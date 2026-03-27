@@ -288,9 +288,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         return status;
       }
     }
-    for (size_t j = 0; j < dataSource->timeSteps.size(); j++) {
-      delete dataSource->timeSteps[j];
-    }
+
     dataSource->timeSteps.clear();
     /*
      * Get the number of required dims from the given dims
@@ -902,7 +900,7 @@ int CRequest::process_all_layers() {
         CDataReader reader;
         status = reader.open(firstDataSource, CNETCDFREADER_MODE_OPEN_HEADER);
         if (status != 0) {
-          CDBError("Could not open file: %s", firstDataSource->getFileName());
+          CDBError("Could not open file: %s", firstDataSource->getFileName().c_str());
           throw(__LINE__);
         }
         CT::string dumpString = CDF::dump(firstDataSource->getDataObject(0)->cdfObject);

@@ -43,6 +43,11 @@ struct StatusFlag {
   std::string meaning;
   double value;
 };
+
+struct TimeStep {
+  std::string fileName; // Filename of the file to load
+  CCDFDims dims;        // Dimension index in the corresponding name and file
+};
 struct DataObject {
   bool hasStatusFlag = false;
   bool hasNodataValue = false;
@@ -59,7 +64,6 @@ struct DataObject {
   CDFObject *cdfObject = nullptr;       // Not owned!
 };
 
-DataObject *dObjClone(const DataObject &dataOject);
 std::string dObjGetStdName(const DataObject &dataOject);
 std::string dObjgetVariableName(const DataObject &dataOject);
 std::string dObjgetUnits(const DataObject &dataOject);
@@ -87,25 +91,20 @@ private:
 public:
   CStyleConfiguration *getStyle();
 
-  class TimeStep {
-  public:
-    CT::string fileName; // Filename of the file to load
-    CCDFDims dims;       // Dimension index in the corresponding name and file
-  };
   int datasourceIndex = 0;
-  int currentAnimationStep = 0;
+  size_t currentAnimationStep = 0;
   int threadNr = -1;
   /**
    * The amount of steps in this datasource
    */
-  std::vector<TimeStep *> timeSteps;
+  std::vector<TimeStep> timeSteps;
 
   /**
    * Returns the value for a certain dimension and step
    */
-  CT::string getDimensionValueForNameAndStep(const char *dimName, int dimStep);
+  std::string getDimensionValueForNameAndStep(const char *dimName, int dimStep);
 
-  std::vector<DataObject *> dataObjects;
+  std::vector<DataObject> dataObjects;
 
   bool stretchMinMax = false;
 
@@ -121,7 +120,6 @@ public:
   int dWidth, dHeight;
   CT::string nativeEPSG;
   CT::string nativeProj4;
-  bool dataSourceOwnsDataObject = false;
 
   // TODO KVP and metaDataItems can be moved out to GDAL datawriter
 
@@ -189,7 +187,7 @@ public:
 
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex);
   void addStep(const char *fileName);
-  const char *getFileName();
+  std::string getFileName();
   void setHeaderFilename(CT::string headerFileName);
   void setGeo(GeoParameters &geo);
   GeoParameters getGeo();
@@ -197,27 +195,21 @@ public:
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObjectByName(std::string name);
   DataObject *getDataObject(int j);
-
   DataObject *getFirstAvailableDataObject();
 
-  std::vector<DataObject *> *getDataObjectsVector() { return &(dataObjects); }
-
   size_t getNumDataObjects() { return dataObjects.size(); }
-  void eraseDataObject(int j) {
-    delete dataObjects[j];
-    dataObjects.erase(dataObjects.begin() + j);
-  }
-  void setTimeStep(int timeStep);
+  void eraseDataObject(int j) { dataObjects.erase(dataObjects.begin() + j); }
+  void setTimeStep(size_t timeStep);
   int getCurrentTimeStep();
   size_t getDimensionIndex(const char *name);
   size_t getDimensionIndex(int i);
-  CT::string getDimensionValue(int i);
+  std::string getDimensionValue(int i);
   CCDFDims *getCDFDims();
   int getNumTimeSteps();
   const char *getLayerName();
   const char *getLayerTitle();
 
-  int attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataObject);
+  int attachCDFObject(CDFObject *cdfObject);
   void detachCDFObject();
   CDataSource *clone();
   const std::vector<CStyleConfiguration> &getStyleListForDataSource();

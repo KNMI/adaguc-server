@@ -21,7 +21,6 @@ private:
       ((T *)settings.data)[x + y * settings.width] = val;
     }
   }
-  CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource);
   int setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, CDataSource *dataSourceToInclude);
 
 public:

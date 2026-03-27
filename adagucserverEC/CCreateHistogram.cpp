@@ -50,7 +50,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
 
     if (status != 0) {
-      CDBError("Could not open file: %s", dataSource->getFileName());
+      CDBError("Could not open file: %s", dataSource->getFileName().c_str());
       return 1;
     }
 
@@ -83,7 +83,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       CDataReader reader;
       status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
       if (status != 0) {
-        CDBError("Could not open file: %s", dataSource->getFileName());
+        CDBError("Could not open file: %s", dataSource->getFileName().c_str());
         return 1;
       }
 

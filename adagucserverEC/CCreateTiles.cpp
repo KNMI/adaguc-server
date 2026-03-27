@@ -115,10 +115,10 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   dataSourceToTile->addStep(fileToTile.c_str());
   dataSourceToTile->setTimeStep(0);
 
-  CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName());
+  CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName().c_str());
   int status = reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
   if (status != 0) {
-    CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
+    CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName().c_str());
     return 1;
   }
   // Enable cache for the variable to tile, to speed up reading data for each tile.

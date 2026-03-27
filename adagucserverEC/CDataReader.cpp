@@ -849,10 +849,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBError("Invalid dataSource");
     return 1;
   }
-  if (dataSource->getFileName() == NULL) {
-    CDBError("Invalid NetCDF filename (NULL)");
-    return 1;
-  }
 
   if (verbose) {
     CDBDebug("Open mode:%d x:%d y:%d, numdataObjects %lu", mode, x, y, dataSource->getNumDataObjects());
@@ -861,7 +857,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   bool singleCellMode = false;
   // If there are no files associated with the dataSource, we treat it as a virtual one
   // Example: solar terminator
-  int isVirtual = dataSource->getFileName() == NULL || dataSource->getFileName()[0] == '\0';
+  int isVirtual = dataSource->getFileName().empty();
   if (isVirtual) {
     // For datasets without files, such as the Solar Terminator
     if (enablePostProcessors) {
@@ -912,7 +908,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBError("Unable to get CDFObject from store");
     return 1;
   }
-  if (dataSource->attachCDFObject(cdfObject, !enableObjectCache) != 0) {
+  if (dataSource->attachCDFObject(cdfObject) != 0) {
     CDBError("Unable to attach CDFObject");
     return 1;
   }
@@ -1109,7 +1105,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
 
         if (dataSource->getDataObject(varNr)->cdfVariable->readData(dataSource->getDataObject(varNr)->cdfVariable->getType(), start.data(), count.data(), stride.data()) != 0) {
-          CDBError("Unable to read data for variable %s in file %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), dataSource->getFileName());
+          CDBError("Unable to read data for variable %s in file %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), dataSource->getFileName().c_str());
 
           for (size_t j = 0; j < dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks.size(); j++) {
             CDBDebug("%s %lu %lu %lu", dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks[j]->name.c_str(), start[j], count[j], stride[j]);

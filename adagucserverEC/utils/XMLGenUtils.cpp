@@ -98,7 +98,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     CDataReader reader;
     status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (status != 0 && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
-      CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
+      CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName().c_str());
       return 1;
     }
 
@@ -114,26 +114,25 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.nativeEPSG = metadataLayer->dataSource->nativeEPSG;
     metadataLayer->layerMetadata.projstring = metadataLayer->dataSource->nativeProj4;
 
-    auto v = metadataLayer->dataSource->getDataObjectsVector();
-    for (auto d: (*v)) {
-      if (d->filterFromOutput) {
+    for (auto &d: metadataLayer->dataSource->dataObjects) {
+      if (d.filterFromOutput) {
         continue;
       }
-      if (d->cdfVariable == nullptr) {
+      if (d.cdfVariable == nullptr) {
         continue;
       }
-      CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
+      CDF::Attribute *longName = d.cdfVariable->getAttributeNE("long_name");
       if (longName == nullptr) {
-        longName = d->cdfVariable->getAttributeNE("standard_name");
+        longName = d.cdfVariable->getAttributeNE("standard_name");
       }
-      CDF::Attribute *standardNameAttr = d->cdfVariable->getAttributeNE("standard_name");
+      CDF::Attribute *standardNameAttr = d.cdfVariable->getAttributeNE("standard_name");
 
-      CT::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(*d).c_str();
-      LayerMetadataVariable layerMetadataVariable = {.variableName = d->cdfVariable->name, .units = dObjgetUnits(*d), .label = label, .standard_name = d->cdfVariable->name};
+      CT::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(d).c_str();
+      LayerMetadataVariable layerMetadataVariable = {.variableName = d.cdfVariable->name, .units = dObjgetUnits(d), .label = label, .standard_name = d.cdfVariable->name};
 
       if (standardNameAttr != nullptr) {
         layerMetadataVariable.standard_name = standardNameAttr->toString();
-        // CDBDebug("standard_name for %s: %s", d->cdfVariable->name.c_str(), standardNameAttr->toString().c_str());
+        // CDBDebug("standard_name for %s: %s", d.cdfVariable->name.c_str(), standardNameAttr->toString().c_str());
       }
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
@@ -305,7 +304,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       CDataReader reader;
       int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
       if (status != 0) {
-        CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
+        CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName().c_str());
         return 1;
       }
       if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
@@ -648,7 +647,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
   CDataReader reader;
   int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
   if (status != 0) {
-    CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
+    CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName().c_str());
     return 1;
   }
 
@@ -773,7 +772,7 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
     CDataReader reader;
     int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS); // TODO, would open header also work?
     if (status != 0 || metadataLayer->dataSource->getNumDataObjects() == 0) {
-      CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
+      CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName().c_str());
       return 1;
     }
     CDF::Attribute *longName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name");

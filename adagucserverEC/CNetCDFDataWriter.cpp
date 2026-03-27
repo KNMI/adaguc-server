@@ -90,7 +90,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (status != 0) {
-      CDBError("Could not open file: %s", dataSource->getFileName());
+      CDBError("Could not open file: %s", dataSource->getFileName().c_str());
       return 1;
     }
 
@@ -445,7 +445,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       reader.silent = this->silent;
       int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
       if (status != 0) {
-        CDBError("Could not open file: %s", dataSource->getFileName());
+        CDBError("Could not open file: %s", dataSource->getFileName().c_str());
         throw __LINE__;
       }
       reader.close();
@@ -561,7 +561,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     //     render
 
     if (verbose) {
-      CDBDebug("Reading file %s", dataSource->getFileName());
+      CDBDebug("Reading file %s", dataSource->getFileName().c_str());
     }
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
 
@@ -646,7 +646,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     sourceGeo.crs = dataSource->nativeProj4;
 
     if (status != 0) {
-      CDBError("Could not open file: %s", dataSource->getFileName());
+      CDBError("Could not open file: %s", dataSource->getFileName().c_str());
       return 1;
     }
 

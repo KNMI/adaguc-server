@@ -577,7 +577,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           }
 
           if (status != 0) {
-            CDBError("Could not open file: %s", dataSource->getFileName());
+            CDBError("Could not open file: %s", dataSource->getFileName().c_str());
             return 1;
           }
         }
@@ -612,7 +612,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL, projCacheInfo.imx, projCacheInfo.imy);
           }
           if (status != 0) {
-            CDBError("Could not open file: %s", dataSource->getFileName());
+            CDBError("Could not open file: %s", dataSource->getFileName().c_str());
             return 1;
           }
         }
@@ -690,7 +690,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               }
               // Recalculate the pointer if there is no associated file
               // Case where calculations are based solely on postprocessors
-              if (dataSource->getFileName() == nullptr || *dataSource->getFileName() == '\0') {
+              if (dataSource->getFileName().empty()) {
                 ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
               }
 
@@ -873,7 +873,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   }
 
   if (status != 0) {
-    CDBError("Could not open file: %s", dataSource->getFileName());
+    CDBError("Could not open file: %s", dataSource->getFileName().c_str());
     return 1;
   }
 

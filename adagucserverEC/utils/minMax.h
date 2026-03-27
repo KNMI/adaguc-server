@@ -93,7 +93,7 @@ public:
   }
 
 private:
-  template <class T> void calcMinMax(size_t size, std::vector<DataObject *> *dataObject);
+  template <class T> void calcMinMax(size_t size, std::vector<DataObject> &dataObject);
 
 public:
   double min, max, avg, stddev;

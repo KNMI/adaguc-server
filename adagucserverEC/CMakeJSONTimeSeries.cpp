@@ -35,7 +35,7 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
     dataSource->setTimeStep(step);
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       auto &ogcDim = dataSource->requiredDims[dimnr];
-      uniqueRequest.addDimensionRangeRequest(dataSource->getFileName(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr).c_str());
+      uniqueRequest.addDimensionRangeRequest(dataSource->getFileName().c_str(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr).c_str());
     }
   }
 

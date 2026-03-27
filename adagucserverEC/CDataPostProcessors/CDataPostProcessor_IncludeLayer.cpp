@@ -14,7 +14,7 @@ int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CData
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
   CDataSource *dataSourceToInclude = new CDataSource();
   CT::string additionalLayerName = proc->attr.name.c_str();
   size_t additionalLayerNo = 0;
@@ -56,10 +56,9 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     // CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
 
     /* First check if this was already added */
-    auto dataObjectsVector = *dataSource->getDataObjectsVector();
-    for (auto it = dataObjectsVector.begin(); it != dataObjectsVector.end(); ++it) {
-      DataObject *dataObject = *it;
-      if (dataObject->dataObjectName == proc->attr.name.c_str()) { // TODO SHould think of another identifier
+
+    for (const auto &dataObject: dataSource->dataObjects) {
+      if (dataObject.dataObjectName == proc->attr.name.c_str()) { // TODO SHould think of another identifier
         CDBDebug("This processor was already applied, skipping metadata part");
         return 0;
       }
@@ -83,80 +82,66 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     // CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
-    reader.enableObjectCache = false;
+    reader.enableObjectCache = true;
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_HEADER); // Only read metadata
     if (status != 0) {
-      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
+      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName().c_str(), proc->attr.name.c_str());
+      delete dataSourceToInclude;
       return 1;
     }
 
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
       if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
         CDBDebug("Probably already done");
+        reader.close();
         delete dataSourceToInclude;
 
         return 0;
       }
     }
-    for (size_t dataObjectNr = 0; dataObjectNr < dataSourceToInclude->getNumDataObjects(); dataObjectNr++) {
-      DataObject *currentDataObject = dataSource->getDataObject(0);
-      CDF::Variable *varToClone = NULL;
-      try {
-        varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
-      } catch (int e) {
-      }
-      if (varToClone == NULL) {
+    if (dataSource->dataObjects.size() == 0) {
+      CDBError("datasource has no dataobjects");
+      delete dataSourceToInclude;
+      return 1;
+    }
+    auto baseCDFObject = dataSource->dataObjects[0].cdfVariable->getParentCDFObject();
+    int appendOrPrepend = proc->attr.mode.equals("prepend"); // 0:append, 1:prepend
+
+    for (const auto &dataObjectToInClude: dataSourceToInclude->dataObjects) {
+      if (dataObjectToInClude.cdfVariable == NULL) {
         CDBError("Variable not found");
+        delete dataSourceToInclude;
         return 1;
       }
-
-      int mode = 0; // 0:append, 1:prepend
-      if (proc->attr.mode.empty() == false) {
-        if (proc->attr.mode.equals("append")) mode = 0;
-        if (proc->attr.mode.equals("prepend")) mode = 1;
-      }
-
-      DataObject *newDataObject = new DataObject();
-      if (mode == 0) dataSource->getDataObjectsVector()->push_back(newDataObject);
-
-      if (mode == 1) dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
-
-      // CDBDebug("--------> newDataObject %d ", dataSource->getDataObjectsVector()->size());
-
-      newDataObject->variableName = varToClone->name.c_str();
-      newDataObject->dataObjectName = proc->attr.name;
-
-      newDataObject->cdfVariable = new CDF::Variable();
+      DataObject newDataObject;
+      newDataObject.variableName = dataObjectToInClude.cdfVariable->name.c_str();
+      newDataObject.dataObjectName = proc->attr.name;
+      newDataObject.cdfVariable = new CDF::Variable();
       CT::string text;
-      text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", varToClone->name.c_str(), this->getId());
-      newDataObject->cdfObject = currentDataObject->cdfObject; //(CDFObject*)varToClone->getParentCDFObject();
-      // CDBDebug("--------> Adding variable %s ", varToClone->name.c_str());
-      newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-      newDataObject->cdfVariable->setName(varToClone->name.c_str());
-      newDataObject->cdfVariable->setType(varToClone->getType());
-      newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
-
-      for (size_t j = 0; j < currentDataObject->cdfVariable->dimensionlinks.size(); j++) {
-        // CDBDebug("Copying %d %s (%d)", j, currentDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), currentDataObject->cdfVariable->dimensionlinks[j]->getSize());
-        newDataObject->cdfVariable->dimensionlinks.push_back(currentDataObject->cdfVariable->dimensionlinks[j]);
+      text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", dataObjectToInClude.cdfVariable->name.c_str(), this->getId());
+      newDataObject.cdfObject = baseCDFObject; //(CDFObject*)varToClone->getParentCDFObject();
+      baseCDFObject->addVariable(newDataObject.cdfVariable);
+      newDataObject.cdfVariable->setName(dataObjectToInClude.cdfVariable->name.c_str());
+      newDataObject.cdfVariable->setType(dataObjectToInClude.cdfVariable->getType());
+      newDataObject.cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
+      newDataObject.cdfVariable->dimensionlinks = dataObjectToInClude.cdfVariable->dimensionlinks;
+      for (size_t j = 0; j < dataObjectToInClude.cdfVariable->attributes.size(); j++) {
+        newDataObject.cdfVariable->attributes.push_back(new CDF::Attribute(dataObjectToInClude.cdfVariable->attributes[j]));
       }
+      newDataObject.cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
+      newDataObject.cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
 
-      // for (size_t j = 0; j < newDataObject->cdfVariable->dimensionlinks.size(); j++) {
-      //   CDBDebug("NowHas dimensions %d %s (%d)", j, newDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), newDataObject->cdfVariable->dimensionlinks[j]->getSize());
-      // }
+      newDataObject.cdfVariable->removeAttribute("scale_factor");
+      newDataObject.cdfVariable->removeAttribute("add_offset");
+      newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-      for (size_t j = 0; j < varToClone->attributes.size(); j++) {
-        newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
+      if (appendOrPrepend == 0) {
+        dataSource->dataObjects.push_back(newDataObject);
+      } else {
+        dataSource->dataObjects.insert(dataSource->dataObjects.begin(), newDataObject);
       }
-      newDataObject->cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
-      newDataObject->cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
-
-      newDataObject->cdfVariable->removeAttribute("scale_factor");
-      newDataObject->cdfVariable->removeAttribute("add_offset");
-      newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
     }
     reader.close();
-    // CDBDebug("CLOSING TEMPORAL METADATA READER");
     delete dataSourceToInclude;
     return 0;
   }
@@ -186,11 +171,12 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
-    reader.enableObjectCache = false;
+    reader.enableObjectCache = true;
     //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {
-      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
+      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName().c_str(), proc->attr.name.c_str());
+      delete dataSourceToInclude;
       return 1;
     }
 

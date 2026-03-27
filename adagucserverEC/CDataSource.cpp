@@ -38,17 +38,6 @@ bool configWarningNameMappingSet = false;
 
 std::vector<std::string> knownRenderMethods = {"generic", "nearest", "rgba", "polyline", "point"};
 
-DataObject *dObjClone(const DataObject &dataOject) {
-  DataObject *nd = new DataObject();
-  nd->hasStatusFlag = dataOject.hasStatusFlag;
-  nd->hasNodataValue = dataOject.hasNodataValue;
-  nd->dfNodataValue = dataOject.dfNodataValue;
-  nd->cdfObject = dataOject.cdfObject;
-  nd->overruledUnits = dataOject.overruledUnits;
-  nd->cdfVariable = nullptr;
-  return nd;
-}
-
 std::string dObjGetStdName(const DataObject &dataOject) { return dataOject.cdfVariable != nullptr ? getStandardName(*dataOject.cdfVariable) : ""; }
 std::string dObjgetVariableName(const DataObject &dataOject) { return dataOject.cdfVariable != nullptr ? std::string(dataOject.cdfVariable->name) : dataOject.variableName; }
 std::string dObjgetUnits(const DataObject &dataOject) {
@@ -85,24 +74,8 @@ CDataSource::CDataSource() {
 
 CDataSource::~CDataSource() {
 
-  for (size_t d = 0; d < dataObjects.size(); d++) {
-    if (dataSourceOwnsDataObject) {
-      delete (CDFReader *)dataObjects[d]->cdfObject->getCDFReader();
-      delete dataObjects[d]->cdfObject;
-      dataObjects[d]->cdfObject = nullptr;
-    }
-    delete dataObjects[d];
-    dataObjects[d] = NULL;
-  }
-
-  dataSourceOwnsDataObject = false;
   dataObjects.clear();
-
-  for (size_t j = 0; j < timeSteps.size(); j++) {
-
-    delete timeSteps[j];
-    timeSteps[j] = NULL;
-  }
+  timeSteps.clear();
   requiredDims.clear();
   if (statistics != NULL) {
     delete statistics;
@@ -126,9 +99,9 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
   }
   // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
-    DataObject *newDataObject = new DataObject();
-    newDataObject->dataObjectName = ""; // Should not have a name yet!
-    newDataObject->variableName = cfgLayer->Variable[j]->value;
+    DataObject newDataObject;
+    newDataObject.dataObjectName = "";                         // Should not have a name yet!
+    newDataObject.variableName = cfgLayer->Variable[j]->value; // Has a name, but no cdfVariable yet.
     this->dataObjects.push_back(newDataObject);
   }
 
@@ -173,10 +146,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
 }
 
 void CDataSource::addStep(const char *fileName) {
-  TimeStep *timeStep = new TimeStep();
-  timeSteps.push_back(timeStep);
+  timeSteps.push_back({.fileName = fileName, .dims = {}});
   currentAnimationStep = timeSteps.size() - 1;
-  timeStep->fileName.copy(fileName);
 }
 
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
@@ -188,28 +159,26 @@ void CDataSource::setGeo(GeoParameters &geo) {
   geo.bbox.toArray(dfBBOX);
 }
 
-const char *CDataSource::getFileName() {
-  if (currentAnimationStep < 0) return NULL;
-  if (currentAnimationStep >= (int)timeSteps.size()) return NULL;
-  return timeSteps[currentAnimationStep]->fileName.c_str();
+std::string CDataSource::getFileName() {
+  if (currentAnimationStep >= timeSteps.size()) return "";
+  return timeSteps[currentAnimationStep].fileName;
 }
 
-void CDataSource::setTimeStep(int timeStep) {
-  if (timeStep < 0) return;
-  if (timeStep > (int)timeSteps.size()) return;
+void CDataSource::setTimeStep(size_t timeStep) {
+  if (timeStep > timeSteps.size()) return;
   currentAnimationStep = timeStep;
 }
 
 int CDataSource::getCurrentTimeStep() { return currentAnimationStep; }
 
 size_t CDataSource::getDimensionIndex(const char *name) {
-  int idx = findCDFDimIdx(timeSteps[currentAnimationStep]->dims, name);
-  return idx == -1 ? 0 : timeSteps[currentAnimationStep]->dims[idx].index;
+  int idx = findCDFDimIdx(timeSteps[currentAnimationStep].dims, name);
+  return idx == -1 ? 0 : timeSteps[currentAnimationStep].dims[idx].index;
 }
 
-size_t CDataSource::getDimensionIndex(int i) { return timeSteps[currentAnimationStep]->dims[i].index; }
+size_t CDataSource::getDimensionIndex(int i) { return timeSteps[currentAnimationStep].dims[i].index; }
 
-CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnimationStep]->dims[i].value; }
+std::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnimationStep].dims[i].value; }
 
 int CDataSource::getNumTimeSteps() { return (int)timeSteps.size(); }
 
@@ -217,11 +186,11 @@ const char *CDataSource::getLayerName() { return layerName.c_str(); }
 const char *CDataSource::getLayerTitle() { return layerTitle.c_str(); }
 
 CCDFDims *CDataSource::getCDFDims() {
-  if (currentAnimationStep >= int(timeSteps.size())) {
+  if (currentAnimationStep >= (timeSteps.size())) {
     CDBError("Invalid step asked");
     return NULL;
   }
-  return &timeSteps[currentAnimationStep]->dims;
+  return &timeSteps[currentAnimationStep].dims;
 }
 
 void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &statusFlagList) {
@@ -276,7 +245,7 @@ std::string CDataSource::getFlagMeaningHumanReadable(std::vector<StatusFlag> &st
   return CT::replace(flagMeaning, "_", " ");
 }
 
-CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return getCDFDimensionValue(timeSteps[dimStep]->dims, dimName); }
+std::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return getCDFDimensionValue(timeSteps[dimStep].dims, dimName); }
 
 /**
  * Returns a stringlist with all available legends for this datasource and chosen style.
@@ -618,28 +587,13 @@ int CDataSource::setStyle(const char *styleName) {
 CDataSource *CDataSource::clone() {
 
   CDataSource *d = new CDataSource();
-  d->dataSourceOwnsDataObject = false; // cdfObject stays with source datasource.
   d->currentStyle = currentStyle;
   d->datasourceIndex = datasourceIndex;
   d->currentAnimationStep = currentAnimationStep;
   d->styleConfigurationList = styleConfigurationList;
-
-  /* Copy timesteps */
-  for (size_t j = 0; j < timeSteps.size(); j++) {
-    // CDBDebug("addStep for %s",fileName);
-    TimeStep *timeStep = new TimeStep();
-    d->timeSteps.push_back(timeStep);
-    timeStep->fileName.copy(timeSteps[j]->fileName.c_str());
-    timeStep->dims = timeSteps[j]->dims;
-  }
-
-  /* Copy dataObjects */
-  for (size_t j = 0; j < dataObjects.size(); j++) {
-    d->dataObjects.push_back(dObjClone(*dataObjects[j]));
-  }
-
+  d->timeSteps = timeSteps;
+  d->dataObjects = dataObjects;
   d->stretchMinMax = stretchMinMax;
-
   /* Copy requireddims */
   d->requiredDims = requiredDims;
 
@@ -710,17 +664,17 @@ double CDataSource::getContourScaling() {
 DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
 DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
-    DataObject *dataObject = *it;
+    DataObject &dataObject = *it;
 
-    if (dataObject->dataObjectName == name) {
-      return dataObject;
+    if (dataObject.dataObjectName == name) {
+      return &dataObject;
     }
 
-    if (dataObject->variableName == name) {
-      return dataObject;
+    if (dataObject.variableName == name) {
+      return &dataObject;
     }
-    if (dataObject->cdfVariable->name.equals(name)) {
-      return dataObject;
+    if (dataObject.cdfVariable->name.equals(name)) {
+      return &dataObject;
     }
   }
   return nullptr;
@@ -740,16 +694,16 @@ DataObject *CDataSource::getFirstAvailableDataObject() {
 DataObject *CDataSource::getDataObject(int j) {
 
   if (int(dataObjects.size()) <= j) {
-    CDBError("No Data object witn nr %d (total %d) for animation step %lu (total steps %lu)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
+    CDBError("No Data object witn nr %d (total %lu) for animation step %lu (total steps %lu)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
     throw(CEXCEPTION_NULLPOINTER);
   }
 
-  DataObject *d = dataObjects[j];
+  DataObject *d = &dataObjects.at(j);
   // CDBDebug("getDataObject %d %d",currentAnimationStep,j);
   return d;
 }
 
-int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataObject) {
+int CDataSource::attachCDFObject(CDFObject *cdfObject) {
   if (cdfObject == NULL) {
     CDBError("cdfObject==NULL");
     return 1;
@@ -795,7 +749,6 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
       }
     }
   }
-  this->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
   return 0;
 }
 void CDataSource::detachCDFObject() {

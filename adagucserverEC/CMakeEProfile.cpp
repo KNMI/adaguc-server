@@ -409,7 +409,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
     // CDBDebug("Found file %d %s",step,dataSource->getFileName());
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       COGCDims &ogcDim = dataSource->requiredDims[dimnr];
-      uniqueRequest.set(dataSource->getFileName(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
+      uniqueRequest.set(dataSource->getFileName().c_str(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
     }
   }
 
@@ -605,7 +605,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
       }
     }
 
-    CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName());
+    CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName().c_str());
 
     // Make profile object
     eProfileJson->concat("\"profile\":{");

@@ -158,7 +158,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
         }
         CDBDebug("Deleting dataObject(1))");
         delete (dataSource->getDataObject(1));
-        dataSource->getDataObjectsVector()->erase(dataSource->getDataObjectsVector()->begin() + 1); // Remove second element
+        dataSource->dataObjects.erase(dataSource->dataObjects.begin() + 1); // Remove second element
       }
     }
   }

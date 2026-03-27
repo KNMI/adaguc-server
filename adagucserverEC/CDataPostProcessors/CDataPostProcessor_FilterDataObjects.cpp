@@ -22,11 +22,11 @@ int CDDPFilterDataObjects::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     return -1;
   }
 
-  for (auto d : *dataSource->getDataObjectsVector()) {
-    d->filterFromOutput = true;
+  for (auto &d: dataSource->dataObjects) {
+    d.filterFromOutput = true;
   }
   auto itemsToFilter = proc->attr.select.split(",");
-  for (auto item : itemsToFilter) {
+  for (auto item: itemsToFilter) {
     auto d = dataSource->getDataObjectByName(item.trim().c_str());
     if (d != nullptr) {
       d->filterFromOutput = false;

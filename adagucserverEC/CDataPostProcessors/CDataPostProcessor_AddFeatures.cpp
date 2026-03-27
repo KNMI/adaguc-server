@@ -27,31 +27,29 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Adding features from GEOJson");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    DataObject *newDataObject = new DataObject();
-
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin() + 1, newDataObject);
-
-    newDataObject->cdfVariable = new CDF::Variable();
-    newDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-    newDataObject->cdfVariable->setName("indexes");
-    newDataObject->cdfVariable->setType(CDF_USHORT);
-    newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin() + 1, DataObject());
+    auto &newDataObject = dataSource->dataObjects[1];
+    newDataObject.cdfVariable = new CDF::Variable();
+    newDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    newDataObject.cdfObject->addVariable(newDataObject.cdfVariable);
+    newDataObject.cdfVariable->setName("indexes");
+    newDataObject.cdfVariable->setType(CDF_USHORT);
+    newDataObject.cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
     for (size_t j = 0; j < varToClone->dimensionlinks.size(); j++) {
-      newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
+      newDataObject.cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
     }
-    newDataObject->cdfVariable->removeAttribute("standard_name");
-    newDataObject->cdfVariable->removeAttribute("_FillValue");
+    newDataObject.cdfVariable->removeAttribute("standard_name");
+    newDataObject.cdfVariable->removeAttribute("_FillValue");
 
-    newDataObject->cdfVariable->setAttributeText("standard_name", "indexes");
-    newDataObject->cdfVariable->setAttributeText("long_name", "indexes");
-    newDataObject->cdfVariable->setAttributeText("units", "1");
-    newDataObject->cdfVariable->setAttributeText("ADAGUC_GEOJSONPOINT", "1");
+    newDataObject.cdfVariable->setAttributeText("standard_name", "indexes");
+    newDataObject.cdfVariable->setAttributeText("long_name", "indexes");
+    newDataObject.cdfVariable->setAttributeText("units", "1");
+    newDataObject.cdfVariable->setAttributeText("ADAGUC_GEOJSONPOINT", "1");
     dataSource->getDataObject(0)->cdfVariable->setAttributeText("ADAGUC_GEOJSONPOINT", "1");
 
     unsigned short sf = 65535u;
-    newDataObject->cdfVariable->setAttribute("_FillValue", CDF_USHORT, &sf, 1);
+    newDataObject.cdfVariable->setAttribute("_FillValue", CDF_USHORT, &sf, 1);
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDataSource featureDataSource;
@@ -60,7 +58,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     }
     featureDataSource.addStep(proc->attr.a.c_str()); // Set filename
     CDataReader reader;
-    CDBDebug("Opening %s", featureDataSource.getFileName());
+    CDBDebug("Opening %s", featureDataSource.getFileName().c_str());
     int status = reader.open(&featureDataSource, CNETCDFREADER_MODE_OPEN_ALL);
     //   CDBDebug("fds: %s", CDF::dump(featureDataSource.getDataObject(0)->cdfObject).c_str());
 
