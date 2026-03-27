@@ -505,49 +505,25 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               dim->name.copy(dimName);
               dim->setSize(1);
               cdfObject->addDimension(dim);
-              CDF::Variable *dimVar = new CDF::Variable();
-              dimVar->setType(CDF_DOUBLE);
-              dimVar->name.copy(dimName);
-              dimVar->isDimension = true;
-              dimVar->setAttributeText("units", dimUnits.c_str());
-              dimVar->setAttributeText("standard_name", dimName.c_str());
-              dimVar->dimensionlinks.push_back(dim);
-              // CDBDebug("Pushed_back %s dim", dim->name.c_str());
-              cdfObject->addVariable(dimVar);
-              CDF::allocateData(CDF_DOUBLE, &dimVar->data, dim->length);
-              dimVar->setType(CDF_DOUBLE);
-              ((double *)dimVar->data)[0] = dDimVal;
-
-#ifdef USETHIS
-              CDF::Variable timeVarHelper;
-              timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
-
-              double timeOffset;
-              if (timeVal.length() > 0) {
-                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
-              } else if (dTimeVal > 0) {
-                timeOffset = dTimeVal;
-              } else if (iTimeVal > 0) {
-                timeOffset = iTimeVal;
+              if (!dimVal.empty()) {
+                // dimVar->setType(CDF_STRING);
+                // dimVar->name.copy(dimName);
+                // dimVar->isDimension = true;
+                // dimVar->setAttributeText("units", dimUnits.c_str());
+                // dimVar->setAttributeText("standard_name", dimName.c_str());
+                // dimVar->dimensionlinks.push_back(dim);
+                auto dimVar = cdfObject->addVariable(new CDF::Variable(dimName.c_str(), CDF_STRING, {dim}, true));
+                dimVar->setAttributeText("units", dimUnits.c_str());
+                dimVar->setAttributeText("standard_name", dimName.c_str());
+                dimVar->allocateData(1);
+                ((char **)dimVar->data)[0] = strdup(dimVal.c_str());
+              } else {
+                auto dimVar = cdfObject->addVariable(new CDF::Variable(dimName.c_str(), CDF_DOUBLE, {dim}, true));
+                dimVar->setAttributeText("units", dimUnits.c_str());
+                dimVar->setAttributeText("standard_name", dimName.c_str());
+                dimVar->allocateData(1);
+                ((double *)dimVar->data)[0] = dDimVal;
               }
-              CDBDebug("timeOffset=%f", timeOffset);
-              CDF::Dimension *timeDim = new CDF::Dimension();
-              timeDim->name = "time";
-              timeDim->setSize(1);
-              cdfObject->addDimension(timeDim);
-              CDF::Variable *timeVar = new CDF::Variable();
-              timeVar->setType(CDF_DOUBLE);
-              timeVar->name.copy("time");
-              timeVar->isDimension = true;
-              timeVar->setAttributeText("units", "seconds since 1970-1-1");
-              timeVar->setAttributeText("standard_name", "time");
-              timeVar->dimensionlinks.push_back(timeDim);
-              cdfObject->addVariable(timeVar);
-              CDF::allocateData(CDF_DOUBLE, &timeVar->data, timeDim->length);
-              timeVar->setType(CDF_DOUBLE);
-              ((double *)timeVar->data)[0] = timeOffset;
-#endif
             }
           }
         }
