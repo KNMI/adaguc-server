@@ -19,7 +19,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     //    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
-    //    dataSource->getDataObject(0)->setUnits("mm/hr");
+    //    dataSource->getDataObject(0)->overruledUnits=("mm/hr");
     try {
       if (dataSource->getDataObject(0)->cdfVariable->getAttributeThrows("ADAGUC_GEOJSONPOINT")) return 0;
     } catch (int a) {
@@ -29,7 +29,6 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
 
     DataObject *newDataObject = new DataObject();
 
-    newDataObject->variableName.copy("indexes");
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin() + 1, newDataObject);
 
     newDataObject->cdfVariable = new CDF::Variable();

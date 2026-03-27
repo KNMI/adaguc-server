@@ -303,27 +303,9 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   }
 
   /* Get the searchname, based on variable, standard name or long name.*/
-  CT::string searchStandardName = dataSource->getDataObject(0)->variableName.c_str();
-
-  CT::string searchVariableName = dataSource->getDataObject(0)->variableName.c_str();
-
-  try {
-    if (dataSource->getDataObject(0)->cdfVariable == nullptr) {
-      throw __LINE__;
-    }
-    searchStandardName = dataSource->getDataObject(0)->cdfVariable->getAttributeThrows("standard_name")->toString();
-  } catch (int e) {
-  }
-
-  searchStandardName.toLowerCaseSelf();
-  searchVariableName.toLowerCaseSelf();
-
-  /* Get the units */
-  CT::string dataSourceUnits;
-  if (dataSource->getDataObject(0)->getUnits().length() > 0) {
-    dataSourceUnits = dataSource->getDataObject(0)->getUnits().c_str();
-  }
-  dataSourceUnits.toLowerCaseSelf();
+  std::string searchStandardName = CT::toLowerCase(dObjGetStdName(*dataSource->getDataObject(0)));
+  std::string searchVariableName = CT::toLowerCase(dObjgetVariableName(*dataSource->getDataObject(0)));
+  std::string dataSourceUnits = CT::toLowerCase(dObjgetUnits(*dataSource->getDataObject(0)));
 
 #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("Retrieving auto styles by using fileinfo \"%s\"", searchStandardName.c_str());
@@ -333,7 +315,6 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   std::vector<CT::string> styleList;
 
   for (size_t j = 0; j < dataSource->cfg->Style.size(); j++) {
-
     const char *styleName = dataSource->cfg->Style[j]->attr.name.c_str();
 #ifdef CAUTOCONFIGURE_DEBUG
     CDBDebug("Searching Style \"%s\"", styleName);
@@ -375,20 +356,20 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 
           for (size_t n = 0; n < standardNameList.size(); n++) {
             bool variableNameMatch = false;
-            if (searchVariableName.equals(variable_name.c_str()) || variable_name.equals("*")) {
+            if (searchVariableName == variable_name.c_str() || variable_name.equals("*")) {
               variableNameMatch = true;
             } else if (variable_name.charAt(0) == '^') {
-              if (searchVariableName.testRegEx(variable_name.c_str())) {
+              if (CT::testRegEx(searchVariableName, variable_name.c_str())) {
                 variableNameMatch = true;
               }
             }
 
             bool standardNameMatch = false;
-            if (searchStandardName.equals(standardNameList[n].c_str()) || standardNameList[n].equals("*")) {
+            if (searchStandardName == (standardNameList[n].c_str()) || standardNameList[n] == ("*")) {
               standardNameMatch = true;
             } else if (standardNameList[n].charAt(0) == '^') {
               /* Regex */
-              if (searchStandardName.testRegEx(standardNameList[n].c_str())) {
+              if (CT::testRegEx(searchStandardName, standardNameList[n].c_str())) {
                 standardNameMatch = true;
               }
             }
@@ -398,13 +379,13 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
               if (dataSourceUnits.length() != 0 && units.length() != 0) {
                 unitsMatch = false;
                 /* Test for same units */
-                if (dataSourceUnits.equals(units))
+                if (dataSourceUnits == units.c_str())
                   unitsMatch = true;
                 else {
                   /* Test for regexp */
                   if (units.charAt(0) == '^') {
                     CDBDebug("Found regex %s", units.c_str());
-                    if (dataSourceUnits.testRegEx(units.c_str())) {
+                    if (CT::testRegEx(dataSourceUnits, units.c_str())) {
                       unitsMatch = true;
                     }
                   }

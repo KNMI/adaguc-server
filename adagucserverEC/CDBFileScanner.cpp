@@ -89,8 +89,8 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
   // Check if variable is in this file:
 
-  if (cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str()) == NULL) {
-    CDBError("Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFilename.c_str());
+  if (cdfObject->getVar(dObjgetVariableName(*dataSource->getDataObject(0))) == NULL) {
+    CDBError("Variable %s does not exist in %s ", dObjgetVariableName(*dataSource->getDataObject(0)).c_str(), dataSource->headerFilename.c_str());
     return 1;
   }
 

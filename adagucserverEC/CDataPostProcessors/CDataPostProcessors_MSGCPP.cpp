@@ -31,8 +31,6 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 
     DataObject *newDataObject = new DataObject();
 
-    newDataObject->variableName.copy("mask");
-
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
 
     newDataObject->cdfVariable = new CDF::Variable();
@@ -130,8 +128,6 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
     DataObject *newDataObject = new DataObject();
-
-    newDataObject->variableName.copy("hiwc");
 
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
 
@@ -328,8 +324,6 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 
     DataObject *newDataObject = new DataObject();
 
-    newDataObject->variableName.copy("masked");
-
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
 
     newDataObject->cdfVariable = new CDF::Variable();
@@ -356,7 +350,7 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 
     if (proc->attr.units.empty() == false) {
       newDataObject->cdfVariable->removeAttribute("units");
-      newDataObject->setUnits(proc->attr.units.c_str());
+      newDataObject->overruledUnits = proc->attr.units.c_str();
       newDataObject->cdfVariable->setAttributeText("units", proc->attr.units.c_str());
     }
     if (proc->attr.name.empty() == false) {

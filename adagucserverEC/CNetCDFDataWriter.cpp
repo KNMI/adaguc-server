@@ -440,7 +440,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       throw __LINE__;
     }
     if (dataSource->getDataObject(j)->cdfVariable == nullptr) {
-      CDBError("dataSource->getDataObject(j)->cdfVariable==nullptr for variable [%s]", dataSource->getDataObject(j)->variableName.c_str());
+      CDBError("dataSource->getDataObject(j)->cdfVariable==nullptr for variable [%s]", dObjgetVariableName(*dataSource->getDataObject(j)).c_str());
       CDataReader reader;
       reader.silent = this->silent;
       int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
@@ -1081,7 +1081,7 @@ int CNetCDFDataWriter::end() {
   CT::string humanReadableString;
   humanReadableString.copy(srvParam->Format.c_str());
   humanReadableString.concat("_");
-  humanReadableString.concat(baseDataSource->getDataObject(0)->variableName.c_str());
+  humanReadableString.concat(dObjgetVariableName(*baseDataSource->getDataObject(0)).c_str());
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {
     humanReadableString.printconcat("_%s", baseDataSource->requiredDims[i].value.c_str());
   }

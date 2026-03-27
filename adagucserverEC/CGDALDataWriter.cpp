@@ -589,7 +589,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
   CT::string humanReadableString;
   humanReadableString.copy(srvParam->Format.c_str());
   humanReadableString.concat("_");
-  humanReadableString.concat(_dataSource->getDataObject(0)->variableName.c_str());
+  humanReadableString.concat(dObjgetVariableName(*_dataSource->getDataObject(0)).c_str());
 
   for (size_t i = 0; i < _dataSource->requiredDims.size(); i++) {
     humanReadableString.printconcat("_%s", _dataSource->requiredDims[i].value.c_str());
@@ -629,7 +629,7 @@ std::string generateUniqueGetCoverageFileName(CGDALDataWriter *gdalDataWriter) {
   //  "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
   auto s = gdalDataWriter->srvParam;
   auto d = gdalDataWriter->_dataSource;
-  auto variableName = d->getDataObject(0)->variableName;
+  auto variableName = dObjgetVariableName(*d->getDataObject(0));
   std::string dimSettings;
   for (size_t i = 0; i < d->cfgLayer->Dimension.size() && i < 4; i++) {
     CT::printfconcat(dimSettings, "%d_", int(d->getDimensionIndex(i)));

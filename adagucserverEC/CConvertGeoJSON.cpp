@@ -995,7 +995,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   size_t nrDataObjects = dataSource->getNumDataObjects();
 
   if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC || (dataSource->dWidth == 1 && dataSource->dHeight == 1)) {
-    if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dataSource->getDataObject(0)->variableName.equals("features") == true)) {
+    if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dObjgetVariableName(*dataSource->getDataObject(0)) == "features")) {
       // CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false or variable name is features");
       dataSource->srvParams->geoParams.bbox.toArray(dataSource->dfBBOX);
       return 0;
@@ -1147,7 +1147,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         featureIndex++;
       }
       if (dataSource && dataSource->statistics != NULL) {
-        if (dataObject->variableName.equals("features") == false) {
+        if (dObjgetVariableName(*dataObject) != "features") {
           if (min != NAN) dataSource->statistics->min = min;
           if (max != NAN) dataSource->statistics->max = max;
         }

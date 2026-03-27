@@ -335,7 +335,7 @@ public:
                 }
                 // Apply units:
                 if (proc->attr.units.empty() == false) {
-                  dataSource->getDataObject(dataObjectNr)->setUnits(proc->attr.units.c_str());
+                  dataSource->getDataObject(dataObjectNr)->overruledUnits = proc->attr.units.c_str();
                 }
               }
               /* End of data postproc */
@@ -569,7 +569,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   if (dataSource->srvParams->InfoFormat.equals("application/json")) {
     float *data = (float *)varRange->data;
     eProfileJson->concat("{");
-    CT::string units = dataSource->getDataObject(0)->getUnits();
+    CT::string units = dObjgetUnits(*dataSource->getDataObject(0));
     if (!units.empty()) {
       eProfileJson->printconcat("\"units\":\"%s\",", encodeJSON(units).c_str());
     } else {

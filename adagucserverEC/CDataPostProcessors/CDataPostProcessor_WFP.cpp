@@ -64,7 +64,6 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     DataObject *foundWindSectorsDataObject = new DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), foundWindSectorsDataObject);
     foundWindSectorsDataObject->cdfVariable = cloneVariable(varToClone, "foundWindSector", dataSource->dWidth * dataSource->dHeight);
-    foundWindSectorsDataObject->variableName.copy("foundWindSector");
     foundWindSectorsDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     foundWindSectorsDataObject->cdfObject->addVariable(foundWindSectorsDataObject->cdfVariable);
 
@@ -73,7 +72,6 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), windSpeedDifferenceDataObject);
     windSpeedDifferenceDataObject->cdfVariable = cloneVariable(varToClone, "windSpeedDifference", dataSource->dWidth * dataSource->dHeight);
     windSpeedDifferenceDataObject->cdfVariable->setAttributeText("units", "kts");
-    windSpeedDifferenceDataObject->variableName.copy("windSpeedDifference");
     windSpeedDifferenceDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     windSpeedDifferenceDataObject->cdfObject->addVariable(windSpeedDifferenceDataObject->cdfVariable);
 
@@ -81,7 +79,6 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     DataObject *correctedWindFieldMinDataObject = new DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldMinDataObject);
     correctedWindFieldMinDataObject->cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOnImproved", dataSource->dWidth * dataSource->dHeight);
-    correctedWindFieldMinDataObject->variableName.copy("WindSpeedWindparksOnImproved");
     correctedWindFieldMinDataObject->cdfVariable->setAttributeText("units", "kts");
     correctedWindFieldMinDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     correctedWindFieldMinDataObject->cdfObject->addVariable(correctedWindFieldMinDataObject->cdfVariable);
@@ -89,7 +86,6 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     DataObject *correctedWindFieldDataObject = new DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldDataObject);
     correctedWindFieldDataObject->cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOff", dataSource->dWidth * dataSource->dHeight);
-    correctedWindFieldDataObject->variableName.copy("WindSpeedWindparksOff");
     correctedWindFieldDataObject->cdfVariable->setAttributeText("units", "kts");
     correctedWindFieldDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     correctedWindFieldDataObject->cdfObject->addVariable(correctedWindFieldDataObject->cdfVariable);

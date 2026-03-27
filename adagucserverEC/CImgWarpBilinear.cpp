@@ -279,7 +279,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   StopWatch_Stop("reprojection finished");
 #endif
   bool has_u_v_grid_rel = (sourceImage->getNumDataObjects() >= 3 &&
-                           (sourceImage->getDataObject(2)->variableName.equals(U_COMPONENT_GRID_ABSOLUTE) && sourceImage->getDataObject(3)->variableName.equals(V_COMPONENT_GRID_ABSOLUTE)));
+                           (dObjgetVariableName(*sourceImage->getDataObject(2)) == U_COMPONENT_GRID_ABSOLUTE && dObjgetVariableName(*sourceImage->getDataObject(3)) == V_COMPONENT_GRID_ABSOLUTE));
   bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
 
   for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {

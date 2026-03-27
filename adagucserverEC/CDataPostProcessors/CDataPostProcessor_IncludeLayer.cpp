@@ -59,7 +59,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     auto dataObjectsVector = *dataSource->getDataObjectsVector();
     for (auto it = dataObjectsVector.begin(); it != dataObjectsVector.end(); ++it) {
       DataObject *dataObject = *it;
-      if (dataObject->dataObjectName.equals(proc->attr.name)) { // TODO SHould think of another identifier
+      if (dataObject->dataObjectName == proc->attr.name.c_str()) { // TODO SHould think of another identifier
         CDBDebug("This processor was already applied, skipping metadata part");
         return 0;
       }
@@ -123,7 +123,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
       // CDBDebug("--------> newDataObject %d ", dataSource->getDataObjectsVector()->size());
 
-      newDataObject->variableName.copy(varToClone->name.c_str());
+      newDataObject->variableName = varToClone->name.c_str();
       newDataObject->dataObjectName = proc->attr.name;
 
       newDataObject->cdfVariable = new CDF::Variable();

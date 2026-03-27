@@ -40,43 +40,30 @@
 struct CStyleConfiguration;
 
 struct StatusFlag {
-  CT::string meaning;
+  std::string meaning;
   double value;
 };
-class DataObject {
-  CT::string overruledUnits;
-
-public:
-  DataObject();
-  bool hasStatusFlag, hasNodataValue;
-  double dfNodataValue;
+struct DataObject {
+  bool hasStatusFlag = false;
+  bool hasNodataValue = false;
   bool noFurtherProcessing = false;
   bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
+  double dfNodataValue;
+  std::string dataObjectName;
+  std::string variableName;
+  std::string overruledUnits;
   std::vector<StatusFlag> statusFlagList;
-  CDF::Variable *cdfVariable; // Not owned!
-  CDFObject *cdfObject;       // Not owned!
-
-  CT::string variableName;
-
-  /**
-   * Returns the standardname of the DataObject based on 1. standard_name attribute, 2. variable name.
-   */
-  CT::string getStandardName();
-  /**
-   * Return the units associated with this dataobject
-   */
-  CT::string getUnits();
-
-  /**
-   * Return the units associated with this dataobject. Note that this is not set in the CDF data model
-   */
-  void setUnits(CT::string units);
   std::vector<PointDVWithLatLon> points;
   std::map<int, CFeature> features;
-
-  DataObject *clone();
-  CT::string dataObjectName;
+  CDF::Variable *cdfVariable = nullptr; // Not owned!
+  CDFObject *cdfObject = nullptr;       // Not owned!
 };
+
+DataObject *dObjClone(const DataObject &dataOject);
+std::string dObjGetStdName(const DataObject &dataOject);
+std::string dObjgetVariableName(const DataObject &dataOject);
+std::string dObjgetUnits(const DataObject &dataOject);
+void dObjsetUnits(const DataObject &dataOject, std::string units);
 
 /**
  * This class represents data to be used further in the server. Specific  metadata and data is filled in by CDataReader

@@ -2434,7 +2434,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
               throw(__LINE__);
             } else {
               // This is an animation, report an error and continue with adding images.
-              CDBError("Unable to load datasource %s at line %d", dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(), __LINE__);
+              CDBError("Unable to load datasource %s at line %d", dObjgetVariableName(*dataSources[dataSourceToUse]->getDataObject(0)).c_str(), __LINE__);
             }
           }
         }

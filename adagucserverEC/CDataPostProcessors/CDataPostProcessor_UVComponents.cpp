@@ -87,29 +87,25 @@ void addDataObject(CDataSource *dataSource) {
   dataSource->getDataObject(1)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT;
 
   auto cdfObject = dataSource->getDataObject(0)->cdfObject;
-  DataObject *ugridabsolute = dataSource->getDataObject(0)->clone();
+  DataObject *ugridabsolute = dObjClone(*dataSource->getDataObject(0));
   ugridabsolute->noFurtherProcessing = true;
   ugridabsolute->cdfVariable = cdfObject->getVariableThrows(U_COMPONENT_GRID_ABSOLUTE);
-  ugridabsolute->variableName = U_COMPONENT_GRID_ABSOLUTE;
   ugridabsolute->dataObjectName = U_COMPONENT_GRID_ABSOLUTE;
 
-  DataObject *vgridabsolute = dataSource->getDataObject(0)->clone();
+  DataObject *vgridabsolute = dObjClone(*dataSource->getDataObject(0));
   vgridabsolute->noFurtherProcessing = true;
   vgridabsolute->cdfVariable = cdfObject->getVariableThrows(V_COMPONENT_GRID_ABSOLUTE);
-  vgridabsolute->variableName = V_COMPONENT_GRID_ABSOLUTE;
   vgridabsolute->dataObjectName = V_COMPONENT_GRID_ABSOLUTE;
 
-  DataObject *directionObject = dataSource->getDataObject(0)->clone();
+  DataObject *directionObject = dObjClone(*dataSource->getDataObject(0));
   directionObject->noFurtherProcessing = true;
   directionObject->cdfVariable = cdfObject->getVariableThrows(DIRECTION_COMPONENT);
-  directionObject->variableName = DIRECTION_COMPONENT;
   directionObject->dataObjectName = DIRECTION_COMPONENT;
-  directionObject->setUnits("degrees");
+  directionObject->overruledUnits = ("degrees");
 
-  DataObject *speedObject = dataSource->getDataObject(0)->clone();
+  DataObject *speedObject = dObjClone(*dataSource->getDataObject(0));
   speedObject->noFurtherProcessing = true;
   speedObject->cdfVariable = cdfObject->getVariableThrows(SPEED_COMPONENT);
-  speedObject->variableName = SPEED_COMPONENT;
   speedObject->dataObjectName = SPEED_COMPONENT;
 
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), vgridabsolute);

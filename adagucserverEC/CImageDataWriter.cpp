@@ -650,9 +650,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
             element.dataSource = dataSource;
             // Get variable name
-            element.var_name = dataSource->getDataObject(o)->variableName;
+            element.var_name = dObjgetVariableName(*dataSource->getDataObject(o));
             // Get variable units
-            std::string units = dataSource->getDataObject(o)->getUnits();
+            std::string units = dObjgetUnits(*dataSource->getDataObject(o));
             element.units = units;
 
             // Get variable standard name

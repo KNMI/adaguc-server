@@ -299,8 +299,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   }
   // Get units
   CT::string units;
-  if (dataSource->getDataObject(0)->getUnits().length() > 0) {
-    units.concat(dataSource->getDataObject(0)->getUnits().c_str());
+  if (dObjgetUnits(*dataSource->getDataObject(0)).length() > 0) {
+    units.concat(dObjgetUnits(*dataSource->getDataObject(0)).c_str());
   }
   if (units.length() == 0) {
     units = "-";

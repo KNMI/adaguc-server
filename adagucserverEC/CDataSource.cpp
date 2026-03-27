@@ -28,7 +28,7 @@
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
 #include "utils/lintDataset.h"
-
+#include "utils.h"
 // #define CDATASOURCE_DEBUG
 
 bool debugDataSource = false;
@@ -38,45 +38,27 @@ bool configWarningNameMappingSet = false;
 
 std::vector<std::string> knownRenderMethods = {"generic", "nearest", "rgba", "polyline", "point"};
 
-DataObject::DataObject() {
-  hasStatusFlag = false;
-  cdfVariable = NULL;
-  cdfObject = NULL;
-  std::vector<f8point> points;
-}
-
-DataObject *DataObject::clone() {
+DataObject *dObjClone(const DataObject &dataOject) {
   DataObject *nd = new DataObject();
-  nd->hasStatusFlag = hasStatusFlag;
-  nd->hasNodataValue = hasNodataValue;
-  nd->dfNodataValue = dfNodataValue;
-  nd->cdfObject = cdfObject;
-  nd->overruledUnits = overruledUnits;
-  nd->variableName = variableName;
+  nd->hasStatusFlag = dataOject.hasStatusFlag;
+  nd->hasNodataValue = dataOject.hasNodataValue;
+  nd->dfNodataValue = dataOject.dfNodataValue;
+  nd->cdfObject = dataOject.cdfObject;
+  nd->overruledUnits = dataOject.overruledUnits;
   nd->cdfVariable = nullptr;
   return nd;
 }
 
-CT::string DataObject::getUnits() {
-  if (overruledUnits.empty() && cdfVariable != NULL) {
-    try {
-      return cdfVariable->getAttributeThrows("units")->toString();
-    } catch (int e) {
-    }
+std::string dObjGetStdName(const DataObject &dataOject) { return dataOject.cdfVariable != nullptr ? getStandardName(*dataOject.cdfVariable) : ""; }
+std::string dObjgetVariableName(const DataObject &dataOject) { return dataOject.cdfVariable != nullptr ? std::string(dataOject.cdfVariable->name) : dataOject.variableName; }
+std::string dObjgetUnits(const DataObject &dataOject) {
+  if (dataOject.overruledUnits.empty() && dataOject.cdfVariable != NULL) {
+    const auto unitsAttr = dataOject.cdfVariable->getAttr("units");
+    if (unitsAttr != nullptr) return unitsAttr->toString();
   }
-  return overruledUnits;
+  return dataOject.overruledUnits;
 }
-
-CT::string DataObject::getStandardName() {
-  CT::string standard_name = variableName;
-  CDF::Attribute *standardNameAttr = cdfVariable->getAttributeNE("standard_name");
-  if (standardNameAttr != nullptr) {
-    standard_name = standardNameAttr->toString();
-  }
-  return standard_name;
-}
-
-void DataObject::setUnits(CT::string units) { overruledUnits = units; }
+void dObjsetUnits(DataObject &dataOject, std::string units) { dataOject.overruledUnits = units; };
 
 CDataSource::CDataSource() {
   stretchMinMax = false;
@@ -145,7 +127,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
   // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
-    newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
+    newDataObject->dataObjectName = ""; // Should not have a name yet!
+    newDataObject->variableName = cfgLayer->Variable[j]->value;
     this->dataObjects.push_back(newDataObject);
   }
 
@@ -652,7 +635,7 @@ CDataSource *CDataSource::clone() {
 
   /* Copy dataObjects */
   for (size_t j = 0; j < dataObjects.size(); j++) {
-    d->dataObjects.push_back(dataObjects[j]->clone());
+    d->dataObjects.push_back(dObjClone(*dataObjects[j]));
   }
 
   d->stretchMinMax = stretchMinMax;
@@ -729,14 +712,13 @@ DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     DataObject *dataObject = *it;
 
-    if (dataObject->dataObjectName.equals(name)) {
+    if (dataObject->dataObjectName == name) {
       return dataObject;
     }
 
-    if (dataObject->variableName.equals(name)) {
+    if (dataObject->variableName == name) {
       return dataObject;
     }
-
     if (dataObject->cdfVariable->name.equals(name)) {
       return dataObject;
     }
@@ -786,7 +768,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
     }
 
     getDataObject(varNr)->cdfObject = cdfObject;
-    getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
+    getDataObject(varNr)->cdfVariable = cdfObject->getVar(getDataObject(varNr)->variableName);
     if (getDataObject(varNr)->cdfVariable == NULL) {
       CDBError("attachCDFObject: variable nr %lu \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
       return 1;

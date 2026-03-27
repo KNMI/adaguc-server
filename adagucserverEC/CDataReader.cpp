@@ -1013,9 +1013,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     // Get Unit
     CDF::Attribute *varUnits = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if (varUnits != NULL) {
-      dataSource->getDataObject(varNr)->setUnits(varUnits->toString()); // units.copy((char*)varUnits->data,varUnits->length);
+      dataSource->getDataObject(varNr)->overruledUnits = varUnits->toString();
     } else
-      dataSource->getDataObject(varNr)->setUnits("");
+      dataSource->getDataObject(varNr)->overruledUnits = ("");
 
     // Check for packed data / hasScaleOffset
 

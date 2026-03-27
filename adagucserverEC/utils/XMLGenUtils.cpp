@@ -128,8 +128,8 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       }
       CDF::Attribute *standardNameAttr = d->cdfVariable->getAttributeNE("standard_name");
 
-      CT::string label = longName != nullptr ? longName->toString() : d->variableName;
-      LayerMetadataVariable layerMetadataVariable = {.variableName = d->cdfVariable->name, .units = d->getUnits(), .label = label, .standard_name = d->cdfVariable->name};
+      CT::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(*d).c_str();
+      LayerMetadataVariable layerMetadataVariable = {.variableName = d->cdfVariable->name, .units = dObjgetUnits(*d), .label = label, .standard_name = d->cdfVariable->name};
 
       if (standardNameAttr != nullptr) {
         layerMetadataVariable.standard_name = standardNameAttr->toString();

@@ -102,14 +102,14 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     auto fromUnits = CT::split(lookupUnit.from_units, ",");
     for (const auto dataObject: dataSource->dataObjects) {
 
-      if (fromUnits.empty() || std::find(fromUnits.begin(), fromUnits.end(), dataObject->getUnits().c_str()) != fromUnits.end()) {
+      if (fromUnits.empty() || std::find(fromUnits.begin(), fromUnits.end(), dObjgetUnits(*dataObject).c_str()) != fromUnits.end()) {
         if (adagucPostProcVerboseLog) {
           CDBDebug("BEFORE: %s %f %f %s %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str(), lookupUnit.from_units.c_str());
         }
-        dataObject->cdfVariable->setAttributeText((std::string(ADAGUCPOSTPROC_ATTR_PREFIX) + "_WAS_UNITS").c_str(), dataObject->getUnits());
+        dataObject->cdfVariable->setAttributeText((std::string(ADAGUCPOSTPROC_ATTR_PREFIX) + "_WAS_UNITS").c_str(), dObjgetUnits(*dataObject));
         dataObject->cdfVariable->setAttributeText(getDataPostProcId(proc).c_str(), "true");
-        CDBDebug("[Unit Conversion] --> [%s] Changing unit from [%s] to [%s]", proc->attr.algorithm.c_str(), dataObject->getUnits().c_str(), lookupUnit.units.c_str());
-        dataObject->setUnits(lookupUnit.units.c_str());
+        CDBDebug("[Unit Conversion] --> [%s] Changing unit from [%s] to [%s]", proc->attr.algorithm.c_str(), dObjgetUnits(*dataObject).c_str(), lookupUnit.units.c_str());
+        dataObject->overruledUnits = lookupUnit.units;
         // Also set the unit directly in the datamodel.
         dataObject->cdfVariable->setAttributeText("units", lookupUnit.units.c_str());
       }

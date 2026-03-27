@@ -174,7 +174,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     JSONdata.printconcat("\"numdatasources\":%d,", dataSources.size());
     JSONdata.printconcat("\"numdataobjects\":%d,", dataSource->getNumDataObjects());
     // Units
-    JSONdata.printconcat("\"units\":\"%s\",", dataSource->getDataObject(0)->getUnits().c_str());
+    JSONdata.printconcat("\"units\":\"%s\",", dObjgetUnits(*dataSource->getDataObject(0)).c_str());
 
     // Name
     JSONdata.printconcat("\"layername\":\"%s\",", dataSource->layerName.c_str());
