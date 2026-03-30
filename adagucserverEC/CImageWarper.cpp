@@ -31,18 +31,24 @@
 #include <cmath>
 
 void floatToString(char *string, size_t maxlen, int numdigits, float number) {
-  // snprintf(string,maxlen,"%0.2f",number);
-  // return;
-  if (numdigits > -3 && numdigits < 4) {
-    if (numdigits <= -3) snprintf(string, maxlen, "%0.5f", float(floor(number * 100000.0 + 0.5) / 100000));
-    if (numdigits == -2) snprintf(string, maxlen, "%0.4f", float(floor(number * 10000.0 + 0.5) / 10000));
-    if (numdigits == -1) snprintf(string, maxlen, "%0.3f", float(floor(number * 1000.0 + 0.5) / 1000));
-    if (numdigits == 0) snprintf(string, maxlen, "%0.3f", float(floor(number * 1000.0 + 0.5) / 1000));
-    if (numdigits == 1) snprintf(string, maxlen, "%0.2f", float(floor(number * 100.0 + 0.5) / 100));
-    if (numdigits == 2) snprintf(string, maxlen, "%0.1f", float(floor(number * 10.0 + 0.5) / 10));
-    if (numdigits >= 3) snprintf(string, maxlen, "%0.1f", float(floor(number + 0.5)));
-  } else
-    snprintf(string, maxlen, "%0.3e", number);
+  // Interpret numdigits as "number of decimals"
+  int decimals = numdigits;
+
+  // Clamp
+  if (decimals < 0) decimals = 0;
+  if (decimals > 6) decimals = 6;
+
+  // Round to requested number of decimals
+  float factor = powf(10.0f, (float)decimals);
+  float rounded = roundf(number * factor) / factor;
+
+  // Corner case to avoid "-0.000" and similar
+  if (fabsf(rounded) < 1e-12f) rounded = 0.0f;
+
+  // Format with fixed decimals (for the whole series)
+  char format[16];
+  snprintf(format, sizeof(format), "%%.%df", decimals);
+  snprintf(string, maxlen, format, rounded);
 }
 
 void floatToString(char *string, size_t maxlen, float number) {
@@ -59,9 +65,16 @@ void floatToString(char *string, size_t maxlen, float number) {
 }
 
 void floatToString(char *string, size_t maxlen, float min, float max, float number) {
-  float range = fabs(max - min);
-  int digits = (int)log10(range) + 1;
-  floatToString(string, maxlen, digits, number);
+  float range = fabsf(max - min);
+
+  // Estimate precision from range magnitude only
+  int magnitude = int(floor(log10(range)));
+  int decimals = std::max(0, -magnitude);
+
+  // Clamp
+  if (decimals > 6) decimals = 6;
+
+  floatToString(string, maxlen, decimals, number);
 }
 
 int CImageWarper::closereproj() {

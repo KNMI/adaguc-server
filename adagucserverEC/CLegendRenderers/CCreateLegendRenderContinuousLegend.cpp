@@ -250,8 +250,6 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     double absInc = fabs(increment);
     if (absInc < 1e-12) absInc = 1.0;
     double snapped = round(absInc * 1e6) / 1e6;
-
-    // Compute decimals required
     int decimals = 0;
     if (snapped < 1.0) {
       decimals = int(ceil(-log10(snapped)));
@@ -267,11 +265,9 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         textFormat.print("%s", textformatting.c_str());
         snprintf(tempText, sizeof(tempText), textFormat.c_str(), v);
       } else {
-        if (tickRound == 0) {
-          floatToString(tempText, sizeof(tempText), min, max, v);
-        } else {
-          floatToString(tempText, sizeof(tempText), tickRound, v);
-        }
+          // TODO: Reintegrate tickRound
+          floatToString(tempText, sizeof(tempText), decimals, v);
+      }
       }
 
       allLabels.push_back(CT::string(tempText));
