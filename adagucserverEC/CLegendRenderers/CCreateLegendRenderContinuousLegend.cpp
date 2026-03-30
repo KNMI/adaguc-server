@@ -244,9 +244,22 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     }
     std::vector<CT::string> allLabels;
     char tempText[1024];
+    int steps = int(round((loopMax - loopMin) / increment));
 
-    // Pre-calculate all labels first
-    for (double j = loopMin; j < loopMax + increment; j += increment) {
+    // Compute decimals (for the whole series)
+    double absInc = fabs(increment);
+    if (absInc < 1e-12) absInc = 1.0;
+    double snapped = round(absInc * 1e6) / 1e6;
+
+    // Compute decimals required
+    int decimals = 0;
+    if (snapped < 1.0) {
+      decimals = int(ceil(-log10(snapped)));
+    }
+
+    // Pre-calculate all labels
+    for (int i = 0; i <= steps; ++i) {
+      double j = loopMin + i * increment;
       double v = isInverted ? -j : j;
 
       if (!textformatting.empty()) {
