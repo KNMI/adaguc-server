@@ -1,3 +1,7 @@
+**Next version**
+
+- Refactored dataobject and datasource properties
+
 **Version 7.1.1 - 2026-03-24**
 
 - Fix symbol interval rendering
