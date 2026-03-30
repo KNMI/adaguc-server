@@ -57,11 +57,11 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     if (dataSource->getNumDataObjects() == 1) {
       CDBDebug("Applying beaufort for 1 element");
-      if (isKnotsUnit(dataSource->getDataObject(0)->getUnits())) {
+      if (isKnotsUnit(dObjgetUnits(*dataSource->getDataObject(0)))) {
         factor = 1852. / 3600;
       }
       CDBDebug("Applying beaufort for 1 element with factor %f", factor);
-      dataSource->getDataObject(0)->setUnits("bft");
+      dataSource->getDataObject(0)->overruledUnits = ("bft");
       size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
       float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
       float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
@@ -88,10 +88,10 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
       }
     }
     if (dataSource->getNumDataObjects() == 2) {
-      CDBDebug("Applying beaufort for 2 elements %s %s", dataSource->getDataObject(0)->getUnits().c_str(), dataSource->getDataObject(1)->getUnits().c_str());
-      if (isMpsUnit(dataSource->getDataObject(0)->getUnits()) && isDegreesUnit(dataSource->getDataObject(1)->getUnits())) {
+      CDBDebug("Applying beaufort for 2 elements %s %s", dObjgetUnits(*dataSource->getDataObject(0)).c_str(), dObjgetUnits(*dataSource->getDataObject(1)).c_str());
+      if (isMpsUnit(dObjgetUnits(*dataSource->getDataObject(0))) && isDegreesUnit(dObjgetUnits(*dataSource->getDataObject(1)))) {
         // This is a (wind speed,direction) pair
-        dataSource->getDataObject(0)->setUnits("bft");
+        dataSource->getDataObject(0)->overruledUnits = ("bft");
         size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
         float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
         float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
@@ -116,9 +116,9 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
           }
         }
       }
-      if (isMpsUnit(dataSource->getDataObject(0)->getUnits()) && isMpsUnit(dataSource->getDataObject(1)->getUnits())) {
+      if (isMpsUnit(dObjgetUnits(*dataSource->getDataObject(0))) && isMpsUnit(dObjgetUnits(*dataSource->getDataObject(1)))) {
         // This is a (u,v) pair
-        dataSource->getDataObject(0)->setUnits("bft");
+        dataSource->getDataObject(0)->overruledUnits = ("bft");
 
         size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
         float *srcu = (float *)dataSource->getDataObject(0)->cdfVariable->data;
@@ -158,7 +158,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
         }
         CDBDebug("Deleting dataObject(1))");
         delete (dataSource->getDataObject(1));
-        dataSource->getDataObjectsVector()->erase(dataSource->getDataObjectsVector()->begin() + 1); // Remove second element
+        dataSource->dataObjects.erase(dataSource->dataObjects.begin() + 1); // Remove second element
       }
     }
   }
@@ -174,11 +174,11 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     if (dataSource->getNumDataObjects() == 1) {
       CDBDebug("Applying beaufort for 1 element");
-      if (isKnotsUnit(dataSource->getDataObject(0)->getUnits())) {
+      if (isKnotsUnit(dObjgetUnits(*dataSource->getDataObject(0)))) {
         factor = 1852. / 3600;
       }
       CDBDebug("Applying beaufort for 1 element with factor %f", factor);
-      dataSource->getDataObject(0)->setUnits("bft");
+      dataSource->getDataObject(0)->overruledUnits = ("bft");
       double noDataValue = dataSource->getDataObject(0)->dfNodataValue;
       for (size_t cnt = 0; cnt < numDataPoints; cnt++) {
         double speed = data[cnt];

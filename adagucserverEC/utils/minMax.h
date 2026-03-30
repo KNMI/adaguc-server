@@ -1,7 +1,11 @@
 
 #include <cstddef>
 #include <vector>
+#include <cmath>
 #include <CDataSource.h>
+#include <CCDFVariable.h>
+#include "CDataSource.h"
+
 #ifndef MINMAX_H
 #define MINMAX_H
 
@@ -93,7 +97,7 @@ public:
   }
 
 private:
-  template <class T> void calcMinMax(size_t size, std::vector<DataObject *> *dataObject);
+  template <class T> void calcMinMax(size_t size, std::vector<DataObject> &dataObject);
 
 public:
   double min, max, avg, stddev;

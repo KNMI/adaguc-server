@@ -335,7 +335,7 @@ public:
                 }
                 // Apply units:
                 if (proc->attr.units.empty() == false) {
-                  dataSource->getDataObject(dataObjectNr)->setUnits(proc->attr.units.c_str());
+                  dataSource->getDataObject(dataObjectNr)->overruledUnits = proc->attr.units.c_str();
                 }
               }
               /* End of data postproc */
@@ -409,7 +409,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
     // CDBDebug("Found file %d %s",step,dataSource->getFileName());
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       COGCDims &ogcDim = dataSource->requiredDims[dimnr];
-      uniqueRequest.set(dataSource->getFileName(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
+      uniqueRequest.set(dataSource->getFileName().c_str(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
     }
   }
 
@@ -569,7 +569,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   if (dataSource->srvParams->InfoFormat.equals("application/json")) {
     float *data = (float *)varRange->data;
     eProfileJson->concat("{");
-    CT::string units = dataSource->getDataObject(0)->getUnits();
+    CT::string units = dObjgetUnits(*dataSource->getDataObject(0));
     if (!units.empty()) {
       eProfileJson->printconcat("\"units\":\"%s\",", encodeJSON(units).c_str());
     } else {
@@ -605,7 +605,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
       }
     }
 
-    CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName());
+    CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName().c_str());
 
     // Make profile object
     eProfileJson->concat("\"profile\":{");

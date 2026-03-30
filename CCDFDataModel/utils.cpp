@@ -18,3 +18,8 @@ CDFReader *findReaderByFileName(CT::string fileName) {
   }
   return NULL;
 }
+
+std::string getStandardName(const CDF::Variable &variable) {
+  const auto standardNameAttr = variable.getAttr("standard_name");
+  return standardNameAttr != nullptr ? standardNameAttr->toString() : variable.name;
+}

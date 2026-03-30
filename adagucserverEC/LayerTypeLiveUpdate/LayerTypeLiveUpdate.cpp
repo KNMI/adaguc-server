@@ -99,18 +99,18 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   dataSource->addStep("");
   auto cfgLayer = srvParam->cfg->Layer[0]; // TODO
   std::string layerName = makeUniqueLayerName(cfgLayer);
-  if (dataSource->getDataObjectsVector()->size() == 0) {
+  if (dataSource->dataObjects.size() == 0) {
     if (cfgLayer->Variable.size() == 0) {
       cfgLayer->Variable.push_back(new CServerConfig::XMLE_Variable());
       cfgLayer->Variable[0]->value = "solarterminator";
     }
     dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[0], 0);
   }
-  auto *obj = dataSource->getDataObjectsVector()->at(0);
+  auto &obj = dataSource->dataObjects.at(0);
   dataSource->layerName = layerName;
-  obj->cdfObject = cdfObject;
-  obj->cdfVariable = solTVar;
-  obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+  obj.cdfObject = cdfObject;
+  obj.cdfVariable = solTVar;
+  obj.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 }
 
 int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {

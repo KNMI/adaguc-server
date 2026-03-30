@@ -1,3 +1,8 @@
+**Version 7.1.2 - 2026-03-30***
+
+- Refactored dataobject and datasource properties - no heap data is owned anymore.
+- Improved stability when tiling of satellite imagery 
+
 **Version 7.1.1 - 2026-03-24**
 
 - Fix symbol interval rendering
