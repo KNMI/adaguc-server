@@ -1789,6 +1789,10 @@ int CRequest::process_querystring() {
         traceTimingsSpanStart(TraceTimingType::GETMETADATAJSON);
         getLayerMetadataAsJson(srvParam, result);
         traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
+        if (errorsOccured()) {
+          readyerror();
+          return 1;
+        }
         auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
         printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
         printf("%s", result.dump().c_str());

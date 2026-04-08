@@ -15,7 +15,7 @@
 #include "CXMLGen.h"
 
 int getProjectionInformationForLayer(MetadataLayer *metadataLayer);
-int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList);
+int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList, std::map<std::string, std::vector<std::string>> dimValuesMap);
 int getStylesForLayer(MetadataLayer *metadataLayer);
 bool compareStringCase(const std::string &s1, const std::string &s2);
 bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataProjection &p2);

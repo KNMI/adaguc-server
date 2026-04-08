@@ -3,7 +3,7 @@
 #include "f8vector.h"
 #include <utils.h>
 
-bool verboseLog = true;
+bool verboseLog = false;
 
 f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8point gridCoordUR, CImageWarper *warper, bool gridRelative) {
   if (gridRelative) {
@@ -73,7 +73,7 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8po
 }
 
 bool isGridRelative(CDataSource *dataSource) {
-  bool verboseLog = true;
+  bool verboseLog = false;
   bool gridRelative = true; // default is gridRelative=true
 
   if (dataSource->getNumDataObjects() >= 6) {
