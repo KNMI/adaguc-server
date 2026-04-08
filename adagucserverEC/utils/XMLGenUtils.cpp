@@ -371,12 +371,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   }
 
   CT::string dimUnits("ISO8601");
-  if (cfgLayerDim->attr.units.empty()) {
-    try {
-      dimUnits = dataSource->getDataObject(0)->cdfObject->getVariableThrows(cfgLayerDim->attr.name.c_str())->getAttributeThrows("units")->toString();
-    } catch (int e) {
-    }
-  }
+
   if (cfgLayerDim->attr.units.empty() == false) {
     dimUnits = (cfgLayerDim->attr.units.c_str());
   }
