@@ -246,7 +246,7 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
 
   auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->value);
   std::vector<std::string> queryValues;
-  if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() < 2) {
+  if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
 
     // Get the tablename
     CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
@@ -287,7 +287,9 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
     layerMetadataDim.units = ("NA");
     if (cfgLayerDim->attr.units.empty()) {
       try {
-        layerMetadataDim.units = dataSource->getDataObject(0)->cdfObject->getVariableThrows(cfgLayerDim->attr.name.c_str())->getAttributeThrows("units")->toString();
+        if (dataSource->getDataObject(0)->cdfObject != nullptr) {
+          layerMetadataDim.units = dataSource->getDataObject(0)->cdfObject->getVariableThrows(cfgLayerDim->attr.name.c_str())->getAttributeThrows("units")->toString();
+        }
       } catch (int e) {
       }
     }

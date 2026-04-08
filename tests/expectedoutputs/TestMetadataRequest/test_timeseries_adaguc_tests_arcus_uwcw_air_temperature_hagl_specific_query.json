@@ -1,0 +1,86 @@
+{
+  "adaguc.tests.arcus_uwcw": {
+    "air_temperature_hagl": {
+      "dims": {
+        "height_above_ground_level_in_m": {
+          "cdfName": "temp_at_hagl",
+          "defaultValue": "2",
+          "hasMultipleValues": 1,
+          "hidden": true,
+          "serviceName": "height_above_ground_level_in_m",
+          "type": "dimtype_none",
+          "units": "m",
+          "values": "2"
+        },
+        "member": {
+          "cdfName": "member",
+          "defaultValue": "5",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "member",
+          "type": "dimtype_custom",
+          "units": "NA",
+          "values": "5"
+        },
+        "reference_time": {
+          "cdfName": "forecast_reference_time",
+          "defaultValue": "2024-05-23T00:00:00Z",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "reference_time",
+          "type": "dimtype_none",
+          "units": "ISO8601",
+          "values": "2024-05-23T00:00:00Z"
+        },
+        "time": {
+          "cdfName": "time",
+          "defaultValue": "2024-05-25T12:00:00Z",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "time",
+          "type": "dimtype_none",
+          "units": "ISO8601",
+          "values": "2024-05-25T12:00:00Z"
+        }
+      },
+      "layer": {
+        "abstract": "",
+        "collection": "hagl_member",
+        "enable_edr": true,
+        "gridspec": {
+          "bbox": [
+            -0.014499999999999957,
+            48.99100000000001,
+            11.2955,
+            56.011
+          ],
+          "cellsizex": 2.262,
+          "cellsizey": -1.404,
+          "height": 5,
+          "projstring": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs",
+          "width": 5
+        },
+        "hidden": false,
+        "isqueryable": 1,
+        "latlonbox": [
+          -0.014499999999999957,
+          48.99100000000001,
+          11.2955,
+          56.011
+        ],
+        "layername": "air_temperature_hagl",
+        "nativeepsg": "PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs",
+        "title": "UWCW_HA43ENS(NL) Air temperature at 2 m",
+        "variables": [
+          {
+            "label": "Air temperature at height above ground level",
+            "standard_name": "air_temperature",
+            "units": "C",
+            "variableName": "air-temperature-hagl"
+          }
+        ],
+        "wmsgroup": ""
+      }
+    }
+  }
+}

@@ -1,3 +1,9 @@
+**Version TBD**
+
+- GetLayerMetadata can now return results for specific forecast_reference_time, like:
+-- http://localhost:8080/adagucserver?dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl
+
+
 **Version 7.1.2 - 2026-03-30***
 
 - Refactored dataobject and datasource properties - no heap data is owned anymore.

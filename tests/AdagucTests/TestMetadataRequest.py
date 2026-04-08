@@ -36,3 +36,19 @@ class TestMetadataRequest(unittest.TestCase):
         AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
+    def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query(self):
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query.json"
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename))
