@@ -5,10 +5,10 @@
 #include "XMLGenUtils.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 
-int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
+int getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList, json &dimListJson) {
   try {
 
-    for (auto dimension : metadataLayer->layerMetadata.dimList) {
+    for (auto dimension: dimList) {
       json item;
       item["defaultValue"] = dimension.defaultValue.c_str();
       item["hasMultipleValues"] = dimension.hasMultipleValues;
@@ -26,6 +26,8 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
   }
   return 0;
 }
+
+int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) { return getDimensionListAsJson(metadataLayer->layerMetadata.dimList, dimListJson); }
 
 int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadataItem) {
   try {
@@ -59,7 +61,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["gridspec"] = gridspec;
 
     json variables;
-    for (auto lv : metadataLayer->layerMetadata.variableList) {
+    for (auto lv: metadataLayer->layerMetadata.variableList) {
       json variable;
       variable["units"] = lv.units;
       variable["label"] = lv.label;
@@ -77,7 +79,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
 }
 int getProjectionListAsJson(MetadataLayer *metadataLayer, json &projsettings) {
   try {
-    for (auto projection : metadataLayer->layerMetadata.projectionList) {
+    for (auto projection: metadataLayer->layerMetadata.projectionList) {
       json item = {projection.dfBBOX[0], projection.dfBBOX[1], projection.dfBBOX[2], projection.dfBBOX[3]};
       projsettings[projection.name.c_str()] = item;
     }
@@ -90,7 +92,7 @@ int getProjectionListAsJson(MetadataLayer *metadataLayer, json &projsettings) {
 
 int getStyleListMetadataAsJson(MetadataLayer *metadataLayer, json &styleListJson) {
   try {
-    for (auto style : metadataLayer->layerMetadata.styleList) {
+    for (auto style: metadataLayer->layerMetadata.styleList) {
       json item;
       item["abstract"] = style.abstract.c_str();
       item["title"] = style.title.c_str();
@@ -124,7 +126,7 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
     return "";
   }
   auto records = layerMetaDataStore->getRecords();
-  for (auto record : records) {
+  for (auto record: records) {
     if (record.get("layername")->equals(layerName) && record.get("metadatakey")->equals(metadataKey)) {
 #ifdef MEASURETIME
       StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
@@ -209,7 +211,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.cellsizeY = gridspec["cellsizey"].get<double>();
     metadataLayer->layerMetadata.projstring = gridspec["projstring"].get<std::string>().c_str();
     auto c = i["variables"];
-    for (auto styleJson : c.items()) {
+    for (auto styleJson: c.items()) {
       auto variableProps = styleJson.value();
       LayerMetadataVariable variable = {
           .variableName = variableProps["variableName"].get<std::string>().c_str(),
@@ -257,7 +259,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
     }
     json a;
     auto c = json::parse(projInfo.c_str());
-    for (const auto &d : c.items()) {
+    for (const auto &d: c.items()) {
       auto bboxArray = d.value();
       double bbox[4] = {
           bboxArray[0].get_to((bbox[0])),
@@ -317,7 +319,7 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
     json a;
     auto c = a.parse(styleListAsJson.c_str());
 
-    for (auto styleJson : c.items()) {
+    for (auto styleJson: c.items()) {
       auto styleProperties = styleJson.value();
       LayerMetadataStyle style = {
           .name = styleProperties["name"].get<std::string>().c_str(),
@@ -370,7 +372,7 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
     json a;
     auto c = a.parse(dimensionListAsJson.c_str());
 
-    for (auto d : c.items()) {
+    for (auto d: c.items()) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim dimension = {

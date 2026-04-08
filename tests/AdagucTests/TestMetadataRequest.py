@@ -35,4 +35,4 @@ class TestMetadataRequest(unittest.TestCase):
         )
         AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareFile(self.testresultspath + filename, self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename))

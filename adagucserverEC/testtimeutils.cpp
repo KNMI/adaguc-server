@@ -99,87 +99,85 @@ TEST(EstimateISO8601Duration, TimeUtils) {
 
 TEST(checkDependenciesBetweenDims, TimeUtils) {
   int result = 0;
-  MetadataLayer ml;
-  ml.dataSource = new CDataSource();
-  ml.dataSource->cfgLayer = new CServerConfig::XMLE_Layer();
+
+  CDataSource dataSource;
+  dataSource.cfgLayer = new CServerConfig::XMLE_Layer();
 
   auto timeDim = new CServerConfig::XMLE_Dimension();
   timeDim->value = "time";
-  ml.dataSource->cfgLayer->Dimension.push_back(timeDim);
-  result = checkDependenciesBetweenDims(&ml);
+  dataSource.cfgLayer->Dimension.push_back(timeDim);
+  std::vector<LayerMetadataDim> dimList;
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
   timeDim->attr.defaultV = "reference_time+PT1H";
 
-  result = checkDependenciesBetweenDims(&ml);
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
 
-  ml.layerMetadata.dimList.push_back({.serviceName = "time", .cdfName = "", .units = "", .values = "", .defaultValue = "?", .type = "", .hasMultipleValues = 1, .hidden = false});
-  result = checkDependenciesBetweenDims(&ml);
+  dimList.push_back({.serviceName = "time", .cdfName = "", .units = "", .values = "", .defaultValue = "?", .type = "", .hasMultipleValues = 1, .hidden = false});
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals(""));
+  CHECK(dimList[0].defaultValue.equals(""));
 
   auto refTimeDim = new CServerConfig::XMLE_Dimension();
   refTimeDim->value = "reference_time";
-  ml.dataSource->cfgLayer->Dimension.push_back(refTimeDim);
-
-  result = checkDependenciesBetweenDims(&ml);
+  dataSource.cfgLayer->Dimension.push_back(refTimeDim);
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
 
-  ml.layerMetadata.dimList.push_back(
-      {.serviceName = "reference_time", .cdfName = "", .units = "", .values = "", .defaultValue = "2025-05-10T12:00:00Z", .type = "", .hasMultipleValues = 1, .hidden = false});
-  result = checkDependenciesBetweenDims(&ml);
+  dimList.push_back({.serviceName = "reference_time", .cdfName = "", .units = "", .values = "", .defaultValue = "2025-05-10T12:00:00Z", .type = "", .hasMultipleValues = 1, .hidden = false});
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
   // New default value should be 1 hour more then default value of reference time
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T13:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-10T13:00:00Z") == true)
 
   // Try other cases
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T08:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T08:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T09:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-10T09:00:00Z") == true)
 
   // Try other cases
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T23:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
 
   // Try other cases
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
 
   timeDim->attr.defaultV = "reference_time+PT1S";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:00:59Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T23:00:59Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T23:01:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-10T23:01:00Z") == true)
 
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:59:59Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T23:59:59Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
 
   timeDim->attr.defaultV = "reference_time+PT3600S";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
 
   timeDim->attr.defaultV = "reference_time";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
 
   timeDim->attr.defaultV = "reference_time+PT0H";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T18:00:00Z") == true)
+  CHECK(dimList[0].defaultValue.equals("2025-05-10T18:00:00Z") == true)
 
-  delete ml.dataSource->cfgLayer;
-  delete ml.dataSource;
+  delete dataSource.cfgLayer;
   CTime::cleanInstances();
 }
 
