@@ -117,7 +117,7 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   dimList.push_back({.serviceName = "time", .cdfName = "", .units = "", .values = "", .defaultValue = "?", .type = "", .hasMultipleValues = 1, .hidden = false});
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
-  CHECK(dimList[0].defaultValue.equals(""));
+  CHECK(dimList[0].defaultValue == (""));
 
   auto refTimeDim = new CServerConfig::XMLE_Dimension();
   refTimeDim->value = "reference_time";
@@ -129,42 +129,42 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
   // New default value should be 1 hour more then default value of reference time
-  CHECK(dimList[0].defaultValue.equals("2025-05-10T13:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-10T13:00:00Z"));
 
   // Try other cases
   dimList[1].defaultValue = "2025-05-10T08:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-10T09:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-10T09:00:00Z"));
 
   // Try other cases
   dimList[1].defaultValue = "2025-05-10T23:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-11T00:00:00Z"));
 
   // Try other cases
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-10T19:00:00Z"));
 
   timeDim->attr.defaultV = "reference_time+PT1S";
   dimList[1].defaultValue = "2025-05-10T23:00:59Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-10T23:01:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-10T23:01:00Z"));
 
   dimList[1].defaultValue = "2025-05-10T23:59:59Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-11T00:00:00Z"));
 
   timeDim->attr.defaultV = "reference_time+PT3600S";
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-10T19:00:00Z"));
 
   timeDim->attr.defaultV = "reference_time";
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
@@ -175,7 +175,7 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(dimList[0].defaultValue.equals("2025-05-10T18:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == ("2025-05-10T18:00:00Z"));
 
   delete dataSource.cfgLayer;
   CTime::cleanInstances();
