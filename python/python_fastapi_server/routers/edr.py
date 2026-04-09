@@ -66,9 +66,7 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
-def get_times_for_collection(
-    wmslayers, parameter: str = None
-) -> tuple[list[list[str]], list[str]]:
+def get_times_for_collection(wmslayers, parameter: str = None) -> tuple[list[list[str]], list[str]]:
     """
     Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
 
@@ -86,38 +84,28 @@ def get_times_for_collection(
             terms = time_dim["values"][0].split("/")
             interval = [
                 [
-                    datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc
-                    ),
-                    datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc
-                    ),
+                    datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+                    datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
                 ]
             ]
             return interval, get_time_values_for_range(time_dim["values"][0])
         interval = [
             [
-                datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc
-                ),
-                datetime.strptime(time_dim["values"][-1], "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc
-                ),
+                datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+                datetime.strptime(time_dim["values"][-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
             ]
         ]
         return interval, time_dim["values"]
     return None, None
 
 
-@edrApiApp.get(
-    "/collections", response_model=Collections, response_model_exclude_none=True
-)
+@edrApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
 async def rest_get_edr_collections(request: Request, response: Response):
     """
     GET /collections, returns all available collections
     """
     links: list[Link] = []
-    collection_url = get_base_url(request) + "/edr/collections"
+    collection_url = get_base_url(request) + "/collections"
     self_link = Link(href=collection_url, rel="self", type="application/json")
 
     links.append(self_link)
@@ -128,7 +116,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
         raise exc_no_datasets()
     for dataset_name in metadata.keys():
         try:
-            colls = get_collectioninfo_from_md(metadata[dataset_name], dataset_name)
+            colls = get_collectioninfo_from_md(metadata[dataset_name], dataset_name, get_base_url(request))
             if colls:
                 collections.extend(colls)
             else:
@@ -146,7 +134,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_edr_collection_by_id(collection_name: str, response: Response):
+async def rest_get_edr_collection_by_id(collection_name: str, request: Request, response: Response):
     """
     GET Returns collection information for given collection id
     """
@@ -159,9 +147,7 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
 
     ttl = None
 
-    collection = get_collectioninfo_from_md(metadata[collection_name], collection_name)[
-        0
-    ]
+    collection = get_collectioninfo_from_md(metadata[collection_name], collection_name, get_base_url(request))[0]
     if ttl is not None:
         response.headers["cache-control"] = generate_max_age(ttl)
     if collection is None:
@@ -182,16 +168,16 @@ async def rest_get_edr_landing_page(request: Request):
     title = cfg.get("title")
     keywords = cfg.get("keywords")
 
-    landingpage_url = get_base_url(request) + "/edr"
-    conformance_url = get_base_url(request) + "/edr/conformance"
-    collections_url = get_base_url(request) + "/edr/collections"
+    landingpage_url = get_base_url(request) + "/"
+    conformance_url = get_base_url(request) + "/conformance"
+    collections_url = get_base_url(request) + "/collections"
 
     links: list[Link] = []
     link = Link(href=landingpage_url, rel="self", type="application/json")
     links.append(link)
     links.append(Link(href=conformance_url, rel="conformance", type="application/json"))
     links.append(Link(href=collections_url, rel="data", type="application/json"))
-    openapi_url = f"{landingpage_url}/api"
+    openapi_url = f"{landingpage_url}api"
     links.append(
         Link(
             href=openapi_url,

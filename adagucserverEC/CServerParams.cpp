@@ -258,18 +258,8 @@ CT::string CServerParams::getOnlineResource() {
     return onlineResource;
   }
 
-  // Only the last part is given, we need to prepend the HTTP_HOST environment variable.
-  const char *pszHTTPHost = getenv("HTTP_HOST");
-  if (pszHTTPHost == NULL) {
-    CDBError("Unable to determine HTTP_HOST");
-    _onlineResource = "";
-    return "";
-  }
-  CT::string httpHost = "http://";
-  httpHost.concat(pszHTTPHost);
-  httpHost.concat(&onlineResource);
-  _onlineResource = httpHost;
-  return httpHost;
+  _onlineResource = "";
+  return "";
 }
 
 bool CServerParams::checkBBOXXYOrder(const char *projName) {

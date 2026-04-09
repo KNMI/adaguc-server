@@ -30,9 +30,7 @@ def handle_base_route() -> Response:
     )
 
 
-def list_dataset_files(
-    adaguc_dataset_dir: str, adaguc_online_resource: str
-) -> list[dict]:
+def list_dataset_files(adaguc_dataset_dir: str, adaguc_online_resource: str) -> list[dict]:
     """Return a list of xml files (datasets) found in the adaguc dataset directory"""
 
     datasets = []
@@ -52,9 +50,7 @@ def list_dataset_files(
     return datasets
 
 
-def list_data_files(
-    data_dir: str, url_param_path: str, adaguc_online_resource: str, autowms_prefix: str
-) -> list[dict]:
+def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: str, autowms_prefix: str) -> list[dict]:
     """Return a list of (allowed) files and directories found in the requested data directory"""
 
     ALLOWED_EXTENSIONS = (
@@ -78,9 +74,7 @@ def list_data_files(
 
     # To protect from `../../` path traversals, check if we begin with data_dir
     if not browse_path.startswith(data_dir):
-        logger.error(
-            f"Invalid path detected, used {url_param_path} to get {browse_path}, does not start with {data_dir}"
-        )
+        logger.error(f"Invalid path detected, used {url_param_path} to get {browse_path}, does not start with {data_dir}")
         raise HTTPException(status_code=400, detail="Invalid path detected")
 
     data = []
@@ -111,16 +105,14 @@ def list_data_files(
 
 
 @autowms_router.get("/autowms")
-async def handle_autowms(
-    req: Request, request: str | None = None, path: str | None = None
-) -> Response:
+async def handle_autowms(req: Request, request: str | None = None, path: str | None = None) -> Response:
     adaguc_instance = setup_adaguc()
     adaguc_data_set_dir = adaguc_instance.ADAGUC_DATASET_DIR
     adaguc_data_dir = adaguc_instance.ADAGUC_DATA_DIR
     adaguc_autowms_dir = adaguc_instance.ADAGUC_AUTOWMS_DIR
     url = req.url
     base_url = f"{url.scheme}://{url.hostname}:{url.port}"
-    adaguc_online_resource = os.getenv("EXTERNALADDRESS", base_url)
+    adaguc_online_resource = base_url
 
     if request is None or path is None:
         raise HTTPException(
@@ -128,17 +120,13 @@ async def handle_autowms(
             detail="Mandatory parameters [request] and or [path] are missing",
         )
     if request != "getfiles":
-        raise HTTPException(
-            status_code=400, detail="Only request=getfiles is supported"
-        )
+        raise HTTPException(status_code=400, detail="Only request=getfiles is supported")
 
     if path == "":
         return handle_base_route()
 
     if path.startswith("/adaguc::datasets"):
-        handler = partial(
-            list_dataset_files, adaguc_data_set_dir, adaguc_online_resource
-        )
+        handler = partial(list_dataset_files, adaguc_data_set_dir, adaguc_online_resource)
     elif path.startswith("/adaguc::data"):
         handler = partial(
             list_data_files,

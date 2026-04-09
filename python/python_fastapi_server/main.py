@@ -28,9 +28,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(redirect_slashes=False)
 
 # Set uvicorn access log format using middleware
-ACCESS_LOG_FORMAT = (
-    'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s"'
-)
+ACCESS_LOG_FORMAT = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s"'
 logging.getLogger("uvicorn.access").handlers.clear()
 app.add_middleware(AccessLoggerMiddleware, format=ACCESS_LOG_FORMAT)
 logging.getLogger("access").propagate = False
@@ -40,15 +38,11 @@ logging.getLogger("access").propagate = False
 async def add_hsts_header(request: Request, call_next):
     """Middleware to HTTP Strict Transport Security (HSTS) header"""
     response = await call_next(request)
-    if "EXTERNALADDRESS" in os.environ:
-        external_address = os.environ["EXTERNALADDRESS"]
-        scheme = urlsplit(external_address).scheme
-        if scheme == "https":
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
-            response.headers["X-Content-Type-Options"] = "nosniff"
-            response.headers["Content-Security-Policy"] = "default-src 'self'"
+    scheme = request.url.scheme
+    if scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
 
     return response
 
@@ -67,7 +61,7 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     # Log the X-Trace-Timings so we can monitor timings of the server
     if "X-Trace-Timings" in response.headers:
-        logger.log(35, str(request.query_params)+ response.headers["X-Trace-Timings"])
+        logger.log(35, str(request.query_params) + response.headers["X-Trace-Timings"])
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     return response
@@ -86,9 +80,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     """Root page"""
-    return {
-        "message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
-    }
+    return {"message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"}
 
 
 app.mount("/ogcapi", ogcApiApp)
@@ -101,4 +93,10 @@ app.include_router(opendapRouter)
 
 if __name__ == "__main__":
     testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    logger.info("Starting without proxy support")
+    uvicorn.run(
+        app="main:app",
+        host="0.0.0.0",
+        port=8080,
+        reload=True,
+    )
