@@ -1,3 +1,7 @@
+**Version 7.2.0 TBD***
+
+- Revert remove of user agent logging [#677](https://github.com/KNMI/adaguc-server/issues/677)
+
 **Version 7.1.2 - 2026-03-30***
 
 - Refactored dataobject and datasource properties - no heap data is owned anymore.
