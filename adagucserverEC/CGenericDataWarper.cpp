@@ -204,6 +204,8 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
   int sxw = floor(fabs(xScale)) + 1;
   int syh = floor(fabs(yScale)) + 1;
+  bool yDirPositive = span.y > 0;
+  bool xDirPositive = span.x > 0;
   for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
     for (int x = pixelspan.left; x < pixelspan.right; x++) {
       double dfx = x + halfCell;
@@ -241,8 +243,8 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       for (int sjy = sy1; sjy < sy2; sjy++) {
         for (int sjx = sx1; sjx < sx2; sjx++) {
           if (sjx >= 0 && sjy >= 0 && sjx < warperState.destGridWidth && sjy < warperState.destGridHeight) {
-            warperState.sourceTileDy = (sjy - sy1) / h; // TODO: Check why sourceTileDy is upside down.
-            warperState.sourceTileDx = (sjx - sx1) / w;
+            warperState.sourceTileDy = yDirPositive ? (sjy - sy1) / h : ((sy2 - sjy) / h);
+            warperState.sourceTileDx = xDirPositive ? (sjx - sx1) / w : (sx2 - sjx) / w;
             warperState.destIndexX = sjx;
             warperState.destIndexY = sjy;
             drawFunction(sjx, sjy, value, warperState);
