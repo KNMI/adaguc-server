@@ -3,22 +3,22 @@
 import logging
 import os
 import time
-from urllib.parse import urlsplit
+
 import uvicorn
+from asgi_logger import AccessLoggerMiddleware
 from brotli_asgi import BrotliMiddleware
+from configure_logging import configure_logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from asgi_logger import AccessLoggerMiddleware
-
+from middleware.caching_middleware import CachingMiddleware
+from middleware.fix_scheme_middleware import FixSchemeMiddleware
+from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
 from routers.healthcheck import health_check_router
-from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
-from routers.caching_middleware import CachingMiddleware
-from configure_logging import configure_logging
 
 configure_logging(logging)
 
@@ -67,6 +67,11 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
+trusted_proxies = os.getenv("TRUSTED_PROXIES")
+if trusted_proxies is not None:
+    app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=trusted_proxies)
+
+
 app.add_middleware(BrotliMiddleware, gzip_fallback=True)
 
 app.add_middleware(
@@ -93,10 +98,4 @@ app.include_router(opendapRouter)
 
 if __name__ == "__main__":
     testadaguc()
-    logger.info("Starting without proxy support")
-    uvicorn.run(
-        app="main:app",
-        host="0.0.0.0",
-        port=8080,
-        reload=True,
-    )
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True, proxy_headers=False)

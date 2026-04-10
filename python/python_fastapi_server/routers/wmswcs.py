@@ -28,22 +28,17 @@ async def handle_wms(
     """
     adaguc_instance = setup_adaguc()
     # logger.info("instance: %s", str(adaguc_instance))
-    url = req.url
-    root_path = req.scope.get("root_path", "")
-
-    # logger.info(req.url)
 
     adagucenv = {}
 
     # Set required environment variables
-    base_url = f"{url.scheme}://{url.hostname}:{url.port}"
-    base_url = base_url + root_path
+    base_url = str(req.base_url)
     logger.info("baseUrl: %s", base_url)
     logger.info("Host: %s", req.headers.get("host", "`'"))
     logger.info("X-Forwarded-Host: %s", req.headers.get("x-forwarded-host", "`'"))
     logger.info("X-Forwarded-For: %s", req.headers.get("x-forwarded-for", "`'"))
 
-    adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "/adaguc-server?"
+    adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     query_string = ""

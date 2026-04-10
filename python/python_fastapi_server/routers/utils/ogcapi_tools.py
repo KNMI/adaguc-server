@@ -48,9 +48,7 @@ def get_datasets(adaguc_data_set_dir):
     Return all possible OGCAPI feature datasets, based on the dataset directory
     """
     dataset_files = [
-        f
-        for f in os.listdir(adaguc_data_set_dir)
-        if os.path.isfile(os.path.join(adaguc_data_set_dir, f)) and f.endswith(".xml")
+        f for f in os.listdir(adaguc_data_set_dir) if os.path.isfile(os.path.join(adaguc_data_set_dir, f)) and f.endswith(".xml")
     ]
     datasets = {}
     for dataset_file in dataset_files:
@@ -64,8 +62,7 @@ def get_datasets(adaguc_data_set_dir):
                     "dataset": dataset_file.replace(".xml", ""),
                     "name": dataset_file.replace(".xml", ""),
                     "title": dataset_file.replace(".xml", "").lower().capitalize(),
-                    "service": "http://localhost:8080/wms?DATASET="
-                    + dataset_file.replace(".xml", ""),
+                    "service": "http://localhost:8080/wms?DATASET=" + dataset_file.replace(".xml", ""),
                 }
                 datasets[dataset["name"]] = dataset
         except ParseError:
@@ -99,17 +96,12 @@ async def call_adaguc(url):
     adagucenv = {}
 
     # Set required environment variables
-    adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", "http://192.168.178.113:8080") + "/adaguc-server?"
-    )
-    adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
-    )
+    adagucenv["ADAGUC_ONLINERESOURCE"] = "fakehost" + "/adaguc-server?"
+    logger.info("ADAGUC_ONLINERESOURCE: %s", adagucenv["ADAGUC_ONLINERESOURCE"])
+    adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     # Run adaguc-server
-    status, data, headers = await adaguc_instance.runADAGUCServer(
-        url, env=adagucenv, showLogOnError=True
-    )
+    status, data, headers = await adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=True)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()

@@ -85,11 +85,7 @@ def get_ref_times_for_coll(metadata) -> list[str]:
 def get_base_url(req: Request) -> str:
     """Returns the base url of this service"""
 
-    base_url_from_request = f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}" if req else None
-    logger.info("BASE_URL: %s", base_url_from_request)
-    base_url = base_url_from_request
-
-    return base_url.strip("/")
+    return str(req.base_url).strip("/")
 
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"

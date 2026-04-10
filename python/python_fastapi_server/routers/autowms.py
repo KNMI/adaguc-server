@@ -40,7 +40,7 @@ def list_dataset_files(adaguc_dataset_dir: str, adaguc_online_resource: str) -> 
                 datasets.append(
                     {
                         "path": f"/adaguc::datasets/{entry.name}",
-                        "adaguc": f"{adaguc_online_resource}/adagucserver?dataset={entry.name.replace('.xml', '')}&",
+                        "adaguc": f"{adaguc_online_resource}adagucserver?dataset={entry.name.replace('.xml', '')}&",
                         "name": entry.name.replace(".xml", ""),
                         "leaf": True,
                     }
@@ -85,7 +85,7 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
                 data.append(
                     {
                         "path": os.path.join(autowms_prefix, sub_path, entry.name),
-                        "adaguc": f"{adaguc_online_resource}/adagucserver?source={source}&",
+                        "adaguc": f"{adaguc_online_resource}adagucserver?source={source}&",
                         "name": entry.name,
                         "leaf": True,
                     }
@@ -110,9 +110,7 @@ async def handle_autowms(req: Request, request: str | None = None, path: str | N
     adaguc_data_set_dir = adaguc_instance.ADAGUC_DATASET_DIR
     adaguc_data_dir = adaguc_instance.ADAGUC_DATA_DIR
     adaguc_autowms_dir = adaguc_instance.ADAGUC_AUTOWMS_DIR
-    url = req.url
-    base_url = f"{url.scheme}://{url.hostname}:{url.port}"
-    adaguc_online_resource = base_url
+    adaguc_online_resource = str(req.base_url)
 
     if request is None or path is None:
         raise HTTPException(

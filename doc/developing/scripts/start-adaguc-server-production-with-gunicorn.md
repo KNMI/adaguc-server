@@ -11,6 +11,6 @@ export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-pytho
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
-gunicorn --bind 0.0.0.0:8080 --workers=1 -k uvicorn.workers.UvicornWorker --disable-redirect-access-to-syslog --access-logfile - main:app
+gunicorn --bind 0.0.0.0:8080 --workers=1 -k NoProxyHeaderUvicornWorker --disable-redirect-access-to-syslog --access-logfile - main:app
 
 ```

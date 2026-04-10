@@ -17,7 +17,6 @@ async def handle_opendap(req: Request, opendappath: str):
     logger.info(opendappath)
     adaguc_instance = setup_adaguc()
     url = req.url
-    root_path = req.scope.get("root_path", "")
     adagucenv = {}
 
     query_string = ""
@@ -25,11 +24,10 @@ async def handle_opendap(req: Request, opendappath: str):
         query_string += f"&{k}={req.query_params[k]}"
 
     # Set required environment variables
-    base_url = f"{url.scheme}://{url.hostname}:{url.port}{root_path}"
-    adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "/adagucopendap?"
+    adagucenv["ADAGUC_ONLINERESOURCE"] = req.base_url + "adagucopendap?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
-    logger.info("Setting request_uri to %s", base_url)
+    logger.info("Setting request_uri to %s", req.base_url)
     adagucenv["REQUEST_URI"] = url.path
     adagucenv["SCRIPT_NAME"] = ""
 
