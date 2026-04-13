@@ -34,13 +34,13 @@
         },
         "time": {
           "cdfName": "time",
-          "defaultValue": "2024-05-25T12:00:00Z",
-          "hasMultipleValues": 1,
+          "defaultValue": "2024-05-23T01:00:00Z",
+          "hasMultipleValues": 0,
           "hidden": false,
           "serviceName": "time",
           "type": "dimtype_none",
           "units": "ISO8601",
-          "values": "2024-05-25T12:00:00Z"
+          "values": "2024-05-23T01:00:00Z/2024-05-25T12:00:00Z/PT1H"
         }
       },
       "layer": {

@@ -22,41 +22,64 @@ CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName,
 
 std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource &dataSource) {
   std::map<std::string, std::vector<std::string>> dimensionNameAndValues;
-  try {
-    CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
-    // Find time dim for this datasource
-    auto it = std::find_if(dataSource.requiredDims.begin(), dataSource.requiredDims.end(), [](const auto &a) { return a.name == "time"; });
-    int timeDimIndexInRequiredDims = it != dataSource.requiredDims.end() ? std::distance(std::begin(dataSource.requiredDims), it) : -1;
-    if (timeDimIndexInRequiredDims == -1) {
-      return {};
-    }
-    // Set the time dim to *
-    // dataSource.requiredDims[timeDimIndexInRequiredDims].value = "*";
-    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
-    if (store == nullptr || store->getSize() == 0) {
-      throw InvalidDimensionValue;
-    }
-    for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
-      for (size_t k = 0; k < store->getSize(); k++) {
-        const auto &reqDim = dataSource.requiredDims[d];
-        std::string dimValueFromDb = store->getRecord(k)->get(1 + d * 2)->c_str();
-        auto &reqDimList = dimensionNameAndValues[reqDim.name];
-        // Only add if not already there.
-        auto it = std::find_if(reqDimList.begin(), reqDimList.end(), [&dimValueFromDb](const auto &a) { return a == dimValueFromDb; });
-        if (it == reqDimList.end()) {
-          CDBDebug("Push %s %s=%s", dataSource.layerName.c_str(), reqDim.name.c_str(), dimValueFromDb.c_str());
-          reqDimList.push_back(dimValueFromDb);
-        }
+
+  auto srvParam = dataSource.srvParams;
+  auto it = std::find_if(srvParam->requestDims.begin(), srvParam->requestDims.end(), [](const auto &a) { return CT::toLowerCase(a.name) == "time"; });
+  int timeDimIndexInRequiredDims = it != srvParam->requestDims.end() ? std::distance(std::begin(srvParam->requestDims), it) : -1;
+  // Set the time to * if not set in the request.
+  if (timeDimIndexInRequiredDims == -1) {
+    srvParam->requestDims.push_back({.name = "time", .value = "*"});
+  }
+
+  CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
+  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
+  if (store == nullptr || store->getSize() == 0) {
+    delete store;
+    throw InvalidDimensionValue;
+  }
+  for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
+    for (size_t k = 0; k < store->getSize(); k++) {
+      const auto &reqDim = dataSource.requiredDims[d];
+      std::string dimValueFromDb = store->getRecord(k)->get(1 + d * 2)->c_str();
+      auto &reqDimList = dimensionNameAndValues[reqDim.name];
+      // Only add if not already there.
+      auto it = std::find_if(reqDimList.begin(), reqDimList.end(), [&dimValueFromDb](const auto &a) { return a == dimValueFromDb; });
+      if (it == reqDimList.end()) {
+        reqDimList.push_back(dimValueFromDb);
       }
     }
-    delete store;
-  } catch (ServiceExceptionCode e) {
-    if (dataSource.srvParams->verbose) {
-      CDBDebug("Unable to query for requested dimensoins for layer [%s]", dataSource.layerName.c_str());
-    }
-    return {};
   }
+  delete store;
+
   return dimensionNameAndValues;
+}
+
+json querySpecificDims(CServerParams *srvParams, const std::string &layerName) {
+  if (srvParams->verbose) {
+    CDBDebug("Start query specific dims for [%s]", layerName.c_str());
+  }
+  auto it = std::find_if(srvParams->cfg->Layer.begin(), srvParams->cfg->Layer.end(), [&layerName](auto *a) { return makeUniqueLayerName(a) == layerName; });
+
+  if ((*it)->Variable.size() == 0) {
+    CDBError("No variables defined");
+    return 1;
+  }
+  CDataSource dataSource;
+  auto index = it - srvParams->cfg->Layer.begin();
+  dataSource.setCFGLayer(srvParams, (*it), index);
+  if (dataSource.dataObjects.size() == 0) {
+    CDBError("No dataobjects defined for %s", dataSource.layerName.c_str());
+    return 1;
+  }
+
+  auto dimCombiAndData = getAllDimensionCombinationsFromDb(dataSource);
+
+  std::vector<LayerMetadataDim> dimList;
+  getDimsForLayer(&dataSource, dimList, dimCombiAndData);
+  if (dataSource.srvParams->verbose) {
+    CDBDebug("Succesfully queried specific dims for [%s]", layerName.c_str());
+  }
+  return getDimensionListAsJson(dimList);
 }
 
 int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
@@ -81,9 +104,9 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
     layerNameInRequest = srvParams->requestedLayerNames[0];
   }
 
-  // Parse
-  // http://localhost:8080/adagucserver?dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z
-  // http://localhost:8080/adagucserver?dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z&time=2025-11-21T06:00:00Z
+  // The following example demonstrates how the getmetadata call can be used with DIM_REFERENCE_TIME.
+  // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z
+  // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z&time=2025-11-21T06:00:00Z
 
   std::string hasReferenceTimeValue;
   auto it = std::find_if(srvParams->requestDims.begin(), srvParams->requestDims.end(), [](const auto &a) { return a.name == "REFERENCE_TIME"; });
@@ -103,42 +126,15 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
             json layer;
             json a;
             layer["layer"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "layermetadata").c_str());
-
-            // Find layer and create datasource
-            auto it = hasReferenceTimeValue.empty() ? srvParams->cfg->Layer.end()
-                                                    : std::find_if(srvParams->cfg->Layer.begin(), srvParams->cfg->Layer.end(), [&layerName](auto *a) { return makeUniqueLayerName(a) == layerName; });
-
-            // If the iterator points to a valid layer configuration, in case of a set reference time, do a query to find the mathing time to the given reference time
-            if (it != srvParams->cfg->Layer.end()) {
-              if (srvParams->verbose) {
-                CDBDebug("Start query specific dims for [%s]", layerName.c_str());
-              }
-              if ((*it)->Variable.size() == 0) {
-                CDBError("No variables defined");
-                return 1;
-              }
-              CDataSource dataSource;
-              auto index = it - srvParams->cfg->Layer.begin();
-              dataSource.setCFGLayer(srvParams, (*it), index);
-              if (dataSource.dataObjects.size() == 0) {
-                CDBError("No dataobjects defined for %s", dataSource.layerName.c_str());
-                return 1;
-              }
+            // do a query to find the matching times to the given reference time
+            if (!hasReferenceTimeValue.empty()) {
               try {
-                auto dimCombiAndData = getAllDimensionCombinationsFromDb(dataSource);
-                std::vector<LayerMetadataDim> dimList;
-                getDimsForLayer(&dataSource, dimList, dimCombiAndData);
-                if (dataSource.srvParams->verbose) {
-                  CDBDebug("Succesfully queried specific dims for [%s]", layerName.c_str());
-                }
-                getDimensionListAsJson(dimList, layer["dims"]);
-              } catch (ServiceExceptionCode e) {
-                CDBWarning("unable to do specific query for [%s]. Going back to defaults", layerName.c_str());
-                resetErrors();
-                layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
+                layer["dims"] = querySpecificDims(srvParams, layerName);
+              } catch (...) {
+                result["error"] = "InvalidDimensionValue";
+                return 1;
               }
             } else {
-              // CDBDebug("All dims");
               layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
             }
             // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());

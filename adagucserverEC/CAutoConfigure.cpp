@@ -366,7 +366,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
             }
 
             bool standardNameMatch = false;
-            if (searchStandardName == (standardNameList[n].c_str()) || standardNameList[n] == ("*")) {
+            if (searchStandardName == (standardNameList[n].c_str()) || standardNameList[n] == "*") {
               standardNameMatch = true;
             } else if (standardNameList[n].charAt(0) == '^') {
               /* Regex */

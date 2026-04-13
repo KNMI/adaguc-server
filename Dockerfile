@@ -13,7 +13,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="7.1.2"
+LABEL version="7.2.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \

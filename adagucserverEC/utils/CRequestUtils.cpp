@@ -72,10 +72,8 @@ std::string makeIsoStringFromDbString(std::string input) {
 std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
   auto refTimeDim = getReferenceTimeDimName(dataSource);
   if (refTimeDim.empty()) return {};
-
-  CT::string tableName;
   auto srvParam = dataSource.srvParams;
-
+  std::string tableName;
   try {
     tableName = CDBFactory::getDBAdapter(srvParam->cfg)
                     ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0]->value.c_str(), dataSource.cfgLayer->FilePath[0]->attr.filter.c_str(), refTimeDim.c_str(), &dataSource);

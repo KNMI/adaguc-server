@@ -5,29 +5,24 @@
 #include "XMLGenUtils.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 
-int getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList, json &dimListJson) {
-  try {
+json getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList) {
+  json dimListJson;
 
-    for (auto dimension: dimList) {
-      json item;
-      item["defaultValue"] = dimension.defaultValue.c_str();
-      item["hasMultipleValues"] = dimension.hasMultipleValues;
-      item["hidden"] = dimension.hidden;
-      item["type"] = dimension.type;
-      item["serviceName"] = dimension.serviceName.c_str();
-      item["cdfName"] = dimension.cdfName.c_str();
-      item["units"] = dimension.units.c_str();
-      item["values"] = dimension.values.c_str();
-      dimListJson[dimension.serviceName.c_str()] = item;
-    }
-  } catch (json::exception &e) {
-    CDBWarning("Unable to build json structure");
-    return 1;
+  for (auto dimension: dimList) {
+    json item;
+    item["defaultValue"] = dimension.defaultValue.c_str();
+    item["hasMultipleValues"] = dimension.hasMultipleValues;
+    item["hidden"] = dimension.hidden;
+    item["type"] = dimension.type;
+    item["serviceName"] = dimension.serviceName.c_str();
+    item["cdfName"] = dimension.cdfName.c_str();
+    item["units"] = dimension.units.c_str();
+    item["values"] = dimension.values.c_str();
+    dimListJson[dimension.serviceName.c_str()] = item;
   }
-  return 0;
-}
 
-int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) { return getDimensionListAsJson(metadataLayer->layerMetadata.dimList, dimListJson); }
+  return dimListJson;
+}
 
 int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadataItem) {
   try {
@@ -341,10 +336,7 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
 
 int storeLayerDimensionListIntoMetadataDb(MetadataLayer *metadataLayer) {
   try {
-    json dimListJson;
-    if (getDimensionListAsJson(metadataLayer, dimListJson) != 0) {
-      return 1;
-    }
+    json dimListJson = getDimensionListAsJson(metadataLayer->layerMetadata.dimList);
     storeLayerMetadataInDb(metadataLayer, "dimensionlist", dimListJson.dump());
   } catch (json::exception &e) {
     CDBWarning("Unable to build json structure");

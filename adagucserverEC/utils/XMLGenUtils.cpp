@@ -249,9 +249,9 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
 
     // Get the tablename
-    CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
-                                                                       cfgLayerDim->attr.name.c_str(), dataSource);
+    std::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
+                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                                                        cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
                             : CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str());
@@ -284,7 +284,7 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
     layerMetadataDim.cdfName = (cfgLayerDim->attr.name.c_str());
 
     // // Try to get units from the variable
-    layerMetadataDim.units = ("NA");
+    layerMetadataDim.units = "NA";
     if (cfgLayerDim->attr.units.empty()) {
       try {
         if (dataSource->getDataObject(0)->cdfObject != nullptr) {
@@ -540,13 +540,13 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
-  CT::string fileDate = CDirReader::getFileDate(dataSource->cfgLayer->FilePath[0]->value.c_str());
+  std::string fileDate = CDirReader::getFileDate(dataSource->cfgLayer->FilePath[0]->value.c_str());
   LayerMetadataDim dim;
-  dim.serviceName = ("time");
-  dim.cdfName = ("time");
-  dim.units = ("ISO8601");
-  dim.values = (fileDate.c_str());
-  dim.defaultValue = (fileDate.c_str());
+  dim.serviceName = "time";
+  dim.cdfName = "time";
+  dim.units = "ISO8601";
+  dim.values = fileDate;
+  dim.defaultValue = fileDate;
   dim.hasMultipleValues = true;
   dim.hidden = false;
   dim.type = "dimtype_none";
@@ -585,14 +585,15 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
   if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase) {
     return 0;
   }
-  for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-    auto cfgDim = dataSource->cfgLayer->Dimension[i];
+
+  for (auto it = dataSource->cfgLayer->Dimension.begin(); it != dataSource->cfgLayer->Dimension.end(); ++it) {
+    auto *cfgDim = (*it);
     // This dimension is a filetimedate type, its values come from the modification date of the file
     if (cfgDim->attr.defaultV.equals("filetimedate")) {
       layerMetadataDimensionList.push_back(handleFileTimeDateDim(dataSource));
       break;
     }
-    if (i == 0 && cfgDim->attr.name.equals("none")) break;
+    if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name.equals("none")) break;
     if (cfgDim->attr.interval.empty()) {
       const auto &valuesFromDimMap = dimValuesMap[cfgDim->value];
       const auto &timeList = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;

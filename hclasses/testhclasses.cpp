@@ -253,7 +253,7 @@ TEST(string, eraseTableNames) {
 }
 
 TEST(string, indexOf) {
-  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "mars"));
   LONGS_EQUAL(6, CT::indexOf(valueToCheck, "planet"));
   LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello"));
@@ -264,7 +264,7 @@ TEST(string, indexOf) {
 }
 
 TEST(string, endsWith) {
-  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(false, CT::endsWith(valueToCheck, "mars"));
   LONGS_EQUAL(true, CT::endsWith(valueToCheck, "planet."));
   LONGS_EQUAL(false, CT::endsWith(valueToCheck, "Hello"));
@@ -272,7 +272,7 @@ TEST(string, endsWith) {
 }
 
 TEST(string, startsWith) {
-  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(false, CT::startsWith(valueToCheck, "mars"));
   LONGS_EQUAL(false, CT::startsWith(valueToCheck, "planet."));
   LONGS_EQUAL(true, CT::startsWith(valueToCheck, "Hello"));
@@ -280,6 +280,6 @@ TEST(string, startsWith) {
 }
 
 TEST(string, encodeXml) {
-  std::string valueToCheck = ("maybe<you>are&right&amp;");
+  std::string valueToCheck = "maybe<you>are&right&amp;";
   CHECK_EQUAL("maybe&lt;you>are&amp;right&amp;", CT::encodeXml(valueToCheck));
 }
