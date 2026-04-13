@@ -155,6 +155,8 @@ RUN bash -c "rm -f result.png && if [[ "${TEST_IN_CONTAINER}" == "github_build" 
 
 WORKDIR /adaguc/adaguc-server-master
 
+ENV TRUSTED_PROXIES="*"
+
 # This checks if the test stage has ran without issues.
 COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt
 
