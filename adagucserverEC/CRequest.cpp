@@ -1787,8 +1787,11 @@ int CRequest::process_querystring() {
         // GetMetadata for specific dataset and layer
         json result;
         traceTimingsSpanStart(TraceTimingType::GETMETADATAJSON);
-        getLayerMetadataAsJson(srvParam, result);
+        int status = getLayerMetadataAsJson(srvParam, result);
         traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
+        if (status == HTTP_STATUSCODE_404_NOT_FOUND) {
+          setExceptionType(ServiceExceptionCode::InvalidDimensionValue);
+        }
         if (errorsOccured()) {
           readyerror();
           return 1;
@@ -1796,7 +1799,8 @@ int CRequest::process_querystring() {
         auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
         printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
         printf("%s", result.dump().c_str());
-        return 0;
+        CDBDebug("return status %d", status);
+        return status;
       }
 
       if (dFound_WMSLAYERS == 0) {

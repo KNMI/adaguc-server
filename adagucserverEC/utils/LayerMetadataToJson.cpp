@@ -132,7 +132,7 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
                 layer["dims"] = querySpecificDims(srvParams, layerName);
               } catch (...) {
                 result["error"] = "InvalidDimensionValue";
-                return 1;
+                return HTTP_STATUSCODE_404_NOT_FOUND;
               }
             } else {
               layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
