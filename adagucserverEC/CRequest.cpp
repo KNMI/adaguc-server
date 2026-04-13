@@ -288,9 +288,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         return status;
       }
     }
-    for (size_t j = 0; j < dataSource->timeSteps.size(); j++) {
-      delete dataSource->timeSteps[j];
-    }
+
     dataSource->timeSteps.clear();
     /*
      * Get the number of required dims from the given dims
@@ -902,7 +900,7 @@ int CRequest::process_all_layers() {
         CDataReader reader;
         status = reader.open(firstDataSource, CNETCDFREADER_MODE_OPEN_HEADER);
         if (status != 0) {
-          CDBError("Could not open file: %s", firstDataSource->getFileName());
+          CDBError("Could not open file: %s", firstDataSource->getFileName().c_str());
           throw(__LINE__);
         }
         CT::string dumpString = CDF::dump(firstDataSource->getDataObject(0)->cdfObject);
@@ -2239,10 +2237,10 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
         }
         bool add = true;
 
-        CDataSource *checkForData = additionalDataSource->clone();
+        CDataSource checkForData = *additionalDataSource;
 
         try {
-          if (setDimValuesForDataSource(checkForData, srvParam) != 0) {
+          if (setDimValuesForDataSource(&checkForData, srvParam) != 0) {
             CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
             add = false;
           }
@@ -2250,7 +2248,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
           CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
           add = false;
         }
-        delete checkForData;
 
         // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
         if (add) {
@@ -2434,7 +2431,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
               throw(__LINE__);
             } else {
               // This is an animation, report an error and continue with adding images.
-              CDBError("Unable to load datasource %s at line %d", dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(), __LINE__);
+              CDBError("Unable to load datasource %s at line %d", dObjgetVariableName(*dataSources[dataSourceToUse]->getDataObject(0)).c_str(), __LINE__);
             }
           }
         }
@@ -2498,7 +2495,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       bool drawAllLegends = srvParam->showLegendInImage.equals("true");
 
       /* List of specified legends */
-      std::vector<CT::string> legendLayerList = srvParam->showLegendInImage.split(",");
+      std::vector<std::string> legendLayerList = CT::split(srvParam->showLegendInImage, ",");
 
       //          int numberOfLegendsDrawn = 0;
       int legendOffsetX = 0;
@@ -2509,7 +2506,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
           if (!drawAllLegends) {
             for (size_t li = 0; li < legendLayerList.size(); li++) {
               CDBDebug("Comparing [%s] == [%s]", dataSources[d]->layerName.c_str(), legendLayerList[li].c_str());
-              if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
+              if (CT::toLowerCase(dataSources[d]->layerName) == legendLayerList[li]) {
                 drawThisLegend = true;
               }
             }

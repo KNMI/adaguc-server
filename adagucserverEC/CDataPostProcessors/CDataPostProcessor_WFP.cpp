@@ -61,38 +61,38 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     dataSource->getDataObject(1)->cdfVariable->setAttributeText("long_name", "WindSpeedWindparksOn");
 
     /* Prepend foundWindSectors data object */
-    DataObject *foundWindSectorsDataObject = new DataObject();
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), foundWindSectorsDataObject);
-    foundWindSectorsDataObject->cdfVariable = cloneVariable(varToClone, "foundWindSector", dataSource->dWidth * dataSource->dHeight);
-    foundWindSectorsDataObject->variableName.copy("foundWindSector");
-    foundWindSectorsDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    foundWindSectorsDataObject->cdfObject->addVariable(foundWindSectorsDataObject->cdfVariable);
+
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &foundWindSectorsDataObject = dataSource->dataObjects.front();
+    foundWindSectorsDataObject.cdfVariable = cloneVariable(varToClone, "foundWindSector", dataSource->dWidth * dataSource->dHeight);
+    foundWindSectorsDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    foundWindSectorsDataObject.cdfObject->addVariable(foundWindSectorsDataObject.cdfVariable);
 
     /* Prepend windSpeedDifference data object */
-    DataObject *windSpeedDifferenceDataObject = new DataObject();
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), windSpeedDifferenceDataObject);
-    windSpeedDifferenceDataObject->cdfVariable = cloneVariable(varToClone, "windSpeedDifference", dataSource->dWidth * dataSource->dHeight);
-    windSpeedDifferenceDataObject->cdfVariable->setAttributeText("units", "kts");
-    windSpeedDifferenceDataObject->variableName.copy("windSpeedDifference");
-    windSpeedDifferenceDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    windSpeedDifferenceDataObject->cdfObject->addVariable(windSpeedDifferenceDataObject->cdfVariable);
+
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &windSpeedDifferenceDataObject = dataSource->dataObjects.front();
+    windSpeedDifferenceDataObject.cdfVariable = cloneVariable(varToClone, "windSpeedDifference", dataSource->dWidth * dataSource->dHeight);
+    windSpeedDifferenceDataObject.cdfVariable->setAttributeText("units", "kts");
+    windSpeedDifferenceDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    windSpeedDifferenceDataObject.cdfObject->addVariable(windSpeedDifferenceDataObject.cdfVariable);
 
     /* Prepend WindSpeedWindparksOnImproved data object */
-    DataObject *correctedWindFieldMinDataObject = new DataObject();
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldMinDataObject);
-    correctedWindFieldMinDataObject->cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOnImproved", dataSource->dWidth * dataSource->dHeight);
-    correctedWindFieldMinDataObject->variableName.copy("WindSpeedWindparksOnImproved");
-    correctedWindFieldMinDataObject->cdfVariable->setAttributeText("units", "kts");
-    correctedWindFieldMinDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    correctedWindFieldMinDataObject->cdfObject->addVariable(correctedWindFieldMinDataObject->cdfVariable);
+
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &correctedWindFieldMinDataObject = dataSource->dataObjects.front();
+    correctedWindFieldMinDataObject.cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOnImproved", dataSource->dWidth * dataSource->dHeight);
+    correctedWindFieldMinDataObject.cdfVariable->setAttributeText("units", "kts");
+    correctedWindFieldMinDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    correctedWindFieldMinDataObject.cdfObject->addVariable(correctedWindFieldMinDataObject.cdfVariable);
     /* Prepend WindSpeedWindparksOff data object */
-    DataObject *correctedWindFieldDataObject = new DataObject();
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldDataObject);
-    correctedWindFieldDataObject->cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOff", dataSource->dWidth * dataSource->dHeight);
-    correctedWindFieldDataObject->variableName.copy("WindSpeedWindparksOff");
-    correctedWindFieldDataObject->cdfVariable->setAttributeText("units", "kts");
-    correctedWindFieldDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    correctedWindFieldDataObject->cdfObject->addVariable(correctedWindFieldDataObject->cdfVariable);
+
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &correctedWindFieldDataObject = dataSource->dataObjects.front();
+    correctedWindFieldDataObject.cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOff", dataSource->dWidth * dataSource->dHeight);
+    correctedWindFieldDataObject.cdfVariable->setAttributeText("units", "kts");
+    correctedWindFieldDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    correctedWindFieldDataObject.cdfObject->addVariable(correctedWindFieldDataObject.cdfVariable);
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
@@ -108,7 +108,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     CDFReader *windSectorscdfReader = new CDFNetCDFReader();
 
     windSectorscdfObject->attachCDFReader(windSectorscdfReader);
-    int status = windSectorscdfReader->open(tempDataSource->getFileName());
+    int status = windSectorscdfReader->open(tempDataSource->getFileName().c_str());
     CDF::Variable *windSpeedDifferenceVariable = windSectorscdfReader->cdfObject->getVariableThrows(tempDataSource->getDataObject(0)->variableName);
     CDF::Variable *windSectorX = windSectorscdfReader->cdfObject->getVariableThrows("x");
     CDF::Variable *windSectorY = windSectorscdfReader->cdfObject->getVariableThrows("y");

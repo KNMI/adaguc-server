@@ -27,6 +27,8 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
+#include "utils/minMax.h"
+#include "CStyleConfiguration.h"
 
 void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {

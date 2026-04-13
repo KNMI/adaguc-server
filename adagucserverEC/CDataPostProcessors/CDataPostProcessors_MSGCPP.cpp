@@ -29,46 +29,42 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp VISIBLE mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    DataObject *newDataObject = new DataObject();
-
-    newDataObject->variableName.copy("mask");
-
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
-
-    newDataObject->cdfVariable = new CDF::Variable();
-    newDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-    newDataObject->cdfVariable->setName("mask");
-    newDataObject->cdfVariable->setType(CDF_SHORT);
-    newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &newDataObject = dataSource->dataObjects.front();
+    newDataObject.cdfVariable = new CDF::Variable();
+    newDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    newDataObject.cdfObject->addVariable(newDataObject.cdfVariable);
+    newDataObject.cdfVariable->setName("mask");
+    newDataObject.cdfVariable->setType(CDF_SHORT);
+    newDataObject.cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
     for (size_t j = 0; j < varToClone->dimensionlinks.size(); j++) {
-      newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
+      newDataObject.cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
     }
 
     for (size_t j = 0; j < varToClone->attributes.size(); j++) {
-      newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
+      newDataObject.cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
     }
 
-    newDataObject->cdfVariable->removeAttribute("scale_factor");
-    newDataObject->cdfVariable->removeAttribute("add_offset");
-    newDataObject->cdfVariable->setAttributeText("standard_name", "visible_mask status_flag");
-    newDataObject->cdfVariable->setAttributeText("long_name", "Visible mask");
-    newDataObject->cdfVariable->setAttributeText("units", "1");
-    newDataObject->cdfVariable->removeAttribute("valid_range");
-    newDataObject->cdfVariable->removeAttribute("flag_values");
-    newDataObject->cdfVariable->removeAttribute("flag_meanings");
+    newDataObject.cdfVariable->removeAttribute("scale_factor");
+    newDataObject.cdfVariable->removeAttribute("add_offset");
+    newDataObject.cdfVariable->setAttributeText("standard_name", "visible_mask status_flag");
+    newDataObject.cdfVariable->setAttributeText("long_name", "Visible mask");
+    newDataObject.cdfVariable->setAttributeText("units", "1");
+    newDataObject.cdfVariable->removeAttribute("valid_range");
+    newDataObject.cdfVariable->removeAttribute("flag_values");
+    newDataObject.cdfVariable->removeAttribute("flag_meanings");
     short attrData[3];
     attrData[0] = -1;
-    newDataObject->cdfVariable->setAttribute("_FillValue", CDF_SHORT, attrData, 1);
+    newDataObject.cdfVariable->setAttribute("_FillValue", CDF_SHORT, attrData, 1);
 
     attrData[0] = 0;
     attrData[1] = 1;
-    newDataObject->cdfVariable->setAttribute("valid_range", CDF_SHORT, attrData, 2);
-    newDataObject->cdfVariable->setAttribute("flag_values", CDF_SHORT, attrData, 2);
-    newDataObject->cdfVariable->setAttributeText("flag_meanings", "no yes");
+    newDataObject.cdfVariable->setAttribute("valid_range", CDF_SHORT, attrData, 2);
+    newDataObject.cdfVariable->setAttribute("flag_values", CDF_SHORT, attrData, 2);
+    newDataObject.cdfVariable->setAttributeText("flag_meanings", "no yes");
 
-    newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
     // return 0;
   }
@@ -129,46 +125,42 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp HIWC mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    DataObject *newDataObject = new DataObject();
-
-    newDataObject->variableName.copy("hiwc");
-
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
-
-    newDataObject->cdfVariable = new CDF::Variable();
-    newDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-    newDataObject->cdfVariable->setName("hiwc");
-    newDataObject->cdfVariable->setType(CDF_SHORT);
-    newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &newDataObject = dataSource->dataObjects.front();
+    newDataObject.cdfVariable = new CDF::Variable();
+    newDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    newDataObject.cdfObject->addVariable(newDataObject.cdfVariable);
+    newDataObject.cdfVariable->setName("hiwc");
+    newDataObject.cdfVariable->setType(CDF_SHORT);
+    newDataObject.cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
     for (size_t j = 0; j < varToClone->dimensionlinks.size(); j++) {
-      newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
+      newDataObject.cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
     }
 
     for (size_t j = 0; j < varToClone->attributes.size(); j++) {
-      newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
+      newDataObject.cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
     }
 
-    newDataObject->cdfVariable->removeAttribute("scale_factor");
-    newDataObject->cdfVariable->removeAttribute("add_offset");
-    newDataObject->cdfVariable->setAttributeText("standard_name", "high_ice_water_content status_flag");
-    newDataObject->cdfVariable->setAttributeText("long_name", "High ice water content");
-    newDataObject->cdfVariable->setAttributeText("units", "1");
-    newDataObject->cdfVariable->removeAttribute("valid_range");
-    newDataObject->cdfVariable->removeAttribute("flag_values");
-    newDataObject->cdfVariable->removeAttribute("flag_meanings");
+    newDataObject.cdfVariable->removeAttribute("scale_factor");
+    newDataObject.cdfVariable->removeAttribute("add_offset");
+    newDataObject.cdfVariable->setAttributeText("standard_name", "high_ice_water_content status_flag");
+    newDataObject.cdfVariable->setAttributeText("long_name", "High ice water content");
+    newDataObject.cdfVariable->setAttributeText("units", "1");
+    newDataObject.cdfVariable->removeAttribute("valid_range");
+    newDataObject.cdfVariable->removeAttribute("flag_values");
+    newDataObject.cdfVariable->removeAttribute("flag_meanings");
     short attrData[3];
     attrData[0] = -1;
-    newDataObject->cdfVariable->setAttribute("_FillValue", CDF_SHORT, attrData, 1);
+    newDataObject.cdfVariable->setAttribute("_FillValue", CDF_SHORT, attrData, 1);
 
     attrData[0] = 0;
     attrData[1] = 1;
-    newDataObject->cdfVariable->setAttribute("valid_range", CDF_SHORT, attrData, 2);
-    newDataObject->cdfVariable->setAttribute("flag_values", CDF_SHORT, attrData, 2);
-    newDataObject->cdfVariable->setAttributeText("flag_meanings", "no yes");
+    newDataObject.cdfVariable->setAttribute("valid_range", CDF_SHORT, attrData, 2);
+    newDataObject.cdfVariable->setAttribute("flag_values", CDF_SHORT, attrData, 2);
+    newDataObject.cdfVariable->setAttributeText("flag_meanings", "no yes");
 
-    newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
     // return 0;
   }
@@ -326,44 +318,40 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying datamask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    DataObject *newDataObject = new DataObject();
-
-    newDataObject->variableName.copy("masked");
-
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
-
-    newDataObject->cdfVariable = new CDF::Variable();
-    newDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-    newDataObject->cdfVariable->setName("masked");
+    dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
+    auto &newDataObject = dataSource->dataObjects.front();
+    newDataObject.cdfVariable = new CDF::Variable();
+    newDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    newDataObject.cdfObject->addVariable(newDataObject.cdfVariable);
+    newDataObject.cdfVariable->setName("masked");
     CT::string text;
     text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", "masked", this->getId());
-    newDataObject->cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
-    newDataObject->cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
-    newDataObject->cdfVariable->setType(dataSource->getDataObject(1)->cdfVariable->getType());
-    newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
+    newDataObject.cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
+    newDataObject.cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
+    newDataObject.cdfVariable->setType(dataSource->getDataObject(1)->cdfVariable->getType());
+    newDataObject.cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
     for (size_t j = 0; j < varToClone->dimensionlinks.size(); j++) {
-      newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
+      newDataObject.cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
     }
 
     for (size_t j = 0; j < varToClone->attributes.size(); j++) {
-      newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
+      newDataObject.cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
     }
 
-    newDataObject->cdfVariable->removeAttribute("scale_factor");
-    newDataObject->cdfVariable->removeAttribute("add_offset");
+    newDataObject.cdfVariable->removeAttribute("scale_factor");
+    newDataObject.cdfVariable->removeAttribute("add_offset");
 
     if (proc->attr.units.empty() == false) {
-      newDataObject->cdfVariable->removeAttribute("units");
-      newDataObject->setUnits(proc->attr.units.c_str());
-      newDataObject->cdfVariable->setAttributeText("units", proc->attr.units.c_str());
+      newDataObject.cdfVariable->removeAttribute("units");
+      newDataObject.overruledUnits = proc->attr.units.c_str();
+      newDataObject.cdfVariable->setAttributeText("units", proc->attr.units.c_str());
     }
     if (proc->attr.name.empty() == false) {
-      newDataObject->cdfVariable->removeAttribute("long_name");
-      newDataObject->cdfVariable->setAttributeText("long_name", proc->attr.name.c_str());
+      newDataObject.cdfVariable->removeAttribute("long_name");
+      newDataObject.cdfVariable->setAttributeText("long_name", proc->attr.name.c_str());
     }
-    newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
     // return 0;
   }
