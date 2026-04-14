@@ -7,11 +7,9 @@ import os
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
     make_adaguc_env,
-    run_adaguc_and_compare_file,
-    run_adaguc_and_compare_getcapabilities,
-    run_adaguc_and_compare_image,
     run_adaguc_and_compare_json,
     update_db,
+    reset_datasetsloaded,
 )
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
@@ -26,11 +24,12 @@ class TestMetadataRequest:
     expectedoutputsspath = "expectedoutputs/TestMetadataRequest/"
     env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
 
+    reset_datasetsloaded()
     AdagucTestTools().mkdir_p(testresultspath)
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl(self):
-        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(env)
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
         run_adaguc_and_compare_json(
             env,
             "test_GetMetadataRequest_arcus_uwcw.json",
@@ -38,8 +37,8 @@ class TestMetadataRequest:
         )
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query(self):
-        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(env)
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query.json",
@@ -47,8 +46,8 @@ class TestMetadataRequest:
         )
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime(self):
-        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(env)
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime.json",

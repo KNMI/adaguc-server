@@ -6,6 +6,7 @@
 #include "LayerUtils.h"
 #include "CRequestUtils.h"
 #include "XMLGenUtils.h"
+#include <ranges>
 
 CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName, const char *layerName, const char *metadataKey) {
   auto records = layerMetaDataStore->getRecords();
@@ -82,75 +83,98 @@ json querySpecificDims(CServerParams *srvParams, const std::string &layerName) {
   return getDimensionListAsJson(dimList);
 }
 
-int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
-  json dataset;
-  json layer;
-  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
-  if (layerMetaDataStore == nullptr) {
-    return 1;
-  }
-  auto records = layerMetaDataStore->getRecords();
-  std::map<std::string, std::set<std::string>> datasetNames;
-  for (auto record: records) {
-    CT::string *datasetName = record.get("datasetname");
-    CT::string *layerName = record.get("layername");
-    if (datasetName != nullptr && layerName != nullptr) {
-      datasetNames[datasetName->c_str()].insert(layerName->c_str());
-    }
-  }
-
+json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetName, CServerParams *srvParams, CDBStore::Store *layerMetaDataStore) {
+  json datasetJSON;
   std::string layerNameInRequest;
   if (srvParams->requestedLayerNames.size() > 0) {
     layerNameInRequest = srvParams->requestedLayerNames[0];
   }
-
-  // The following example demonstrates how the getmetadata call can be used with DIM_REFERENCE_TIME.
-  // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z
-  // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z&time=2025-11-21T06:00:00Z
-
   std::string hasReferenceTimeValue;
   auto it = std::find_if(srvParams->requestDims.begin(), srvParams->requestDims.end(), [](const auto &a) { return a.name == "REFERENCE_TIME"; });
   if (it != srvParams->requestDims.end()) {
     hasReferenceTimeValue = (*it).value;
   }
 
-  CDBDebug("hasReferenceTimeValue: %s", hasReferenceTimeValue.c_str());
+  for (auto layerName: layers) {
+    // CDBDebug("Checking %s = %s", layerNameInRequest.c_str(), layerName.c_str());
+    if (layerNameInRequest.empty() || layerNameInRequest == layerName) {
 
-  for (auto [dataSetName, layers]: datasetNames) {
-    if (srvParams->datasetLocation.empty() || srvParams->datasetLocation.equals(dataSetName)) {
-      json datasetJSON;
-      for (auto layerName: layers) {
-        if (layerNameInRequest.empty() || layerNameInRequest == layerName) {
-
-          try {
-            json layer;
-            json a;
-            layer["layer"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "layermetadata").c_str());
-            // do a query to find the matching times to the given reference time
-            if (!hasReferenceTimeValue.empty()) {
-              try {
-                layer["dims"] = querySpecificDims(srvParams, layerName);
-              } catch (...) {
-                result["error"] = "InvalidDimensionValue";
-                return HTTP_STATUSCODE_404_NOT_FOUND;
-              }
-            } else {
-              layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
-            }
-            // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());
-            // layer["projected_extents"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "projected_extents").c_str());
-
-            datasetJSON[layerName.c_str()] = layer;
-
-          } catch (json::exception &e) {
-            CDBWarning("Unable to parse json for layer %s", layerName.c_str());
-          }
+      try {
+        json layer;
+        json a;
+        layer["layer"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "layermetadata").c_str());
+        // do a query to find the matching times to the given reference time
+        if (!hasReferenceTimeValue.empty()) {
+          layer["dims"] = querySpecificDims(srvParams, layerName);
+        } else {
+          layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
         }
-      }
+        // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());
+        // layer["projected_extents"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "projected_extents").c_str());
 
-      result[dataSetName.c_str()] = datasetJSON;
+        datasetJSON[layerName.c_str()] = layer;
+
+      } catch (json::exception &e) {
+        CDBWarning("Unable to parse json for layer %s", layerName.c_str());
+      }
+    }
+  }
+  return datasetJSON;
+}
+
+int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
+  json dataset;
+  json layer;
+  std::string datasetLocation = srvParams->datasetLocation;
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
+  if (layerMetaDataStore == nullptr) {
+    return 1;
+  }
+  auto records = layerMetaDataStore->getRecords();
+  // CDBDebug("Found %lu records in database", records.size());
+  std::map<std::string, std::set<std::string>> datasetNames;
+  for (auto record: records) {
+    std::string datasetName = record.get("datasetname")->c_str();
+    std::string layerName = record.get("layername")->c_str();
+    if (!datasetName.empty() && !layerName.empty()) {
+      datasetNames[datasetName].insert(layerName);
     }
   }
 
+  // The following example demonstrates how the getmetadata call can be used with DIM_REFERENCE_TIME.
+  // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z
+  // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z&time=2025-11-21T06:00:00Z
+
+  if (!datasetLocation.empty()) {
+    auto ks = std::views::keys(datasetNames);
+    std::vector<std::string> keys{ks.begin(), ks.end()};
+    CDBDebug("looking for [%s] in [%s]", datasetLocation.c_str(), CT::join(keys).c_str());
+    auto it = std::find_if(datasetNames.begin(), datasetNames.end(), [&datasetLocation](const auto &a) { return datasetLocation == a.first; });
+    if (it == datasetNames.end()) {
+      // CDBError("Dataset not found");
+      resetErrors();
+      result["error"] = "dataset not found";
+      // result["error"] = "InvalidDimensionValue";
+      return HTTP_STATUSCODE_404_NOT_FOUND;
+    } else {
+      // List single dataset.
+      const auto &dataSetName = (*it).first;
+      auto &layers = (*it).second;
+      try {
+        result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
+      } catch (...) {
+        result["error"] = "InvalidDimensionValue";
+        return HTTP_STATUSCODE_404_NOT_FOUND;
+      }
+    }
+  } else {
+    for (auto [dataSetName, layers]: datasetNames) {
+      // List all datasets.
+      // CDBDebug("Checking %s = %s", srvParams->datasetLocation.c_str(), dataSetName.c_str());
+      if (srvParams->datasetLocation.empty() || srvParams->datasetLocation.equals(dataSetName)) {
+        result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
+      }
+    }
+  }
   return 0;
 }
