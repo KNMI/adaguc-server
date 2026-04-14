@@ -72,11 +72,20 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 7
-    first_collection = colls["collections"][0]
-    assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
-    coll_5d = colls["collections"][5]
+    collection_ids = [coll["id"] for coll in colls["collections"]]
+    assert collection_ids == [
+        "adaguc.tests.arcus_uwcw.hagl_member",
+        "adaguc.tests.members.mycollection",
+        "adaguc.tests.multi_reftime_temporal_extent.gl",
+        "adaguc_ewclocalclimateinfo_test",
+        "adaguc_tests_solarterminator",
+        "adaguc_tests_uwcwdini_windcomponents",
+        "netcdf_5d.data_5d",
+        "testcollection.testcollection",
+    ]
+
+    coll_5d = colls["collections"][6]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(ext_name in coll_5d["extent"] for ext_name in ("spatial", "temporal", "vertical", "custom"))
     assert list(coll_5d["extent"]) == [
