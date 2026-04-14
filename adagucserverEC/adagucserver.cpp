@@ -50,6 +50,9 @@ int processQueryStringRequest() {
 }
 
 int main(int argc, char **argv, char **envp) {
+  int* arr = new int[1];
+  arr[1] = 0;
+
   traceTimingsCheckEnabled();
   checkLogSettings();
 
