@@ -152,8 +152,7 @@ ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &resu
     std::vector<std::string> keys{ks.begin(), ks.end()};
     auto it = std::find_if(datasetNames.begin(), datasetNames.end(), [&datasetLocation](const auto &a) { return datasetLocation == a.first; });
     if (it == datasetNames.end()) {
-      resetErrors();
-      result["error"] = "dataset not found";
+      CDBError("DataSet not found");
       setExceptionType(ServiceExceptionType::InvalidDataset);
       return ServiceExceptionType::InvalidDataset;
     } else {
@@ -163,7 +162,7 @@ ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &resu
       try {
         result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
       } catch (...) {
-        result["error"] = "InvalidDimensionValue";
+        CDBError("Unable to make metadata for dataset");
         setExceptionType(ServiceExceptionType::InvalidDimensionValue);
         return ServiceExceptionType::InvalidDimensionValue;
       }

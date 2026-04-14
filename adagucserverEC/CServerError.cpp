@@ -53,10 +53,14 @@ void addErrorMessage(const char *text) {
     errormsgs.push_back(t);
   }
 }
-void setErrorMode(ServiceExceptionMode errormode) { cerror_mode = errormode; }
+void setErrorMode(ServiceExceptionMode errormode) {
+  cerror_mode = errormode;
+  resetErrors();
+}
 void resetErrors() {
   errormsgs.clear();
   error_raised = 0;
+  serviceExceptionCode = ServiceExceptionType::OK;
 }
 
 std::string getExceptionCodeText(ServiceExceptionType code) {
@@ -126,6 +130,9 @@ void setErrorImageSize(int w, int h, int format, bool _enableTransparency) {
 void readyHandleError() {
 
   if (cerror_mode == ServiceExceptionMode::ExceptionJSON) {
+    if (serviceExceptionCode == ServiceExceptionType::OK) {
+      return;
+    }
     printf("%s%c%c\n", "Content-type: application/json", 13, 10);
     fprintf(stdout, "{\"error\":\"%s\"}", getExceptionCodeText(serviceExceptionCode).c_str());
     resetErrors();
