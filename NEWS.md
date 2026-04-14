@@ -5,6 +5,9 @@
 - Revert remove of user agent logging [#677](https://github.com/KNMI/adaguc-server/issues/677)
 - CI/CD now runs with sanitize check
 - Error handling is improved
+- EDR: When selecting a specific instance (`/edr/collections/my_collection/instances/123` or `/edr/collections/my_collection`) in a dataset with multiple instances, adaguc returned an incorrect temporal extent. Adaguc now passes `dim_reference_time=...` to the metadata service, which now returns a corresponding time range. Fixes [#675](https://github.com/KNMI/adaguc-server/issues/675).
+- EDR: Time and reftime were both calculated by looking at the first parameter in the dataset. Adaguc now checks all parameters of a dataset.
+- EDR: When performing a position or cube query without selecting an instance (e.g. `/edr/collections/my_collection/position`), adaguc now returns the most recent instance.
 
 **Version 7.1.2 - 2026-03-30***
 
