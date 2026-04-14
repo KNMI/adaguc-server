@@ -148,10 +148,8 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   if (!datasetLocation.empty()) {
     auto ks = std::views::keys(datasetNames);
     std::vector<std::string> keys{ks.begin(), ks.end()};
-    CDBDebug("looking for [%s] in [%s]", datasetLocation.c_str(), CT::join(keys).c_str());
     auto it = std::find_if(datasetNames.begin(), datasetNames.end(), [&datasetLocation](const auto &a) { return datasetLocation == a.first; });
     if (it == datasetNames.end()) {
-      // CDBError("Dataset not found");
       resetErrors();
       result["error"] = "dataset not found";
       // result["error"] = "InvalidDimensionValue";

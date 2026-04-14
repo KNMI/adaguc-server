@@ -1799,7 +1799,6 @@ int CRequest::process_querystring() {
         auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
         printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
         printf("%s", result.dump().c_str());
-        CDBDebug("return status %d", status);
         return status;
       }
 
