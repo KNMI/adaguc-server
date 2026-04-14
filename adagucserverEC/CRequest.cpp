@@ -73,90 +73,8 @@ int CRequest::process_wms_getmetadata_request() { return process_all_layers(); }
 CServerParams *CRequest::getServerParams() { return srvParam; }
 
 int CRequest::generateGetReferenceTimesDoc(CT::string *result, CDataSource *dataSource) {
-  bool hasReferenceTimeDimension = false;
-  CT::string dimName = "";
-  for (size_t l = 0; l < dataSource->cfgLayer->Dimension.size(); l++) {
-    if (dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")) {
-      dimName = dataSource->cfgLayer->Dimension[l]->attr.name.c_str();
-      hasReferenceTimeDimension = true;
-      break;
-    }
-  }
-
-  if (hasReferenceTimeDimension) {
-    CT::string tableName;
-
-    try {
-      tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(), dataSource);
-    } catch (int e) {
-      CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
-      return 1;
-    }
-
-    CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(dimName.c_str(), -1, false, tableName.c_str());
-    if (store == NULL) {
-      setExceptionType(InvalidDimensionValue);
-      CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
-      return 1;
-    }
-    result->copy("[");
-    bool first = true;
-    for (size_t k = 0; k < store->getSize(); k++) {
-      if (!first) {
-        result->concat(",");
-      }
-      first = false;
-      result->concat("\"");
-      CT::string ymd;
-      ymd = store->getRecord(k)->get(0);
-      ymd.setChar(10, 'T');
-      // 01234567890123456789
-      // YYYY-MM-DDTHH:MM:SSZ
-      if (ymd.length() == 19) {
-        ymd.concat("Z");
-      }
-      result->concat(ymd);
-      result->concat("\"");
-    }
-    result->concat("]");
-    delete store;
-    return 0;
-  } else {
-    // Set WMSLayers:
-    std::set<std::string> WMSGroups;
-    for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-      CT::string groupName;
-      dataSource->srvParams->makeLayerGroupName(&groupName, dataSource->srvParams->cfg->Layer[j]);
-      if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]"
-                              "_[[:digit:]][[:digit:]]")) {
-        CT::string ymd = groupName.substring(0, 8);
-        CT::string hh = groupName.substring(9, 11);
-        ymd.concat(hh);
-        ymd.concat("00");
-        WMSGroups.insert(ymd.c_str());
-      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:"
-                                     "digit:]][[:digit:]][[:digit:]]")) {
-        groupName.concat("00");
-        WMSGroups.insert(groupName.c_str());
-      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:"
-                                     "digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-        WMSGroups.insert(groupName.c_str());
-      }
-    }
-    result->copy("[");
-    bool first = true;
-    for (std::set<std::string>::reverse_iterator it = WMSGroups.rbegin(); it != WMSGroups.rend(); ++it) {
-      if (!first) {
-        result->concat(",");
-      }
-      first = false;
-      result->concat("\"");
-      result->concat((*it).c_str());
-      result->concat("\"");
-    }
-    result->concat("]");
-  }
+  auto refTimeList = getReferenceTimes(*dataSource);
+  result->print("[\"%s\"]", CT::join(refTimeList).c_str());
   return 0;
 }
 
@@ -659,18 +577,9 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       dataSource->queryBBOX = false;
       dataSource->queryLevel = hasTileSettings ? 0 : -1;
 
-      int maxQueryResultLimit = 512;
+      int maxQueryResultLimit = getMaxQueryLimit(*dataSource);
 
-      /* Get maxquerylimit from database configuration */
-      if (srvParam->cfg->DataBase.size() == 1 && srvParam->cfg->DataBase[0]->attr.maxquerylimit.empty() == false) {
-        maxQueryResultLimit = srvParam->cfg->DataBase[0]->attr.maxquerylimit.toInt();
-      }
-      /* Get maxquerylimit from layer */
-      if (dataSource->isConfigured && dataSource->cfgLayer != NULL && dataSource->cfgLayer->FilePath.size() > 0) {
-        if (dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.empty() == false) {
-          maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
-        }
-      }
+      CDBDebug("maxQueryResultLimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
@@ -1878,12 +1787,19 @@ int CRequest::process_querystring() {
         // GetMetadata for specific dataset and layer
         json result;
         traceTimingsSpanStart(TraceTimingType::GETMETADATAJSON);
-        getLayerMetadataAsJson(srvParam, result);
+        int status = getLayerMetadataAsJson(srvParam, result);
         traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
+        if (status == HTTP_STATUSCODE_404_NOT_FOUND) {
+          setExceptionType(ServiceExceptionCode::InvalidDimensionValue);
+        }
+        if (errorsOccured()) {
+          readyerror();
+          return 1;
+        }
         auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
         printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
         printf("%s", result.dump().c_str());
-        return 0;
+        return status;
       }
 
       if (dFound_WMSLAYERS == 0) {

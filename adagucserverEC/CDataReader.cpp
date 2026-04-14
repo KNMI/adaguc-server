@@ -1011,7 +1011,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     if (varUnits != NULL) {
       dataSource->getDataObject(varNr)->overruledUnits = varUnits->toString();
     } else
-      dataSource->getDataObject(varNr)->overruledUnits = ("");
+      dataSource->getDataObject(varNr)->overruledUnits = "";
 
     // Check for packed data / hasScaleOffset
 

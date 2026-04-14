@@ -15,7 +15,7 @@
 #include "CXMLGen.h"
 
 int getProjectionInformationForLayer(MetadataLayer *metadataLayer);
-int getDimsForLayer(MetadataLayer *metadataLayer);
+int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList, std::map<std::string, std::vector<std::string>> dimValuesMap);
 int getStylesForLayer(MetadataLayer *metadataLayer);
 bool compareStringCase(const std::string &s1, const std::string &s2);
 bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataProjection &p2);
@@ -24,5 +24,5 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDb);
 int getTitleForLayer(MetadataLayer *metadataLayer);
 int getFileNameForLayer(MetadataLayer *metadataLayer);
 bool multiTypeSort(const CT::string &a, const CT::string &b);
-int checkDependenciesBetweenDims(MetadataLayer *mL);
+int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList);
 #endif

@@ -16,7 +16,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   if (srvParams->requestDims.size() == 0) {
     // We put a time request for the current time
     OGCURIDims timeDim;
-    timeDim.name = ("TIME");
+    timeDim.name = "TIME";
     timeDim.value = (timeRange.defaultTime);
     srvParams->requestDims.push_back(timeDim);
   }

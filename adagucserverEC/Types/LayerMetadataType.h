@@ -6,12 +6,12 @@
 #include <CDataSource.h>
 
 struct LayerMetadataDim {
-  CT::string serviceName;
-  CT::string cdfName;
-  CT::string units;
-  CT::string values;
-  CT::string defaultValue;
-  CT::string type;
+  std::string serviceName;
+  std::string cdfName;
+  std::string units;
+  std::string values;
+  std::string defaultValue;
+  std::string type;
   int hasMultipleValues;
   bool hidden;
 };

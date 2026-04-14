@@ -639,7 +639,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             // Dims
             for (auto dim: layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
-              if (dim.serviceName.indexOf("time") != -1) {
+              if (CT::indexOf(dim.serviceName, "time") != -1) {
                 XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" current=\"1\">", dim.serviceName.c_str(), dim.units.c_str(),
                                     dim.defaultValue.c_str(), 1);
               } else {
@@ -783,10 +783,10 @@ void generateWCSRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
   for (size_t d = 0; d < layer->layerMetadata.dimList.size(); d++) {
     LayerMetadataDim *dim = &layer->layerMetadata.dimList[d];
     CT::string min, max, duration;
-    std::vector<CT::string> valuesVector;
+    std::vector<std::string> valuesVector;
 
     // Case of min/max(/duration), for time dimension
-    auto valueSplit = dim->values.split("/");
+    auto valueSplit = CT::split(dim->values, "/");
     if (valueSplit.size() >= 2) {
       min = valueSplit[0];
       max = valueSplit[1];
@@ -796,7 +796,7 @@ void generateWCSRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
       }
     } else {
       // General case of a list of values (of any type)
-      valueSplit = dim->values.split(",");
+      valueSplit = CT::split(dim->values, ",");
       valuesVector = valueSplit;
       std::sort(valuesVector.begin(), valuesVector.end(), multiTypeSort);
       min = valuesVector[0];
@@ -815,12 +815,12 @@ void generateWCSRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
                           "                <max>%s</max>\n",
                           min.c_str(), max.c_str());
       // Precalculate the interval in the case of time (no interval if fewer than 4 values)
-      if ((dim->cdfName.indexOf("time") != -1) && duration.length() > 0) {
+      if ((CT::indexOf(dim->cdfName, "time") != -1) && duration.length() > 0) {
         XMLDoc->printconcat("                <res>%s</res>\n", duration.c_str()); // .c_str());
       }
       XMLDoc->printconcat("              </interval>\n");
       // Print all possible values if there is a relatively small number, for other dimensions
-      if ((valueSplit.size() <= 100) && (dim->cdfName.indexOf("time") == -1)) {
+      if ((valueSplit.size() <= 100) && (CT::indexOf(dim->cdfName, "time") == -1)) {
         for (size_t i = 0; i < valueSplit.size(); i++) {
           XMLDoc->printconcat("              <singleValue>%s</singleValue>\n", valuesVector[i].c_str());
         }
@@ -862,7 +862,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
             int d = 0;
             for (auto dim: layer->layerMetadata.dimList) {
               // if(dim.hasMultipleValues==0){
-              if (dim.units.equals("ISO8601")) {
+              if (dim.units == "ISO8601") {
                 timeDimIndex = d;
               }
               d++;
@@ -887,7 +887,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
 
               if (timeDimIndex >= 0) {
                 // For information about this, visit http://www.galdosinc.com/archives/151
-                auto timeDimSplit = layer->layerMetadata.dimList[timeDimIndex].values.split("/");
+                auto timeDimSplit = CT::split(layer->layerMetadata.dimList[timeDimIndex].values, "/");
                 if (timeDimSplit.size() == 3) {
                   XMLDoc->concat("        <gml:TimePeriod>\n");
                   XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n", timeDimSplit[0].c_str());
@@ -942,7 +942,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
               if (timeDimIndex >= 0) {
                 XMLDoc->concat("      <temporalDomain>\n");
                 if (layer->layerMetadata.dimList[timeDimIndex].hasMultipleValues == 0) {
-                  auto timeDimSplit = layer->layerMetadata.dimList[timeDimIndex].values.split("/");
+                  auto timeDimSplit = CT::split(layer->layerMetadata.dimList[timeDimIndex].values, "/");
                   if (timeDimSplit.size() == 3) {
                     XMLDoc->concat("        <gml:TimePeriod>\n");
                     XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n", timeDimSplit[0].c_str());
@@ -952,7 +952,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
                   }
                 } else {
 
-                  auto positions = layer->layerMetadata.dimList[timeDimIndex].values.split(",");
+                  auto positions = CT::split(layer->layerMetadata.dimList[timeDimIndex].values, ",");
                   for (size_t p = 0; p < positions.size(); p++) {
                     XMLDoc->printconcat("        <gml:timePosition>%s</gml:timePosition>\n", (positions[p]).c_str());
                   }
