@@ -10,6 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
+from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
 from routers.healthcheck import health_check_router
@@ -50,6 +51,8 @@ async def add_hsts_header(request: Request, call_next):
 
     return response
 
+
+app.add_middleware(ForwardedHostAndPrefixMiddleware)
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
@@ -94,6 +97,8 @@ app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)
 app.include_router(autowms_router)
 app.include_router(opendapRouter)
+
+logging.info("Starting with %s", os.getenv("EXTERNALADDRESS", "---"))
 
 if __name__ == "__main__":
     testadaguc()
