@@ -32,6 +32,7 @@ def setup_test_data():
         "adaguc_ewclocalclimateinfo_test.xml",
         "adaguc_tests_uwcwdini_windcomponents.xml",
         "adaguc_tests_solarterminator.xml",
+        "adaguc.tests.multi_reftime_temporal_extent.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -809,5 +810,79 @@ def test_solt_instanceless_position(client: TestClient):
     assert resp.status_code == 200
     covjson = resp.json()
     filename = "test_solt_instanceless_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_multi_reftime_temporal_extent(client: TestClient):
+    """
+    This dataset contains two instances, with reftime 2026-04-01T12 and 2026-04-07T00.
+    There is an hourly and 24-hourly parameter in this dataset.
+
+    The temporal extent of a specific instance must be calculated over _all_ the parameters.
+    This means that even though the first (configured) parameter in the dataset is a 24-hourly
+    parameter (starts at T+24) the other parameter in the dataset is an hourly parameter
+    (starts at T+1). This means the start of the temporal extent must begin at T+1.
+
+    Temporal extents in the /instances call will be wrong, we cannot fix this.
+    """
+
+    base_url = f"/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
+
+    # The temporal extent in the /instances call will be wrong, as they are the same for _all_ instances.
+    resp = client.get(f"{base_url}/instances")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    instances = covjson.get("instances")
+    assert instances[0]["id"] == "202604070000"
+    assert instances[1]["id"] == "202604011200"
+    assert instances[0]["extent"]["temporal"]["interval"] == instances[1]["extent"]["temporal"]["interval"] == [['2026-04-01T13:00:00Z', '2026-04-09T12:00:00Z']]
+
+    # Temporal extent must be correct when requesting a specific instance
+    resp = client.get(f"{base_url}/instances/202604011200")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    assert covjson["extent"]["temporal"]["interval"] == [["2026-04-01T13:00:00Z", "2026-04-04T00:00:00Z"]]
+    assert covjson["extent"]["temporal"]["values"] == ["R60/2026-04-01T13:00:00Z/PT1H"]
+
+    # Temporal extent must be correct when requesting a specific instance
+    resp = client.get(f"{base_url}/instances/202604070000")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    assert covjson["extent"]["temporal"]["interval"] == [["2026-04-07T01:00:00Z", "2026-04-09T12:00:00Z"]]
+    assert covjson["extent"]["temporal"]["values"] == ["R60/2026-04-07T01:00:00Z/PT1H"]
+
+    # If you omit the instance, EDR must return the most recent instance
+    resp = client.get(f"{base_url}")
+    assert resp.status_code == 200
+    most_recent_instance = resp.json()
+
+    # ids and urls will be different, but the temporal extent must be the same since it refers to the same specific instance
+    assert most_recent_instance["extent"] == covjson["extent"]
+
+
+def test_multi_reftime_instanceless_query(client: TestClient):
+    """Querying position and cube without selecting an instance should return results for the most recent instance"""
+
+    base_url = f"/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
+
+    # Position query
+    resp = client.get(f"{base_url}/position?coords=POINT(5.0 52.0)&datetime=*")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "multi_reftime_instanceless_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+    # Cube query
+    resp = client.get(f"{base_url}/cube?bbox=2.0,50.5,9.0,54.5&datetime=*")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "multi_reftime_instanceless_cube.json"
     AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
