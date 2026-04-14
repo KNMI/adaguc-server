@@ -60,7 +60,6 @@ void setErrorMode(ServiceExceptionMode errormode) {
 void resetErrors() {
   errormsgs.clear();
   error_raised = 0;
-  serviceExceptionCode = ServiceExceptionType::OK;
 }
 
 std::string getExceptionCodeText(ServiceExceptionType code) {

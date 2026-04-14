@@ -1785,7 +1785,7 @@ int CRequest::process_querystring() {
         traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
         if (status != ServiceExceptionType::OK) {
           setExceptionType(status);
-          return 1;
+          return status;
         }
         auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
         printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
