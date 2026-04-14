@@ -28,7 +28,7 @@ from covjson_pydantic.unit import Unit as CovJsonUnit
 from pydantic import AwareDatetime
 
 from .utils.edr_exception import EdrException
-from .utils.edr_utils import get_param_metadata
+from .utils.edr_utils import DATETIME_ISO8601_FMT, get_param_metadata
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
@@ -148,7 +148,7 @@ def covjson_from_resp(dats, metadata, collection_name):
             if time_steps:
                 axes["t"] = ValuesAxis[AwareDatetime](
                     values=[
-                        datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
+                        datetime.strptime(t, DATETIME_ISO8601_FMT).replace(
                             tzinfo=timezone.utc
                         )
                         for t in time_steps
@@ -202,7 +202,7 @@ def covjson_from_resp(dats, metadata, collection_name):
                         "t": ValuesAxis[AwareDatetime](
                             values=[
                                 datetime.strptime(
-                                    time_step, "%Y-%m-%dT%H:%M:%SZ"
+                                    time_step, DATETIME_ISO8601_FMT
                                 ).replace(tzinfo=timezone.utc)
                             ]
                         ),

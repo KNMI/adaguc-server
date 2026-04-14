@@ -107,9 +107,6 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     metadata = await get_metadata(collection_name, instance)
     collection = get_collectioninfo_from_md(metadata[collection_name], collection_name)[0]
 
-    ttl = None
-    if ttl is not None:
-        response.headers["cache-control"] = generate_max_age(ttl)
     if collection is None:
         raise exc_unknown_collection(collection_name)
 

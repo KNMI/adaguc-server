@@ -32,10 +32,11 @@ from fastapi.datastructures import QueryParams
 HTTP_STATUSCODE_404_NOT_FOUND = 32
 
 from .edr_exception import (
+    AdagucErrorCode,
     exc_failed_call,
     exc_unknown_collection,
     exc_incorrect_instance,
-    exec_unknown_parameter,
+    exc_unknown_parameter,
 )
 
 from .ogcapi_tools import call_adaguc
@@ -50,13 +51,16 @@ location_list = [
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
 
+DATETIME_ISO8601_FMT = "%Y-%m-%dT%H:%M:%SZ"
+
+
 def parse_iso(dts: str) -> datetime:
     """
     Converts a ISO8601 string into a datetime object
     """
     parsed_dt = None
     try:
-        parsed_dt = datetime.strptime(dts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        parsed_dt = datetime.strptime(dts, DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc)
     except ValueError as exc:
         logger.error("err: %s %s", dts, exc)
     return parsed_dt
@@ -84,7 +88,12 @@ def get_ref_times_for_coll(metadata) -> list[str]:
 
         ref_times.update(ref_time_values.split(","))
 
-    return [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in sorted(list(ref_times), reverse=True)]
+    try:
+        return [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in sorted(list(ref_times))]
+    except Exception:
+        error_msg = "Could not parse reference times from metadata"
+        logger.exception(error_msg)
+        raise exc_failed_call(error_msg)
 
 
 def get_base_url(req: Request = None) -> str:
@@ -105,7 +114,7 @@ def instance_to_iso(instance_dt: str):
     """
     parsed_dt = parse_instance_time(instance_dt)
     if parsed_dt:
-        return parsed_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return parsed_dt.strftime(DATETIME_ISO8601_FMT)
     return None
 
 
@@ -403,7 +412,7 @@ def parse_interval_string(time_interval: str, ref_time: datetime):
     match = offset_pattern.match(time_interval_term)
     if match and match.group(2):
         offset_steps = int(match.group(2))
-    # "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    # "{reference_time}", ref_time.strftime(DATETIME_ISO8601_FMT))
     (repeat_s, _, period) = time_interval.split("/")
     repeat = int(repeat_s[1:])
 
@@ -412,7 +421,7 @@ def parse_interval_string(time_interval: str, ref_time: datetime):
     times = []
     step_time = ref_time + delta * offset_steps
     for _ in range(repeat):
-        times.append(step_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        times.append(step_time.strftime(DATETIME_ISO8601_FMT))
         step_time = step_time + delta
     return times
 
@@ -429,8 +438,8 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
 
     interval = [
         [
-            datetime.strptime(times[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
-            datetime.strptime(times[-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+            datetime.strptime(times[0], DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc),
+            datetime.strptime(times[-1], DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc),
         ]
     ]
     logger.info(
@@ -499,7 +508,10 @@ def handle_metadata(metadata: dict):
 
 
 async def get_metadata(collection_name: str = "", instance: str = "") -> dict:
-    """get metadata from ADAGUC"""
+    """Get metadata from ADAGUC.
+
+    This method will either return a dictionary representing the metadata, or throw an exception
+    """
 
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
     if collection_name:
@@ -510,28 +522,32 @@ async def get_metadata(collection_name: str = "", instance: str = "") -> dict:
         urlrequest = f"{urlrequest}&dim_reference_time={reference_time}"
 
     status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
-    # ttl = get_ttl_from_adaguc_headers(headers)
     logger.info("status for %s: %d", urlrequest, status)
 
     raw_response = response.getvalue().decode("UTF-8")
-    if status == HTTP_STATUSCODE_404_NOT_FOUND:
-        # Metadata call may set error field, try to parse and throw correct exception
-        try:
-            err_msg = json.loads(raw_response)
-        except json.JSONDecodeError:
-            raise exc_failed_call("Failed to query metadata, couldn't parse json response")
+    try:
+        parsed_json = json.loads(raw_response)
+    except json.JSONDecodeError:
+        raise exc_failed_call("Failed to query metadata: couldn't parse json response")
 
-        if err_msg.get("error", "") == "InvalidDimensionValue":
-            raise exc_incorrect_instance(collection_name, instance)
-
-        raise exc_unknown_collection(collection_name)
-
+    # If metadata call failed, try to decipher response
     if status != 0:
-        raise exc_failed_call("Failed to query metadata")
+        # Try to parse error code into AdagucErrorCode enum
+        error_msg = parsed_json.get("error")
+        try:
+            adaguc_error_code = AdagucErrorCode(error_msg)
+        except ValueError:
+            raise exc_failed_call(f"Unknown error code: {error_msg}")
 
-    metadata = json.loads(raw_response)
-    collection_metadata = handle_metadata(metadata)
+        # Handle specific exceptions for wrong instance/dataset.
+        if adaguc_error_code == AdagucErrorCode.InvalidDimensionValue:
+            raise exc_incorrect_instance(collection_name, instance)
+        if adaguc_error_code == AdagucErrorCode.InvalidDataset:
+            raise exc_unknown_collection(collection_name)
 
+        raise exc_failed_call(f"Failed to query metadata: {error_msg}")
+
+    collection_metadata = handle_metadata(parsed_json)
     if collection_metadata is None:
         raise exc_unknown_collection(collection_name)
 
@@ -662,13 +678,18 @@ def get_times_for_collection(metadata: dict) -> tuple[list[list[datetime]], list
     else:
         return [], []
 
-    interval = [
-        [
-            datetime.strptime(start, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
-            datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+    try:
+        interval = [
+            [
+                datetime.strptime(start, DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc),
+                datetime.strptime(end, DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc),
+            ]
         ]
-    ]
-    return interval, range_values
+        return interval, range_values
+    except Exception:
+        error_msg = "Could not parse time values from metadata"
+        logger.exception(error_msg)
+        raise exc_failed_call(error_msg)
 
 
 def get_time_values_for_range(start: str, end: str, period: str) -> list[str]:
@@ -697,7 +718,7 @@ def get_time_values_for_range(start: str, end: str, period: str) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
-    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%M:%SZ')}/{step}"]
+    return [f"R{nsteps}/{iso_start.strftime(DATETIME_ISO8601_FMT)}/{step}"]
 
 
 VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
@@ -755,7 +776,7 @@ def get_instance(metadata: dict, collection_name: str, instance: str | None = No
         if instance is not None:
             raise exc_incorrect_instance(collection_name, instance)
     elif not instance:
-        instance = ref_times[0]
+        instance = ref_times[-1]
     elif instance not in ref_times:
         raise exc_incorrect_instance(collection_name, instance)
 
@@ -773,7 +794,7 @@ def get_parameters(metadata: dict, collection_name: str, parameter_name_par: str
             parameters.append(param)
 
     if len(parameters) == 0:
-        raise exec_unknown_parameter(collection_name, parameter_name_par)
+        raise exc_unknown_parameter(collection_name, parameter_name_par)
     return parameters
 
 

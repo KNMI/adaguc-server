@@ -836,7 +836,7 @@ def test_multi_reftime_temporal_extent(client: TestClient):
     Temporal extents in the /instances call will be wrong, we cannot fix this.
     """
 
-    base_url = f"/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
+    base_url = "/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
 
     # The temporal extent in the /instances call will be wrong, as they are the same for _all_ instances.
     resp = client.get(f"{base_url}/instances")
@@ -876,10 +876,10 @@ def test_multi_reftime_temporal_extent(client: TestClient):
 def test_multi_reftime_instanceless_query(client: TestClient):
     """Querying position and cube without selecting an instance should return results for the most recent instance"""
 
-    base_url = f"/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
+    base_url = "/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
 
     # Position query
-    resp = client.get(f"{base_url}/position?coords=POINT(5.0 52.0)&datetime=*")
+    resp = client.get(f"{base_url}/position?coords=POINT(5.0 52.0)&datetime=1000-01-01T00:00:00Z/3000-01-01T00:00:00Z")
     assert resp.status_code == 200
     covjson = resp.json()
 
@@ -888,7 +888,7 @@ def test_multi_reftime_instanceless_query(client: TestClient):
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
     # Cube query
-    resp = client.get(f"{base_url}/cube?bbox=2.0,50.5,9.0,54.5&datetime=*")
+    resp = client.get(f"{base_url}/cube?bbox=2.0,50.5,9.0,54.5&datetime=1000-01-01T00:00:00Z/3000-01-01T00:00:00Z")
     assert resp.status_code == 200
     covjson = resp.json()
 
