@@ -51,9 +51,7 @@ def parse_iso(dts: str) -> datetime:
     """
     parsed_dt = None
     try:
-        parsed_dt = datetime.strptime(dts, "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=timezone.utc
-        )
+        parsed_dt = datetime.strptime(dts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     except ValueError as exc:
         logger.error("err: %s %s", dts, exc)
     return parsed_dt
@@ -76,10 +74,7 @@ def get_ref_times_for_coll(metadata) -> list[str]:
     ):
         try:
             instance_ids = [
-                parse_iso(reft).strftime("%Y%m%d%H%M")
-                for reft in metadata[first_param]["dims"]["reference_time"][
-                    "values"
-                ].split(",")
+                parse_iso(reft).strftime("%Y%m%d%H%M") for reft in metadata[first_param]["dims"]["reference_time"]["values"].split(",")
             ]
             return instance_ids
         except ValueError:
@@ -90,16 +85,11 @@ def get_ref_times_for_coll(metadata) -> list[str]:
 def get_base_url(req: Request = None) -> str:
     """Returns the base url of this service"""
 
-    base_url_from_request = (
-        f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}"
-        if req
-        else None
-    )
-    base_url = (
-        os.getenv("EXTERNALADDRESS", base_url_from_request) or "http://localhost:8080"
-    )
-
-    return base_url.strip("/")
+    # base_url_from_request = f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}" if req else None
+    # base_url = os.getenv("EXTERNALADDRESS", base_url_from_request) or "http://localhost:8080"
+    # base_url = req.headers.get("x-ADAGUC-ONLINERESOURCE")
+    logging.info("get_base_url: %s", req.base_url)
+    return str(req.base_url).strip("/")
 
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"
@@ -194,9 +184,7 @@ def get_extent_from_md(metadata: dict, parameter: str):
         )
     # logger.info("TEMPORAL [%s]: %s, %s", parameter, interval, time_values)
 
-    extent = Extent(
-        spatial=spatial, temporal=temporal, custom=custom, vertical=vertical
-    )
+    extent = Extent(spatial=spatial, temporal=temporal, custom=custom, vertical=vertical)
 
     return extent
 
@@ -204,6 +192,7 @@ def get_extent_from_md(metadata: dict, parameter: str):
 def get_collectioninfo_from_md(
     metadata: dict,
     collection_name: str,
+    base_url_: str,
     instance: str = None,
 ) -> Collection:
     """
@@ -228,16 +217,13 @@ def get_collectioninfo_from_md(
     # Identify first parameter with enable_edr==True
     first_param = None
     for param in metadata:
-        if (
-            param not in ["baselayer", "overlay"]
-            and metadata[param]["layer"].get("enable_edr") is True
-        ):
+        if param not in ["baselayer", "overlay"] and metadata[param]["layer"].get("enable_edr") is True:
             first_param = param
             break
     if first_param is None or metadata[first_param]["layer"]["variables"] is None:
         return []
 
-    base_url = get_base_url() + f"/edr/collections/{collection_name}"
+    base_url = base_url_ + f"/edr/collections/{collection_name}"
 
     if instance is not None:
         base_url += f"/instances/{instance}"
@@ -250,9 +236,7 @@ def get_collectioninfo_from_md(
         ref_times = get_ref_times_for_coll(metadata)
         if ref_times and len(ref_times) > 0:
             has_instances = True
-            instances_link = Link(
-                href=f"{base_url}/instances", rel="collection", type="application/json"
-            )
+            instances_link = Link(href=f"{base_url}/instances", rel="collection", type="application/json")
             links.append(instances_link)
 
     primary_extent = get_extent_from_md(metadata, first_param)
@@ -449,12 +433,8 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
 
     interval = [
         [
-            datetime.strptime(times[0], "%Y-%m-%dT%H:%M:%SZ").replace(
-                tzinfo=timezone.utc
-            ),
-            datetime.strptime(times[-1], "%Y-%m-%dT%H:%M:%SZ").replace(
-                tzinfo=timezone.utc
-            ),
+            datetime.strptime(times[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+            datetime.strptime(times[-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
         ]
     ]
     logger.info(
@@ -468,9 +448,7 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
     return interval, times
 
 
-def get_params_for_dataset(
-    metadata: dict, dataset_name: str, primary_extent: Extent
-) -> dict[str, Parameter]:
+def get_params_for_dataset(metadata: dict, dataset_name: str, primary_extent: Extent) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
     """
@@ -491,11 +469,7 @@ def get_params_for_dataset(
             ),
             description=param_metadata["description"],
             type="Parameter",
-            unit=Unit(
-                symbol=Symbol(
-                    value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
-                )
-            ),
+            unit=Unit(symbol=Symbol(value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL)),
             label=param_metadata["parameter_label"],
             extent=current_extent if current_extent != primary_extent else None,
         )
@@ -513,10 +487,7 @@ def handle_metadata(metadata: dict):
             continue
         for layername, layerdata in metadata[dataset].items():
             if layerdata:
-                if (
-                    "collection" in layerdata["layer"]
-                    and len(layerdata["layer"]["collection"]) > 0
-                ):
+                if "collection" in layerdata["layer"] and len(layerdata["layer"]["collection"]) > 0:
                     collection_name = dataset + "." + layerdata["layer"]["collection"]
                 elif "." in dataset:
                     # Note, no collections were configured. There is a "." in the datasetname, so we cannot make an EDR dataset out of it.
@@ -571,8 +542,7 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
             if not layer["dims"][dim_name]["hidden"] and (
-                dim_name in ["elevation"]
-                or layer["dims"][dim_name]["type"] == "dimtype_vertical"
+                dim_name in ["elevation"] or layer["dims"][dim_name]["type"] == "dimtype_vertical"
             ):
                 values = layer["dims"][dim_name]["values"].split(",")
                 vertical_dim = {
@@ -605,10 +575,7 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
 
     if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
-            if (
-                not layer["dims"][dim_name]["hidden"]
-                and not layer["dims"][dim_name]["type"] == "dimtype_vertical"
-            ):
+            if not layer["dims"][dim_name]["hidden"] and not layer["dims"][dim_name]["type"] == "dimtype_vertical":
                 # Not needed for non custom dims:
                 if dim_name not in [
                     "reference_time",
@@ -632,9 +599,7 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
     return None
 
 
-def get_times_for_collection(
-    metadata, parameter: str = None
-) -> tuple[list[list[str]], list[str]]:
+def get_times_for_collection(metadata, parameter: str = None) -> tuple[list[list[str]], list[str]]:
     """
     Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
 
@@ -652,12 +617,8 @@ def get_times_for_collection(
             terms = time_dim.split("/")
             interval = [
                 [
-                    datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc
-                    ),
-                    datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc
-                    ),
+                    datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+                    datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
                 ]
             ]
             return interval, get_time_values_for_range(time_dim)
@@ -665,12 +626,8 @@ def get_times_for_collection(
         terms = time_dim.split(",")
         interval = [
             [
-                datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc
-                ),
-                datetime.strptime(terms[-1], "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc
-                ),
+                datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+                datetime.strptime(terms[-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
             ]
         ]
         return interval, terms
@@ -721,10 +678,7 @@ def get_param_metadata(param_metadata: dict, dataset_name: str) -> dict:
     wms_layer_name = param_metadata["layer"]["layername"]
     observed_property_id = wms_layer_name
     if "standard_name" in param_metadata["layer"]["variables"][0]:
-        observed_property_id = (
-            VOCAB_ENDPOINT_URL
-            + param_metadata["layer"]["variables"][0]["standard_name"]
-        )
+        observed_property_id = VOCAB_ENDPOINT_URL + param_metadata["layer"]["variables"][0]["standard_name"]
 
     parameter_label = param_metadata["layer"]["title"]
     parameter_unit = param_metadata["layer"]["variables"][0]["units"]
@@ -755,9 +709,7 @@ def get_dataset_from_collection(metadata: dict, collection_name: str) -> str:
     return dataset_name
 
 
-def get_instance(
-    metadata: dict, collection_name: str, instance: str | None = None
-) -> str:
+def get_instance(metadata: dict, collection_name: str, instance: str | None = None) -> str:
     ref_times = get_ref_times_for_coll(metadata[collection_name])
     if len(ref_times) == 0:
         if instance is not None:
@@ -770,9 +722,7 @@ def get_instance(
     return instance
 
 
-def get_parameters(
-    metadata: dict, collection_name: str, parameter_name_par: str | None
-) -> list[str]:
+def get_parameters(metadata: dict, collection_name: str, parameter_name_par: str | None) -> list[str]:
     if parameter_name_par is None:
         return list(metadata[collection_name].keys())
 
@@ -787,9 +737,7 @@ def get_parameters(
     return parameters
 
 
-def get_vertical(
-    metadata: dict, collection_name: str, requested_param: str, z_par: str | None
-) -> tuple[str, str]:
+def get_vertical(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> tuple[str, str]:
     vertical_name = None
     vertical_dim = ""
     for param_dim in metadata[collection_name][requested_param]["dims"].values():

@@ -4,6 +4,7 @@ from starlette.types import Receive
 from starlette.types import Scope
 from starlette.types import Send
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
 import logging
 
 
@@ -25,24 +26,22 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
         if scope["type"] == "lifespan":
             return await self.app(scope, receive, send)
 
+        headers: dict[bytes, bytes] = dict(scope["headers"])
+        onlineresource = f"{scope['scheme']}://{headers[b'host'].decode('ascii')}"
+
         # Perform the trusted_host check (--forwarded_allow_ips). Same as in ProxyHeadersMiddleware
         client_addr = scope.get("client")
         client_host = client_addr[0] if client_addr else None
         if client_host not in self.trusted_hosts:
+            logging.info(" NOT trusted %s", client_host)
+            scope["headers"].append((b"x-adaguc-onlineresource", bytes(onlineresource, "ascii")))
             return await self.app(scope, receive, send)
 
-        headers: dict[bytes, bytes] = dict(scope["headers"])
-        logging.info(
-            "HEADERS: %s\n%s",
-            list(headers.keys()),
-            [
-                f"{k}: {headers.get(k, '-')}"
-                for k in [b"host", b"x-forwarded-for", b"x-forwarded-host", b"x-forwarded-proto", b"x-forwarded-prefix"]
-            ],
-        )
+        logging.info("TRUSTED: %s", client_host)
 
         if b"x-forwarded-prefix" in headers:
             prefix = headers[b"x-forwarded-prefix"].decode("ascii").strip()
+            logging.info("prefix=%s", prefix)
 
             # Prevent malicious input, while still allowing slashes
             prefix = urllib.parse.quote(prefix, safe="/")
@@ -55,12 +54,23 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
 
         if b"x-forwarded-host" in headers:
             forwarded_host = headers[b"x-forwarded-host"].decode("ascii").strip()
+            logging.info("forwarded_host: %s", forwarded_host)
 
             # Prevent malicious input
             forwarded_host = urllib.parse.quote(forwarded_host)
 
             # Replace the Host header with the value of the X-Forwarded-Host header
             scope["headers"] = [(k, forwarded_host.encode("ascii")) if k == b"host" else (k, v) for k, v in scope["headers"]]
+
+            scheme = headers.get(b"x-forwarded-proto", b"https").decode("ascii")
+            if b"x-forwarded-port" in headers:
+                port = ":" + headers[b"x-forwarded-port"].decode("ascii")
+            else:
+                port = ""
+            onlineresource = f"{scheme}://{forwarded_host}{port}"
+
+        logging.info("onlineresource set to: %s", onlineresource)
+        scope["headers"].append((b"x-adaguc-onlineresource", bytes(onlineresource, "ascii")))
 
         # Calling the parent ProxyHeadersMiddleware **after** replacing these headers, as ProxyHeadersMiddleware
         # will replace the client addresss if X-Forwarded-For has been set
