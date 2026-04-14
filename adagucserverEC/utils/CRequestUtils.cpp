@@ -84,7 +84,7 @@ std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
 
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(refTimeDim.c_str(), -1, false, tableName.c_str());
   if (store == NULL) {
-    setExceptionType(InvalidDimensionValue);
+    setExceptionType(ServiceExceptionType::InvalidDimensionValue);
     CDBError("Invalid dimension value for layer %s", dataSource.cfgLayer->Name[0]->value.c_str());
     return {};
   }

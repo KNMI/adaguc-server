@@ -36,7 +36,8 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
   if (store == nullptr || store->getSize() == 0) {
     delete store;
-    throw InvalidDimensionValue;
+    setExceptionType(ServiceExceptionType::InvalidDimensionValue);
+    throw ServiceExceptionType::InvalidDimensionValue;
   }
   for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
     for (size_t k = 0; k < store->getSize(); k++) {
@@ -122,13 +123,14 @@ json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetNa
   return datasetJSON;
 }
 
-int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
+ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   json dataset;
   json layer;
   std::string datasetLocation = srvParams->datasetLocation;
   CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
   if (layerMetaDataStore == nullptr) {
-    return 1;
+    CDBError("Unable to get layer metadata store");
+    return ServiceExceptionType::UnprocessableEntity;
   }
   auto records = layerMetaDataStore->getRecords();
   // CDBDebug("Found %lu records in database", records.size());
@@ -152,8 +154,8 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
     if (it == datasetNames.end()) {
       resetErrors();
       result["error"] = "dataset not found";
-      // result["error"] = "InvalidDimensionValue";
-      return HTTP_STATUSCODE_404_NOT_FOUND;
+      setExceptionType(ServiceExceptionType::InvalidDataset);
+      return ServiceExceptionType::InvalidDataset;
     } else {
       // List single dataset.
       const auto &dataSetName = (*it).first;
@@ -162,7 +164,8 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
         result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
       } catch (...) {
         result["error"] = "InvalidDimensionValue";
-        return HTTP_STATUSCODE_404_NOT_FOUND;
+        setExceptionType(ServiceExceptionType::InvalidDimensionValue);
+        return ServiceExceptionType::InvalidDimensionValue;
       }
     }
   } else {
@@ -174,5 +177,5 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
       }
     }
   }
-  return 0;
+  return ServiceExceptionType::OK;
 }
