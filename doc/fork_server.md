@@ -1,8 +1,9 @@
 # ADAGUC Fork Server Overview
 
-This document describes how the ADAGUC fork server processes requests using a single fork server (mother) process that creates child processes using `fork()`. The mother process remains running and listens for incoming requests, while each request is handled by a separate child process.
+This document describes how the ADAGUC fork server handles requests using a persistent "mother" process that spawns short-lived child processes via `fork()`.
+Each request is handled in a separate child process, while the mother process remains initialized and ready to accept new connections.
 
-Using a fork server reduces overhead because the main process stays initialized, so handling a request only requires creating a new child process using `fork()`.
+This design reduces per-request overhead by avoiding repeated process initialization.
 
 The fork server is enabled by setting the environment variable `ADAGUC_FORK_ENABLE` to `TRUE`. If this variable is not set to `TRUE`, ADAGUC runs without the fork server.
 
@@ -10,13 +11,13 @@ The fork server is enabled by setting the environment variable `ADAGUC_FORK_ENAB
 
 The system consists of three parts:
 
-- Python server: Receives HTTP/WMS requests and forwards them to the fork server.
+- Python server: Handles HTTP/WMS requests, forwards them to the fork server, and returns the response to the client.
 - Mother process (C++): A persistent process that listens for requests and manages child processes.
 - Child processes (C++): Short-lived processes created with `fork()`. Each child handles one request.
 
 The maximum number of concurrent children is limited by the environment variable `ADAGUC_NUMPARALLELPROCESSES`.
 
-Communication between the Python server and adaguc-server happens through a unix socket.
+Communication between the Python server and the mother process occurs via a Unix domain socket.
 
 # Request Lifecycle
 
@@ -44,7 +45,7 @@ REQUEST_URI=...\n
 QUERY_STRING=...
 ```
 
-Normally, ADAGUC receives these values as environment variables when the process is started. With the fork server, the mother process is already running, so these request-specific variables are sent through the socket instead.
+Normally, ADAGUC receives these values via environment variables at process startup. With the fork server, the mother process is already running, so these request-specific variables are sent through the socket instead.
 
 ## 3. Connection Accepted
 
@@ -73,7 +74,7 @@ The child process:
 4. Writes the result to stdout (which goes to the socket).
 5. Exits with a status code.
 
-Each child processes exactly one request.
+Each child handles exactly one request and then exits immediately.
 
 ## 6. Child Exit Notification
 
@@ -95,7 +96,7 @@ For each exited child:
 - The socket is closed.
 - The child entry is removed from the bookkeeping map.
 
-## 9. Python Reads Response
+## 8. Python Reads Response
 
 Python reads the full response from the Unix socket.
 
@@ -106,8 +107,18 @@ The response format is:
 [4 byte status code]
 ```
 
-All bytes except the final four contain the normal ADAGUC response that is returned to the client. The last four bytes represent the exit status of the child process.
+All bytes except the final four contain the normal ADAGUC response that is returned to the client. The final four bytes represent the exit status of the child process.
 
 # Process Cleanup
 
 The mother periodically checks if child processes run too long, and will send a `SIGKILL` if a child exceeds the configured timeout.
+
+
+# Supervision
+
+The fork server (mother process) is managed by a Python supervisor `fork_server_supervisor.py`, which:
+
+- Starts the process during application startup
+- Performs periodic health checks via the Unix socket
+- Restarts the process if it becomes unresponsive or exits
+- Terminates the process during application shutdown
