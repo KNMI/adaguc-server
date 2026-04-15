@@ -100,6 +100,7 @@ def get_times_for_collection(wmslayers, parameter: str = None) -> tuple[list[lis
 
 
 @edrApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
+@edrApiApp.get("/collections/", response_model=Collections, response_model_exclude_none=True)
 async def rest_get_edr_collections(request: Request, response: Response):
     """
     GET /collections, returns all available collections

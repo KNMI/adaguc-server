@@ -31,6 +31,11 @@ router = APIRouter()
     response_model=Instances,
     response_model_exclude_none=True,
 )
+@router.get(
+    "/collections/{collection_name}/instances/",
+    response_model=Instances,
+    response_model_exclude_none=True,
+)
 async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, response: Response):
     """
     GET: Returns all available instances for the collection
