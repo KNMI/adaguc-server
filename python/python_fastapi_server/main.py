@@ -30,18 +30,16 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    supervisor = None
+    fork_supervisor = None
 
     if is_fork_enabled():
-        supervisor = ForkServerSupervisor(
-            binary_path=f"{os.getenv('ADAGUC_PATH')}/bin/adagucserver",
-        )
-        await supervisor.start()
+        fork_supervisor = ForkServerSupervisor()
+        await fork_supervisor.start_monitoring()
 
     yield
 
-    if supervisor:
-        await supervisor.stop()
+    if fork_supervisor:
+        await fork_supervisor.stop_monitoring()
 
 
 app = FastAPI(redirect_slashes=False, lifespan=lifespan)

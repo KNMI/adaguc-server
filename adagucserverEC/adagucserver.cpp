@@ -51,7 +51,7 @@ int processQueryStringRequest() {
   return getStatusCode();
 }
 
-int run_adaguc_once(int argc, char **argv, char **envp, bool is_forked) {
+int run_adaguc_once(int argc, char **argv, char **envp) {
   traceTimingsCheckEnabled();
   checkLogSettings();
 
@@ -91,9 +91,9 @@ int main(int argc, char **argv, char **envp) {
 
   const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
   if (fork_enable && std::string(fork_enable) == "TRUE") {
-    return run_as_fork_service(run_adaguc_once, argc, argv, envp);
+    return mother_run_as_fork_service(run_adaguc_once, argc, argv, envp);
   } else {
     // normal flow without unix socket server/fork
-    return run_adaguc_once(argc, argv, envp, false);
+    return run_adaguc_once(argc, argv, envp);
   }
 }
