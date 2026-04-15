@@ -1992,13 +1992,13 @@ int CImageDataWriter::end() {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png with alpha");
 #endif
-    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png\r\nContent-Encoding:png8a", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8_NOALPHA) {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png without alpha");
 #endif
-    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png\r\nContent-Encoding:png8", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(false);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24) {
 #ifdef CIMAGEDATAWRITER_DEBUG
@@ -2016,7 +2016,7 @@ int CImageDataWriter::end() {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating webp");
 #endif
-    printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/webp\r\nContent-Encoding:webp", cacheControl.c_str(), 13, 10);
 
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {

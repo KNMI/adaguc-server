@@ -15,6 +15,9 @@ ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
 MAX_SIZE_FOR_CACHING = 10_000_000
 
+BR_COMPRESS_CONTENT_TYPES = ["application/json", "text/xml", "text/html", "text/plain", "image/png32"]
+CONTENT_TYPE_HEADER_LOWER = "content-type"
+
 
 async def get_cached_response(redis_pool, request):
     key = generate_key(request)
@@ -30,12 +33,17 @@ async def get_cached_response(redis_pool, request):
 
     headers_len = int(cached[10:16].decode("utf-8"))
     headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
-
-    data = brotli.decompress(cached[16 + headers_len :])
+    is_compression_needed = check_if_compression_needed(headers)
+    data = brotli.decompress(cached[16 + headers_len :]) if is_compression_needed else cached[16 + headers_len :]
     return age, headers, data
 
 
 headers_to_skip = ["x-process-time", "age"]
+
+
+def check_if_compression_needed(headers):
+    lowercase_headers = {k.lower(): v for k, v in headers.items()}
+    return CONTENT_TYPE_HEADER_LOWER in lowercase_headers and lowercase_headers[CONTENT_TYPE_HEADER_LOWER] in BR_COMPRESS_CONTENT_TYPES
 
 
 async def response_to_cache(redis_pool, request, headers, data, ex: int):
@@ -47,18 +55,15 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
             fixed_headers[k] = headers[k]
     headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode("utf-8")
 
-    entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
-        "utf-8"
-    )
-    compressed_data = brotli.compress(data, quality=4)
+    entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode("utf-8")
+    is_compression_needed = check_if_compression_needed(headers)
+
+    compressed_data = brotli.compress(data, quality=4) if is_compression_needed else data
     if len(compressed_data) < MAX_SIZE_FOR_CACHING:
         redis_client = redis.Redis(connection_pool=redis_pool)
         await redis_client.set(
             key,
-            entrytime
-            + f"{len(headers_json):06d}".encode("utf-8")
-            + headers_json
-            + compressed_data,
+            entrytime + f"{len(headers_json):06d}".encode("utf-8") + headers_json + compressed_data,
             ex=ex,
         )
         await redis_client.aclose()

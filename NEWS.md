@@ -9,6 +9,7 @@
 - EDR: Time and reftime were both calculated by looking at the first parameter in the dataset. Adaguc now checks all parameters of a dataset.
 - EDR: When performing a position or cube query without selecting an instance (e.g. `/edr/collections/my_collection/position`), adaguc now returns the most recent instance.
 - Replaced CAIRO_LINE_JOIN_MITER with BEVEL for smoother line joins 
+- Brotli encoding is now done only for certain Content-Types.
 
 **Version 7.1.2 - 2026-03-30***
 
