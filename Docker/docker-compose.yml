@@ -59,6 +59,7 @@ services:
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
       - "ADAGUC_REDIS=redis://adaguc-redis:6379"
       - "ADAGUC_TRACE_TIMINGS=TRUE"
+      - "TRUSTED_PROXIES=*"
     env_file:
       - .env
     restart: unless-stopped
