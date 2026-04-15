@@ -45,7 +45,7 @@ int processQueryStringRequest() {
     CDBError("Unable to read configuration file.");
   }
   request.runRequest();
-  readyerror();
+  readyHandleError();
   return getStatusCode();
 }
 

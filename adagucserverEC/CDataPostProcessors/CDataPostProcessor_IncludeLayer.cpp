@@ -37,10 +37,10 @@ int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *
     if (CRequest::setDimValuesForDataSource(dataSourceToInclude, dataSource->srvParams) == 0) {
       dataIsFound = true;
     }
-  } catch (ServiceExceptionCode e) {
+  } catch (ServiceExceptionType e) {
   }
   if (dataIsFound == false) {
-    CDBDebug("No data available for layer %s", additionalLayerName.c_str());
+    CDBWarning("No data available for layer %s", additionalLayerName.c_str());
     return 1;
   }
   return 0;

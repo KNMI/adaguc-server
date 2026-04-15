@@ -542,7 +542,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                   CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                   if (dimUnits == NULL) {
                     if (isTimeDim[d]) {
-                      setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+                      setExceptionType(ServiceExceptionType::InvalidDimensionValue);
                       CREPORT_ERROR_NODOC(CT::string("No time units found for variable ") + dimVar->name, CReportMessage::Categories::GENERAL);
                       throw(__LINE__);
                     }

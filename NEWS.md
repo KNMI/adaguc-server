@@ -3,6 +3,8 @@
 - GetLayerMetadata can now return results for specific forecast_reference_time, like: `http://localhost:8080/adagucserver?dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl`
 - Fixed [#614](https://github.com/KNMI/adaguc-server/issues/614) where generic renderer caused issues with linear transform
 - Revert remove of user agent logging [#677](https://github.com/KNMI/adaguc-server/issues/677)
+- CI/CD now runs with sanitize check
+- Error handling is improved
 
 **Version 7.1.2 - 2026-03-30***
 

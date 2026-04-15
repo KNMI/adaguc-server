@@ -59,7 +59,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   }
   try {
     CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
-  } catch (ServiceExceptionCode e) {
+  } catch (ServiceExceptionType e) {
     return std::make_pair(1, filesDeletedFromFS);
   }
 

@@ -343,11 +343,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
                   if (maxStore == NULL) {
                     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
-                    throw InvalidDimensionValue;
-                    //                     setExceptionType(InvalidDimensionValue);
-                    //                     CDBError("Invalid dimension value for layer
-                    //                     %s",dataSource->cfgLayer->Name[0]->value.c_str()); CDBError("query failed");
-                    //                     return 1;
+                    throw ServiceExceptionType::InvalidDimensionValue;
                   }
                   ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
 
@@ -358,11 +354,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
                   if (maxStore == NULL) {
                     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
-                    throw InvalidDimensionValue;
-                    //                     setExceptionType(InvalidDimensionValue);
-                    //                     CDBError("Invalid dimension value for layer
-                    //                     %s",dataSource->cfgLayer->Name[0]->value.c_str()); CDBError("query failed");
-                    //                     return 1;
+                    throw ServiceExceptionType::InvalidDimensionValue;
                   }
                   ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
                   delete maxStore;
@@ -464,7 +456,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
         if (maxStore == NULL) {
           CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
-          throw InvalidDimensionValue;
+          throw ServiceExceptionType::InvalidDimensionValue;
         }
         ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
 
@@ -517,7 +509,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       for (auto &dimValue: dimValues) {
         if (!CServerParams::checkTimeFormat(dimValue)) {
           CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
-          throw InvalidDimensionValue;
+          throw ServiceExceptionType::InvalidDimensionValue;
         }
       }
     }
@@ -585,7 +577,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
     if (store == NULL) {
       CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
-      throw InvalidDimensionValue;
+      throw ServiceExceptionType::InvalidDimensionValue;
     }
     if (store->getSize() == 0) {
       delete store;
@@ -601,7 +593,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         return 0;
       }
       CDBError("Store has no results. Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
-      throw InvalidDimensionValue;
+      throw ServiceExceptionType::InvalidDimensionValue;
     }
 
     for (size_t k = 0; k < store->getSize(); k++) {
@@ -672,7 +664,7 @@ int CRequest::process_all_layers() {
         // Do not set status code for a missing layer to 404 when we request GetCapabilities
         // GetCapabilities should return statuscode 200 with layers that work.
         if (srvParam->requestType != REQUEST_WMS_GETCAPABILITIES && srvParam->requestType != REQUEST_WCS_GETCAPABILITIES && srvParam->requestType != REQUEST_WCS_DESCRIBECOVERAGE) {
-          setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+          setExceptionType(ServiceExceptionType::InvalidLayer);
           CDBError("Layer [%s] not found", requestedLayerName.c_str());
         } else {
           CDBDebug("Layer [%s] not found", requestedLayerName.c_str());
@@ -861,7 +853,7 @@ int CRequest::process_querystring() {
     return 1;
   }
 
-  seterrormode(EXCEPTIONS_PLAINTEXT);
+  setErrorMode(ServiceExceptionMode::ExceptionPlainText);
   CT::string SERVICE, REQUEST;
 
   int dFound_Width = 0;
@@ -1340,7 +1332,7 @@ int CRequest::process_querystring() {
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
     dErrorOccured = 1;
-    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
   }
   if (dFound_Styles == 0) {
     srvParam->Styles.copy("");
@@ -1354,7 +1346,7 @@ int CRequest::process_querystring() {
   else { // Service not recognised
     CDBError("ADAGUC Server: Parameter SERVICE invalid");
     dErrorOccured = 1;
-    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
   }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
@@ -1369,7 +1361,7 @@ int CRequest::process_querystring() {
     if (dFound_Request == 0) {
       CDBError("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured = 1;
-      setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
     } else {
       if (REQUEST.equals("GETCAPABILITIES"))
         srvParam->requestType = REQUEST_WMS_GETCAPABILITIES;
@@ -1391,7 +1383,7 @@ int CRequest::process_querystring() {
         srvParam->requestType = REQUEST_WMS_GETREFERENCETIMES;
       else {
         dErrorOccured = 1;
-        setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+        setExceptionType(ServiceExceptionType::UnprocessableEntity);
         CDBError("ADAGUC Server: Parameter REQUEST invalid");
       }
     }
@@ -1406,7 +1398,7 @@ int CRequest::process_querystring() {
       }
     }
 
-    seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
+    setErrorMode(ServiceExceptionMode::ExceptionWMS_1_3_0);
     // Check the version
     if (dFound_Version != 0) {
       srvParam->OGCVersion = -1; // WMS_VERSION_1_1_1;
@@ -1420,13 +1412,13 @@ int CRequest::process_querystring() {
     }
     // Set the exception response
     if (srvParam->OGCVersion == WMS_VERSION_1_0_0) {
-      seterrormode(EXCEPTIONS_PLAINTEXT);
-      if (srvParam->requestType == REQUEST_WMS_GETMAP) seterrormode(WMS_EXCEPTIONS_IMAGE);
-      if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) seterrormode(WMS_EXCEPTIONS_IMAGE);
+      setErrorMode(ServiceExceptionMode::ExceptionPlainText);
+      if (srvParam->requestType == REQUEST_WMS_GETMAP) setErrorMode(ServiceExceptionMode::ExceptionImage);
+      if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) setErrorMode(ServiceExceptionMode::ExceptionImage);
     }
 
     if (srvParam->OGCVersion == WMS_VERSION_1_1_1) {
-      seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+      setErrorMode(ServiceExceptionMode::ExceptionWMS_1_1_1);
       // Check if default has been set for EXCEPTIONS
       if ((srvParam->requestType == REQUEST_WMS_GETMAP) || (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
         if ((dFound_Exceptions == 0) && (srvParam->cfg->WMS[0]->WMSExceptions.size() > 0)) {
@@ -1439,7 +1431,7 @@ int CRequest::process_querystring() {
     }
 
     if (srvParam->OGCVersion == WMS_VERSION_1_3_0) {
-      seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
+      setErrorMode(ServiceExceptionMode::ExceptionWMS_1_3_0);
       // Check if default has been set for EXCEPTIONS
       if ((srvParam->requestType == REQUEST_WMS_GETMAP) || (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
         if ((dFound_Exceptions == 0) && (srvParam->cfg->WMS[0]->WMSExceptions.size() > 0)) {
@@ -1470,23 +1462,23 @@ int CRequest::process_querystring() {
       }
 
       if (Exceptions.equals("application/vnd.ogc.se_xml")) {
-        if (srvParam->OGCVersion == WMS_VERSION_1_1_1) seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+        if (srvParam->OGCVersion == WMS_VERSION_1_1_1) setErrorMode(ServiceExceptionMode::ExceptionWMS_1_1_1);
       }
       if (Exceptions.equals("application/vnd.ogc.se_inimage")) {
-        seterrormode(WMS_EXCEPTIONS_IMAGE);
+        setErrorMode(ServiceExceptionMode::ExceptionImage);
       }
       if (Exceptions.equals("application/vnd.ogc.se_blank")) {
-        seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
+        setErrorMode(ServiceExceptionMode::ExceptionBlankImage);
       }
       if (Exceptions.equals("INIMAGE")) {
-        seterrormode(WMS_EXCEPTIONS_IMAGE);
+        setErrorMode(ServiceExceptionMode::ExceptionImage);
       }
       if (Exceptions.equals("BLANK")) {
-        seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
+        setErrorMode(ServiceExceptionMode::ExceptionBlankImage);
       }
       if (Exceptions.equals("XML")) {
-        if (srvParam->OGCVersion == WMS_VERSION_1_1_1) seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
-        if (srvParam->OGCVersion == WMS_VERSION_1_3_0) seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
+        if (srvParam->OGCVersion == WMS_VERSION_1_1_1) setErrorMode(ServiceExceptionMode::ExceptionWMS_1_1_1);
+        if (srvParam->OGCVersion == WMS_VERSION_1_3_0) setErrorMode(ServiceExceptionMode::ExceptionWMS_1_3_0);
       }
     } else {
       // EXCEPTIONS not set in request
@@ -1786,15 +1778,14 @@ int CRequest::process_querystring() {
       if (srvParam->Format.equals("application/json")) {
         // GetMetadata for specific dataset and layer
         json result;
+        setErrorMode(ServiceExceptionMode::ExceptionJSON);
+
         traceTimingsSpanStart(TraceTimingType::GETMETADATAJSON);
-        int status = getLayerMetadataAsJson(srvParam, result);
+        ServiceExceptionType status = getLayerMetadataAsJson(srvParam, result);
         traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
-        if (status == HTTP_STATUSCODE_404_NOT_FOUND) {
-          setExceptionType(ServiceExceptionCode::InvalidDimensionValue);
-        }
-        if (errorsOccured()) {
-          readyerror();
-          return 1;
+        if (status != ServiceExceptionType::OK) {
+          setExceptionType(status);
+          return status;
         }
         auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
         printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
@@ -1830,7 +1821,7 @@ int CRequest::process_querystring() {
     }
     if (dFound_Request == 0) {
       dErrorOccured = 1;
-      setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
       CDBError("ADAGUC Server: Parameter REQUEST missing");
       return 1;
     } else {
@@ -1842,7 +1833,7 @@ int CRequest::process_querystring() {
         srvParam->requestType = REQUEST_WCS_GETCOVERAGE;
       else {
         dErrorOccured = 1;
-        setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+        setExceptionType(ServiceExceptionType::UnprocessableEntity);
         CDBError("ADAGUC Server: Parameter REQUEST invalid");
         return 1;
       }
@@ -1923,16 +1914,16 @@ int CRequest::process_querystring() {
   if (srvParam->serviceType == SERVICE_WCS) {
     CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and "
              "getcoverage");
-    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
     return 1;
   } else if (srvParam->serviceType == SERVICE_WMS) {
     CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, gethistogram, "
              "getfeatureinfo, getpointvalue, getmetadata, getReferencetimes, getstyles and getlegendgraphic");
-    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
     return 1;
   } else {
     CDBError("ADAGUC Server: Unknown service");
-    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
     return 1;
   }
 #ifdef MEASURETIME
@@ -2059,8 +2050,8 @@ int CRequest::determineTypesForDataSources() {
             CDBError("Error in setDimValuesForDataSource: Unable to find data for layer %s", dataSources[j]->layerName.c_str());
             return 1;
           }
-        } catch (ServiceExceptionCode e) {
-          CDBError("Exception in setDimValuesForDataSource for layer %s with ServiceExceptionCode=%d", dataSources[j]->layerName.c_str(), e);
+        } catch (ServiceExceptionType e) {
+          CDBError("Exception in setDimValuesForDataSource for layer %s with ServiceExceptionType=%s", dataSources[j]->layerName.c_str(), getExceptionCodeText(e).c_str());
           setExceptionType(e);
           return 1;
         }
@@ -2147,7 +2138,7 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
         /* Set the dims based on server parameters */
         try {
           CRequest::fillDimValuesForDataSource(additionalDataSource, additionalDataSource->srvParams);
-        } catch (ServiceExceptionCode e) {
+        } catch (ServiceStatusCode e) {
           CDBError("additionalDataSource: Exception in setDimValuesForDataSource");
           return 1;
         }
@@ -2160,7 +2151,7 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
             CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
             add = false;
           }
-        } catch (ServiceExceptionCode e) {
+        } catch (ServiceStatusCode e) {
           CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
           add = false;
         }
