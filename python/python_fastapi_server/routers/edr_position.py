@@ -76,9 +76,7 @@ async def get_coll_inst_position(
     response: CovJSONResponse,
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[
-        str, Query(alias="parameter-name", min_length=1)
-    ] = None,
+    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """
@@ -113,9 +111,7 @@ async def handle_coll_inst_position(
     metadata: dict,
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[
-        str, Query(alias="parameter-name", min_length=1)
-    ] = None,
+    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """

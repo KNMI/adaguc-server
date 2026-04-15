@@ -38,7 +38,7 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
             return await self.app(scope, receive, send)
 
         logging.info("TRUSTED: %s", client_host)
-
+        prefix = ""
         if b"x-forwarded-prefix" in headers:
             prefix = headers[b"x-forwarded-prefix"].decode("ascii").strip()
             logging.info("prefix=%s", prefix)
@@ -67,7 +67,7 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
                 port = ":" + headers[b"x-forwarded-port"].decode("ascii")
             else:
                 port = ""
-            onlineresource = f"{scheme}://{forwarded_host}{port}"
+            onlineresource = f"{scheme}://{forwarded_host}{port}{prefix}"
 
         logging.info("onlineresource set to: %s", onlineresource)
         scope["headers"].append((b"x-adaguc-onlineresource", bytes(onlineresource, "ascii")))

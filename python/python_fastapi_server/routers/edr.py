@@ -9,7 +9,6 @@ KNMI
 """
 
 import logging
-from datetime import datetime, timezone
 import traceback
 
 from edr_pydantic.capabilities import (
@@ -25,18 +24,12 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from .edr_cube import router as cube_router
-from .utils.edr_exception import EdrException, exc_no_datasets
+from .utils.edr_exception import EdrException, exc_unknown_collection
 from .edr_locations import router as locations_router
 from .edr_position import router as position_router
 from .edr_instances import router as instances_router
 
-from .utils.edr_utils import (
-    generate_max_age,
-    get_base_url,
-    get_collectioninfo_from_md,
-    get_time_values_for_range,
-    get_metadata,
-)
+from .utils.edr_utils import generate_max_age, get_base_url, get_collectioninfo_from_md, get_instance, get_metadata
 
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
@@ -66,39 +59,6 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
-def get_times_for_collection(wmslayers, parameter: str = None) -> tuple[list[list[str]], list[str]]:
-    """
-    Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
-
-    It does this for given parameter. When the parameter is not given it will do it for the first Layer in the GetCapabilities document.
-    """
-    # logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo["name"], parameter)
-    if parameter and parameter in wmslayers:
-        layer = wmslayers[parameter]
-    else:
-        layer = wmslayers[list(wmslayers)[0]]
-
-    if "time" in layer["dimensions"]:
-        time_dim = layer["dimensions"]["time"]
-        if "/" in time_dim["values"][0]:
-            terms = time_dim["values"][0].split("/")
-            interval = [
-                [
-                    datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
-                    datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
-                ]
-            ]
-            return interval, get_time_values_for_range(time_dim["values"][0])
-        interval = [
-            [
-                datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
-                datetime.strptime(time_dim["values"][-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
-            ]
-        ]
-        return interval, time_dim["values"]
-    return None, None
-
-
 @edrApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
 @edrApiApp.get("/collections/", response_model=Collections, response_model_exclude_none=True)
 async def rest_get_edr_collections(request: Request, response: Response):
@@ -114,8 +74,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
     collections: list[Collection] = []
     ttl_set = set()
     metadata = await get_metadata()
-    if metadata is None:
-        raise exc_no_datasets()
+
     for dataset_name in metadata.keys():
         try:
             colls = get_collectioninfo_from_md(metadata[dataset_name], dataset_name, base_url)
@@ -138,23 +97,23 @@ async def rest_get_edr_collections(request: Request, response: Response):
 )
 async def rest_get_edr_collection_by_id(collection_name: str, req: Request, response: Response):
     """
-    GET Returns collection information for given collection id
+    GET Returns the most recent EDR collection for given collection id
     """
-    metadata = await get_metadata(collection_name)
-    if metadata is None:
-        raise EdrException(
-            code=400,
-            description=f"Unknown or unconfigured collection {collection_name}",
-        )
 
-    ttl = None
     base_url = get_base_url(req)
 
+    # Query metadata to find last reference time
+    metadata = await get_metadata(collection_name)
+    instance = get_instance(metadata, collection_name)
+
+    # Query metadata again with the most recent reference time, so time.values matches the reference time
+    # TODO: it would be good if we can prevent the extra call to metadata.
+    metadata = await get_metadata(collection_name, instance)
     collection = get_collectioninfo_from_md(metadata[collection_name], collection_name, base_url)[0]
-    if ttl is not None:
-        response.headers["cache-control"] = generate_max_age(ttl)
+
     if collection is None:
-        raise EdrException(code=400, description="Unknown or unconfigured collection")
+        raise exc_unknown_collection(collection_name)
+
     return collection
 
 

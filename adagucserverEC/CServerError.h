@@ -28,19 +28,23 @@
 #include <cstdio>
 #include <CDebugger.h>
 
-enum ServiceExceptionCode { OperationNotSupported, InvalidDimensionValue, UnprocessableEntity }; // OGC WMS Exceptions
+// Determines how outputs will be printed
+enum ServiceExceptionMode { ExceptionPlainText, ExceptionJSON, ExceptionImage, ExceptionBlankImage, ExceptionWMS_1_0_0, ExceptionWMS_1_1_1, ExceptionWMS_1_3_0 }; // OGC WMS Exceptions
 
-void printerror(const char *text);
-void printdebug(const char *text, int prioritylevel);
-void seterrormode(int errormode);
-void readyerror();
-void printerrorImage(void *drawImage);
+// OGC WMS Exceptions types.
+enum ServiceExceptionType { OK, OperationNotSupported, InvalidDimensionValue, UnprocessableEntity, InvalidDataset, InvalidLayer };
+
+// Status code types, used as return code of main function.
+enum ServiceStatusCode { HTTPStatusOK_200 = 0, HTTPStatusNotFound_404 = 32, HTTPStatusUnProcessableEntity_422 = 33 };
+
+void addErrorMessage(const char *text);
+void setErrorMode(ServiceExceptionMode errormode);
+void readyHandleError();
 void resetErrors();
 bool errorsOccured();
 void setErrorImageSize(int w, int h, int format, bool _enableTransparency);
-void setExceptionType(ServiceExceptionCode code);
-const char *getExceptionCodeText(ServiceExceptionCode code);
-void setStatusCode(int newStatusCode);
-int getStatusCode();
+void setExceptionType(ServiceExceptionType code);
+ServiceStatusCode getStatusCode();
+std::string getExceptionCodeText(ServiceExceptionType code);
 
 #endif

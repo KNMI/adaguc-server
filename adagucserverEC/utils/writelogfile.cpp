@@ -104,19 +104,13 @@ void logBufferCheckMode() {
 void writeErrorFile(const char *msg) { writeLogFile(msg); }
 
 /* Function pointers called by CDebugger */
-void serverDebugFunction(const char *msg) {
-  writeLogFile(msg);
-  printdebug(msg, 1);
-}
+void serverDebugFunction(const char *msg) { writeLogFile(msg); }
 /* Function pointers called by CDebugger */
 void serverErrorFunction(const char *msg) {
   writeErrorFile(msg);
-  printerror(msg);
+  addErrorMessage(msg);
 }
 /* Function pointers called by CDebugger */
-void serverWarningFunction(const char *msg) {
-  writeLogFile(msg);
-  printdebug(msg, 1);
-}
+void serverWarningFunction(const char *msg) { writeLogFile(msg); }
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }

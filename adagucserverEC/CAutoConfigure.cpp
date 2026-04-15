@@ -440,7 +440,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
       if (dataSource->cfgLayer->Dimension.size() > 0) {
         try {
           CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
-        } catch (ServiceExceptionCode e) {
+        } catch (ServiceExceptionType e) {
           CDBDebug("Unable to fillDimValuesForDataSource");
           return 1;
         }

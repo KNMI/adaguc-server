@@ -485,10 +485,11 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 404)
         self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
+
         expectedErrors = [
             "No time units found for variable time",
             "Exception in DBLoopFiles",
-            "Exception in setDimValuesForDataSource for layer sow_a1 with ServiceExceptionCode=1",
+            "Exception in setDimValuesForDataSource for layer sow_a1 with ServiceExceptionType=InvalidDimensionValue",
             "WMS GetMap Request failed",
         ]
         foundErrors = []

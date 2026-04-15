@@ -7,7 +7,6 @@ import json
 import os
 import os.path
 import unittest
-import sys
 from adaguc.AdagucTestTools import AdagucTestTools
 import netCDF4
 
@@ -272,7 +271,6 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetCapabilities_adaguc_arcus_harmonie_sorted_model_levels.xml"
-        # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.tests.arcus_harmonie_sorted_model_levels&service=WMS&request=GetCapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},

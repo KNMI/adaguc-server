@@ -66,7 +66,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     }
 
     if (datasetConfigFile.length() == 0) {
-      setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+      setExceptionType(ServiceExceptionType::InvalidDataset);
       CDBError("No such dataset");
       return 1;
     }
@@ -186,7 +186,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
     if (isValidResource == false) {
       CDBError("Invalid OpenDAP URL");
-      readyerror();
+      readyHandleError();
       return 1;
     }
 
