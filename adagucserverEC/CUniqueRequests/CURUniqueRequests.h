@@ -31,7 +31,7 @@ public:
   bool readDataAsCDFDouble = false;
   int *__getDimOrder();
 
-  void addDimensionRangeRequest(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue);
+  void addDimensionRangeRequest(const std::string &filename, const std::string &dimName, const size_t dimIndex, const std::string &dimValue);
   void makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
 };
 

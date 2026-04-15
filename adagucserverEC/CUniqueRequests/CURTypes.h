@@ -24,7 +24,7 @@ typedef std::map<std::string, CURDimInfo> map_type_diminfo;
 typedef map_type_diminfo::iterator it_type_diminfo;
 
 struct CURAggregatedDimension {
-  CT::string name;
+  std::string name;
   int start;
   std::vector<std::string> values;
 };

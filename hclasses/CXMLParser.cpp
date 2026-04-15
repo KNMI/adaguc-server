@@ -27,13 +27,14 @@
 #include <libxml/tree.h>
 
 #include "CXMLParser.h"
+#include <algorithm>
 /**
  * Static function which converts an exception into a readable message
  * @param int The value of catched exception
  * @return CT::string with the readable message
  */
-CT::string CXMLParser::getErrorMessage(int CXMLParserException) {
-  CT::string message = "Unknown error";
+std::string CXMLParser::getErrorMessage(int CXMLParserException) {
+  std::string message = "Unknown error";
   if (CXMLParserException == CXMLPARSER_ATTR_NOT_FOUND) message = "CXMLPARSER_ATTR_NOT_FOUND";
   if (CXMLParserException == CXMLPARSER_ELEMENT_NOT_FOUND) message = "CXMLPARSER_ELEMENT_NOT_FOUND";
   if (CXMLParserException == CXMLPARSER_ATTRIBUTE_OUT_OF_BOUNDS) message = "CXMLPARSER_ATTRIBUTE_OUT_OF_BOUNDS";
@@ -106,7 +107,7 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node, int depth) {
  * @param el The XMLElement to convert
  * @param depth the current recursive depth
  */
-CT::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
+std::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
   CT::string data = "";
   bool hasValue = false;
   if (CT::trim(CT::replace(el.value, "\n", "")).length() > 0) {
@@ -143,14 +144,14 @@ CT::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
 /**
  * toString converts the current XMLElement to string
  */
-CT::string CXMLParser::XMLElement::toString() {
+std::string CXMLParser::XMLElement::toString() {
   CT::string data = "";
   data = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
   data += toXML((*this), 0);
   return data;
 }
 
-CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
+std::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
   CT::string data;
   std::vector<CT::string> done;
 
@@ -173,7 +174,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
     }
     if (alreadyDone == false) {
       done.push_back(name);
-      CXMLParser::XMLElement::XMLElementPointerList els = el.getList(name);
+      std::vector<CXMLParser::XMLElement> els = el.getList(name);
       if (els.size() > 1) {
         if (j > 0) data += ",";
         data += "\"";
@@ -238,7 +239,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
   return data;
 }
 
-CT::string CXMLParser::XMLElement::toJSON(int mode) {
+std::string CXMLParser::XMLElement::toJSON(int mode) {
   CT::string data = "";
   data = "[{";
   data += toJSON((*this), 0, mode);
@@ -249,7 +250,7 @@ CT::string CXMLParser::XMLElement::toJSON(int mode) {
 /**
  * toString converts the current XMLElement to string
  */
-CT::string CXMLParser::XMLElement::toStringNoHeader() {
+std::string CXMLParser::XMLElement::toStringNoHeader() {
   CT::string data = "";
   data += toXML((*this), 0);
   return data;
@@ -260,10 +261,12 @@ CT::string CXMLParser::XMLElement::toStringNoHeader() {
  * Throws CXMLPARSER_ATTR_NOT_FOUND if attribute was not found.
  * @param name the name of the attribute to search for
  */
-CT::string CXMLParser::XMLElement::getAttrValue(const char *name) {
-  for (size_t j = 0; j < xmlAttributes.size(); j++) {
-    if (xmlAttributes[j].name == name) return xmlAttributes[j].value;
+std::string CXMLParser::XMLElement::getAttrValue(const std::string &name) {
+  auto it = std::find_if(xmlAttributes.begin(), xmlAttributes.end(), [&name](const auto &a) { return name == a.name; });
+  if (it != xmlAttributes.end()) {
+    return (*it).value;
   }
+
   throw CXMLPARSER_ATTR_NOT_FOUND;
 }
 
@@ -287,8 +290,8 @@ CXMLParser::XMLElement *CXMLParser::XMLElement::getLast() {
  * getList returns all elements with the specified name
  * @param name The name of the elements to return
  */
-CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(const char *name) {
-  XMLElementPointerList elements;
+std::vector<CXMLParser::XMLElement> CXMLParser::XMLElement::getList(const std::string &name) {
+  std::vector<CXMLParser::XMLElement> elements;
   for (size_t j = 0; j < xmlElements.size(); j++) {
     if (xmlElements[j].name == name) {
       elements.push_back(xmlElements[j]);
@@ -303,45 +306,36 @@ CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(co
  * get returns the elements with the specified name
  * @param name The name of the elements to return
  */
-CXMLParser::XMLElement *CXMLParser::XMLElement::get(const char *name) {
-  for (size_t j = 0; j < xmlElements.size(); j++) {
-    if (xmlElements[j].name == name) {
-      return &xmlElements[j];
-    }
+
+CXMLParser::XMLElement *CXMLParser::XMLElement::get(const std::string &name) {
+  auto it = std::find_if(xmlElements.begin(), xmlElements.end(), [&name](const auto &a) { return name == a.name; });
+  if (it != xmlElements.end()) {
+    return &(*it);
+  }
+  return nullptr;
+}
+
+CXMLParser::XMLElement *CXMLParser::XMLElement::getThrows(const std::string &name) {
+  auto el = get(name);
+  if (el != nullptr) {
+    return el;
   }
   throw CXMLPARSER_ELEMENT_NOT_FOUND;
 }
 
 /**
- * Parses a string to XMLElement structure
- * throws integer CXMLPARSER_INVALID_XML if invalid
- * @param data the CT::string
- * @return Zero means succesfully parsed
- */
-int CXMLParser::XMLElement::parse(CT::string data) { return parse(data.c_str(), data.length()); }
-
-/**
- * Parses a string to XMLElement structure
- * throws integer CXMLPARSER_INVALID_XML if invalid
- * @param *data pointer to the CT::string
- * @return Zero means succesfully parsed
- */
-int CXMLParser::XMLElement::parse(CT::string *data) { return parse(data->c_str(), data->length()); }
-
-/**
  * Parses a string of given size to XMLElement structure
  * throws integer CXMLPARSER_INVALID_XML if invalid
  * @param xmlData The XML data as string to parse
- * @param xmlSize The size of the XML data
  * @return Zero means succesfully parsed
  */
-int CXMLParser::XMLElement::parse(const char *xmlData, size_t xmlSize) {
+int CXMLParser::XMLElement::parseData(const std::string &xmlData) {
   LIBXML_TEST_VERSION
   xmlElements.clear();
   xmlAttributes.clear();
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
-  doc = xmlParseMemory(xmlData, xmlSize);
+  doc = xmlParseMemory(xmlData.c_str(), xmlData.length());
   if (doc == NULL) {
     xmlCleanupParser();
     throw(CXMLPARSER_INVALID_XML);
@@ -362,11 +356,11 @@ int CXMLParser::XMLElement::parse(const char *xmlData, size_t xmlSize) {
  * @param xmlFile The XML file location
  * @return Zero means succesfully parsed
  */
-int CXMLParser::XMLElement::parse(const char *xmlFile) {
+int CXMLParser::XMLElement::parseFile(const std::string &filename) {
   LIBXML_TEST_VERSION
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
-  doc = xmlParseFile(xmlFile);
+  doc = xmlParseFile(filename.c_str());
   if (doc == NULL) {
     xmlCleanupParser();
     throw(CXMLPARSER_INVALID_XML);
@@ -379,4 +373,15 @@ int CXMLParser::XMLElement::parse(const char *xmlFile) {
   xmlFreeDoc(doc);
   xmlCleanupParser();
   return 0;
+}
+
+std::string xmlListToJSON(std::vector<CXMLParser::XMLElement> list, int mode) {
+  CT::string json = "[";
+  for (size_t j = 0; j < list.size(); j++) {
+    if (j > 0) json += ",";
+    CT::string subdata = list.at(j).toJSON(mode);
+    json.concatlength((subdata.c_str() + 1), subdata.length() - 3);
+  }
+  json += "]";
+  return json;
 }

@@ -799,15 +799,15 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     CXMLParserElement element;
 
     try {
-      element.parse(legend->attr.file.c_str());
-      CXMLParser::XMLElement::XMLElementPointerList stops = element.get("svg")->get("g")->get("defs")->get("linearGradient")->getList("stop");
+      element.parseFile(legend->attr.file.c_str());
+      auto stops = element.getThrows("svg")->getThrows("g")->getThrows("defs")->getThrows("linearGradient")->getList("stop");
       float cx;
       float rc[4];
       unsigned char prev_red = 0, prev_green = 0, prev_blue = 0, prev_alpha = 0;
       int prev_offset = 0;
       for (size_t j = 0; j < stops.size(); j++) {
         // CDBDebug("%s",stops.get(j)->toString().c_str());
-        int offset = (int)(stops.at(j).getAttrValue("offset").toFloat() * 2.4);
+        int offset = (int)(std::stof(stops.at(j).getAttrValue("offset")) * 2.4);
         CT::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
         color.setSize(color.length() - 1);
         auto colors = color.split(",");
@@ -818,7 +818,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
         unsigned char red = colors[0].toInt();
         unsigned char green = colors[1].toInt();
         unsigned char blue = colors[2].toInt();
-        unsigned char alpha = (char)(stops.at(j).getAttrValue("stop-opacity").toFloat() * 255);
+        unsigned char alpha = (char)(std::stof(stops.at(j).getAttrValue("stop-opacity")) * 255);
         // CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
         if (offset > 255)
           offset = 255;

@@ -46,7 +46,7 @@
 
 int main(){
 
-  CT::string xmlData=
+  std::string xmlData=
   "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
   "<playlist name=\"mylist\" xml:lang=\"en\">\n"
   "  <song>\n"
@@ -67,7 +67,7 @@ int main(){
     printf("xml:\n%s\n",element.getFirst()->toString().c_str());
     printf("%s\n",element.get("playlist")->getList("song").get(1)->toString().c_str());
   }catch(int e){
-    CT::string message=CXMLParser::getErrorMessage(e);
+    std::string message=CXMLParser::getErrorMessage(e);
     printf("%s\n",message.c_str());
   }
 
@@ -86,9 +86,9 @@ public:
   /**
    * Static function which converts an exception into a readable message
    * @param int The value of catched exception
-   * @return CT::string with the readable message
+   * @return string with the readable message
    */
-  static CT::string getErrorMessage(int CXMLParserException);
+  static std::string getErrorMessage(int CXMLParserException);
 
   /**
    * XML Attribute
@@ -104,40 +104,12 @@ public:
   class XMLElement {
   public:
     void copy(XMLElement const &f);
-
     XMLElement();
-
-    XMLElement(const char *name) { this->name = name; }
-
     XMLElement(const std::string &name) { this->name = name; }
-
-    XMLElement(const char *name, const char *value) {
-      this->name = name;
-      this->value = value;
-    }
-
     XMLElement(const std::string &name, const std::string &value) {
       this->name = name;
       this->value = value;
     }
-
-    /**
-     *  List/Vector of XML Element pointers
-     */
-    class XMLElementPointerList : public std::vector<XMLElement> {
-    public:
-      void add(XMLElement *element);
-      CT::string toJSON(int mode) {
-        CT::string json = "[";
-        for (size_t j = 0; j < size(); j++) {
-          if (j > 0) json += ",";
-          CT::string subdata = at(j).toJSON(mode);
-          json.concatlength((subdata.c_str() + 1), subdata.length() - 3);
-        }
-        json += "]";
-        return json;
-      }
-    };
 
   public:
     std::vector<XMLElement> xmlElements;
@@ -173,37 +145,37 @@ public:
      * @param el The XMLElement to convert
      * @param depth the current recursive depth
      */
-    CT::string toXML(XMLElement el, int depth);
+    std::string toXML(XMLElement el, int depth);
 
     /**
      * Converts XMLElements and attributes to a jsonstring recursively
      * @param el The XMLElement to convert
      * @param depth the current recursive depth
      */
-    CT::string toJSON(XMLElement el, int depth, int mode);
+    std::string toJSON(XMLElement el, int depth, int mode);
 
   public:
     /**
      * toString converts the current XMLElement to string
      */
-    CT::string toString();
+    std::string toString();
 
     /**
      * toJSON converts the current XMLElement to json
      */
-    CT::string toJSON(int mode);
+    std::string toJSON(int mode);
 
     /**
      * toString converts the current XMLElement to string
      */
-    CT::string toStringNoHeader();
+    std::string toStringNoHeader();
 
     /**
      * getAttrValue Returns the value of the attribute with the specified name
      * Throws CXMLPARSER_ATTR_NOT_FOUND if attribute was not found.
      * @param name the name of the attribute to search for
      */
-    CT::string getAttrValue(const char *name);
+    std::string getAttrValue(const std::string &name);
 
     /**
      * getFirst returns the first XMLElement
@@ -219,17 +191,23 @@ public:
      * getList returns all elements with the specified name
      * @param name The name of the elements to return
      */
-    XMLElementPointerList getList(const char *name);
+    std::vector<CXMLParser::XMLElement> getList(const std::string &name);
     /**
-     * getList returns all elements with the specified name
+     * get returns all elements with the specified name
+     * @param name The name of the elements to return or null if noit found
+     */
+    XMLElement *get(const std::string &name);
+    /**
+     * get returns all elements with the specified name
+     * @throws exception if not found
      * @param name The name of the elements to return
      */
-    XMLElement *get(const char *name);
+    XMLElement *getThrows(const std::string &name);
 
     /**
      * set Name and Value of XML element
      */
-    void setNameValue(const char *name, const char *value) {
+    void setNameValue(const std::string &name, const std::string &value) {
       this->name = name;
       this->value = value;
     }
@@ -237,13 +215,11 @@ public:
     /**
      * Set the name of the XML element
      */
-    void setName(const char *name) { this->name = name; }
+    void setName(const std::string &name) { this->name = name; }
 
     /**
      * Set the value of the xml element
      */
-    void setValue(const char *value) { this->value = value; }
-
     void setValue(const std::string &value) { this->value = value; }
 
     /**
@@ -259,11 +235,6 @@ public:
       return xmlElements.back();
     }
 
-    XMLElement &add(const char *name) {
-      xmlElements.push_back(XMLElement(name));
-      return xmlElements.back();
-    }
-
     void add(std::string name, std::string value) { xmlElements.push_back(XMLElement(name.c_str(), value.c_str())); }
     /**
      * Add xmlAttibute
@@ -273,27 +244,10 @@ public:
     /**
      * Parses a string to XMLElement structure
      * throws integer CXMLPARSER_INVALID_XML if invalid
-     * @param data the CT::string
+     * @param data the string
      * @return Zero means succesfully parsed
      */
-    int parse(CT::string data);
-
-    /**
-     * Parses a string to XMLElement structure
-     * throws integer CXMLPARSER_INVALID_XML if invalid
-     * @param *data pointer to the CT::string
-     * @return Zero means succesfully parsed
-     */
-    int parse(CT::string *data);
-
-    /**
-     * Parses a string of given size to XMLElement structure
-     * throws integer CXMLPARSER_INVALID_XML if invalid
-     * @param xmlData The XML data as string to parse
-     * @param xmlSize The size of the XML data
-     * @return Zero means succesfully parsed
-     */
-    int parse(const char *xmlData, size_t xmlSize);
+    int parseData(const std::string &data);
 
     /**
      * Parses a file to XMLElement structure
@@ -301,7 +255,7 @@ public:
      * @param xmlFile The XML file location
      * @return Zero means succesfully parsed
      */
-    int parse(const char *xmlFile);
+    int parseFile(const std::string &filename);
   };
 };
 
@@ -309,4 +263,5 @@ public:
 #define CXMLParserElement CXMLParser::XMLElement
 #define CXMLParserAttribute CXMLParser::XMLAttribute
 
+std::string xmlListToJSON(std::vector<CXMLParser::XMLElement> list, int mode);
 #endif
