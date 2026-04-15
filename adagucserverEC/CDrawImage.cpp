@@ -184,7 +184,7 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, int
     .lineWidth = 1.0,
     .lineColor = getColorForIndex(color),
     .lineOutlineColor = CColor(255, 255, 255, 255),
-    .lineOutlineWidth = 0,
+    .lineOutlineWidth = 0
   };
   drawVector(x, y, direction, strength, lineStyle);
 }
@@ -194,7 +194,7 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, int
     .lineWidth = linewidth,
     .lineColor = getColorForIndex(color),
     .lineOutlineColor = CColor(255, 255, 255, 255),
-    .lineOutlineWidth = 0,
+    .lineOutlineWidth = 0
   };
   drawVector(x, y, direction, strength, lineStyle);
 }

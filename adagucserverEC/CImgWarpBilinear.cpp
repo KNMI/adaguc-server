@@ -414,7 +414,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       }
       for (size_t sz = 0; sz < windVectors.size(); sz++) {
         CalculatedWindVector wv = windVectors[sz];
-        float outlineWidth = 0;
+        // float outlineWidth = 0;
         // drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
 
         // TODO: defaults to blue barbs at lineWidth 0, which gets corrected in CDrawImage to lineWidth 0.8?
