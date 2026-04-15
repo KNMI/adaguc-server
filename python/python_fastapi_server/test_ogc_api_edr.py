@@ -14,10 +14,9 @@ logger = logging.getLogger(__name__)
 testresultspath = f"testresults/{Path(__file__).stem}/"
 expectedoutputspath = f"expectedoutputs/{Path(__file__).stem}/"
 
+
 def set_environ():
-    os.environ["ADAGUC_CONFIG"] = os.path.join(
-        os.environ["ADAGUC_PATH"], "data", "config", "adaguc.dataset.xml"
-    )
+    os.environ["ADAGUC_CONFIG"] = os.path.join(os.environ["ADAGUC_PATH"], "data", "config", "adaguc.dataset.xml")
 
 
 def setup_test_data():
@@ -33,6 +32,7 @@ def setup_test_data():
         "adaguc_ewclocalclimateinfo_test.xml",
         "adaguc_tests_uwcwdini_windcomponents.xml",
         "adaguc_tests_solarterminator.xml",
+        "adaguc.tests.multi_reftime_temporal_extent.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -44,9 +44,7 @@ def setup_test_data():
             showLogOnError=False,
             showLog=False,
         )
-        print(
-            "ingesting: ", os.environ["ADAGUC_CONFIG"] + "," + service + " =>", status
-        )
+        print("ingesting: ", os.environ["ADAGUC_CONFIG"] + "," + service + " =>", status)
 
     AdagucTestTools().mkdir_p(testresultspath)
 
@@ -74,16 +72,22 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 7
-    first_collection = colls["collections"][0]
-    assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
-    coll_5d = colls["collections"][5]
+    collection_ids = [coll["id"] for coll in colls["collections"]]
+    assert collection_ids == [
+        "adaguc.tests.arcus_uwcw.hagl_member",
+        "adaguc.tests.members.mycollection",
+        "adaguc.tests.multi_reftime_temporal_extent.gl",
+        "adaguc_ewclocalclimateinfo_test",
+        "adaguc_tests_solarterminator",
+        "adaguc_tests_uwcwdini_windcomponents",
+        "netcdf_5d.data_5d",
+        "testcollection.testcollection",
+    ]
+
+    coll_5d = colls["collections"][6]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
-    assert all(
-        ext_name in coll_5d["extent"]
-        for ext_name in ("spatial", "temporal", "vertical", "custom")
-    )
+    assert all(ext_name in coll_5d["extent"] for ext_name in ("spatial", "temporal", "vertical", "custom"))
     assert list(coll_5d["extent"]) == [
         "spatial",
         "temporal",
@@ -184,29 +188,19 @@ def test_position_domain_types(client: TestClient):
     assert covjson["domain"]["domainType"] == "VerticalProfile"
 
     # Multiple datetime, single z = Coverage with PointSeries
-    resp = client.get(
-        position_url.format(
-            datetime="2024-06-01T01:00:00Z/2024-06-01T04:00:00Z", z="10"
-        )
-    )
+    resp = client.get(position_url.format(datetime="2024-06-01T01:00:00Z/2024-06-01T04:00:00Z", z="10"))
     assert resp.status_code, 200
     covjson = resp.json()
     assert covjson["type"] == "Coverage"
     assert covjson["domain"]["domainType"] == "PointSeries"
 
     # Multiple datetime, multiple z = CoverageCollection with VerticalProfile
-    resp = client.get(
-        position_url.format(
-            datetime="2024-06-01T01:00:00Z/2024-06-01T04:00:00Z", z="10,20"
-        )
-    )
+    resp = client.get(position_url.format(datetime="2024-06-01T01:00:00Z/2024-06-01T04:00:00Z", z="10,20"))
     assert resp.status_code, 200
     covjson = resp.json()
     assert covjson["type"] == "CoverageCollection"
     assert len(covjson["coverages"]) == 4
-    assert all(
-        [c["domain"]["domainType"] == "VerticalProfile" for c in covjson["coverages"]]
-    )
+    assert all([c["domain"]["domainType"] == "VerticalProfile" for c in covjson["coverages"]])
 
 
 def test_cube_domain_types(client: TestClient):
@@ -228,9 +222,7 @@ def test_cube_domain_types(client: TestClient):
     assert covjson["domain"]["domainType"] == "Grid"
 
     # Multiple datetimes and multiple z
-    resp = client.get(
-        cube_url.format(datetime="2024-06-01T01:00:00Z/2024-06-01T04:00:00Z", z="10,20")
-    )
+    resp = client.get(cube_url.format(datetime="2024-06-01T01:00:00Z/2024-06-01T04:00:00Z", z="10,20"))
     assert resp.status_code, 200
     covjson = resp.json()
     assert covjson["type"] == "Coverage"
@@ -249,17 +241,10 @@ def test_coll_multi_dim_position_coverage_collection_all_z_star(client: TestClie
     assert len(covjson["coverages"]) == 4
 
     # All coverages should have same z
-    assert all(
-        [
-            c["domain"]["axes"]["z"]["values"] == [10, 20, 30, 40]
-            for c in covjson["coverages"]
-        ]
-    )
+    assert all([c["domain"]["axes"]["z"]["values"] == [10, 20, 30, 40] for c in covjson["coverages"]])
 
     # All coverages should have same shape
-    assert all(
-        [c["ranges"]["testdata"]["shape"] == [4, 1] for c in covjson["coverages"]]
-    )
+    assert all([c["ranges"]["testdata"]["shape"] == [4, 1] for c in covjson["coverages"]])
 
     assert [c["domain"]["axes"]["t"]["values"] for c in covjson["coverages"]] == [
         ["2024-06-01T01:00:00Z"],
@@ -308,17 +293,10 @@ def test_coll_multi_dim_position_coverage_collection_all_z_undefined(
     assert len(covjson["coverages"]) == 4
 
     # All coverages should have same z
-    assert all(
-        [
-            c["domain"]["axes"]["z"]["values"] == [10, 20, 30, 40]
-            for c in covjson["coverages"]
-        ]
-    )
+    assert all([c["domain"]["axes"]["z"]["values"] == [10, 20, 30, 40] for c in covjson["coverages"]])
 
     # All coverages should have same shape
-    assert all(
-        [c["ranges"]["testdata"]["shape"] == [4, 1] for c in covjson["coverages"]]
-    )
+    assert all([c["ranges"]["testdata"]["shape"] == [4, 1] for c in covjson["coverages"]])
 
     assert [c["domain"]["axes"]["t"]["values"] for c in covjson["coverages"]] == [
         ["2024-06-01T01:00:00Z"],
@@ -365,14 +343,10 @@ def test_coll_multi_dim_position_coverage_collection_multiple_z(client: TestClie
     assert len(covjson["coverages"]) == 4
 
     # All coverages should have same z
-    assert all(
-        [c["domain"]["axes"]["z"]["values"] == [10, 20] for c in covjson["coverages"]]
-    )
+    assert all([c["domain"]["axes"]["z"]["values"] == [10, 20] for c in covjson["coverages"]])
 
     # All coverages should have same shape
-    assert all(
-        [c["ranges"]["testdata"]["shape"] == [2, 1] for c in covjson["coverages"]]
-    )
+    assert all([c["ranges"]["testdata"]["shape"] == [2, 1] for c in covjson["coverages"]])
 
     assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
         0,
@@ -397,25 +371,13 @@ def test_coll_multi_dim_position_auto_ewc_local_climate_info(client: TestClient)
     assert covjson["coverages"][0]["type"] == "Coverage"
     assert covjson["coverages"][0]["domain"]["domainType"] == "PointSeries"
     assert len(covjson["coverages"][0]["domain"]["axes"]["t"]["values"]) == 30
-    assert (
-        covjson["coverages"][0]["domain"]["axes"]["t"]["values"][0]
-        == "2036-01-01T00:00:00Z"
-    )
-    assert (
-        covjson["coverages"][0]["domain"]["axes"]["t"]["values"][29]
-        == "2065-01-01T00:00:00Z"
-    )
+    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"][0] == "2036-01-01T00:00:00Z"
+    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"][29] == "2065-01-01T00:00:00Z"
     assert covjson["coverages"][0]["domain"]["custom:scenario"] == "2050Hd"
 
     assert len(covjson["coverages"][1]["domain"]["axes"]["t"]["values"]) == 30
-    assert (
-        covjson["coverages"][1]["domain"]["axes"]["t"]["values"][0]
-        == "2036-01-01T00:00:00Z"
-    )
-    assert (
-        covjson["coverages"][1]["domain"]["axes"]["t"]["values"][29]
-        == "2065-01-01T00:00:00Z"
-    )
+    assert covjson["coverages"][1]["domain"]["axes"]["t"]["values"][0] == "2036-01-01T00:00:00Z"
+    assert covjson["coverages"][1]["domain"]["axes"]["t"]["values"][29] == "2065-01-01T00:00:00Z"
     assert covjson["coverages"][1]["domain"]["custom:scenario"] == "2050Hn"
 
     assert covjson["coverages"][0]["ranges"]["jaarlijks/tas_mean_2050"]["shape"] == [30]
@@ -497,16 +459,9 @@ def test_coll_multi_dim_position_coverage_collection_z_range(client: TestClient)
     covjson = resp.json()
 
     # All coverages should have same z
-    assert all(
-        [
-            c["domain"]["axes"]["z"]["values"] == [10, 30, 40]
-            for c in covjson["coverages"]
-        ]
-    )
+    assert all([c["domain"]["axes"]["z"]["values"] == [10, 30, 40] for c in covjson["coverages"]])
     # All coverages should have same shape
-    assert all(
-        [c["ranges"]["testdata"]["shape"] == [3, 1] for c in covjson["coverages"]]
-    )
+    assert all([c["ranges"]["testdata"]["shape"] == [3, 1] for c in covjson["coverages"]])
 
     assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
         0,
@@ -677,11 +632,7 @@ def test_point_custom_dim(client: TestClient):
     position_json = resp.json()
 
     # Should mention the custom dimension inside the "domain" section
-    custom_dims = [
-        custom_dim
-        for custom_dim in position_json["domain"]
-        if custom_dim.startswith("custom:")
-    ]
+    custom_dims = [custom_dim for custom_dim in position_json["domain"] if custom_dim.startswith("custom:")]
     # TODO: point includes custom:reference_time, is bad?
     assert custom_dims == ["custom:member", "custom:reference_time"]
 
@@ -699,11 +650,7 @@ def test_cube_custom_dim(client: TestClient):
     cube_json = resp.json()
 
     # Should mention the custom dimension inside the "domain" section
-    custom_dims = [
-        custom_dim
-        for custom_dim in cube_json["domain"]
-        if custom_dim.startswith("custom:")
-    ]
+    custom_dims = [custom_dim for custom_dim in cube_json["domain"] if custom_dim.startswith("custom:")]
     # TODO: cube does not include custom:reference_time, good?
     assert custom_dims == ["custom:member"]
 
@@ -772,8 +719,8 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
     [
         (
             "/edr/collections/my_unknown_collection",
-            400,
-            "Unknown or unconfigured collection my_unknown_collection",
+            404,
+            "Collection my_unknown_collection unknown",
         ),
         (
             "/edr/collections/adaguc.tests.members.mycollection/instances/12345",
@@ -843,9 +790,7 @@ def test_position(client: TestClient):
     url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(4.76389 52.308601)"
     resp = client.get(url)
     assert resp.status_code == 200
-    print(
-        "/position?coords=POINT(4.76389,52.308601):", json.dumps(resp.json(), indent=2)
-    )
+    print("/position?coords=POINT(4.76389,52.308601):", json.dumps(resp.json(), indent=2))
     covjson = resp.json()
     assert covjson["ranges"]["mymemberdata"]["values"] == [152055950.0]
 
@@ -867,11 +812,86 @@ def test_unknown_location(client: TestClient):
     covjson = resp.json()
     assert covjson["detail"] == "location KJFK not found"
 
+
 def test_solt_instanceless_position(client: TestClient):
     url = "/edr/collections/adaguc_tests_solarterminator/position?coords=POINT(5.0 52.0)&datetime=2026-06-01T01:00:00Z/2026-06-01T02:00:00Z&parameter-name=solarterminator"
     resp = client.get(url)
     assert resp.status_code == 200
     covjson = resp.json()
     filename = "test_solt_instanceless_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_multi_reftime_temporal_extent(client: TestClient):
+    """
+    This dataset contains two instances, with reftime 2026-04-01T12 and 2026-04-07T00.
+    There is an hourly and 24-hourly parameter in this dataset.
+
+    The temporal extent of a specific instance must be calculated over _all_ the parameters.
+    This means that even though the first (configured) parameter in the dataset is a 24-hourly
+    parameter (starts at T+24) the other parameter in the dataset is an hourly parameter
+    (starts at T+1). This means the start of the temporal extent must begin at T+1.
+
+    Temporal extents in the /instances call will be wrong, we cannot fix this.
+    """
+
+    base_url = "/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
+
+    # The temporal extent in the /instances call will be wrong, as they are the same for _all_ instances.
+    resp = client.get(f"{base_url}/instances")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    instances = covjson.get("instances")
+    assert instances[0]["id"] == "202604070000"
+    assert instances[1]["id"] == "202604011200"
+    assert instances[0]["extent"]["temporal"]["interval"] == instances[1]["extent"]["temporal"]["interval"] == [['2026-04-01T13:00:00Z', '2026-04-09T12:00:00Z']]
+
+    # Temporal extent must be correct when requesting a specific instance
+    resp = client.get(f"{base_url}/instances/202604011200")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    assert covjson["extent"]["temporal"]["interval"] == [["2026-04-01T13:00:00Z", "2026-04-04T00:00:00Z"]]
+    assert covjson["extent"]["temporal"]["values"] == ["R60/2026-04-01T13:00:00Z/PT1H"]
+
+    # Temporal extent must be correct when requesting a specific instance
+    resp = client.get(f"{base_url}/instances/202604070000")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    assert covjson["extent"]["temporal"]["interval"] == [["2026-04-07T01:00:00Z", "2026-04-09T12:00:00Z"]]
+    assert covjson["extent"]["temporal"]["values"] == ["R60/2026-04-07T01:00:00Z/PT1H"]
+
+    # If you omit the instance, EDR must return the most recent instance
+    resp = client.get(f"{base_url}")
+    assert resp.status_code == 200
+    most_recent_instance = resp.json()
+
+    # ids and urls will be different, but the temporal extent must be the same since it refers to the same specific instance
+    assert most_recent_instance["extent"] == covjson["extent"]
+
+
+def test_multi_reftime_instanceless_query(client: TestClient):
+    """Querying position and cube without selecting an instance should return results for the most recent instance"""
+
+    base_url = "/edr/collections/adaguc.tests.multi_reftime_temporal_extent.gl"
+
+    # Position query
+    resp = client.get(f"{base_url}/position?coords=POINT(5.0 52.0)&datetime=1000-01-01T00:00:00Z/3000-01-01T00:00:00Z")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "multi_reftime_instanceless_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+    # Cube query
+    resp = client.get(f"{base_url}/cube?bbox=2.0,50.5,9.0,54.5&datetime=1000-01-01T00:00:00Z/3000-01-01T00:00:00Z")
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "multi_reftime_instanceless_cube.json"
     AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)

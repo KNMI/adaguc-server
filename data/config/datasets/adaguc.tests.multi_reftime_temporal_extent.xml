@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<Configuration>
+  <Layer type="database">
+    <Group collection="gl"/>
+    <Name>weather_code_24h_gl</Name>
+    <Title>Weather code past 24hrs at ground level</Title>
+    <Variable>weather-code-24h-gl</Variable>
+    <FilePath filter="netcdf_weather-code-24h-gl*">{ADAGUC_PATH}/data/datasets/multi_reftime_temporal_extent/</FilePath>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT24H" type="time">time</Dimension>
+    <Dimension name="gl" units=" " default="min" type="vertical" hidden="true">ground_level</Dimension>
+  </Layer>
+
+  <Layer type="database">
+    <Group collection="gl"/>
+    <Name>weather_code_gl</Name>
+    <Title>Weather code since previous time step at ground level</Title>
+    <Variable>weather-code-gl</Variable>
+    <FilePath filter="netcdf_weather-code-gl*">{ADAGUC_PATH}/data/datasets/multi_reftime_temporal_extent/</FilePath>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="gl" units=" " default="min" type="vertical" hidden="true">ground_level</Dimension>
+  </Layer>
+</Configuration>
