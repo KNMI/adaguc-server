@@ -9,6 +9,12 @@ import os.path
 import unittest
 from adaguc.AdagucTestTools import AdagucTestTools
 import netCDF4
+from conftest import (
+    make_adaguc_env,
+    run_adaguc_and_compare_json,
+    update_db,
+)
+
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -528,4 +534,16 @@ class TestWMSTimeSeries(unittest.TestCase):
                 37,
                 0.1,
             )
+        )
+
+    def test_timeseries_adaguc_tests_adaguc_tests_multi_reftime_temporal_extent_asterisk(self):
+        """
+        This checks for correct behavior when passing a non-existing dataset
+        """
+        env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
+        run_adaguc_and_compare_json(
+            env,
+            "test_timeseries_adaguc_tests_adaguc_tests_multi_reftime_temporal_extent_asterisk.json",
+            "time=*&dataset=adaguc.tests.multi_reftime_temporal_extent&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=weather_code_gl&query_layers=weather_code_gl&crs=EPSG%3A3857&bbox=-14204.36702572%2C3630706.712827636%2C1269999.54266372%2C10203233.464103365&width=178&height=911&i=107&j=458&format=image%2Fgif&info_format=application%2Fjson&dim_reference_time=2026-04-07T00%3A00%3A00Z&",
         )

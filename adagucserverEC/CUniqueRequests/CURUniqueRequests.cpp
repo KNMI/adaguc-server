@@ -4,7 +4,7 @@
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
 
-#define CCUniqueRequests_DEBUG
+// #define CCUniqueRequests_DEBUG
 
 int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
@@ -40,7 +40,6 @@ void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileI
 }
 
 void CURUniqueRequests::sortAndAggregate() {
-  CDBDebug("--------------------------------------------------------------------------------------------------------------------------------------");
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
     auto dimInfoMap = &(filemapiterator->second).dimInfoMap;
     for (it_type_diminfo diminfomapiterator = dimInfoMap->begin(); diminfomapiterator != dimInfoMap->end(); diminfomapiterator++) {

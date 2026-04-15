@@ -470,8 +470,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     // Fix found time values which are retrieved from the database
     for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
       if (CT::indexOf(dataSource->requiredDims[i].name, "time") != -1) {
+        dataSource->requiredDims[i].isATimeDimension = true;
         if (dataSource->requiredDims[i].value.length() > 12) {
-          dataSource->requiredDims[i].isATimeDimension = true;
           if (dataSource->requiredDims[i].value.at(10) == ' ') {
             dataSource->requiredDims[i].value[10] = 'T';
           }
