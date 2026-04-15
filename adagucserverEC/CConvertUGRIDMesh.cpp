@@ -192,7 +192,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -205,7 +205,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -367,8 +367,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     varX = cdfObject->getVariableThrows("x");
     varY = cdfObject->getVariableThrows("y");
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -382,7 +382,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
 
     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
     new2DVar->setSize(fieldSize);
-    CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
+    new2DVar->allocateData(fieldSize);
 
     // Draw data!
 

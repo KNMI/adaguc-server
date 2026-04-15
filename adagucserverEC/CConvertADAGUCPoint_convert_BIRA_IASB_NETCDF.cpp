@@ -24,7 +24,7 @@ void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
       realTimeVar->isDimension = true;
       realTimeVar->dimensionlinks.push_back(realTimeDim);
       cdfObject->addVariable(realTimeVar);
-      CDF::allocateData(CDF_DOUBLE, &realTimeVar->data, realTimeDim->length);
+      realTimeVar->allocateData(realTimeDim->length);
       CTime ctime;
       ctime.init("seconds since 1970-01-01 0:0:0", "");
       ((double *)realTimeVar->data)[0] = ctime.dateToOffset(ctime.freeDateStringToDate(timeString.c_str()));

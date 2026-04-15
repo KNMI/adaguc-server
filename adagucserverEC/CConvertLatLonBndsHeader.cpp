@@ -100,7 +100,7 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -113,7 +113,7 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
