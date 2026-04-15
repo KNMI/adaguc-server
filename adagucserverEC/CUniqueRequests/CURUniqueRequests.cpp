@@ -5,6 +5,7 @@
 #include "CURUniqueRequests.h"
 
 // #define CCUniqueRequests_DEBUG
+// #define CCUniqueRequests_DEBUG_HIGH
 
 int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
@@ -44,7 +45,7 @@ void CURUniqueRequests::sortAndAggregate() {
     auto dimInfoMap = &(filemapiterator->second).dimInfoMap;
     for (it_type_diminfo diminfomapiterator = dimInfoMap->begin(); diminfomapiterator != dimInfoMap->end(); diminfomapiterator++) {
 #ifdef CCUniqueRequests_DEBUG
-      CDBDebug("%s/%s", (filemapiterator->first), (diminfomapiterator->first));
+      CDBDebug("%s/%s", filemapiterator->first.c_str(), diminfomapiterator->first.c_str());
 #endif
 
       int currentDimIndex = -1;
@@ -82,7 +83,7 @@ void CURUniqueRequests::sortAndAggregate() {
 
         if (currentDimIndex != -1) {
 #ifdef CCUniqueRequests_DEBUG
-          CDBDebug("Add %d/%s", dimindex, dimvalue);
+          CDBDebug("Add %d/%s", dimindex, dimvalue.c_str());
 #endif
 
           dimValues.push_back(dimvalue);
@@ -213,7 +214,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
 #ifdef CCUniqueRequests_DEBUG
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    CDBDebug("New order = %d/%d = [%s]", dimnr, dimOrdering[dimnr], dataSource->requiredDims[dimOrdering[dimnr]].name);
+    CDBDebug("New order = %d/%d = [%s]", dimnr, dimOrdering[dimnr], dataSource->requiredDims[dimOrdering[dimnr]].name.c_str());
   }
 #endif
 
@@ -244,7 +245,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
         CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, (filemapiterator->first.c_str()));
 
 #ifdef CCUniqueRequests_DEBUG
-        CDBDebug("Getting data variable [%s]", variableName);
+        CDBDebug("Getting data variable [%s]", variableName.c_str());
 #endif
 
         CDF::Variable *variable = cdfObject->getVariableNE(variableName);
@@ -257,7 +258,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
         for (auto request: (filemapiterator->second).requests) {
 
 #ifdef CCUniqueRequests_DEBUG
-          CDBDebug("Reading file %s  for variable %s", (filemapiterator->first), variable->name);
+          CDBDebug("Reading file %s  for variable %s", filemapiterator->first.c_str(), variable->name.c_str());
 #endif
 
           variable->freeData();
@@ -308,15 +309,10 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 count[netcdfDimIndex] = request[i].values.size();
               }
 #ifdef CCUniqueRequests_DEBUG
-              CDBDebug("  request index: %lu  netcdfdimindex %d  %s %d %lu", i, netcdfDimIndex, request[i].name, request[i].start, request[i].values.size());
+              CDBDebug("  request index: %lu  netcdfdimindex %d  %s %d %lu", i, netcdfDimIndex, request[i].name.c_str(), request[i].start, request[i].values.size());
 #endif
             }
           }
-#ifdef CCUniqueRequests_DEBUG_HIGH
-          for (int i = 0; i < numberOfDims; i++) {
-            CDBDebug("  %d %s [%d:%d:%d]", i, dimName[i], start[i], count[i], stride[i]);
-          }
-#endif
 
           /*
            * In case a scale_factor and add_offset attribute is present, we need to read the data into the same datatype as this attribute
@@ -335,11 +331,11 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           }
 
 #ifdef CCUniqueRequests_DEBUG_HIGH
-          CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType));
+          CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
 #endif
           int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
 #ifdef CCUniqueRequests_DEBUG_HIGH
-          CDBDebug("Read %d elements", variable->getSize());
+          CDBDebug("Read %lu elements", variable->getSize());
 #endif
           if (status != 0) {
             CDBError("Unable to read variable %s", variable->name.c_str());
@@ -348,7 +344,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
 #ifdef CCUniqueRequests_DEBUG_HIGH
           for (size_t j = 0; j < variable->getSize(); j++) {
-            CDBDebug("Orig Data value %d is \t %f", j, ((double *)variable->data)[j]);
+            CDBDebug("Orig Data value %lu is \t %f", j, ((double *)variable->data)[j]);
           }
 #endif
           if (status == 0) {
@@ -476,7 +472,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
     try {
 #ifdef CCUniqueRequests_DEBUG_HIGH
       CDBDebug("**************** Create Structure ********************");
-      CDBDebug("dataObjectNr: %d", dataObjectNr);
+      CDBDebug("dataObjectNr: %lu", dataObjectNr);
 #endif
       createStructure(results, dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
     } catch (int e) {
