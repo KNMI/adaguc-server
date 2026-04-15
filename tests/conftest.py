@@ -114,6 +114,10 @@ def make_adaguc_env(dataset: str = "", testresultspath_actual: str = "", testres
     return {"ADAGUC_CONFIG": config, "ADAGUC_TESTPATH_ACTUAL": testresultspath_actual, "ADAGUC_TESTPATH_EXPECTED": testresultspath_expected}
 
 
+def reset_datasetsloaded():
+    DATASETS_LOADED.clear()
+
+
 def update_db(adaguc_env: dict, force_update: bool = False):
     """
     Run `--updatedb` if it has not been run before for the given environment. When executed multiple times
@@ -189,7 +193,7 @@ def run_adaguc_and_compare_file(env, filename, query_string):
     assert file_is_equal
 
 
-def run_adaguc_and_compare_json(env, filename, query_string):
+def run_adaguc_and_compare_json(env, filename, query_string, expected_status_code=0):
     """
     Compares a json for a given query_string to a filename in the expected testresult folder.
     """
@@ -199,6 +203,6 @@ def run_adaguc_and_compare_json(env, filename, query_string):
         query_string,
         env=env,
     )
-    assert status == 0
+    assert status == expected_status_code
     AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data.getvalue())
     AdagucTestTools().compareJson(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)

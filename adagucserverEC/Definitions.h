@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "7.1.2" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "7.2.0" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -67,14 +67,6 @@
 #define WMS_VERSION_1_0_0 1
 #define WMS_VERSION_1_1_1 2
 #define WMS_VERSION_1_3_0 3
-
-// Exceptions
-#define EXCEPTIONS_PLAINTEXT 0
-#define WMS_EXCEPTIONS_IMAGE 1
-#define WMS_EXCEPTIONS_BLANKIMAGE 2
-#define WMS_EXCEPTIONS_XML_1_1_1 3
-#define WCS_EXCEPTIONS_XML_1_0_0 4
-#define WMS_EXCEPTIONS_XML_1_3_0 5
 
 // ADAGUC Internal exceptions
 #define CEXCEPTION_NULLPOINTER 1000
@@ -179,13 +171,6 @@
 
 // #define ADAGUC_USE_GDAL
 #endif
-
-// HTTP status codes
-// Success
-#define HTTP_STATUSCODE_200_OK 0
-// Client errors
-#define HTTP_STATUSCODE_404_NOT_FOUND 32
-#define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33
 
 #define SCAN_EXITCODE_FILENOMATCH 64
 #define SCAN_EXITCODE_DATASETNOEXIST 65

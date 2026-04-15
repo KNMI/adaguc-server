@@ -11,7 +11,7 @@
 
 // TODO THIS NEEDS refactoring, e.g. combine MinMax and Statistics into one and dont use pointers.
 // The calculate routine should be a standalone function
-class DataObject;
+struct DataObject;
 
 struct MinMax {
   bool isSet = false;

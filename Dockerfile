@@ -13,7 +13,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="7.1.2"
+LABEL version="7.2.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -49,7 +49,8 @@ COPY compile.sh /adaguc/adaguc-server-master/
 
 WORKDIR /adaguc/adaguc-server-master
 
-RUN bash compile.sh
+ARG BUILD_TYPE
+RUN bash compile.sh "$BUILD_TYPE"
 
 ######### Second stage, base image for test and prod ############
 FROM python:3.10-slim-bookworm AS base

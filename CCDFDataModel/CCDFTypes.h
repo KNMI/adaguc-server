@@ -59,6 +59,8 @@ typedef int CDFType;
 #define CDF_INT64 12   /* signed 8 byte integer */
 #define CDF_UINT64 13  /* unsigned 8 byte integer */
 
+typedef unsigned long ulong;
+
 // This is an X-Macro to automatically enumerate all template type mappings used in CDF
 #define ENUMERATE_OVER_CDFTYPES(DO)                                                                                                                                                                    \
   DO(CDF_CHAR, char)                                                                                                                                                                                   \
