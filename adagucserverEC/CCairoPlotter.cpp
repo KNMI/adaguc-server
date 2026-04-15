@@ -552,6 +552,7 @@ void CCairoPlotter::lineTo(float x1, float y1) {
   cairo_set_source_rgba(cr, rr, rg, rb, ra);
   cairo_line_to(cr, x1 + 0.5, y1 + 0.5);
   cairo_set_line_width(cr, 0.9);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
 }
 
@@ -562,12 +563,12 @@ void CCairoPlotter::lineTo(float x1, float y1, float width) {
 }
 
 void CCairoPlotter::endLine() {
-  cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
 }
 
 void CCairoPlotter::endLine(const double *dashes, int num_dashes) {
-  cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_set_dash(cr, dashes, num_dashes, 0);
   cairo_stroke(cr);
   cairo_set_dash(cr, 0, 0, 0);
@@ -578,6 +579,7 @@ void CCairoPlotter::line(float x1, float y1, float x2, float y2) {
   cairo_move_to(cr, x1 + 0.5, y1 + 0.5);
   cairo_line_to(cr, x2 + 0.5, y2 + 0.5);
   cairo_set_line_width(cr, 0.9);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
 }
 void CCairoPlotter::line(float x1, float y1, float x2, float y2, float width) {
@@ -585,6 +587,7 @@ void CCairoPlotter::line(float x1, float y1, float x2, float y2, float width) {
   cairo_move_to(cr, x1 + 0.5, y1 + 0.5);
   cairo_line_to(cr, x2 + 0.5, y2 + 0.5);
   cairo_set_line_width(cr, width);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
 }
 //  /*cairo_status_t writeToPng(const char* fileName) {
@@ -651,6 +654,7 @@ void CCairoPlotter::poly(float x[], float y[], int n, bool closePath, bool fill)
     }
   }
   cairo_set_source_rgba(cr, rr, rg, rb, ra);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
   cairo_set_antialias(cr, aa);
 }
@@ -677,6 +681,7 @@ void CCairoPlotter::poly(float x[], float y[], int n, float lineWidth, bool clos
     }
   }
   cairo_set_source_rgba(cr, rr, rg, rb, ra);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
   cairo_set_antialias(cr, aa);
 }
@@ -1178,7 +1183,7 @@ void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double v
   cairo_new_path(cr);
   cairo_set_line_width(cr, lineWidth);
   cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-  cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
 
   int strengthInKnots = round(strength);
   if (toKnots) {
