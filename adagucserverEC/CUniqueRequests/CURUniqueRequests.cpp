@@ -4,6 +4,8 @@
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
 
+#define CCUniqueRequests_DEBUG
+
 int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
 void CURUniqueRequests::addDimensionRangeRequest(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {
@@ -38,6 +40,7 @@ void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileI
 }
 
 void CURUniqueRequests::sortAndAggregate() {
+  CDBDebug("--------------------------------------------------------------------------------------------------------------------------------------");
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
     auto dimInfoMap = &(filemapiterator->second).dimInfoMap;
     for (it_type_diminfo diminfomapiterator = dimInfoMap->begin(); diminfomapiterator != dimInfoMap->end(); diminfomapiterator++) {
@@ -178,7 +181,7 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, DataObje
 
   std::sort(results.begin(), results.end(), compareFunctionCurResult());
 #ifdef CCUniqueRequests_DEBUG
-  CDBDebug("Found %d elements", results.size());
+  CDBDebug("Found %lu elements", results.size());
 #endif
 
   for (size_t j = 0; j < results.size(); j++) {
@@ -216,7 +219,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
 #ifdef CCUniqueRequests_DEBUG
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    CDBDebug("New order = %d/%d = [%s]", dimnr, dimOrdering[dimnr], dataSource->requiredDims[dimOrdering[dimnr]]->name.c_str());
+    CDBDebug("New order = %d/%d = [%s]", dimnr, dimOrdering[dimnr], dataSource->requiredDims[dimOrdering[dimnr]].name.c_str());
   }
 #endif
 
@@ -313,7 +316,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 count[netcdfDimIndex] = request[i].values.size();
               }
 #ifdef CCUniqueRequests_DEBUG
-              CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request[i]->name.c_str(), request[i]->start, request[i]->values.size());
+              CDBDebug("  request index: %lu  netcdfdimindex %d  %s %d %lu", i, netcdfDimIndex, request[i].name.c_str(), request[i].start, request[i].values.size());
 #endif
             }
           }
@@ -389,10 +392,10 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             }
             /* End of data postproc */
 #ifdef CCUniqueRequests_DEBUG
-            CDBDebug("Read %d elements", variable->getSize());
+            CDBDebug("Read %lu elements", variable->getSize());
 
             for (size_t j = 0; j < variable->getSize(); j++) {
-              CDBDebug("New Data value %d is \t %f", j, ((double *)variable->data)[j]);
+              CDBDebug("New Data value %lu is \t %f", j, ((float *)variable->data)[j]);
             }
 #endif
             try {
