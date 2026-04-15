@@ -119,7 +119,8 @@ public:
   void drawVector(int x, int y, double direction, double strength, int color);
   void drawVector(int x, int y, double direction, double strength, int color, float linewidth);
   void drawVector(int x, int y, double direction, double strength, LineStyle lineStyle);
-  void drawVector2(int x, int y, double direction, double strength, int radius, CColor color, float linewidth);
+  // void drawVector2(int x, int y, double direction, double strength, int radius, CColor color, float linewidth);
+  void drawVector2(int x, int y, double direction, double strength, int radius, CColor color, VectorStyle vectorStyle);
   void destroyImage();
   void line(float x1, float y1, float x2, float y2, int color);
   void line(float x1, float y1, float x2, float y2, CColor color);
@@ -154,12 +155,12 @@ public:
   void getHexColorForColorIndex(CT::string *hexValue, int colorIndex);
   void setText(const char *text, int x, int y, int color);
   void setText(const char *text, int x, int y, CColor color);
-  // void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
   void setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor);
   void setDisc(int x, int y, int discRadius, int fillCol, int lineCol);
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
-  void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
+  // void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
+  void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, CColor fillcolor, TextStyle textStyle, LineStyle lineStyle);
   void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);

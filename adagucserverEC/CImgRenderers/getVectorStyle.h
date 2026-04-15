@@ -3,23 +3,8 @@
 
 #include "CTString.h"
 #include "CColor.h"
+#include "PointStyles.h"
 #include <CServerConfig_CPPXSD.h>
-
-struct TextStyle {
-  CColor textColor;
-  double fontSize;
-
-  CColor textOutlineColor;
-  double textOutlineWidth;
-};
-
-struct LineStyle {
-  CColor lineColor;
-  double lineWidth;
-
-  CColor lineOutlineColor;
-  double lineOutlineWidth;
-};
 
 struct VectorStyle {
   LineStyle lineStyle;

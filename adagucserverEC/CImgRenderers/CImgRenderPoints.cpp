@@ -183,9 +183,9 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.textStyle.fontSize, vectorStyle.textStyle.textColor, vectorStyle.fillColor,
-                               vectorStyle.lineStyle.lineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineStyle.lineWidth);
+        // TODO: we use fillColor, should we use lineColor?
+        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fillColor, vectorStyle.textStyle, vectorStyle.lineStyle);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineStyle);
       }
 
       drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);

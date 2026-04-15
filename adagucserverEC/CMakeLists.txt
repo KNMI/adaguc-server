@@ -182,6 +182,7 @@ add_library(
     CImgRenderStippling.h
     CImgRenderers/CImgRenderPoints.cpp
     CImgRenderers/CImgRenderPoints.h
+    CImgRenderers/PointStyles.h
     CImgRenderers/getPointStyle.h
     CImgRenderers/getPointStyle.cpp
     CImgRenderers/getVectorStyle.h

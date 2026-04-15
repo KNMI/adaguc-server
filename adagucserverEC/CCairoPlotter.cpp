@@ -476,6 +476,7 @@ int CCairoPlotter::drawFilledText(int x, int y, float angle, const char *text) {
 void CCairoPlotter::initFont() {}
 
 void CCairoPlotter::setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+  // TODO: add setColor which accepts a CColor directly
   this->r = r;
   rr = r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   this->g = g;

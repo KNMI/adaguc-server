@@ -253,7 +253,8 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, Lin
 #define xCor(l, d) ((int)(l * cos(d) + 0.5))
 #define yCor(l, d) ((int)(l * sin(d) + 0.5))
 
-void CDrawImage::drawVector2(int x, int y, double direction, double strength, int radius, CColor color, float linewidth) {
+void CDrawImage::drawVector2(int x, int y, double direction, double strength, int radius, CColor color, VectorStyle vectorStyle) {
+  // TODO: what is drawVector2?
   if (fabs(strength) < 1) {
     setPixel(x, y, color);
     return;
@@ -263,7 +264,7 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
   float tipX = x + (int)(ARROW_LENGTH * cos(direction));
   float tipY = y + (int)(ARROW_LENGTH * sin(direction));
 
-  int i2 = 8 + (int)linewidth;
+  int i2 = 8 + (int)vectorStyle.lineStyle.lineWidth;
   int i1 = 2 * i2;
 
   float hx1 = tipX - xCor(i1, direction + 0.5);
@@ -273,7 +274,7 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
   float hx3 = tipX - xCor(i1, direction - 0.5);
   float hy3 = tipY - yCor(i1, direction - 0.5);
 
-  poly(tipX, tipY, hx1, hy1, hx2, hy2, hx3, hy3, linewidth, color, true);
+  poly(tipX, tipY, hx1, hy1, hx2, hy2, hx3, hy3, vectorStyle.lineStyle.lineWidth, color, true);
 }
 
 #define MSTOKNOTS (3600. / 1852.)
@@ -551,12 +552,15 @@ void CDrawImage::setDisc(int x, int y, float discRadius, CColor fillColor, CColo
   cairo->filledcircle(x, y, discRadius);
 }
 
-void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor) {
+// void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor) {
+void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, CColor fillcolor, TextStyle textStyle, LineStyle lineStyle) {
+  // Draw both a disc and text
+
   if (currentLegend == NULL) return;
   cairo->setFillColor(fillcolor.r, fillcolor.g, fillcolor.b, fillcolor.a);
-  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->setColor(lineStyle.lineColor.r, lineStyle.lineColor.g, lineStyle.lineColor.b, lineStyle.lineColor.a);
   cairo->filledcircle(x, y, discRadius);
-  drawCenteredText(x, y, fontfile, fontsize, 0, text, textcolor);
+  drawCenteredText(x, y, fontfile, textStyle.fontSize, 0, text, textStyle.textColor);
 }
 
 void CDrawImage::drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor) {

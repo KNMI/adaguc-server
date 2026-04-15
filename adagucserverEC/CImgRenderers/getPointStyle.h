@@ -3,12 +3,16 @@
 
 #include "CTString.h"
 #include "CColor.h"
+#include "PointStyles.h"
 #include <CServerConfig_CPPXSD.h>
 
 struct PointStyle {
   std::string style;
-
   CColor fillColor;
+
+  // LineStyle lineStyle;
+  // TextStyle textStyle;
+
   CColor lineColor;
   CColor textOutlineColor;
   CColor textColor;
