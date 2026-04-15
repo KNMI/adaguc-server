@@ -152,9 +152,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
      varT->setAttributeText("standard_name","time");
      varT->setAttributeText("long_name","time");
      varT->dimensionlinks.push_back(dimT);
-     CDF::allocateData(CDF_DOUBLE,&varT->data,dimT->length);
-
-
+     varT->allocateData(dimT->length);
      //Detect time from the netcdf data and copy the same units from the original time variable
      if(origT!=NULL){
        try{
@@ -261,7 +259,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -274,7 +272,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
 #ifdef CCONVERTCURVILINEAR_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables (%d x %d)", varX->getSize(), varY->getSize());
@@ -530,8 +528,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   varX = cdfObject->getVariableThrows("adaguccoordinatex");
   varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
-  CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-  CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+  varX->allocateData(dimX->length);
+  varY->allocateData(dimY->length);
 
 #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Data allocated for 'x' and 'y' variables");
@@ -585,7 +583,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
     new2DVar->setSize(fieldSize);
-    CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
+    new2DVar->allocateData(fieldSize);
 
     // Draw data!
     if (dataObjects[0]->hasNodataValue) {

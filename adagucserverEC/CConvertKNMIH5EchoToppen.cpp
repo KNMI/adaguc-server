@@ -96,7 +96,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     /* Set the bbox in the data, since the virtual grid is 2x2 pixels we can directly apply the bbox */
     ((double *)varX->data)[0] = dfBBOX[0];
@@ -115,7 +115,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     ((double *)varY->data)[0] = dfBBOX[1];
     ((double *)varY->data)[1] = dfBBOX[3];
@@ -183,8 +183,8 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     CDF::Variable *varY = cdfObject0->getVariableThrows("yet");
 
     /* Re-allocate data for these coordinate variables with the new grid size */
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
     /* Get the echotoppen variable from the datasource */
     CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
@@ -192,7 +192,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     /* Calculate the gridsize, allocate data and fill the data with a fillvalue */
     size_t fieldSize = dimX->length * dimY->length;
     echoToppenVar->setSize(fieldSize);
-    CDF::allocateData(echoToppenVar->getType(), &(echoToppenVar->data), fieldSize);
+    echoToppenVar->allocateData(fieldSize);
     float fillValue = CConvertKNMIH5EchoToppen_FillValue;
     CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue, fieldSize);
 

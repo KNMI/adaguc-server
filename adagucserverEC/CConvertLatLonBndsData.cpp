@@ -108,7 +108,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
 #endif
       dataSource->statistics = new Statistics();
       dataSource->statistics->setMinMax(minMax);
-        }
+    }
   }
 
   // Make the width and height of the new regular grid field the same as the viewing window
@@ -171,8 +171,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
 
     // Allocate and clear data
     for (size_t d = 0; d < nrDataObjects; d++) {
-      destRegularGrid[d]->setSize(fieldSize);
-      CDF::allocateData(CDF_FLOAT, &(destRegularGrid[d]->data), fieldSize);
+      destRegularGrid[d]->allocateData(fieldSize);
       for (size_t j = 0; j < fieldSize; j++) {
         ((float *)dataObjects[d]->cdfVariable->data)[j] = NAN;
       }

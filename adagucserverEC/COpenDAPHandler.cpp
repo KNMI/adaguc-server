@@ -992,7 +992,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
                       CDBDebug("Create missing data");
                       CDF::Variable *variableToRead = new CDF::Variable();
-                      CDF::allocateData(type, &variableToRead->data, varSize);
+                      variableToRead->allocateData(varSize);
                       CDF::fill(variableToRead->data, type, 0, varSize);
                       putVariableData(variableToRead, type);
                       delete variableToRead;
