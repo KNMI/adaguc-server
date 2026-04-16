@@ -1,5 +1,5 @@
 ######### First stage (build) ############
-FROM python:3.14-slim-trixie AS build
+FROM python:3.14-slim-bookworm AS build
 
 # To build on linux ubuntu use 
 # docker compose -f Docker/docker-compose-test.yml up -Vd
@@ -53,7 +53,7 @@ ARG BUILD_TYPE
 RUN bash compile.sh "$BUILD_TYPE"
 
 ######### Second stage, base image for test and prod ############
-FROM python:3.14-slim-trixie AS base
+FROM python:3.14-slim-bookworm AS base
 
 USER root
 
@@ -99,8 +99,8 @@ COPY scripts /adaguc/adaguc-server-master/scripts
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
 # Determine if we're building in github actions or via a local docker build
-ARG TEST_IN_CONTAINER=local_build
-ENV TEST_IN_CONTAINER=$TEST_IN_CONTAINER
+ARG TEST_IN_CONTAINER
+ENV TEST_IN_CONTAINER=${TEST_IN_CONTAINER:-local_build}
 
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 
@@ -152,18 +152,7 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN rm -f result.png && \
-    if [ "$TEST_IN_CONTAINER" = "github_build" ]; then \
-        db_host="localhost"; \
-    elif [ "$TEST_IN_CONTAINER" = "local_build" ]; then \
-        db_host="host.docker.internal"; \
-    else \
-        db_host="localhost"; \
-    fi && \
-    apt-get update && apt-get install -y netcat-traditional && nc -zv $db_host 54321 && \
-    ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" \
-    python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && \
-    ls -lrtha result.png
+RUN bash -c "rm -f result.png && if [[ "${TEST_IN_CONTAINER}" == "github_build" ]]; then db_host="localhost"; elif [[ "${TEST_IN_CONTAINER}" == "local_build" ]]; then db_host="host.docker.internal"; else db_host="localhost"; fi && export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" && python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls -lrtha result.png"
 
 WORKDIR /adaguc/adaguc-server-master
 
