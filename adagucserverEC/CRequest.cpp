@@ -571,7 +571,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
       int maxQueryResultLimit = getMaxQueryLimit(*dataSource);
 
-      CDBDebug("maxQueryResultLimit %d", maxQueryResultLimit);
+      // CDBDebug("maxQueryResultLimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
@@ -587,8 +587,8 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         CDBDebug("No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong "
                  "dims or with missing area.");
         CDBDebug("dataSource->requiredDims.size() %lu", dataSource->requiredDims.size());
-        for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-          CDBDebug("  [%s] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), dataSource->requiredDims[i].value.c_str());
+        for (const auto &requiredDim: dataSource->requiredDims) {
+          CDBDebug("  [%s] = [%s]", requiredDim.netCDFDimName.c_str(), requiredDim.value.c_str());
         }
         return 0;
       }

@@ -31,7 +31,7 @@
 /**
  * Static function which converts an exception into a readable message
  * @param int The value of catched exception
- * @return CT::string with the readable message
+ * @return std::string with the readable message
  */
 std::string CXMLParser::getErrorMessage(int CXMLParserException) {
   std::string message = "Unknown error";
@@ -108,16 +108,16 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node, int depth) {
  * @param depth the current recursive depth
  */
 std::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
-  CT::string data = "";
+  std::string data = "";
   bool hasValue = false;
   if (CT::trim(CT::replace(el.value, "\n", "")).length() > 0) {
     hasValue = true;
   }
 
   for (int i = 0; i < depth; i++) data += "  ";
-  data += CT::string("<") + el.name;
+  data += "<" + el.name;
   for (size_t j = 0; j < el.xmlAttributes.size(); j++) {
-    data += CT::string(" ") + el.xmlAttributes.at(j).name + CT::string("=\"") + CT::encodeXml(el.xmlAttributes.at(j).value) + "\"";
+    data += " " + el.xmlAttributes.at(j).name + "=\"" + CT::encodeXml(el.xmlAttributes.at(j).value) + "\"";
   }
   if (!hasValue) {
     data += ">\n";
@@ -131,12 +131,12 @@ std::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
 
   if (hasValue) {
     data += el.value;
-    data += CT::string("</") + el.name + ">\n";
+    data += "</" + el.name + ">\n";
   } else {
     for (int i = 0; i < depth; i++) {
       data += "  ";
     };
-    data += CT::string("</") + el.name + ">\n";
+    data += "</" + el.name + ">\n";
   }
   return data;
 }
@@ -145,116 +145,76 @@ std::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
  * toString converts the current XMLElement to string
  */
 std::string CXMLParser::XMLElement::toString() {
-  CT::string data = "";
-  data = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+  std::string data = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
   data += toXML((*this), 0);
   return data;
 }
 
-std::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
-  CT::string data;
-  std::vector<CT::string> done;
-
-  if (el.xmlAttributes.size() > 0) {
-    CXMLParser::XMLElement xmlattr("xmlattr");
-    for (size_t j = 0; j < el.xmlAttributes.size(); j++) {
-      xmlattr.xmlElements.push_back(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(), el.xmlAttributes[j].value.c_str()));
-    }
-    el.xmlElements.push_back(xmlattr);
-  }
-
+std::string CXMLParser::XMLElement::toJSON(const XMLElement &el, int depth, int mode) const {
+  std::string data;
+  std::vector<std::string> done;
   for (size_t j = 0; j < el.xmlElements.size(); j++) {
-    const char *name = el.xmlElements[j].name.c_str();
-    bool alreadyDone = false;
-    for (size_t i = 0; i < done.size(); i++) {
-      if (done[i].equals(name)) {
-        alreadyDone = true;
-        break;
-      }
-    }
-    if (alreadyDone == false) {
-      done.push_back(name);
-      std::vector<CXMLParser::XMLElement> els = el.getList(name);
-      if (els.size() > 1) {
-        if (j > 0) data += ",";
-        data += "\"";
-        data += el.xmlElements[j].name.c_str();
-        data += "\"";
-        data += ":[";
-        for (size_t i = 0; i < els.size(); i++) {
-          CT::string value = CT::trim(CT::replace(els[i].value, "\n", ""));
-          CT::string subdata = toJSON((els[i]), depth++, mode);
-          ;
-          if (subdata.length() > 0) {
-            if (i > 0) data += ",";
-            data += "{";
-            data += subdata;
-            data += "}";
-          }
-          if (value.length() > 0) {
-            if (i > 0)
-              data += ",";
-            else {
-              if (subdata.length() > 0) {
-                data += ",";
-              }
-            }
-            data += "\"";
-            data += value.c_str();
-            data += "\"";
-          }
-        }
-        data += "]";
-      } else {
-        bool hasValues = false;
-        CT::string value = el.xmlElements[j].value;
-        if (value.length() > 0) {
-          value = value.replace("\n", "").trim();
-          if (value.length() > 0) {
-            hasValues = true;
-          }
-        }
-        if (j > 0) data += ",";
-        data += "\"";
-        data += name;
-        data += "\":";
-        if (hasValues) {
-          data += "\"";
-          data += value.c_str();
-          data += "\"";
-        } else {
-          data += "{";
-        }
-        CT::string subdata = toJSON(el.xmlElements[j], depth++, mode);
-        if (hasValues && subdata.length() > 0) data += ",";
+    const auto &name = el.xmlElements[j].name;
+    if (std::find(done.begin(), done.end(), name) != done.end()) continue;
+    done.push_back(name);
+    const auto &els = el.getList(name);
+    if (els.size() > 1) {
+      if (j > 0) data += ",";
+      data += "\"" + el.xmlElements[j].name + "\":[";
+      for (size_t i = 0; i < els.size(); i++) {
+        std::string value = CT::trim(CT::replace(els[i].value, "\n", ""));
+        std::string subdata = toJSON((els[i]), depth++, mode);
         if (subdata.length() > 0) {
-          data += subdata;
+          if (i > 0) data += ",";
+          data += "{" + subdata + "}";
         }
-        if (!hasValues) {
-          data += "}";
+        if (value.length() > 0) {
+          if (i > 0)
+            data += ",";
+          else {
+            if (subdata.length() > 0) {
+              data += ",";
+            }
+          }
+          data += "\"" + value + "\"";
         }
+      }
+      data += "]";
+    } else {
+      bool hasValues = false;
+      std::string value = el.xmlElements[j].value;
+      if (value.length() > 0) {
+        value = CT::trim(CT::replace(value, "\n", ""));
+        if (value.length() > 0) {
+          hasValues = true;
+        }
+      }
+      if (j > 0) data += ",";
+      data += "\"" + name + "\":";
+      if (hasValues) {
+        data += "\"" + value + "\"";
+      } else {
+        data += "{";
+      }
+      std::string subdata = toJSON(el.xmlElements[j], depth++, mode);
+      if (hasValues && subdata.length() > 0) data += ",";
+      if (subdata.length() > 0) {
+        data += subdata;
+      }
+      if (!hasValues) {
+        data += "}";
       }
     }
   }
   return data;
 }
 
-std::string CXMLParser::XMLElement::toJSON(int mode) {
-  CT::string data = "";
-  data = "[{";
-  data += toJSON((*this), 0, mode);
-  data += "}]\n";
-  return data;
-}
+std::string CXMLParser::XMLElement::toJSON(int mode) const { return "[{" + toJSON((*this), 0, mode) + "}]\n"; }
 
 /**
  * toString converts the current XMLElement to string
  */
-std::string CXMLParser::XMLElement::toStringNoHeader() {
-  CT::string data = "";
-  data += toXML((*this), 0);
-  return data;
-}
+std::string CXMLParser::XMLElement::toStringNoHeader() { return toXML((*this), 0); }
 
 /**
  * getAttrValue Returns the value of the attribute with the specified name
@@ -290,7 +250,7 @@ CXMLParser::XMLElement *CXMLParser::XMLElement::getLast() {
  * getList returns all elements with the specified name
  * @param name The name of the elements to return
  */
-std::vector<CXMLParser::XMLElement> CXMLParser::XMLElement::getList(const std::string &name) {
+std::vector<CXMLParser::XMLElement> CXMLParser::XMLElement::getList(const std::string &name) const {
   std::vector<CXMLParser::XMLElement> elements;
   for (size_t j = 0; j < xmlElements.size(); j++) {
     if (xmlElements[j].name == name) {
@@ -324,7 +284,7 @@ CXMLParser::XMLElement *CXMLParser::XMLElement::getThrows(const std::string &nam
 }
 
 /**
- * Parses a string of given size to XMLElement structure
+ * Parses a string to XMLElement structure
  * throws integer CXMLPARSER_INVALID_XML if invalid
  * @param xmlData The XML data as string to parse
  * @return Zero means succesfully parsed
@@ -375,12 +335,12 @@ int CXMLParser::XMLElement::parseFile(const std::string &filename) {
   return 0;
 }
 
-std::string xmlListToJSON(std::vector<CXMLParser::XMLElement> list, int mode) {
-  CT::string json = "[";
+std::string xmlListToJSON(const std::vector<CXMLParser::XMLElement> &list, int mode) {
+  std::string json = "[";
   for (size_t j = 0; j < list.size(); j++) {
     if (j > 0) json += ",";
-    CT::string subdata = list.at(j).toJSON(mode);
-    json.concatlength((subdata.c_str() + 1), subdata.length() - 3);
+    std::string subdata = list.at(j).toJSON(mode);
+    json += CT::substring(subdata, 1, subdata.length() - 2);
   }
   json += "]";
   return json;

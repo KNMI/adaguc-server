@@ -152,7 +152,7 @@ public:
      * @param el The XMLElement to convert
      * @param depth the current recursive depth
      */
-    std::string toJSON(XMLElement el, int depth, int mode);
+    std::string toJSON(const XMLElement &el, int depth, int mode) const;
 
   public:
     /**
@@ -163,7 +163,7 @@ public:
     /**
      * toJSON converts the current XMLElement to json
      */
-    std::string toJSON(int mode);
+    std::string toJSON(int mode) const;
 
     /**
      * toString converts the current XMLElement to string
@@ -191,7 +191,7 @@ public:
      * getList returns all elements with the specified name
      * @param name The name of the elements to return
      */
-    std::vector<CXMLParser::XMLElement> getList(const std::string &name);
+    std::vector<CXMLParser::XMLElement> getList(const std::string &name) const;
     /**
      * get returns all elements with the specified name
      * @param name The name of the elements to return or null if noit found
@@ -263,5 +263,5 @@ public:
 #define CXMLParserElement CXMLParser::XMLElement
 #define CXMLParserAttribute CXMLParser::XMLAttribute
 
-std::string xmlListToJSON(std::vector<CXMLParser::XMLElement> list, int mode);
+std::string xmlListToJSON(const std::vector<CXMLParser::XMLElement> &list, int mode);
 #endif
