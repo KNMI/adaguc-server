@@ -99,8 +99,8 @@ COPY scripts /adaguc/adaguc-server-master/scripts
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
 # Determine if we're building in github actions or via a local docker build
-ARG TEST_IN_CONTAINER
-ENV TEST_IN_CONTAINER=${TEST_IN_CONTAINER:-local_build}
+ARG TEST_IN_CONTAINER=local_build
+ENV TEST_IN_CONTAINER=$TEST_IN_CONTAINER
 
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 
@@ -152,7 +152,18 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN bash -c "rm -f result.png && if [[ "${TEST_IN_CONTAINER}" == "github_build" ]]; then     db_host="localhost"; elif [[ "${TEST_IN_CONTAINER}" == "local_build" ]]; then     db_host="host.docker.internal"; else     db_host="localhost"; fi && export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" && python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls -lrtha result.png"
+RUN rm -f result.png && \
+    if [ "$TEST_IN_CONTAINER" = "github_build" ]; then \
+        db_host="localhost"; \
+    elif [ "$TEST_IN_CONTAINER" = "local_build" ]; then \
+        db_host="host.docker.internal"; \
+    else \
+        db_host="localhost"; \
+    fi && \
+    apt-get update && apt-get install -y netcat-traditional && nc -zv $db_host 54321 && \
+    ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" \
+    python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && \
+    ls -lrtha result.png
 
 WORKDIR /adaguc/adaguc-server-master
 
