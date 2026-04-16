@@ -1,19 +1,18 @@
 import asyncio
-import logging
 import os
 from PIL import Image
-from io import BytesIO
-import brotli
 import shutil
 import random
 import string
-import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
-
-import calendar
-import json
-from datetime import datetime
 
 from adaguc.CGIRunner import CGIRunner
+
+
+# Store ADAGUCENV_ environment variables once
+ADAGUC_ENV_CACHE = {
+    k: v for k, v in os.environ.items()
+    if k.startswith("ADAGUCENV_")
+}
 
 
 class runAdaguc:
@@ -171,11 +170,7 @@ class runAdaguc:
         adagucenv = self.getAdagucEnv(env)
 
         # Forward all environment variables starting with ADAGUCENV_
-        prefix: str = "ADAGUCENV_"
-        for key, value in os.environ.items():
-            if key[: len(prefix)] == prefix:
-                adagucenv[key] = value
-
+        adagucenv.update(ADAGUC_ENV_CACHE)
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
         ADAGUC_LOGFILE = adagucenv["ADAGUC_LOGFILE"]
 

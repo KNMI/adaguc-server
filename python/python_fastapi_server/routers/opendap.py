@@ -54,7 +54,7 @@ async def handle_opendap(req: Request, opendappath: str):
 
     # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:
-        key = header.split(":")[0]
-        value = header.split(":")[1].strip()
-        response.headers[key] = value
+        key, value = header.split(":", 1)
+        response.headers[key] = value.strip()
+
     return response
