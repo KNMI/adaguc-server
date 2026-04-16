@@ -211,7 +211,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     std::string variableName = dataObject->cdfVariable->name;
     for (const auto &[dimName, fileInfo]: fileInfoMap) {
       if (projCacheInfo.isOutsideBBOX == false) {
-        CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, (dimName.c_str()));
+        CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dimName.c_str());
 
         if (enableLogUnique) {
           CDBDebug("Getting data variable [%s]", variableName.c_str());
@@ -248,37 +248,38 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
           start[(size_t)dataSource->dimXIndex] = projCacheInfo.imx;
           start[(size_t)dataSource->dimYIndex] = projCacheInfo.imy;
 
-          for (size_t i = 0; i < request.size(); i++) {
+          // for (size_t i = 0; i < request.size(); i++) {
+          for (const auto &request: request) {
             int netcdfDimIndex = -1;
-            CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request[i].name);
+            CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request.name);
             if (dtype != CDataReader::dtype_reference_time) {
               if (dtype == CDataReader::dtype_none) {
-                CDBWarning("dtype_none for %d with name %s", dtype, request[i].name.c_str());
+                CDBWarning("dtype_none for %d with name %s", dtype, request.name.c_str());
               }
 
-              netcdfDimIndex = variable->getDimIndex(request[i].name);
+              netcdfDimIndex = variable->getDimIndex(request.name);
               if (netcdfDimIndex == -1) {
-                CDBDebug("Unable to find dimension [%s] for variable %s", request[i].name.c_str(), variable->name.c_str());
+                CDBDebug("Unable to find dimension [%s] for variable %s", request.name.c_str(), variable->name.c_str());
 
                 if (dtype == CDataReader::dtype_reference_time) {
-                  CDBDebug("IS REFERENCE TIME %s", request[i].name.c_str());
-                } else if (variable->getParentCDFObject()->getDimensionNE(request[i].name) != nullptr) {
+                  CDBDebug("IS REFERENCE TIME %s", request.name.c_str());
+                } else if (variable->getParentCDFObject()->getDimensionNE(request.name) != nullptr) {
                   CDBDebug("IT IS IN THE DATAMODEL");
 
                 } else {
-                  CDBError("Unable to find dimension [%s] for variable %s", request[i].name.c_str(), variable->name.c_str());
+                  CDBError("Unable to find dimension [%s] for variable %s", request.name.c_str(), variable->name.c_str());
                   throw(__LINE__);
                 }
               }
               if (netcdfDimIndex == dataSource->dimXIndex || netcdfDimIndex == dataSource->dimYIndex) {
-                CDBWarning("netcdfDimIndex %d already taken for %s", netcdfDimIndex, request[i].name.c_str());
+                CDBWarning("netcdfDimIndex %d already taken for %s", netcdfDimIndex, request.name.c_str());
               }
               if (netcdfDimIndex != -1) {
-                start[netcdfDimIndex] = request[i].start;
-                count[netcdfDimIndex] = request[i].values.size();
+                start[netcdfDimIndex] = request.start;
+                count[netcdfDimIndex] = request.values.size();
               }
               if (enableLogUnique) {
-                CDBDebug("  request index: %lu  netcdfdimindex %d  %s %d %lu", i, netcdfDimIndex, request[i].name.c_str(), request[i].start, request[i].values.size());
+                CDBDebug("  request  netcdfdimindex %d  %s %d %lu", netcdfDimIndex, request.name.c_str(), request.start, request.values.size());
               }
             }
           }
