@@ -15,7 +15,7 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   InspireMetadataFromCSW inspireMetadata;
 
   try {
-    element.parse(xmlData);
+    element.parseData(xmlData);
   } catch (int e) {
     CT::string message = CXMLParser::getErrorMessage(e);
     CDBError("Inspire CSW parsing failed: %s ", message.c_str());
@@ -25,71 +25,72 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   }
   CXMLParserElement *MD_DataIdentification = NULL;
   try {
-    MD_DataIdentification = element.get("GetRecordByIdResponse")->get("MD_Metadata")->get("identificationInfo")->get("MD_DataIdentification");
-    // MD_DataIdentification = element.get("GetRecordByIdResponse")->get("MD_Metadata")->get("identificationInfo")->get("SV_ServiceIdentification");
+    MD_DataIdentification = element.getThrows("GetRecordByIdResponse")->getThrows("MD_Metadata")->getThrows("identificationInfo")->getThrows("MD_DataIdentification");
+    // MD_DataIdentification = element.get("GetRecordByIdResponse")->getThrows("MD_Metadata")->getThrows("identificationInfo")->getThrows("SV_ServiceIdentification");
   } catch (int e) {
     throw CINSPIRE_XMLELEMENTNOTFOUND;
   }
   // Get title
   try {
-    inspireMetadata.title = MD_DataIdentification->get("citation")->get("CI_Citation")->get("title")->get("CharacterString")->value;
+    inspireMetadata.title = MD_DataIdentification->getThrows("citation")->getThrows("CI_Citation")->getThrows("title")->getThrows("CharacterString")->value;
   } catch (int e) {
   }
 
   // Get identifier
   try {
-    inspireMetadata.identifier = MD_DataIdentification->get("citation")->get("CI_Citation")->get("identifier")->get("MD_Identifier")->get("code")->get("CharacterString")->value;
+    inspireMetadata.identifier =
+        MD_DataIdentification->getThrows("citation")->getThrows("CI_Citation")->getThrows("identifier")->getThrows("MD_Identifier")->getThrows("code")->getThrows("CharacterString")->value;
   } catch (int e) {
   }
   // Get abstract
   try {
-    inspireMetadata.abstract = MD_DataIdentification->get("abstract")->get("CharacterString")->value;
+    inspireMetadata.abstract = MD_DataIdentification->getThrows("abstract")->getThrows("CharacterString")->value;
   } catch (int e) {
   }
   // Get point of contact
   try {
-    inspireMetadata.pointOfContact = MD_DataIdentification->get("pointOfContact")->get("CI_ResponsibleParty")->get("individualName")->get("CharacterString")->value;
+    inspireMetadata.pointOfContact = MD_DataIdentification->getThrows("pointOfContact")->getThrows("CI_ResponsibleParty")->getThrows("individualName")->getThrows("CharacterString")->value;
   } catch (int e) {
   }
   // Get organisation name
   try {
-    inspireMetadata.organisationName = MD_DataIdentification->get("pointOfContact")->get("CI_ResponsibleParty")->get("organisationName")->get("CharacterString")->value;
+    inspireMetadata.organisationName = MD_DataIdentification->getThrows("pointOfContact")->getThrows("CI_ResponsibleParty")->getThrows("organisationName")->getThrows("CharacterString")->value;
   } catch (int e) {
   }
 
   // Get mail address
   try {
-    inspireMetadata.email = MD_DataIdentification->get("pointOfContact")
-                                ->get("CI_ResponsibleParty")
-                                ->get("contactInfo")
-                                ->get("CI_Contact")
-                                ->get("address")
-                                ->get("CI_Address")
-                                ->get("electronicMailAddress")
-                                ->get("CharacterString")
+    inspireMetadata.email = MD_DataIdentification->getThrows("pointOfContact")
+                                ->getThrows("CI_ResponsibleParty")
+                                ->getThrows("contactInfo")
+                                ->getThrows("CI_Contact")
+                                ->getThrows("address")
+                                ->getThrows("CI_Address")
+                                ->getThrows("electronicMailAddress")
+                                ->getThrows("CharacterString")
                                 ->value.c_str();
   } catch (int e) {
   }
 
   // Get voiceTelephone
   try {
-    inspireMetadata.voiceTelephone = MD_DataIdentification->get("pointOfContact")
-                                         ->get("CI_ResponsibleParty")
-                                         ->get("contactInfo")
-                                         ->get("CI_Contact")
-                                         ->get("phone")
-                                         ->get("CI_Telephone")
-                                         ->get("voice")
-                                         ->get("CharacterString")
+    inspireMetadata.voiceTelephone = MD_DataIdentification->getThrows("pointOfContact")
+                                         ->getThrows("CI_ResponsibleParty")
+                                         ->getThrows("contactInfo")
+                                         ->getThrows("CI_Contact")
+                                         ->getThrows("phone")
+                                         ->getThrows("CI_Telephone")
+                                         ->getThrows("voice")
+                                         ->getThrows("CharacterString")
                                          ->value.c_str();
   } catch (int e) {
   }
 
   // Get keywords
   try {
-    CXMLParser::XMLElement::XMLElementPointerList keyWordList = MD_DataIdentification->get("descriptiveKeywords")->get("MD_Keywords")->getList("keyword");
+    auto keyWordList = MD_DataIdentification->getThrows("descriptiveKeywords")->getThrows("MD_Keywords")->getList("keyword");
     for (size_t j = 0; j < keyWordList.size(); j++) {
-      inspireMetadata.keywords.push_back(keyWordList[j].get("CharacterString")->value);
+      inspireMetadata.keywords.push_back(keyWordList[j].getThrows("CharacterString")->value);
     }
   } catch (int e) {
   }
