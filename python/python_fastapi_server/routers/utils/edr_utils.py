@@ -524,7 +524,7 @@ async def get_metadata(collection_name: str = "", instance: str = "") -> dict:
     status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
     logger.info("status for %s: %d", urlrequest, status)
 
-    raw_response = response.getvalue().decode("UTF-8")
+    raw_response = response.decode("UTF-8")
     try:
         parsed_json = json.loads(raw_response)
     except json.JSONDecodeError:

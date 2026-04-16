@@ -71,8 +71,7 @@ class runAdaguc:
             "ADAGUC_ENABLELOGBUFFER", "TRUE"
         ) != "DISABLELOGGING"
 
-    def getAdagucEnv(self, adagucenv = {}):
-        
+    def getAdagucEnv(self, adagucenv: dict = {}) -> dict:
         """ Set required environment variables for adaguc to run"""
         adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
         adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
@@ -105,7 +104,7 @@ class runAdaguc:
             args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
         )
 
-        return status, data.getvalue().decode()        
+        return status, data.decode()
 
     def scanDataset(self, datasetName):
         config = self.ADAGUC_CONFIG + "," + datasetName
@@ -116,8 +115,7 @@ class runAdaguc:
             )
         )
 
-
-        return data.getvalue().decode()
+        return data.decode()
 
     def runGetMapUrl(self, url):
         adagucenv = self.getAdagucEnv()
@@ -169,10 +167,8 @@ class runAdaguc:
         isCGI=True,
         showLogOnError=True,
         showLog=False,
-    ):
+    ) -> tuple[int, bytes, list[str]]:
         adagucenv = self.getAdagucEnv(env)
-
-
 
         # Forward all environment variables starting with ADAGUCENV_
         prefix: str = "ADAGUCENV_"
@@ -189,18 +185,14 @@ class runAdaguc:
             pass
 
         adagucexecutable = ADAGUC_PATH + "/bin/adagucserver"
-
         adagucargs = [adagucexecutable]
 
         if args is not None:
             adagucargs = adagucargs + args
 
-
-        filetogenerate = BytesIO()
-        status, headers, processErr = await CGIRunner().run(
+        status, headers, processErr, output = await CGIRunner().run(
             adagucargs,
             url=url,
-            output=filetogenerate,
             env=adagucenv,
             path=path,
             isCGI=isCGI,
@@ -210,7 +202,7 @@ class runAdaguc:
             print("\n\n--- START ADAGUC DEBUG INFO ---")
             print("Adaguc-server has non zero exit status %d " % status)
             if isCGI == False:
-                print(filetogenerate.getvalue())
+                print(output)
             else:
                 self.printLogFile()
             if status == -9:
@@ -227,7 +219,7 @@ class runAdaguc:
 
             print("--- END ADAGUC DEBUG INFO ---\n")
 
-        return status, filetogenerate, headers
+        return status, output, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:

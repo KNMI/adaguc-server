@@ -28,7 +28,7 @@ class TestWMSVolScan:
             f"source=test/volscan/{file_type}_RAD_NL62_VOL_NA_202106181850.h5&SERVICE=WMS&request=getcapabilities",
             env=self.env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(
@@ -77,7 +77,7 @@ class TestWMSVolScan:
         status, data, _ = AdagucTestTools().runADAGUCServer(wms_arg, env=self.env)
         AdagucTestTools().writetofile(
             self.testresultspath + f"{file_type}_{filename}",
-            data.getvalue(),
+            data,
         )
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + f"{file_type}_{filename}")
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + f"{file_type}_{filename}")

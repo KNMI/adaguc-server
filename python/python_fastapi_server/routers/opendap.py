@@ -50,7 +50,7 @@ async def handle_opendap(req: Request, opendappath: str):
     if status != 0:
         logger.info("Adaguc status code was %d", status)
         response_code = 500
-    response = Response(content=data.getvalue(), status_code=response_code)
+    response = Response(content=data, status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:

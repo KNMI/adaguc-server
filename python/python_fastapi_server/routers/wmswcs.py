@@ -79,7 +79,7 @@ async def handle_wms(
             response_code = 500  # Timeout
         else:
             response_code = 500
-    response = Response(content=data.getvalue(), status_code=response_code)
+    response = Response(content=data, status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:

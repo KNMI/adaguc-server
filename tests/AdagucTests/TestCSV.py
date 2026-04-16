@@ -43,9 +43,9 @@ class TestCSV:
             env=env,
         )
 
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_CSV_reference_time(self):
         AdagucTestTools().cleanTempDir()
@@ -62,7 +62,7 @@ class TestCSV:
         # Test GetCapabilities
         filename = "test_CSV_reference_timesupport_GetCapabilities.xml"
         status, data, _ = AdagucTestTools().runADAGUCServer("&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
@@ -92,9 +92,9 @@ class TestCSV:
             env=env,
         )
 
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_CSV_negative_values(self):
         AdagucTestTools().cleanTempDir()
@@ -107,9 +107,9 @@ class TestCSV:
             "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tn&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=4000904.446200706,-1231688.3419664246,4468921.645102525,-685668.2765809689&STYLES=name/point&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_CSV_radiusandvalue(self):
         AdagucTestTools().cleanTempDir()
@@ -123,9 +123,9 @@ class TestCSV:
             env=env,
         )
 
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_CSV_radiusandvalue_and_symbol(self):
         AdagucTestTools().cleanTempDir()
@@ -139,9 +139,9 @@ class TestCSV:
             env=env,
         )
 
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_CSV_windbarbs_Cairo_png(self):
         AdagucTestTools().cleanTempDir()
@@ -154,6 +154,6 @@ class TestCSV:
             "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=windallspeeds&width=1600&height=500&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&showlegend=false&0.817264530295692&bbox=-11,-1,11,32&transparent=true&FORMAT=image/png&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)

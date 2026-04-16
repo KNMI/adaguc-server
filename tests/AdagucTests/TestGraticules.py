@@ -43,6 +43,6 @@ class TestGraticules:
             showLog=True,
         )
 
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)

@@ -35,7 +35,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
             "source=example_file_latlonbnds.nc&SERVICE=WMS&request=getcapabilities",
             env=self.env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
@@ -54,7 +54,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
             env=self.env,
             args=["--report"],
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
 
@@ -72,9 +72,9 @@ class TestConvertLatLonBnds(unittest.TestCase):
             env=self.env,
             args=["--report"],
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertEqual(
-            json.loads(data.getvalue()),
+            json.loads(data),
             json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)),
         )
