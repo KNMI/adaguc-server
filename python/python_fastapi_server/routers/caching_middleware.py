@@ -7,9 +7,12 @@ from io import BytesIO
 
 import brotli
 import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, logger
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
+
+from .is_br_encoding_needed import requires_encoding
+
 
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
@@ -30,8 +33,8 @@ async def get_cached_response(redis_pool, request):
 
     headers_len = int(cached[10:16].decode("utf-8"))
     headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
-
-    data = brotli.decompress(cached[16 + headers_len :])
+    is_compression_needed = requires_encoding(headers)
+    data = brotli.decompress(cached[16 + headers_len :]) if is_compression_needed else cached[16 + headers_len :]
     return age, headers, data
 
 
@@ -47,18 +50,14 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
             fixed_headers[k] = headers[k]
     headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode("utf-8")
 
-    entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
-        "utf-8"
-    )
-    compressed_data = brotli.compress(data, quality=4)
+    entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode("utf-8")
+    is_compression_needed = requires_encoding(headers)
+    compressed_data = brotli.compress(data, quality=4) if is_compression_needed else data
     if len(compressed_data) < MAX_SIZE_FOR_CACHING:
         redis_client = redis.Redis(connection_pool=redis_pool)
         await redis_client.set(
             key,
-            entrytime
-            + f"{len(headers_json):06d}".encode("utf-8")
-            + headers_json
-            + compressed_data,
+            entrytime + f"{len(headers_json):06d}".encode("utf-8") + headers_json + compressed_data,
             ex=ex,
         )
         await redis_client.aclose()
