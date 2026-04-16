@@ -29,7 +29,7 @@ class MyBrotliResponder(BrotliResponder):
             await self.send(message)
 
 
-class ContentTypeBasedbrotli(BrotliMiddleware):
+class ContentTypeBasedBrotli(BrotliMiddleware):
     """This middleware extends the BrotliMiddleware but makes it content type aware"""
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:

@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
-from routers.ContentTypeBasedbrotli import ContentTypeBasedbrotli
+from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
 from routers.healthcheck import health_check_router
@@ -71,7 +71,7 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
-app.add_middleware(ContentTypeBasedbrotli, gzip_fallback=True)
+app.add_middleware(ContentTypeBasedBrotli, gzip_fallback=True)
 
 app.add_middleware(
     CORSMiddleware,
