@@ -80,7 +80,7 @@ void sortAndAggregate(std::map<std::string, CURFileInfo> &fileInfoMap) {
   }
 }
 
-void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, const std::vector<int> &dimOrdering, std::vector<int> dimIndicesToSkip) {
+void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, const std::vector<int> &dimOrdering, const std::vector<int> &dimIndicesToSkip) {
   int dimIndex = dimOrdering[depth];
 
   for (const int &dimIndexToSkip: dimIndicesToSkip) {
@@ -224,7 +224,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
           throw(__LINE__);
         }
 
-        for (auto request: (fileInfo).requests) {
+        for (auto request: fileInfo.requests) {
 
           if (enableLogUnique) {
             CDBDebug("Reading file %s  for variable %s", dimName.c_str(), variable->name.c_str());
@@ -248,7 +248,6 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
           start[(size_t)dataSource->dimXIndex] = projCacheInfo.imx;
           start[(size_t)dataSource->dimYIndex] = projCacheInfo.imy;
 
-          // for (size_t i = 0; i < request.size(); i++) {
           for (const auto &request: request) {
             int netcdfDimIndex = -1;
             CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request.name);
