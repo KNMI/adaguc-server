@@ -26,6 +26,7 @@ from edr_pydantic.variables import Variables
 from fastapi import Request
 from fastapi.datastructures import QueryParams
 
+
 # TODO; this import should be possible!
 # from python.lib.adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 HTTP_STATUSCODE_404_NOT_FOUND = 32
@@ -252,6 +253,12 @@ def get_collectioninfo_from_md(
         query_type="position",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
+        crs_details=[
+            {
+                "crs": "EPSG:4326",
+                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+            }
+        ],
     )
     position_link = EDRQueryLink(
         href=f"{base_url}/position",
@@ -261,9 +268,15 @@ def get_collectioninfo_from_md(
         variables=position_variables,
     )
     cube_variables = Variables(
-        query_type="position",
+        query_type="cube",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
+        crs_details=[
+            {
+                "crs": "EPSG:4326",
+                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+            }
+        ],
     )
     cube_link = EDRQueryLink(
         href=f"{base_url}/cube",

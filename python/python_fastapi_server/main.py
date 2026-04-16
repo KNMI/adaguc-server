@@ -52,8 +52,8 @@ async def add_hsts_header(request: Request, call_next):
     return response
 
 
-if "TRUSTED_PROXIES" in os.environ:
-    app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ["TRUSTED_PROXIES"])
+if "ADAGUC_TRUSTED_PROXIES" in os.environ:
+    app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ["ADAGUC_TRUSTED_PROXIES"])
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
