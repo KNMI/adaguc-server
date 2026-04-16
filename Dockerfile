@@ -1,5 +1,5 @@
 ######### First stage (build) ############
-FROM python:3.10-slim-bookworm AS build
+FROM python:3.14-slim-trixie AS build
 
 # To build on linux ubuntu use 
 # docker compose -f Docker/docker-compose-test.yml up -Vd
@@ -53,7 +53,7 @@ ARG BUILD_TYPE
 RUN bash compile.sh "$BUILD_TYPE"
 
 ######### Second stage, base image for test and prod ############
-FROM python:3.10-slim-bookworm AS base
+FROM python:3.14-slim-trixie AS base
 
 USER root
 
