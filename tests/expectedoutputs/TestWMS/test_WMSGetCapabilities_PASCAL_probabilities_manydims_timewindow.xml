@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 6.0.0, of Nov 19 2025 08:49:47 </Keyword>
+            <Keyword>ADAGUCServer version 7.2.0, of Apr 16 2026 13:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -73,6 +73,7 @@
 <CRS>EPSG:4258</CRS>
 <CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
+<CRS>EPSG:5041</CRS>
 <CRS>EPSG:54030</CRS>
 <CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
@@ -92,6 +93,7 @@
 <BoundingBox CRS="EPSG:4258" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:4326" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1998797.905458" miny="-2749996.025036" maxx="2930377.601350" maxy="-1808590.961851" />
 <BoundingBox CRS="EPSG:54030" minx="-1197.220328" miny="5222308.942734" maxx="932634.635340" maxy="5940218.262293" />
 <BoundingBox CRS="EPSG:7399" minx="-1117.353231" miny="5767402.687526" maxx="870418.166689" maxy="6487641.412002" />
 <BoundingBox CRS="EPSG:900913" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
@@ -119,6 +121,7 @@
 <BoundingBox CRS="EPSG:4258" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:4326" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1998797.905458" miny="-2749996.025036" maxx="2930377.601350" maxy="-1808590.961851" />
 <BoundingBox CRS="EPSG:54030" minx="-1197.220328" miny="5222308.942734" maxx="932634.635340" maxy="5940218.262293" />
 <BoundingBox CRS="EPSG:7399" minx="-1117.353231" miny="5767402.687526" maxx="870418.166689" maxy="6487641.412002" />
 <BoundingBox CRS="EPSG:900913" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
@@ -128,7 +131,51 @@
 <Dimension name="reference_time" units="seconds since 1970-01-01" default="2025-07-02T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2025-07-02T00:00:00Z</Dimension>
 <Dimension name="radius" units="1" default="0.12" multipleValues="1" nearestValue="0" >0.12</Dimension>
 <Dimension name="condition" units="1" default="greater_than_or_equal_to_36" multipleValues="1" nearestValue="0" >greater_than_or_equal_to_36</Dimension>
-   <Style>    <Name>auto/nearest</Name>    <Title>Auto style blue-white-red</Title>    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>autogeneric</Name>    <Title>Auto style blue-white-red</Title>    <Abstract>Nearest neighbour interpolation using the generic renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autogeneric"/>    </LegendURL>  </Style>   <Style>    <Name>autobilinear</Name>    <Title>Auto style bilnear blue-white-red</Title>    <Abstract>Bilinear neighbour interpolation using the generic renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autobilinear"/>    </LegendURL>  </Style>   <Style>    <Name>autoboxoutline</Name>    <Title>Grid boxes</Title>    <Abstract>Render grid boxes if applicable</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autoboxoutline"/>    </LegendURL>  </Style>   <Style>    <Name>autobilinear_deprecated/bilinear</Name>    <Title>autobilinear_deprecated/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>auto/nearest</Name>
+    <Title>Auto style blue-white-red</Title>
+    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=auto/nearest"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autogeneric</Name>
+    <Title>Auto style blue-white-red</Title>
+    <Abstract>Nearest neighbour interpolation using the generic renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autogeneric"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autobilinear</Name>
+    <Title>Auto style bilnear blue-white-red</Title>
+    <Abstract>Bilinear neighbour interpolation using the generic renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autobilinear"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autoboxoutline</Name>
+    <Title>Grid boxes</Title>
+    <Abstract>Render grid boxes if applicable</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autoboxoutline"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autobilinear_deprecated/bilinear</Name>
+    <Title>autobilinear_deprecated/bilinear</Title>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>
+    </LegendURL>
+  </Style>
+</Layer>
     </Layer>
   </Capability>
 </WMS_Capabilities>

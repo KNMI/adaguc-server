@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 3.1.2, of Jun 30 2025 11:29:01 </Keyword>
+            <Keyword>ADAGUCServer version 7.2.0, of Apr 16 2026 13:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -73,6 +73,7 @@
 <CRS>EPSG:4258</CRS>
 <CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
+<CRS>EPSG:5041</CRS>
 <CRS>EPSG:54030</CRS>
 <CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
@@ -92,6 +93,7 @@
 <BoundingBox CRS="EPSG:4258" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:4326" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="2236636.957682" miny="-2499207.579300" maxx="2321824.106000" maxy="-2370491.121972" />
 <BoundingBox CRS="EPSG:54030" minx="250267.819665" miny="5424087.672457" maxx="333585.083442" maxy="5526906.416450" />
 <BoundingBox CRS="EPSG:7399" minx="229341.630247" miny="5971691.317382" maxx="307650.224519" maxy="6075231.074174" />
 <BoundingBox CRS="EPSG:900913" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
@@ -119,12 +121,29 @@
 <BoundingBox CRS="EPSG:4258" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:4326" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="2236636.957682" miny="-2499207.579300" maxx="2321824.106000" maxy="-2370491.121972" />
 <BoundingBox CRS="EPSG:54030" minx="250267.819665" miny="5424087.672457" maxx="333585.083442" maxy="5526906.416450" />
 <BoundingBox CRS="EPSG:7399" minx="229341.630247" miny="5971691.317382" maxx="307650.224519" maxy="6075231.074174" />
 <BoundingBox CRS="EPSG:900913" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
 <BoundingBox CRS="GFI:TIME_ELEVATION" minx="3.095820" miny="50.941341" maxx="4.095820" maxy="51.941341" />
 <Dimension name="time" units="ISO8601" default="2023-12-02T06:40:00Z" multipleValues="1" nearestValue="0" current="1">2023-12-02T06:40:00Z</Dimension>
-   <Style>    <Name>beta_raw/nearest</Name>    <Title>beta_raw/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=beta_raw/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>beta_raw/bilinear</Name>    <Title>beta_raw/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=beta_raw/bilinear"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>beta_raw/nearest</Name>
+    <Title>beta_raw/nearest</Title>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=beta_raw/nearest"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>beta_raw/bilinear</Name>
+    <Title>beta_raw/bilinear</Title>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=beta_raw/bilinear"/>
+    </LegendURL>
+  </Style>
+</Layer>
     </Layer>
   </Capability>
 </WMS_Capabilities>

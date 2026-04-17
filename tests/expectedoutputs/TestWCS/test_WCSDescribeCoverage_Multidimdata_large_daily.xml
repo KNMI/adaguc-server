@@ -83,6 +83,10 @@
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>
           <gml:pos>10000000.000000 8500000.000000</gml:pos>
         </gml:Envelope>
+        <gml:Envelope srsName="EPSG:5041">
+          <gml:pos>-956875261.313672 -956583178.620243</gml:pos>
+          <gml:pos>959123209.982084 959999102.204602</gml:pos>
+        </gml:Envelope>
         <gml:Envelope srsName="EPSG:54030">
           <gml:pos>-16769347.747524 -8576525.559211</gml:pos>
           <gml:pos>16485922.151792 8537587.027768</gml:pos>
@@ -154,6 +158,7 @@
       <requestResponseCRSs>EPSG:4258</requestResponseCRSs>
       <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <requestResponseCRSs>EPSG:50001</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:5041</requestResponseCRSs>
       <requestResponseCRSs>EPSG:54030</requestResponseCRSs>
       <requestResponseCRSs>EPSG:7399</requestResponseCRSs>
       <requestResponseCRSs>EPSG:900913</requestResponseCRSs>

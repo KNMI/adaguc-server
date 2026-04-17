@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 6.0.0, of Nov 19 2025 08:49:47 </Keyword>
+            <Keyword>ADAGUCServer version 7.2.0, of Apr 16 2026 13:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.arcus_harmonie_sorted_model_levels&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -73,6 +73,7 @@
 <CRS>EPSG:4258</CRS>
 <CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
+<CRS>EPSG:5041</CRS>
 <CRS>EPSG:54030</CRS>
 <CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
@@ -92,6 +93,7 @@
 <BoundingBox CRS="EPSG:4258" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:4326" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1998797.905458" miny="-2749996.025036" maxx="2930377.601350" maxy="-1808590.961851" />
 <BoundingBox CRS="EPSG:54030" minx="-1197.220328" miny="5222308.942734" maxx="932634.635340" maxy="5940218.262293" />
 <BoundingBox CRS="EPSG:7399" minx="-1117.353231" miny="5767402.687526" maxx="870418.166689" maxy="6487641.412002" />
 <BoundingBox CRS="EPSG:900913" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
@@ -119,6 +121,7 @@
 <BoundingBox CRS="EPSG:4258" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:4326" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1998797.905458" miny="-2749996.025036" maxx="2930377.601350" maxy="-1808590.961851" />
 <BoundingBox CRS="EPSG:54030" minx="-1197.220328" miny="5222308.942734" maxx="932634.635340" maxy="5940218.262293" />
 <BoundingBox CRS="EPSG:7399" minx="-1117.353231" miny="5767402.687526" maxx="870418.166689" maxy="6487641.412002" />
 <BoundingBox CRS="EPSG:900913" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
@@ -126,7 +129,16 @@
 <Dimension name="time" units="ISO8601" default="2024-12-23T13:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-12-23T13:00:00Z</Dimension>
 <Dimension name="reference_time" units="ISO8601" default="2024-12-22T06:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-12-22T06:00:00Z</Dimension>
 <Dimension name="model_level_number" units="hPa" default="90" multipleValues="1" nearestValue="0" >1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90</Dimension>
-   <Style>    <Name>auto/nearest</Name>    <Title>Auto style blue-white-red</Title>    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.arcus_harmonie_sorted_model_levels&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=air-temperature-ml&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>auto/nearest</Name>
+    <Title>Auto style blue-white-red</Title>
+    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.arcus_harmonie_sorted_model_levels&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=air-temperature-ml&amp;format=image/png&amp;STYLE=auto/nearest"/>
+    </LegendURL>
+  </Style>
+</Layer>
     </Layer>
   </Capability>
 </WMS_Capabilities>
