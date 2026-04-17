@@ -48,9 +48,9 @@ class TestWMSTiling(unittest.TestCase):
             showLogOnError=True,
             showLog=False,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_WMSGetMap_testdatanc_tiling(self):
         """
@@ -71,9 +71,9 @@ class TestWMSTiling(unittest.TestCase):
             showLogOnError=True,
             showLog=False,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
         AdagucTestTools().mkdir_p(os.environ["ADAGUC_TMP"] + "/tiling/")
         config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.testtiling.xml"
@@ -89,9 +89,9 @@ class TestWMSTiling(unittest.TestCase):
             showLogOnError=True,
             showLog=False,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_WMSGetMap_testdatanc_autotiling(self):
         """
@@ -112,9 +112,9 @@ class TestWMSTiling(unittest.TestCase):
             showLogOnError=True,
             showLog=False,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_tiling_satcomp_png(self):
         """

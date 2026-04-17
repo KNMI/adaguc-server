@@ -1,19 +1,20 @@
 import asyncio
-import logging
 import os
 from PIL import Image
-from io import BytesIO
-import brotli
 import shutil
 import random
 import string
-import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
 
-import calendar
-import json
-from datetime import datetime
+from PIL.ImageFile import ImageFile
 
 from adaguc.CGIRunner import CGIRunner
+
+
+# Store ADAGUCENV_ environment variables once
+ADAGUC_ENV_CACHE = {
+    k: v for k, v in os.environ.items()
+    if k.startswith("ADAGUCENV_")
+}
 
 
 class runAdaguc:
@@ -59,20 +60,19 @@ class runAdaguc:
     def setFontDir(self, newFontDir):
         self.ADAGUC_FONT = newFontDir
 
-    def get_random_string(self, length):
+    def get_random_string(self, length) -> str:
         letters = string.ascii_lowercase
         return "".join(random.choice(letters) for i in range(length))
 
     def setConfiguration(self, configFile):
         self.ADAGUC_CONFIG = configFile
 
-    def isLoggingEnabled(self):
+    def isLoggingEnabled(self) -> bool:
         return os.getenv(
             "ADAGUC_ENABLELOGBUFFER", "TRUE"
         ) != "DISABLELOGGING"
 
-    def getAdagucEnv(self, adagucenv = {}):
-        
+    def getAdagucEnv(self, adagucenv: dict = {}) -> dict:
         """ Set required environment variables for adaguc to run"""
         adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
         adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
@@ -98,16 +98,16 @@ class runAdaguc:
 
         return adagucenv
 
-    async def updateLayerMetadata(self):
+    async def updateLayerMetadata(self) -> tuple[int, str]:
         """Uses the adaguc executable to update the layermetadatatable"""
         adagucenv = self.getAdagucEnv()
         status, data, headers = await self.runADAGUCServer(
             args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
         )
 
-        return status, data.getvalue().decode()        
+        return status, data.decode()
 
-    def scanDataset(self, datasetName):
+    def scanDataset(self, datasetName) -> str:
         config = self.ADAGUC_CONFIG + "," + datasetName
         adagucenv = self.getAdagucEnv()
         status, data, headers = asyncio.run(
@@ -116,10 +116,9 @@ class runAdaguc:
             )
         )
 
+        return data.decode()
 
-        return data.getvalue().decode()
-
-    def runGetMapUrl(self, url):
+    def runGetMapUrl(self, url) -> tuple[ImageFile | None, str]:
         adagucenv = self.getAdagucEnv()
 
         status, data, headers = asyncio.run(
@@ -143,7 +142,7 @@ class runAdaguc:
         except:
             pass
 
-    def getLogFile(self):
+    def getLogFile(self) -> str:
         try:
             f = open(self.ADAGUC_LOGFILE, encoding="utf8", errors="ignore")
             data = f.read()
@@ -162,24 +161,18 @@ class runAdaguc:
 
     async def runADAGUCServer(
         self,
-        url=None,
-        env=[],
-        path=None,
-        args=None,
-        isCGI=True,
-        showLogOnError=True,
-        showLog=False,
-    ):
+        url: str | None = None,
+        env: dict = {},
+        path: str | None = None,
+        args: list[str] | None = None,
+        isCGI: bool = True,
+        showLogOnError: bool = True,
+        showLog: bool = False,
+    ) -> tuple[int, bytes, list[str]]:
         adagucenv = self.getAdagucEnv(env)
 
-
-
         # Forward all environment variables starting with ADAGUCENV_
-        prefix: str = "ADAGUCENV_"
-        for key, value in os.environ.items():
-            if key[: len(prefix)] == prefix:
-                adagucenv[key] = value
-
+        adagucenv.update(ADAGUC_ENV_CACHE)
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
         ADAGUC_LOGFILE = adagucenv["ADAGUC_LOGFILE"]
 
@@ -189,18 +182,14 @@ class runAdaguc:
             pass
 
         adagucexecutable = ADAGUC_PATH + "/bin/adagucserver"
-
         adagucargs = [adagucexecutable]
 
         if args is not None:
             adagucargs = adagucargs + args
 
-
-        filetogenerate = BytesIO()
-        status, headers, processErr = await CGIRunner().run(
-            adagucargs,
+        status, headers, processErr, output = await CGIRunner().run(
+            cmds=adagucargs,
             url=url,
-            output=filetogenerate,
             env=adagucenv,
             path=path,
             isCGI=isCGI,
@@ -210,7 +199,7 @@ class runAdaguc:
             print("\n\n--- START ADAGUC DEBUG INFO ---")
             print("Adaguc-server has non zero exit status %d " % status)
             if isCGI == False:
-                print(filetogenerate.getvalue())
+                print(output)
             else:
                 self.printLogFile()
             if status == -9:
@@ -227,13 +216,13 @@ class runAdaguc:
 
             print("--- END ADAGUC DEBUG INFO ---\n")
 
-        return status, filetogenerate, headers
+        return status, output, headers
 
-    def writetofile(self, filename, data):
+    def writetofile(self, filename: str, data: bytes):
         with open(filename, "wb") as f:
             f.write(data)
 
-    def readfromfile(self, filename):
+    def readfromfile(self, filename: str) -> bytes:
         ADAGUC_PATH = os.environ["ADAGUC_PATH"]
         with open(ADAGUC_PATH + "/tests/" + filename, "rb") as f:
             return f.read()
@@ -247,7 +236,7 @@ class runAdaguc:
         self.mkdir_p(os.environ["ADAGUC_TMP"])
         return
 
-    def mkdir_p(self, directory):
+    def mkdir_p(self, directory: str):
         if not os.path.exists(directory):
             os.makedirs(directory)
 

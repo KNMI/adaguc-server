@@ -160,7 +160,7 @@ async def get_coll_inst_cube(
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             continue
-        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response.getvalue())
+        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response)
 
         coveragejson = netcdf_to_covjson(
             metadata[collection_name], result_dataset, translate_names, translate_dims

@@ -162,7 +162,7 @@ async def get_point_value(
     datetime_par: str,
     vertical_dim: str = None,
     custom_dims: list[str] = None,
-):
+) -> tuple[bytes, list[str]]:
     """Returns information in EDR format for a given collection and position"""
     custom_dims = [] if custom_dims is None else custom_dims
     urlrequest = "&".join(
@@ -181,5 +181,5 @@ async def get_point_value(
 
     status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:
-        return response.getvalue(), headers
+        return response, headers
     return None, None

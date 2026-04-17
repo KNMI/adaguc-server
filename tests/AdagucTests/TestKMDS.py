@@ -46,7 +46,7 @@ class TestKMDS:
             f"LAYERS=baselayer,{layers},overlay&STYLES=default,{styles},default&DATASET=adaguc.test.kmds_alle_stations_10001&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=400&HEIGHT=600&CRS=EPSG%3A3857&BBOX=269422.313123934,6357145.5563671775,939865.5563671777,7457638.879961043&FORMAT=image/png32&TRANSPARENT=FALSE&&time=2025-11-06T09%3A20%3A00Z",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
         assert AdagucTestTools().compareImage(
@@ -71,9 +71,9 @@ class TestKMDS:
             f"dataset=adaguc.test.kmds_alle_stations_10001&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS={layers}&QUERY_LAYERS={layers}&CRS=EPSG%3A3857&BBOX=-141702.05839427316,6126251.383284947,1317478.0003938763,7367966.542989185&WIDTH=1550&HEIGHT=1319&I=765&J=585&INFO_FORMAT=application/json&STYLES=&&time=2025-11-06T09%3A20%3A00Z",
             env=env,
         )
-        AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetojson(self.testresultspath + filename, data)
         assert status == 0
-        assert json.loads(data.getvalue())[0]["units"] == units
+        assert json.loads(data)[0]["units"] == units
 
         # TODO: Value does not seem to be stored in the json.
         assert AdagucTestTools().compareFile(self.expectedoutputsspath + filename, self.testresultspath + filename)
@@ -90,6 +90,6 @@ class TestKMDS:
         )
         assert status == 0
 
-        layer = json.loads(data.getvalue())["adaguc.test.kmds_alle_stations_10001"]["10M/wind_adjust"]["layer"]
+        layer = json.loads(data)["adaguc.test.kmds_alle_stations_10001"]["10M/wind_adjust"]["layer"]
         assert layer["variables"][0]["units"] == "mym s -1"
         assert layer["variables"][1]["units"] == "mydegrees"

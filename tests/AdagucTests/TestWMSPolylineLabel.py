@@ -38,10 +38,10 @@ class TestWMSPolylineLabel(unittest.TestCase):
             + "%2Fpolyline&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=self.env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertEqual(
-            data.getvalue(),
+            data,
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 

@@ -21,9 +21,9 @@ class TestRendering:
             env=env,
             showLog=False,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_RenderingGeoJSON_time_GetCapabilities(self):
         AdagucTestTools().cleanTempDir()
@@ -34,7 +34,7 @@ class TestRendering:
         # Test GetCapabilities
         filename = "test_RenderingGeoJSON_time_GetCapabilities.xml"
         status, data, _ = AdagucTestTools().runADAGUCServer("&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -59,9 +59,9 @@ class TestRendering:
             + date,
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data.getvalue() == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMap_AutoWMS(self):
         AdagucTestTools().cleanTempDir()
@@ -75,7 +75,7 @@ class TestRendering:
             env={"ADAGUC_CONFIG": config},
         )
         filename = "test_GeoJSON_CTR_EHAM_Schiphol_GetMap_AutoWMS.png"
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -90,7 +90,7 @@ class TestRendering:
             env=env,
         )
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapNoPoints.png"
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -105,7 +105,7 @@ class TestRendering:
             env=env,
         )
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapOnlyLines.png"
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -120,7 +120,7 @@ class TestRendering:
             env=env,
         )
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapLinesPointsAndNearest.png"
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -135,7 +135,7 @@ class TestRendering:
             env=env,
         )
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapOnlyPoints.png"
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -150,7 +150,7 @@ class TestRendering:
             env=env,
         )
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoNoPoints.json"
-        AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetojson(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareFile(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -170,6 +170,6 @@ class TestRendering:
             env=env,
         )
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoExactlyOnPoint.json"
-        AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetojson(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename)

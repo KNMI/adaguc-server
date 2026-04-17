@@ -42,7 +42,7 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertTrue(
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
@@ -61,7 +61,7 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
         )
         self.assertEqual(status, 0)
         AdagucTestTools().writetofile(
-            self.testresultspath + filename, json.dumps(json.loads(data.getvalue().decode("utf-8")), indent=2).encode("utf-8")
+            self.testresultspath + filename, json.dumps(json.loads(data.decode("utf-8")), indent=2).encode("utf-8")
         )
         self.assertEqual(
             AdagucTestTools().readfromfile(self.testresultspath + filename),
@@ -77,7 +77,7 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
         )
         self.assertEqual(status, 0)
         AdagucTestTools().writetofile(
-            self.testresultspath + filename, json.dumps(json.loads(data.getvalue().decode("utf-8")), indent=2).encode("utf-8")
+            self.testresultspath + filename, json.dumps(json.loads(data.decode("utf-8")), indent=2).encode("utf-8")
         )
         self.assertEqual(
             AdagucTestTools().readfromfile(self.testresultspath + filename),

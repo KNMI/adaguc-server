@@ -3,20 +3,13 @@ import urllib
 from io import BytesIO
 import isodate
 import time
-import netCDF4
-from netCDF4 import MFDataset
-import sys
-from subprocess import PIPE, Popen, STDOUT
-from threading import Thread
 import json
 import os
 import shutil
 import pathlib
 import zipfile
-from xml.sax.saxutils import escape
 from xml.dom import minidom
 from .CGIRunner import CGIRunner
-import re
 import logging
 
 
@@ -82,8 +75,7 @@ def makezip(tmpdir, OUTFILE):
     os.chdir(currentpath)
 
 
-def callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, filetogenerate, env={}):
-
+def callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, env={}) -> tuple[int, bytes]:
     if LOGFILE != None:
         env["ADAGUC_ERRORFILE"] = LOGFILE
     try:
@@ -92,10 +84,10 @@ def callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, filetogenerate, env={}):
         pass
     env["ADAGUC_LOGFILE"] = tmpdir + "/adaguclog.log"
 
-    status, headers, processErr = asyncio.run(
-        CGIRunner().run([adagucexecutable], url, output=filetogenerate, env=env)
+    status, headers, processErr, output = asyncio.run(
+        CGIRunner().run([adagucexecutable], url, env=env)
     )
-    return status
+    return status, output
 
 
 """
@@ -105,20 +97,15 @@ def callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, filetogenerate, env={}):
 
 def describeCoverage(adagucexecutable, tmpdir, LOGFILE, WCSURL, COVERAGE, env=None):
 
-    filetogenerate = BytesIO()
-    # filetogenerate = tmpdir+"/describecoverage.xml"
     url = WCSURL + "&SERVICE=WCS&REQUEST=DescribeCoverage&"
     url = url + "COVERAGE=" + COVERAGE + "&"
-    status = callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, filetogenerate, env=env)
+    status, output = callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, env=env)
 
     if status != 0:
         adaguclog = openfile(tmpdir + "/adaguclog.log")
         raise ValueError("Unable to retrieve " + url + "\n" + adaguclog + "\n")
 
-    filetogenerate.seek(0, os.SEEK_END)
-    filesize = filetogenerate.tell()
-
-    if filesize == 0:
+    if len(output) == 0:
         adaguclog = openfile(tmpdir + "/adaguclog.log")
         raise ValueError(
             "Succesfully completed WCS DescribeCoverage, but no data found. Log is: "
@@ -128,9 +115,8 @@ def describeCoverage(adagucexecutable, tmpdir, LOGFILE, WCSURL, COVERAGE, env=No
             + "\n"
         )
 
-    # print filetogenerate.getvalue()
     try:
-        xmldoc = minidom.parseString(filetogenerate.getvalue())
+        xmldoc = minidom.parseString(output)
     except:
         adaguclog = openfile(tmpdir + "/adaguclog.log")
         raise ValueError(
@@ -314,14 +300,11 @@ def iteratewcs(
         if FORMAT == "aaigrid":
             filetogenerate = filetogenerate + ".grd"
 
-        BytesIOobject = BytesIO()
-
-        status = callADAGUC(
-            adagucexecutable, tmpdir, LOGFILE, url, BytesIOobject, env=env
+        status, output = callADAGUC(
+            adagucexecutable, tmpdir, LOGFILE, url, env=env
         )
         with open(filetogenerate, "wb") as fd:
-            BytesIOobject.seek(0)
-            shutil.copyfileobj(BytesIOobject, fd)
+            fd.write(output)
         if status != 0:
             adaguclog = openfile(tmpdir + "/adaguclog.log")
             raise ValueError("Unable to retrieve " + url + "\n" + adaguclog + "\n")

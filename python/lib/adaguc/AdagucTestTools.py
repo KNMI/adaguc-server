@@ -43,14 +43,14 @@ class AdagucTestTools:
 
     def runADAGUCServer(
         self,
-        url=None,
-        env=None,
-        path=None,
-        args=None,
-        isCGI=True,
-        showLogOnError=True,
-        showLog=False,
-        maxLogFileSize=8192,
+        url: str = None,
+        env: dict = None,
+        path: str | None = None,
+        args: dict = None,
+        isCGI: bool = True,
+        showLogOnError: bool = True,
+        showLog: bool = False,
+        maxLogFileSize: int = 8192,
     ):
         if env is None:
             env = []
@@ -76,12 +76,10 @@ class AdagucTestTools:
 
         os.chdir(ADAGUC_PATH + "/tests")
 
-        filetogenerate = BytesIO()
-        status, headers, processErr = asyncio.run(
+        status, headers, processErr, output = asyncio.run(
             CGIRunner().run(
                 adagucargs,
                 url=url,
-                output=filetogenerate,
                 env=adagucenv,
                 path=path,
                 isCGI=isCGI,
@@ -99,7 +97,7 @@ class AdagucTestTools:
             print("\n\n--- START ADAGUC DEBUG INFO ---")
             print("Adaguc-server has non zero exit status %d " % status)
             if isCGI == False:
-                print(filetogenerate.getvalue().decode())
+                print(output.decode())
             else:
                 self.printLogFile()
             if status == -9:
@@ -115,7 +113,7 @@ class AdagucTestTools:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return status, filetogenerate, headers
+            return status, output, headers
 
         else:
             # The executable wrote to stderr, which is unwanted behaviour. Stderr should be empty when running adaguc-server.
@@ -127,9 +125,9 @@ class AdagucTestTools:
             if logfileSize > maxLogFileSize:
                 self.printLogFile()
                 print("[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes" % (logfileSize / 1024))
-            return status, filetogenerate, headers
+            return status, output, headers
 
-    def writetofile(self, filename, data):
+    def writetofile(self, filename: str, data):
         chars = set(":+,@#$%^&*()\\")
         if any((c in chars) for c in filename):
             raise Exception("Filename %s contains invalid characters" % filename)
