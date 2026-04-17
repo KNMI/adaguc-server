@@ -1,6 +1,6 @@
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
-from conftest import make_adaguc_env, run_adaguc_and_compare_image, update_db
+from conftest import make_adaguc_env, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
