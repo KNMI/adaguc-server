@@ -10,8 +10,9 @@
 - EDR: When performing a position or cube query without selecting an instance (e.g. `/edr/collections/my_collection/position`), adaguc now returns the most recent instance.
 - WMS GetFeatureInfo for timeseries now sorts properly when * is used for the time dimension
 - Replaced CAIRO_LINE_JOIN_MITER with BEVEL for smoother line joins 
-- Brotli encoding is now done only for certain Content-Types.
+- Brotli encoding is now done only for certain Con'tent-Types.
 - Add EPSG:5041 as a supported projection
+- "Upgraded to python 3.14
 
 **Version 7.1.2 - 2026-03-30***
 
