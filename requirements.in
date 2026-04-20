@@ -19,11 +19,9 @@ fastapi~=0.120.2
 geojson-pydantic~=1.0
 gunicorn~=23.0
 httpx~=0.26.0
-lxml~=4.9
+lxml~=6.0.4
 netCDF4~=1.6
-# Pin to avoid update to 2.0. NetCDF should be compatible, but cftime is not mentioned on the page:
-# https://github.com/numpy/numpy/issues/26191
-numpy~=1.26
+numpy~=2.4.4
 pydantic~=2.6
 pytz~=2023.3
 uvicorn~=0.34.2

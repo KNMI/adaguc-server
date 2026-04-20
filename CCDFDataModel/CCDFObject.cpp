@@ -451,23 +451,6 @@ int CDFObject::getVariableIndexNE(const char *name) {
   return -1;
 }
 
-int CDFObject::getDimensionIndexThrows(const char *name) {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      return j;
-    }
-  }
-  throw(CDF_E_DIMNOTFOUND);
-}
-int CDFObject::getDimensionIndexNE(const char *name) {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      return j;
-    }
-  }
-  return -1;
-}
-
 CDF::Variable *CDFObject::addVariable(CDF::Variable *var) {
   var->id = variables.size();
   var->setParentCDFObject(this);

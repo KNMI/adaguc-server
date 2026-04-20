@@ -44,16 +44,16 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
   try {
 
     CXMLParserElement parsedElement;
-    parsedElement.parse(sldFromUrl);
+    parsedElement.parseData(sldFromUrl);
 
     // Extract NamedLayers
-    CXMLParser::XMLElement::XMLElementPointerList namedLayers = parsedElement.get("StyledLayerDescriptor")->getList("NamedLayer");
+    auto namedLayers = parsedElement.getThrows("StyledLayerDescriptor")->getList("NamedLayer");
 
     for (size_t i = 0; i < namedLayers.size(); ++i) {
 
       // LayerName
       auto &namedLayerElement = namedLayers.at(i);
-      CT::string sldLayerName = namedLayerElement.get("Name")->value;
+      CT::string sldLayerName = namedLayerElement.getThrows("Name")->value;
 
       for (size_t j = 0; j < this->serverConfig->Layer.size(); j++) {
 
@@ -149,10 +149,9 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 int CSLD::validateAndParseSLDElements(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle) {
   try {
     // Extract UserStyle
-    CXMLParser::XMLElement *userStyle = element.get("UserStyle");
-
+    CXMLParser::XMLElement *userStyle = element.getThrows("UserStyle");
     // Extract Rules from UserStyle
-    CXMLParser::XMLElement::XMLElementPointerList rules = userStyle->get("FeatureTypeStyle")->getList("Rule");
+    auto rules = userStyle->getThrows("FeatureTypeStyle")->getList("Rule");
 
     // Check how many Rule elements are supported
     if (rules.size() == MAX_RULE_ELEMENTS) {
@@ -251,7 +250,7 @@ int CSLD::buildRasterSymbolizer(CXMLParserElement &childElement, CServerConfig::
 }
 
 int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle) {
-  CXMLParser::XMLElement::XMLElementPointerList colorMapEntries = element.getList("ColorMapEntry");
+  auto colorMapEntries = element.getList("ColorMapEntry");
 
   // Foreach colorMapEntries
   for (size_t i = 0; i < colorMapEntries.size(); i++) {

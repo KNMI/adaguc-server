@@ -140,8 +140,8 @@ def update_db(adaguc_env: dict, force_update: bool = False):
 
     status, *_ = AdagucTestTools().runADAGUCServer(args=args, env=adaguc_env, isCGI=False)
     assert status == 0
-
-    DATASETS_LOADED.add(adaguc_config)
+    if not force_update:
+        DATASETS_LOADED.add(adaguc_config)
 
 
 def run_adaguc_and_compare_image(env, filename, query_string):

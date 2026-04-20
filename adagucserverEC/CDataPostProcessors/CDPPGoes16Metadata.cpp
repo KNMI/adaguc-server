@@ -45,7 +45,7 @@ int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     varT->isDimension = true;
     varT->dimensionlinks.push_back(dimT);
     cdfObject->addVariable(varT);
-    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
+    varT->allocateData(dimT->length);
     varT->setAttributeText("standard_name", "time");
     try {
       varT->setAttributeText("units", productT->getAttributeThrows("time_coverage_start")->toString().c_str());

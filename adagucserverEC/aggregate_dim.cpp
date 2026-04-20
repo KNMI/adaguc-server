@@ -100,7 +100,7 @@ void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, std::v
       dimVar->isDimension = true;
       dimVar->setSize(1);
 
-      CDF::allocateData(dimVar->currentType, &dimVar->data, dimVar->getSize());
+      dimVar->allocateData(dimVar->getSize());
       ((char **)dimVar->data)[0] = strdup(memberValue.c_str());
     }
 

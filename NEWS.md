@@ -1,4 +1,4 @@
-**Version TBD**
+**Version 7.2.0 - 2026-04-17**
 
 - GetLayerMetadata can now return results for specific forecast_reference_time, like: `http://localhost:8080/adagucserver?dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl`
 - Fixed [#614](https://github.com/KNMI/adaguc-server/issues/614) where generic renderer caused issues with linear transform
@@ -8,6 +8,11 @@
 - EDR: When selecting a specific instance (`/edr/collections/my_collection/instances/123` or `/edr/collections/my_collection`) in a dataset with multiple instances, adaguc returned an incorrect temporal extent. Adaguc now passes `dim_reference_time=...` to the metadata service, which now returns a corresponding time range. Fixes [#675](https://github.com/KNMI/adaguc-server/issues/675).
 - EDR: Time and reftime were both calculated by looking at the first parameter in the dataset. Adaguc now checks all parameters of a dataset.
 - EDR: When performing a position or cube query without selecting an instance (e.g. `/edr/collections/my_collection/position`), adaguc now returns the most recent instance.
+- WMS GetFeatureInfo for timeseries now sorts properly when * is used for the time dimension
+- Replaced CAIRO_LINE_JOIN_MITER with BEVEL for smoother line joins 
+- Brotli encoding is now done only for certain Con'tent-Types.
+- Add EPSG:5041 as a supported projection
+- Upgraded to python 3.14
 
 **Version 7.1.2 - 2026-03-30***
 

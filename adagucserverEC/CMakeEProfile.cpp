@@ -164,13 +164,13 @@ public:
 #ifdef CMakeEProfile_DEBUG
         CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
-        map_type_dimvalindex *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
+        auto *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
         int dimindex = 0;
 
         int startDimIndex = 0;
         std::vector<std::string> dimValues;
-        for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
+        for (auto dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
           // const char *filename=(filemapiterator->first).c_str();
           // const char *dimname=(diminfomapiterator->first).c_str();
           dimindex = dimvalindexmapiterator->first;

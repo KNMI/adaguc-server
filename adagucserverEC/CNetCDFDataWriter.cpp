@@ -26,8 +26,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   projectionVarX->name.copy(projectionDimX->name.c_str());
   projectionVarX->isDimension = true;
   projectionVarX->dimensionlinks.push_back(projectionDimX);
-
-  CDF::allocateData(CDF_DOUBLE, &projectionVarX->data, width);
+  projectionVarX->allocateData(width);
 
   projectionDimY = new CDF::Dimension();
   cdfObject->addDimension(projectionDimY);
@@ -45,7 +44,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   projectionVarY->isDimension = true;
   projectionVarY->dimensionlinks.push_back(projectionDimY);
 
-  CDF::allocateData(CDF_DOUBLE, &projectionVarY->data, height);
+  projectionVarY->allocateData(height);
 
   if (isProjected) {
     projectionVarX->setAttributeText("standard_name", "projection_x_coordinate");
@@ -341,8 +340,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
         return 1;
       }
 
-      destinationVar->setSize(dim->length);
-      CDF::allocateData(destinationVar->getType(), &destinationVar->data, dim->length);
+      destinationVar->allocateData(dim->length);
 
       if (CDF::fill(destinationVar->data, destinationVar->getType(), 0, destinationVar->getSize()) != 0) {
         CDBError("Unable to initialize data field to nodata value");
@@ -968,8 +966,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           featureIndexVar->setAttributeText("long_name", "feature index number");
           featureIndexVar->setAttributeText("auxiliary", variable->name.c_str());
           featureIndexVar->dimensionlinks.push_back(featureIndexDim);
-          CDF::allocateData(CDF_DOUBLE, &featureIndexVar->data, featureIndexDim->getSize());
-
+          featureIndexVar->allocateData(featureIndexDim->getSize());
           destCDFObject->addVariable(featureIndexVar);
         }
         featureIndexVar = destCDFObject->getVariableThrows(featureDimIndexName.c_str());

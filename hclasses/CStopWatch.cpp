@@ -25,6 +25,7 @@
 
 #include "CStopWatch.h"
 #include "CTString.h"
+#include <sys/time.h>
 /* Stopwatch functions for timing */
 
 timespec starttime, stoptime, currenttime;
