@@ -41,6 +41,8 @@ bash docker-compose-generate-env.sh \
   -f $ADAGUCDOCKERHOME/adaguc-data \
   -p 443
 # You can view or edit the file ./.env file
+
+For more info on what environment variables you can configure, see [Environment variables](/doc/Environment_Variables.md)
 ```
 
 ### Step 3. Once the steps above have been done, it is time to start:
