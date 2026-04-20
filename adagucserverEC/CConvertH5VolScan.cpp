@@ -204,7 +204,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -217,7 +217,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
@@ -261,7 +261,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
 
     timeVar->setAttributeText("units", time_units.c_str());
     timeVar->dimensionlinks.push_back(dimT);
-    CDF::allocateData(CDF_DOUBLE, &timeVar->data, 1);
+    timeVar->allocateData(1);
     ((double *)timeVar->data)[0] = offset;
     cdfObject->addVariable(timeVar);
 
@@ -276,8 +276,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     varElevation->isDimension = true;
     varElevation->dimensionlinks.push_back(dimElevation);
     cdfObject->addVariable(varElevation);
-    CDF::allocateData(CDF_STRING, &varElevation->data, dimElevation->length);
-    varElevation->setSize(dimElevation->length);
+    varElevation->allocateData(dimElevation->length);
 
     CDF::Variable *varScan = new CDF::Variable();
     varScan->setType(CDF_UINT);
@@ -285,7 +284,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     varScan->isDimension = false;
     varScan->dimensionlinks.push_back(dimElevation);
     cdfObject->addVariable(varScan);
-    CDF::allocateData(varScan->getType(), &varScan->data, dimElevation->length);
+    varScan->allocateData(dimElevation->length);
 
     for (int i = 0; i < nrscans; i++) {
       ((char **)varElevation->data)[i] = strdup(elevation_names[i].c_str());
@@ -362,8 +361,8 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     varX = cdfObject->getVariableThrows("adaguccoordinatex");
     varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables");
@@ -428,7 +427,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
     new2DVar->setSize(fieldSize);
 
-    CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
+    new2DVar->allocateData(fieldSize);
     new2DVar->fill(FLT_MAX);
 
     double radarLon;

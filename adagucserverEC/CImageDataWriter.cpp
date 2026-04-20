@@ -1587,12 +1587,11 @@ int CImageDataWriter::end() {
     if (srvParam->InfoFormat.indexOf("application/json") != -1) {
 
       try {
-        if (gfiStructure.get("root") != NULL) {
-          std::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
+        if (gfiStructure.get("root") != nullptr) {
+          std::string data = xmlListToJSON(gfiStructure.getList("root"), CXMLPARSER_JSONMODE_STANDARD);
           if (srvParam->JSONP.length() == 0) {
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
-
             printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
             printf("\n%s(", srvParam->JSONP.c_str());
           }
@@ -1957,11 +1956,11 @@ int CImageDataWriter::end() {
 
       resetErrors();
       if (srvParam->JSONP.length() == 0) {
-        resultJSON += rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str();
+        resultJSON += xmlListToJSON(rootElement.getList("param"), CXMLPARSER_JSONMODE_STANDARD);
       } else {
         resultJSON += srvParam->JSONP.c_str();
         resultJSON += "(";
-        resultJSON += rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str();
+        resultJSON += xmlListToJSON(rootElement.getList("param"), CXMLPARSER_JSONMODE_STANDARD);
         resultJSON += ");";
       }
       printf("%s", resultJSON.c_str());

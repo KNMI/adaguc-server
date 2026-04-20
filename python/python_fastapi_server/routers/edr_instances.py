@@ -12,8 +12,6 @@ from edr_pydantic.collections import Collection, Instance, Instances
 from edr_pydantic.link import Link
 from fastapi import APIRouter, Request, Response
 
-from .utils.edr_exception import exc_unknown_collection
-
 from .utils.edr_utils import (
     generate_max_age,
     get_base_url,
@@ -31,22 +29,15 @@ router = APIRouter()
     response_model=Instances,
     response_model_exclude_none=True,
 )
-async def rest_get_edr_inst_for_coll(
-    collection_name: str, request: Request, response: Response
-):
+async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, response: Response):
     """
     GET: Returns all available instances for the collection
     """
-    instances_url = (
-        get_base_url(request) + f"/edr/collections/{collection_name}/instances"
-    )
+    instances_url = get_base_url(request) + f"/edr/collections/{collection_name}/instances"
 
     instances: list[Instance] = []
 
     metadata = await get_metadata(collection_name)
-
-    if metadata is None:
-        raise exc_unknown_collection(collection_name)
 
     ref_times = get_ref_times_for_coll(metadata[collection_name])
     links: list[Link] = []
@@ -56,9 +47,7 @@ async def rest_get_edr_inst_for_coll(
         instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
-        instance_info = get_collectioninfo_from_md(
-            metadata[collection_name], collection_name, instance
-        )
+        instance_info = get_collectioninfo_from_md(metadata[collection_name], collection_name, instance)
         instances.extend(instance_info)
 
     # Instance ordering should be most recent first
@@ -79,13 +68,8 @@ async def rest_get_collection_info(collection_name: str, instance: str):
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
-    metadata = await get_metadata(collection_name)
-    if metadata is None:
-        raise exc_unknown_collection(collection_name)
-
+    metadata = await get_metadata(collection_name, instance)
     instance = get_instance(metadata, collection_name, instance)
 
-    coll = get_collectioninfo_from_md(
-        metadata[collection_name], collection_name, instance
-    )
+    coll = get_collectioninfo_from_md(metadata[collection_name], collection_name, instance)
     return coll[0]

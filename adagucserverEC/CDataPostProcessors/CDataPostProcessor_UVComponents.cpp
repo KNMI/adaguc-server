@@ -101,7 +101,7 @@ void addDataObject(CDataSource *dataSource) {
   directionObject.noFurtherProcessing = true;
   directionObject.cdfVariable = cdfObject->getVariableThrows(DIRECTION_COMPONENT);
   directionObject.dataObjectName = DIRECTION_COMPONENT;
-  directionObject.overruledUnits = ("degrees");
+  directionObject.overruledUnits = "degrees";
 
   DataObject speedObject = (*dataSource->getDataObject(0));
   speedObject.noFurtherProcessing = true;

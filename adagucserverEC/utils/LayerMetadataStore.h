@@ -6,7 +6,8 @@
 #include "CXMLGen.h"
 #include <json_adaguc.h>
 
-int getDimensionListAsJson(MetadataLayer *myMetadataLayer, json &dimListJson);
+json getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList);
+
 int getLayerBaseMetadataAsJson(MetadataLayer *myMetadataLayer, json &layerMetadataItem);
 int getProjectionListAsJson(MetadataLayer *myMetadataLayer, json &projsettings);
 int getStyleListMetadataAsJson(MetadataLayer *myMetadataLayer, json &styleListJson);

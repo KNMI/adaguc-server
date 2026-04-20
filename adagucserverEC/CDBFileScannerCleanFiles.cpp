@@ -59,7 +59,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   }
   try {
     CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
-  } catch (ServiceExceptionCode e) {
+  } catch (ServiceExceptionType e) {
     return std::make_pair(1, filesDeletedFromFS);
   }
 
@@ -72,7 +72,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   if (hasTimeDim == dataSource->requiredDims.end()) {
     // time is not part of this dimension set. Take something which looks like a time dim.
     CDBWarning("time dimension does not seem to exist in this layer");
-    auto isTypeTime = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [&colName](const COGCDims &ogcdim) { return ogcdim.isATimeDimension; });
+    auto isTypeTime = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [](const COGCDims &ogcdim) { return ogcdim.isATimeDimension; });
     if (isTypeTime != dataSource->requiredDims.end()) {
       CDBDebug("Using %s instead.", (*isTypeTime).netCDFDimName.c_str());
       colName = (*isTypeTime).netCDFDimName.c_str();

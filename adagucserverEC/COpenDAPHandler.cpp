@@ -8,32 +8,32 @@ class CDFTypeToOpenDAPType {
 public:
   static CT::string getvar(const int type) {
     CT::string rtype = "unknown";
-    if (type == CDF_NONE) rtype = ("CDF_NONE");
-    if (type == CDF_BYTE) rtype = ("Byte");
-    if (type == CDF_UBYTE) rtype = ("Byte");
-    if (type == CDF_CHAR) rtype = ("Byte");
-    if (type == CDF_SHORT) rtype = ("Int16");
-    if (type == CDF_USHORT) rtype = ("UInt16");
-    if (type == CDF_INT) rtype = ("Int32");
-    if (type == CDF_UINT) rtype = ("Uint32");
-    if (type == CDF_FLOAT) rtype = ("Float32");
-    if (type == CDF_DOUBLE) rtype = ("Float64");
-    if (type == CDF_STRING) rtype = ("String");
+    if (type == CDF_NONE) rtype = "CDF_NONE";
+    if (type == CDF_BYTE) rtype = "Byte";
+    if (type == CDF_UBYTE) rtype = "Byte";
+    if (type == CDF_CHAR) rtype = "Byte";
+    if (type == CDF_SHORT) rtype = "Int16";
+    if (type == CDF_USHORT) rtype = "UInt16";
+    if (type == CDF_INT) rtype = "Int32";
+    if (type == CDF_UINT) rtype = "Uint32";
+    if (type == CDF_FLOAT) rtype = "Float32";
+    if (type == CDF_DOUBLE) rtype = "Float64";
+    if (type == CDF_STRING) rtype = "String";
     return rtype;
   }
   static CT::string getatt(const int type) {
     CT::string rtype = "unknown";
-    if (type == CDF_NONE) rtype = ("CDF_NONE");
-    if (type == CDF_BYTE) rtype = ("Byte");
-    if (type == CDF_UBYTE) rtype = ("Byte");
-    if (type == CDF_CHAR) rtype = ("String");
-    if (type == CDF_SHORT) rtype = ("Int16");
-    if (type == CDF_USHORT) rtype = ("UInt16");
-    if (type == CDF_INT) rtype = ("Int32");
-    if (type == CDF_UINT) rtype = ("Uint32");
-    if (type == CDF_FLOAT) rtype = ("Float32");
-    if (type == CDF_DOUBLE) rtype = ("Float64");
-    if (type == CDF_STRING) rtype = ("String");
+    if (type == CDF_NONE) rtype = "CDF_NONE";
+    if (type == CDF_BYTE) rtype = "Byte";
+    if (type == CDF_UBYTE) rtype = "Byte";
+    if (type == CDF_CHAR) rtype = "String";
+    if (type == CDF_SHORT) rtype = "Int16";
+    if (type == CDF_USHORT) rtype = "UInt16";
+    if (type == CDF_INT) rtype = "Int32";
+    if (type == CDF_UINT) rtype = "Uint32";
+    if (type == CDF_FLOAT) rtype = "Float32";
+    if (type == CDF_DOUBLE) rtype = "Float64";
+    if (type == CDF_STRING) rtype = "String";
     return rtype;
   }
 };
@@ -992,7 +992,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
                       CDBDebug("Create missing data");
                       CDF::Variable *variableToRead = new CDF::Variable();
-                      CDF::allocateData(type, &variableToRead->data, varSize);
+                      variableToRead->allocateData(varSize);
                       CDF::fill(variableToRead->data, type, 0, varSize);
                       putVariableData(variableToRead, type);
                       delete variableToRead;

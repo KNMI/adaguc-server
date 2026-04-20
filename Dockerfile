@@ -1,5 +1,5 @@
 ######### First stage (build) ############
-FROM python:3.10-slim-bookworm AS build
+FROM python:3.14-slim-bookworm AS build
 
 # To build on linux ubuntu use 
 # docker compose -f Docker/docker-compose-test.yml up -Vd
@@ -49,10 +49,11 @@ COPY compile.sh /adaguc/adaguc-server-master/
 
 WORKDIR /adaguc/adaguc-server-master
 
-RUN bash compile.sh
+ARG BUILD_TYPE
+RUN bash compile.sh "$BUILD_TYPE"
 
 ######### Second stage, base image for test and prod ############
-FROM python:3.10-slim-bookworm AS base
+FROM python:3.14-slim-bookworm AS base
 
 USER root
 
@@ -151,7 +152,7 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN bash -c "rm -f result.png && if [[ "${TEST_IN_CONTAINER}" == "github_build" ]]; then     db_host="localhost"; elif [[ "${TEST_IN_CONTAINER}" == "local_build" ]]; then     db_host="host.docker.internal"; else     db_host="localhost"; fi && export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" && python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls -lrtha result.png"
+RUN bash -c "rm -f result.png && if [[ "${TEST_IN_CONTAINER}" == "github_build" ]]; then db_host="localhost"; elif [[ "${TEST_IN_CONTAINER}" == "local_build" ]]; then db_host="host.docker.internal"; else db_host="localhost"; fi && export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" && python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls -lrtha result.png"
 
 WORKDIR /adaguc/adaguc-server-master
 

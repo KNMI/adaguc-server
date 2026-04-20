@@ -48,7 +48,7 @@ int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
 
         // Process the SLD URL
         if (values[1].empty()) {
-          setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+          setExceptionType(ServiceExceptionType::UnprocessableEntity);
           return 1;
         }
         int status = csld.processSLDUrl(values[1]);
