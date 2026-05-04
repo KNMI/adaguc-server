@@ -31,7 +31,7 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
     if (dim.queryValue.empty()) {
       newRequiredDims.push_back({.name = dim.name,
                                  .queryValue = "*",
-                                 .value = dim.value,
+                                 .value = "*",
                                  .netCDFDimName = dim.netCDFDimName,
                                  .uniqueValues = dim.uniqueValues,
                                  .isATimeDimension = dim.isATimeDimension,
@@ -118,7 +118,7 @@ json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetNa
           try {
             layer["dims"] = querySpecificDims(srvParams, layerName);
           } catch (...) {
-            layer["dims"] = a.array();
+            CDBWarning("No results for %s / %s", dataSetName.c_str(), layerName.c_str());
           }
         } else {
           layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());

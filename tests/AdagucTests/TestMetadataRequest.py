@@ -52,7 +52,7 @@ class TestMetadataRequest:
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime(self):
         """
-        This checks for correct behavior when passing a invalid reference time, a 404 should be returned.
+        This checks for correct behavior when passing a invalid reference time, a status OK should be returned with empty dims.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
         update_db(env, True)
@@ -60,7 +60,6 @@ class TestMetadataRequest:
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime.json",
             "dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=5024-05-23T00:00:00Z&layer=air_temperature_hagl",
-            404,
         )
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_datasets(self):
@@ -68,10 +67,12 @@ class TestMetadataRequest:
         This checks for correct behavior when passing a non-existing dataset
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
+
+        env2 = make_adaguc_env("blabla", self.testresultspath, self.expectedoutputsspath)
         update_db(env, True)
         run_adaguc_and_compare_json(
-            env,
-            "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime.json",
+            env2,
+            "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_datasets.json",
             "dataset=blabla&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=5024-05-23T00:00:00Z&layer=air_temperature_hagl",
             404,
         )
