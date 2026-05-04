@@ -26,12 +26,20 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
   CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
   std::vector<COGCDims> newRequiredDims;
   // Set other dims to * if not set in the request.
-  for (const auto &dim: dataSource.requiredDims) {
-    COGCDims newDim = dim;
+  for (auto dim: dataSource.requiredDims) {
+
     if (dim.queryValue.empty()) {
-      newDim.queryValue = "*";
+      newRequiredDims.push_back({.name = dim.name,
+                                 .queryValue = "*",
+                                 .value = dim.value,
+                                 .netCDFDimName = dim.netCDFDimName,
+                                 .uniqueValues = dim.uniqueValues,
+                                 .isATimeDimension = dim.isATimeDimension,
+                                 .hasFixedValue = dim.hasFixedValue,
+                                 .hidden = dim.hidden});
+    } else {
+      newRequiredDims.push_back(dim);
     }
-    newRequiredDims.push_back(newDim);
   }
   dataSource.requiredDims = newRequiredDims;
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
