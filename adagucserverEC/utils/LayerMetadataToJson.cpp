@@ -42,6 +42,7 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
     }
   }
   dataSource.requiredDims = newRequiredDims;
+
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
   if (store == nullptr || store->getSize() == 0) {
     delete store;
