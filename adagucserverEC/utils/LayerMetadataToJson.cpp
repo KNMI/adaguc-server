@@ -24,14 +24,16 @@ CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName,
 std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource &dataSource) {
   std::map<std::string, std::vector<std::string>> dimensionNameAndValues;
   CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
-
+  std::vector<COGCDims> newRequiredDims;
   // Set other dims to * if not set in the request.
-  for (auto &dim: dataSource.requiredDims) {
+  for (const auto &dim: dataSource.requiredDims) {
+    COGCDims newDim = dim;
     if (dim.queryValue.empty()) {
-      dim.queryValue = "*";
+      newDim.queryValue = "*";
     }
+    newRequiredDims.push_back(newDim);
   }
-
+  dataSource.requiredDims = newRequiredDims;
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
   if (store == nullptr || store->getSize() == 0) {
     delete store;
