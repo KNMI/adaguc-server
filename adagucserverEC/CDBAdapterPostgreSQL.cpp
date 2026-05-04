@@ -464,7 +464,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       query.printconcat("AND (%s) ", whereStatement.c_str());
     }
   }
-  CDBDebug("%s", query.c_str());
   // Order and limit query
   query.printconcat("ORDER BY %s", dataSource->requiredDims[0].netCDFDimName.c_str());
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {
