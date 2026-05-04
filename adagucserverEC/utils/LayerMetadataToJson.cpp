@@ -21,7 +21,7 @@ CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName,
   return "";
 }
 
-std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource &dataSource) {
+std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource dataSource) {
   std::map<std::string, std::vector<std::string>> dimensionNameAndValues;
   CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
   std::vector<COGCDims> newRequiredDims;
