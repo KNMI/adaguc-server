@@ -58,7 +58,7 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
             tmpFolderPath="/tmp",
             callback=progressCallback,
         )
-        # AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        # AdagucTestTools().writetofile(self.testresultspath + filename,data)
         # Comparing binary NetCDF is difficult
         # self.assertEqual(
         # AdagucTestTools().readfromfile(self.testresultspath + filenamencraster), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamencraster))

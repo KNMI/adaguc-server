@@ -34,7 +34,7 @@ class TestWCS:
         AdagucTestTools().cleanTempDir()
         filename = "test_WCSGetCapabilities_testdatanc.xml"
         status, data, _ = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&request=getcapabilities", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -49,7 +49,7 @@ class TestWCS:
             env=self.env,
             maxLogFileSize=16384,
         )  # Silence log flood warning, datafile has lots of variables, each giving log output
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -65,7 +65,7 @@ class TestWCS:
             env=self.env,
             maxLogFileSize=16384,
         )  # Silence log flood warning, datafile has lots of variables, each giving log output
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -81,7 +81,7 @@ class TestWCS:
             env=self.env,
             maxLogFileSize=16384,
         )  # Silence log flood warning, datafile has lots of variables, each giving log output
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -98,7 +98,7 @@ class TestWCS:
             env=self.env,
             maxLogFileSize=16384,
         )  # Silence log flood warning, datafile has lots of variables, each giving log output
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -114,7 +114,7 @@ class TestWCS:
             env=self.env,
             maxLogFileSize=16384,
         )  # Silence log flood warning, datafile has lots of variables, each giving log output
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -131,7 +131,7 @@ class TestWCS:
             maxLogFileSize=16384,
             showLog=True,
         )  # Silence log flood warning, datafile has lots of variables, each giving log output
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
@@ -146,12 +146,12 @@ class TestWCS:
             env=self.env,
             args=["--report"],
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         # Different gdal versions give different spaces in the output.
         # Compare in a way where any sequence of whitespace characters is equivalent
         # This means that newlines (which are important?) are not compared
-        test_output = data.getvalue()
+        test_output = data
         expected_output = AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
         test_output = " ".join(test_output.decode("utf-8").split())
         expected_output = " ".join(expected_output.decode("utf-8").split())
@@ -168,7 +168,7 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:10] == b"CDF\x02\x00\x00\x00\x00\x00\x00"
+        assert data[0:10] == b"CDF\x02\x00\x00\x00\x00\x00\x00"
 
     def test_WCSGetCoverageNetCDF4_testdatanc(self):
         """
@@ -181,7 +181,7 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         """
@@ -195,7 +195,7 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:10] == b"II*\x00\x08\x00\x00\x00\x12\x00"
+        assert data[0:10] == b"II*\x00\x08\x00\x00\x00\x12\x00"
 
     # TODO: This test (which uses GDAL) produces incorrect results. Made a ticket in backlog.
     def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
@@ -207,9 +207,9 @@ class TestWCS:
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&", env=self.env, args=["--report"]
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        lines = str(data.getvalue().decode("UTF-8")).splitlines()[0:6]
+        lines = str(data.decode("UTF-8")).splitlines()[0:6]
         parsed = [re.split(r"\s+", line) for line in lines]
         aaigrid_header_items = [(p[0], round(float(p[1]), 3)) for p in parsed]
 
@@ -233,9 +233,9 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=360&height=180&resx=1.000000&resy=1.000000&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -254,9 +254,9 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=360&height=180&resx=1.000000&resy=1.000000&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -273,9 +273,9 @@ class TestWCS:
             "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=NetCDF4", env=self.env, args=["--report"]
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=29&height=31&resx=103448.276786&resy=96774.191667&bbox=-1500000.013393,-999999.970833,1500000.013393,1999999.970833&crs=+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 +units=m +no_defs"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -294,9 +294,9 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=174&height=196&resx=2.068966&resy=0.918367&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -315,8 +315,8 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        assert data[0:6] == b"\x89HDF\r\n"
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=15&height=22&resx=2.000000&resy=0.909091&bbox=-10.000000,40.000000,20.000000,60.000000&crs=EPSG:4326"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -335,9 +335,9 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=100&height=100&resx=7167.687040&resy=11262.730534&bbox=-231108.757898,223282.967525,485659.946091,1349556.020954&crs=EPSG:28992"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -407,7 +407,7 @@ class TestWCS:
         assert "Cache-Control:max-age=60" in headers
 
         filename = tmp_path / "my_file1"
-        filename.write_bytes(data.getvalue())
+        filename.write_bytes(data)
         dataset = Dataset(filename, mode="r")
         assert dataset.variables["member"][0] == "member6"  # Largest value (default
         assert dataset.variables["height"][0] == 5000
@@ -422,7 +422,7 @@ class TestWCS:
         assert "Cache-Control:max-age=7200" in headers  # Fully specified with the fixed dimension and the query
 
         filename = tmp_path / "my_file2"
-        filename.write_bytes(data.getvalue())
+        filename.write_bytes(data)
         dataset = Dataset(filename, mode="r")
         assert dataset.variables["member"][0] == "member4"  # Fixed dimension
         assert dataset.variables["height"][0] == 2000
@@ -520,9 +520,9 @@ class TestWCS:
             args=["--report"],
         )
         assert status == 0
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=0&height=1&resx=inf&resy=1.000000&bbox=5.500000,52.500000,6.500000,53.500000&crs=EPSG:4326"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
@@ -551,9 +551,9 @@ class TestWCS:
         )
         assert status == 0
 
-        assert data.getvalue()[0:6] == b"\x89HDF\r\n"
+        assert data[0:6] == b"\x89HDF\r\n"
 
-        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        ds = netCDF4.Dataset("filename.nc", memory=data)
 
         expectedgridspec = "width=1&height=1&resx=1.000000&resy=1.000000&bbox=5.500000,52.500000,6.500000,53.500000&crs=EPSG:4326"
         foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")

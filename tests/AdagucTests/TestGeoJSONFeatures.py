@@ -42,9 +42,9 @@ class TestGeoJSONFeatures(unittest.TestCase):
             env=env,
             showLog=False,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_GeoJSON_time_GetCapabilities(self):
         AdagucTestTools().cleanTempDir()
@@ -60,7 +60,7 @@ class TestGeoJSONFeatures(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env={"ADAGUC_CONFIG": config}
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
@@ -83,6 +83,6 @@ class TestGeoJSONFeatures(unittest.TestCase):
                 + date,
                 env={"ADAGUC_CONFIG": config},
             )
-            AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+            AdagucTestTools().writetofile(self.testresultspath + filename, data)
             self.assertEqual(status, 0)
-            self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+            self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))

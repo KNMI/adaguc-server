@@ -414,7 +414,7 @@ async def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     status, data, _ = await call_adaguc(request_url.encode("UTF-8"))
     if status == 0:
         try:
-            response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
+            response_data = json.loads(data, object_pairs_hook=OrderedDict)
         except ValueError:
             root = fromstring(data)
 
@@ -481,7 +481,7 @@ async def get_features_for_items(
         if status == 0:
             try:
                 response_data = json.loads(
-                    data.getvalue(), object_pairs_hook=OrderedDict
+                    data, object_pairs_hook=OrderedDict
                 )
             except ValueError:
                 root = fromstring(data)
