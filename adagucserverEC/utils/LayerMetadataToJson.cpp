@@ -25,6 +25,9 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
   std::map<std::string, std::vector<std::string>> dimensionNameAndValues;
   CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
   std::vector<COGCDims> newRequiredDims;
+  if (dataSource.requiredDims.size() == 0) {
+    return dimensionNameAndValues;
+  }
   // Set other dims to * if not set in the request.
   for (auto dim: dataSource.requiredDims) {
 
