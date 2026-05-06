@@ -234,6 +234,9 @@ void CServerParams::encodeTableName(CT::string *tableName) {
 void CServerParams::setOnlineResource(CT::string r) { _onlineResource = r; };
 
 CT::string CServerParams::getOnlineResource() {
+  // TODO: enabling the following line crashes call to `/edr/collections/edr_dataset/instances` because the "@ GOT HERE err" gets wrapped into XMl and send to the client _after_ the (valid?) JSON response
+  // CDBError("@ GOT HERE err");
+
   if (_onlineResource.length() > 0) {
     return _onlineResource;
   }

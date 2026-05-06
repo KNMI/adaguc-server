@@ -34,6 +34,8 @@
 #include "ProjCache.h"
 #include "Types/ProjectionStore.h"
 #include <cdfVariableCache.h>
+#include "fork_server.h"
+#include <unistd.h>
 
 int processQueryStringRequest() {
   /* Process the OGC request */
@@ -49,7 +51,7 @@ int processQueryStringRequest() {
   return getStatusCode();
 }
 
-int main(int argc, char **argv, char **envp) {
+int run_adaguc_once(int argc, char **argv, char **envp) {
   traceTimingsCheckEnabled();
   checkLogSettings();
 
@@ -77,4 +79,21 @@ int main(int argc, char **argv, char **envp) {
   varCacheClear();
 
   return status;
+}
+
+int main(int argc, char **argv, char **envp) {
+  // TODO:
+  // If these lines are commented out, the calls the /edr/collections/instances/<my-instance> fail to return data
+  // because the call to `request=getreferencetimes` does not contain useful output
+  // Also regular calls (e.g. GetMap) include logging statements in the image response
+  setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
+  setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
+
+  const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
+  if (fork_enable && std::string(fork_enable) == "TRUE") {
+    return mother_run_as_fork_service(run_adaguc_once, argc, argv, envp);
+  } else {
+    // normal flow without unix socket server/fork
+    return run_adaguc_once(argc, argv, envp);
+  }
 }
