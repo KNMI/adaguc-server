@@ -99,7 +99,7 @@ namespace CT {
   }
 
   void string::copy(const char *_value, size_t _length) {
-    if (_value == nullptr) {
+    if (_value == nullptr || _length == 0) {
       this->stdstring = "";
       return;
     }

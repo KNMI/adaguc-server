@@ -448,7 +448,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     for (size_t i = 0; i < requestedDimVals.size(); ++i) {
       if (requestedDimVals[i] == "*") continue;
 
-      if (i != 0) {
+      if (whereStatement.length() > 0) {
         whereStatement.printconcat(" OR ");
       }
 
@@ -464,7 +464,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       query.printconcat("AND (%s) ", whereStatement.c_str());
     }
   }
-
   // Order and limit query
   query.printconcat("ORDER BY %s", dataSource->requiredDims[0].netCDFDimName.c_str());
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {

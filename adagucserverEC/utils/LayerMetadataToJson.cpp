@@ -21,22 +21,35 @@ CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName,
   return "";
 }
 
-std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource &dataSource) {
+std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource dataSource) {
   std::map<std::string, std::vector<std::string>> dimensionNameAndValues;
-
-  auto srvParam = dataSource.srvParams;
-  auto it = std::find_if(srvParam->requestDims.begin(), srvParam->requestDims.end(), [](const auto &a) { return CT::toLowerCase(a.name) == "time"; });
-  int timeDimIndexInRequiredDims = it != srvParam->requestDims.end() ? std::distance(std::begin(srvParam->requestDims), it) : -1;
-  // Set the time to * if not set in the request.
-  if (timeDimIndexInRequiredDims == -1) {
-    srvParam->requestDims.push_back({.name = "time", .value = "*"});
-  }
-
   CRequest::fillDimValuesForDataSource(&dataSource, dataSource.srvParams);
+  std::vector<COGCDims> newRequiredDims;
+  if (dataSource.requiredDims.size() == 0) {
+    return dimensionNameAndValues;
+  }
+  // Set other dims to * if not set in the request.
+  for (auto dim: dataSource.requiredDims) {
+
+    if (dim.queryValue.empty()) {
+      newRequiredDims.push_back({.name = dim.name,
+                                 .queryValue = "*",
+                                 .value = "*",
+                                 .netCDFDimName = dim.netCDFDimName,
+                                 .uniqueValues = dim.uniqueValues,
+                                 .isATimeDimension = dim.isATimeDimension,
+                                 .hasFixedValue = dim.hasFixedValue,
+                                 .hidden = dim.hidden});
+    } else {
+      newRequiredDims.push_back(dim);
+    }
+  }
+  dataSource.requiredDims = newRequiredDims;
+
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
   if (store == nullptr || store->getSize() == 0) {
     delete store;
-    setExceptionType(ServiceExceptionType::InvalidDimensionValue);
+    CDBWarning("getAllDimensionCombinationsFromDb: No results for %s", dataSource.layerName.c_str());
     throw ServiceExceptionType::InvalidDimensionValue;
   }
   for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
@@ -106,7 +119,12 @@ json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetNa
         layer["layer"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "layermetadata").c_str());
         // do a query to find the matching times to the given reference time
         if (!hasReferenceTimeValue.empty()) {
-          layer["dims"] = querySpecificDims(srvParams, layerName);
+          try {
+            layer["dims"] = querySpecificDims(srvParams, layerName);
+          } catch (...) {
+            CDBWarning("No results for %s / %s. Using defaults.", dataSetName.c_str(), layerName.c_str());
+            layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
+          }
         } else {
           layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
         }
