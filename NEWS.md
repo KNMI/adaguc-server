@@ -1,3 +1,7 @@
+**Version 7.2.1 - 2026-05-04**
+
+- Patch for GetLayerMetadata to work gracefully when a mix of ground level dimensions with different values are used
+
 **Version 7.2.0 - 2026-04-17**
 
 - GetLayerMetadata can now return results for specific forecast_reference_time, like: `http://localhost:8080/adagucserver?dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl`

@@ -421,18 +421,42 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
   for (const auto &timeStamp: timeStampList) {
     const char *isotime = timeStamp.c_str();
     CT::string year, month, day, hour, minute, second;
-    year.copy(isotime + 0, 4);
-    tms[timeIndex].tm_year = year.toInt() - 1900;
-    month.copy(isotime + 5, 2);
-    tms[timeIndex].tm_mon = month.toInt() - 1;
-    day.copy(isotime + 8, 2);
-    tms[timeIndex].tm_mday = day.toInt();
-    hour.copy(isotime + 11, 2);
-    tms[timeIndex].tm_hour = hour.toInt();
-    minute.copy(isotime + 14, 2);
-    tms[timeIndex].tm_min = minute.toInt();
-    second.copy(isotime + 17, 2);
-    tms[timeIndex].tm_sec = second.toInt();
+    if (timeStamp.length() > 4) {
+      year.copy(isotime + 0, 4);
+      tms[timeIndex].tm_year = year.toInt() - 1900;
+    } else {
+      tms[timeIndex].tm_year = 0;
+    }
+    if (timeStamp.length() > 5) {
+      month.copy(isotime + 5, 2);
+      tms[timeIndex].tm_mon = month.toInt() - 1;
+    } else {
+      tms[timeIndex].tm_mon = 0;
+    }
+    if (timeStamp.length() > 8) {
+      day.copy(isotime + 8, 2);
+      tms[timeIndex].tm_mday = day.toInt();
+    } else {
+      tms[timeIndex].tm_mday = 0;
+    }
+    if (timeStamp.length() > 11) {
+      hour.copy(isotime + 11, 2);
+      tms[timeIndex].tm_hour = hour.toInt();
+    } else {
+      tms[timeIndex].tm_hour = 0;
+    }
+    if (timeStamp.length() > 14) {
+      minute.copy(isotime + 14, 2);
+      tms[timeIndex].tm_min = minute.toInt();
+    } else {
+      tms[timeIndex].tm_min = 0;
+    }
+    if (timeStamp.length() > 17) {
+      second.copy(isotime + 17, 2);
+      tms[timeIndex].tm_sec = second.toInt();
+    } else {
+      tms[timeIndex].tm_sec = 0;
+    }
     timeIndex++;
   }
 
