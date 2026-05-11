@@ -498,6 +498,8 @@ namespace CT {
    */
   int indexOf(const std::string &input, const std::string pattern);
 
+  int lastIndexOf(const std::string &input, const std::string pattern);
+
   /**
    * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.
    *

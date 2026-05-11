@@ -954,7 +954,7 @@ int CRequest::process_querystring() {
     if (uriKeyUpperCase.equals("STYLES")) {
       if (dFound_Styles == 0) {
         if (!uriValue.empty()) {
-          srvParam->Styles = (&uriValue);
+          srvParam->Styles = uriValue;
         } else
           srvParam->Styles = ("");
         dFound_Styles = 1;
@@ -967,7 +967,7 @@ int CRequest::process_querystring() {
     if (uriKeyUpperCase.equals("STYLE")) {
       if (dFound_Style == 0) {
         if (!uriValue.empty()) {
-          srvParam->Style = (&uriValue);
+          srvParam->Style = uriValue;
         } else
           srvParam->Style = ("");
         dFound_Style = 1;
@@ -1152,7 +1152,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("BGCOLOR")) {
         if (dFound_BGColor == 0) {
           if (uriValue.length() > 1) {
-            srvParam->BGColor = (&uriValue);
+            srvParam->BGColor = uriValue;
             dFound_BGColor = 1;
           }
         } else {
@@ -1165,7 +1165,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("VERSION")) {
         if (dFound_Version == 0) {
           if (uriValue.length() > 1) {
-            Version = (&uriValue);
+            Version = uriValue;
             dFound_Version = 1;
           }
         }
@@ -1180,7 +1180,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("EXCEPTIONS")) {
         if (dFound_Exceptions == 0) {
           if (uriValue.length() > 1) {
-            Exceptions = (&uriValue);
+            Exceptions = uriValue;
             dFound_Exceptions = 1;
           }
         } else {
@@ -1195,6 +1195,7 @@ int CRequest::process_querystring() {
           if (srvParam->autoResourceLocation.empty()) {
             auto hashList = uriValue.split("#");
             if (hashList.size() > 0) {
+
               srvParam->autoResourceLocation = (hashList[0].c_str());
             }
           }
@@ -1300,7 +1301,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("JSONP")) {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
-            srvParam->JSONP = (&uriValue);
+            srvParam->JSONP = uriValue;
             dFound_JSONP = 1;
           }
         } else {
@@ -1393,7 +1394,7 @@ int CRequest::process_querystring() {
     } else {
       // For getlegend graphic the parameter is style, not styles
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-        srvParam->Styles = (&srvParam->Style);
+        srvParam->Styles = srvParam->Style;
       }
     }
 

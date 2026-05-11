@@ -109,7 +109,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
 
     // The last configration file is considered the dataset one, strip path and extension and give it to configurer
     srvParam->datasetLocation = CT::basename(configFileList[configFileList.size() - 1]);
-    srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
+    srvParam->datasetLocation = CT::substring(srvParam->datasetLocation, 0, CT::lastIndexOf(srvParam->datasetLocation, "."));
     if (srvParam->verbose) {
       CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
     }

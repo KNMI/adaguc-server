@@ -263,6 +263,17 @@ TEST(string, indexOf) {
   LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
 }
 
+TEST(string, lastIndexOf) {
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
+  LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "mars"));
+  LONGS_EQUAL(6, CT::indexOf(valueToCheck, "planet"));
+  LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello"));
+  LONGS_EQUAL(0, CT::indexOf(valueToCheck, ""));
+  LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello planet earth, you are a great planet."));
+  LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "Hello planet earth, you are a great planet. ---------------------------"));
+  LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
+}
+
 TEST(string, endsWith) {
   std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(false, CT::endsWith(valueToCheck, "mars"));

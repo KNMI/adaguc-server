@@ -116,7 +116,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       srvParam->geoParams.bbox = dfSrcBBOX;
       srvParam->geoParams.width = dataSource->dWidth;
       srvParam->geoParams.height = dataSource->dHeight;
-      srvParam->geoParams.crs = (&dataSource->nativeProj4);
+      srvParam->geoParams.crs = dataSource->nativeProj4;
 
       if (srvParam->Format.length() == 0) srvParam->Format = ("adagucnetcdf");
     }
@@ -142,7 +142,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       srvParam->geoParams.bbox.toArray(dfDstBBOX);
 
       /* BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates */
-      if (srvParam->responceCrs.empty() == false && srvParam->responceCrs.equals(srvParam->geoParams.crs) == false) {
+      if (srvParam->responceCrs.empty() == false && srvParam->responceCrs != srvParam->geoParams.crs) {
         CDBDebug("BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates ");
 
         CImageWarper warper;
@@ -221,7 +221,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double rx = fabs((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->geoParams.width);
     double ry = fabs((dfDstBBOX[3] - dfDstBBOX[1]) / srvParam->geoParams.height);
     adagucwcsdestgrid.print("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->geoParams.width, srvParam->geoParams.height, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2],
-                            dfDstBBOX[3], srvParam->geoParams.crs.trim().c_str());
+                            dfDstBBOX[3], CT::trim(srvParam->geoParams.crs).c_str());
 
     CT::string newHistoryText;
     newHistoryText.print("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());

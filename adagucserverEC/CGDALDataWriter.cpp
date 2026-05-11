@@ -38,9 +38,9 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   int status;
   _dataSource = dataSource;
   // Init projections
-  if (srvParam->geoParams.crs.indexOf("PROJ4:") == 0) {
+  if (CT::startsWith(srvParam->geoParams.crs, "PROJ4:")) {
     CT::string temp(srvParam->geoParams.crs.c_str() + 6);
-    srvParam->geoParams.crs = (&temp);
+    srvParam->geoParams.crs = temp;
   }
   // Load metadata from the dataSource
 #ifdef CGDALDATAWRITER_DEBUG
@@ -86,8 +86,8 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     srvParam->geoParams.bbox = dfSrcBBOX;
     srvParam->geoParams.width = dataSource->dWidth;
     srvParam->geoParams.height = dataSource->dHeight;
-    srvParam->geoParams.crs = (&dataSource->nativeProj4);
-    if (srvParam->Format.length() == 0) srvParam->Format = ("NetCDF4");
+    srvParam->geoParams.crs = dataSource->nativeProj4;
+    if (srvParam->Format.length() == 0) srvParam->Format = "NetCDF4";
   } else {
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
@@ -370,7 +370,7 @@ int CGDALDataWriter::end() {
   }
   OGRSpatialReference oSRS;
   CImageWarper imageWarper;
-  CT::string destinationCRS(&srvParam->geoParams.crs);
+  CT::string destinationCRS(srvParam->geoParams.crs);
   if (oSRS.SetFromUserInput(destinationCRS.c_str()) != OGRERR_NONE) {
     CDBError("WCS: Invalid destination projection: [%s]", destinationCRS.c_str());
     return 1;

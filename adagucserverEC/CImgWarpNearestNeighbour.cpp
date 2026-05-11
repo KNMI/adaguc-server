@@ -506,7 +506,7 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
 
   if (y2 < y1) {
     if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-      if (isLonLatProjection(&dataSource->nativeProj4) == false) {
+      if (!isLonLatProjection(dataSource->nativeProj4)) {
         double checkBBOX[4];
         for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 

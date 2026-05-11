@@ -112,7 +112,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(std::string key, C
     projCacheInfo.CoordY = y;
 
     imageWarper->reprojpoint(x, y);
-    if (isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(dataSource->nativeProj4)) {
       if (x >= -180 && x < 180) {
         while (x < dataSource->dfBBOX[0]) x += 360;
       } else {
@@ -195,7 +195,7 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawI
       int hexa[8];
 
       for (size_t j = 0; j < 6; j++) {
-        hexa[j] = srvParam->BGColor.charAt(j + 2);
+        hexa[j] = srvParam->BGColor.at(j + 2);
         hexa[j] -= 48;
         if (hexa[j] > 16) hexa[j] -= 7;
       }
@@ -281,7 +281,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA || srvParam->Styles.indexOf("HQ") > 0) {
+  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
     drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
   }
 
@@ -1752,7 +1752,7 @@ int CImageDataWriter::end() {
             CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             CT::printfconcat(resultXML, "        </gml:Point>\n");
 
-            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+            if (srvParam->geoParams.crs != "EPSG:4326") {
               CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               CT::printfconcat(resultXML, "        </gml:Point>\n");
@@ -1816,7 +1816,7 @@ int CImageDataWriter::end() {
             CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             CT::printfconcat(resultXML, "        </gml:Point>\n");
 
-            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+            if (srvParam->geoParams.crs != "EPSG:4326") {
               CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               CT::printfconcat(resultXML, "        </gml:Point>\n");

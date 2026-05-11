@@ -138,7 +138,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   store->records = filteredRecords;
 
   if (tileSettingsDebug) {
-    srvParam->mapTitle.print("level %d, tiles %d targetNrOfTiles %d", dataSource->queryLevel, store->getSize(), targetNrOfTiles);
+    srvParam->mapTitle = CT::printf("level %d, tiles %lu targetNrOfTiles %d", dataSource->queryLevel, store->getSize(), targetNrOfTiles);
   }
 
   // Return the store for CRequest.

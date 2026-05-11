@@ -104,24 +104,25 @@ public:
   double dY = 0;
   std::string Format;
   std::string InfoFormat;
-  CT::string BGColor;
-  CT::string responceCrs;
-  CT::string Styles;
-  CT::string Style;
-  CT::string autoResourceLocation; // given location by the KVP key source=<value> parameter
-  CT::string datasetLocation;
-  CT::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
-  CT::string autoResourceVariable;         // autoResourceVariable is given by the KVP key variable=<value> parameter.
-  CT::string mapTitle;
-  CT::string mapSubTitle;
+  std::string BGColor;
+  std::string responceCrs;
+  std::string Styles;
+  std::string Style;
+  std::string autoResourceLocation; // given location by the KVP key source=<value> parameter
+  std::string datasetLocation;
+  std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
+  std::string autoResourceVariable;         // autoResourceVariable is given by the KVP key variable=<value> parameter.
+  std::string mapTitle;
+  std::string mapSubTitle;
   std::string showLegendInImage = "false";
-  CT::string configFileName;
-  CT::string JSONP, queryStrURLParam;
+  std::string configFileName;
+  std::string JSONP;
   std::vector<OGCURIDims> requestDims;
   std::vector<std::string> requestedLayerNames;
-  CServerConfig configObj;
+
   CWMSExtensions wmsExtensions;
   GeoParameters geoParams;
+  CServerConfig configObj;                          // The parsed config object representing the xml structure
   CServerConfig::XMLE_Configuration *cfg = nullptr; // Pointer into configObj when configured.
 
   /**
@@ -185,7 +186,7 @@ public:
    * @param path The filepath or urlpath to check
    * @return true on valid, false on invalid
    */
-  static bool checkIfPathHasValidTokens(const char *path);
+  static bool checkIfPathHasValidTokens(const std::string &path);
 
   /**
    * Generic function which checks for custom tokens
@@ -193,7 +194,7 @@ public:
    * @param validTokens The string with a list of allowed tokens
    * @return true on valid, false on invalid
    */
-  static bool checkForValidTokens(const char *path, const char *validTokens);
+  static bool checkForValidTokens(const std::string &path, const std::string &validTokens);
 
   /**
    * Check wether the resourcelocation is whithin the servers configured realpath. In the servers configuration a comma separated list of realpaths can be configured.
@@ -201,7 +202,7 @@ public:
    * @param resolvedPath The resolvedPath if a instantiated CT::string pointer is given.
    * @return true means valid location
    */
-  bool checkResolvePath(const char *path, CT::string *resolvedPath);
+  bool checkResolvePath(const std::string &path, std::string &outputtedResolvedPath);
 
   /**
    * Generic function which will be showed when a WCS is requested while it is not compiled in

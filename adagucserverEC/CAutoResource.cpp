@@ -161,11 +161,11 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     bool isValidResource = false;
     // TODO should be placed in a a more generic place
     if (srvParam->isAutoOpenDAPResourceEnabled()) {
-      if (srvParam->autoResourceLocation.indexOf("http://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("https://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("dodsc://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("dods://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("ncdods://") == 0) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "http://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "https://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "dodsc://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "dods://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "ncdods://")) isValidResource = true;
     }
 
     // Error messages should be the same for different 'dir' attempts, otherwise someone can find out directory structures
@@ -175,7 +175,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
           CDBError("Invalid token(s), unable to read file %s", srvParam->autoResourceLocation.c_str());
           return 1;
         }
-        if (srvParam->checkResolvePath(srvParam->autoResourceLocation.c_str(), &srvParam->internalAutoResourceLocation) == false) {
+        if (srvParam->checkResolvePath(srvParam->autoResourceLocation, srvParam->internalAutoResourceLocation) == false) {
           CDBDebug("Unable to resolve path for autoresource file %s", srvParam->autoResourceLocation.c_str());
           CDBDebug("Please note that only absolute paths without symbolic links can be used");
           return 1;
@@ -191,7 +191,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     }
 
     // Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
-    if (srvParam->autoResourceVariable.empty() || srvParam->autoResourceVariable.equals("*")) {
+    if (srvParam->autoResourceVariable.empty() || srvParam->autoResourceVariable == "*") {
       // Try to retrieve a list of variables from the OpenDAPURL.
       srvParam->autoResourceVariable = ("");
       // Open the opendap resource
@@ -220,8 +220,8 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
                   }
                 }
                 if (skip == false) {
-                  if (srvParam->autoResourceVariable.length() > 0) srvParam->autoResourceVariable.concat(",");
-                  srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
+                  if (srvParam->autoResourceVariable.length() > 0) srvParam->autoResourceVariable += ",";
+                  srvParam->autoResourceVariable += cdfObject->variables[j]->name;
                 }
                 // CDBDebug("%s",cdfObject->variables[j]->name.c_str());
               }
@@ -361,7 +361,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     }
 
     // Generate layers based on the OpenDAP variables
-    std::vector<CT::string> variables = srvParam->autoResourceVariable.split(",");
+    std::vector<std::string> variables = CT::split(srvParam->autoResourceVariable, ",");
     for (size_t j = 0; j < variables.size(); j++) {
       std::vector<CT::string> variableNames;
       variableNames.push_back(variables[j].c_str());
@@ -371,9 +371,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Find derived wind parameters
     std::vector<CT::string> detectStrings;
     for (size_t v = 0; v < variables.size(); v++) {
-      int dirLoc = variables[v].indexOf("_dir");
+      int dirLoc = CT::indexOf(variables[v], "_dir");
       if (dirLoc > 0) {
-        detectStrings.push_back(variables[v].substring(0, dirLoc));
+        detectStrings.push_back(CT::substring(variables[v], 0, dirLoc));
       }
     }
 

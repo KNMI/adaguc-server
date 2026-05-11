@@ -625,6 +625,17 @@ namespace CT {
     return -1;
   }
 
+  int lastIndexOf(const std::string &input, const std::string pattern) {
+    if (input.length() == 0 || pattern.length() == 0) {
+      return -1;
+    }
+    auto pi = strrstr(input.c_str(), pattern.c_str());
+    if (pi == nullptr) return -1;
+    auto c = pi - input.c_str();
+    if (c < 0) c = -1;
+    return c;
+  }
+
   bool endsWith(const std::string &input, const std::string pattern) {
     return pattern.size() == 0 || (input.size() >= pattern.size() && input.compare(input.size() - pattern.size(), pattern.size(), pattern) == 0);
   }

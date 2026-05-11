@@ -117,12 +117,12 @@ bool CServerParams::isAutoResourceEnabled() {
   return false;
 }
 
-bool CServerParams::checkIfPathHasValidTokens(const char *path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
+bool CServerParams::checkIfPathHasValidTokens(const std::string &path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
 
-bool CServerParams::checkForValidTokens(const char *path, const char *validPATHTokens) {
+bool CServerParams::checkForValidTokens(const std::string &path, const std::string &validPATHTokens) {
   // Check for valid tokens
-  size_t pathLength = strlen(path);
-  size_t allowedTokenLength = strlen(validPATHTokens);
+  size_t pathLength = path.length();
+  size_t allowedTokenLength = validPATHTokens.length();
   for (size_t j = 0; j < pathLength; j++) {
     bool isInvalid = true;
     for (size_t i = 0; i < allowedTokenLength; i++) {
@@ -132,14 +132,14 @@ bool CServerParams::checkForValidTokens(const char *path, const char *validPATHT
       }
     }
     if (isInvalid) {
-      CDBDebug("Invalid token '%c' in '%s'", path[j], path);
+      CDBDebug("Invalid token '%c' in '%s'", path[j], path.c_str());
       return false;
     }
 
     // Check for sequences
     if (j > 0) {
       if (path[j - 1] == '.' && path[j] == '.') {
-        CDBDebug("Invalid sequence in '%s'", path);
+        CDBDebug("Invalid sequence in '%s'", path.c_str());
         return false;
       }
     }
@@ -147,7 +147,7 @@ bool CServerParams::checkForValidTokens(const char *path, const char *validPATHT
   return true;
 }
 
-bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath) {
+bool CServerParams::checkResolvePath(const std::string &path, std::string &outputtedResolvedPath) {
   if (cfg->AutoResource.size() > 0) {
     // Needs to be configured otherwise it will be denied.
     if (cfg->AutoResource[0]->Dir.size() == 0) {
@@ -155,7 +155,10 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
       return false;
     }
 
-    if (checkIfPathHasValidTokens(path) == false) return false;
+    if (checkIfPathHasValidTokens(path) == false) {
+      CDBDebug("Invalid tokens in path");
+      return false;
+    }
 
     for (size_t d = 0; d < cfg->AutoResource[0]->Dir.size(); d++) {
       const char *_baseDir = cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
@@ -169,14 +172,13 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
 
       if (strlen(baseDir) > 0 && strlen(dirPrefix) > 0) {
         // Prepend the prefix to make the absolute path
-        CT::string pathToCheck;
-        pathToCheck.print("%s/%s", dirPrefix, path);
+        std::string pathToCheck = CT::printf("%s/%s", dirPrefix, path.c_str());
         // Make a realpath
         char szResolvedPath[PATH_MAX];
         if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL) {
-          CT::string resolvedPathStr = szResolvedPath;
-          if (resolvedPathStr.indexOf(baseDir) == 0) {
-            resolvedPath->copy(szResolvedPath);
+          std::string resolvedPathStr = szResolvedPath;
+          if (CT::startsWith(resolvedPathStr, baseDir)) {
+            outputtedResolvedPath = resolvedPathStr;
             return true;
           }
         }
