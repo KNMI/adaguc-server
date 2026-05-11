@@ -1112,7 +1112,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("FORMAT")) {
         if (dFound_Format == 0) {
           if (uriValue.length() > 1) {
-            srvParam->Format = (&uriValue);
+            srvParam->Format = (uriValue);
             dFound_Format = 1;
           }
         } else {
@@ -1125,7 +1125,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("INFO_FORMAT")) {
         if (dFound_InfoFormat == 0) {
           if (uriValue.length() > 1) {
-            srvParam->InfoFormat = (&uriValue);
+            srvParam->InfoFormat = uriValue;
             dFound_InfoFormat = 1;
           }
         } else {
@@ -1204,13 +1204,13 @@ int CRequest::process_querystring() {
 
       // WMS Layers parameter
       if (uriKeyUpperCase.equals("LAYERS") || uriKeyUpperCase.equals("LAYER")) {
-        srvParam->requestedLayerNames = uriValue.split(",");
+        srvParam->requestedLayerNames = CT::split(uriValue, ",");
         dFound_WMSLAYERS = 1;
       }
 
       // WMS Layer parameter
       if (uriKeyUpperCase.equals("QUERY_LAYERS")) {
-        srvParam->requestedLayerNames = uriValue.split(",");
+        srvParam->requestedLayerNames = CT::split(uriValue, ",");
         dFound_WMSLAYERS = 1;
       }
       // WCS Coverage parameter
@@ -1219,7 +1219,7 @@ int CRequest::process_querystring() {
           CDBError("ADAGUC Server: COVERAGE already defined");
           dErrorOccured = 1;
         } else {
-          srvParam->requestedLayerNames = uriValue.split(",");
+          srvParam->requestedLayerNames = CT::split(uriValue, ",");
         }
         dFound_WCSCOVERAGE = 1;
       }
@@ -1280,10 +1280,10 @@ int CRequest::process_querystring() {
         srvParam->wmsExtensions.opacity = uriValue.toDouble();
       }
       if (uriKeyUpperCase.equals("COLORSCALERANGE")) {
-        auto valuesC = uriValue.split(",");
+        auto valuesC = CT::split(uriValue, ",");
         if (valuesC.size() == 2) {
-          srvParam->wmsExtensions.colorScaleRangeMin = valuesC[0].toDouble();
-          srvParam->wmsExtensions.colorScaleRangeMax = valuesC[1].toDouble();
+          srvParam->wmsExtensions.colorScaleRangeMin = atof(valuesC[0].c_str());
+          srvParam->wmsExtensions.colorScaleRangeMax = atof(valuesC[1].c_str());
           srvParam->wmsExtensions.colorScaleRangeSet = true;
         }
       }
@@ -1774,7 +1774,7 @@ int CRequest::process_querystring() {
         return 1;
       }
 
-      if (srvParam->Format.equals("application/json")) {
+      if (srvParam->Format == ("application/json")) {
         // GetMetadata for specific dataset and layer
         json result;
         setErrorMode(ServiceExceptionMode::ExceptionJSON);
@@ -2494,8 +2494,8 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   setDimValuesForDataSource(firstDataSource, srvParam);
 
   for (const auto &WCSFormat: srvParam->cfg->WCS[0]->WCSFormat) {
-    if (srvParam->Format.equals(WCSFormat->attr.name.c_str())) {
-      driverName = (WCSFormat->attr.driver.c_str());
+    if (srvParam->Format == WCSFormat->attr.name) {
+      driverName = WCSFormat->attr.driver;
       break;
     }
   }

@@ -80,7 +80,7 @@ struct CXMLObjectInterface {
  * Inherits the CXMLObjectInterface base object
  */
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName);
+int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::string datasetName);
 
 /**
  * parses a character string to int

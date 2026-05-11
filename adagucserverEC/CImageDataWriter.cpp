@@ -1584,7 +1584,7 @@ int CImageDataWriter::end() {
       return 0;
     }
 
-    if (srvParam->InfoFormat.indexOf("application/json") != -1) {
+    if (CT::indexOf(srvParam->InfoFormat, "application/json") != -1) {
 
       try {
         if (gfiStructure.get("root") != nullptr) {
@@ -2020,9 +2020,9 @@ int CImageDataWriter::end() {
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
-      auto s = srvParam->Format.split(";");
+      auto s = CT::split(srvParam->Format, ";");
       if (s.size() > 1) {
-        int q = s[1].toInt();
+        int q = atoi(s[1].c_str());
         if (q >= 0 && q <= 100) {
           webPQuality = q;
         }

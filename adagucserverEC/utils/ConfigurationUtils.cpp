@@ -79,13 +79,13 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
 
   // Parse the main configuration file
   int status = srvParam->parseConfigFile(configFileList[0]);
-  if (status != 0 || srvParam->configObj->Configuration.size() != 1) {
+  if (status != 0 || srvParam->configObj.Configuration.size() != 1) {
     CDBError("Invalid XML file %s", configFile.c_str());
     return 1;
   }
 
   srvParam->configFileName = configFile;
-  srvParam->cfg = srvParam->configObj->Configuration[0];
+  srvParam->cfg = srvParam->configObj.Configuration[0];
 
 #ifdef MEASURETIME
   StopWatch_Stop("!start next parseConfigFile");

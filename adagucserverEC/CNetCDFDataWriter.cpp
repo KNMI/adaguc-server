@@ -1059,7 +1059,7 @@ int CNetCDFDataWriter::end() {
   }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
 
-  if (srvParam->Format.equals("NetCDF3")) {
+  if (CT::equalsIgnoreCase(srvParam->Format, "NetCDF3")) {
     netCDFWriter->setNetCDFMode(3);
   } else {
     netCDFWriter->setNetCDFMode(4);

@@ -74,76 +74,55 @@ public:
 class CServerParams {
 
 private:
-  int autoOpenDAPEnabled, autoLocalFileResourceEnabled;
-
-  CT::string _onlineResource;
+  int autoOpenDAPEnabled = -1;
+  int autoLocalFileResourceEnabled = -1;
+  int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
   static int dataRestriction;
   static char debugLoggingIsEnabled;
-  int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
+  std::string _onlineResource;
   int _parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
 
 public:
-  double dfResX, dfResY;
-  int dFound_BBOX = 0;
-  double dX, dY;
+  bool Transparent = false;
   bool verbose = false;
-  std::vector<CT::string> requestedLayerNames;
-  CT::string Format;
-  CT::string InfoFormat;
-  int imageFormat;
-  int imageQuality; // 0-100
-  int imageMode;
-  CWMSExtensions wmsExtensions;
-
-  /*
-   * figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
-   */
-  int figWidth, figHeight;
+  bool showDimensionsInImage = false;
+  bool showScaleBarInImage = false;
+  bool showNorthArrow = false;
+  int dFound_BBOX = 0;
+  int imageFormat = IMAGEFORMAT_IMAGEPNG8;
+  int imageQuality = 85; // 0-100
+  int imageMode = SERVERIMAGEMODE_8BIT;
+  int figWidth = -1; // figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
+  int figHeight = -1;
+  int serviceType = -1;
+  int requestType = -1;
+  int OGCVersion = -1;
+  int WCS_GoNative = -1;
+  double dfResX = 0;
+  double dfResY = 0;
+  double dX = 0;
+  double dY = 0;
+  std::string Format;
+  std::string InfoFormat;
   CT::string BGColor;
-  bool Transparent;
-  GeoParameters geoParams;
   CT::string responceCrs;
   CT::string Styles;
   CT::string Style;
-
-  // given location by the KVP key source=<value> parameter
-  CT::string autoResourceLocation;
-
+  CT::string autoResourceLocation; // given location by the KVP key source=<value> parameter
   CT::string datasetLocation;
-
-  // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
-  CT::string internalAutoResourceLocation;
-  // autoResourceVariable is given by the KVP key variable=<value> parameter.
-  CT::string autoResourceVariable;
-
+  CT::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
+  CT::string autoResourceVariable;         // autoResourceVariable is given by the KVP key variable=<value> parameter.
   CT::string mapTitle;
   CT::string mapSubTitle;
-  bool showDimensionsInImage;
-  std::string showLegendInImage;
-  bool showScaleBarInImage;
-  bool showNorthArrow;
-
-  CT::string JSONP, queryStrURLParam;
-
-  std::vector<OGCURIDims> requestDims;
-  int serviceType;
-  int requestType;
-  int OGCVersion;
-  int WCS_GoNative;
-
-  CServerConfig *configObj;
-  CServerConfig::XMLE_Configuration *cfg = nullptr;
+  std::string showLegendInImage = "false";
   CT::string configFileName;
-
-  /**
-   * Constructor
-   */
-  CServerParams();
-
-  /**
-   * Destructor
-   */
-  ~CServerParams();
+  CT::string JSONP, queryStrURLParam;
+  std::vector<OGCURIDims> requestDims;
+  std::vector<std::string> requestedLayerNames;
+  CServerConfig configObj;
+  CWMSExtensions wmsExtensions;
+  GeoParameters geoParams;
+  CServerConfig::XMLE_Configuration *cfg = nullptr; // Pointer into configObj when configured.
 
   /**
    * Function which generates a group name from the Layer's configuration

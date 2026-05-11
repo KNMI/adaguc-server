@@ -31,37 +31,6 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 
-CServerParams::CServerParams() {
-
-  serviceType = -1;
-  requestType = -1;
-  OGCVersion = -1;
-
-  Transparent = false;
-  cfg = NULL;
-  configObj = new CServerConfig();
-  imageFormat = IMAGEFORMAT_IMAGEPNG8;
-  imageMode = SERVERIMAGEMODE_8BIT;
-  autoOpenDAPEnabled = -1;
-  autoLocalFileResourceEnabled = -1;
-  showDimensionsInImage = false;
-  showLegendInImage = "false";
-  showScaleBarInImage = false;
-  figWidth = -1;
-  figHeight = -1;
-  imageQuality = 85;
-  dfResX = 0;
-  dfResY = 0;
-}
-
-CServerParams::~CServerParams() {
-  if (configObj != NULL) {
-    delete configObj;
-    configObj = NULL;
-  }
-  requestDims.clear();
-}
-
 // Table names need to be different between dims like time and height.
 //  Therefor create unique tablenames like tablename_time and tablename_height
 CT::string CServerParams::makeCorrectTableName(CT::string tableName, CT::string dimName) {
@@ -381,11 +350,11 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
   StopWatch_Stop("CServerParams::parseConfigFile done first %s", pszConfigFile.c_str());
 #endif
 
-  if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
-    for (size_t j = 0; j < tempServerParam.configObj->Configuration[0]->Environment.size(); j++) {
+  if (tempServerParam.configObj.Configuration.size() > 0 && tempServerParam.configObj.Configuration[0]->Environment.size() > 0) {
+    for (size_t j = 0; j < tempServerParam.configObj.Configuration[0]->Environment.size(); j++) {
       CServerConfig::XMLE_Environment tmpEnv;
-      tmpEnv.attr.name = (*tempServerParam.configObj->Configuration[0]->Environment[j]).attr.name;
-      tmpEnv.attr.defaultVal = (*tempServerParam.configObj->Configuration[0]->Environment[j]).attr.defaultVal;
+      tmpEnv.attr.name = (*tempServerParam.configObj.Configuration[0]->Environment[j]).attr.name;
+      tmpEnv.attr.defaultVal = (*tempServerParam.configObj.Configuration[0]->Environment[j]).attr.defaultVal;
       extraEnvironment.push_back(tmpEnv);
     }
   }
@@ -490,12 +459,12 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
   StopWatch_Stop("CServerParams::_parseConfigFile Start parseConfig");
 #endif
 
-  int status = parseConfig(configObj, configFileData, datasetName);
+  int status = parseConfig(&configObj, configFileData, datasetName);
 #ifdef MEASURETIME
   StopWatch_Stop("CServerParams::_parseConfigFile Done parseConfig");
 #endif
 
-  if (status == 0 && configObj->Configuration.size() == 1) {
+  if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
   } else {
     // cfg=NULL;

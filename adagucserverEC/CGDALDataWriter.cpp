@@ -132,19 +132,19 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
 
   // Retrieve output format
   for (size_t j = 0; j < srvParam->cfg->WCS[0]->WCSFormat.size(); j++) {
-    if (srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())) {
+    if (srvParam->Format == srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name) {
       driverName = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
       mimeType = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
       customOptions = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
       break;
     }
   }
-  srvParam->Format.toUpperCaseSelf();
+  std::string serverFormat = CT::toUpperCase(srvParam->Format);
   if (driverName.length() == 0) {
-    if (srvParam->Format.equals("GEOTIFF")) {
+    if (serverFormat == "GEOTIFF") {
       driverName = ("GTiff");
     }
-    if (srvParam->Format.equals("AAIGRID")) {
+    if (serverFormat == "AAIGRID") {
       driverName = ("AAIGRID");
       if (NrOfBands > 1) {
         CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.", srvParam->Format.c_str());

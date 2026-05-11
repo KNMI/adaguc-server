@@ -566,7 +566,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
   }
 
-  if (dataSource->srvParams->InfoFormat.equals("application/json")) {
+  if (dataSource->srvParams->InfoFormat == "application/json") {
     float *data = (float *)varRange->data;
     eProfileJson->concat("{");
     CT::string units = dObjgetUnits(*dataSource->getDataObject(0));

@@ -12,8 +12,8 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
     return 1;
   }
 
-  if (dataSource->srvParams->configObj->Configuration.size() == 0) {
-    CDBError("Error! dataSource->srvParams->configObj->Configuration.size() == 0");
+  if (dataSource->srvParams->cfg == nullptr) {
+    CDBError("Error! dataSource->srvParams->cfg not set");
     return 1;
   }
 

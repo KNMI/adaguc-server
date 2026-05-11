@@ -61,7 +61,7 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {
       char *content = cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE ? (char *)cur_node->children->content : nullptr;
-      addedElement = object->addElement((char *)cur_node->name);
+      addedElement = object->addElement((const char *)cur_node->name);
       if (addedElement != nullptr) {
         if (content != nullptr) {
           addedElement->elementValue = CT::trim(content);
@@ -87,7 +87,7 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
   }
 }
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName) {
+int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::string datasetName) {
   LIBXML_TEST_VERSION
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
