@@ -190,7 +190,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   CT::string offset = LIVEUPDATE_DEFAULT_OFFSET;
 
   for (auto dim: metadataLayer->layer->Dimension) {
-    if (dim->elementValue.equals("time") && !dim->attr.interval.empty()) {
+    if (dim->elementValue == ("time") && !dim->attr.interval.empty()) {
       timeResolution = dim->attr.interval;
     }
   }

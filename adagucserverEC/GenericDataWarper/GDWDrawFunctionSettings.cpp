@@ -57,7 +57,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
 
     if (!smoothingFilter->elementValue.empty()) {
-      settings.smoothingFiter = smoothingFilter->elementValue.toDouble();
+      settings.smoothingFiter = atof(smoothingFilter->elementValue.c_str());
     }
   }
 
@@ -65,7 +65,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   if (settings.isUsingShadeIntervals) {
     int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
     if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].elementValue.empty()) {
-      settings.shadeInterval = styleConfiguration->shadeIntervals[0].elementValue.toDouble();
+      settings.shadeInterval = atof(styleConfiguration->shadeIntervals[0].elementValue.c_str());
     } else {
       settings.intervals.reserve(numShadeDefs);
       for (int j = 0; j < numShadeDefs; j++) {

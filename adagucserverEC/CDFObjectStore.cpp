@@ -59,7 +59,7 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
   // CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->DataReader.size() > 0) {
-      if (dataSource->cfgLayer->DataReader[0]->elementValue.equals("HDF5")) {
+      if (dataSource->cfgLayer->DataReader[0]->elementValue == ("HDF5")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating HDF5 reader");
 #endif
@@ -71,17 +71,17 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
             hdf5Reader->enableKNMIHDF5UseEndTime();
           }
         }
-      } else if (dataSource->cfgLayer->DataReader[0]->elementValue.equals("GEOJSON")) {
+      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("GEOJSON")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating GEOJSON reader");
 #endif
         cdfReader = new CDFGeoJSONReader();
-      } else if (dataSource->cfgLayer->DataReader[0]->elementValue.equals("PNG")) {
+      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("PNG")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating PNG reader");
 #endif
         cdfReader = new CDFPNGReader();
-      } else if (dataSource->cfgLayer->DataReader[0]->elementValue.equals("CSV")) {
+      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("CSV")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating CSV reader");
 #endif

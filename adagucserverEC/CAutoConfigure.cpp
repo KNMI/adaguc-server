@@ -72,7 +72,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       for (size_t j = 0; j < store->size(); j++) {
         CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
 
-        xmleDim->elementValue.copy(store->getRecord(j)->get("ogcname")->c_str());
+        xmleDim->elementValue = (store->getRecord(j)->get("ogcname")->c_str());
         xmleDim->attr.name.copy(store->getRecord(j)->get("ncname")->c_str());
         xmleDim->attr.units.copy(store->getRecord(j)->get("units")->c_str());
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
@@ -132,7 +132,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
          * Each time to find the non existing dims. */
         if (variable->dimensionlinks.size() == 2) {
           CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
-          xmleDim->elementValue.copy("0");
+          xmleDim->elementValue = ("0");
           xmleDim->attr.name.copy("none");
           xmleDim->attr.units.copy("none");
           dataSource->cfgLayer->Dimension.push_back(xmleDim);
@@ -186,7 +186,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 #endif
             CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
             dataSource->cfgLayer->Dimension.push_back(xmleDim);
-            xmleDim->elementValue.copy(OGCDimName.c_str());
+            xmleDim->elementValue = (OGCDimName.c_str());
             xmleDim->attr.name.copy(netcdfdimname.c_str());
             if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
               xmleDim->attr.units.copy("ISO8601");
@@ -222,17 +222,17 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
               /* But only add if it is not already added */
               bool forecastRefererenceIsAlreadyThere = false;
-              for (size_t check = 0; check < dataSource->cfgLayer->Dimension.size(); check += 1) {
-                if (dataSource->cfgLayer->Dimension[check]->elementValue.equals("reference_time")) {
-                  CDBDebug("Found forecast_reference_time variable with name [%s], but it is already configured.", cdfObject->variables[j]->name.c_str());
-                  forecastRefererenceIsAlreadyThere = true;
-                  break;
-                }
+
+              auto it = std::find_if(dataSource->cfgLayer->Dimension.begin(), dataSource->cfgLayer->Dimension.end(), [](const auto a) { return "reference_time" == a->elementValue; });
+              if (it != dataSource->cfgLayer->Dimension.end()) {
+                CDBDebug("Found forecast_reference_time variable with name [%s], but it is already configured.", cdfObject->variables[j]->name.c_str());
+                forecastRefererenceIsAlreadyThere = true;
               }
+
               if (!forecastRefererenceIsAlreadyThere) {
                 CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
                 dataSource->cfgLayer->Dimension.push_back(xmleDim);
-                xmleDim->elementValue.copy("reference_time");
+                xmleDim->elementValue = ("reference_time");
                 xmleDim->attr.name.copy(cdfObject->variables[j]->name.c_str());
                 xmleDim->attr.units.copy(units.c_str());
                 /* Store the data in the db for quick access. */
@@ -414,7 +414,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 
   if (styles.length() == 0) styles = "auto,autogeneric,autobilinear,autobilinear_deprecated";
 
-  xmleStyle->elementValue.copy(styles.c_str());
+  xmleStyle->elementValue = (styles.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("/[DONE] [AutoConfigureStyles]");
 #endif

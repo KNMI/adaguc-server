@@ -189,7 +189,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   auto cfgDims = dataSource->cfgLayer->Dimension; // Layer configuration dimensions
 
   // Find time dimension in Layer configuration dimensions
-  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->elementValue.equals("time"); });
+  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->elementValue == "time"; });
   if (xmleDimTimeIt == cfgDims.end()) {
     // There is no time dim. Do nothing, all OK.
     return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_TIME;

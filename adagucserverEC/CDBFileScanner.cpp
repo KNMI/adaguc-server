@@ -120,7 +120,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
     /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
     if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
-      dataSource->cfgLayer->Dimension[d]->elementValue.copy("0");
+      dataSource->cfgLayer->Dimension[d]->elementValue = ("0");
       dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
       dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
     }
@@ -298,7 +298,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
       /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
       if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
-        dataSource->cfgLayer->Dimension[d]->elementValue.copy("0");
+        dataSource->cfgLayer->Dimension[d]->elementValue = ("0");
         dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
         dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
       }

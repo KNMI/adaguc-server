@@ -715,11 +715,11 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   }
   if (srvParam->cfg->WCS[0]->Name.size() == 0) {
     srvParam->cfg->WCS[0]->Name.push_back(new CServerConfig::XMLE_Name());
-    srvParam->cfg->WCS[0]->Name[0]->elementValue.copy(srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
+    srvParam->cfg->WCS[0]->Name[0]->elementValue = (srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
   }
   if (srvParam->cfg->WCS[0]->Abstract.size() == 0) {
     srvParam->cfg->WCS[0]->Abstract.push_back(new CServerConfig::XMLE_Abstract());
-    srvParam->cfg->WCS[0]->Abstract[0]->elementValue.copy(srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
+    srvParam->cfg->WCS[0]->Abstract[0]->elementValue = (srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
   }
   XMLDoc->replaceSelf("[SERVICENAME]", srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
   XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WCS[0]->Name[0]->elementValue.c_str());

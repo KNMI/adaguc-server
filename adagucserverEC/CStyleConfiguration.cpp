@@ -136,11 +136,12 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   }
 
   if (style->Min.size() > 0) {
-    styleConfig->minValue = style->Min[0]->elementValue.toDouble();
+    styleConfig->minValue = atof(style->Min[0]->elementValue.c_str());
     styleConfig->minMaxSet = true;
   }
   if (style->Max.size() > 0) {
-    styleConfig->maxValue = style->Max[0]->elementValue.toDouble();
+
+    styleConfig->maxValue = atof(style->Max[0]->elementValue.c_str());
     styleConfig->minMaxSet = true;
   }
 
@@ -244,11 +245,11 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   }
 
   if (layer->Min.size() > 0) {
-    this->minValue = layer->Min[0]->elementValue.toDouble();
+    this->minValue = atof(layer->Min[0]->elementValue.c_str());
     this->minMaxSet = true;
   }
   if (layer->Max.size() > 0) {
-    this->maxValue = layer->Max[0]->elementValue.toDouble();
+    this->maxValue = atof(layer->Max[0]->elementValue.c_str());
     this->minMaxSet = true;
   }
 

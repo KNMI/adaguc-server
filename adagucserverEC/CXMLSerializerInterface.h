@@ -69,7 +69,7 @@ int parseInt(const attribute &attrCfg);
  */
 class CXMLObjectInterface {
 public:
-  CT::string elementValue;
+  std::string elementValue;
   virtual ~CXMLObjectInterface() {}
 
   virtual CXMLObjectInterface *addElement(const std::string &) { return nullptr; };

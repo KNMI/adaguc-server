@@ -126,13 +126,13 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, CT::string serverTitl
         CT::string title = "";
         title.concat(serverTitle.c_str());
         // title.replaceSelf(" ","_");
-        srvParam->cfg->WMS[0]->Title[0]->elementValue.copy(title.c_str());
+        srvParam->cfg->WMS[0]->Title[0]->elementValue = (title.c_str());
       }
       if (srvParam->cfg->WMS[0]->RootLayer.size() > 0) {
         if (srvParam->cfg->WMS[0]->RootLayer[0]->Title.size() > 0) {
           CT::string title = "WMS of  ";
           title.concat(serverTitle.c_str());
-          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.copy(title.c_str());
+          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue = (title.c_str());
         }
       }
     }
@@ -140,7 +140,7 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, CT::string serverTitl
       if (srvParam->cfg->WCS[0]->Title.size() > 0) {
         CT::string title = "ADAGUC_AUTO_WCS_";
         title.concat(serverTitle.c_str());
-        srvParam->cfg->WCS[0]->Title[0]->elementValue.copy(title.c_str());
+        srvParam->cfg->WCS[0]->Title[0]->elementValue = (title.c_str());
       }
     }
   }
@@ -355,7 +355,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     if (serverAbstract.length() > 0) {
       if (srvParam->cfg->WMS.size() > 0) {
         if (srvParam->cfg->WMS[0]->Abstract.size() > 0) {
-          srvParam->cfg->WMS[0]->Abstract[0]->elementValue.copy(serverAbstract.c_str());
+          srvParam->cfg->WMS[0]->Abstract[0]->elementValue = (serverAbstract.c_str());
         }
       }
     }
@@ -456,7 +456,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
   CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
 
   xmleLayer->attr.type.copy("database");
-  xmleFilePath->elementValue.copy(location);
+  xmleFilePath->elementValue = (location);
   xmleFilePath->attr.filter.copy("");
 
   if (group != NULL) {
@@ -467,7 +467,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
 
   for (size_t j = 0; j < variableNames->size(); j++) {
     CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
-    xmleVariable->elementValue.copy((*variableNames)[j].c_str());
+    xmleVariable->elementValue = ((*variableNames)[j].c_str());
     xmleLayer->Variable.push_back(xmleVariable);
   }
 
@@ -480,7 +480,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         if (featureType->toString().equals("timeSeries") || featureType->toString().equals("point")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           // CREPORT_INFO_NODOC((*variableNames)[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->elementValue.copy("point");
+          xmleRenderMethod->elementValue = ("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
       }
@@ -490,21 +490,21 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         if (adaguc_data_type->toString().equals("CConvertGeoJSON")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->elementValue.copy("polyline");
+          xmleRenderMethod->elementValue = ("polyline");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
 
         if (adaguc_data_type->toString().equals("CConvertGeoJSONPOLYGON")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOLYGON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->elementValue.copy("polyline");
+          xmleRenderMethod->elementValue = ("polyline");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
 
         if (adaguc_data_type->toString().equals("CConvertGeoJSONPOINT")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOINT. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->elementValue.copy("point");
+          xmleRenderMethod->elementValue = ("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
       }
@@ -519,7 +519,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         if (attribute->toString().equals("rgba")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("Only one variable. Assuming grid and setting render method to rgba. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->elementValue.copy("rgba");
+          xmleRenderMethod->elementValue = ("rgba");
           xmleLayer->RenderMethod.push_back(xmleRenderMethod);
         }
       }
@@ -531,7 +531,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     newName.print("%s + %s", (*variableNames)[0].c_str(), (*variableNames)[1].c_str());
 
     CServerConfig::XMLE_Title *xmleTitle = new CServerConfig::XMLE_Title();
-    xmleTitle->elementValue.copy(newName.c_str());
+    xmleTitle->elementValue = (newName.c_str());
     xmleLayer->Title.push_back(xmleTitle);
 
     CServerConfig::XMLE_Name *xmleName = new CServerConfig::XMLE_Name();
@@ -539,11 +539,11 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     newName.replaceSelf("+", "and");
     newName.replaceSelf(" ", "_");
     newName.encodeURLSelf();
-    xmleName->elementValue.copy(newName.c_str());
+    xmleName->elementValue = (newName.c_str());
     xmleLayer->Name.push_back(xmleName);
     CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
     CREPORT_INFO_NODOC("Exactly two variables: Assuming wind and setting render method to nearestpoint. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
-    xmleRenderMethod->elementValue.copy("nearestpoint");
+    xmleRenderMethod->elementValue = ("nearestpoint");
     xmleLayer->RenderMethod.push_back(xmleRenderMethod);
   }
 
@@ -555,7 +555,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
       CServerConfig::XMLE_ImageText *xmleImageText = new CServerConfig::XMLE_ImageText();
       xmleLayer->ImageText.push_back(xmleImageText);
       if (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.empty() == false) {
-        xmleImageText->elementValue.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.c_str());
+        xmleImageText->elementValue = (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.c_str());
       }
       if (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.empty() == false) {
         xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());

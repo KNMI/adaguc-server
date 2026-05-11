@@ -9,9 +9,9 @@ CT::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *
       CServerConfig::XMLE_Name *name = new CServerConfig::XMLE_Name();
       cfgLayer->Name.push_back(name);
       if (cfgLayer->Variable.size() == 0) {
-        name->elementValue.copy("undefined_variable");
+        name->elementValue = ("undefined_variable");
       } else {
-        name->elementValue.copy(cfgLayer->Variable[0]->elementValue.c_str());
+        name->elementValue = (cfgLayer->Variable[0]->elementValue.c_str());
       }
     }
     // The groupname should be suffixed to the real layername

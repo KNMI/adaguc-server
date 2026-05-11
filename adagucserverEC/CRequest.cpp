@@ -218,11 +218,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k].name = CT::toLowerCase(srvParam->requestDims[k].name);
 
     bool hasReferenceTimeDimension = false;
-    for (size_t l = 0; l < dataSource->cfgLayer->Dimension.size(); l++) {
-      if (dataSource->cfgLayer->Dimension[l]->elementValue.equals("reference_time")) {
-        hasReferenceTimeDimension = true;
-        break;
-      }
+    auto it = std::find_if(dataSource->cfgLayer->Dimension.begin(), dataSource->cfgLayer->Dimension.end(), [](const auto a) { return "reference_time" == a->elementValue; });
+    if (it != dataSource->cfgLayer->Dimension.end()) {
+      hasReferenceTimeDimension = true;
     }
 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
@@ -338,7 +336,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                 // For models with a reference_time, select the nearest time to current system clock
 
                 // For time:
-                if (dataSource->cfgLayer->Dimension[i]->elementValue.equals("time")) {
+                if (dataSource->cfgLayer->Dimension[i]->elementValue == ("time")) {
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
 
                   if (maxStore == NULL) {
@@ -410,7 +408,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         ogcDim.hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
         bool isReferenceTimeDimension = false;
-        if (dataSource->cfgLayer->Dimension[i]->elementValue.equals("reference_time")) {
+        if (dataSource->cfgLayer->Dimension[i]->elementValue == ("reference_time")) {
           isReferenceTimeDimension = true;
         }
 
