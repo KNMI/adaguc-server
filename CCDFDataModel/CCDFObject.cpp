@@ -423,7 +423,7 @@ CDFType CDFObject::ncmlTypeToCDFType(const char *type) {
 }
 
 CDFObject::CDFObject() {
-  name.copy("NC_GLOBAL");
+  name = ("NC_GLOBAL");
   reader = NULL;
 }
 

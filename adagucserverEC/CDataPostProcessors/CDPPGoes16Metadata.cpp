@@ -41,7 +41,7 @@ int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     cdfObject->addDimension(dimT);
     CDF::Variable *varT = new CDF::Variable();
     varT->setType(CDF_DOUBLE);
-    varT->name.copy("time");
+    varT->name = ("time");
     varT->isDimension = true;
     varT->dimensionlinks.push_back(dimT);
     cdfObject->addVariable(varT);

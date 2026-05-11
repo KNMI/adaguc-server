@@ -1726,8 +1726,8 @@ public:
 
       Cattr() {
         transparent = true;
-        bgcolor.copy("");
-        style.copy("");
+        bgcolor = ("");
+        style = ("");
       }
     } attr;
     bool addAttribute(const attribute &attrCfg) {

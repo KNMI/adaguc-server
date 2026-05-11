@@ -118,7 +118,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       srvParam->geoParams.height = dataSource->dHeight;
       srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
 
-      if (srvParam->Format.length() == 0) srvParam->Format.copy("adagucnetcdf");
+      if (srvParam->Format.length() == 0) srvParam->Format = ("adagucnetcdf");
     }
 
     CT::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->responceCrs);

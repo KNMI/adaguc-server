@@ -299,7 +299,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
       new2DVar->setAttributeText("grid_mapping", "customgridprojection");
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
@@ -574,7 +574,7 @@ bool CConvertADAGUCVector::createVirtualGeoVariables(CDFObject *cdfObject) {
   cdfObject->addDimension(dimX);
   CDF::Variable *varX = new CDF::Variable();
   varX->setType(CDF_DOUBLE);
-  varX->name.copy("x");
+  varX->name = ("x");
   varX->isDimension = true;
   varX->dimensionlinks.push_back(dimX);
   cdfObject->addVariable(varX);
@@ -587,7 +587,7 @@ bool CConvertADAGUCVector::createVirtualGeoVariables(CDFObject *cdfObject) {
   cdfObject->addDimension(dimY);
   CDF::Variable *varY = new CDF::Variable();
   varY->setType(CDF_DOUBLE);
-  varY->name.copy("y");
+  varY->name = ("y");
   varY->isDimension = true;
   varY->dimensionlinks.push_back(dimY);
   cdfObject->addVariable(varY);

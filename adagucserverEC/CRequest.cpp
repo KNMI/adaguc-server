@@ -956,7 +956,7 @@ int CRequest::process_querystring() {
         if (!uriValue.empty()) {
           srvParam->Styles.copy(&uriValue);
         } else
-          srvParam->Styles.copy("");
+          srvParam->Styles = ("");
         dFound_Styles = 1;
       } else {
         CDBError("ADAGUC Server: Styles already defined");
@@ -969,7 +969,7 @@ int CRequest::process_querystring() {
         if (!uriValue.empty()) {
           srvParam->Style.copy(&uriValue);
         } else
-          srvParam->Style.copy("");
+          srvParam->Style = ("");
         dFound_Style = 1;
       } else {
         CDBError("ADAGUC Server: Style already defined");
@@ -1334,7 +1334,7 @@ int CRequest::process_querystring() {
     setExceptionType(ServiceExceptionType::UnprocessableEntity);
   }
   if (dFound_Styles == 0) {
-    srvParam->Styles.copy("");
+    srvParam->Styles = ("");
   }
   if (SERVICE.equals("WMS"))
     srvParam->serviceType = SERVICE_WMS;
@@ -1389,7 +1389,7 @@ int CRequest::process_querystring() {
 
     // For getlegend graphic the parameter is style, not styles
     if (dFound_Style == 0) {
-      srvParam->Style.copy("");
+      srvParam->Style = ("");
     } else {
       // For getlegend graphic the parameter is style, not styles
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {

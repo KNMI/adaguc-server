@@ -193,7 +193,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
     if (srvParam->autoResourceVariable.empty() || srvParam->autoResourceVariable.equals("*")) {
       // Try to retrieve a list of variables from the OpenDAPURL.
-      srvParam->autoResourceVariable.copy("");
+      srvParam->autoResourceVariable = ("");
       // Open the opendap resource
       CDBDebug("OGC REQUEST Remote resource %s", srvParam->internalAutoResourceLocation.c_str());
       CDFObject *cdfObject = NULL;
@@ -455,9 +455,9 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
   CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
 
-  xmleLayer->attr.type.copy("database");
+  xmleLayer->attr.type = ("database");
   xmleFilePath->elementValue = (location);
-  xmleFilePath->attr.filter.copy("");
+  xmleFilePath->attr.filter = ("");
 
   if (group != NULL) {
     CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();

@@ -87,7 +87,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     srvParam->geoParams.width = dataSource->dWidth;
     srvParam->geoParams.height = dataSource->dHeight;
     srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
-    if (srvParam->Format.length() == 0) srvParam->Format.copy("NetCDF4");
+    if (srvParam->Format.length() == 0) srvParam->Format = ("NetCDF4");
   } else {
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
@@ -142,10 +142,10 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   srvParam->Format.toUpperCaseSelf();
   if (driverName.length() == 0) {
     if (srvParam->Format.equals("GEOTIFF")) {
-      driverName.copy("GTiff");
+      driverName = ("GTiff");
     }
     if (srvParam->Format.equals("AAIGRID")) {
-      driverName.copy("AAIGRID");
+      driverName = ("AAIGRID");
       if (NrOfBands > 1) {
         CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.", srvParam->Format.c_str());
         return 1;
@@ -538,7 +538,7 @@ int CGDALDataWriter::end() {
 
   /* Output the file to stdout */
 
-  if (mimeType.length() < 2) mimeType.copy("Content-Type:text/plain");
+  if (mimeType.length() < 2) mimeType = ("Content-Type:text/plain");
   //  printf("%s\n",tmpFileName.c_str());
   int returnCode = 0;
   FILE *fp = fopen(tmpFileName.c_str(), "r");

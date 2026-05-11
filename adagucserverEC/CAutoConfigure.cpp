@@ -133,8 +133,8 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         if (variable->dimensionlinks.size() == 2) {
           CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
           xmleDim->elementValue = ("0");
-          xmleDim->attr.name.copy("none");
-          xmleDim->attr.units.copy("none");
+          xmleDim->attr.name = ("none");
+          xmleDim->attr.units = ("none");
           dataSource->cfgLayer->Dimension.push_back(xmleDim);
 #ifdef CAUTOCONFIGURE_DEBUG
           CDBDebug("Creating an empty table, because variable [%s] has only x and y dims", variable->name.c_str());
@@ -189,7 +189,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             xmleDim->elementValue = (OGCDimName.c_str());
             xmleDim->attr.name.copy(netcdfdimname.c_str());
             if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
-              xmleDim->attr.units.copy("ISO8601");
+              xmleDim->attr.units = ("ISO8601");
             } else {
               xmleDim->attr.units.copy(units.c_str());
             }

@@ -301,7 +301,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adaguccoordinatex");
+    varX->name = ("adaguccoordinatex");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -314,7 +314,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("adaguccoordinatey");
+    varY->name = ("adaguccoordinatey");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
@@ -623,7 +623,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       // Apply once
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

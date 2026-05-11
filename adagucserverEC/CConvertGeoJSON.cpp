@@ -275,7 +275,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
+    varX->name = ("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -288,7 +288,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
+    varY->name = ("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
@@ -461,7 +461,7 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               cdfObject->addDimension(timeDim);
               CDF::Variable *timeVar = new CDF::Variable();
               timeVar->setType(CDF_DOUBLE);
-              timeVar->name.copy("time");
+              timeVar->name = ("time");
               timeVar->isDimension = true;
               timeVar->setAttributeText("units", "seconds since 1970-1-1");
               timeVar->setAttributeText("standard_name", "time");
@@ -538,7 +538,7 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               cdfObject->addDimension(timeDim);
               CDF::Variable *timeVar = new CDF::Variable();
               timeVar->setType(CDF_DOUBLE);
-              timeVar->name.copy("time");
+              timeVar->name = ("time");
               timeVar->isDimension = true;
               timeVar->setAttributeText("units", "seconds since 1970-1-1");
               timeVar->setAttributeText("standard_name", "time");
@@ -1062,7 +1062,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         //            }
         if (cdfObject->getVariableNE("customgridprojection") == NULL) {
           CDF::Variable *projectionVar = new CDF::Variable();
-          projectionVar->name.copy("customgridprojection");
+          projectionVar->name = ("customgridprojection");
           cdfObject->addVariable(projectionVar);
           dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
           imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

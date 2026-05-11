@@ -31,7 +31,7 @@ static const char *const lonNamesToCheck[] = {"lon", "longitude"};
 static const char *const latNamesToCheck[] = {"lat", "latitude"};
 
 CDF::Variable *CConvertLatLonGrid::getLon1D(CDFObject *cdfObject) {
-  for (auto lonName : lonNamesToCheck) {
+  for (auto lonName: lonNamesToCheck) {
     CDF::Variable *lon1DVar = cdfObject->getVariableNE(lonName);
     if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 1) {
       return lon1DVar;
@@ -41,7 +41,7 @@ CDF::Variable *CConvertLatLonGrid::getLon1D(CDFObject *cdfObject) {
 }
 
 CDF::Variable *CConvertLatLonGrid::getLat1D(CDFObject *cdfObject) {
-  for (auto latName : latNamesToCheck) {
+  for (auto latName: latNamesToCheck) {
     CDF::Variable *lon1DVar = cdfObject->getVariableNE(latName);
     if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 1) {
       return lon1DVar;
@@ -50,7 +50,7 @@ CDF::Variable *CConvertLatLonGrid::getLat1D(CDFObject *cdfObject) {
   return nullptr;
 }
 CDF::Variable *CConvertLatLonGrid::getLon2D(CDFObject *cdfObject) {
-  for (auto lonName : lonNamesToCheck) {
+  for (auto lonName: lonNamesToCheck) {
     CDF::Variable *lon1DVar = cdfObject->getVariableNE(lonName);
     if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 2) {
       return lon1DVar;
@@ -59,7 +59,7 @@ CDF::Variable *CConvertLatLonGrid::getLon2D(CDFObject *cdfObject) {
   return nullptr;
 }
 CDF::Variable *CConvertLatLonGrid::getLat2D(CDFObject *cdfObject) {
-  for (auto latName : latNamesToCheck) {
+  for (auto latName: latNamesToCheck) {
     CDF::Variable *lon1DVar = cdfObject->getVariableNE(latName);
     if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 2) {
       return lon1DVar;
@@ -142,7 +142,7 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       //  Define the 2D latitude longitude grids
       CDF::Variable *longitude = new CDF::Variable();
       longitude->setType(CDF_DOUBLE);
-      longitude->name.copy("longitude");
+      longitude->name = ("longitude");
       longitude->dimensionlinks.push_back(lat1DDim);
       longitude->dimensionlinks.push_back(lon1DDim);
       longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
@@ -154,7 +154,7 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
 
       CDF::Variable *latitude = new CDF::Variable();
       latitude->setType(CDF_DOUBLE);
-      latitude->name.copy("latitude");
+      latitude->name = ("latitude");
       latitude->dimensionlinks.push_back(lat1DDim);
       latitude->dimensionlinks.push_back(lon1DDim);
       latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");

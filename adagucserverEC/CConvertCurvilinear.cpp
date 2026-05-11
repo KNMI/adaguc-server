@@ -255,7 +255,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adaguccoordinatex");
+    varX->name = ("adaguccoordinatex");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -268,7 +268,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("adaguccoordinatey");
+    varY->name = ("adaguccoordinatey");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
@@ -555,7 +555,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
     if (cdfObject->getVariableNE("customgridprojection") == NULL) {
       CDBDebug("Adding customgridprojection");
       CDF::Variable *projectionVar = new CDF::Variable();
-      projectionVar->name.copy("customgridprojection");
+      projectionVar->name = ("customgridprojection");
       cdfObject->addVariable(projectionVar);
       dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
       imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

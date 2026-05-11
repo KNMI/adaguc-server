@@ -338,7 +338,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
+    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
     setExceptionType(InvalidDimensionValue);
     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
@@ -482,7 +482,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
+    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }

@@ -196,14 +196,14 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
   int startAtIndex = 0;
   if (path.c_str()[0] == '/') {
     /* Check if this should start with a slash or not */
-    path.copy("/");
+    path = ("/");
   } else if (path.indexOf("://") != -1) {
     /*Check if this should start with the original prefix"*/
     CT::string leftPart = path.split("://")[0] + "://";
     path.copy(leftPart);
     startAtIndex = 1;
   } else
-    path.copy("");
+    path = ("");
 
   std::vector<CT::string> parts2;
   for (size_t j = 0; j < parts.size(); j++) {
@@ -275,7 +275,7 @@ void CDirReader::makePublicDirectory(const char *dirname) {
     CT::string directory = dirname;
     auto directorySplitted = directory.split("/");
     directory = "";
-    for (auto &directoryPart : directorySplitted) {
+    for (auto &directoryPart: directorySplitted) {
       directory.concat("/");
       directory.concat(directoryPart);
       const char *part = directory.c_str();
@@ -298,7 +298,7 @@ CT::string CDirReader::getFileDate(const char *fileName) {
   }
   CT::string fileDate;
   CDirReader::getFileDate(&fileDate, fileName);
-  if (fileDate.length() < 10) fileDate.copy("1970-01-01T00:00:00Z");
+  if (fileDate.length() < 10) fileDate = ("1970-01-01T00:00:00Z");
 
   lookupTableFileModificationDateMap.insert(std::pair<std::string, std::string>(fileName, fileDate.c_str()));
   return fileDate;
@@ -414,7 +414,7 @@ CDirReader *CCachedDirReader::getDirReader(const char *directory, const char *ex
 }
 
 void CCachedDirReader::removeFileFromCachedList(std::string fileToRemove) {
-  for (auto i : dirReaderMap) {
+  for (auto i: dirReaderMap) {
     CDirReader *dirReader = i.second;
     // Find the file in the vector
     auto itr = std::find(dirReader->fileList.begin(), dirReader->fileList.end(), fileToRemove);
