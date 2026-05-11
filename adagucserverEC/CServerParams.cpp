@@ -304,7 +304,7 @@ std::vector<std::string> CServerParams::getLegendNames(std::vector<CServerConfig
   }
   std::vector<std::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
-    CT::string legendValue = Legend[j]->value.c_str();
+    CT::string legendValue = Legend[j]->elementValue.c_str();
     std::vector<CT::string> l1 = legendValue.split(",");
     for (auto li: l1) {
       if (li.length() > 0) {
@@ -474,7 +474,7 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
                 CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
               }
             } else {
-              CDBWarning("Environment element found, but either name or default are not set");
+              CDBWarning("Environment element found, but either name or default are not set [%s] [%s]", env->attr.name.c_str(), env->attr.defaultVal.c_str());
             }
           }
         }

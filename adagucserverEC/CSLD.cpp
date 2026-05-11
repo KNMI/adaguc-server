@@ -90,7 +90,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
           CServerConfig::XMLE_Legend *myOwnLegend = new CServerConfig::XMLE_Legend();
           this->serverConfig->Legend.push_back(myOwnLegend);
 
-          layer->Styles[0]->value = uniqueStyleName.c_str();
+          layer->Styles[0]->elementValue = uniqueStyleName.c_str();
           myOwnStyle->attr.name = uniqueStyleName.c_str();
 
           CT::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
@@ -100,11 +100,11 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 
           CServerConfig::XMLE_Legend *styleLegend = new CServerConfig::XMLE_Legend();
           myOwnStyle->Legend.push_back(styleLegend);
-          styleLegend->value = myOwnLegend->attr.name;
+          styleLegend->elementValue = myOwnLegend->attr.name;
 
           CServerConfig::XMLE_RenderMethod *renderMethod = new CServerConfig::XMLE_RenderMethod();
           myOwnStyle->RenderMethod.push_back(renderMethod);
-          renderMethod->value = "shadedContour";
+          renderMethod->elementValue = "shadedContour";
 
           status = this->validateAndParseSLDElements(namedLayerElement, myOwnStyle);
 
@@ -213,14 +213,14 @@ int CSLD::buildScaleDenominator(CXMLParserElement &element, CServerConfig::XMLE_
   if (element.name == (RULE_MIN_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Min *min = new CServerConfig::XMLE_Min();
-    min->value = element.value;
+    min->elementValue = element.value;
     myOwnStyle->Min.push_back(min);
     return 0;
 
   } else if (element.name == (RULE_MAX_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Max *max = new CServerConfig::XMLE_Max();
-    max->value = element.value;
+    max->elementValue = element.value;
     myOwnStyle->Max.push_back(max);
 
     return 0;
@@ -270,7 +270,7 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
       shadeInterval->attr.max = max;
     } else {
       if (myOwnStyle->Max.size() == 1) {
-        shadeInterval->attr.max = myOwnStyle->Max[0]->value;
+        shadeInterval->attr.max = myOwnStyle->Max[0]->elementValue;
       } else {
         CDBError("Missing element %s for setting the last ColorMapEntry Max attribute", RULE_MAX_SCALE_DENOMINATOR);
         return 1;

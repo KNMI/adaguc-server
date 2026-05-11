@@ -92,9 +92,9 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   try {
     tableNameForTimeDimension =
-        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
+        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
   } catch (int e) {
-    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
+    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
     return std::make_pair(1, filesDeletedFromFS);
   }
 

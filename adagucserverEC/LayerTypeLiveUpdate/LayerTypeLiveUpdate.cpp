@@ -29,7 +29,7 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
     std::vector<std::string> fileList;
     if (!dataSource->cfgLayer->FilePath.empty()) {
       try {
-        fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+        fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
       } catch (int e) {
         CDBError("Could not find any filename");
         return 1;
@@ -102,7 +102,7 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   if (dataSource->dataObjects.size() == 0) {
     if (cfgLayer->Variable.size() == 0) {
       cfgLayer->Variable.push_back(new CServerConfig::XMLE_Variable());
-      cfgLayer->Variable[0]->value = "solarterminator";
+      cfgLayer->Variable[0]->elementValue = "solarterminator";
     }
     dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[0], 0);
   }
@@ -180,9 +180,9 @@ static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostP
 
 int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer) {
   if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
-    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Title[0]->elementValue.c_str());
   } else {
-    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->elementValue.c_str());
   }
   CTime timeInstance;
 
@@ -190,7 +190,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   CT::string offset = LIVEUPDATE_DEFAULT_OFFSET;
 
   for (auto dim: metadataLayer->layer->Dimension) {
-    if (dim->value.equals("time") && !dim->attr.interval.empty()) {
+    if (dim->elementValue.equals("time") && !dim->attr.interval.empty()) {
       timeResolution = dim->attr.interval;
     }
   }

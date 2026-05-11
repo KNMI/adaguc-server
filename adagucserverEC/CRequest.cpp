@@ -219,14 +219,14 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
     bool hasReferenceTimeDimension = false;
     for (size_t l = 0; l < dataSource->cfgLayer->Dimension.size(); l++) {
-      if (dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")) {
+      if (dataSource->cfgLayer->Dimension[l]->elementValue.equals("reference_time")) {
         hasReferenceTimeDimension = true;
         break;
       }
     }
 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+      CT::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue.c_str());
       dimName.toLowerCaseSelf();
 #ifdef CREQUEST_DEBUG
       CDBDebug("dimName \"%s\"", dimName.c_str());
@@ -316,10 +316,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
               try {
                 tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                                                                         ogcDim.netCDFDimName.c_str(), dataSource);
               } catch (int e) {
-                CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                          ogcDim.netCDFDimName.c_str());
                 return 1;
               }
@@ -338,11 +338,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                 // For models with a reference_time, select the nearest time to current system clock
 
                 // For time:
-                if (dataSource->cfgLayer->Dimension[i]->value.equals("time")) {
+                if (dataSource->cfgLayer->Dimension[i]->elementValue.equals("time")) {
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
 
                   if (maxStore == NULL) {
-                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
                     throw ServiceExceptionType::InvalidDimensionValue;
                   }
                   ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
@@ -353,7 +353,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   // For other dimensions than time take the latest
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
                   if (maxStore == NULL) {
-                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
                     throw ServiceExceptionType::InvalidDimensionValue;
                   }
                   ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
@@ -372,7 +372,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     /* Fill in the undefined dims */
 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+      CT::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue.c_str());
       dimName.toLowerCaseSelf();
       bool alreadyAdded = false;
 
@@ -393,11 +393,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
         CT::string tableName;
         try {
-          tableName =
-              CDBFactory::getDBAdapter(srvParam->cfg)
-                  ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(), dataSource);
+          tableName = CDBFactory::getDBAdapter(srvParam->cfg)
+                          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                                                  netCDFDimName.c_str(), dataSource);
         } catch (int e) {
-          CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+          CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                   netCDFDimName.c_str());
           return 1;
         }
 
@@ -409,7 +410,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         ogcDim.hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
         bool isReferenceTimeDimension = false;
-        if (dataSource->cfgLayer->Dimension[i]->value.equals("reference_time")) {
+        if (dataSource->cfgLayer->Dimension[i]->elementValue.equals("reference_time")) {
           isReferenceTimeDimension = true;
         }
 
@@ -440,10 +441,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             CT::string timeTableName;
             try {
               timeTableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                  ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                  ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                                                                           netcdfTimeDimName.c_str(), dataSource);
             } catch (int e) {
-              CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+              CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                        netcdfTimeDimName.c_str());
               return 1;
             }
@@ -455,7 +456,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
 
         if (maxStore == NULL) {
-          CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+          CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
           throw ServiceExceptionType::InvalidDimensionValue;
         }
         ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
@@ -486,7 +487,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     // Check and set value when the value is forced in the layer dimension configuration
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
       if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
-        CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+        CT::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue.c_str());
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
         for (auto &requiredDim: dataSource->requiredDims) {
@@ -576,7 +577,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     }
 
     if (store == NULL) {
-      CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
       throw ServiceExceptionType::InvalidDimensionValue;
     }
     if (store->getSize() == 0) {
@@ -592,7 +593,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         }
         return 0;
       }
-      CDBError("Store has no results. Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBError("Store has no results. Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
       throw ServiceExceptionType::InvalidDimensionValue;
     }
 
@@ -1953,7 +1954,7 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
     }
     if (!layerName.empty()) {
       if (cfgLayer->Name.size() == 1) {
-        CT::string simpleLayerName = cfgLayer->Name[0]->value;
+        CT::string simpleLayerName = cfgLayer->Name[0]->elementValue;
         if (layerName.equals(simpleLayerName)) {
           dataSources.push_back(dataSource);
         }
@@ -1981,7 +1982,7 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
         status = CCreateTiles::createTiles(dataSources[j], scanFlags);
       }
       if (status != CDBFILESCANNER_RETURN_FILEDOESNOTMATCH && status != 0) {
-        CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->value.c_str());
+        CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->elementValue.c_str());
         errorHasOccured++;
       }
     }
@@ -2061,7 +2062,7 @@ int CRequest::determineTypesForDataSources() {
 
         std::vector<std::string> fileList;
         try {
-          fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
+          fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->elementValue.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
         } catch (int linenr) {
           CDBError("Could not find any filename");
           return 1;
@@ -2116,7 +2117,7 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
       replaceAllDataSource = true;
     }
 
-    CT::string additionalLayerName = additionalLayer->value.c_str();
+    CT::string additionalLayerName = additionalLayer->elementValue.c_str();
     size_t additionalLayerNo = 0;
     for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
       CT::string additional = makeUniqueLayerName(srvParam->cfg->Layer[additionalLayerNo]);

@@ -1243,8 +1243,8 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         if (dataSource->cfgLayer->ImageText.size() > 0) {
 
           std::string imageText = "";
-          if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-            imageText = dataSource->cfgLayer->ImageText[0]->value;
+          if (dataSource->cfgLayer->ImageText[0]->elementValue.empty() == false) {
+            imageText = dataSource->cfgLayer->ImageText[0]->elementValue;
           }
 
           if (dataSource->getNumDataObjects() > 0) {

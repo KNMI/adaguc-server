@@ -58,9 +58,9 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WMS&amp;");
   XMLDoc->copy(WMS_1_0_0_GetCapabilities_Header);
-  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]", onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]", serviceInfo.c_str());
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
@@ -117,9 +117,9 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WMS&amp;");
   XMLDoc->copy(WMS_1_1_1_GetCapabilities_Header);
-  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]", onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]", serviceInfo.c_str());
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
@@ -259,7 +259,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             }
 
             if (layer->layer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = layer->layer->MetadataURL[0]->value.c_str();
+              CT::string layerMetaDataURL = layer->layer->MetadataURL[0]->elementValue.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
               XMLDoc->concat("     <Format>text/xml</Format>\n");
@@ -289,8 +289,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WMS&amp;");
   XMLDoc->copy(WMS_1_3_0_GetCapabilities_Header);
-  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
   // XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]", onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]", serviceInfo.c_str());
@@ -305,14 +305,14 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
 
   if (srvParam->cfg->WMS[0]->Inspire.size() == 1) {
     if (srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW.size() == 1) {
-      if (srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->value.empty() == false) {
-        viewServiceCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->value.c_str();
+      if (srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->elementValue.empty() == false) {
+        viewServiceCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->elementValue.c_str();
         viewServiceCSWURL.replaceSelf("&", "&amp;");
       }
     }
     if (srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW.size() == 1) {
-      if (srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->value.empty() == false) {
-        datasetCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->value.c_str();
+      if (srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->elementValue.empty() == false) {
+        datasetCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->elementValue.c_str();
         datasetCSWURL.replaceSelf("&", "&amp;");
       }
     }
@@ -456,7 +456,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   }
 
   XMLDoc->concat("<Layer>\n");
-  XMLDoc->printconcat("<Title>%s</Title>\n", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  XMLDoc->printconcat("<Title>%s</Title>\n", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.c_str());
 
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
@@ -623,7 +623,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             }
 
             if (firstWMLayer->layer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0]->value.c_str();
+              CT::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0]->elementValue.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
               XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
@@ -715,15 +715,15 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   }
   if (srvParam->cfg->WCS[0]->Name.size() == 0) {
     srvParam->cfg->WCS[0]->Name.push_back(new CServerConfig::XMLE_Name());
-    srvParam->cfg->WCS[0]->Name[0]->value.copy(srvParam->cfg->WCS[0]->Title[0]->value.c_str());
+    srvParam->cfg->WCS[0]->Name[0]->elementValue.copy(srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
   }
   if (srvParam->cfg->WCS[0]->Abstract.size() == 0) {
     srvParam->cfg->WCS[0]->Abstract.push_back(new CServerConfig::XMLE_Abstract());
-    srvParam->cfg->WCS[0]->Abstract[0]->value.copy(srvParam->cfg->WCS[0]->Title[0]->value.c_str());
+    srvParam->cfg->WCS[0]->Abstract[0]->elementValue.copy(srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
   }
-  XMLDoc->replaceSelf("[SERVICENAME]", srvParam->cfg->WCS[0]->Title[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WCS[0]->Name[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WCS[0]->Abstract[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICENAME]", srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]", srvParam->cfg->WCS[0]->Name[0]->elementValue.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]", srvParam->cfg->WCS[0]->Abstract[0]->elementValue.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]", onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]", serviceInfo.c_str());
 

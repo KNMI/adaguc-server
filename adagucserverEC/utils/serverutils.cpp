@@ -11,7 +11,7 @@ bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Lay
 
   if (layer->attr.type.empty() || layer->attr.type.equals("database")) {
     if (layer->FilePath.size() > 0) {
-      CT::string filePath = CDirReader::makeCleanPath(layer->FilePath[0]->value.c_str());
+      CT::string filePath = CDirReader::makeCleanPath(layer->FilePath[0]->elementValue.c_str());
       // Directories need to end with a /
       CT::string filePathWithTrailingSlash = filePath + "/";
       CT::string filter = layer->FilePath[0]->attr.filter;
@@ -52,7 +52,7 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
   srvParam->verbose = false;
   auto datasetList = getEnabledDatasetsConfigurations(srvParam);
 
-  for (auto &dataset : datasetList) {
+  for (auto &dataset: datasetList) {
     if (verbose) {
       CDBDebug("Testing dataset %s", dataset.c_str());
     }
@@ -63,7 +63,7 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
 
     if (configSrvParam && configSrvParam->cfg) {
       auto layers = configSrvParam->cfg->Layer;
-      for (auto layer : layers) {
+      for (auto layer: layers) {
         if (checkIfFileMatchesLayer(layerPathToScan, layer)) {
           datasetsToScan.insert(dataset.c_str());
           break;

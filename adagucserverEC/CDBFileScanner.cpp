@@ -120,7 +120,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
     /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
     if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
-      dataSource->cfgLayer->Dimension[d]->value.copy("0");
+      dataSource->cfgLayer->Dimension[d]->elementValue.copy("0");
       dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
       dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
     }
@@ -150,10 +150,10 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
     // Create database tableNames
     CT::string tableName;
     try {
-      tableName =
-          dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(), dataSource);
+      tableName = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),
+                                                                   dataSource);
     } catch (int e) {
-      CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
     }
 #ifdef CDBFILESCANNER_DEBUG
@@ -298,7 +298,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
       /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
       if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
-        dataSource->cfgLayer->Dimension[d]->value.copy("0");
+        dataSource->cfgLayer->Dimension[d]->elementValue.copy("0");
         dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
         dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
       }
@@ -317,10 +317,11 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
 
       try {
-        tableNames[d] =
-            dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str(), dataSource);
+        tableNames[d] = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                                                         dimNames[d].c_str(), dataSource);
       } catch (int e) {
-        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
+        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                 dimNames[d].c_str());
         return 1;
       }
 #ifdef CDBFILESCANNER_DEBUG
@@ -423,7 +424,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                   layerTableId =
                       CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+                          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
 
                 } catch (int e) {
                   CDBError("Unable to get layerTableId for autoconfigure_dimensions");
@@ -524,12 +525,12 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
               if ((dimDim == NULL || dimVar == NULL)) {
                 CDBError("In file %s", (*fileList)[j].c_str());
                 if (dimVar == NULL) {
-                  CREPORT_ERROR_NODOC(CT::string("Variable ") + dataSource->cfgLayer->Variable[0]->value + CT::string(" for dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
+                  CREPORT_ERROR_NODOC(CT::string("Variable ") + dataSource->cfgLayer->Variable[0]->elementValue + CT::string(" for dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
                                           CT::string(" not found"),
                                       CReportMessage::Categories::GENERAL);
                 }
                 if (dimDim == NULL) {
-                  CREPORT_ERROR_NODOC(CT::string("For variable ") + dataSource->cfgLayer->Variable[0]->value + CT::string(" dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
+                  CREPORT_ERROR_NODOC(CT::string("For variable ") + dataSource->cfgLayer->Variable[0]->elementValue + CT::string(" dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
                                           CT::string(" not found"),
                                       CReportMessage::Categories::GENERAL);
                 }
@@ -846,7 +847,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
   if (!_layerPathToScan.empty()) {
     CT::string layerPath, layerPathToScan;
-    layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
+    layerPath.copy(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
     layerPathToScan.copy(_layerPathToScan);
     layerPath = CDirReader::makeCleanPath(layerPath.c_str());
     layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
@@ -879,10 +880,10 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
   if (scanFlags & CDBFILESCANNER_DONTREMOVEDATAFROMDB) {
     removeNonExistingFiles = 0;
   }
-  CDBDebug("  ==> *** Starting update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("  ==> *** Starting update layer [%s] ***", dataSource->cfgLayer->Name[0]->elementValue.c_str());
 
   if (verbose) {
-    CDBDebug("Using path [%s], filter [%s] and tailpath [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), tailPath.c_str());
+    CDBDebug("Using path [%s], filter [%s] and tailpath [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), tailPath.c_str());
   }
 
   CT::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
@@ -896,9 +897,9 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
     // No file specified, just scan the directory for matching filenames.
     try {
       if (scanFlags & CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY) {
-        if (checkIfPathIsFile(dataSource->cfgLayer->FilePath[0]->value.c_str())) {
-          fileList.push_back(dataSource->cfgLayer->FilePath[0]->value.c_str());
-          CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str());
+        if (checkIfPathIsFile(dataSource->cfgLayer->FilePath[0]->elementValue.c_str())) {
+          fileList.push_back(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
+          CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
         } else {
           std::string fileName;
           if (dataSource->requiredDims.size() == 0) {
@@ -914,14 +915,14 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
           CDBDebug("Queried file from database with filename [%s]", fileName.c_str());
         }
       } else {
-        fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+        fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
         if (verbose) {
           CDBDebug("SearchFileNames found %lu files", fileList.size());
         }
       }
 
     } catch (int linenr) {
-      CDBDebug("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+      CDBDebug("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
       return 0;
     }
   } else {
@@ -930,7 +931,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
       CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
     }
     CT::string fileToCheckAgainstRegexp = CT::basename(fileToUpdate);
-    if (fileToUpdate.equals(dataSource->cfgLayer->FilePath[0]->value) || CDirReader::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str()) == 1) {
+    if (fileToUpdate.equals(dataSource->cfgLayer->FilePath[0]->elementValue) || CDirReader::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str()) == 1) {
       if (verbose) {
         CDBDebug("Add specified file %s with filter %s for scanning", fileToCheckAgainstRegexp.c_str(), filter.c_str());
       }
@@ -948,7 +949,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
   if (fileList.size() == 0) {
     if (verbose) {
-      CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
     }
     // Clean up if needed
     cleanFiles(dataSource, scanFlags);
@@ -1025,7 +1026,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
       }
     }
   }
-  CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->elementValue.c_str());
   return 0;
 }
 

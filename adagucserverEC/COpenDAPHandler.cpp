@@ -55,10 +55,11 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
       CT::string dim = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
 
       try {
-        tableName = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                        ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str(), dataSource);
+        tableName =
+            CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
+                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str(), dataSource);
       } catch (int e) {
-        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
+        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
         return -1;
       }
 #ifdef COPENDAPHANDLER_DEBUG
@@ -608,7 +609,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
     std::vector<std::string> fileList;
     try {
-      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
     } catch (int linenr) {
       CDBError("Could not find any filename");
       delete dataSource;

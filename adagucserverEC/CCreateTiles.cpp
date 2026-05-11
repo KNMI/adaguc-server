@@ -35,9 +35,9 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
     filter = "^.*$";
   }
   try {
-    fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+    fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
   } catch (int linenr) {
-    CDBError("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+    CDBError("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
     return 1;
   }
   if (fileList.size() == 0) {

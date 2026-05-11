@@ -345,25 +345,25 @@ public:
     }
     bool addAttribute(const attribute &attrCfg) {
       if ("name" == attrCfg.name) {
-        attr.name.copy(value);
+        attr.name = attrCfg.value;
         return true;
       } else if ("type" == attrCfg.name) {
-        attr.type.copy(value);
+        attr.type = attrCfg.value;
         return true;
       } else if ("file" == attrCfg.name) {
-        attr.file.copy(value);
+        attr.file = attrCfg.value;
         return true;
       } else if ("tickround" == attrCfg.name) {
-        attr.tickround.copy(value);
+        attr.tickround = attrCfg.value;
         return true;
       } else if ("tickinterval" == attrCfg.name) {
-        attr.tickinterval.copy(value);
+        attr.tickinterval = attrCfg.value;
         return true;
       } else if ("fixedclasses" == attrCfg.name || "fixed" == attrCfg.name) {
-        attr.fixedclasses.copy(value);
+        attr.fixedclasses = attrCfg.value;
         return true;
       } else if ("textformatting" == attrCfg.name) {
-        attr.textformatting.copy(value);
+        attr.textformatting = attrCfg.value;
         return true;
       }
       return false;
@@ -870,40 +870,40 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("settings" == attrCfg.name) {
-        attr.settings.copy(value);
+        attr.settings = attrCfg.value;
         return true;
       } else if ("striding" == attrCfg.name) {
-        attr.striding.copy(value);
+        attr.striding = attrCfg.value;
         return true;
       } else if ("renderhint" == attrCfg.name) {
-        attr.renderhint.copy(value);
+        attr.renderhint = attrCfg.value;
         return true;
       } else if ("scalewidth" == attrCfg.name) {
-        attr.scalewidth.copy(value);
+        attr.scalewidth = attrCfg.value;
         return true;
       } else if ("scalecontours" == attrCfg.name) {
-        attr.scalecontours.copy(value);
+        attr.scalecontours = attrCfg.value;
         return true;
       } else if ("randomizefeatures" == attrCfg.name) {
-        attr.randomizefeatures.copy(value);
+        attr.randomizefeatures = attrCfg.value;
         return true;
       } else if ("featuresoverlap" == attrCfg.name) {
-        attr.featuresoverlap.copy(value);
+        attr.featuresoverlap = attrCfg.value;
         return true;
       } else if ("rendertextforvectors" == attrCfg.name) {
-        attr.rendertextforvectors.copy(value);
+        attr.rendertextforvectors = attrCfg.value;
         return true;
       } else if ("cliplegend" == attrCfg.name) {
-        attr.cliplegend.copy(value);
+        attr.cliplegend = attrCfg.value;
         return true;
       } else if ("interpolationmethod" == attrCfg.name) {
-        attr.interpolationmethod.copy(value);
+        attr.interpolationmethod = attrCfg.value;
         return true;
       } else if ("drawgridboxoutline" == attrCfg.name) {
-        attr.drawgridboxoutline.copy(value);
+        attr.drawgridboxoutline = attrCfg.value;
         return true;
       } else if ("drawgrid" == attrCfg.name) {
-        attr.drawgrid.copy(value);
+        attr.drawgrid = attrCfg.value;
         return true;
       }
       return false;
@@ -1088,14 +1088,14 @@ public:
 
     bool addAttribute(const attribute &attrCfg) {
       if ("name" == attrCfg.name) {
-        attr.name.copy(value);
+        attr.name = attrCfg.value;
         return true;
       } else if ("title" == attrCfg.name) {
-        attr.title.copy(value);
+        attr.title = attrCfg.value;
         return true;
       }
       if ("abstract" == attrCfg.name) {
-        attr.abstract.copy(value);
+        attr.abstract = attrCfg.value;
         return true;
       }
       return false;
@@ -1114,10 +1114,10 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("name" == attrCfg.name) {
-        attr.name.copy(value);
+        attr.name = attrCfg.value;
         return true;
       } else if ("onlineresource" == attrCfg.name) {
-        attr.onlineresource.copy(value);
+        attr.onlineresource = attrCfg.value;
         return true;
       }
       return false;
@@ -1132,10 +1132,10 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("id" == attrCfg.name) {
-        attr.id.copy(value);
+        attr.id = attrCfg.value;
         return true;
       } else if ("authority" == attrCfg.name) {
-        attr.authority.copy(value);
+        attr.authority = attrCfg.value;
         return true;
       }
       return false;
@@ -1150,7 +1150,7 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("force" == attrCfg.name) {
-        attr.force.copy(value);
+        attr.force = attrCfg.value;
         return true;
       }
       return false;
@@ -1167,16 +1167,16 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("orgname" == attrCfg.name) {
-        attr.orgname.copy(value);
+        attr.orgname = attrCfg.value;
         return true;
       } else if ("long_name" == attrCfg.name) {
-        attr.long_name.copy(value);
+        attr.long_name = attrCfg.value;
         return true;
       } else if ("standard_name" == attrCfg.name) {
-        attr.standard_name.copy(value);
+        attr.standard_name = attrCfg.value;
         return true;
       } else if ("units" == attrCfg.name) {
-        attr.units.copy(value);
+        attr.units = attrCfg.value;
         return true;
       }
       return false;
@@ -1190,7 +1190,7 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("useendtime" == attrCfg.name) {
-        attr.useendtime.copy(value);
+        attr.useendtime = attrCfg.value;
         return true;
       }
       return false;
@@ -1202,26 +1202,26 @@ public:
     public:
       CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
-    void handleValue() { this->value = CDirReader::makeCleanPath(this->value.c_str()); }
+    void handleValue() { this->elementValue = CDirReader::makeCleanPath(this->elementValue.c_str()); }
 
     bool addAttribute(const attribute &attrCfg) {
       if ("filter" == attrCfg.name) {
-        attr.filter.copy(value);
+        attr.filter = attrCfg.value;
         return true;
       } else if ("gfi_openall" == attrCfg.name) {
-        attr.gfi_openall.copy(value);
+        attr.gfi_openall = attrCfg.value;
         return true;
       } else if ("maxquerylimit" == attrCfg.name) {
-        attr.maxquerylimit.copy(value);
+        attr.maxquerylimit = attrCfg.value;
         return true;
       } else if ("ncml" == attrCfg.name) {
-        attr.ncml.copy(value);
+        attr.ncml = attrCfg.value;
         return true;
       } else if ("retentionperiod" == attrCfg.name) {
-        attr.retentionperiod.copy(value);
+        attr.retentionperiod = attrCfg.value;
         return true;
       } else if ("retentiontype" == attrCfg.name) {
-        attr.retentiontype.copy(value);
+        attr.retentiontype = attrCfg.value;
         return true;
       }
       return false;
@@ -1236,37 +1236,37 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("tilemode" == attrCfg.name) {
-        attr.tilemode.copy(value);
+        attr.tilemode = attrCfg.value;
         return true;
       } else if ("debug" == attrCfg.name) {
-        attr.debug.copy(value);
+        attr.debug = attrCfg.value;
         return true;
       } else if ("tilewidthpx" == attrCfg.name) {
-        attr.tilewidthpx.copy(value);
+        attr.tilewidthpx = attrCfg.value;
         return true;
       } else if ("tileheightpx" == attrCfg.name) {
-        attr.tileheightpx.copy(value);
+        attr.tileheightpx = attrCfg.value;
         return true;
       } else if ("minlevel" == attrCfg.name) {
-        attr.minlevel.copy(value);
+        attr.minlevel = attrCfg.value;
         return true;
       } else if ("maxlevel" == attrCfg.name) {
-        attr.maxlevel.copy(value);
+        attr.maxlevel = attrCfg.value;
         return true;
       } else if ("maxtilesinimage" == attrCfg.name) {
-        attr.maxtilesinimage.copy(value);
+        attr.maxtilesinimage = attrCfg.value;
         return true;
       } else if ("threads" == attrCfg.name) {
-        attr.threads.copy(value);
+        attr.threads = attrCfg.value;
         return true;
       } else if ("autotile" == attrCfg.name) {
-        attr.autotile.copy(value);
+        attr.autotile = attrCfg.value;
         return true;
       } else if ("optimizeextent" == attrCfg.name) {
-        attr.optimizeextent.copy(value);
+        attr.optimizeextent = attrCfg.value;
         return true;
       } else if ("tilepath" == attrCfg.name) {
-        attr.tilepath.copy(value);
+        attr.tilepath = attrCfg.value;
         return true;
       }
       return false;
@@ -1282,11 +1282,11 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("value" == attrCfg.name) {
-        attr.value.copy(value);
+        attr.value = attrCfg.value;
         return true;
       }
       if ("collection" == attrCfg.name) {
-        attr.collection.copy(value);
+        attr.collection = attrCfg.value;
         return true;
       }
       return false;
@@ -1402,10 +1402,10 @@ public:
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("name" == attrCfg.name) {
-        attr.name.copy(value);
+        attr.name = attrCfg.value;
         return true;
       } else if ("default" == attrCfg.name) {
-        attr.defaultVal.copy(value);
+        attr.defaultVal = attrCfg.value;
         return true;
       }
       return false;

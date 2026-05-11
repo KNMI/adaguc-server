@@ -56,16 +56,16 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   if (styleConfiguration->smoothingFilterVector.size() > 0) {
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
 
-    if (!smoothingFilter->value.empty()) {
-      settings.smoothingFiter = smoothingFilter->value.toDouble();
+    if (!smoothingFilter->elementValue.empty()) {
+      settings.smoothingFiter = smoothingFilter->elementValue.toDouble();
     }
   }
 
   /* Make a shorthand vector from the shadeInterval configuration*/
   if (settings.isUsingShadeIntervals) {
     int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
-    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].value.empty()) {
-      settings.shadeInterval = styleConfiguration->shadeIntervals[0].value.toDouble();
+    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].elementValue.empty()) {
+      settings.shadeInterval = styleConfiguration->shadeIntervals[0].elementValue.toDouble();
     } else {
       settings.intervals.reserve(numShadeDefs);
       for (int j = 0; j < numShadeDefs; j++) {

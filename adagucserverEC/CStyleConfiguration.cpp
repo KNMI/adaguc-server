@@ -116,18 +116,18 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
     }
   }
 
-  if (style->Scale.size() > 0) styleConfig->legendScale = atof(style->Scale[0]->value.c_str());
-  if (style->Offset.size() > 0) styleConfig->legendOffset = atof(style->Offset[0]->value.c_str());
-  if (style->Log.size() > 0) styleConfig->legendLog = atof(style->Log[0]->value.c_str());
+  if (style->Scale.size() > 0) styleConfig->legendScale = atof(style->Scale[0]->elementValue.c_str());
+  if (style->Offset.size() > 0) styleConfig->legendOffset = atof(style->Offset[0]->elementValue.c_str());
+  if (style->Log.size() > 0) styleConfig->legendLog = atof(style->Log[0]->elementValue.c_str());
 
   if (style->ContourIntervalL.size() > 0) {
-    styleConfig->contourIntervalL = atof(style->ContourIntervalL[0]->value.c_str());
+    styleConfig->contourIntervalL = atof(style->ContourIntervalL[0]->elementValue.c_str());
     styleConfig->shadeInterval = styleConfig->contourIntervalL;
   }
-  if (style->ContourIntervalH.size() > 0) styleConfig->contourIntervalH = atof(style->ContourIntervalH[0]->value.c_str());
+  if (style->ContourIntervalH.size() > 0) styleConfig->contourIntervalH = atof(style->ContourIntervalH[0]->elementValue.c_str());
 
-  if (style->ShadeInterval.size() > 0) styleConfig->shadeInterval = atof(style->ShadeInterval[0]->value.c_str());
-  if (style->SmoothingFilter.size() > 0) styleConfig->smoothingFilter = atoi(style->SmoothingFilter[0]->value.c_str());
+  if (style->ShadeInterval.size() > 0) styleConfig->shadeInterval = atof(style->ShadeInterval[0]->elementValue.c_str());
+  if (style->SmoothingFilter.size() > 0) styleConfig->smoothingFilter = atoi(style->SmoothingFilter[0]->elementValue.c_str());
 
   if (style->ValueRange.size() > 0) {
     styleConfig->hasLegendValueRange = true;
@@ -136,11 +136,11 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   }
 
   if (style->Min.size() > 0) {
-    styleConfig->minValue = style->Min[0]->value.toDouble();
+    styleConfig->minValue = style->Min[0]->elementValue.toDouble();
     styleConfig->minMaxSet = true;
   }
   if (style->Max.size() > 0) {
-    styleConfig->maxValue = style->Max[0]->value.toDouble();
+    styleConfig->maxValue = style->Max[0]->elementValue.toDouble();
     styleConfig->minMaxSet = true;
   }
 
@@ -179,7 +179,7 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
     } else if (style->Legend[0]->attr.fixedclasses.equals("false")) {
       styleConfig->legendHasFixedMinMax = false;
     }
-    styleConfig->legendName = style->Legend[0]->value;
+    styleConfig->legendName = style->Legend[0]->elementValue;
   }
 
   if (depth == 0) {
@@ -227,15 +227,15 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 
   // Legend settings can always be overriden in the layer itself!
   CServerConfig::XMLE_Layer *layer = dataSource->cfgLayer;
-  if (layer->Scale.size() > 0) this->legendScale = atof(layer->Scale[0]->value.c_str());
-  if (layer->Offset.size() > 0) this->legendOffset = atof(layer->Offset[0]->value.c_str());
-  if (layer->Log.size() > 0) this->legendLog = atof(layer->Log[0]->value.c_str());
+  if (layer->Scale.size() > 0) this->legendScale = atof(layer->Scale[0]->elementValue.c_str());
+  if (layer->Offset.size() > 0) this->legendOffset = atof(layer->Offset[0]->elementValue.c_str());
+  if (layer->Log.size() > 0) this->legendLog = atof(layer->Log[0]->elementValue.c_str());
 
-  if (layer->ContourIntervalL.size() > 0) this->contourIntervalL = atof(layer->ContourIntervalL[0]->value.c_str());
-  if (layer->ContourIntervalH.size() > 0) this->contourIntervalH = atof(layer->ContourIntervalH[0]->value.c_str());
+  if (layer->ContourIntervalL.size() > 0) this->contourIntervalL = atof(layer->ContourIntervalL[0]->elementValue.c_str());
+  if (layer->ContourIntervalH.size() > 0) this->contourIntervalH = atof(layer->ContourIntervalH[0]->elementValue.c_str());
   if (this->shadeInterval == 0.0f) this->shadeInterval = this->contourIntervalL;
-  if (layer->ShadeInterval.size() > 0) this->shadeInterval = atof(layer->ShadeInterval[0]->value.c_str());
-  if (layer->SmoothingFilter.size() > 0) this->smoothingFilter = atoi(layer->SmoothingFilter[0]->value.c_str());
+  if (layer->ShadeInterval.size() > 0) this->shadeInterval = atof(layer->ShadeInterval[0]->elementValue.c_str());
+  if (layer->SmoothingFilter.size() > 0) this->smoothingFilter = atoi(layer->SmoothingFilter[0]->elementValue.c_str());
 
   if (layer->ValueRange.size() > 0) {
     this->hasLegendValueRange = true;
@@ -244,11 +244,11 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   }
 
   if (layer->Min.size() > 0) {
-    this->minValue = layer->Min[0]->value.toDouble();
+    this->minValue = layer->Min[0]->elementValue.toDouble();
     this->minMaxSet = true;
   }
   if (layer->Max.size() > 0) {
-    this->maxValue = layer->Max[0]->value.toDouble();
+    this->maxValue = layer->Max[0]->elementValue.toDouble();
     this->minMaxSet = true;
   }
 
@@ -277,7 +277,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     } else if (layer->Legend[0]->attr.fixedclasses.equals("false")) {
       this->legendHasFixedMinMax = false;
     }
-    this->legendName = layer->Legend[0]->value;
+    this->legendName = layer->Legend[0]->elementValue;
   }
 
   this->legendIndex = dataSource->srvParams->getServerLegendIndexByName(this->legendName);

@@ -54,7 +54,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   // Get Abstract
   if (metadataLayer->dataSource->cfgLayer->Abstract.size() > 0) {
-    metadataLayer->layerMetadata.abstract = metadataLayer->dataSource->cfgLayer->Abstract[0]->value;
+    metadataLayer->layerMetadata.abstract = metadataLayer->dataSource->cfgLayer->Abstract[0]->elementValue;
   }
 
   // Check if it is hidden
@@ -74,9 +74,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)
   if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
-    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Title[0]->elementValue.c_str());
   } else {
-    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Name[0]->elementValue.c_str());
   }
   bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
   if (readFileInfo) {
@@ -189,7 +189,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   auto cfgDims = dataSource->cfgLayer->Dimension; // Layer configuration dimensions
 
   // Find time dimension in Layer configuration dimensions
-  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->value.equals("time"); });
+  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->elementValue.equals("time"); });
   if (xmleDimTimeIt == cfgDims.end()) {
     // There is no time dim. Do nothing, all OK.
     return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_TIME;
@@ -245,13 +245,13 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   auto srvParam = dataSource->srvParams;
   bool isTimeDim = isLayerDimATimeDim(cfgLayerDim);
 
-  auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->value);
+  auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->elementValue);
   std::vector<std::string> queryValues;
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
 
     // Get the tablename
     std::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                                                                         cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
@@ -278,10 +278,10 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   LayerMetadataDim layerMetadataDim;
   layerMetadataDim.hidden = cfgLayerDim->attr.hidden;
   layerMetadataDim.type = cfgLayerDim->attr.type;
-  layerMetadataDim.serviceName = cfgLayerDim->value;
+  layerMetadataDim.serviceName = cfgLayerDim->elementValue;
   layerMetadataDim.cdfName = cfgLayerDim->attr.name;
   if (queryValues.size() > 0) {
-    layerMetadataDim.serviceName = cfgLayerDim->value;
+    layerMetadataDim.serviceName = cfgLayerDim->elementValue;
     layerMetadataDim.cdfName = (cfgLayerDim->attr.name.c_str());
 
     // // Try to get units from the variable
@@ -337,7 +337,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   LayerMetadataDim dim;
   dim.hidden = false;
   dim.type = "dimtype_none";
-  dim.serviceName = (cfgLayerDim->value.c_str());
+  dim.serviceName = (cfgLayerDim->elementValue.c_str());
   dim.cdfName = (cfgLayerDim->attr.name.c_str());
   if (cfgLayerDim->attr.interval.empty()) {
     CDBError("Dimension interval not defined");
@@ -345,13 +345,13 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   }
 
   std::string minTimeStamp, maxTimeStamp;
-  auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->value);
+  auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->elementValue);
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) { //
     // Query the values from the DB if they are not set in the map
     // This is an interval defined as start/stop/resolution
     // Retrieve the minimum dimension value
     CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                                                                        cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
@@ -376,7 +376,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   if (cfgLayerDim->attr.units.empty() == false) {
     dimUnits = (cfgLayerDim->attr.units.c_str());
   }
-  dim.serviceName = (cfgLayerDim->value.c_str());
+  dim.serviceName = (cfgLayerDim->elementValue.c_str());
   dim.cdfName = (cfgLayerDim->attr.name.c_str());
   dim.units = (dimUnits.c_str());
   dim.hasMultipleValues = false;
@@ -565,7 +565,7 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
-  std::string fileDate = CDirReader::getFileDate(dataSource->cfgLayer->FilePath[0]->value.c_str());
+  std::string fileDate = CDirReader::getFileDate(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
   LayerMetadataDim dim;
   dim.serviceName = "time";
   dim.cdfName = "time";
@@ -585,9 +585,9 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
     return timeStampList;
   }
   // Get the tablename
-  CT::string tableName =
-      CDBFactory::getDBAdapter(srvParam->cfg)
-          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), cfgDim->attr.name.c_str(), dataSource);
+  CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
+                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                                                     cfgDim->attr.name.c_str(), dataSource);
 
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
@@ -620,7 +620,7 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
     }
     if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name.equals("none")) break;
     if (cfgDim->attr.interval.empty()) {
-      const auto &valuesFromDimMap = dimValuesMap[cfgDim->value];
+      const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
       const auto &timeList = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
       const auto &interval = makeIntervalFromTimeList(timeList);
       if (!interval.empty()) {
@@ -818,7 +818,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
-      metadataLayer->fileName = (metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
+      metadataLayer->fileName = (metadataLayer->dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
       if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {
         CDBError("Unable to autoconfigure dimensions");
         return 1;
@@ -839,7 +839,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
       // If not, just return the filename as configured in the layer
       std::vector<std::string> fileList;
       try {
-        fileList = CDBFileScanner::searchFileNames(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(), metadataLayer->dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+        fileList = CDBFileScanner::searchFileNames(metadataLayer->dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), metadataLayer->dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
       } catch (int linenr) {
       };
       metadataLayer->fileName = (fileList[0].c_str());
@@ -860,10 +860,10 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name.c_str());
     try {
       tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->value.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),
+                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),
                                                               metadataLayer->dataSource);
     } catch (int e) {
-      CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->value.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
     }
 
@@ -884,7 +884,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
         // Ignore the file for now too
-        CDBError("Query for '%s' not succeeded", metadataLayer->layer->FilePath[0]->value.c_str());
+        CDBError("Query for '%s' not succeeded", metadataLayer->layer->FilePath[0]->elementValue.c_str());
         databaseError = true;
       }
       delete values;
