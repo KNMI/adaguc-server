@@ -506,10 +506,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           sameHeaderForAll = true;
         }
 
-        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall == ("true")) {
           openAll = true;
         }
-        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall.equals("headers")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall == ("headers")) {
           sameHeaderForAll = true;
         }
       }
@@ -528,7 +528,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         CDBError("CMakeEProfile::MakeEProfile failed");
         return status;
       }
-    } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat.equals("application/json")) {
+    } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat == ("application/json")) {
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
       if (status != 0) {
         CDBError("CMakeJSONTimeSeries::MakeJSONTimeSeries failed");
@@ -920,8 +920,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
             std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues);
             for (size_t i = 0; i < ranges.size(); i++) {
               auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
-              shadeInterval.attr.min.print("%d", ranges[i].min);
-              shadeInterval.attr.max.print("%d", ranges[i].max);
+              shadeInterval.attr.min = CT::printf("%d", ranges[i].min);
+              shadeInterval.attr.max = CT::printf("%d", ranges[i].max);
               shadeInterval.attr.fillcolor = featureInterval->attr.fillcolor;
               shadeInterval.attr.bgcolor = featureInterval->attr.bgcolor;
               shadeInterval.attr.label = featureInterval->attr.label;
@@ -1299,7 +1299,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       bool useProjection = true;
 
-      if (srvParam->geoParams.crs.equals("EPSG:4326")) {
+      if (srvParam->geoParams.crs == ("EPSG:4326")) {
         // CDBDebug("Not using projection");
         useProjection = false;
       }
@@ -1564,16 +1564,16 @@ int CImageDataWriter::end() {
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
 
-    if (srvParam->InfoFormat.equals("text/plain")) resultFormat = textplain;
-    if (srvParam->InfoFormat.equals("text/xml")) resultFormat = textxml;
-    if (srvParam->InfoFormat.equals("image/png")) resultFormat = imagepng;
+    if (srvParam->InfoFormat == ("text/plain")) resultFormat = textplain;
+    if (srvParam->InfoFormat == ("text/xml")) resultFormat = textxml;
+    if (srvParam->InfoFormat == ("image/png")) resultFormat = imagepng;
 
-    if (srvParam->InfoFormat.equals("application/vnd.ogc.gml")) resultFormat = applicationvndogcgml;
+    if (srvParam->InfoFormat == ("application/vnd.ogc.gml")) resultFormat = applicationvndogcgml;
 
     if (isProfileData) {
       resultFormat = imagepng_eprofile;
 
-      if (srvParam->InfoFormat.equals("image/png")) {
+      if (srvParam->InfoFormat == ("image/png")) {
         printf("%s%s%c%c\n", "Content-Type:image/png", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         drawImage.printImagePng8(true);
       } else {

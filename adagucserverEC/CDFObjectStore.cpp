@@ -67,7 +67,7 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
         CDFHDF5Reader *hdf5Reader = (CDFHDF5Reader *)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
         if (!dataSource->cfgLayer->DataReader[0]->attr.useendtime.empty()) {
-          if (dataSource->cfgLayer->DataReader[0]->attr.useendtime.equalsIgnoreCase("true")) {
+          if (CT::equalsIgnoreCase(dataSource->cfgLayer->DataReader[0]->attr.useendtime, "true")) {
             hdf5Reader->enableKNMIHDF5UseEndTime();
           }
         }

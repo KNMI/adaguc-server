@@ -562,8 +562,9 @@ CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string proj
     return bboxProj4Params;
   }
   std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
-  for (size_t j = 0; j < (*prj).size(); j++) {
-    if ((*prj)[j]->attr.id.equals(projectionId.trim())) {
+  std::string trimmedProjectionId = projectionId.trim();
+  for (size_t j = 0; j < (*prj).size(); j++) { // TODO: use find_if
+    if ((*prj)[j]->attr.id == trimmedProjectionId) {
       bboxProj4Params = (*prj)[j]->attr.proj4;
       return bboxProj4Params;
       break;

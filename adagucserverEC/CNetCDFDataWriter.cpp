@@ -583,7 +583,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     bool usePixelExtent = false;
     bool optimizeExtentForTiles = false;
     if (dataSource->cfgLayer->TileSettings.size() == 1 && !dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.empty()) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.equals("true")) {
+      if (dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent == "true") {
         optimizeExtentForTiles = true;
       }
     }
@@ -812,14 +812,14 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("DataStep index = %d, timestep = %d", dataStepIndex, dataSource->getCurrentTimeStep());
 #endif
 
-      CT::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
+      std::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
       destCDFObject->getVariableThrows("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
 
       /* Lookup possible projection EPSG codes based on this */
       std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
       destCDFObject->getVariableThrows("crs")->setAttributeText("id", "unknown");
       for (size_t j = 0; j < (*prj).size(); j++) {
-        if ((*prj)[j]->attr.proj4.trim().equals(dataSourceProjectionString)) {
+        if (CT::trim((*prj)[j]->attr.proj4) == dataSourceProjectionString) {
           destCDFObject->getVariableThrows("crs")->setAttributeText("id", (*prj)[j]->attr.id);
           break;
         }

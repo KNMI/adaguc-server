@@ -34,9 +34,9 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   };
 
   CT::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
-  bool enableCleanupIsTrue = enableCleanupSystem.equals("true");
-  bool enableCleanupIsInform = enableCleanupSystem.equals("dryrun");
-  int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.toInt()
+  bool enableCleanupIsTrue = enableCleanupSystem == ("true");
+  bool enableCleanupIsInform = enableCleanupSystem == ("dryrun");
+  int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? atoi(dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.c_str())
                                                                                                                                   : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
   if (!enableCleanupIsTrue && !enableCleanupIsInform) {
     CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to %s", enableCleanupSystem.c_str());
@@ -98,7 +98,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(1, filesDeletedFromFS);
   }
 
-  if (retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE)) {
+  if (retentiontype == (CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE)) {
     colName = "filedate";
   }
 

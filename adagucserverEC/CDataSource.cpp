@@ -116,15 +116,15 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
   }
   // Defaults to database
   dLayerType = CConfigReaderLayerTypeDataBase;
-  if (cfgLayer->attr.type.equals("database")) {
+  if (cfgLayer->attr.type == ("database")) {
     dLayerType = CConfigReaderLayerTypeDataBase;
-  } else if (cfgLayer->attr.type.equals("grid")) {
+  } else if (cfgLayer->attr.type == ("grid")) {
     dLayerType = CConfigReaderLayerTypeGraticule;
-  } else if (cfgLayer->attr.type.equals("autoscan")) {
+  } else if (cfgLayer->attr.type == ("autoscan")) {
     dLayerType = CConfigReaderLayerTypeUnknown;
-  } else if (cfgLayer->attr.type.equals("baselayer")) {
+  } else if (cfgLayer->attr.type == ("baselayer")) {
     dLayerType = CConfigReaderLayerTypeBaseLayer;
-  } else if (cfgLayer->attr.type.equals("liveupdate")) {
+  } else if (cfgLayer->attr.type == ("liveupdate")) {
     dLayerType = CConfigReaderLayerTypeLiveUpdate;
   } else if (cfgLayer->attr.type.empty() == false) {
     if (strlen(cfgLayer->attr.type.c_str()) > 0) {
@@ -134,7 +134,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
     }
   }
   // Deprecated
-  if (cfgLayer->attr.type.equals("file")) {
+  if (cfgLayer->attr.type == ("file")) {
     dLayerType = CConfigReaderLayerTypeDataBase; // CConfigReaderLayerTypeFile;
   }
 
@@ -512,7 +512,7 @@ CStyleConfiguration *CDataSource::getStyle() {
   // Copy default style
   currentStyle = styleList.at(0);
 
-  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return styleName.equals(a.styleName); });
+  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return styleName == (a.styleName); });
   if (it != styleList.end()) {
     currentStyle = (*it);
   } else {
@@ -523,7 +523,7 @@ CStyleConfiguration *CDataSource::getStyle() {
     } else {
       // Try without rendermethod
       CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
-      it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod.equals(a.styleName); });
+      it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod == (a.styleName); });
       if (it != styleList.end()) {
         currentStyle = (*it);
         CDBDebug("Selected style %s", currentStyle.styleName.c_str());
@@ -640,7 +640,7 @@ double CDataSource::getScaling() {
   if (styleConfiguration != nullptr) {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalewidth.empty()) {
-        double scaleWidth = renderSetting->attr.scalewidth.toDouble();
+        double scaleWidth = atof(renderSetting->attr.scalewidth.c_str());
         double imageWidth = (double)this->srvParams->geoParams.width;
         return imageWidth / scaleWidth;
       }
@@ -654,7 +654,7 @@ double CDataSource::getContourScaling() {
   if (styleConfiguration != nullptr) {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalecontours.empty()) {
-        double scalecontours = renderSetting->attr.scalecontours.toDouble();
+        double scalecontours = atof(renderSetting->attr.scalecontours.c_str());
         return scalecontours;
       }
     }
@@ -674,7 +674,7 @@ DataObject *CDataSource::getDataObjectByName(const char *name) {
     if (dataObject.variableName == name) {
       return &dataObject;
     }
-    if (dataObject.cdfVariable->name.equals(name)) {
+    if (dataObject.cdfVariable->name == (name)) {
       return &dataObject;
     }
   }

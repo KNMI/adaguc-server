@@ -1005,10 +1005,10 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
   std::vector<MetadataLayer *> metadataLayerList;
 
   for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-    if (srvParam->cfg->Layer[j]->attr.type.equals("autoscan")) {
+    if (srvParam->cfg->Layer[j]->attr.type == "autoscan") {
       continue;
     }
-    if (srvParam->cfg->Layer[j]->attr.hidden.equals("true")) {
+    if (srvParam->cfg->Layer[j]->attr.hidden == "true") {
       continue;
     }
     // Create a new layer and push it in the list

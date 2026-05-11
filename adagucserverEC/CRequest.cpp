@@ -233,7 +233,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       bool alreadyAdded = false;
 
       /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
-      if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+      if (dataSource->cfgLayer->Dimension[i]->attr.defaultV == "filetimedate") {
         alreadyAdded = true;
       }
 
@@ -386,7 +386,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           continue;
         }
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
-        if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+        if (dataSource->cfgLayer->Dimension[i]->attr.defaultV == "filetimedate") {
           continue;
         }
         CT::string tableName;
@@ -893,7 +893,7 @@ int CRequest::process_querystring() {
    * Check for OPENDAP
    */
   if (srvParam->cfg->OpenDAP.size() == 1) {
-    if (srvParam->cfg->OpenDAP[0]->attr.enabled.equals("true")) {
+    if (srvParam->cfg->OpenDAP[0]->attr.enabled == "true") {
       CT::string defaultPath = "opendap";
       if (srvParam->cfg->OpenDAP[0]->attr.path.empty() == false) {
         defaultPath = srvParam->cfg->OpenDAP[0]->attr.path.c_str();
@@ -1138,7 +1138,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("TRANSPARENT")) {
         if (dFound_Transparent == 0) {
           if (uriValue.length() > 1) {
-            if (uriValue.toUpperCase().equals("TRUE")) {
+            if (uriValue.toLowerCase() == "true") {
               srvParam->Transparent = true;
             }
             dFound_Transparent = 1;
@@ -1265,12 +1265,12 @@ int CRequest::process_querystring() {
         }
       }
       if (uriKeyUpperCase.equals("SHOWSCALEBAR")) {
-        if (uriValue.toLowerCase().equals("true")) {
+        if (uriValue.toLowerCase() == "true") {
           srvParam->showScaleBarInImage = true;
         }
       }
       if (uriKeyUpperCase.equals("SHOWNORTHARROW")) {
-        if (uriValue.toLowerCase().equals("true")) {
+        if (uriValue.toLowerCase() == "true") {
           srvParam->showNorthArrow = true;
         }
       }
@@ -1292,7 +1292,7 @@ int CRequest::process_querystring() {
         srvParam->wmsExtensions.numColorBandsSet = true;
       }
       if (uriKeyUpperCase.equals("LOGSCALE")) {
-        if (uriValue.toLowerCase().equals("true")) {
+        if (uriValue.toLowerCase() == "true") {
           srvParam->wmsExtensions.logScale = true;
         }
       }
@@ -1452,7 +1452,7 @@ int CRequest::process_querystring() {
         // Overrule found EXCEPTIONS with value of WMSExceptions.default if force is set and default is defined
         if (srvParam->cfg->WMS[0]->WMSExceptions.size() > 0) {
           if ((srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty() == false) && (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.empty() == false)) {
-            if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.equals("true")) {
+            if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force == "true") {
               Exceptions = srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
               CDBDebug("Overruling default Exceptions %s", Exceptions.c_str());
             }
@@ -2108,10 +2108,10 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
     bool replacePreviousDataSource = false;
     bool replaceAllDataSource = false;
 
-    if (additionalLayer->attr.replace.equals("true") || additionalLayer->attr.replace.equals("previous")) {
+    if (additionalLayer->attr.replace == "true" || additionalLayer->attr.replace == "previous") {
       replacePreviousDataSource = true;
     }
-    if (additionalLayer->attr.replace.equals("all")) {
+    if (additionalLayer->attr.replace == ("all")) {
       replaceAllDataSource = true;
     }
 
@@ -2119,7 +2119,7 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
     size_t additionalLayerNo = 0;
     for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
       CT::string additional = makeUniqueLayerName(srvParam->cfg->Layer[additionalLayerNo]);
-      if (additionalLayerName.equals(additional)) {
+      if (additionalLayerName == (additional)) {
         CDataSource *additionalDataSource = new CDataSource();
         if (additionalDataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[additionalLayerNo], layerIndex) != 0) {
           delete additionalDataSource;
@@ -2223,7 +2223,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
     int numThreads = 4;
     if (dataSources[dataSourceToUse]->cfgLayer->TileSettings.size() == 1) {
       if (dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.empty() == false) {
-        numThreads = dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.toInt();
+        numThreads = atoi(dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.c_str());
         if (numThreads <= 1) {
           useThreading = false;
         } else {
@@ -2396,9 +2396,9 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       }
     }
 
-    if (!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()) {
+    if (srvParam->showLegendInImage != "false" && !srvParam->showLegendInImage.empty()) {
       // Draw legend
-      bool drawAllLegends = srvParam->showLegendInImage.equals("true");
+      bool drawAllLegends = srvParam->showLegendInImage == "true";
 
       /* List of specified legends */
       std::vector<std::string> legendLayerList = CT::split(srvParam->showLegendInImage, ",");
@@ -2417,7 +2417,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
               }
             }
           } else {
-            if (!dataSources[d]->cfgLayer->attr.hidden.equals("true")) {
+            if (dataSources[d]->cfgLayer->attr.hidden != "true") {
               drawThisLegend = true;
             }
           }

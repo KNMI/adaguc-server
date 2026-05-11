@@ -47,7 +47,7 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
 #ifdef COPENDAPHANDLER_DEBUG
     CDBDebug("getDimSize Checking : %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
 #endif
-    if (dataSource->cfgLayer->Dimension[d]->attr.name.equals(name)) {
+    if (dataSource->cfgLayer->Dimension[d]->attr.name == name) {
 #ifdef COPENDAPHANDLER_DEBUG
       CDBDebug("getDimSize found : %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
 #endif
@@ -518,7 +518,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     // Check if DATASET is enabled
     if (hasFoundDataSetOrAutoResource == false) {
       for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
-        if (srvParam->cfg->Dataset[j]->attr.enabled.equals("true") && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
+        if (srvParam->cfg->Dataset[j]->attr.enabled == "true" && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
           srvParam->datasetLocation = dataURL;
           CDBDebug("Checking %s", srvParam->cfg->Dataset[j]->attr.location.c_str());
           int status = CAutoResource::configureDataset(srvParam, true);
@@ -564,7 +564,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
   bool foundLayer = false;
 
   for (size_t layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
-    if (srvParam->cfg->Layer[layerNo]->attr.type.equals("database")) {
+    if (srvParam->cfg->Layer[layerNo]->attr.type == "database") {
       CT::string intLayerName = makeUniqueLayerName(srvParam->cfg->Layer[layerNo]);
 
       if (layerName.length() == 0) {

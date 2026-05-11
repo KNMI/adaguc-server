@@ -11,8 +11,8 @@ enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBiline
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
 
 struct Interval {
-  float min;
-  float max;
+  double min;
+  double max;
   CColor color;
 };
 

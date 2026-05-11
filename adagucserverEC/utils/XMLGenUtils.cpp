@@ -58,15 +58,15 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Check if it is hidden
-  if (metadataLayer->dataSource->cfgLayer->attr.hidden.equals("true")) {
+  if (metadataLayer->dataSource->cfgLayer->attr.hidden == ("true")) {
     metadataLayer->layerMetadata.hidden = true;
   }
 
   // Determine if edr is enabled for this layer
   CT::string layer_enable_edr = metadataLayer->layer->attr.enable_edr;
-  if (layer_enable_edr.equals("false")) {
+  if (layer_enable_edr == ("false")) {
     metadataLayer->layerMetadata.enable_edr = false;
-  } else if (layer_enable_edr.equals("true")) {
+  } else if (layer_enable_edr == ("true")) {
     metadataLayer->layerMetadata.enable_edr = true;
   } else {
     metadataLayer->layerMetadata.enable_edr = isEdrEnabled;
@@ -195,7 +195,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
     return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_TIME;
   }
   CServerConfig::XMLE_Dimension *layerCfgTimeDim = xmleDimTimeIt[0];
-  int hasIsoDuration = layerCfgTimeDim->attr.defaultV.indexOf("+");
+  int hasIsoDuration = CT::indexOf(layerCfgTimeDim->attr.defaultV, "+");
 
   if (hasIsoDuration == -1) {
     // There is no iso time range defined. Do nothing, all OK.
@@ -219,7 +219,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   LayerMetadataDim layerMetadataTimeDim = lmDimTimeIt[0];
   LayerMetadataDim layerMetadataRefTimeDim = lmDimRefTimeIt[0];
 
-  CT::string isoDurationString = layerCfgTimeDim->attr.defaultV.substring(hasIsoDuration + 1, -1);
+  CT::string isoDurationString = CT::substring(layerCfgTimeDim->attr.defaultV, hasIsoDuration + 1, -1);
   // CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
   try {
     CTime *time = CTime::GetCTimeEpochInstance();
@@ -237,7 +237,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
 }
 
 bool isLayerDimATimeDim(CServerConfig::XMLE_Dimension *cfgLayerDim) {
-  return (cfgLayerDim->attr.name.equals("time") || (cfgLayerDim->attr.name.indexOf("time") >= 0 && cfgLayerDim->attr.units.equals("ISO8601")));
+  return (cfgLayerDim->attr.name == ("time") || (CT::indexOf(cfgLayerDim->attr.name, "time") >= 0 && cfgLayerDim->attr.units == ("ISO8601")));
 }
 
 LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap) {
@@ -304,9 +304,9 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
       layerMetadataDim.units = (cfgLayerDim->attr.units.c_str());
     }
 
-    if (cfgLayerDim->attr.defaultV.equals("max")) {
+    if (cfgLayerDim->attr.defaultV == ("max")) {
       layerMetadataDim.defaultValue = queryValues[queryValues.size() - 1];
-    } else if (cfgLayerDim->attr.defaultV.equals("min")) {
+    } else if (cfgLayerDim->attr.defaultV == ("min")) {
       layerMetadataDim.defaultValue = queryValues[0];
     } else {
       if (cfgLayerDim->attr.defaultV.empty()) {
@@ -384,9 +384,9 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   const char *pszDefaultV = cfgLayerDim->attr.defaultV.c_str();
   CT::string defaultV;
   if (pszDefaultV != NULL) defaultV = pszDefaultV;
-  if (defaultV.length() == 0 || defaultV.equals("max")) {
+  if (defaultV.length() == 0 || defaultV == ("max")) {
     dim.defaultValue = maxTimeStamp;
-  } else if (defaultV.equals("min")) {
+  } else if (defaultV == ("min")) {
     dim.defaultValue = minTimeStamp;
   } else {
     dim.defaultValue = defaultV;
@@ -565,7 +565,7 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
-  std::string fileDate = CDirReader::getFileDate(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
+  std::string fileDate = getFileDate(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
   LayerMetadataDim dim;
   dim.serviceName = "time";
   dim.cdfName = "time";
@@ -581,7 +581,7 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name.equals("time") || (cfgDim->attr.name.indexOf("time") >= 0 && cfgDim->attr.units.equals("ISO8601")))) {
+  if (!(cfgDim->attr.name == ("time") || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == ("ISO8601")))) {
     return timeStampList;
   }
   // Get the tablename
@@ -614,11 +614,11 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
   for (auto it = dataSource->cfgLayer->Dimension.begin(); it != dataSource->cfgLayer->Dimension.end(); ++it) {
     auto *cfgDim = (*it);
     // This dimension is a filetimedate type, its values come from the modification date of the file
-    if (cfgDim->attr.defaultV.equals("filetimedate")) {
+    if (cfgDim->attr.defaultV == ("filetimedate")) {
       layerMetadataDimensionList.push_back(handleFileTimeDateDim(dataSource));
       break;
     }
-    if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name.equals("none")) break;
+    if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name == ("none")) break;
     if (cfgDim->attr.interval.empty()) {
       const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
       const auto &timeList = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
@@ -704,7 +704,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
-    if (geo.crs.equals("EPSG:4326")) {
+    if (geo.crs == ("EPSG:4326")) {
       for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = bboxToFind[k];
     }
 
@@ -827,12 +827,12 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 
     /* A dimension where the default value is set to filetimedate should not be queried from the db */
     bool dataBaseDimension = true;
-    if (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.defaultV.equals("filetimedate")) {
+    if (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.defaultV == ("filetimedate")) {
       dataBaseDimension = false;
     }
 
     // Check if any dimension is given:
-    if (dataBaseDimension == false || (metadataLayer->layer->Dimension.size() == 0) || (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.name.equals("none"))) {
+    if (dataBaseDimension == false || (metadataLayer->layer->Dimension.size() == 0) || (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.name == ("none"))) {
 #ifdef CXMLGEN_DEBUG
       CDBDebug("Layer %s has no dimensions", metadataLayer->dataSource->layerName.c_str());
 #endif

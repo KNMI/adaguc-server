@@ -96,7 +96,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
           CT::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
           uniqueLegendName.printconcat("%i", i);
           myOwnLegend->attr.name = uniqueLegendName.c_str();
-          myOwnLegend->attr.type.print("interval");
+          myOwnLegend->attr.type = "interval";
 
           CServerConfig::XMLE_Legend *styleLegend = new CServerConfig::XMLE_Legend();
           myOwnStyle->Legend.push_back(styleLegend);
@@ -281,7 +281,7 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
     CT::string hexColor = colorMapEntry.getAttrValue("color");
     hexColor.toUpperCaseSelf();
 
-    shadeInterval->attr.fillcolor.print(hexColor.c_str());
+    shadeInterval->attr.fillcolor = hexColor;
     myOwnStyle->ShadeInterval.push_back(shadeInterval);
 
     if (i == (colorMapEntries.size() - 1)) {

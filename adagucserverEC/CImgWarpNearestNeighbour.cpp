@@ -414,7 +414,7 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   int renderSettings = 0; // auto
-  for (auto renderSetting : styleConfiguration->renderSettings) {
+  for (auto renderSetting: styleConfiguration->renderSettings) {
     if (!renderSetting->attr.settings.empty()) {
       CT::string renderSettingsAttr = renderSetting->attr.settings;
       if (renderSettingsAttr.equals("fast")) {
@@ -656,8 +656,8 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
     bool hasBgColor = false;
     for (int j = 0; j < numShadeDefs; j++) {
       CServerConfig::XMLE_ShadeInterval &shadeInterval = ((styleConfiguration->shadeIntervals)[j]);
-      shadeDefMin[j] = (T)shadeInterval.attr.min.toDouble();
-      shadeDefMax[j] = (T)shadeInterval.attr.max.toDouble();
+      shadeDefMin[j] = (T)atof(shadeInterval.attr.min.c_str());
+      shadeDefMax[j] = (T)atof(shadeInterval.attr.max.c_str());
       fillColors[j] = CColor(shadeInterval.attr.fillcolor.c_str());
       if (j == 0) {
         if (shadeInterval.attr.bgcolor.empty() == false) {

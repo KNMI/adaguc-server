@@ -745,7 +745,7 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
   if (styleConfiguration != nullptr) {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (renderSetting->attr.striding.empty() == false) {
-        dataSource->stride2DMap = renderSetting->attr.striding.toInt();
+        dataSource->stride2DMap = atoi(renderSetting->attr.striding.c_str());
         CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + renderSetting->attr.striding + CT::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
         return;
       }

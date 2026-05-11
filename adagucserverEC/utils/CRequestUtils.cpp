@@ -103,12 +103,12 @@ int getMaxQueryLimit(CDataSource &dataSource) {
 
   /* Get maxquerylimit from database configuration */
   if (dataSource.srvParams->cfg->DataBase.size() == 1 && dataSource.srvParams->cfg->DataBase[0]->attr.maxquerylimit.empty() == false) {
-    maxQueryResultLimit = dataSource.srvParams->cfg->DataBase[0]->attr.maxquerylimit.toInt();
+    maxQueryResultLimit = atoi(dataSource.srvParams->cfg->DataBase[0]->attr.maxquerylimit.c_str());
   }
   /* Get maxquerylimit from layer */
   if (dataSource.isConfigured && dataSource.cfgLayer != NULL && dataSource.cfgLayer->FilePath.size() > 0) {
     if (dataSource.cfgLayer->FilePath[0]->attr.maxquerylimit.empty() == false) {
-      maxQueryResultLimit = dataSource.cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
+      maxQueryResultLimit = atoi(dataSource.cfgLayer->FilePath[0]->attr.maxquerylimit.c_str());
     }
   }
   return maxQueryResultLimit;

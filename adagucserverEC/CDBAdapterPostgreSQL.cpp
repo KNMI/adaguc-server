@@ -547,7 +547,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
           }
           databaseTime.setChar(10, 'T');
 
-          CT::string fileDate = CDirReader::getFileDate(store->getRecord(0)->get(0)->c_str());
+          const auto fileDate = getFileDate(store->getRecord(0)->get(0)->c_str());
 
           if (databaseTime.equals(fileDate) == false) {
             CDBDebug("Table was found, %s ~ %s : %d", fileDate.c_str(), databaseTime.c_str(), databaseTime.equals(fileDate));
@@ -658,7 +658,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
     for (const auto &cfgDimension: dataSource->cfgLayer->Dimension) {
-      CT::string dimString = cfgDimension->attr.name.toLowerCase();
+      CT::string dimString = CT::toLowerCase(cfgDimension->attr.name);
       CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
       tableList.push_back(correctedTableName);
       CDBDebug("Adding custom table %s", correctedTableName.c_str());

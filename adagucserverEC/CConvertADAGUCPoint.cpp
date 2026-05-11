@@ -765,7 +765,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         for (auto pointInterval: styleConfiguration->pointIntervals) {
           if (!pointInterval->attr.discradius.empty()) {
             hasZoomableDiscRadius = true;
-            discSize = pointInterval->attr.discradius.toFloat();
+            discSize = atof(pointInterval->attr.discradius.c_str());
           }
         }
       }

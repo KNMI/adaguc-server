@@ -611,7 +611,7 @@ int CDrawImage::create685Palette() {
   const char *paletteName685 = "685Palette";
 
   for (size_t j = 0; j < legends.size(); j++) {
-    if (legends[j]->legendName.equals(paletteName685)) {
+    if (legends[j]->legendName == (paletteName685)) {
       CDBDebug("Found legend");
       currentLegend = legends[j];
       return 0;
@@ -687,7 +687,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   currentLegend = NULL;
   if (legend != NULL) {
     for (size_t j = 0; j < legends.size(); j++) {
-      if (legends[j]->legendName.equals(legend->attr.name.c_str())) {
+      if (legends[j]->legendName == (legend->attr.name.c_str())) {
         currentLegend = legends[j];
         return 0;
       }
@@ -715,7 +715,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   if (legend == NULL) {
     return _createStandard();
   }
-  if (legend->attr.type.equals("colorRange")) {
+  if (legend->attr.type == ("colorRange")) {
 
     float cx;
     float rc[4];
@@ -755,7 +755,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
 
     return _createStandard();
   }
-  if (legend->attr.type.equals("interval")) {
+  if (legend->attr.type == ("interval")) {
 
     for (size_t j = 0; j < legend->palette.size(); j++) {
 
@@ -788,7 +788,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     }
     return _createStandard();
   }
-  if (legend->attr.type.equals("svg")) {
+  if (legend->attr.type == ("svg")) {
     if (legend->attr.file.empty()) {
       CDBError("Legend type file has no file attribute specified");
       return 1;

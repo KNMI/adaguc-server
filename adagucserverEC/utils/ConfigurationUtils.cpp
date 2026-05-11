@@ -13,7 +13,7 @@ std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvPara
     CDBWarning("No dataset paths are configured");
   }
   for (auto dataset: srvParam->cfg->Dataset) {
-    if (dataset->attr.enabled.equals("true") && dataset->attr.location.empty() == false) {
+    if (dataset->attr.enabled == ("true") && dataset->attr.location.empty() == false) {
       if (srvParam->verbose) {
         CDBDebug("Checking dataset location %s", dataset->attr.location.c_str());
       }
@@ -157,7 +157,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   int layerIndex = -1;
   for (const auto &layer: srvParam->cfg->Layer) {
     layerIndex++;
-    if (layer->attr.type.equals("database")) {
+    if (layer->attr.type == ("database")) {
       if (layer->Variable.size() == 0) {
         CDBError("Configuration error at layer %d: <Variable> not defined", layerIndex);
         return 1;
@@ -168,80 +168,6 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
       }
     }
   }
-
-  // // Check for autoscan elements
-  // layerIndex = -1;
-  // for (const auto &layer: srvParam->cfg->Layer) {
-  //   layerIndex++;
-  //   if (layer->attr.type.equals("autoscan")) {
-  //     if (layer->FilePath.size() == 0) {
-  //       CDBError("Configuration error at layer %d: <FilePath> not defined", layerIndex);
-  //       return 1;
-  //     }
-  //     try {
-  //       /* Create the list of layers from a directory list */
-  //       const char *baseDir = layer->FilePath[0]->value.c_str();
-
-  //       CDBDebug("autoscan");
-  //       std::vector<std::string> fileList;
-  //       try {
-  //         fileList = CDBFileScanner::searchFileNames(baseDir, layer->FilePath[0]->attr.filter.c_str(), NULL);
-  //       } catch (int linenr) {
-  //         CDBError("Could not find any file in directory '%s'", baseDir);
-  //         throw(__LINE__);
-  //       }
-
-  //       if (fileList.size() == 0) {
-  //         CDBError("Could not find any file in directory '%s'", baseDir);
-  //         throw(__LINE__);
-  //       }
-  //       size_t nrOfFileErrors = 0;
-  //       for (const auto &fileName: fileList) {
-  //         try {
-  //           std::string baseDirStr = baseDir;
-  //           std::string groupName = CT::substring(fileName, baseDirStr.length(), -1);
-
-  //           // Open file
-  //           // CDBDebug("Opening file %s",fileName.c_str());
-  //           CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, fileName.c_str());
-  //           if (cdfObject == NULL) {
-  //             CDBError("Unable to read file %s", fileName.c_str());
-  //             throw(__LINE__);
-  //           }
-
-  //           // std::vector<CT::string> variables;
-  //           // List variables
-  //           for (size_t v = 0; v < cdfObject->variables.size(); v++) {
-  //             CDF::Variable *var = cdfObject->variables[v];
-  //             if (var->isDimension == false) {
-  //               if (var->dimensionlinks.size() >= 2) {
-  //                 CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
-  //                 CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
-  //                 CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
-  //                 CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
-  //                 xmleLayer->attr.type = "database";
-  //                 xmleVariable->value = var->name;
-  //                 xmleFilePath->value = fileName;
-  //                 xmleGroup->attr.value = groupName;
-  //                 xmleLayer->Variable.push_back(xmleVariable);
-  //                 xmleLayer->FilePath.push_back(xmleFilePath);
-  //                 xmleLayer->Group.push_back(xmleGroup);
-  //                 srvParam->cfg->Layer.push_back(xmleLayer);
-  //               }
-  //             }
-  //           }
-  //         } catch (int e) {
-  //           nrOfFileErrors++;
-  //         }
-  //       }
-  //       if (nrOfFileErrors != 0) {
-  //         CDBError("%lu files are not readable", nrOfFileErrors);
-  //       }
-  //     } catch (int line) {
-  //       return 1;
-  //     }
-  //   }
-  // }
 
   return status;
 }

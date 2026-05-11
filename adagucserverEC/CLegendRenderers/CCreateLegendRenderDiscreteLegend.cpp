@@ -249,7 +249,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     int angle = 0; // Text angle (in radians)
 
     for (auto renderSetting: styleConfiguration->renderSettings) {
-      if (renderSetting->attr.cliplegend.equals("true")) {
+      if (renderSetting->attr.cliplegend == "true") {
         std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
       }
     }

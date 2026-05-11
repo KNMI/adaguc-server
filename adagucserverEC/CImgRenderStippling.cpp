@@ -131,19 +131,18 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   mode = CImgRenderStipplingModeDefault; // Mode 0 is standard stippling
 
   if (styleConfiguration != nullptr) {
-    for (auto stippling : styleConfiguration->stipplingList) {
+    for (auto stippling: styleConfiguration->stipplingList) {
       if (!stippling->attr.distancex.empty()) {
-        xDistance = stippling->attr.distancex.toInt();
+        xDistance = atoi(stippling->attr.distancex.c_str());
       }
       if (!stippling->attr.distancey.empty()) {
-        yDistance = stippling->attr.distancey.toInt();
+        yDistance = atoi(stippling->attr.distancey.c_str());
       }
       if (!stippling->attr.discradius.empty()) {
-        discSize = stippling->attr.discradius.toInt();
+        discSize = atoi(stippling->attr.discradius.c_str());
       }
       if (!stippling->attr.mode.empty()) {
-        CT::string smode = stippling->attr.mode;
-        if (smode.equals("threshold")) {
+        if (stippling->attr.mode == "threshold") {
           mode = CImgRenderStipplingModeThreshold;
         }
       }

@@ -119,7 +119,7 @@ public:
   CT::string mapTitle;
   CT::string mapSubTitle;
   bool showDimensionsInImage;
-  CT::string showLegendInImage;
+  std::string showLegendInImage;
   bool showScaleBarInImage;
   bool showNorthArrow;
 
@@ -312,7 +312,7 @@ public:
    * @param legendName The name of the legend to locate
    * @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
    */
-  int getServerLegendIndexByName(CT::string legendName);
+  int getServerLegendIndexByName(std::string legendName);
 
   /**
    * Retrieves the style index in the server configuration by stylename.

@@ -73,7 +73,7 @@ ThinningInfo getThinningInfo(CStyleConfiguration *styleConfiguration) {
     for (auto thinning: styleConfiguration->thinningList) {
       if (!thinning->attr.radius.empty()) {
         info.doThinning = true;
-        info.thinningRadius = thinning->attr.radius.toInt();
+        info.thinningRadius = atoi(thinning->attr.radius.c_str());
       }
     }
   }
@@ -199,7 +199,7 @@ SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
    */
   for (size_t j = 0; j < cfg->Symbol.size(); j++) {
     auto symbolName = cfg->Symbol[j]->attr.name;
-    auto coordinates = cfg->Symbol[j]->attr.coordinates;
+    CT::string coordinates = cfg->Symbol[j]->attr.coordinates;
     // Make a single list of numbers
     coordinates.replaceSelf("[", "");
     coordinates.replaceSelf("]", "");
@@ -508,7 +508,7 @@ std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *style
   if (styleConfiguration->filterPointList.size() == 0) return usePoints;
   for (auto filterPoint: styleConfiguration->filterPointList) {
     if (!filterPoint->attr.use.empty()) {
-      for (const auto &token: filterPoint->attr.use.split(",")) {
+      for (const auto &token: CT::split(filterPoint->attr.use, ",")) {
         usePoints.insert(token.c_str());
       }
     }

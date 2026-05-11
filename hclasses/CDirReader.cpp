@@ -183,45 +183,6 @@ int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recu
   }
   return 0;
 }
-/* Removes the double //'s from the string and makes sure that the string does not end with a / */
-CT::string CDirReader::makeCleanPath(const char *_path) {
-  CT::string path;
-  if (_path == NULL) return path;
-  path = _path;
-  if (path.length() == 0) return path;
-  path.replaceSelf("\n", "");
-  path.trimSelf();
-  std::vector<CT::string> parts = path.split("/");
-
-  int startAtIndex = 0;
-  if (path.c_str()[0] == '/') {
-    /* Check if this should start with a slash or not */
-    path = ("/");
-  } else if (path.indexOf("://") != -1) {
-    /*Check if this should start with the original prefix"*/
-    CT::string leftPart = path.split("://")[0] + "://";
-    path = (leftPart);
-    startAtIndex = 1;
-  } else
-    path = ("");
-
-  std::vector<CT::string> parts2;
-  for (size_t j = 0; j < parts.size(); j++) {
-    if (parts[j].length() > 0) {
-      parts2.push_back(parts[j]);
-    }
-  }
-
-  for (size_t j = startAtIndex; j < parts2.size(); j++) {
-    if (parts2[j].length() > 0) {
-      path.concat(&(parts2[j]));
-      if (j + 1 < parts2.size()) {
-        path.concat("/");
-      }
-    }
-  }
-  return path;
-}
 
 bool CDirReader::isDir(const char *directory) {
   struct stat fileattr;
@@ -256,17 +217,6 @@ int CDirReader::testRegEx(const char *string, const char *pattern) {
   return (1);
 }
 
-int CDirReader::getFileDate(CT::string *date, const char *file) {
-  struct tm *clock;                       /* create a time structure */
-  struct stat attrib;                     /* create a file attribute structure */
-  if (stat(file, &attrib) != 0) return 1; /* get the attributes of afile.txt */
-  clock = gmtime(&(attrib.st_mtime));     /* Get the last modified time and put it into the time structure */
-  char buffer[80];
-  strftime(buffer, 80, "%Y-%m-%dT%H:%M:%SZ", clock);
-  date->copy(buffer);
-  return 0;
-}
-
 void CDirReader::makePublicDirectory(const char *dirname) {
   if (dirname == NULL) return;
   struct stat stFileInfo;
@@ -287,21 +237,6 @@ void CDirReader::makePublicDirectory(const char *dirname) {
       }
     }
   }
-}
-
-CT::string CDirReader::getFileDate(const char *fileName) {
-
-  std::map<std::string, std::string>::iterator it = lookupTableFileModificationDateMap.find(fileName);
-  if (it != lookupTableFileModificationDateMap.end()) {
-    CT::string filemoddate = (*it).second.c_str();
-    return filemoddate;
-  }
-  CT::string fileDate;
-  CDirReader::getFileDate(&fileDate, fileName);
-  if (fileDate.length() < 10) fileDate = ("1970-01-01T00:00:00Z");
-
-  lookupTableFileModificationDateMap.insert(std::pair<std::string, std::string>(fileName, fileDate.c_str()));
-  return fileDate;
 }
 
 void CDirReader::compareLists(std::vector<std::string> L1, std::vector<std::string> L2, void (*handleMissing)(std::string), void (*handleNew)(std::string)) {
@@ -430,4 +365,37 @@ void CCachedDirReader::free() {
     delete it->second;
   }
   dirReaderMap.clear();
+}
+
+std::string makeCleanPath(const std::string &input) {
+  const auto newString = CT::replace(CT::trim(CT::replace(CT::trim(input), "\n", "")), "//", "/");
+  if (CT::endsWith(newString, "/")) {
+    return CT::substring(newString, 0, newString.length() - 1);
+  }
+  return newString;
+}
+
+std::string getFileDateUnCached(const std::string &file) {
+  struct tm *clock;                                /* create a time structure */
+  struct stat attrib;                              /* create a file attribute structure */
+  if (stat(file.c_str(), &attrib) != 0) return ""; /* get the attributes of afile.txt */
+  clock = gmtime(&(attrib.st_mtime));              /* Get the last modified time and put it into the time structure */
+  char buffer[80];
+  strftime(buffer, 80, "%Y-%m-%dT%H:%M:%SZ", clock);
+  std::string date = buffer;
+  return date;
+}
+
+std::string getFileDate(const std::string &fileName) {
+
+  std::map<std::string, std::string>::iterator it = lookupTableFileModificationDateMap.find(fileName);
+  if (it != lookupTableFileModificationDateMap.end()) {
+    CT::string filemoddate = (*it).second.c_str();
+    return filemoddate;
+  }
+  auto fileDate = getFileDateUnCached(fileName);
+  if (fileDate.length() < 10) fileDate = ("1970-01-01T00:00:00Z");
+
+  lookupTableFileModificationDateMap.insert(std::pair<std::string, std::string>(fileName, fileDate.c_str()));
+  return fileDate;
 }

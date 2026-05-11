@@ -105,7 +105,7 @@ bool CServerParams::isDebugLoggingEnabled() const {
   else if (debugLoggingIsEnabled == 1)
     return true;
   else if (cfg && cfg->Logging.size() > 0) {
-    if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug.equals("false")) {
+    if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug == ("false")) {
       debugLoggingIsEnabled = 0;
       return false;
     }
@@ -121,7 +121,7 @@ bool CServerParams::isAutoOpenDAPResourceEnabled() {
   if (autoOpenDAPEnabled == -1) {
     autoOpenDAPEnabled = 0;
     if (cfg->AutoResource.size() > 0) {
-      if (cfg->AutoResource[0]->attr.enableautoopendap.equals("true")) autoOpenDAPEnabled = 1;
+      if (cfg->AutoResource[0]->attr.enableautoopendap == ("true")) autoOpenDAPEnabled = 1;
     }
   }
   if (autoOpenDAPEnabled == 1) return true;
@@ -136,7 +136,7 @@ bool CServerParams::isAutoLocalFileResourceEnabled() {
   if (autoLocalFileResourceEnabled == -1) {
     autoLocalFileResourceEnabled = 0;
     if (cfg->AutoResource.size() > 0) {
-      if (cfg->AutoResource[0]->attr.enablelocalfile.equals("true")) autoLocalFileResourceEnabled = 1;
+      if (cfg->AutoResource[0]->attr.enablelocalfile == ("true")) autoLocalFileResourceEnabled = 1;
     }
   }
   if (autoLocalFileResourceEnabled == 1) return true;
@@ -280,11 +280,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
     } else {
       projNameString = projName;
     }
-    if (projNameString.equals("EPSG:4326"))
+    if (projNameString == ("EPSG:4326"))
       return true;
-    else if (projNameString.equals("EPSG:4258"))
+    else if (projNameString == ("EPSG:4258"))
       return true;
-    else if (projNameString.equals("CRS:84"))
+    else if (projNameString == ("CRS:84"))
       return true;
   }
   return false;
@@ -326,20 +326,20 @@ int CServerParams::checkDataRestriction() {
     dr = ALLOW_NONE;
     CT::string temp(data);
     temp.toUpperCaseSelf();
-    if (temp.equals("TRUE")) {
+    if (temp == ("TRUE")) {
       dr = ALLOW_NONE;
     }
-    if (temp.equals("FALSE")) {
+    if (temp == ("FALSE")) {
       dr = ALLOW_WCS | ALLOW_GFI | ALLOW_METADATA;
     }
     // Decompose into stringlist and check each item
     std::vector<CT::string> items = temp.split("|");
     for (size_t j = 0; j < items.size(); j++) {
       items[j].replaceSelf("\"", "");
-      if (items[j].equals("ALLOW_GFI")) dr |= ALLOW_GFI;
-      if (items[j].equals("ALLOW_WCS")) dr |= ALLOW_WCS;
-      if (items[j].equals("ALLOW_METADATA")) dr |= ALLOW_METADATA;
-      if (items[j].equals("SHOW_QUERYINFO")) dr |= SHOW_QUERYINFO;
+      if (items[j] == ("ALLOW_GFI")) dr |= ALLOW_GFI;
+      if (items[j] == ("ALLOW_WCS")) dr |= ALLOW_WCS;
+      if (items[j] == ("ALLOW_METADATA")) dr |= ALLOW_METADATA;
+      if (items[j] == ("SHOW_QUERYINFO")) dr |= SHOW_QUERYINFO;
     }
   }
 
@@ -415,7 +415,7 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
     /* Substitute ADAGUC_PATH */
     const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
     if (pszADAGUC_PATH != NULL) {
-      CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
+      CT::string adagucPath = makeCleanPath(pszADAGUC_PATH);
       adagucPath = adagucPath + "/";
       configFileData.replaceSelf("{ADAGUC_PATH}", adagucPath.c_str());
     }
@@ -451,7 +451,7 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
           if (env != nullptr) {
             if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
 
-              if (env->attr.name.startsWith(CSERVERPARAMS_ADAGUCENV_PREFIX)) {
+              if (CT::startsWith(env->attr.name, CSERVERPARAMS_ADAGUCENV_PREFIX)) {
                 const char *environmentVarName = env->attr.name.c_str();
                 const char *environmentVarDefault = env->attr.defaultVal.c_str();
                 const char *environmentValue = getenv(environmentVarName);
@@ -510,15 +510,15 @@ CT::string CServerParams::getResponseHeaders(int mode) {
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
-        if (cfg->Settings[0]->attr.cache_age_volatileresources.toInt() != 0) {
-          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_volatileresources.toInt());
+        if (atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()) != 0) {
+          cacheString.printconcat("%d", atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }
     } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
       if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
-        if (cfg->Settings[0]->attr.cache_age_cacheableresources.toInt() != 0) {
-          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_cacheableresources.toInt());
+        if (atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()) != 0) {
+          cacheString.printconcat("%d", atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }
@@ -533,7 +533,7 @@ std::tuple<float, std::string> CServerParams::getContourFont() {
   for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
     for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->ContourFont.size(); fontNr += 1) {
       if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.empty()) {
-        contourFontSize = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.toDouble();
+        contourFontSize = atof(this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.c_str());
       }
       if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location.empty()) {
         legendfontLocation = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location;
@@ -552,7 +552,7 @@ std::tuple<float, std::string> CServerParams::getLegendFont() {
   for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
     for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->LegendFont.size(); fontNr += 1) {
       if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.empty()) {
-        legendFontSize = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.toDouble();
+        legendFontSize = atof(this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.c_str());
       }
       if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location.empty()) {
         legendfontLocation = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location;
@@ -567,7 +567,7 @@ bool CServerParams::useMetadataTable() {
   size_t numSettings = this->cfg->Settings.size();
   if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
     auto settings = this->cfg->Settings[numSettings - 1];
-    if (settings->attr.enablemetadatacache.equalsIgnoreCase("false")) {
+    if (CT::equalsIgnoreCase(settings->attr.enablemetadatacache, "false")) {
       return false;
     }
   }
@@ -578,17 +578,13 @@ bool CServerParams::isEdrEnabled() {
   size_t numSettings = this->cfg->Settings.size();
   if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
     auto settings = this->cfg->Settings[numSettings - 1];
-    if (settings->attr.enable_edr.equalsIgnoreCase("false")) {
-      return false;
-    } else if (settings->attr.enable_edr.equalsIgnoreCase("true")) {
-      return true;
-    }
+    return CT::equalsIgnoreCase(settings->attr.enable_edr, "true");
   }
   return true;
 }
 
-int CServerParams::getServerLegendIndexByName(CT::string legendName) {
-  auto comp = [legendName](CServerConfig::XMLE_Legend *a) { return a->attr.name.equals(legendName); };
+int CServerParams::getServerLegendIndexByName(std::string legendName) {
+  auto comp = [legendName](CServerConfig::XMLE_Legend *a) { return a->attr.name == (legendName); };
   auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), comp);
   return it == cfg->Legend.end() ? -1 : it - cfg->Legend.begin();
 }
@@ -598,13 +594,13 @@ int CServerParams::getServerStyleIndexByName(CT::string styleName) {
     CDBError("No style name provided");
     return -1;
   }
-  if (styleName.equals("default")) {
+  if (styleName == ("default")) {
     return -1;
   }
   // Remove last slash (/). E.g. windbarbs/shaded => windbarbs
-  CT::string sanitizedStyleName = styleName.substring(0, styleName.indexOf("/"));
+  std::string sanitizedStyleName = styleName.substring(0, styleName.indexOf("/"));
 
-  auto comp = [sanitizedStyleName](CServerConfig::XMLE_Style *a) { return a->attr.name.equals(sanitizedStyleName); };
+  auto comp = [sanitizedStyleName](CServerConfig::XMLE_Style *a) { return a->attr.name == (sanitizedStyleName); };
   auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);
   int index = it == cfg->Style.end() ? -1 : it - cfg->Style.begin();
 

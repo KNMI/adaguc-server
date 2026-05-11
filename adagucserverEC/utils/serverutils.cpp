@@ -5,18 +5,18 @@
 
 bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
   // Get the directory of the file to scan:
-  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
+  CT::string directoryOfFileToScan = layerPathToScan = makeCleanPath(layerPathToScan.c_str());
   directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
-  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan.c_str()) + "/";
+  directoryOfFileToScan = makeCleanPath(directoryOfFileToScan.c_str()) + "/";
 
-  if (layer->attr.type.empty() || layer->attr.type.equals("database")) {
+  if (layer->attr.type.empty() || layer->attr.type == ("database")) {
     if (layer->FilePath.size() > 0) {
-      CT::string filePath = CDirReader::makeCleanPath(layer->FilePath[0]->elementValue.c_str());
+      CT::string filePath = makeCleanPath(layer->FilePath[0]->elementValue.c_str());
       // Directories need to end with a /
       CT::string filePathWithTrailingSlash = filePath + "/";
       CT::string filter = layer->FilePath[0]->attr.filter;
       // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
-      if (layerPathToScan.equals(filePath)) {
+      if (layerPathToScan == (filePath)) {
         return true;
         // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
       } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash.c_str())) {
@@ -43,9 +43,9 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
   auto srvParam = baseRequest.getServerParams();
 
   // Get the directory of the file to scan:
-  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
+  CT::string directoryOfFileToScan = layerPathToScan = makeCleanPath(layerPathToScan.c_str());
   directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
-  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan.c_str()) + "/";
+  directoryOfFileToScan = makeCleanPath(directoryOfFileToScan.c_str()) + "/";
   if (verbose) {
     CDBDebug("directoryOfFileToScan = [%s]", directoryOfFileToScan.c_str());
   }

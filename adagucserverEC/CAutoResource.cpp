@@ -28,7 +28,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
 
     for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
 
-      if (srvParam->cfg->Dataset[j]->attr.enabled.equals("true") && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
+      if (srvParam->cfg->Dataset[j]->attr.enabled == "true" && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
 
         datasetEnabled = true;
         break;
