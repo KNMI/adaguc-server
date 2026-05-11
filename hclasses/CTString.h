@@ -451,6 +451,7 @@ namespace CT {
    */
 
   std::string replace(const std::string &input, const std::string &from, const std::string &to);
+  void replaceSelf(std::string &input, const std::string &from, const std::string &to);
 
   /**
    * Converts a string to lowercase

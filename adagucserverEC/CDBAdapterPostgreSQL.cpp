@@ -34,6 +34,12 @@
 // #define CDBAdapterPostgreSQL_DEBUG
 // #define MEASURETIME
 
+// Table names need to be different between dims like time and height.
+//  Therefor create unique tablenames like tablename_time and tablename_height
+std::string makeCorrectTableName(const std::string &tableName, const std::string &dimName) {
+  return CT::toLowerCase(CT::replace(CT::replace(CT::replace(CT::printf("%s_%s", tableName.c_str(), dimName.c_str()), "-", "_m_"), "+", "_p_"), ".", "_"));
+}
+
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL() {
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("CDBAdapterPostgreSQL()");
@@ -338,7 +344,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
+    if ((checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
     setExceptionType(InvalidDimensionValue);
     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
@@ -482,7 +488,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
+    if ((checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
@@ -659,7 +665,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
     CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
     for (const auto &cfgDimension: dataSource->cfgLayer->Dimension) {
       CT::string dimString = CT::toLowerCase(cfgDimension->attr.name);
-      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
+      CT::string correctedTableName = makeCorrectTableName(tableName, dimString);
       tableList.push_back(correctedTableName);
       CDBDebug("Adding custom table %s", correctedTableName.c_str());
     }
@@ -709,7 +715,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     for (auto &dim: dimensions) {
       CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
-      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dim);
+      CT::string correctedTableName = makeCorrectTableName(tableName, dim);
       mapping[dim] = {correctedTableName, ""};
     }
 #ifdef MEASURETIME
@@ -1188,7 +1194,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
 
     CT::string query;
     if (datasetName != nullptr) {
-      if (CServerParams::checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+      if (checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
         CDBError("Invalid dataset name. ");
         throw(__LINE__);
       }

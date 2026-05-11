@@ -552,6 +552,18 @@ namespace CT {
     return str;
   }
 
+  void replaceSelf(std::string &input, const std::string &from, const std::string &to) {
+    if (from.empty()) {
+      return;
+    }
+    size_t start_pos = 0;
+    while ((start_pos = input.find(from, start_pos)) != std::string::npos) {
+      input.replace(start_pos, from.length(), to);
+      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+    return;
+  }
+
   std::string toLowerCase(const std::string input) {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -626,7 +638,10 @@ namespace CT {
   }
 
   int lastIndexOf(const std::string &input, const std::string pattern) {
-    if (input.length() == 0 || pattern.length() == 0) {
+    if (pattern.length() == 0) {
+      return 0;
+    }
+    if (input.length() == 0) {
       return -1;
     }
     auto pi = strrstr(input.c_str(), pattern.c_str());

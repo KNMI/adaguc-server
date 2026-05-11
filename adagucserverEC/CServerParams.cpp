@@ -30,43 +30,11 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
+#include <algorithm>
 
-// Table names need to be different between dims like time and height.
-//  Therefor create unique tablenames like tablename_time and tablename_height
-CT::string CServerParams::makeCorrectTableName(CT::string tableName, CT::string dimName) {
-  CT::string correctedTableName;
-  correctedTableName.print("%s_%s", tableName.c_str(), dimName.c_str());
-  correctedTableName.replaceSelf("-", "_m_");
-  correctedTableName.replaceSelf("+", "_p_");
-  correctedTableName.replaceSelf(".", "_");
-  correctedTableName.toLowerCaseSelf();
-  return correctedTableName;
-}
+void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
-void CServerParams::showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
-
-int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE_Layer *cfgLayer) {
-  /*
-  if(cfgLayer->Variable.size()!=0){
-  _layerName=cfgLayer->Variable[0]->value.c_str();
-}*/
-
-  CT::string layerName;
-  groupName->copy("");
-  if (cfgLayer->Group.size() == 1) {
-    if (cfgLayer->Group[0]->attr.value.c_str() != NULL) {
-      CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
-      auto groupElements = layerName.split("/");
-      if (groupElements.size() > 0) {
-        groupName->copy(groupElements[0].c_str());
-      }
-    }
-  }
-
-  return 0;
-}
-
-char CServerParams::debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
+char debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
 
 bool CServerParams::isDebugLoggingEnabled() const {
   if (debugLoggingIsEnabled == 0)
@@ -117,9 +85,9 @@ bool CServerParams::isAutoResourceEnabled() {
   return false;
 }
 
-bool CServerParams::checkIfPathHasValidTokens(const std::string &path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
+bool checkIfPathHasValidTokens(const std::string &path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
 
-bool CServerParams::checkForValidTokens(const std::string &path, const std::string &validPATHTokens) {
+bool checkForValidTokens(const std::string &path, const std::string &validPATHTokens) {
   // Check for valid tokens
   size_t pathLength = path.length();
   size_t allowedTokenLength = validPATHTokens.length();
@@ -197,14 +165,9 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
   return false;
 }
 
-void CServerParams::encodeTableName(CT::string *tableName) {
-  tableName->replaceSelf("/", "_");
-  tableName->toLowerCaseSelf();
-}
+void CServerParams::setOnlineResource(std::string r) { _onlineResource = r; };
 
-void CServerParams::setOnlineResource(CT::string r) { _onlineResource = r; };
-
-CT::string CServerParams::getOnlineResource() {
+std::string CServerParams::getOnlineResource() {
   if (_onlineResource.length() > 0) {
     return _onlineResource;
   }
@@ -267,27 +230,21 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<std::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
+std::vector<std::string> getLegendNames(const std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    std::vector<std::string> legendList;
-    legendList.push_back("rainbow");
-    return legendList;
+    return {"rainbow"};
   }
   std::vector<std::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
-    CT::string legendValue = Legend[j]->elementValue.c_str();
-    std::vector<CT::string> l1 = legendValue.split(",");
-    for (auto li: l1) {
-      if (li.length() > 0) {
-        stringList.push_back(li);
-      }
-    }
+    std::vector<std::string> l1 = CT::split(Legend[j]->elementValue, ",");
+    std::erase_if(l1, [](const std::string &s) { return s.empty(); });
+    stringList.insert(stringList.end(), l1.begin(), l1.end());
   }
   return stringList;
 }
 
-int CServerParams::dataRestriction = -1;
-int CServerParams::checkDataRestriction() {
+int dataRestriction = -1;
+int checkDataRestriction() {
   if (dataRestriction != -1) return dataRestriction;
 
   // By default no restrictions
@@ -319,7 +276,8 @@ int CServerParams::checkDataRestriction() {
 }
 
 const char *timeFormatAllowedChars = "0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
-bool CServerParams::checkTimeFormat(const std::string &timeToCheck) {
+
+bool checkTimeFormat(const std::string &timeToCheck) {
   if (timeToCheck.length() < 1) return false;
   //  bool isValidTime = false;
   // First test wether invalid characters are in this string
@@ -371,11 +329,11 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
 }
 
 int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
-  CT::string configFileData = "";
+  std::string configFileData = "";
 
   try {
     try {
-      configFileData = CReadFile::open(pszConfigFile.c_str());
+      configFileData = readFile(pszConfigFile);
     } catch (int e) {
       CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
       return 1;
@@ -388,28 +346,28 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
     if (pszADAGUC_PATH != NULL) {
       CT::string adagucPath = makeCleanPath(pszADAGUC_PATH);
       adagucPath = adagucPath + "/";
-      configFileData.replaceSelf("{ADAGUC_PATH}", adagucPath.c_str());
+      CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath.c_str());
     }
 
     /* Substitute ADAGUC_TMP */
     const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
-    configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
+    CT::replaceSelf(configFileData, "{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
 
     /* Substitute ADAGUC_DB */
     const char *pszADAGUC_DB = getenv("ADAGUC_DB");
-    if (pszADAGUC_DB != NULL) configFileData.replaceSelf("{ADAGUC_DB}", pszADAGUC_DB);
+    if (pszADAGUC_DB != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DB}", pszADAGUC_DB);
 
     /* Substitute ADAGUC_DATASET_DIR */
     const char *pszADAGUC_DATASET_DIR = getenv("ADAGUC_DATASET_DIR");
-    if (pszADAGUC_DATASET_DIR != NULL) configFileData.replaceSelf("{ADAGUC_DATASET_DIR}", pszADAGUC_DATASET_DIR);
+    if (pszADAGUC_DATASET_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DATASET_DIR}", pszADAGUC_DATASET_DIR);
 
     /* Substitute ADAGUC_DATA_DIR */
     const char *pszADAGUC_DATA_DIR = getenv("ADAGUC_DATA_DIR");
-    if (pszADAGUC_DATA_DIR != NULL) configFileData.replaceSelf("{ADAGUC_DATA_DIR}", pszADAGUC_DATA_DIR);
+    if (pszADAGUC_DATA_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DATA_DIR}", pszADAGUC_DATA_DIR);
 
     /* Substitute ADAGUC_AUTOWMS_DIR */
     const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
-    if (pszADAGUC_AUTOWMS_DIR != NULL) configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+    if (pszADAGUC_AUTOWMS_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
 #ifdef MEASURETIME
     StopWatch_Stop("CServerParams::_parseConfigFile Start extra substitutions");
 #endif
@@ -426,20 +384,19 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
                 const char *environmentVarName = env->attr.name.c_str();
                 const char *environmentVarDefault = env->attr.defaultVal.c_str();
                 const char *environmentValue = getenv(environmentVarName);
-                CT::string substituteName;
-                substituteName.print("{%s}", environmentVarName);
+                std::string substituteName = CT::printf("{%s}", environmentVarName);
                 const char *environmentSubstituteName = substituteName.c_str();
 
                 if (environmentValue != NULL) {
                   if (verbose) {
                     CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
                   }
-                  configFileData.replaceSelf(environmentSubstituteName, environmentValue);
+                  CT::replaceSelf(configFileData, environmentSubstituteName, environmentValue);
                 } else {
                   if (verbose) {
                     CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
                   }
-                  configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
+                  CT::replaceSelf(configFileData, environmentSubstituteName, environmentVarDefault);
                 }
               } else {
                 CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
@@ -475,7 +432,7 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
   }
 }
 
-CT::string CServerParams::getResponseHeaders(int mode) {
+std::string CServerParams::getResponseHeaders(int mode) {
   auto tracingHeaders = traceTimingsGetHeader();
   if (cfg != nullptr && cfg->Settings.size() > 0) {
     CT::string cacheString = "\r\nCache-Control:max-age=";
@@ -560,7 +517,7 @@ int CServerParams::getServerLegendIndexByName(std::string legendName) {
   return it == cfg->Legend.end() ? -1 : it - cfg->Legend.begin();
 }
 
-int CServerParams::getServerStyleIndexByName(CT::string styleName) {
+int CServerParams::getServerStyleIndexByName(std::string styleName) {
   if (styleName.empty()) {
     CDBError("No style name provided");
     return -1;
@@ -569,7 +526,7 @@ int CServerParams::getServerStyleIndexByName(CT::string styleName) {
     return -1;
   }
   // Remove last slash (/). E.g. windbarbs/shaded => windbarbs
-  std::string sanitizedStyleName = styleName.substring(0, styleName.indexOf("/"));
+  std::string sanitizedStyleName = CT::substring(styleName, 0, CT::indexOf(styleName, "/"));
 
   auto comp = [sanitizedStyleName](CServerConfig::XMLE_Style *a) { return a->attr.name == (sanitizedStyleName); };
   auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);

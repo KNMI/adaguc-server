@@ -134,7 +134,7 @@ int CRequest::process_wms_getcap_request() {
 
   const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
   if (pszADAGUCWriteToFile != NULL) {
-    CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
+    writeFile(pszADAGUCWriteToFile, XMLdocument);
   } else {
     printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
@@ -506,7 +506,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
       auto dimValues = CT::split(dim.value, ",");
       for (auto &dimValue: dimValues) {
-        if (!CServerParams::checkTimeFormat(dimValue)) {
+        if (!checkTimeFormat(dimValue)) {
           CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
           throw ServiceExceptionType::InvalidDimensionValue;
         }
@@ -702,7 +702,7 @@ int CRequest::process_all_layers() {
       if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
       const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
       if (pszADAGUCWriteToFile != NULL) {
-        CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
+        writeFile(pszADAGUCWriteToFile, XMLDocument);
       } else {
         printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", XMLDocument.c_str());
@@ -1556,7 +1556,7 @@ int CRequest::process_querystring() {
                                )) {
 
       if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO || srvParam->requestType == REQUEST_WMS_GETPOINTVALUE || srvParam->requestType == REQUEST_WMS_GETHISTOGRAM) {
-        int status = CServerParams::checkDataRestriction();
+        int status = checkDataRestriction();
         if ((status & ALLOW_GFI) == false) {
           CDBError("ADAGUC Server: This layer is not queryable.");
           return 1;
@@ -1769,7 +1769,7 @@ int CRequest::process_querystring() {
       return status;
     }
     if (dErrorOccured == 0 && srvParam->requestType == REQUEST_WMS_GETMETADATA) {
-      int status = CServerParams::checkDataRestriction();
+      int status = checkDataRestriction();
       if ((status & ALLOW_METADATA) == false) {
         CDBError("ADAGUC Server: GetMetaData is restricted");
         return 1;
@@ -1814,7 +1814,7 @@ int CRequest::process_querystring() {
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WCS) {
     srvParam->OGCVersion = WCS_VERSION_1_0;
-    int status = CServerParams::checkDataRestriction();
+    int status = checkDataRestriction();
     if ((status & ALLOW_WCS) == false) {
       CDBError("ADAGUC Server: WCS Service is disabled.");
       return 1;

@@ -38,7 +38,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->layerMetadata.wmsgroup = (&layerGroup);
 
   // Check if this layer is querable
-  int datasetRestriction = CServerParams::checkDataRestriction();
+  int datasetRestriction = checkDataRestriction();
   if ((datasetRestriction & ALLOW_GFI)) {
     metadataLayer->layerMetadata.isQueryable = 1;
   }

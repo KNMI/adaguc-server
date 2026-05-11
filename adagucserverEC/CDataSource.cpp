@@ -260,10 +260,10 @@ std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::
     CDBDebug("getLegendListForDataSource");
   }
   if (this->cfgLayer->Legend.size() > 0) {
-    return CServerParams::getLegendNames(this->cfgLayer->Legend);
+    return getLegendNames(this->cfgLayer->Legend);
   } else {
     if (style != NULL) {
-      return CServerParams::getLegendNames(style->Legend);
+      return getLegendNames(style->Legend);
     }
   }
   //  CDBError("No legendlist for layer %s",this->layerName.c_str());

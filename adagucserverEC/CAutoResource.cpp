@@ -40,7 +40,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       return 1;
     }
 
-    if (CServerParams::checkForValidTokens(srvParam->datasetLocation.c_str(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+    if (checkForValidTokens(srvParam->datasetLocation.c_str(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
       CDBError("Invalid dataset name. ");
       return 1;
     }
@@ -171,7 +171,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Error messages should be the same for different 'dir' attempts, otherwise someone can find out directory structures
     if (isValidResource == false) {
       if (srvParam->isAutoLocalFileResourceEnabled()) {
-        if (srvParam->checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str()) == false) {
+        if (checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str()) == false) {
           CDBError("Invalid token(s), unable to read file %s", srvParam->autoResourceLocation.c_str());
           return 1;
         }

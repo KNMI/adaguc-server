@@ -93,20 +93,20 @@ int CDFPNGReader::open(const char *fileName) {
   }
 
   try {
-    CT::string infoFile = fileName;
-    infoFile.concat(".info");
-    CT::string infoData = CReadFile::open(infoFile.c_str());
-    std::vector<CT::string> lines = infoData.split("\n");
+    std::string infoFile = fileName;
+    infoFile += ".info";
+    std::string infoData = readFile(infoFile);
+    std::vector<std::string> lines = CT::split(infoData, "\n");
 
     for (size_t l = 0; l < lines.size(); l++) {
       CDBDebug("Info file line %s", lines[l].c_str());
-      if (lines[l].startsWith("proj4_params=")) {
+      if (CT::startsWith(lines[l], "proj4_params=")) {
         CT::string proj4Params = lines[l];
         proj4Params.substringSelf(13, -1);
         CDBDebug("proj4params=%s", proj4Params.c_str());
         CRS->setAttributeText("proj4", proj4Params.c_str());
       }
-      if (lines[l].startsWith("bbox=")) {
+      if (CT::startsWith(lines[l], "bbox=")) {
         CT::string bbox = lines[l];
         bbox.substringSelf(5, -1);
         std::vector<CT::string> bboxItems = bbox.split(",");
