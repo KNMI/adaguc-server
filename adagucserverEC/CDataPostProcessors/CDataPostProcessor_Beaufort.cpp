@@ -4,7 +4,7 @@
 
 const char *CDPPBeaufort::getId() { return "beaufort"; }
 int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("beaufort")) {
+  if (proc->attr.algorithm == ("beaufort")) {
     if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
       if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
         CDBError("1 or 2 variables are needed for beaufort, found %lu", dataSource->getNumDataObjects());

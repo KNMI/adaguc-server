@@ -317,7 +317,7 @@ public:
               for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
                 CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
                 // Algorithm ax+b:
-                if (proc->attr.algorithm.equals("ax+b")) {
+                if (proc->attr.algorithm == ("ax+b")) {
                   double dfadd_offset = 0;
                   double dfscale_factor = 1;
 
@@ -391,7 +391,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
   //   for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
   //     CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
   //     //Algorithm ax+b:
-  //     if(proc->attr.algorithm.equals("ax+b")){
+  //     if(proc->attr.algorithm ==("ax+b")){
   //       uniqueRequest.readDataAsCDFDouble = true;
   //       break;
   //     }

@@ -6,7 +6,7 @@
 
 const char *CDPPClipMinMax::getId() { return "clipminmax"; }
 int CDPPClipMinMax::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals("clipminmax")) {
+  if (proc->attr.algorithm == ("clipminmax")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;

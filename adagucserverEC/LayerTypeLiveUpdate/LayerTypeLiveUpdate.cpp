@@ -171,9 +171,9 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   return status;
 }
 
-static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const CT::string &postProcName) {
+static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const std::string &postProcName) {
 
-  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc *p) { return p != nullptr && p->attr.algorithm.equals(postProcName); });
+  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc *p) { return p != nullptr && p->attr.algorithm == (postProcName); });
 
   return (it == vec.end()) ? -1 : int(it - vec.begin());
 }

@@ -1516,7 +1516,7 @@ int CRequest::process_querystring() {
               srvParam->Format = (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str());
             }
             if (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.empty() == false) {
-              srvParam->imageQuality = srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.toInt();
+              srvParam->imageQuality = atoi(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.c_str());
             }
             break;
           }

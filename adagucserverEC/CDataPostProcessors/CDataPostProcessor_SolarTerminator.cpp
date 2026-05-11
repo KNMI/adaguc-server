@@ -22,7 +22,7 @@
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 
 int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("solarterminator")) {
+  if (proc->attr.algorithm == ("solarterminator")) {
     if (dataSource->getNumDataObjects() < 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       CDBError("1 variable is needed for solarterminator, found %lu", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
@@ -52,7 +52,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       dataSource->dWidth = dataSource->srvParams->geoParams.width / DEFAULT_STRIDING;
       dataSource->dHeight = dataSource->srvParams->geoParams.height / DEFAULT_STRIDING;
       if (proc->attr.stride.empty() == false) {
-        float stride = proc->attr.stride.toFloat();
+        float stride = atof(proc->attr.stride.c_str());
         dataSource->dWidth = dataSource->srvParams->geoParams.width / stride;
         dataSource->dHeight = dataSource->srvParams->geoParams.height / stride;
       }

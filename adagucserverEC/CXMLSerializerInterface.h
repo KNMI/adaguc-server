@@ -67,11 +67,9 @@ int parseInt(const attribute &attrCfg);
 /**
  * Base objects
  */
-class CXMLObjectInterface {
-public:
+struct CXMLObjectInterface {
   std::string elementValue;
   virtual ~CXMLObjectInterface() {}
-
   virtual CXMLObjectInterface *addElement(const std::string &) { return nullptr; };
   virtual void handleValue() {};
   virtual bool addAttribute(const attribute &) { return false; }

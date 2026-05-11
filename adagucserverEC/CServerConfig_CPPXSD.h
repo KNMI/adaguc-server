@@ -33,19 +33,16 @@
 // Struct for keeping settings for a datapostprocessor. Can be assigned to new structs by assigment operator. Also used in CDataPostProcessor.cpp
 struct XMLE_DataPostProcAttributes {
   int postProcIndexInLayer = 0;
-  CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
+  std::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
 };
 
-class CServerConfig : public CXMLObjectInterface {
-public:
-  class XMLE_palette : public CXMLObjectInterface {
-  public:
+struct CServerConfig : CXMLObjectInterface {
+  struct XMLE_palette : CXMLObjectInterface {
     XMLE_palette() {
       attr.alpha = 255;
       attr.index = -1;
     }
-    class Cattr {
-    public:
+    struct Cattr {
       int min, max, index, red, green, blue, alpha;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -84,11 +81,9 @@ public:
     }
   };
 
-  class XMLE_WMSFormat : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, format, quality;
+  struct XMLE_WMSFormat : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, format, quality;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("name" == attrCfg.name) {
@@ -105,10 +100,8 @@ public:
     }
   };
 
-  class XMLE_WMSExceptions : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_WMSExceptions : CXMLObjectInterface {
+    struct Cattr {
       CT::string defaultValue, force;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -123,10 +116,8 @@ public:
     }
   };
 
-  class XMLE_Logging : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Logging : CXMLObjectInterface {
+    struct Cattr {
       CT::string debug;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -138,10 +129,8 @@ public:
     }
   };
 
-  class XMLE_Thinning : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Thinning : CXMLObjectInterface {
+    struct Cattr {
       CT::string radius;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -153,10 +142,8 @@ public:
     }
   };
 
-  class XMLE_FilterPoints : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_FilterPoints : CXMLObjectInterface {
+    struct Cattr {
       CT::string use;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -168,10 +155,8 @@ public:
     }
   };
 
-  class XMLE_Symbol : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Symbol : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, coordinates;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -186,8 +171,7 @@ public:
     }
   };
 
-  class XMLE_Vector : public CXMLObjectInterface {
-  public:
+  struct XMLE_Vector : CXMLObjectInterface {
     XMLE_Vector() {
       attr.scale = 1.0;
       attr.outlinewidth = 4.5;
@@ -197,8 +181,7 @@ public:
       attr.min = -DBL_MAX;
       attr.max = DBL_MAX;
     }
-    class Cattr {
-    public:
+    struct Cattr {
       CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, fillcolor, fontfile;
       float scale;
       double min, max, outlinewidth, fontSize, linewidth, discradius;
@@ -257,8 +240,7 @@ public:
     }
   };
 
-  class XMLE_Point : public CXMLObjectInterface {
-  public:
+  struct XMLE_Point : CXMLObjectInterface {
     XMLE_Point() {
       attr.min = -DBL_MAX;
       attr.max = DBL_MAX;
@@ -266,8 +248,7 @@ public:
       attr.maxpointspercell = -1;
       attr.maxpointcellsize = -1;
     }
-    class Cattr {
-    public:
+    struct Cattr {
       CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, textformat, plotstationid, pointstyle, symbol;
       double min, max;
       int maxpointspercell, maxpointcellsize;
@@ -329,12 +310,10 @@ public:
     }
   };
 
-  class XMLE_Legend : public CXMLObjectInterface {
-  public:
+  struct XMLE_Legend : CXMLObjectInterface {
     std::vector<XMLE_palette *> palette;
     ~XMLE_Legend() { XMLE_DELOBJ(palette); }
-    class Cattr {
-    public:
+    struct Cattr {
       CT::string name, type, tickround, tickinterval, fixedclasses, file, textformatting;
     } attr;
     CXMLObjectInterface *addElement(const std::string &elName) {
@@ -369,20 +348,18 @@ public:
       return false;
     }
   };
-  class XMLE_Scale : public CXMLObjectInterface {};
-  class XMLE_Offset : public CXMLObjectInterface {};
-  class XMLE_Min : public CXMLObjectInterface {};
-  class XMLE_Max : public CXMLObjectInterface {};
+  struct XMLE_Scale : CXMLObjectInterface {};
+  struct XMLE_Offset : CXMLObjectInterface {};
+  struct XMLE_Min : CXMLObjectInterface {};
+  struct XMLE_Max : CXMLObjectInterface {};
 
   /*Deprecated*/
-  class XMLE_ContourIntervalL : public CXMLObjectInterface {};
+  struct XMLE_ContourIntervalL : CXMLObjectInterface {};
   /*Deprecated*/
-  class XMLE_ContourIntervalH : public CXMLObjectInterface {};
+  struct XMLE_ContourIntervalH : CXMLObjectInterface {};
 
-  class XMLE_ContourLine : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_ContourLine : CXMLObjectInterface {
+    struct Cattr {
       CT::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -421,10 +398,8 @@ public:
     }
   };
 
-  class XMLE_ShadeInterval : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_ShadeInterval : CXMLObjectInterface {
+    struct Cattr {
       CT::string min, max, label, fillcolor, bgcolor;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -448,10 +423,8 @@ public:
     }
   };
 
-  class XMLE_SymbolInterval : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_SymbolInterval : CXMLObjectInterface {
+    struct Cattr {
       CT::string min, max, binary_and;
       CT::string file;
       CT::string offsetX, offsetY;
@@ -480,11 +453,9 @@ public:
     }
   };
 
-  class XMLE_SmoothingFilter : public CXMLObjectInterface {};
-  class XMLE_StandardNames : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_SmoothingFilter : CXMLObjectInterface {};
+  struct XMLE_StandardNames : CXMLObjectInterface {
+    struct Cattr {
       CT::string units, standard_name, variable_name;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -502,10 +473,8 @@ public:
     }
   };
 
-  class XMLE_LegendGraphic : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_LegendGraphic : CXMLObjectInterface {
+    struct Cattr {
       CT::string value;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -517,11 +486,9 @@ public:
     }
   };
 
-  class XMLE_Log : public CXMLObjectInterface {};
-  class XMLE_ValueRange : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Log : CXMLObjectInterface {};
+  struct XMLE_ValueRange : CXMLObjectInterface {
+    struct Cattr {
       CT::string min, max;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -536,10 +503,8 @@ public:
     }
   };
 
-  class XMLE_ContourFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_ContourFont : CXMLObjectInterface {
+    struct Cattr {
       CT::string location, size;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -553,10 +518,8 @@ public:
       return false;
     }
   };
-  class XMLE_TitleFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_TitleFont : CXMLObjectInterface {
+    struct Cattr {
       CT::string location, size;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -570,45 +533,8 @@ public:
       return false;
     }
   };
-  class XMLE_SubTitleFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
-    } attr;
-    bool addAttribute(const attribute &attrCfg) {
-      if ("size" == attrCfg.name) {
-        attr.size = attrCfg.value;
-        return true;
-      } else if ("location" == attrCfg.name) {
-        attr.location = attrCfg.value;
-        return true;
-      }
-      return false;
-    }
-  };
-
-  class XMLE_DimensionFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
-    } attr;
-    bool addAttribute(const attribute &attrCfg) {
-      if ("size" == attrCfg.name) {
-        attr.size = attrCfg.value;
-        return true;
-      } else if ("location" == attrCfg.name) {
-        attr.location = attrCfg.value;
-        return true;
-      }
-      return false;
-    }
-  };
-  class XMLE_GridFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_SubTitleFont : CXMLObjectInterface {
+    struct Cattr {
       CT::string location, size;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -623,10 +549,23 @@ public:
     }
   };
 
-  class XMLE_LegendFont : public XMLE_GridFont {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_DimensionFont : CXMLObjectInterface {
+    struct Cattr {
+      CT::string location, size;
+    } attr;
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
+        return true;
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
+        return true;
+      }
+      return false;
+    }
+  };
+  struct XMLE_GridFont : CXMLObjectInterface {
+    struct Cattr {
       CT::string location, size;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -641,10 +580,24 @@ public:
     }
   };
 
-  class XMLE_Dir : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_LegendFont : XMLE_GridFont {
+    struct Cattr {
+      CT::string location, size;
+    } attr;
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
+        return true;
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
+        return true;
+      }
+      return false;
+    }
+  };
+
+  struct XMLE_Dir : CXMLObjectInterface {
+    struct Cattr {
       CT::string basedir, prefix;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -659,10 +612,8 @@ public:
     }
   };
 
-  class XMLE_ImageText : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_ImageText : CXMLObjectInterface {
+    struct Cattr {
       CT::string attribute;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -674,16 +625,14 @@ public:
     }
   };
 
-  class XMLE_AutoResource : public CXMLObjectInterface {
-  public:
+  struct XMLE_AutoResource : CXMLObjectInterface {
     std::vector<XMLE_Dir *> Dir;
     std::vector<XMLE_ImageText *> ImageText;
     ~XMLE_AutoResource() {
       XMLE_DELOBJ(Dir);
       XMLE_DELOBJ(ImageText);
     }
-    class Cattr {
-    public:
+    struct Cattr {
       CT::string enableautoopendap, enablelocalfile;
     } attr;
 
@@ -708,10 +657,8 @@ public:
     }
   };
 
-  class XMLE_Dataset : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Dataset : CXMLObjectInterface {
+    struct Cattr {
       CT::string enabled, location;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -726,10 +673,8 @@ public:
     }
   };
 
-  class XMLE_Include : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Include : CXMLObjectInterface {
+    struct Cattr {
       CT::string location;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -741,10 +686,8 @@ public:
     }
   };
 
-  class XMLE_IncludeStyle : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_IncludeStyle : CXMLObjectInterface {
+    struct Cattr {
       CT::string name;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -756,10 +699,8 @@ public:
     }
   };
 
-  class XMLE_NameMapping : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_NameMapping : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, title, abstract;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -777,10 +718,8 @@ public:
     }
   };
 
-  class XMLE_FeatureInterval : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_FeatureInterval : CXMLObjectInterface {
+    struct Cattr {
       CT::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
       CT::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
       CT::string labelpadding;
@@ -833,10 +772,8 @@ public:
     }
   };
 
-  class XMLE_Stippling : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Stippling : CXMLObjectInterface {
+    struct Cattr {
       CT::string distancex, distancey, discradius, mode, color;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -860,12 +797,10 @@ public:
     }
   };
 
-  class XMLE_RenderMethod : public CXMLObjectInterface {};
+  struct XMLE_RenderMethod : CXMLObjectInterface {};
 
-  class XMLE_RenderSettings : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_RenderSettings : CXMLObjectInterface {
+    struct Cattr {
       CT::string settings, striding, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline, drawgrid;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -910,8 +845,7 @@ public:
     }
   };
 
-  class XMLE_DataPostProc : public CXMLObjectInterface {
-  public:
+  struct XMLE_DataPostProc : CXMLObjectInterface {
     XMLE_DataPostProcAttributes attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("a" == attrCfg.name) {
@@ -967,8 +901,7 @@ public:
     }
   };
 
-  class XMLE_Style : public CXMLObjectInterface {
-  public:
+  struct XMLE_Style : CXMLObjectInterface {
     std::vector<XMLE_Thinning *> Thinning;
     std::vector<XMLE_Point *> Point;
     std::vector<XMLE_Vector *> Vector;
@@ -1024,8 +957,7 @@ public:
       XMLE_DELOBJ(DataPostProc);
       XMLE_DELOBJ(IncludeStyle);
     }
-    class Cattr {
-    public:
+    struct Cattr {
       CT::string name, title, abstract;
     } attr;
     CXMLObjectInterface *addElement(const std::string &elName) {
@@ -1101,15 +1033,13 @@ public:
       return false;
     }
   };
-  class XMLE_Styles : public CXMLObjectInterface {};
-  class XMLE_Title : public CXMLObjectInterface {};
+  struct XMLE_Styles : CXMLObjectInterface {};
+  struct XMLE_Title : CXMLObjectInterface {};
 
-  class XMLE_MetadataURL : public CXMLObjectInterface {};
+  struct XMLE_MetadataURL : CXMLObjectInterface {};
 
-  class XMLE_AuthorityURL : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_AuthorityURL : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, onlineresource;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1124,10 +1054,8 @@ public:
     }
   };
 
-  class XMLE_Identifier : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Identifier : CXMLObjectInterface {
+    struct Cattr {
       CT::string authority, id;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1142,10 +1070,8 @@ public:
     }
   };
 
-  class XMLE_Name : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Name : CXMLObjectInterface {
+    struct Cattr {
       CT::string force;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1156,13 +1082,11 @@ public:
       return false;
     }
   };
-  class XMLE_Abstract : public CXMLObjectInterface {};
+  struct XMLE_Abstract : CXMLObjectInterface {};
 
-  class XMLE_DataBaseTable : public CXMLObjectInterface {};
-  class XMLE_Variable : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_DataBaseTable : CXMLObjectInterface {};
+  struct XMLE_Variable : CXMLObjectInterface {
+    struct Cattr {
       CT::string orgname, long_name, standard_name, units;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1182,10 +1106,8 @@ public:
       return false;
     }
   };
-  class XMLE_DataReader : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_DataReader : CXMLObjectInterface {
+    struct Cattr {
       CT::string useendtime;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1196,10 +1118,8 @@ public:
       return false;
     }
   };
-  class XMLE_FilePath : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_FilePath : CXMLObjectInterface {
+    struct Cattr {
       CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
     void handleValue() { this->elementValue = CDirReader::makeCleanPath(this->elementValue.c_str()); }
@@ -1228,10 +1148,8 @@ public:
     }
   };
 
-  class XMLE_TileSettings : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_TileSettings : CXMLObjectInterface {
+    struct Cattr {
       CT::string tilewidthpx = "1024", tileheightpx = "1024", minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1273,10 +1191,8 @@ public:
     }
   };
 
-  class XMLE_Group : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Group : CXMLObjectInterface {
+    struct Cattr {
       CT::string value;
       CT::string collection;
     } attr;
@@ -1292,10 +1208,8 @@ public:
       return false;
     }
   };
-  class XMLE_LatLonBox : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_LatLonBox : CXMLObjectInterface {
+    struct Cattr {
       float minx, miny, maxx, maxy;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1316,10 +1230,8 @@ public:
     }
   };
 
-  class XMLE_Dimension : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Dimension : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
       CT::string type = "dimtype_none";
@@ -1365,10 +1277,8 @@ public:
     }
   };
 
-  class XMLE_Path : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Path : CXMLObjectInterface {
+    struct Cattr {
       CT::string value;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1379,10 +1289,8 @@ public:
       return false;
     }
   };
-  class XMLE_TempDir : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_TempDir : CXMLObjectInterface {
+    struct Cattr {
       CT::string value;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1394,10 +1302,8 @@ public:
     }
   };
 
-  class XMLE_Environment : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Environment : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, defaultVal;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1411,10 +1317,8 @@ public:
       return false;
     }
   };
-  class XMLE_Settings : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Settings : CXMLObjectInterface {
+    struct Cattr {
       CT::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
       CT::string enable_edr = "true";
     } attr;
@@ -1441,10 +1345,8 @@ public:
       return false;
     }
   };
-  class XMLE_OnlineResource : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_OnlineResource : CXMLObjectInterface {
+    struct Cattr {
       CT::string value;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1455,10 +1357,8 @@ public:
       return false;
     }
   };
-  class XMLE_DataBase : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_DataBase : CXMLObjectInterface {
+    struct Cattr {
       CT::string parameters, maxquerylimit;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1472,10 +1372,8 @@ public:
       return false;
     }
   };
-  class XMLE_Projection : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Projection : CXMLObjectInterface {
+    struct Cattr {
       CT::string id, proj4;
     } attr;
     std::vector<XMLE_LatLonBox *> LatLonBox;
@@ -1498,10 +1396,8 @@ public:
       return nullptr;
     }
   };
-  class XMLE_Cache : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Cache : CXMLObjectInterface {
+    struct Cattr {
       CT::string enabled, optimizeextent;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1515,10 +1411,8 @@ public:
       return false;
     }
   };
-  class XMLE_WCSFormat : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_WCSFormat : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, driver, mimetype, options;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1542,8 +1436,7 @@ public:
     }
   };
 
-  class XMLE_RootLayer : public CXMLObjectInterface {
-  public:
+  struct XMLE_RootLayer : CXMLObjectInterface {
     std::vector<XMLE_Name *> Name;
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
@@ -1564,11 +1457,10 @@ public:
     }
   };
 
-  class XMLE_ViewServiceCSW : public CXMLObjectInterface {};
-  class XMLE_DatasetCSW : public CXMLObjectInterface {};
+  struct XMLE_ViewServiceCSW : CXMLObjectInterface {};
+  struct XMLE_DatasetCSW : CXMLObjectInterface {};
 
-  class XMLE_Inspire : public CXMLObjectInterface {
-  public:
+  struct XMLE_Inspire : CXMLObjectInterface {
     std::vector<XMLE_ViewServiceCSW *> ViewServiceCSW;
     std::vector<XMLE_DatasetCSW *> DatasetCSW;
     std::vector<XMLE_AuthorityURL *> AuthorityURL;
@@ -1594,8 +1486,7 @@ public:
     }
   };
 
-  class XMLE_WMS : public CXMLObjectInterface {
-  public:
+  struct XMLE_WMS : CXMLObjectInterface {
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
     std::vector<XMLE_RootLayer *> RootLayer;
@@ -1655,10 +1546,8 @@ public:
     }
   };
 
-  class XMLE_OpenDAP : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_OpenDAP : CXMLObjectInterface {
+    struct Cattr {
       CT::string enabled, path;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1673,8 +1562,7 @@ public:
     }
   };
 
-  class XMLE_WCS : public CXMLObjectInterface {
-  public:
+  struct XMLE_WCS : CXMLObjectInterface {
     std::vector<XMLE_Name *> Name;
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
@@ -1699,10 +1587,8 @@ public:
     }
   };
 
-  class XMLE_CacheDocs : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_CacheDocs : CXMLObjectInterface {
+    struct Cattr {
       CT::string enabled, cachefile;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1717,10 +1603,8 @@ public:
     }
   };
 
-  class XMLE_WMSLayer : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_WMSLayer : CXMLObjectInterface {
+    struct Cattr {
       CT::string service, layer, bgcolor, style;
       bool transparent;
 
@@ -1750,10 +1634,8 @@ public:
       return false;
     }
   };
-  class XMLE_Position : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Position : CXMLObjectInterface {
+    struct Cattr {
       CT::string top, left, right, bottom;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1774,10 +1656,8 @@ public:
     }
   };
 
-  class XMLE_Grid : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Grid : CXMLObjectInterface {
+    struct Cattr {
       CT::string name, precision, resolution;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1795,10 +1675,8 @@ public:
     }
   };
 
-  class XMLE_AdditionalLayer : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_AdditionalLayer : CXMLObjectInterface {
+    struct Cattr {
       CT::string replace, style;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1813,10 +1691,8 @@ public:
     }
   };
 
-  class XMLE_Layer : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_Layer : CXMLObjectInterface {
+    struct Cattr {
       CT::string type, hidden;
       CT::string enable_edr = "";
     } attr;
@@ -1988,8 +1864,7 @@ public:
     }
   };
 
-  class XMLE_Configuration : public CXMLObjectInterface {
-  public:
+  struct XMLE_Configuration : CXMLObjectInterface {
     std::vector<XMLE_Legend *> Legend;
     std::vector<XMLE_WMS *> WMS;
     std::vector<XMLE_WCS *> WCS;

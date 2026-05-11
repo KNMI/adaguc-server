@@ -53,10 +53,10 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
   // Not in lookup, use the a an b from DataProcessor configuration
   LookupUnits l = {.a = 1, .b = 0, .units = "", .from_units = ""};
   if (!proc.attr.a.empty()) {
-    l.a = proc.attr.a.toDouble();
+    l.a = atof(proc.attr.a.c_str());
   }
   if (!proc.attr.b.empty()) {
-    l.b = proc.attr.b.toDouble();
+    l.b = atof(proc.attr.b.c_str());
   }
   if (!proc.attr.units.empty()) {
     l.units = proc.attr.units;

@@ -7,7 +7,7 @@
 
 const char *CDPPAddFeatures::getId() { return CDATAPOSTPROCESSOR_ADDFEATURES_ID; }
 int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_ADDFEATURES_ID)) {
+  if (proc->attr.algorithm == (CDATAPOSTPROCESSOR_ADDFEATURES_ID)) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
