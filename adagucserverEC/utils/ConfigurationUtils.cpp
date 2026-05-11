@@ -1,5 +1,6 @@
 #include "./ConfigurationUtils.h"
 #include <CAutoResource.h>
+#include "Definitions.h"
 #include "parseQueryString.h"
 #include <algorithm>
 #include <ranges>
@@ -44,13 +45,18 @@ int setCRequestConfigFromEnvironment(CRequest *request, CT::string additionalDat
       configWithAdditionalDataset.concat(additionalDataset);
     }
 
+#ifdef MEASURETIME
+    StopWatch_Stop("Start parseAndCheckConfigFile");
+#endif
     int status = parseAndCheckConfigFile(configWithAdditionalDataset, request->getServerParams());
 
     /* Check logging level */
     if (request->getServerParams()->isDebugLoggingEnabled() == false) {
       setDebugFunction(serverLogFunctionNothing);
     }
-
+#ifdef MEASURETIME
+    StopWatch_Stop("Done parseAndCheckConfigFile");
+#endif
     return status;
   } else {
     CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");
@@ -67,6 +73,10 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   // The configfile can be a comma separated list of configuration files
   std::vector<std::string> configFileList = CT::split(configFile, ",");
 
+#ifdef MEASURETIME
+  StopWatch_Stop("!start first parseConfigFile %s", configFile.c_str());
+#endif
+
   // Parse the main configuration file
   int status = srvParam->parseConfigFile(configFileList[0]);
   if (status != 0 || srvParam->configObj->Configuration.size() != 1) {
@@ -77,13 +87,20 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   srvParam->configFileName = configFile;
   srvParam->cfg = srvParam->configObj->Configuration[0];
 
+#ifdef MEASURETIME
+  StopWatch_Stop("!start next parseConfigFile");
+#endif
   // Include additional config files given as argument
   if (configFileList.size() > 1) {
     for (size_t j = 1; j < configFileList.size() - 1; j++) {
       if (srvParam->verbose) {
         CDBDebug("Include '%s'", configFileList[j].c_str());
       }
+
       status = srvParam->parseConfigFile(configFileList[j]);
+#ifdef MEASURETIME
+      StopWatch_Stop("!done  %s", configFileList[j].c_str());
+#endif
       if (status != 0) {
         CDBError("There is an error with include '%s'", configFileList[j].c_str());
         return 1;
@@ -97,7 +114,14 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
       CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
     }
 
+#ifdef MEASURETIME
+    StopWatch_Stop("start configureDataset");
+#endif
+
     status = CAutoResource::configureDataset(srvParam, false);
+#ifdef MEASURETIME
+    StopWatch_Stop("done configureDataset");
+#endif
     if (status != 0) {
       CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
       return status;
@@ -114,7 +138,14 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
       if (srvParam->verbose) {
         CDBDebug("Include '%s'", include->attr.location.c_str());
       }
+
+#ifdef MEASURETIME
+      StopWatch_Stop("!start  %s", include->attr.location.c_str());
+#endif
       status = srvParam->parseConfigFile(include->attr.location);
+#ifdef MEASURETIME
+      StopWatch_Stop("!done  %s", include->attr.location.c_str());
+#endif
       if (status != 0) {
         CDBError("There is an error with include '%s'", include->attr.location.c_str());
         return 1;
@@ -138,79 +169,79 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
     }
   }
 
-  // Check for autoscan elements
-  layerIndex = -1;
-  for (const auto &layer: srvParam->cfg->Layer) {
-    layerIndex++;
-    if (layer->attr.type.equals("autoscan")) {
-      if (layer->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %d: <FilePath> not defined", layerIndex);
-        return 1;
-      }
-      try {
-        /* Create the list of layers from a directory list */
-        const char *baseDir = layer->FilePath[0]->value.c_str();
+  // // Check for autoscan elements
+  // layerIndex = -1;
+  // for (const auto &layer: srvParam->cfg->Layer) {
+  //   layerIndex++;
+  //   if (layer->attr.type.equals("autoscan")) {
+  //     if (layer->FilePath.size() == 0) {
+  //       CDBError("Configuration error at layer %d: <FilePath> not defined", layerIndex);
+  //       return 1;
+  //     }
+  //     try {
+  //       /* Create the list of layers from a directory list */
+  //       const char *baseDir = layer->FilePath[0]->value.c_str();
 
-        CDBDebug("autoscan");
-        std::vector<std::string> fileList;
-        try {
-          fileList = CDBFileScanner::searchFileNames(baseDir, layer->FilePath[0]->attr.filter.c_str(), NULL);
-        } catch (int linenr) {
-          CDBError("Could not find any file in directory '%s'", baseDir);
-          throw(__LINE__);
-        }
+  //       CDBDebug("autoscan");
+  //       std::vector<std::string> fileList;
+  //       try {
+  //         fileList = CDBFileScanner::searchFileNames(baseDir, layer->FilePath[0]->attr.filter.c_str(), NULL);
+  //       } catch (int linenr) {
+  //         CDBError("Could not find any file in directory '%s'", baseDir);
+  //         throw(__LINE__);
+  //       }
 
-        if (fileList.size() == 0) {
-          CDBError("Could not find any file in directory '%s'", baseDir);
-          throw(__LINE__);
-        }
-        size_t nrOfFileErrors = 0;
-        for (const auto &fileName: fileList) {
-          try {
-            std::string baseDirStr = baseDir;
-            std::string groupName = CT::substring(fileName, baseDirStr.length(), -1);
+  //       if (fileList.size() == 0) {
+  //         CDBError("Could not find any file in directory '%s'", baseDir);
+  //         throw(__LINE__);
+  //       }
+  //       size_t nrOfFileErrors = 0;
+  //       for (const auto &fileName: fileList) {
+  //         try {
+  //           std::string baseDirStr = baseDir;
+  //           std::string groupName = CT::substring(fileName, baseDirStr.length(), -1);
 
-            // Open file
-            // CDBDebug("Opening file %s",fileName.c_str());
-            CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, fileName.c_str());
-            if (cdfObject == NULL) {
-              CDBError("Unable to read file %s", fileName.c_str());
-              throw(__LINE__);
-            }
+  //           // Open file
+  //           // CDBDebug("Opening file %s",fileName.c_str());
+  //           CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, fileName.c_str());
+  //           if (cdfObject == NULL) {
+  //             CDBError("Unable to read file %s", fileName.c_str());
+  //             throw(__LINE__);
+  //           }
 
-            // std::vector<CT::string> variables;
-            // List variables
-            for (size_t v = 0; v < cdfObject->variables.size(); v++) {
-              CDF::Variable *var = cdfObject->variables[v];
-              if (var->isDimension == false) {
-                if (var->dimensionlinks.size() >= 2) {
-                  CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
-                  CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
-                  CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
-                  CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
-                  xmleLayer->attr.type = "database";
-                  xmleVariable->value = var->name;
-                  xmleFilePath->value = fileName;
-                  xmleGroup->attr.value = groupName;
-                  xmleLayer->Variable.push_back(xmleVariable);
-                  xmleLayer->FilePath.push_back(xmleFilePath);
-                  xmleLayer->Group.push_back(xmleGroup);
-                  srvParam->cfg->Layer.push_back(xmleLayer);
-                }
-              }
-            }
-          } catch (int e) {
-            nrOfFileErrors++;
-          }
-        }
-        if (nrOfFileErrors != 0) {
-          CDBError("%lu files are not readable", nrOfFileErrors);
-        }
-      } catch (int line) {
-        return 1;
-      }
-    }
-  }
+  //           // std::vector<CT::string> variables;
+  //           // List variables
+  //           for (size_t v = 0; v < cdfObject->variables.size(); v++) {
+  //             CDF::Variable *var = cdfObject->variables[v];
+  //             if (var->isDimension == false) {
+  //               if (var->dimensionlinks.size() >= 2) {
+  //                 CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
+  //                 CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
+  //                 CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
+  //                 CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
+  //                 xmleLayer->attr.type = "database";
+  //                 xmleVariable->value = var->name;
+  //                 xmleFilePath->value = fileName;
+  //                 xmleGroup->attr.value = groupName;
+  //                 xmleLayer->Variable.push_back(xmleVariable);
+  //                 xmleLayer->FilePath.push_back(xmleFilePath);
+  //                 xmleLayer->Group.push_back(xmleGroup);
+  //                 srvParam->cfg->Layer.push_back(xmleLayer);
+  //               }
+  //             }
+  //           }
+  //         } catch (int e) {
+  //           nrOfFileErrors++;
+  //         }
+  //       }
+  //       if (nrOfFileErrors != 0) {
+  //         CDBError("%lu files are not readable", nrOfFileErrors);
+  //       }
+  //     } catch (int line) {
+  //       return 1;
+  //     }
+  //   }
+  // }
 
   return status;
 }

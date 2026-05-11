@@ -116,8 +116,7 @@ int CDrawImage::createImage(int _dW, int _dH) {
 int CDrawImage::createImage(GeoParameters &_Geo) {
   // CDBDebug("CreateImage from GeoParams");
 #ifdef MEASURETIME
-  StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]", _Geo.dWidth, _Geo.dHeight, _bEnableTrueColor, _bEnableTransparency,
-                 currentGraphicsRenderer);
+  StopWatch_Stop("start createImage of size");
 #endif
   if (dImageCreated == 1) {
     CDBError("createImage: image already created");
@@ -134,7 +133,7 @@ int CDrawImage::createImage(GeoParameters &_Geo) {
   }
   dImageCreated = 1;
 #ifdef MEASURETIME
-  StopWatch_Stop("image created with renderer %d.", currentGraphicsRenderer);
+  StopWatch_Stop("image created");
 #endif
 
   return 0;

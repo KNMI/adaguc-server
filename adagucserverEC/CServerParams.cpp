@@ -368,11 +368,18 @@ bool CServerParams::checkTimeFormat(const std::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string pszConfigFile) {
+int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
   // Find variables to substitute
   std::vector<CServerConfig::XMLE_Environment> extraEnvironment;
+
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile start first  %s", pszConfigFile.c_str());
+#endif
   CServerParams tempServerParam;
   tempServerParam._parseConfigFile(pszConfigFile, nullptr);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile done first %s", pszConfigFile.c_str());
+#endif
 
   if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
     for (size_t j = 0; j < tempServerParam.configObj->Configuration[0]->Environment.size(); j++) {
@@ -382,11 +389,17 @@ int CServerParams::parseConfigFile(CT::string pszConfigFile) {
       extraEnvironment.push_back(tmpEnv);
     }
   }
-
-  return _parseConfigFile(pszConfigFile, &extraEnvironment);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile start second  %s", pszConfigFile.c_str());
+#endif
+  int status = _parseConfigFile(pszConfigFile, &extraEnvironment);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile done second  %s", pszConfigFile.c_str());
+#endif
+  return status;
 }
 
-int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
+int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
   CT::string configFileData = "";
 
   try {
@@ -396,7 +409,9 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
       CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
       return 1;
     }
-
+#ifdef MEASURETIME
+    StopWatch_Stop("CServerParams::_parseConfigFile Start substitutions");
+#endif
     /* Substitute ADAGUC_PATH */
     const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
     if (pszADAGUC_PATH != NULL) {
@@ -424,6 +439,9 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
     /* Substitute ADAGUC_AUTOWMS_DIR */
     const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
     if (pszADAGUC_AUTOWMS_DIR != NULL) configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+#ifdef MEASURETIME
+    StopWatch_Stop("CServerParams::_parseConfigFile Start extra substitutions");
+#endif
 
     if (extraEnvironment != nullptr) {
       /* Substitute any others as specified in env */
@@ -467,7 +485,15 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
   }
 
   std::string datasetName = CT::basename(pszConfigFile.c_str());
+
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::_parseConfigFile Start parseConfig");
+#endif
+
   int status = parseConfig(configObj, configFileData, datasetName);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::_parseConfigFile Done parseConfig");
+#endif
 
   if (status == 0 && configObj->Configuration.size() == 1) {
     return 0;

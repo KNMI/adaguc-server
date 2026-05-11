@@ -1,6 +1,7 @@
 #include <CXMLGen.h>
 #include "LayerMetadataStore.h"
 #include "XMLGenUtils.h"
+#include "CStopWatch.h"
 #include <CDBStore.h>
 #include <CDBFactory.h>
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
@@ -669,7 +670,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     geo.crs = (srvParam->cfg->Projection[p]->attr.id.c_str());
 
 #ifdef MEASURETIME
-    StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
+    StopWatch_Stop("start initreproj %s", geo.crs.c_str());
 #endif
     CImageWarper warper;
     int status = warper.initreproj(metadataLayer->dataSource, geo, &srvParam->cfg->Projection);

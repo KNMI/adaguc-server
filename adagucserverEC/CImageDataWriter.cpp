@@ -1270,7 +1270,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             // CDBDebug("Watermark: %s",imageText.c_str());
             float fontSize = 10;
             if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
-              fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+              fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
               fontSize = fontSize * scaling;
             }
             drawImage.drawText(int(drawImage.geoParams.width / 2 - len * 3), drawImage.geoParams.height - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
@@ -1290,11 +1290,11 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       int lineColor = 247;
 
       if (dataSource->cfgLayer->Grid[0]->attr.resolution.empty() == false) {
-        gridSize = parseFloat(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
+        gridSize = atof(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
       }
       precision = gridSize / 10;
       if (dataSource->cfgLayer->Grid[0]->attr.precision.empty() == false) {
-        precision = parseFloat(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
+        precision = atof(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
       }
 
       bool useProjection = true;
@@ -1398,7 +1398,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       if (srvParam->cfg->WMS[0]->GridFont.size() == 1) {
 
         fontLoc = srvParam->cfg->WMS[0]->GridFont[0]->attr.location.c_str();
-        fontSize = parseFloat(srvParam->cfg->WMS[0]->GridFont[0]->attr.size.c_str());
+        fontSize = atof(srvParam->cfg->WMS[0]->GridFont[0]->attr.size.c_str());
         drawText = true;
       }
 

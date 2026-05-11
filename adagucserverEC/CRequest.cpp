@@ -526,7 +526,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    auto *requiredDim = dataSource->requiredDims[j];
+    auto requiredDim = dataSource->requiredDims[j];
     CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.netCDFDimName.c_str());
     CDBDebug("%s: %s === %s", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str());
   }
@@ -2361,7 +2361,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
     // int prevTextY=0;
     if (srvParam->mapTitle.length() > 0) {
       if (srvParam->cfg->WMS[0]->TitleFont.size() > 0) {
-        float fontSize = parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
+        float fontSize = atof(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
         /* Check if scaling in relation to a reference width/height is needed */
         fontSize = fontSize * scaling;
         textY += int(fontSize);
@@ -2372,7 +2372,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
     }
     if (srvParam->mapSubTitle.length() > 0) {
       if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
-        float fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+        float fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
         fontSize = fontSize * scaling;
         // textY+=int(fontSize)/5;
         textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapSubTitle.c_str(),
@@ -2388,7 +2388,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
       for (size_t d = 0; d < nDims; d++) {
         CT::string message;
-        float fontSize = parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
+        float fontSize = atof(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
         fontSize = fontSize * scaling;
         textY += int(fontSize * 1.2);
         message.print("%s: %s", dataSource->requiredDims[d].name.c_str(), dataSource->requiredDims[d].value.c_str());

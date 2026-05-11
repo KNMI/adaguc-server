@@ -80,7 +80,7 @@ private:
   static int dataRestriction;
   static char debugLoggingIsEnabled;
   int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
-  int _parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
+  int _parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
 
 public:
   double dfResX, dfResY;
@@ -280,7 +280,7 @@ public:
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string pszConfigFile);
+  int parseConfigFile(const std::string &pszConfigFile);
 
   /**
    * Returns cache control header
