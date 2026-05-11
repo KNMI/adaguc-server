@@ -81,9 +81,9 @@ int CDFPNGReader::open(const char *fileName) {
   CT::string fileBaseName;
   const char *last = rindex(fileName, '/');
   if ((last != NULL) && (*last)) {
-    fileBaseName.copy(last + 1);
+    fileBaseName = (last + 1);
   } else {
-    fileBaseName.copy(fileName);
+    fileBaseName = (fileName);
   }
 
   /* Now always add a CRS variable */

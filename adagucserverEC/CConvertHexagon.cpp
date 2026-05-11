@@ -277,7 +277,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     time_counter_dim->name = "counter";
     CDF::Variable *time_counter_var = new CDF::Variable();
     time_counter_var->setType(CDF_DOUBLE);
-    time_counter_var->name.copy(time_counter_dim->name.c_str());
+    time_counter_var->name = (time_counter_dim->name.c_str());
     time_counter_var->isDimension = true;
     time_counter_var->dimensionlinks.push_back(time_counter_dim);
     cdfObject->addVariable(time_counter_var);

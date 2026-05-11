@@ -200,7 +200,7 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
   } else if (path.indexOf("://") != -1) {
     /*Check if this should start with the original prefix"*/
     CT::string leftPart = path.split("://")[0] + "://";
-    path.copy(leftPart);
+    path = (leftPart);
     startAtIndex = 1;
   } else
     path = ("");

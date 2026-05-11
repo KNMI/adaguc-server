@@ -23,7 +23,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   projectionVarX = new CDF::Variable();
   cdfObject->addVariable(projectionVarX);
   projectionVarX->setType(CDF_DOUBLE);
-  projectionVarX->name.copy(projectionDimX->name.c_str());
+  projectionVarX->name = (projectionDimX->name.c_str());
   projectionVarX->isDimension = true;
   projectionVarX->dimensionlinks.push_back(projectionDimX);
   projectionVarX->allocateData(width);
@@ -40,7 +40,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   projectionVarY = new CDF::Variable();
   cdfObject->addVariable(projectionVarY);
   projectionVarY->setType(CDF_DOUBLE);
-  projectionVarY->name.copy(projectionDimY->name.c_str());
+  projectionVarY->name = (projectionDimY->name.c_str());
   projectionVarY->isDimension = true;
   projectionVarY->dimensionlinks.push_back(projectionDimY);
 
@@ -116,7 +116,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       srvParam->geoParams.bbox = dfSrcBBOX;
       srvParam->geoParams.width = dataSource->dWidth;
       srvParam->geoParams.height = dataSource->dHeight;
-      srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
+      srvParam->geoParams.crs = (&dataSource->nativeProj4);
 
       if (srvParam->Format.length() == 0) srvParam->Format = ("adagucnetcdf");
     }
@@ -323,7 +323,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       } else {
         destinationVar->setType(sourceVar->getType());
       }
-      destinationVar->name.copy(dim->name.c_str());
+      destinationVar->name = (dim->name.c_str());
       destinationVar->isDimension = true;
       destinationVar->dimensionlinks.push_back(dim);
 
@@ -454,7 +454,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     CDF::Variable *destVar = new CDF::Variable();
     destCDFObject->addVariable(destVar);
     CDF::Variable *sourceVar = dataSource->getDataObject(j)->cdfVariable;
-    destVar->name.copy(sourceVar->name.c_str());
+    destVar->name = (sourceVar->name.c_str());
 
 #ifdef CNetCDFDataWriter_DEBUG
     CDBDebug("Name = %s, type = %d", sourceVar->name.c_str(), sourceVar->getType());
@@ -1076,7 +1076,7 @@ int CNetCDFDataWriter::end() {
   }
 
   CT::string humanReadableString;
-  humanReadableString.copy(srvParam->Format.c_str());
+  humanReadableString = (srvParam->Format.c_str());
   humanReadableString.concat("_");
   humanReadableString.concat(dObjgetVariableName(*baseDataSource->getDataObject(0)).c_str());
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {

@@ -148,7 +148,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
      CDF::Variable *varT = new CDF::Variable();
      cdfObject->addVariable(varT);
      varT->setType(CDF_DOUBLE);
-     varT->name.copy(dimT->name.c_str());
+     varT->name= (dimT->name.c_str());
      varT->setAttributeText("standard_name","time");
      varT->setAttributeText("long_name","time");
      varT->dimensionlinks.push_back(dimT);

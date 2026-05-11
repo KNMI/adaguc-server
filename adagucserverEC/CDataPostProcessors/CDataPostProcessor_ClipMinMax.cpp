@@ -30,12 +30,12 @@ int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource 
     double fa = 0, fb = 0;
     if (proc->attr.a.empty() == false) {
       CT::string a;
-      a.copy(proc->attr.a.c_str());
+      a = (proc->attr.a.c_str());
       fa = a.toDouble();
     }
     if (proc->attr.b.empty() == false) {
       CT::string b;
-      b.copy(proc->attr.b.c_str());
+      b = (proc->attr.b.c_str());
       fb = b.toDouble();
     }
     switch (dataSource->getDataObject(0)->cdfVariable->getType()) {

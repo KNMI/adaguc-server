@@ -954,7 +954,7 @@ int CRequest::process_querystring() {
     if (uriKeyUpperCase.equals("STYLES")) {
       if (dFound_Styles == 0) {
         if (!uriValue.empty()) {
-          srvParam->Styles.copy(&uriValue);
+          srvParam->Styles = (&uriValue);
         } else
           srvParam->Styles = ("");
         dFound_Styles = 1;
@@ -967,7 +967,7 @@ int CRequest::process_querystring() {
     if (uriKeyUpperCase.equals("STYLE")) {
       if (dFound_Style == 0) {
         if (!uriValue.empty()) {
-          srvParam->Style.copy(&uriValue);
+          srvParam->Style = (&uriValue);
         } else
           srvParam->Style = ("");
         dFound_Style = 1;
@@ -1070,21 +1070,21 @@ int CRequest::process_querystring() {
       // SRS / CRS Parameters
       if (uriKeyUpperCase.equals("SRS")) {
         if (uriValue.length() > 2) {
-          srvParam->geoParams.crs.copy(uriValue);
+          srvParam->geoParams.crs = (uriValue);
           // srvParam->geoParams.CRS.decodeURLSelf();
           dFound_SRS = 1;
         }
       }
       if (uriKeyUpperCase.equals("CRS")) {
         if (uriValue.length() > 2) {
-          srvParam->geoParams.crs.copy(uriValue);
+          srvParam->geoParams.crs = (uriValue);
           dFound_CRS = 1;
         }
       }
 
       if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
         if (uriValue.length() > 2) {
-          srvParam->responceCrs.copy(uriValue);
+          srvParam->responceCrs = (uriValue);
           dFound_RESPONSE_CRS = 1;
         }
       }
@@ -1112,7 +1112,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("FORMAT")) {
         if (dFound_Format == 0) {
           if (uriValue.length() > 1) {
-            srvParam->Format.copy(&uriValue);
+            srvParam->Format = (&uriValue);
             dFound_Format = 1;
           }
         } else {
@@ -1125,7 +1125,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("INFO_FORMAT")) {
         if (dFound_InfoFormat == 0) {
           if (uriValue.length() > 1) {
-            srvParam->InfoFormat.copy(&uriValue);
+            srvParam->InfoFormat = (&uriValue);
             dFound_InfoFormat = 1;
           }
         } else {
@@ -1152,7 +1152,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("BGCOLOR")) {
         if (dFound_BGColor == 0) {
           if (uriValue.length() > 1) {
-            srvParam->BGColor.copy(&uriValue);
+            srvParam->BGColor = (&uriValue);
             dFound_BGColor = 1;
           }
         } else {
@@ -1165,7 +1165,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("VERSION")) {
         if (dFound_Version == 0) {
           if (uriValue.length() > 1) {
-            Version.copy(&uriValue);
+            Version = (&uriValue);
             dFound_Version = 1;
           }
         }
@@ -1180,7 +1180,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("EXCEPTIONS")) {
         if (dFound_Exceptions == 0) {
           if (uriValue.length() > 1) {
-            Exceptions.copy(&uriValue);
+            Exceptions = (&uriValue);
             dFound_Exceptions = 1;
           }
         } else {
@@ -1195,7 +1195,7 @@ int CRequest::process_querystring() {
           if (srvParam->autoResourceLocation.empty()) {
             auto hashList = uriValue.split("#");
             if (hashList.size() > 0) {
-              srvParam->autoResourceLocation.copy(hashList[0].c_str());
+              srvParam->autoResourceLocation = (hashList[0].c_str());
             }
           }
           dFound_autoResourceLocation = 1;
@@ -1226,12 +1226,12 @@ int CRequest::process_querystring() {
 
       // Service parameters
       if (uriKeyUpperCase.equals("SERVICE")) {
-        SERVICE.copy(uriValue.toUpperCase());
+        SERVICE = (uriValue.toUpperCase());
         dFound_Service = 1;
       }
       // Request parameters
       if (uriKeyUpperCase.equals("REQUEST")) {
-        REQUEST.copy(uriValue.toUpperCase());
+        REQUEST = (uriValue.toUpperCase());
         dFound_Request = 1;
       }
 
@@ -1300,7 +1300,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("JSONP")) {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
-            srvParam->JSONP.copy(&uriValue);
+            srvParam->JSONP = (&uriValue);
             dFound_JSONP = 1;
           }
         } else {
@@ -1393,7 +1393,7 @@ int CRequest::process_querystring() {
     } else {
       // For getlegend graphic the parameter is style, not styles
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-        srvParam->Styles.copy(&srvParam->Style);
+        srvParam->Styles = (&srvParam->Style);
       }
     }
 
@@ -1513,7 +1513,7 @@ int CRequest::process_querystring() {
         for (size_t j = 0; j < srvParam->cfg->WMS[0]->WMSFormat.size(); j++) {
           if (currentFormat.equals(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name.c_str())) {
             if (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.empty() == false) {
-              srvParam->Format.copy(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str());
+              srvParam->Format = (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str());
             }
             if (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.empty() == false) {
               srvParam->imageQuality = srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.toInt();
@@ -2495,7 +2495,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
 
   for (const auto &WCSFormat: srvParam->cfg->WCS[0]->WCSFormat) {
     if (srvParam->Format.equals(WCSFormat->attr.name.c_str())) {
-      driverName.copy(WCSFormat->attr.driver.c_str());
+      driverName = (WCSFormat->attr.driver.c_str());
       break;
     }
   }

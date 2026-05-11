@@ -328,7 +328,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       CDBDebug("Found table name %s", tableNames[d].c_str());
 #endif
       //       //Create temporary tableName
-      //       tableNames_temp[d].copy(&(tableNames[d]));
+      //       tableNames_temp[d]= (&(tableNames[d]));
       //       if(removeNonExistingFiles==1){
       //         tableNames_temp[d].concat("_temp");
       //       }
@@ -847,8 +847,8 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
   if (!_layerPathToScan.empty()) {
     CT::string layerPath, layerPathToScan;
-    layerPath.copy(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
-    layerPathToScan.copy(_layerPathToScan);
+    layerPath = (dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
+    layerPathToScan = (_layerPathToScan);
     layerPath = CDirReader::makeCleanPath(layerPath.c_str());
     layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
 
@@ -1044,7 +1044,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
 
   if (tailPath != NULL) {
     if (tailPath[0] == '/') {
-      filePath.copy(tailPath);
+      filePath = (tailPath);
 
       CT::string baseName = filePath.substring(filePath.lastIndexOf("/") + 1, -1);
       if (CDirReader::testRegEx(baseName.c_str(), expr.c_str()) != 1) {
@@ -1071,7 +1071,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
     try {
       CT::string fileFilterExpr(".*\\.nc$");
       if (expr.empty() == false) { // dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
-        fileFilterExpr.copy(&expr);
+        fileFilterExpr = (&expr);
       }
       CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
       CDirReader *dirReader = CCachedDirReader::getDirReader(filePath.c_str(), fileFilterExpr.c_str());

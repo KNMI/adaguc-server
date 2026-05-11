@@ -56,9 +56,9 @@ int CDFGeoJSONReader::open(const char *fileName) {
   CT::string fileBaseName;
   const char *last = rindex(fileName, '/');
   if ((last != NULL) && (*last)) {
-    fileBaseName.copy(last + 1);
+    fileBaseName = (last + 1);
   } else {
-    fileBaseName.copy(fileName);
+    fileBaseName = (fileName);
   }
 
   if (!((strlen(fileName) > 4) || (strcmp("json", fileName + strlen(fileName - 4)) == 0))) {

@@ -73,8 +73,8 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
 
         xmleDim->elementValue = (store->getRecord(j)->get("ogcname")->c_str());
-        xmleDim->attr.name.copy(store->getRecord(j)->get("ncname")->c_str());
-        xmleDim->attr.units.copy(store->getRecord(j)->get("units")->c_str());
+        xmleDim->attr.name = (store->getRecord(j)->get("ncname")->c_str());
+        xmleDim->attr.units = (store->getRecord(j)->get("units")->c_str());
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
 #ifdef CAUTOCONFIGURE_DEBUG
         CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
@@ -172,7 +172,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             }
 
             /* By default use the netcdf dimname */
-            OGCDimName.copy(&netcdfdimname);
+            OGCDimName = (&netcdfdimname);
 
             /* Try to specify the OGC name based on dimtype */
             CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(0)->cdfObject, dimVar);
@@ -187,11 +187,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
             dataSource->cfgLayer->Dimension.push_back(xmleDim);
             xmleDim->elementValue = (OGCDimName.c_str());
-            xmleDim->attr.name.copy(netcdfdimname.c_str());
+            xmleDim->attr.name = (netcdfdimname.c_str());
             if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
               xmleDim->attr.units = ("ISO8601");
             } else {
-              xmleDim->attr.units.copy(units.c_str());
+              xmleDim->attr.units = (units.c_str());
             }
 
             /* Store the data in the db for quick access. */
@@ -233,8 +233,8 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
                 dataSource->cfgLayer->Dimension.push_back(xmleDim);
                 xmleDim->elementValue = ("reference_time");
-                xmleDim->attr.name.copy(cdfObject->variables[j]->name.c_str());
-                xmleDim->attr.units.copy(units.c_str());
+                xmleDim->attr.name = (cdfObject->variables[j]->name.c_str());
+                xmleDim->attr.units = (units.c_str());
                 /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                     ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), xmleDim->attr.name.c_str(), "reference_time", xmleDim->attr.units.c_str());
@@ -328,18 +328,18 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
         CT::string units;
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.empty() == false) {
-          standard_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
+          standard_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
           standard_name.toLowerCaseSelf();
         }
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.empty() == false) {
-          variable_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.c_str());
+          variable_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.c_str());
           variable_name.toLowerCaseSelf();
         }
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.units.empty() == false) {
 
-          units.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
+          units = (dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
         }
         units.toLowerCaseSelf();
 

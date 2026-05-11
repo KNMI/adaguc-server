@@ -264,7 +264,7 @@ int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, st
     return 1;
   }
   if (dataSource->nativeProj4.empty()) {
-    dataSource->nativeProj4.copy(LATLONPROJECTION);
+    dataSource->nativeProj4 = (LATLONPROJECTION);
     // CDBWarning("dataSource->CRS.empty() setting to default latlon");
   }
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);

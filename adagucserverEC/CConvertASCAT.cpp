@@ -68,7 +68,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
     // Create a new time variable for the new 2D fields.
     CDF::Variable *varT = new CDF::Variable();
     varT->setType(CDF_DOUBLE);
-    varT->name.copy(dimT->name.c_str());
+    varT->name = (dimT->name.c_str());
     varT->setAttributeText("standard_name", "time");
     varT->setAttributeText("long_name", "time");
     varT->dimensionlinks.push_back(dimT);

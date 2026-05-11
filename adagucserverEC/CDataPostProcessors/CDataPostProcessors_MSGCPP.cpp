@@ -78,12 +78,12 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     float fa = 72, fb = 75;
     if (proc->attr.b.empty() == false) {
       CT::string b;
-      b.copy(proc->attr.b.c_str());
+      b = (proc->attr.b.c_str());
       fb = b.toDouble();
     }
     if (proc->attr.a.empty() == false) {
       CT::string a;
-      a.copy(proc->attr.a.c_str());
+      a = (proc->attr.a.c_str());
       fa = a.toDouble();
     }
     for (size_t j = 0; j < l; j++) {
@@ -362,17 +362,17 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     double fc = 0;
     if (proc->attr.a.empty() == false) {
       CT::string a;
-      a.copy(proc->attr.a.c_str());
+      a = (proc->attr.a.c_str());
       fa = a.toDouble();
     }
     if (proc->attr.b.empty() == false) {
       CT::string b;
-      b.copy(proc->attr.b.c_str());
+      b = (proc->attr.b.c_str());
       fb = b.toDouble();
     }
     if (proc->attr.c.empty() == false) {
       CT::string c;
-      c.copy(proc->attr.c.c_str());
+      c = (proc->attr.c.c_str());
       fc = c.toDouble();
     }
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;

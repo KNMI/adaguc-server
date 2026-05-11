@@ -40,7 +40,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   // Init projections
   if (srvParam->geoParams.crs.indexOf("PROJ4:") == 0) {
     CT::string temp(srvParam->geoParams.crs.c_str() + 6);
-    srvParam->geoParams.crs.copy(&temp);
+    srvParam->geoParams.crs = (&temp);
   }
   // Load metadata from the dataSource
 #ifdef CGDALDATAWRITER_DEBUG
@@ -86,7 +86,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     srvParam->geoParams.bbox = dfSrcBBOX;
     srvParam->geoParams.width = dataSource->dWidth;
     srvParam->geoParams.height = dataSource->dHeight;
-    srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
+    srvParam->geoParams.crs = (&dataSource->nativeProj4);
     if (srvParam->Format.length() == 0) srvParam->Format = ("NetCDF4");
   } else {
     // Non native projection units
@@ -133,9 +133,9 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   // Retrieve output format
   for (size_t j = 0; j < srvParam->cfg->WCS[0]->WCSFormat.size(); j++) {
     if (srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())) {
-      driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
-      mimeType.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
-      customOptions.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
+      driverName = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
+      mimeType = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
+      customOptions = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
       break;
     }
   }
@@ -587,7 +587,7 @@ int CGDALDataWriter::end() {
 
 CT::string CGDALDataWriter::generateGetCoverageFileName() {
   CT::string humanReadableString;
-  humanReadableString.copy(srvParam->Format.c_str());
+  humanReadableString = (srvParam->Format.c_str());
   humanReadableString.concat("_");
   humanReadableString.concat(dObjgetVariableName(*_dataSource->getDataObject(0)).c_str());
 
@@ -600,7 +600,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
 
   CT::string extension = ".bin";
   CT::string formatUpperCase;
-  formatUpperCase.copy(srvParam->Format.c_str());
+  formatUpperCase = (srvParam->Format.c_str());
   formatUpperCase.toUpperCaseSelf();
   if (formatUpperCase.equals("AAIGRID")) {
     extension = ".asc";

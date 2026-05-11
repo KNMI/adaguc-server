@@ -18,7 +18,7 @@ CT::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *
     if (cfgLayer->Group.size() == 1 && !cfgLayer->Name[0]->attr.force.equals("true") && cfgLayer->Group[0]->attr.value.empty() == false) {
       layerName.print("%s/%s", cfgLayer->Group[0]->attr.value.c_str(), cfgLayer->Name[0]->elementValue.c_str());
     } else {
-      layerName.copy(cfgLayer->Name[0]->elementValue.c_str());
+      layerName = (cfgLayer->Name[0]->elementValue.c_str());
     }
     // Spaces are not allowed
     layerName.replaceSelf(" ", "_");

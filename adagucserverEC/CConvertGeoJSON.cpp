@@ -502,12 +502,12 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               }
 
               CDF::Dimension *dim = new CDF::Dimension();
-              dim->name.copy(dimName);
+              dim->name = (dimName);
               dim->setSize(1);
               cdfObject->addDimension(dim);
               CDF::Variable *dimVar = new CDF::Variable();
               dimVar->setType(CDF_DOUBLE);
-              dimVar->name.copy(dimName);
+              dimVar->name = (dimName);
               dimVar->isDimension = true;
               dimVar->setAttributeText("units", dimUnits.c_str());
               dimVar->setAttributeText("standard_name", dimName.c_str());
@@ -889,7 +889,7 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
         CDBDebug("Creating var %s", name.c_str());
 #endif
         CDF::Variable *newVar = new CDF::Variable();
-        newVar->name.copy(name.c_str());
+        newVar->name = (name.c_str());
         switch (iter->second->getType()) {
         case typeInt:
           newVar->setType(CDF_FLOAT);

@@ -278,7 +278,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
               delete cdfReader;
               return nullptr;
             }
-            var->name.copy(cfgVar->elementValue);
+            var->name = (cfgVar->elementValue);
             // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
             uniqueIDForFile = uniqueIDForFile + "_" + CT::randomString(10).c_str();
           }

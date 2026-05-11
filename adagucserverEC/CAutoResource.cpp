@@ -461,7 +461,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
 
   if (group != NULL) {
     CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
-    xmleGroup->attr.value.copy(group);
+    xmleGroup->attr.value = (group);
     xmleLayer->Group.push_back(xmleGroup);
   }
 
@@ -558,7 +558,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         xmleImageText->elementValue = (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.c_str());
       }
       if (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.empty() == false) {
-        xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
+        xmleImageText->attr.attribute = (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
       }
     }
   }

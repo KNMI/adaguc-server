@@ -696,7 +696,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
           interval = kvp[1].toFloat();
         }
         if (kvp[0].equals("classes")) {
-          classes.copy(kvp[1].c_str());
+          classes = (kvp[1].c_str());
         }
         if (kvp[0].equals("linecolor")) {
           kvp[1].setSize(7);

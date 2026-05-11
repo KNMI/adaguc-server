@@ -299,7 +299,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
-    var->name.copy(param);
+    var->name = (param);
     cdfObject->addVariable(var);
     var->setAttributeText("standard_name", param.c_str());
     var->setAttributeText("long_name", param.c_str());

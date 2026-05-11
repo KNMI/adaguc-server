@@ -22,12 +22,12 @@ int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
         values[0] = parameters[j].c_str();
         values[1] = "";
       }
-      value0Cap.copy(&values[0]);
+      value0Cap = (&values[0]);
       value0Cap.toUpperCaseSelf();
       if (value0Cap.equals("DATASET")) {
         if (srvParam.datasetLocation.empty()) {
 
-          srvParam.datasetLocation.copy(values[1].c_str());
+          srvParam.datasetLocation = (values[1].c_str());
           int status = CAutoResource::configureDataset(&srvParam, false);
           if (status != 0) {
             CDBError("CAutoResource::configureDataset failed");
