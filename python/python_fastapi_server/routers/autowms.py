@@ -110,8 +110,6 @@ async def handle_autowms(req: Request, request: str | None = None, path: str | N
     adaguc_data_set_dir = adaguc_instance.ADAGUC_DATASET_DIR
     adaguc_data_dir = adaguc_instance.ADAGUC_DATA_DIR
     adaguc_autowms_dir = adaguc_instance.ADAGUC_AUTOWMS_DIR
-    url = req.url
-    # base_url = f"{url.scheme}://{url.hostname}:{url.port}"
     adaguc_online_resource = str(req.base_url)
 
     if request is None or path is None:

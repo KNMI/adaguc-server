@@ -26,7 +26,6 @@ from edr_pydantic.variables import Variables
 from fastapi import Request
 from fastapi.datastructures import QueryParams
 
-
 # TODO; this import should be possible!
 # from python.lib.adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 HTTP_STATUSCODE_404_NOT_FOUND = 32
@@ -99,10 +98,6 @@ def get_ref_times_for_coll(metadata) -> list[str]:
 def get_base_url(req: Request = None) -> str:
     """Returns the base url of this service"""
 
-    # base_url_from_request = f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}" if req else None
-    # base_url = os.getenv("EXTERNALADDRESS", base_url_from_request) or "http://localhost:8080"
-    # base_url = req.headers.get("x-ADAGUC-ONLINERESOURCE")
-    logging.info("get_base_url: %s", req.base_url)
     return str(req.base_url).strip("/")
 
 
@@ -427,7 +422,7 @@ def parse_interval_string(time_interval: str, ref_time: datetime):
     if match and match.group(2):
         offset_steps = int(match.group(2))
     # "{reference_time}", ref_time.strftime(DATETIME_ISO8601_FMT))
-    (repeat_s, _, period) = time_interval.split("/")
+    repeat_s, _, period = time_interval.split("/")
     repeat = int(repeat_s[1:])
 
     delta = parse_period_string(period)

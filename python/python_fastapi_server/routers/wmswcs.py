@@ -85,8 +85,7 @@ def testadaguc():
     adagucenv = {}
 
     #  Set required environment variables
-    baseurl = "---"
-    adagucenv["ADAGUC_ONLINERESOURCE"] = os.getenv("EXTERNALADDRESS", baseurl) + "/adaguc-server?"
+    adagucenv["ADAGUC_ONLINERESOURCE"] = "https://example.com/adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     # Run adaguc-server
