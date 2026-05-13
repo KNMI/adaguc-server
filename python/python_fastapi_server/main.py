@@ -14,7 +14,6 @@ from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
 from routers.healthcheck import health_check_router
-from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
@@ -41,25 +40,18 @@ logging.getLogger("access").propagate = False
 async def add_hsts_header(request: Request, call_next):
     """Middleware to HTTP Strict Transport Security (HSTS) header"""
     response = await call_next(request)
-    if "EXTERNALADDRESS" in os.environ:
-        external_address = os.environ["EXTERNALADDRESS"]
-        scheme = urlsplit(external_address).scheme
-        if scheme == "https":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-            response.headers["X-Content-Type-Options"] = "nosniff"
-            response.headers["Content-Security-Policy"] = "default-src 'self'"
+    if request.scope["scheme"] == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
 
     return response
 
 
-if "ADAGUC_TRUSTED_PROXIES" in os.environ:
-    app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ["ADAGUC_TRUSTED_PROXIES"])
+app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
-
-if "EXTERNALADDRESS" in os.environ:
-    app.add_middleware(FixSchemeMiddleware)
 
 
 @app.middleware("http")
@@ -99,7 +91,7 @@ app.include_router(wmsWcsRouter)
 app.include_router(autowms_router)
 app.include_router(opendapRouter)
 
-logging.info("Starting with %s", os.getenv("EXTERNALADDRESS", "---"))
+logging.info("Starting server on 0.0.0.0")
 
 if __name__ == "__main__":
     testadaguc()
