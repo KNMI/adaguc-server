@@ -37,7 +37,7 @@ std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSour
   return std::make_tuple(-1, box);
 }
 
-CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *srvParam, CT::string requestedLayerName) {
+CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *srvParam, const std::string &requestedLayerName) {
   for (size_t layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
     auto cfgLayer = srvParam->cfg->Layer[layerNo];
     if (makeUniqueLayerName(cfgLayer).equals(requestedLayerName)) {

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
+#include <string>
 #include <CTypes.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
@@ -14,6 +15,6 @@
 #ifndef ADAGUCUTILS_H
 #define ADAGUCUTILS_H
 
-CDFReader *findReaderByFileName(CT::string fileName);
+CDFReader *findReaderByFileName(const std::string &fileName);
 
 #endif

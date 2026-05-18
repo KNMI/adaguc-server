@@ -191,7 +191,7 @@ namespace CDF {
         attr = getAttribute(attrName);
       } catch (...) {
         attr = new Attribute();
-        attr->name.copy(attrName);
+        attr->name = CT::fromCStr(attrName);
         addAttribute(attr);
       }
       attr->type = attrType;

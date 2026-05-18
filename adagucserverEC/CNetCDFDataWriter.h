@@ -8,6 +8,7 @@
 #include "CDrawImage.h"
 #include "CIBaseDataWriterInterface.h"
 #include "CDebugger.h"
+#include <string>
 
 #define CNetCDFDataWriter_NEAREST 0
 #define CNetCDFDataWriter_AVG_RGB 1
@@ -65,7 +66,7 @@ private:
   };
   CDataSource *baseDataSource;
   CDFObject *destCDFObject;
-  CT::string tempFileName;
+  std::string tempFileName;
   CServerParams *srvParam;
   CDF::Dimension *projectionDimX, *projectionDimY; // Shorthand pointers to cdfdatamodel (do never delete!)
   CDF::Variable *projectionVarX, *projectionVarY;  // Shorthand pointers to cdfdatamodel (do never delete!)

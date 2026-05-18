@@ -11,6 +11,7 @@
 #include "CStyleConfiguration.h"
 #include "CMyCURL.h"
 #include "CXMLParser.h"
+#include <string>
 #include "CTime.h"
 #include "CDebugger.h"
 
@@ -46,7 +47,7 @@ private:
   FILE *opendapoutstream;
   void writeInt(int &v);
   void writeDouble(double &v);
-  CT::string httpHeaderContentType;
+  std::string httpHeaderContentType;
   bool jsonWriter;
   bool jsonValuesWritten;
 

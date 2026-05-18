@@ -5,6 +5,33 @@
 - Styles can be included into each other via the `IncludeStyle` option: See example at [adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](./data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)
 - The WCS server now handles swapped x/y dimension axes properly.
 - Data postprocessor convert_uv_components (isVectorLike) is not added by default anymore.
+- C++ standard bumped from C++17 to C++20.
+- Foundation laid for the `CT::string` -> `std::string` migration:
+  - New free helpers in `namespace CT::` operating on `std::string`: `CT::split`, `CT::join`, `CT::startsWith`, `CT::endsWith`, `CT::indexOf`, `CT::lastIndexOf`, `CT::replace`, `CT::replaceSelf`, `CT::trim`, `CT::toLowerCase`, `CT::toUpperCase`, `CT::printf`, `CT::printfconcat`, `CT::isNumeric`, `CT::isInt`, `CT::isFloat`, `CT::toFloat`, `CT::toDouble`, `CT::toInt`, `CT::toLong`, `CT::substring`, `CT::testRegEx`, `CT::basename`, `CT::equalsIgnoreCase`, `CT::encodeXml`, `CT::getHex`, `CT::getHex24`, `CT::randomString`.
+  - New `CT::fromCStr(const char*)` helper provides null-safe conversion to `std::string` (matching the historical behaviour of `CT::string((const char*)NULL)`).
+  - `CT::string` now interoperates with `std::string`: a constructor `CT::string(const std::string&)` accepts a `std::string`, and `static_cast<std::string>(ct)` (or `std::string(ct)`) explicitly converts a `CT::string` to `std::string`. The implicit `operator const char *()` is preserved for backward compatibility.
+  - `CDBDebug`, `CDBError`, `CDBWarning`, `_printDebugLine`, `_printErrorLine`, `_printWarningLine`, `CT::printf`, `CT::printfconcat` and the `print`/`printconcat` methods on `CT::string` are annotated with `__attribute__((format(printf,...)))`. The compiler now flags `%s` against an `std::string` (which would push the object onto the varargs stack as undefined behaviour) at build time.
+  - 34 new/extended unit tests in `hclasses/testhclasses.cpp` cover the new helpers, including the historical edge cases (empty-field splits, multi-character delimiters, whitespace-tolerant `isFloat`, NaN handling, null-safe construction).
+  - Migration guide for future contributors at `doc/developing/string-migration.md`.
+  - Real bug fixes uncovered while building the foundation:
+    - `adagucserverEC/CXMLSerializerInterface.cpp:102` - `CT::string xmlData` was being passed through `CDBError("...%s", ...)` varargs without `.c_str()`. The `format(printf,...)` attribute now catches this class of bug at compile time.
+    - `CCDFDataModel/CCDFNetCDFIO.cpp:552` - same pattern with `CT::string *groupName`.
+    - `adagucserverEC/COpenDAPHandler.cpp:423` - `httpHeaderContentType = getenv("CONTENT_TYPE")` was silently safe via `CT::string`'s null-pointer-tolerant constructor; the migration to `std::string` would have crashed, so the call site now uses `CT::fromCStr` explicitly.
+  - Migrated to `std::string` in this release:
+    - `GeoParameters::crs` (`adagucserverEC/Types/GeoParameters.h`)
+    - `ProjectionMapKey::sourceCRS`, `ProjectionMapKey::destCRS` (`adagucserverEC/Types/ProjectionStore.h`)
+    - `PointDV::id` (`adagucserverEC/Types/CPointTypes.h`)
+    - `CRectangleText::text`, `CRectangleText::fontFile` (`adagucserverEC/CRectangleText.h`)
+    - `CServerParams::responceCrs`, `CServerParams::Version`, `CServerParams::Exceptions`, `CServerParams::mapTitle`, `CServerParams::mapSubTitle`, `CServerParams::BGColor`, `CServerParams::JSONP`, `CServerParams::queryStrURLParam`, `CServerParams::datasetLocation` (`adagucserverEC/CServerParams.h` and `CRequest.h`)
+    - `CNetCDFDataWriter::tempFileName` (`adagucserverEC/CNetCDFDataWriter.h`)
+    - `COpenDAPHandler::httpHeaderContentType` (`adagucserverEC/COpenDAPHandler.h`)
+  - Migrated function signatures:
+    - `isLonLatProjection`, `isMercatorProjection` -> `const std::string &` (`adagucserverEC/utils/projectionUtils.h`)
+    - `findReaderByFileName` -> `const std::string &` (`CCDFDataModel/utils.h`)
+    - `checkIfFileMatchesLayer` -> `const std::string &` (`adagucserverEC/utils/serverutils.h`)
+    - `findLayerConfigForRequestedLayer` -> `const std::string &` (`adagucserverEC/utils/CRequestUtils.h`)
+    - `CSLD::parameterIsSld`, `CSLD::processSLDUrl` -> `const std::string &` (`adagucserverEC/CSLD.h`)
+  - Replaced legacy `name.copy(rawCharPtr)` patterns in `CCDFDataModel` (`CCDFAttribute`, `CCDFDimension`, `CCDFVariable`, `CCDFObject`, `CCDFGeoJSONIO`, `CCDFPNGIO`, `CProj4ToCF`) with the null-safe `name = CT::fromCStr(rawCharPtr)` pattern, eliminating the historical reliance on `CT::string`'s permissive null-pointer constructor in those readers/writers.
 
 **Version 5.0.1 - 2025-11-05**
 

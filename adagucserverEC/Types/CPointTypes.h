@@ -1,4 +1,5 @@
 #include <CKeyValuePair.h>
+#include <string>
 #ifndef CPOINT_TYPES_H
 #define CPOINT_TYPES_H
 
@@ -23,7 +24,7 @@ public:
     this->x = x;
     this->y = y;
     this->v = v;
-    this->id = id;
+    this->id = CT::fromCStr(id);
   }
   PointDV(int &x, int &y, float &v) {
     this->x = x;
@@ -32,7 +33,7 @@ public:
   }
   int x, y;
   float v;
-  CT::string id;
+  std::string id;
 };
 
 /**

@@ -382,7 +382,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
 
   // CDBDebug("findExtent for %s and %f %f %f %f", destinationCRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 
-  ProjectionMapKey key = {sourceCRSString, destinationCRS, makef8box(dfBBOX)};
+  ProjectionMapKey key = {sourceCRSString.c_str(), destinationCRS.c_str(), makef8box(dfBBOX)};
   bool found;
   f8box bbox{};
   std::tie(found, bbox) = getBBOXProjection(key);

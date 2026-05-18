@@ -28,6 +28,7 @@
 
 #include <sys/stat.h>
 #include <set>
+#include <string>
 #include "CImageDataWriter.h"
 #include "CServerParams.h"
 #include "CDataSource.h"
@@ -44,8 +45,8 @@
 class CRequest {
 private:
   std::vector<CDataSource *> dataSources;
-  CT::string Version;
-  CT::string Exceptions;
+  std::string Version;
+  std::string Exceptions;
   CServerParams *srvParam;
   std::vector<CT::string *> queryDims;
   DEF_ERRORFUNCTION();

@@ -831,9 +831,9 @@ bool CDF::Variable::isString(bool isString) {
 }
 
 void CDF::Variable::setName(const char *value) {
-  name.copy(value);
+  name = CT::fromCStr(value);
   // TODO Implement this correctly in readvariabledata....
-  if (orgName.length() == 0) orgName.copy(value);
+  if (orgName.length() == 0) orgName = CT::fromCStr(value);
 }
 
 void CDF::Variable::setSize(size_t size) { currentSize = size; }
@@ -938,7 +938,7 @@ int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, const vo
     attr = getAttribute(attrName);
   } catch (...) {
     attr = new Attribute();
-    attr->name.copy(attrName);
+    attr->name = CT::fromCStr(attrName);
     addAttribute(attr);
   }
   attr->type = attrType;

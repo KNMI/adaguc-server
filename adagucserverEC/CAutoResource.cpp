@@ -87,7 +87,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     // Set server title based on dataset
     CT::string serverTitle = "";
     if (serverTitle.empty() && srvParam->datasetLocation.empty() == false) {
-      serverTitle = srvParam->datasetLocation.basename();
+      serverTitle = CT::basename(srvParam->datasetLocation).c_str();
     }
     setServerTitle(srvParam, serverTitle);
 

@@ -1,8 +1,9 @@
 
 #include "serverutils.h"
 
-bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
+bool checkIfFileMatchesLayer(const std::string &layerPathToScan_in, CServerConfig::XMLE_Layer *layer) {
   // Get the directory of the file to scan:
+  CT::string layerPathToScan = layerPathToScan_in.c_str();
   CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan);
   directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - directoryOfFileToScan.basename().length());
   directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan) + "/";

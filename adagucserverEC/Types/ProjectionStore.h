@@ -26,12 +26,13 @@
 #ifndef PROJECTIONSTORE_H
 #define PROJECTIONSTORE_H
 #include <tuple>
+#include <string>
 #include "CTString.h"
 #include "GeoParameters.h"
 
 struct ProjectionMapKey {
-  CT::string sourceCRS;
-  CT::string destCRS;
+  std::string sourceCRS;
+  std::string destCRS;
   f8box extent;
 };
 

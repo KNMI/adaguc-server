@@ -133,7 +133,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     //     CDBDebug("X is : %f Y is: %f",x,y);
 
     imageWarper->reprojpoint(x, y);
-    if (isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(dataSource->nativeProj4.c_str())) {
       //       CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
       // if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
       //         CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
@@ -267,7 +267,7 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawI
       int hexa[8];
 
       for (size_t j = 0; j < 6; j++) {
-        hexa[j] = srvParam->BGColor.charAt(j + 2);
+        hexa[j] = srvParam->BGColor.at(j + 2);
         hexa[j] -= 48;
         if (hexa[j] > 16) hexa[j] -= 7;
       }
@@ -1892,7 +1892,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       bool useProjection = true;
 
-      if (srvParam->geoParams.crs.equals("EPSG:4326")) {
+      if (srvParam->geoParams.crs == "EPSG:4326") {
         // CDBDebug("Not using projection");
         useProjection = false;
       }
@@ -2402,7 +2402,7 @@ int CImageDataWriter::end() {
             resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             resultXML.printconcat("        </gml:Point>\n");
 
-            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+            if (!(srvParam->geoParams.crs == "EPSG:4326")) {
               resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               resultXML.printconcat("        </gml:Point>\n");
@@ -2480,7 +2480,7 @@ int CImageDataWriter::end() {
             resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             resultXML.printconcat("        </gml:Point>\n");
 
-            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+            if (!(srvParam->geoParams.crs == "EPSG:4326")) {
               resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               resultXML.printconcat("        </gml:Point>\n");

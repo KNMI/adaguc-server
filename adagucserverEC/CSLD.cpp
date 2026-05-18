@@ -14,7 +14,8 @@ void CSLD::setServerParams(CServerParams *serverParams) {
 }
 
 // Start processing the SLD url
-int CSLD::processSLDUrl(CT::string sldUrl) {
+int CSLD::processSLDUrl(const std::string &sldUrl_in) {
+  CT::string sldUrl = sldUrl_in.c_str();
   // Check if url extension is .xml
   if (!sldUrl.startsWith("http") || !sldUrl.endsWith(".xml")) {
     CDBError("SLD parameter value needs to be a url pointed to a .xml file");
@@ -299,8 +300,8 @@ int CSLD::buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *m
   return 1;
 }
 
-bool CSLD::parameterIsSld(CT::string param) {
-  if (param.equals(SLD_PARAMETER_NAME)) {
+bool CSLD::parameterIsSld(const std::string &param) {
+  if (param == SLD_PARAMETER_NAME) {
     return true;
   }
   return false;

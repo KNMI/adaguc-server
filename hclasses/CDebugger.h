@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include "printfCheckMacro.h"
 
 // Used to silence -Wunused-parameter warnings
 template <class T> void ignoreParameter(const T &) {}
@@ -56,13 +57,13 @@ void setDebugFunction(void (*function)(const char *));
 void setWarningFunction(void (*function)(const char *));
 void setErrorFunction(void (*function)(const char *));
 
-void _printDebugLine(const char *pszMessage, ...);
-void _printWarningLine(const char *pszMessage, ...);
-void _printErrorLine(const char *pszMessage, ...);
+void _printDebugLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printWarningLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printErrorLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
-void _printDebug(const char *pszMessage, ...);
-void _printWarning(const char *pszMessage, ...);
-void _printError(const char *pszMessage, ...);
+void _printDebug(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printWarning(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
 #define CDBWarning                                                                                                                                                                                     \
   _printWarning("[W:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                            \

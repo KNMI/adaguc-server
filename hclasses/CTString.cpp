@@ -2,6 +2,7 @@
 #include <iostream>
 #include <regex>
 #include <algorithm>
+#include <random>
 #ifdef CTYPES_DEBUG
 const char *CT::string::className = "CT::string";
 #endif
@@ -754,5 +755,238 @@ namespace CT {
     result.print("%s%s%s", getHex(value % 256).c_str(), getHex((value >> 8) % 256).c_str(), getHex((value >> 16) % 256).c_str());
     return result;
   }
+
+  /* ---------------------------------------------------------------------- *
+   *  Free helper functions in namespace CT::, all operating on std::string.
+   *  Introduced as part of the migration from CT::string to std::string.
+   *  See CTString.h for documentation on each helper.
+   * ---------------------------------------------------------------------- */
+
+  static const char *strrstrHelper(const char *x, const char *y) {
+    const char *prev = nullptr;
+    const char *next;
+    if (*y == '\0') return strchr(x, '\0');
+    while ((next = strstr(x, y)) != nullptr) {
+      prev = next;
+      x = next + 1;
+    }
+    return prev;
+  }
+
+  std::string join(const std::vector<std::string> &items, const std::string &separator) {
+    std::string out;
+    for (const auto &item : items) {
+      if (!out.empty()) out += separator;
+      out += item;
+    }
+    return out;
+  }
+
+  std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
+
+  bool equalsIgnoreCase(const std::string &str1, const std::string &str2) {
+    if (str1.length() != str2.length()) return false;
+    for (size_t i = 0; i < str1.length(); ++i) {
+      if (tolower(static_cast<unsigned char>(str1[i])) != tolower(static_cast<unsigned char>(str2[i]))) return false;
+    }
+    return true;
+  }
+
+#define CT_FREE_PRINT_BUFFER_SIZE 128
+
+  std::string printf(const char *a, ...) {
+    std::string buf(CT_FREE_PRINT_BUFFER_SIZE + 1, '\0');
+    va_list ap;
+    va_start(ap, a);
+    int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+    if (numWritten > CT_FREE_PRINT_BUFFER_SIZE) {
+      buf.resize(numWritten + 1);
+      va_start(ap, a);
+      numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+      va_end(ap);
+    }
+    if (numWritten < 0) numWritten = 0;
+    buf.resize(numWritten);
+    return buf;
+  }
+
+  void printfconcat(std::string &appendString, const char *a, ...) {
+    std::string buf(CT_FREE_PRINT_BUFFER_SIZE + 1, '\0');
+    va_list ap;
+    va_start(ap, a);
+    int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+    if (numWritten > CT_FREE_PRINT_BUFFER_SIZE) {
+      buf.resize(numWritten + 1);
+      va_start(ap, a);
+      numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+      va_end(ap);
+    }
+    if (numWritten < 0) numWritten = 0;
+    buf.resize(numWritten);
+    appendString += buf;
+  }
+
+  std::string replace(const std::string &input, const std::string &from, const std::string &to) {
+    std::string str = input;
+    if (from.empty()) return str;
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+      str.replace(start_pos, from.length(), to);
+      start_pos += to.length();
+    }
+    return str;
+  }
+
+  void replaceSelf(std::string &input, const std::string &from, const std::string &to) {
+    if (from.empty()) return;
+    size_t start_pos = 0;
+    while ((start_pos = input.find(from, start_pos)) != std::string::npos) {
+      input.replace(start_pos, from.length(), to);
+      start_pos += to.length();
+    }
+  }
+
+  std::string toLowerCase(const std::string &input) {
+    std::string result = input;
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
+    return result;
+  }
+
+  std::string toUpperCase(const std::string &input) {
+    std::string result = input;
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c); });
+    return result;
+  }
+
+  static void ltrim(std::string &s) { s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); })); }
+  static void rtrim(std::string &s) { s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end()); }
+
+  std::string trim(const std::string &input) {
+    std::string r = input;
+    rtrim(r);
+    ltrim(r);
+    return r;
+  }
+
+  std::vector<std::string> split(const std::string &input, const std::string &value) {
+    std::vector<std::string> stringList;
+    if (value.empty()) {
+      if (!input.empty()) stringList.push_back(input);
+      return stringList;
+    }
+    const char *fo = strstr(input.c_str(), value.c_str());
+    const char *prevFo = input.c_str();
+    size_t keyLength = value.length();
+    while (fo != nullptr) {
+      stringList.push_back(std::string(prevFo, fo - prevFo));
+      prevFo = fo + keyLength;
+      fo = strstr(fo + keyLength, value.c_str());
+    }
+    size_t prevFoLength = strlen(prevFo);
+    if (prevFoLength > 0) stringList.push_back(std::string(prevFo, prevFoLength));
+    return stringList;
+  }
+
+  std::string randomString(int length) {
+    static const char charset[] = "0123456789"
+                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                  "abcdefghijklmnopqrstuvwxyz";
+    static const size_t max_index = sizeof(charset) - 2;
+    static std::mt19937 engine{std::random_device{}()};
+    static std::uniform_int_distribution<int> dist(0, static_cast<int>(max_index));
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, [&] { return charset[dist(engine)]; });
+    return str;
+  }
+
+  int indexOf(const std::string &input, const std::string &pattern) {
+    auto loc = input.find(pattern, 0);
+    if (loc != std::string::npos) return static_cast<int>(loc);
+    return -1;
+  }
+
+  int lastIndexOf(const std::string &input, const std::string &pattern) {
+    if (pattern.empty()) return 0;
+    if (input.empty()) return -1;
+    auto pi = strrstrHelper(input.c_str(), pattern.c_str());
+    if (pi == nullptr) return -1;
+    auto c = pi - input.c_str();
+    if (c < 0) c = -1;
+    return static_cast<int>(c);
+  }
+
+  bool endsWith(const std::string &input, const std::string &pattern) {
+    return pattern.empty() || (input.size() >= pattern.size() && input.compare(input.size() - pattern.size(), pattern.size(), pattern) == 0);
+  }
+
+  bool startsWith(const std::string &input, const std::string &pattern) { return pattern.empty() || input.rfind(pattern, 0) == 0; }
+
+  std::string encodeXml(const std::string &input) {
+    auto out = input;
+    // Match historical CT::string::encodeXMLSelf order: encode &amp; first to avoid double-encoding.
+    std::vector<std::pair<std::string, std::string>> items = {{"&amp;", "&"}, {"&lt;", "<"}, {"&gt;", ">"}};
+    for (const auto &item : items) {
+      out = CT::replace(out, item.first, item.second);
+      out = CT::replace(out, item.second, item.first);
+    }
+    return out;
+  }
+
+  std::string getHex(unsigned int number) {
+    int hex = number % 256;
+    int a = hex / 16;
+    int b = hex % 16;
+    std::string result = "00";
+    result[0] = static_cast<char>(a < 10 ? a + 48 : a + 55);
+    result[1] = static_cast<char>(b < 10 ? b + 48 : b + 55);
+    return result;
+  }
+
+  std::string getHex24(int number) {
+    unsigned int value = static_cast<unsigned int>(number);
+    return CT::printf("%s%s%s", getHex(value % 256).c_str(), getHex((value >> 8) % 256).c_str(), getHex((value >> 16) % 256).c_str());
+  }
+
+  /* Use the same regex objects as the CT::string member impls (defined above in this namespace). */
+  bool isNumeric(const std::string &input) {
+    if (input.empty() || input.size() > CT_MAX_NUM_CHARACTERS_FOR_NUMERIC) return false;
+    if (input == "NaN") return true;
+    return std::regex_match(input.c_str(), isNumericRegex);
+  }
+
+  bool isInt(const std::string &input) {
+    if (input.empty() || input.size() > CT_MAX_NUM_CHARACTERS_FOR_INT) return false;
+    return std::regex_match(input.c_str(), isIntRegex);
+  }
+
+  bool isFloat(const std::string &input) {
+    std::string inputStr = CT::trim(input);
+    if (inputStr.empty() || inputStr.length() > CT_MAX_NUM_CHARACTERS_FOR_FLOAT) return false;
+    if (inputStr == "NaN") return true;
+    return std::regex_match(inputStr.c_str(), isFloatRegex);
+  }
+
+  std::string substring(const std::string &input, int start, int end) {
+    if (start < 0) return "";
+    if (static_cast<size_t>(start) > input.size()) return "";
+    if (end < 0) return input.substr(start);
+    if (end <= start) return "";
+    return input.substr(start, end - start);
+  }
+
+  bool testRegEx(const std::string &input, const char *pattern) {
+    regex_t re;
+    if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) return false;
+    int status = regexec(&re, input.c_str(), 0, nullptr, 0);
+    regfree(&re);
+    return status == 0;
+  }
+
+  float toFloat(const std::string &input) { return static_cast<float>(atof(CT::trim(input).c_str())); }
+  double toDouble(const std::string &input) { return atof(CT::trim(input).c_str()); }
+  int toInt(const std::string &input) { return atoi(input.c_str()); }
+  long toLong(const std::string &input) { return atol(input.c_str()); }
 
 } /* namespace CT */

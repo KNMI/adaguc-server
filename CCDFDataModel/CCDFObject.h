@@ -41,7 +41,7 @@ private:
 public:
   DEF_ERRORFUNCTION();
   CDFObject() {
-    name.copy("NC_GLOBAL");
+    name = "NC_GLOBAL";
     reader = NULL;
   }
   ~CDFObject();

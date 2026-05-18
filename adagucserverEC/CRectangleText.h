@@ -29,6 +29,7 @@
 
 #include "Definitions.h"
 #include "CColor.h"
+#include <string>
 
 class CRectangleText {
 public:
@@ -38,8 +39,8 @@ public:
   int ury;
   float angle;
   int padding;
-  CT::string text;
-  CT::string fontFile;
+  std::string text;
+  std::string fontFile;
   float fontSize;
   CColor color;
 
@@ -53,8 +54,8 @@ public:
     this->ury = ury;
     this->angle = angle;
     this->padding = padding;
-    this->text = CT::string(text);
-    this->fontFile = CT::string(fontFile);
+    this->text = CT::fromCStr(text);
+    this->fontFile = CT::fromCStr(fontFile);
     this->fontSize = fontSize;
     this->color = color;
   }

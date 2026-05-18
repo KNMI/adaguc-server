@@ -1024,7 +1024,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
     populateMetadataLayerStruct(metadataLayer, true);
   }
 
-  serviceInfo.print("ADAGUCServer version %s, of %s %s", ADAGUCSERVER_VERSION, __DATE__, __TIME__);
+  serviceInfo = CT::printf("ADAGUCServer version %s, of %s %s", ADAGUCSERVER_VERSION, __DATE__, __TIME__);
   // Generate an XML document on basis of the information gathered above.
   CT::string XMLDoc;
   status = 0;

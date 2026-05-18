@@ -28,6 +28,7 @@
 #include "CTypes.h"
 #include <math.h>
 #include <map>
+#include <string>
 #include <cstddef>
 
 struct i4point {
@@ -81,7 +82,7 @@ struct GeoParameters {
   f8box bbox;
   double cellsizeX = 0;
   double cellsizeY = 0;
-  CT::string crs;
+  std::string crs;
 };
 
 #endif

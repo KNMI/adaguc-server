@@ -100,31 +100,31 @@ public:
    * figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
    */
   int figWidth, figHeight;
-  CT::string BGColor;
+  std::string BGColor;
   bool Transparent;
   GeoParameters geoParams;
-  CT::string responceCrs;
+  std::string responceCrs;
   CT::string Styles;
   CT::string Style;
 
   // given location by the KVP key source=<value> parameter
   CT::string autoResourceLocation;
 
-  CT::string datasetLocation;
+  std::string datasetLocation;
 
   // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
   CT::string internalAutoResourceLocation;
   // autoResourceVariable is given by the KVP key variable=<value> parameter.
   CT::string autoResourceVariable;
 
-  CT::string mapTitle;
-  CT::string mapSubTitle;
+  std::string mapTitle;
+  std::string mapSubTitle;
   bool showDimensionsInImage;
   CT::string showLegendInImage;
   bool showScaleBarInImage;
   bool showNorthArrow;
 
-  CT::string JSONP, queryStrURLParam;
+  std::string JSONP, queryStrURLParam;
 
   std::vector<COGCDims *> requestDims;
   int serviceType;

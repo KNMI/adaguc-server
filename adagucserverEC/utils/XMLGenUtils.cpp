@@ -654,7 +654,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
     GeoParameters geo;
-    geo.crs.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
+    geo.crs = CT::fromCStr(srvParam->cfg->Projection[p]->attr.id.c_str());
 
 #ifdef MEASURETIME
     StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
@@ -691,7 +691,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
-    if (geo.crs.equals("EPSG:4326")) {
+    if (geo.crs == "EPSG:4326") {
       for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = bboxToFind[k];
     }
 

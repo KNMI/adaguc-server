@@ -26,6 +26,7 @@
 #ifndef CREPORTER_H
 #define CREPORTER_H
 #include <list>
+#include <string>
 #include "CTString.h"
 #include "CReportMessage.h"
 
@@ -51,7 +52,7 @@ private:
   std::list<CReportMessage> messageList;
   void writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const;
   bool writelog = false;
-  CT::string _filename;
+  std::string _filename;
 
 protected:
   CReporter(bool report_and_log = false);
@@ -61,8 +62,8 @@ public:
   const std::list<CReportMessage> getMessageList() const;
   void addMessage(const CT::string message, CReportMessage::Severities severity, CReportMessage::Categories category, CT::string documentationLink, const char *file = "", int line = -1,
                   const char *className = "");
-  void filename(const CT::string filename);
-  CT::string filename() const;
+  void filename(const std::string &filename);
+  std::string filename() const;
 };
 
 #endif

@@ -3,6 +3,7 @@
 #include "CServerConfig_CPPXSD.h"
 #include "CServerParams.h"
 #include "../hclasses/CXMLParser.h"
+#include <string>
 
 #define MAX_RULE_ELEMENTS 1
 #define MAX_FILE_SIZE_ALLOWED 10000
@@ -20,11 +21,11 @@
 class CSLD {
 
 public:
-  bool parameterIsSld(CT::string param);
+  bool parameterIsSld(const std::string &param);
 
   void setServerParams(CServerParams *serverParams);
 
-  int processSLDUrl(CT::string sldUrl);
+  int processSLDUrl(const std::string &sldUrl);
 
 private:
   CServerConfig::XMLE_Configuration *serverConfig;

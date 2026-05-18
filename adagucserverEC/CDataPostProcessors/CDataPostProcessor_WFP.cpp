@@ -167,7 +167,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     CImageWarper warper;
 
-    status = warper.initreproj(sourceGeo.crs, destGeo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(sourceGeo.crs.c_str(), destGeo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;

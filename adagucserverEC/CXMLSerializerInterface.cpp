@@ -99,7 +99,7 @@ int parseConfig(CXMLObjectInterface *object, CT::string &xmlData) {
   xmlNode *root_element = NULL;
   doc = xmlParseMemory(xmlData.c_str(), xmlData.length());
   if (doc == NULL) {
-    CDBError("error: could not parse xmldata %s", xmlData);
+    CDBError("error: could not parse xmldata %s", xmlData.c_str());
     xmlFreeDoc(doc);
     xmlCleanupParser();
     return 1;

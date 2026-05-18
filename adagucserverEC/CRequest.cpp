@@ -117,8 +117,8 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 
       // The last configration file is considered the dataset one, strip path and extension and give it to configurer
       if (configFileList.size() > 1) {
-        srvParam->datasetLocation.copy(configFileList[configFileList.size() - 1].basename().c_str());
-        srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
+        srvParam->datasetLocation = configFileList[configFileList.size() - 1].basename().c_str();
+        srvParam->datasetLocation = CT::substring(srvParam->datasetLocation, 0, CT::lastIndexOf(srvParam->datasetLocation, "."));
         if (srvParam->verbose) {
           CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
         }
@@ -154,7 +154,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         if (value0Cap.equals("DATASET")) {
           if (srvParam->datasetLocation.empty()) {
 
-            srvParam->datasetLocation.copy(values[1].c_str());
+            srvParam->datasetLocation = values[1].c_str();
             status = CAutoResource::configureDataset(srvParam, false);
             if (status != 0) {
               CDBError("CAutoResource::configureDataset failed");
@@ -165,7 +165,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 
         // Check if parameter name is a SLD parameter AND have file name
         CSLD csld;
-        if (csld.parameterIsSld(values[0])) {
+        if (csld.parameterIsSld(values[0].c_str())) {
 #ifdef CREQUEST_DEBUG
           CDBDebug("Found SLD parameter in query");
 #endif
@@ -178,7 +178,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
             setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
             return 1;
           }
-          status = csld.processSLDUrl(values[1]);
+          status = csld.processSLDUrl(values[1].c_str());
 
           if (status != 0) {
             CDBError("Processing SLD failed");
@@ -997,7 +997,7 @@ int CRequest::process_all_layers() {
     // Loop through all layers as request in the request
     for (size_t layerIndex = 0; layerIndex < srvParam->requestedLayerNames.size(); layerIndex++) {
       CT::string requestedLayerName = srvParam->requestedLayerNames[layerIndex];
-      auto cfgLayer = findLayerConfigForRequestedLayer(srvParam, requestedLayerName);
+      auto cfgLayer = findLayerConfigForRequestedLayer(srvParam, requestedLayerName.c_str());
       if (cfgLayer == nullptr) {
 
         // Do not set status code for a missing layer to 404 when we request GetCapabilities
@@ -1466,21 +1466,21 @@ int CRequest::process_querystring() {
       // SRS / CRS Parameters
       if (uriKeyUpperCase.equals("SRS")) {
         if (uriValue.length() > 2) {
-          srvParam->geoParams.crs.copy(uriValue);
+          srvParam->geoParams.crs = uriValue.c_str();
           // srvParam->geoParams.CRS.decodeURLSelf();
           dFound_SRS = 1;
         }
       }
       if (uriKeyUpperCase.equals("CRS")) {
         if (uriValue.length() > 2) {
-          srvParam->geoParams.crs.copy(uriValue);
+          srvParam->geoParams.crs = uriValue.c_str();
           dFound_CRS = 1;
         }
       }
 
       if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
         if (uriValue.length() > 2) {
-          srvParam->responceCrs.copy(uriValue);
+          srvParam->responceCrs = uriValue.c_str();
           dFound_RESPONSE_CRS = 1;
         }
       }
@@ -1556,7 +1556,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("BGCOLOR")) {
         if (dFound_BGColor == 0) {
           if (uriValue.length() > 1) {
-            srvParam->BGColor.copy(&uriValue);
+            srvParam->BGColor = uriValue.c_str();
             dFound_BGColor = 1;
           }
         } else {
@@ -1569,7 +1569,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("VERSION")) {
         if (dFound_Version == 0) {
           if (uriValue.length() > 1) {
-            Version.copy(&uriValue);
+            Version = uriValue.c_str();
             dFound_Version = 1;
           }
         }
@@ -1584,7 +1584,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("EXCEPTIONS")) {
         if (dFound_Exceptions == 0) {
           if (uriValue.length() > 1) {
-            Exceptions.copy(&uriValue);
+            Exceptions = uriValue.c_str();
             dFound_Exceptions = 1;
           }
         } else {
@@ -1704,7 +1704,7 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("JSONP")) {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
-            srvParam->JSONP.copy(&uriValue);
+            srvParam->JSONP = uriValue.c_str();
             dFound_JSONP = 1;
           }
         } else {
@@ -1805,9 +1805,9 @@ int CRequest::process_querystring() {
     // Check the version
     if (dFound_Version != 0) {
       srvParam->OGCVersion = -1; // WMS_VERSION_1_1_1;
-      if (Version.equals("1.0.0")) srvParam->OGCVersion = WMS_VERSION_1_0_0;
-      if (Version.equals("1.1.1")) srvParam->OGCVersion = WMS_VERSION_1_1_1;
-      if (Version.equals("1.3.0")) srvParam->OGCVersion = WMS_VERSION_1_3_0;
+      if (Version == "1.0.0") srvParam->OGCVersion = WMS_VERSION_1_0_0;
+      if (Version == "1.1.1") srvParam->OGCVersion = WMS_VERSION_1_1_1;
+      if (Version == "1.3.0") srvParam->OGCVersion = WMS_VERSION_1_3_0;
       if (srvParam->OGCVersion == -1) {
         CDBError("Invalid version ('%s'): WMS 1.0.0, WMS 1.1.1 and WMS 1.3.0 are supported", Version.c_str());
         dErrorOccured = 1;
@@ -1864,22 +1864,22 @@ int CRequest::process_querystring() {
         }
       }
 
-      if (Exceptions.equals("application/vnd.ogc.se_xml")) {
+      if (Exceptions == "application/vnd.ogc.se_xml") {
         if (srvParam->OGCVersion == WMS_VERSION_1_1_1) seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
       }
-      if (Exceptions.equals("application/vnd.ogc.se_inimage")) {
+      if (Exceptions == "application/vnd.ogc.se_inimage") {
         seterrormode(WMS_EXCEPTIONS_IMAGE);
       }
-      if (Exceptions.equals("application/vnd.ogc.se_blank")) {
+      if (Exceptions == "application/vnd.ogc.se_blank") {
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
-      if (Exceptions.equals("INIMAGE")) {
+      if (Exceptions == "INIMAGE") {
         seterrormode(WMS_EXCEPTIONS_IMAGE);
       }
-      if (Exceptions.equals("BLANK")) {
+      if (Exceptions == "BLANK") {
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
-      if (Exceptions.equals("XML")) {
+      if (Exceptions == "XML") {
         if (srvParam->OGCVersion == WMS_VERSION_1_1_1) seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
         if (srvParam->OGCVersion == WMS_VERSION_1_3_0) seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
       }
@@ -2258,8 +2258,8 @@ int CRequest::process_querystring() {
         srvParam->WCS_GoNative = 1;
       else {
         if (dFound_CRS == 1 && dFound_RESPONSE_CRS == 1) {
-          CT::string CRS = srvParam->responceCrs;
-          CT::string RESPONSE_CRS = srvParam->geoParams.crs;
+          std::string CRS = srvParam->responceCrs;
+          std::string RESPONSE_CRS = srvParam->geoParams.crs;
           srvParam->geoParams.crs = CRS;
           srvParam->responceCrs = RESPONSE_CRS;
         } else {
@@ -2345,7 +2345,7 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
 
   for (size_t layerNo = 0; layerNo < numberOfLayers; layerNo++) {
     if (!layerPathToScan.empty()) {
-      if (!checkIfFileMatchesLayer(layerPathToScan, srvParam->cfg->Layer[layerNo])) {
+      if (!checkIfFileMatchesLayer(layerPathToScan.c_str(), srvParam->cfg->Layer[layerNo])) {
         continue;
       }
     }

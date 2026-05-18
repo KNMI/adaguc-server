@@ -57,6 +57,6 @@ void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Seve
 
 const std::list<CReportMessage> CReporter::getMessageList() const { return messageList; }
 
-void CReporter::filename(const CT::string filename) { this->_filename = filename; }
+void CReporter::filename(const std::string &filename) { this->_filename = filename; }
 
-CT::string CReporter::filename() const { return this->_filename; }
+std::string CReporter::filename() const { return this->_filename; }

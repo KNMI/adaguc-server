@@ -26,7 +26,7 @@
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 
-void CDF::Attribute::setName(const char *value) { name.copy(value); }
+void CDF::Attribute::setName(const char *value) { name = CT::fromCStr(value); }
 
 CDF::Attribute::Attribute() {
   data = NULL;
@@ -37,21 +37,21 @@ CDF::Attribute::Attribute(Attribute *att) {
   data = NULL;
   length = 0;
 
-  name.copy(&att->name);
+  name = att->name;
   setData(att);
 }
 
 CDF::Attribute::Attribute(const char *attrName, const char *attrString) {
   data = NULL;
   length = 0;
-  name.copy(attrName);
+  name = CT::fromCStr(attrName);
   setData(CDF_CHAR, attrString, strlen(attrString));
 }
 
 CDF::Attribute::Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength) {
   data = NULL;
   length = 0;
-  name.copy(attrName);
+  name = CT::fromCStr(attrName);
   setData(type, dataToSet, dataLength);
 }
 

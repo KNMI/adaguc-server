@@ -41,7 +41,7 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
 
   for (auto dataset : datasetNames) {
     auto dataSetName = dataset.first;
-    if (srvParams->datasetLocation.empty() || srvParams->datasetLocation.equals(dataSetName)) {
+    if (srvParams->datasetLocation.empty() || srvParams->datasetLocation == dataSetName) {
       json datasetJSON;
       for (auto layerName : dataset.second) {
         if (layerNameInRequest.empty() || layerNameInRequest.equals(layerName.c_str())) {

@@ -28,6 +28,8 @@
 
 #include "CTypes.h"
 #include "CTStringRef.h"
+#include "printfCheckMacro.h"
+#include <string>
 
 #define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
@@ -135,6 +137,24 @@ namespace CT {
     operator const char *() const;
 
     /**
+     * std::string conversion operator
+     * Marked explicit to avoid ambiguity with operator const char *() during the
+     * CT::string -> std::string migration. Use std::string(ctstring) or
+     * static_cast<std::string>(ctstring) when an explicit conversion is wanted;
+     * otherwise std::string sees CT::string through operator const char *().
+     */
+    explicit operator std::string() const { return std::string(this->c_str(), this->length()); }
+
+    /**
+     * std::string copy constructor — initialize a CT::string from a std::string.
+     * Allows passing std::string anywhere a CT::string is expected during migration.
+     */
+    string(const std::string &s) {
+      init();
+      copy(s.c_str(), s.length());
+    }
+
+    /**
      * Compare operator
      * @param f The input string
      */
@@ -152,7 +172,7 @@ namespace CT {
      * returns length of the string
      * @return length
      */
-    inline size_t length() { return privatelength; }
+    inline size_t length() const { return privatelength; }
 
     /**
      * returns the internal bufferlength of the string
@@ -379,13 +399,13 @@ namespace CT {
      * Print like printf to this string
      * @param a The string to print
      */
-    void print(const char *a, ...);
+    void print(const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
 
     /**
      * Like printf, but concatenates the string
      * @param a The string to print
      */
-    void printconcat(const char *a, ...);
+    void printconcat(const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
 
     /**
      * Get a character array with the string data
@@ -527,6 +547,146 @@ namespace CT {
      */
     static CT::string getHex(unsigned int number);
   };
+
+  /* ---------------------------------------------------------------------- *
+   *  Free helper functions in namespace CT::, all operating on std::string.
+   *  These are introduced as part of the migration from CT::string to
+   *  std::string. New code should use these helpers; existing CT::string
+   *  methods continue to work unchanged.
+   * ---------------------------------------------------------------------- */
+
+  /**
+   * Null-safe conversion from a C string to std::string.
+   * Returns an empty std::string if @p p is nullptr.
+   * Use this to replace patterns where CT::string was implicitly handling
+   * a NULL pointer (CT::string allowed (const char*)NULL; std::string aborts).
+   */
+  inline std::string fromCStr(const char *p) { return p ? std::string(p) : std::string{}; }
+
+  /**
+   * Joins vector of strings into a new string.
+   */
+  std::string join(const std::vector<std::string> &items, const std::string &separator = ",");
+
+  /**
+   * Returns posix basename of path.
+   */
+  std::string basename(std::string input);
+
+  /**
+   * Case-insensitive equality.
+   */
+  bool equalsIgnoreCase(const std::string &str1, const std::string &str2);
+
+  /**
+   * printf into a freshly allocated std::string.
+   */
+  std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
+
+  /**
+   * printf appended to an existing std::string.
+   */
+  void printfconcat(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
+
+  /**
+   * Replace all occurrences of @p from with @p to in @p input. Returns a new string.
+   */
+  std::string replace(const std::string &input, const std::string &from, const std::string &to);
+
+  /**
+   * Replace all occurrences of @p from with @p to in-place in @p input.
+   */
+  void replaceSelf(std::string &input, const std::string &from, const std::string &to);
+
+  /**
+   * Lowercase / uppercase copies.
+   */
+  std::string toLowerCase(const std::string &input);
+  std::string toUpperCase(const std::string &input);
+
+  /**
+   * Trim leading/trailing whitespace (space, tab, newline, carriage return).
+   */
+  std::string trim(const std::string &input);
+
+  /**
+   * Split @p input on @p value. Preserves empty fields between consecutive delimiters
+   * and at the start. Trailing empty field after final delimiter is dropped (matches
+   * historical CT::string::splitToStack behaviour).
+   */
+  std::vector<std::string> split(const std::string &input, const std::string &value);
+
+  /**
+   * Generate a random string of the specified length using digits + ASCII letters.
+   */
+  std::string randomString(int length);
+
+  /**
+   * Index of the first occurrence of @p pattern in @p input, or -1 if not found.
+   * Returns 0 if @p pattern is empty (matches historical semantics).
+   */
+  int indexOf(const std::string &input, const std::string &pattern);
+
+  /**
+   * Index of the last occurrence of @p pattern in @p input, or -1 if not found.
+   * Returns 0 if @p pattern is empty.
+   */
+  int lastIndexOf(const std::string &input, const std::string &pattern);
+
+  /**
+   * True if @p input ends with @p pattern. True if @p pattern is empty.
+   */
+  bool endsWith(const std::string &input, const std::string &pattern);
+
+  /**
+   * True if @p input starts with @p pattern. True if @p pattern is empty.
+   */
+  bool startsWith(const std::string &input, const std::string &pattern);
+
+  /**
+   * Replace XML-special characters with their entities.
+   */
+  std::string encodeXml(const std::string &input);
+
+  /**
+   * Two-character hex of @p number (modulo 256).
+   */
+  std::string getHex(unsigned int number);
+
+  /**
+   * Six-character hex (3 bytes) representation of an int value.
+   */
+  std::string getHex24(int value);
+
+  /**
+   * Numeric / int / float predicates. Match historical CT::string semantics:
+   *  - "NaN" is considered numeric/float.
+   *  - leading/trailing whitespace tolerated for floats.
+   */
+  bool isNumeric(const std::string &input);
+  bool isInt(const std::string &input);
+  bool isFloat(const std::string &input);
+
+  /**
+   * Substring with sentinel: end < 0 means "to the end of the string".
+   * If end <= start, returns empty string. If start < 0, returns empty string.
+   */
+  std::string substring(const std::string &input, int start, int end);
+
+  /**
+   * POSIX regex match against @p pattern.
+   */
+  bool testRegEx(const std::string &input, const char *pattern);
+
+  /**
+   * Numeric parsing helpers matching CT::string semantics:
+   *  - Tolerate leading/trailing whitespace.
+   *  - Return 0 silently on parse failure (no exception).
+   */
+  float toFloat(const std::string &input);
+  double toDouble(const std::string &input);
+  int toInt(const std::string &input);
+  long toLong(const std::string &input);
 }; /* namespace CT */
 
 #endif

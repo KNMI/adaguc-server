@@ -420,8 +420,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
   jsonWriter = false;
 
-  httpHeaderContentType = getenv("CONTENT_TYPE");
-  if (httpHeaderContentType.equals("application/json")) {
+  httpHeaderContentType = CT::fromCStr(getenv("CONTENT_TYPE"));
+  if (httpHeaderContentType == "application/json") {
     jsonWriter = true;
   }
 

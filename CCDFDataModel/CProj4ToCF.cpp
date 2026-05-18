@@ -393,7 +393,7 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
 
   std::vector<CKeyValuePair> projKVPList;
   CT::string proj4CTString;
-  proj4CTString.copy(proj4String);
+  proj4CTString = CT::fromCStr(proj4String);
   auto projElements = proj4CTString.splitToStack(" ");
 
   if (projElements.size() < 2) {
@@ -404,9 +404,9 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     auto element = projElement.splitToStack("=");
     if (element.size() > 0) {
       CT::string name, value;
-      name.copy(element[0]);
+      name = element[0];
       if (element.size() > 1) {
-        value.copy(element[1]);
+        value = element[1];
       }
       if (name.startsWith("+")) {
         name.substringSelf(1, -1);
@@ -497,7 +497,7 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
 
 CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
   CT::string proj4String;
-  proj4String.copy("Unsupported projection");
+  proj4String = "Unsupported projection";
   try {
     CT::string grid_mapping_name;
     projectionVariable->getAttribute("grid_mapping_name")->getDataAsString(&grid_mapping_name);

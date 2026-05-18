@@ -118,7 +118,7 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
     if (configSrvParam && configSrvParam->cfg) {
       auto layers = configSrvParam->cfg->Layer;
       for (auto layer : layers) {
-        if (checkIfFileMatchesLayer(layerPathToScan, layer)) {
+        if (checkIfFileMatchesLayer(layerPathToScan.c_str(), layer)) {
           datasetsToScan.insert(dataset.c_str());
           break;
         }

@@ -28,6 +28,7 @@
 #include "CServerParams.h"
 #include <stdio.h>
 #include <string.h>
+#include <string>
 
 #include "CInspire.h"
 
@@ -54,7 +55,7 @@ private:
   int getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   CServerParams *srvParam;
-  CT::string serviceInfo;
+  std::string serviceInfo;
 
 public:
   int OGCGetCapabilities(CServerParams *srvParam, CT::string *XMLDocument);

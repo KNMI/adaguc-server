@@ -21,19 +21,19 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, GeoParameters &ge
   scaleBarImage->line(offsetX + p.width * 2.0f, scaleBarHeight - 1.0f * scaling, offsetX + p.width * 2.0f, scaleBarHeight - 9.0f * scaling, scaling * 1, 240);
 
   // Draw text
-  CT::string units = "";
-  CT::string projection = geoParams.crs.c_str();
-  if (projection.equals("EPSG:3411")) units = "meter";
-  if (projection.equals("EPSG:3412")) units = "meter";
-  if (projection.equals("EPSG:3575")) units = "meter";
-  if (projection.equals("EPSG:4326")) units = "degrees";
-  if (projection.equals("EPSG:28992")) units = "meter";
-  if (projection.equals("EPSG:32661")) units = "meter";
-  if (projection.equals("EPSG:3857")) units = "meter";
-  if (projection.equals("EPSG:900913")) units = "meter";
-  if (projection.equals("EPSG:102100")) units = "meter";
+  std::string units = "";
+  const std::string &projection = geoParams.crs;
+  if (projection == "EPSG:3411") units = "meter";
+  if (projection == "EPSG:3412") units = "meter";
+  if (projection == "EPSG:3575") units = "meter";
+  if (projection == "EPSG:4326") units = "degrees";
+  if (projection == "EPSG:28992") units = "meter";
+  if (projection == "EPSG:32661") units = "meter";
+  if (projection == "EPSG:3857") units = "meter";
+  if (projection == "EPSG:900913") units = "meter";
+  if (projection == "EPSG:102100") units = "meter";
 
-  if (units.equals("meter")) {
+  if (units == "meter") {
     if (p.mapunits > 1000) {
       p.mapunits /= 1000;
       units = "km";
