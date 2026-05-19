@@ -60,6 +60,7 @@ DEFAULT_CRS_OBJECT = {
 
 
 @edrApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
+@edrApiApp.get("/collections/", response_model=Collections, response_model_exclude_none=True)
 async def rest_get_edr_collections(request: Request, response: Response):
     """
     GET /collections, returns all available collections
@@ -68,6 +69,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
     collection_url = get_base_url(request) + "/edr/collections"
     self_link = Link(href=collection_url, rel="self", type="application/json")
 
+    base_url = get_base_url(request)
     links.append(self_link)
     collections: list[Collection] = []
     ttl_set = set()
@@ -75,7 +77,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
 
     for dataset_name in metadata.keys():
         try:
-            colls = get_collectioninfo_from_md(metadata[dataset_name], dataset_name)
+            colls = get_collectioninfo_from_md(metadata[dataset_name], dataset_name, base_url)
             if colls:
                 collections.extend(colls)
             else:
@@ -93,10 +95,12 @@ async def rest_get_edr_collections(request: Request, response: Response):
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_edr_collection_by_id(collection_name: str, response: Response):
+async def rest_get_edr_collection_by_id(collection_name: str, req: Request, response: Response):
     """
     GET Returns the most recent EDR collection for given collection id
     """
+
+    base_url = get_base_url(req)
 
     # Query metadata to find last reference time
     metadata = await get_metadata(collection_name)
@@ -105,7 +109,7 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     # Query metadata again with the most recent reference time, so time.values matches the reference time
     # TODO: it would be good if we can prevent the extra call to metadata.
     metadata = await get_metadata(collection_name, instance)
-    collection = get_collectioninfo_from_md(metadata[collection_name], collection_name)[0]
+    collection = get_collectioninfo_from_md(metadata[collection_name], collection_name, base_url)[0]
 
     if collection is None:
         raise exc_unknown_collection(collection_name)
