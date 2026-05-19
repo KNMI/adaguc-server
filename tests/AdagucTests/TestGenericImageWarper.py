@@ -100,7 +100,7 @@ class TestGenericImageWarper:
             showLog=False,
         )
 
-        AdagucTestTools().writetofile(self.testresultspath + filetocheck, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filetocheck, data)
 
         assert status == 0
         assert AdagucTestTools().compareImage(

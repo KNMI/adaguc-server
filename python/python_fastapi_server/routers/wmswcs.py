@@ -20,17 +20,12 @@ logger = logging.getLogger(__name__)
 @wmsWcsRouter.get("/wcs")
 @wmsWcsRouter.get("/adagucserver")
 @wmsWcsRouter.get("/adaguc-server")
-async def handle_wms(
-    req: Request,
-):
+async def handle_wms(req: Request):
     """
-    Handle /wms endpoint 
+    Handle /wms endpoint
     """
     adaguc_instance = setup_adaguc()
-    # logger.info("instance: %s", str(adaguc_instance))
     url = req.url
-
-    # logger.info(req.url)
 
     adagucenv = {}
 
@@ -79,13 +74,12 @@ async def handle_wms(
             response_code = 500  # Timeout
         else:
             response_code = 500
-    response = Response(content=data.getvalue(), status_code=response_code)
+    response = Response(content=data, status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:
-        key = header.split(":")[0]
-        value = header.split(":")[1].strip()
-        response.headers[key] = value
+        key, value = header.split(":", 1)
+        response.headers[key] = value.strip()
 
     return response
 

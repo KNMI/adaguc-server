@@ -26,6 +26,7 @@
 #ifndef CDBSTORE_H
 #define CDBSTORE_H
 #include <vector>
+#include <algorithm>
 #include "../hclasses/CTString.h"
 
 #define CDB_UNKNOWN_ERROR 0
@@ -45,10 +46,11 @@ public:
     return getErrorMessage(0);
   }
   struct ColumnModel {
-    std::vector<CT::string> columnNames;
+    std::vector<std::string> columnNames;
     size_t getIndex(const char *name) {
-      for (size_t j = 0; j < columnNames.size(); j++) {
-        if (columnNames[j].equals(name)) return j;
+      auto it = std::find_if(columnNames.begin(), columnNames.end(), [&name](const auto &a) { return a == name; });
+      if (it != columnNames.end()) {
+        return std::distance(columnNames.begin(), it);
       }
       throw(CDB_UNKNOWN_COLUMNNAME);
     }
