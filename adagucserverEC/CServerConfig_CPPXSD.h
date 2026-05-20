@@ -33,164 +33,145 @@
 // Struct for keeping settings for a datapostprocessor. Can be assigned to new structs by assigment operator. Also used in CDataPostProcessor.cpp
 struct XMLE_DataPostProcAttributes {
   int postProcIndexInLayer = 0;
-  CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
+  std::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
 };
 
-class CServerConfig : public CXMLObjectInterface {
-public:
-  class XMLE_palette : public CXMLObjectInterface {
-  public:
+struct CServerConfig : CXMLObjectInterface {
+  struct XMLE_palette : CXMLObjectInterface {
     XMLE_palette() {
       attr.alpha = 255;
       attr.index = -1;
     }
-    class Cattr {
-    public:
+    struct Cattr {
       int min, max, index, red, green, blue, alpha;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("min", name)) {
-        attr.min = parseInt(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("min" == attrCfg.name) {
+        attr.min = parseInt(attrCfg);
         return true;
-      } else if (equals("max", name)) {
-        attr.max = parseInt(value);
+      } else if ("max" == attrCfg.name) {
+        attr.max = parseInt(attrCfg);
         return true;
-      } else if (equals("red", name)) {
-        attr.red = parseInt(value);
+      } else if ("red" == attrCfg.name) {
+        attr.red = parseInt(attrCfg);
         return true;
-      } else if (equals("blue", name)) {
-        attr.blue = parseInt(value);
+      } else if ("blue" == attrCfg.name) {
+        attr.blue = parseInt(attrCfg);
         return true;
-      } else if (equals("green", name)) {
-        attr.green = parseInt(value);
+      } else if ("green" == attrCfg.name) {
+        attr.green = parseInt(attrCfg);
         return true;
-      } else if (equals("alpha", name)) {
-        attr.alpha = parseInt(value);
+      } else if ("alpha" == attrCfg.name) {
+        attr.alpha = parseInt(attrCfg);
         return true;
-      } else if (equals("index", name)) {
-        attr.index = parseInt(value);
+      } else if ("index" == attrCfg.name) {
+        attr.index = parseInt(attrCfg);
         return true;
-      } else if (equals("color", name)) { // Hex color like: #A41D23
-        if (value[0] == '#')
-          if (strlen(value) == 7 || strlen(value) == 9) {
-
-            attr.red = CSERVER_HEXDIGIT_TO_DEC(value[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(value[2]);
-            attr.green = CSERVER_HEXDIGIT_TO_DEC(value[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(value[4]);
-            attr.blue = CSERVER_HEXDIGIT_TO_DEC(value[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(value[6]);
-            if (strlen(value) == 9) {
-              attr.alpha = CSERVER_HEXDIGIT_TO_DEC(value[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(value[8]);
-            }
-          }
-        return true;
+      } else if ("color" == attrCfg.name) { // Hex color like: #A41D23
+        if (attrCfg.value.length() > 1 && attrCfg.value.at(0) == '#') {
+          CColor color(attrCfg.value);
+          attr.red = color.r;
+          attr.green = color.g;
+          attr.blue = color.b;
+          attr.alpha = color.a;
+          return true;
+        }
       }
       return false;
     }
   };
 
-  class XMLE_WMSFormat : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, format, quality;
+  struct XMLE_WMSFormat : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, format, quality;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("quality", attrname)) {
-        attr.quality.copy(attrvalue);
+      } else if ("quality" == attrCfg.name) {
+        attr.quality = attrCfg.value;
         return true;
-      } else if (equals("format", attrname)) {
-        attr.format.copy(attrvalue);
+      } else if ("format" == attrCfg.name) {
+        attr.format = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_WMSExceptions : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string defaultValue, force;
+  struct XMLE_WMSExceptions : CXMLObjectInterface {
+    struct Cattr {
+      std::string defaultValue, force;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("defaultvalue", attrname)) {
-        attr.defaultValue.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("defaultvalue" == attrCfg.name) {
+        attr.defaultValue = attrCfg.value;
         return true;
-      } else if (equals("force", attrname)) {
-        attr.force.copy(attrvalue);
+      } else if ("force" == attrCfg.name) {
+        attr.force = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Logging : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string debug;
+  struct XMLE_Logging : CXMLObjectInterface {
+    struct Cattr {
+      std::string debug;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("debug", attrname)) {
-        attr.debug.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("debug" == attrCfg.name) {
+        attr.debug = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Thinning : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string radius;
+  struct XMLE_Thinning : CXMLObjectInterface {
+    struct Cattr {
+      std::string radius;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("radius", attrname)) {
-        attr.radius.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("radius" == attrCfg.name) {
+        attr.radius = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_FilterPoints : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string use;
+  struct XMLE_FilterPoints : CXMLObjectInterface {
+    struct Cattr {
+      std::string use;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("use", attrname)) {
-        attr.use.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("use" == attrCfg.name) {
+        attr.use = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Symbol : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, coordinates;
+  struct XMLE_Symbol : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, coordinates;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("coordinates", attrname)) {
-        attr.coordinates.copy(attrvalue);
+      } else if ("coordinates" == attrCfg.name) {
+        attr.coordinates = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Vector : public CXMLObjectInterface {
-  public:
+  struct XMLE_Vector : CXMLObjectInterface {
     XMLE_Vector() {
       attr.scale = 1.0;
       attr.outlinewidth = 4.5;
@@ -200,68 +181,66 @@ public:
       attr.min = -DBL_MAX;
       attr.max = DBL_MAX;
     }
-    class Cattr {
-    public:
-      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, fillcolor, fontfile;
+    struct Cattr {
+      std::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, fillcolor, fontfile;
       float scale;
       double min, max, outlinewidth, fontSize, linewidth, discradius;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("linecolor", attrname)) {
-        attr.linecolor.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("linecolor" == attrCfg.name) {
+        attr.linecolor = attrCfg.value;
         return true;
-      } else if (equals("linewidth", attrname)) {
-        attr.linewidth = parseDouble(attrvalue);
+      } else if ("linewidth" == attrCfg.name) {
+        attr.linewidth = parseDouble(attrCfg);
         return true;
-      } else if (equals("scale", attrname)) {
-        attr.scale = parseFloat(attrvalue);
+      } else if ("scale" == attrCfg.name) {
+        attr.scale = parseDouble(attrCfg);
         return true;
-      } else if (equals("discradius", attrname)) {
-        attr.discradius = parseDouble(attrvalue);
+      } else if ("discradius" == attrCfg.name) {
+        attr.discradius = parseDouble(attrCfg);
         return true;
-      } else if (equals("vectorstyle", attrname)) {
-        attr.vectorstyle.copy(attrvalue);
+      } else if ("vectorstyle" == attrCfg.name) {
+        attr.vectorstyle = attrCfg.value;
         return true;
-      } else if (equals("plotstationid", attrname)) {
-        attr.plotstationid.copy(attrvalue);
+      } else if ("plotstationid" == attrCfg.name) {
+        attr.plotstationid = attrCfg.value;
         return true;
-      } else if (equals("textformat", attrname)) {
-        attr.textformat.copy(attrvalue);
+      } else if ("textformat" == attrCfg.name) {
+        attr.textformat = attrCfg.value;
         return true;
-      } else if (equals("plotvalue", attrname)) {
-        attr.plotvalue.copy(attrvalue);
+      } else if ("plotvalue" == attrCfg.name) {
+        attr.plotvalue = attrCfg.value;
         return true;
-      } else if (equals("fontfile", attrname)) {
-        attr.fontfile.copy(attrvalue);
+      } else if ("fontfile" == attrCfg.name) {
+        attr.fontfile = attrCfg.value;
         return true;
-      } else if (equals("min", attrname)) {
-        attr.min = parseDouble(attrvalue);
+      } else if ("min" == attrCfg.name) {
+        attr.min = parseDouble(attrCfg);
         return true;
-      } else if (equals("max", attrname)) {
-        attr.max = parseDouble(attrvalue);
+      } else if ("max" == attrCfg.name) {
+        attr.max = parseDouble(attrCfg);
         return true;
-      } else if (equals("fontsize", attrname)) {
-        attr.fontSize = parseDouble(attrvalue);
+      } else if ("fontsize" == attrCfg.name) {
+        attr.fontSize = parseDouble(attrCfg);
         return true;
-      } else if (equals("outlinewidth", attrname)) {
-        attr.outlinewidth = parseDouble(attrvalue);
+      } else if ("outlinewidth" == attrCfg.name) {
+        attr.outlinewidth = parseDouble(attrCfg);
         return true;
-      } else if (equals("outlinecolor", attrname)) {
-        attr.outlinecolor.copy(attrvalue);
+      } else if ("outlinecolor" == attrCfg.name) {
+        attr.outlinecolor = attrCfg.value;
         return true;
-      } else if (equals("textcolor", attrname)) {
-        attr.textcolor.copy(attrvalue);
+      } else if ("textcolor" == attrCfg.name) {
+        attr.textcolor = attrCfg.value;
         return true;
-      } else if (equals("fillcolor", attrname)) {
-        attr.fillcolor.copy(attrvalue);
+      } else if ("fillcolor" == attrCfg.name) {
+        attr.fillcolor = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Point : public CXMLObjectInterface {
-  public:
+  struct XMLE_Point : CXMLObjectInterface {
     XMLE_Point() {
       attr.min = -DBL_MAX;
       attr.max = DBL_MAX;
@@ -269,709 +248,660 @@ public:
       attr.maxpointspercell = -1;
       attr.maxpointcellsize = -1;
     }
-    class Cattr {
-    public:
-      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, textformat, plotstationid, pointstyle, symbol;
+    struct Cattr {
+      std::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, textformat, plotstationid, pointstyle, symbol;
       double min, max;
       int maxpointspercell, maxpointcellsize;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("fillcolor", attrname)) {
-        attr.fillcolor.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("fillcolor" == attrCfg.name) {
+        attr.fillcolor = attrCfg.value;
         return true;
-      } else if (equals("linecolor", attrname)) {
-        attr.linecolor.copy(attrvalue);
+      } else if ("linecolor" == attrCfg.name) {
+        attr.linecolor = attrCfg.value;
         return true;
-      } else if (equals("textcolor", attrname)) {
-        attr.textcolor.copy(attrvalue);
+      } else if ("textcolor" == attrCfg.name) {
+        attr.textcolor = attrCfg.value;
         return true;
-      } else if (equals("textoutlinecolor", attrname)) {
-        attr.textoutlinecolor.copy(attrvalue);
+      } else if ("textoutlinecolor" == attrCfg.name) {
+        attr.textoutlinecolor = attrCfg.value;
         return true;
-      } else if (equals("fontfile", attrname)) {
-        attr.fontfile.copy(attrvalue);
+      } else if ("fontfile" == attrCfg.name) {
+        attr.fontfile = attrCfg.value;
         return true;
-      } else if (equals("fontsize", attrname)) {
-        attr.fontsize.copy(attrvalue);
+      } else if ("fontsize" == attrCfg.name) {
+        attr.fontsize = attrCfg.value;
         return true;
-      } else if (equals("discradius", attrname)) {
-        attr.discradius.copy(attrvalue);
+      } else if ("discradius" == attrCfg.name) {
+        attr.discradius = attrCfg.value;
         return true;
-      } else if (equals("textradius", attrname)) {
-        attr.textradius.copy(attrvalue);
+      } else if ("textradius" == attrCfg.name) {
+        attr.textradius = attrCfg.value;
         return true;
-      } else if (equals("dot", attrname)) {
-        attr.dot.copy(attrvalue);
+      } else if ("dot" == attrCfg.name) {
+        attr.dot = attrCfg.value;
         return true;
-      } else if (equals("textformat", attrname)) {
-        attr.textformat.copy(attrvalue);
+      } else if ("textformat" == attrCfg.name) {
+        attr.textformat = attrCfg.value;
         return true;
-      } else if (equals("plotstationid", attrname)) {
-        attr.plotstationid.copy(attrvalue);
+      } else if ("plotstationid" == attrCfg.name) {
+        attr.plotstationid = attrCfg.value;
         return true;
-      } else if (equals("pointstyle", attrname)) {
-        attr.pointstyle.copy(attrvalue);
+      } else if ("pointstyle" == attrCfg.name) {
+        attr.pointstyle = attrCfg.value;
         return true;
-      } else if (equals("min", attrname)) {
-        attr.min = parseDouble(attrvalue);
+      } else if ("min" == attrCfg.name) {
+        attr.min = parseDouble(attrCfg);
         return true;
-      } else if (equals("max", attrname)) {
-        attr.max = parseDouble(attrvalue);
+      } else if ("max" == attrCfg.name) {
+        attr.max = parseDouble(attrCfg);
         return true;
-      } else if (equals("symbol", attrname)) {
-        attr.symbol.copy(attrvalue);
+      } else if ("symbol" == attrCfg.name) {
+        attr.symbol = attrCfg.value;
         return true;
-      } else if (equals("maxpointspercell", attrname)) {
-        attr.maxpointspercell = parseInt(attrvalue);
+      } else if ("maxpointspercell" == attrCfg.name) {
+        attr.maxpointspercell = parseInt(attrCfg);
         return true;
-      } else if (equals("maxpointcellsize", attrname)) {
-        attr.maxpointcellsize = parseInt(attrvalue);
+      } else if ("maxpointcellsize" == attrCfg.name) {
+        attr.maxpointcellsize = parseInt(attrCfg);
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Legend : public CXMLObjectInterface {
-  public:
+  struct XMLE_Legend : CXMLObjectInterface {
     std::vector<XMLE_palette *> palette;
     ~XMLE_Legend() { XMLE_DELOBJ(palette); }
-    class Cattr {
-    public:
-      CT::string name, type, tickround, tickinterval, fixedclasses, file, textformatting;
+    struct Cattr {
+      std::string name, type, tickround, tickinterval, fixedclasses, file, textformatting;
     } attr;
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("palette", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("palette" == elName) {
         XMLE_ADDOBJ(palette);
       }
       return nullptr;
     }
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("name", name)) {
-        attr.name.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("type", name)) {
-        attr.type.copy(value);
+      } else if ("type" == attrCfg.name) {
+        attr.type = attrCfg.value;
         return true;
-      } else if (equals("file", name)) {
-        attr.file.copy(value);
+      } else if ("file" == attrCfg.name) {
+        attr.file = attrCfg.value;
         return true;
-      } else if (equals("tickround", name)) {
-        attr.tickround.copy(value);
+      } else if ("tickround" == attrCfg.name) {
+        attr.tickround = attrCfg.value;
         return true;
-      } else if (equals("tickinterval", name)) {
-        attr.tickinterval.copy(value);
+      } else if ("tickinterval" == attrCfg.name) {
+        attr.tickinterval = attrCfg.value;
         return true;
-      } else if (equals("fixedclasses", name) || equals("fixed", name)) {
-        attr.fixedclasses.copy(value);
+      } else if ("fixedclasses" == attrCfg.name || "fixed" == attrCfg.name) {
+        attr.fixedclasses = attrCfg.value;
         return true;
-      } else if (equals("textformatting", name)) {
-        attr.textformatting.copy(value);
+      } else if ("textformatting" == attrCfg.name) {
+        attr.textformatting = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_Scale : public CXMLObjectInterface {};
-  class XMLE_Offset : public CXMLObjectInterface {};
-  class XMLE_Min : public CXMLObjectInterface {};
-  class XMLE_Max : public CXMLObjectInterface {};
+  struct XMLE_Scale : CXMLObjectInterface {};
+  struct XMLE_Offset : CXMLObjectInterface {};
+  struct XMLE_Min : CXMLObjectInterface {};
+  struct XMLE_Max : CXMLObjectInterface {};
 
   /*Deprecated*/
-  class XMLE_ContourIntervalL : public CXMLObjectInterface {};
+  struct XMLE_ContourIntervalL : CXMLObjectInterface {};
   /*Deprecated*/
-  class XMLE_ContourIntervalH : public CXMLObjectInterface {};
+  struct XMLE_ContourIntervalH : CXMLObjectInterface {};
 
-  class XMLE_ContourLine : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
+  struct XMLE_ContourLine : CXMLObjectInterface {
+    struct Cattr {
+      std::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("width", attrname)) {
-        attr.width.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("width" == attrCfg.name) {
+        attr.width = attrCfg.value;
         return true;
-      } else if (equals("dashing", attrname)) {
-        attr.dashing.copy(attrvalue);
+      } else if ("dashing" == attrCfg.name) {
+        attr.dashing = attrCfg.value;
         return true;
-      } else if (equals("linecolor", attrname)) {
-        attr.linecolor.copy(attrvalue);
+      } else if ("linecolor" == attrCfg.name) {
+        attr.linecolor = attrCfg.value;
         return true;
-      } else if (equals("textsize", attrname)) {
-        attr.textsize.copy(attrvalue);
+      } else if ("textsize" == attrCfg.name) {
+        attr.textsize = attrCfg.value;
         return true;
-      } else if (equals("textcolor", attrname)) {
-        attr.textcolor.copy(attrvalue);
+      } else if ("textcolor" == attrCfg.name) {
+        attr.textcolor = attrCfg.value;
         return true;
-      } else if (equals("textstrokecolor", attrname)) {
-        attr.textstrokecolor.copy(attrvalue);
+      } else if ("textstrokecolor" == attrCfg.name) {
+        attr.textstrokecolor = attrCfg.value;
         return true;
-      } else if (equals("classes", attrname)) {
-        attr.classes.copy(attrvalue);
+      } else if ("classes" == attrCfg.name) {
+        attr.classes = attrCfg.value;
         return true;
-      } else if (equals("interval", attrname)) {
-        attr.interval.copy(attrvalue);
+      } else if ("interval" == attrCfg.name) {
+        attr.interval = attrCfg.value;
         return true;
-      } else if (equals("textformatting", attrname)) {
-        attr.textformatting.copy(attrvalue);
+      } else if ("textformatting" == attrCfg.name) {
+        attr.textformatting = attrCfg.value;
         return true;
-      } else if (equals("textstrokewidth", attrname)) {
-        attr.textstrokewidth.copy(attrvalue);
+      } else if ("textstrokewidth" == attrCfg.name) {
+        attr.textstrokewidth = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_ShadeInterval : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string min, max, label, fillcolor, bgcolor;
+  struct XMLE_ShadeInterval : CXMLObjectInterface {
+    struct Cattr {
+      std::string min, max, label, fillcolor, bgcolor;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("min", attrname)) {
-        attr.min.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("min" == attrCfg.name) {
+        attr.min = attrCfg.value;
         return true;
-      } else if (equals("max", attrname)) {
-        attr.max.copy(attrvalue);
+      } else if ("max" == attrCfg.name) {
+        attr.max = attrCfg.value;
         return true;
-      } else if (equals("label", attrname)) {
-        attr.label.copy(attrvalue);
+      } else if ("label" == attrCfg.name) {
+        attr.label = attrCfg.value;
         return true;
-      } else if (equals("fillcolor", attrname)) {
-        attr.fillcolor.copy(attrvalue);
+      } else if ("fillcolor" == attrCfg.name) {
+        attr.fillcolor = attrCfg.value;
         return true;
-      } else if (equals("bgcolor", attrname)) {
-        attr.bgcolor.copy(attrvalue);
+      } else if ("bgcolor" == attrCfg.name) {
+        attr.bgcolor = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_SymbolInterval : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string min, max, binary_and;
-      CT::string file;
-      CT::string offsetX, offsetY;
+  struct XMLE_SymbolInterval : CXMLObjectInterface {
+    struct Cattr {
+      std::string min, max, binary_and;
+      std::string file;
+      std::string offsetX, offsetY;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("min", attrname)) {
-        attr.min.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("min" == attrCfg.name) {
+        attr.min = attrCfg.value;
         return true;
-      } else if (equals("max", attrname)) {
-        attr.max.copy(attrvalue);
+      } else if ("max" == attrCfg.name) {
+        attr.max = attrCfg.value;
         return true;
-      } else if (equals("file", attrname)) {
-        attr.file.copy(attrvalue);
+      } else if ("file" == attrCfg.name) {
+        attr.file = attrCfg.value;
         return true;
-      } else if (equals("binary_and", attrname)) {
-        attr.binary_and.copy(attrvalue);
+      } else if ("binary_and" == attrCfg.name) {
+        attr.binary_and = attrCfg.value;
         return true;
-      } else if (equals("offset_x", attrname)) {
-        attr.offsetX.copy(attrvalue);
+      } else if ("offset_x" == attrCfg.name) {
+        attr.offsetX = attrCfg.value;
         return true;
-      } else if (equals("offset_y", attrname)) {
-        attr.offsetY.copy(attrvalue);
+      } else if ("offset_y" == attrCfg.name) {
+        attr.offsetY = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_SmoothingFilter : public CXMLObjectInterface {};
-  class XMLE_StandardNames : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string units, standard_name, variable_name;
+  struct XMLE_SmoothingFilter : CXMLObjectInterface {};
+  struct XMLE_StandardNames : CXMLObjectInterface {
+    struct Cattr {
+      std::string units, standard_name, variable_name;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("units", attrname)) {
-        attr.units.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("units" == attrCfg.name) {
+        attr.units = attrCfg.value;
         return true;
-      } else if (equals("standard_name", attrname)) {
-        attr.standard_name.copy(attrvalue);
+      } else if ("standard_name" == attrCfg.name) {
+        attr.standard_name = attrCfg.value;
         return true;
-      } else if (equals("variable_name", attrname)) {
-        attr.variable_name.copy(attrvalue);
+      } else if ("variable_name" == attrCfg.name) {
+        attr.variable_name = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_LegendGraphic : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string value;
+  struct XMLE_LegendGraphic : CXMLObjectInterface {
+    struct Cattr {
+      std::string value;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", attrname)) {
-        attr.value.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("value" == attrCfg.name) {
+        attr.value = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Log : public CXMLObjectInterface {};
-  class XMLE_ValueRange : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string min, max;
+  struct XMLE_Log : CXMLObjectInterface {};
+  struct XMLE_ValueRange : CXMLObjectInterface {
+    struct Cattr {
+      std::string min, max;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("min", attrname)) {
-        attr.min.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("min" == attrCfg.name) {
+        attr.min = attrCfg.value;
         return true;
-      } else if (equals("max", attrname)) {
-        attr.max.copy(attrvalue);
+      } else if ("max" == attrCfg.name) {
+        attr.max = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_ContourFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
+  struct XMLE_ContourFont : CXMLObjectInterface {
+    struct Cattr {
+      std::string location, size;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", attrname)) {
-        attr.size.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
         return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_TitleFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
+  struct XMLE_TitleFont : CXMLObjectInterface {
+    struct Cattr {
+      std::string location, size;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", attrname)) {
-        attr.size.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
         return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_SubTitleFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
+  struct XMLE_SubTitleFont : CXMLObjectInterface {
+    struct Cattr {
+      std::string location, size;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", attrname)) {
-        attr.size.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
         return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_DimensionFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
+  struct XMLE_DimensionFont : CXMLObjectInterface {
+    struct Cattr {
+      std::string location, size;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", attrname)) {
-        attr.size.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
         return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_GridFont : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
+  struct XMLE_GridFont : CXMLObjectInterface {
+    struct Cattr {
+      std::string location, size;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", attrname)) {
-        attr.size.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
         return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
-        return true;
-      }
-      return false;
-    }
-  };
-
-  class XMLE_LegendFont : public XMLE_GridFont {
-  public:
-    class Cattr {
-    public:
-      CT::string location, size;
-    } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", attrname)) {
-        attr.size.copy(attrvalue);
-        return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Dir : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string basedir, prefix;
+  struct XMLE_LegendFont : XMLE_GridFont {
+    struct Cattr {
+      std::string location, size;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("prefix", attrname)) {
-        attr.prefix.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("size" == attrCfg.name) {
+        attr.size = attrCfg.value;
         return true;
-      } else if (equals("basedir", attrname)) {
-        attr.basedir.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_ImageText : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string attribute;
+  struct XMLE_Dir : CXMLObjectInterface {
+    struct Cattr {
+      std::string basedir, prefix;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("attribute", attrname)) {
-        attr.attribute.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("prefix" == attrCfg.name) {
+        attr.prefix = attrCfg.value;
+        return true;
+      } else if ("basedir" == attrCfg.name) {
+        attr.basedir = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_AutoResource : public CXMLObjectInterface {
-  public:
+  struct XMLE_ImageText : CXMLObjectInterface {
+    struct Cattr {
+      std::string attribute;
+    } attr;
+    bool addAttribute(const attribute &attrCfg) {
+      if ("attribute" == attrCfg.name) {
+        attr.attribute = attrCfg.value;
+        return true;
+      }
+      return false;
+    }
+  };
+
+  struct XMLE_AutoResource : CXMLObjectInterface {
     std::vector<XMLE_Dir *> Dir;
     std::vector<XMLE_ImageText *> ImageText;
     ~XMLE_AutoResource() {
       XMLE_DELOBJ(Dir);
       XMLE_DELOBJ(ImageText);
     }
-    class Cattr {
-    public:
-      CT::string enableautoopendap, enablelocalfile;
+    struct Cattr {
+      std::string enableautoopendap, enablelocalfile;
     } attr;
 
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Dir", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Dir" == elName) {
         XMLE_ADDOBJ(Dir);
-      } else if (equals("ImageText", name)) {
+      } else if ("ImageText" == elName) {
         XMLE_ADDOBJ(ImageText);
       }
       return nullptr;
     }
 
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enableautoopendap", attrname)) {
-        attr.enableautoopendap.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("enableautoopendap" == attrCfg.name) {
+        attr.enableautoopendap = attrCfg.value;
         return true;
-      } else if (equals("enablelocalfile", attrname)) {
-        attr.enablelocalfile.copy(attrvalue);
+      } else if ("enablelocalfile" == attrCfg.name) {
+        attr.enablelocalfile = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Dataset : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string enabled, location;
+  struct XMLE_Dataset : CXMLObjectInterface {
+    struct Cattr {
+      std::string enabled, location;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", attrname)) {
-        attr.enabled.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("enabled" == attrCfg.name) {
+        attr.enabled = attrCfg.value;
         return true;
-      } else if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+      } else if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Include : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string location;
+  struct XMLE_Include : CXMLObjectInterface {
+    struct Cattr {
+      std::string location;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("location", attrname)) {
-        attr.location.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("location" == attrCfg.name) {
+        attr.location = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_IncludeStyle : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name;
+  struct XMLE_IncludeStyle : CXMLObjectInterface {
+    struct Cattr {
+      std::string name;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_NameMapping : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, title, abstract;
+  struct XMLE_NameMapping : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, title, abstract;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("title", attrname)) {
-        attr.title.copy(attrvalue);
+      } else if ("title" == attrCfg.name) {
+        attr.title = attrCfg.value;
         return true;
-      } else if (equals("abstract", attrname)) {
-        attr.abstract.copy(attrvalue);
+      } else if ("abstract" == attrCfg.name) {
+        attr.abstract = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_FeatureInterval : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
-      CT::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
-      CT::string labelpadding;
+  struct XMLE_FeatureInterval : CXMLObjectInterface {
+    struct Cattr {
+      std::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
+      std::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
+      std::string labelpadding;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("match", attrname)) {
-        attr.match.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("match" == attrCfg.name) {
+        attr.match = attrCfg.value;
         return true;
-      } else if (equals("label", attrname)) {
-        attr.label.copy(attrvalue);
+      } else if ("label" == attrCfg.name) {
+        attr.label = attrCfg.value;
         return true;
-      } else if (equals("matchid", attrname)) {
-        attr.matchid.copy(attrvalue);
+      } else if ("matchid" == attrCfg.name) {
+        attr.matchid = attrCfg.value;
         return true;
-      } else if (equals("fillcolor", attrname)) {
-        attr.fillcolor.copy(attrvalue);
+      } else if ("fillcolor" == attrCfg.name) {
+        attr.fillcolor = attrCfg.value;
         return true;
-      } else if (equals("bgcolor", attrname)) {
-        attr.bgcolor.copy(attrvalue);
+      } else if ("bgcolor" == attrCfg.name) {
+        attr.bgcolor = attrCfg.value;
         return true;
-      } else if (equals("borderwidth", attrname)) {
-        attr.borderwidth.copy(attrvalue);
+      } else if ("borderwidth" == attrCfg.name) {
+        attr.borderwidth = attrCfg.value;
         return true;
-      } else if (equals("bordercolor", attrname)) {
-        attr.bordercolor.copy(attrvalue);
+      } else if ("bordercolor" == attrCfg.name) {
+        attr.bordercolor = attrCfg.value;
         return true;
-      } else if (equals("labelfontsize", attrname)) {
-        attr.labelfontsize.copy(attrvalue);
+      } else if ("labelfontsize" == attrCfg.name) {
+        attr.labelfontsize = attrCfg.value;
         return true;
-      } else if (equals("labelfontfile", attrname)) {
-        attr.labelfontfile.copy(attrvalue);
+      } else if ("labelfontfile" == attrCfg.name) {
+        attr.labelfontfile = attrCfg.value;
         return true;
-      } else if (equals("labelcolor", attrname)) {
-        attr.labelcolor.copy(attrvalue);
+      } else if ("labelcolor" == attrCfg.name) {
+        attr.labelcolor = attrCfg.value;
         return true;
-      } else if (equals("labelpropertyname", attrname)) {
-        attr.labelpropertyname.copy(attrvalue);
+      } else if ("labelpropertyname" == attrCfg.name) {
+        attr.labelpropertyname = attrCfg.value;
         return true;
-      } else if (equals("labelpropertyformat", attrname)) {
-        attr.labelpropertyformat.copy(attrvalue);
+      } else if ("labelpropertyformat" == attrCfg.name) {
+        attr.labelpropertyformat = attrCfg.value;
         return true;
-      } else if (equals("labelangle", attrname)) {
-        attr.labelangle.copy(attrvalue);
+      } else if ("labelangle" == attrCfg.name) {
+        attr.labelangle = attrCfg.value;
         return true;
-      } else if (equals("labelpadding", attrname)) {
-        attr.labelpadding.copy(attrvalue);
+      } else if ("labelpadding" == attrCfg.name) {
+        attr.labelpadding = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Stippling : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string distancex, distancey, discradius, mode, color;
+  struct XMLE_Stippling : CXMLObjectInterface {
+    struct Cattr {
+      std::string distancex, distancey, discradius, mode, color;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("distancex", attrname)) {
-        attr.distancex.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("distancex" == attrCfg.name) {
+        attr.distancex = attrCfg.value;
         return true;
-      } else if (equals("distancey", attrname)) {
-        attr.distancey.copy(attrvalue);
+      } else if ("distancey" == attrCfg.name) {
+        attr.distancey = attrCfg.value;
         return true;
-      } else if (equals("discradius", attrname)) {
-        attr.discradius.copy(attrvalue);
+      } else if ("discradius" == attrCfg.name) {
+        attr.discradius = attrCfg.value;
         return true;
-      } else if (equals("mode", attrname)) {
-        attr.mode.copy(attrvalue);
+      } else if ("mode" == attrCfg.name) {
+        attr.mode = attrCfg.value;
         return true;
-      } else if (equals("color", attrname)) {
-        attr.color.copy(attrvalue);
+      } else if ("color" == attrCfg.name) {
+        attr.color = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_RenderMethod : public CXMLObjectInterface {};
+  struct XMLE_RenderMethod : CXMLObjectInterface {};
 
-  class XMLE_RenderSettings : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string settings, striding, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline, drawgrid;
+  struct XMLE_RenderSettings : CXMLObjectInterface {
+    struct Cattr {
+      std::string settings, striding, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline, drawgrid;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("settings", name)) {
-        attr.settings.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("settings" == attrCfg.name) {
+        attr.settings = attrCfg.value;
         return true;
-      } else if (equals("striding", name)) {
-        attr.striding.copy(value);
+      } else if ("striding" == attrCfg.name) {
+        attr.striding = attrCfg.value;
         return true;
-      } else if (equals("renderhint", name)) {
-        attr.renderhint.copy(value);
+      } else if ("renderhint" == attrCfg.name) {
+        attr.renderhint = attrCfg.value;
         return true;
-      } else if (equals("scalewidth", name)) {
-        attr.scalewidth.copy(value);
+      } else if ("scalewidth" == attrCfg.name) {
+        attr.scalewidth = attrCfg.value;
         return true;
-      } else if (equals("scalecontours", name)) {
-        attr.scalecontours.copy(value);
+      } else if ("scalecontours" == attrCfg.name) {
+        attr.scalecontours = attrCfg.value;
         return true;
-      } else if (equals("randomizefeatures", name)) {
-        attr.randomizefeatures.copy(value);
+      } else if ("randomizefeatures" == attrCfg.name) {
+        attr.randomizefeatures = attrCfg.value;
         return true;
-      } else if (equals("featuresoverlap", name)) {
-        attr.featuresoverlap.copy(value);
+      } else if ("featuresoverlap" == attrCfg.name) {
+        attr.featuresoverlap = attrCfg.value;
         return true;
-      } else if (equals("rendertextforvectors", name)) {
-        attr.rendertextforvectors.copy(value);
+      } else if ("rendertextforvectors" == attrCfg.name) {
+        attr.rendertextforvectors = attrCfg.value;
         return true;
-      } else if (equals("cliplegend", name)) {
-        attr.cliplegend.copy(value);
+      } else if ("cliplegend" == attrCfg.name) {
+        attr.cliplegend = attrCfg.value;
         return true;
-      } else if (equals("interpolationmethod", name)) {
-        attr.interpolationmethod.copy(value);
+      } else if ("interpolationmethod" == attrCfg.name) {
+        attr.interpolationmethod = attrCfg.value;
         return true;
-      } else if (equals("drawgridboxoutline", name)) {
-        attr.drawgridboxoutline.copy(value);
+      } else if ("drawgridboxoutline" == attrCfg.name) {
+        attr.drawgridboxoutline = attrCfg.value;
         return true;
-      } else if (equals("drawgrid", name)) {
-        attr.drawgrid.copy(value);
+      } else if ("drawgrid" == attrCfg.name) {
+        attr.drawgrid = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_DataPostProc : public CXMLObjectInterface {
-  public:
+  struct XMLE_DataPostProc : CXMLObjectInterface {
     XMLE_DataPostProcAttributes attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("a", attrname)) {
-        attr.a.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("a" == attrCfg.name) {
+        attr.a = attrCfg.value;
         return true;
-      } else if (equals("b", attrname)) {
-        attr.b.copy(attrvalue);
+      } else if ("b" == attrCfg.name) {
+        attr.b = attrCfg.value;
         return true;
-      } else if (equals("c", attrname)) {
-        attr.c.copy(attrvalue);
+      } else if ("c" == attrCfg.name) {
+        attr.c = attrCfg.value;
         return true;
-      } else if (equals("mode", attrname)) {
-        attr.mode.copy(attrvalue);
+      } else if ("mode" == attrCfg.name) {
+        attr.mode = attrCfg.value;
         return true;
-      } else if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+      } else if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("units", attrname)) {
-        attr.units.copy(attrvalue);
+      } else if ("units" == attrCfg.name) {
+        attr.units = attrCfg.value;
         return true;
-      } else if (equals("select", attrname)) {
-        attr.select.copy(attrvalue);
+      } else if ("select" == attrCfg.name) {
+        attr.select = attrCfg.value;
         return true;
-      } else if (equals("standard_name", attrname)) {
-        attr.standard_name.copy(attrvalue);
+      } else if ("standard_name" == attrCfg.name) {
+        attr.standard_name = attrCfg.value;
         return true;
-      } else if (equals("variable", attrname)) {
-        attr.variable.copy(attrvalue);
+      } else if ("variable" == attrCfg.name) {
+        attr.variable = attrCfg.value;
         return true;
-      } else if (equals("long_name", attrname)) {
-        attr.long_name.copy(attrvalue);
+      } else if ("long_name" == attrCfg.name) {
+        attr.long_name = attrCfg.value;
         return true;
-      } else if (equals("algorithm", attrname)) {
-        attr.algorithm.copy(attrvalue);
+      } else if ("algorithm" == attrCfg.name) {
+        attr.algorithm = attrCfg.value;
         return true;
-      } else if (equals("directionname", attrname)) {
-        attr.directionname.copy(attrvalue);
+      } else if ("directionname" == attrCfg.name) {
+        attr.directionname = attrCfg.value;
         return true;
-      } else if (equals("speedname", attrname)) {
-        attr.speedname.copy(attrvalue);
+      } else if ("speedname" == attrCfg.name) {
+        attr.speedname = attrCfg.value;
         return true;
-      } else if (equals("from_units", attrname)) {
-        attr.from_units.copy(attrvalue);
+      } else if ("from_units" == attrCfg.name) {
+        attr.from_units = attrCfg.value;
         return true;
-      } else if (equals("offset", attrname)) {
-        attr.offset.copy(attrvalue);
+      } else if ("offset" == attrCfg.name) {
+        attr.offset = attrCfg.value;
         return true;
-      } else if (equals("stride", attrname)) {
-        attr.stride.copy(attrvalue);
+      } else if ("stride" == attrCfg.name) {
+        attr.stride = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Style : public CXMLObjectInterface {
-  public:
+  struct XMLE_Style : CXMLObjectInterface {
     std::vector<XMLE_Thinning *> Thinning;
     std::vector<XMLE_Point *> Point;
     std::vector<XMLE_Vector *> Vector;
@@ -1027,344 +957,318 @@ public:
       XMLE_DELOBJ(DataPostProc);
       XMLE_DELOBJ(IncludeStyle);
     }
-    class Cattr {
-    public:
-      CT::string name, title, abstract;
+    struct Cattr {
+      std::string name, title, abstract;
     } attr;
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Thinning", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Thinning" == elName) {
         XMLE_ADDOBJ(Thinning);
-      } else if (equals("Point", name)) {
+      } else if ("Point" == elName) {
         XMLE_ADDOBJ(Point);
-      } else if (equals("Vector", name)) {
+      } else if ("Vector" == elName) {
         XMLE_ADDOBJ(Vector);
-      } else if (equals("FilterPoints", name)) {
+      } else if ("FilterPoints" == elName) {
         XMLE_ADDOBJ(FilterPoints);
-      } else if (equals("Legend", name)) {
+      } else if ("Legend" == elName) {
         XMLE_ADDOBJ(Legend);
-      } else if (equals("Scale", name)) {
+      } else if ("Scale" == elName) {
         XMLE_ADDOBJ(Scale);
-      } else if (equals("Offset", name)) {
+      } else if ("Offset" == elName) {
         XMLE_ADDOBJ(Offset);
-      } else if (equals("Min", name)) {
+      } else if ("Min" == elName) {
         XMLE_ADDOBJ(Min);
-      } else if (equals("Max", name)) {
+      } else if ("Max" == elName) {
         XMLE_ADDOBJ(Max);
-      } else if (equals("Log", name)) {
+      } else if ("Log" == elName) {
         XMLE_ADDOBJ(Log);
-      } else if (equals("ValueRange", name)) {
+      } else if ("ValueRange" == elName) {
         XMLE_ADDOBJ(ValueRange);
-      } else if (equals("ContourIntervalL", name)) {
+      } else if ("ContourIntervalL" == elName) {
         XMLE_ADDOBJ(ContourIntervalL);
-      } else if (equals("ContourIntervalH", name)) {
+      } else if ("ContourIntervalH" == elName) {
         XMLE_ADDOBJ(ContourIntervalH);
-      } else if (equals("RenderMethod", name)) {
+      } else if ("RenderMethod" == elName) {
         XMLE_ADDOBJ(RenderMethod);
-      } else if (equals("ShadeInterval", name)) {
+      } else if ("ShadeInterval" == elName) {
         XMLE_ADDOBJ(ShadeInterval);
-      } else if (equals("SymbolInterval", name)) {
+      } else if ("SymbolInterval" == elName) {
         XMLE_ADDOBJ(SymbolInterval);
-      } else if (equals("ContourLine", name)) {
+      } else if ("ContourLine" == elName) {
         XMLE_ADDOBJ(ContourLine);
-      } else if (equals("NameMapping", name)) {
+      } else if ("NameMapping" == elName) {
         XMLE_ADDOBJ(NameMapping);
-      } else if (equals("SmoothingFilter", name)) {
+      } else if ("SmoothingFilter" == elName) {
         XMLE_ADDOBJ(SmoothingFilter);
-      } else if (equals("StandardNames", name)) {
+      } else if ("StandardNames" == elName) {
         XMLE_ADDOBJ(StandardNames);
-      } else if (equals("LegendGraphic", name)) {
+      } else if ("LegendGraphic" == elName) {
         XMLE_ADDOBJ(LegendGraphic);
-      } else if (equals("FeatureInterval", name)) {
+      } else if ("FeatureInterval" == elName) {
         XMLE_ADDOBJ(FeatureInterval);
-      } else if (equals("Stippling", name)) {
+      } else if ("Stippling" == elName) {
         XMLE_ADDOBJ(Stippling);
-      } else if (equals("RenderSettings", name)) {
+      } else if ("RenderSettings" == elName) {
         XMLE_ADDOBJ(RenderSettings);
-      } else if (equals("DataPostProc", name)) {
+      } else if ("DataPostProc" == elName) {
         XMLE_ADDOBJ(DataPostProc);
 
-      } else if (equals("IncludeStyle", name)) {
+      } else if ("IncludeStyle" == elName) {
         XMLE_ADDOBJ(IncludeStyle);
       }
       return nullptr;
     }
 
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("name", name)) {
-        attr.name.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("title", name)) {
-        attr.title.copy(value);
+      } else if ("title" == attrCfg.name) {
+        attr.title = attrCfg.value;
         return true;
       }
-      if (equals("abstract", name)) {
-        attr.abstract.copy(value);
+      if ("abstract" == attrCfg.name) {
+        attr.abstract = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_Styles : public CXMLObjectInterface {};
-  class XMLE_Title : public CXMLObjectInterface {};
+  struct XMLE_Styles : CXMLObjectInterface {};
+  struct XMLE_Title : CXMLObjectInterface {};
 
-  class XMLE_MetadataURL : public CXMLObjectInterface {};
+  struct XMLE_MetadataURL : CXMLObjectInterface {};
 
-  class XMLE_AuthorityURL : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, onlineresource;
+  struct XMLE_AuthorityURL : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, onlineresource;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("name", name)) {
-        attr.name.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("onlineresource", name)) {
-        attr.onlineresource.copy(value);
+      } else if ("onlineresource" == attrCfg.name) {
+        attr.onlineresource = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Identifier : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string authority, id;
+  struct XMLE_Identifier : CXMLObjectInterface {
+    struct Cattr {
+      std::string authority, id;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("id", name)) {
-        attr.id.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("id" == attrCfg.name) {
+        attr.id = attrCfg.value;
         return true;
-      } else if (equals("authority", name)) {
-        attr.authority.copy(value);
+      } else if ("authority" == attrCfg.name) {
+        attr.authority = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Name : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string force;
+  struct XMLE_Name : CXMLObjectInterface {
+    struct Cattr {
+      std::string force;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("force", name)) {
-        attr.force.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("force" == attrCfg.name) {
+        attr.force = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_Abstract : public CXMLObjectInterface {};
+  struct XMLE_Abstract : CXMLObjectInterface {};
 
-  class XMLE_DataBaseTable : public CXMLObjectInterface {};
-  class XMLE_Variable : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string orgname, long_name, standard_name, units;
+  struct XMLE_DataBaseTable : CXMLObjectInterface {};
+  struct XMLE_Variable : CXMLObjectInterface {
+    struct Cattr {
+      std::string orgname, long_name, standard_name, units;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("orgname", name)) {
-        attr.orgname.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("orgname" == attrCfg.name) {
+        attr.orgname = attrCfg.value;
         return true;
-      } else if (equals("long_name", name)) {
-        attr.long_name.copy(value);
+      } else if ("long_name" == attrCfg.name) {
+        attr.long_name = attrCfg.value;
         return true;
-      } else if (equals("standard_name", name)) {
-        attr.standard_name.copy(value);
+      } else if ("standard_name" == attrCfg.name) {
+        attr.standard_name = attrCfg.value;
         return true;
-      } else if (equals("units", name)) {
-        attr.units.copy(value);
+      } else if ("units" == attrCfg.name) {
+        attr.units = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_DataReader : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string useendtime;
+  struct XMLE_DataReader : CXMLObjectInterface {
+    struct Cattr {
+      std::string useendtime;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("useendtime", name)) {
-        attr.useendtime.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("useendtime" == attrCfg.name) {
+        attr.useendtime = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_FilePath : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
+  struct XMLE_FilePath : CXMLObjectInterface {
+    struct Cattr {
+      std::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
-    void handleValue() { this->value = CDirReader::makeCleanPath(this->value.c_str()); }
+    void handleValue() { this->elementValue = makeCleanPath(this->elementValue.c_str()); }
 
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("filter", name)) {
-        attr.filter.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("filter" == attrCfg.name) {
+        attr.filter = attrCfg.value;
         return true;
-      } else if (equals("gfi_openall", name)) {
-        attr.gfi_openall.copy(value);
+      } else if ("gfi_openall" == attrCfg.name) {
+        attr.gfi_openall = attrCfg.value;
         return true;
-      } else if (equals("maxquerylimit", name)) {
-        attr.maxquerylimit.copy(value);
+      } else if ("maxquerylimit" == attrCfg.name) {
+        attr.maxquerylimit = attrCfg.value;
         return true;
-      } else if (equals("ncml", name)) {
-        attr.ncml.copy(value);
+      } else if ("ncml" == attrCfg.name) {
+        attr.ncml = attrCfg.value;
         return true;
-      } else if (equals("retentionperiod", name)) {
-        attr.retentionperiod.copy(value);
+      } else if ("retentionperiod" == attrCfg.name) {
+        attr.retentionperiod = attrCfg.value;
         return true;
-      } else if (equals("retentiontype", name)) {
-        attr.retentiontype.copy(value);
+      } else if ("retentiontype" == attrCfg.name) {
+        attr.retentiontype = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_TileSettings : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string tilewidthpx = "1024", tileheightpx = "1024", minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
+  struct XMLE_TileSettings : CXMLObjectInterface {
+    struct Cattr {
+      std::string tilewidthpx = "1024", tileheightpx = "1024", minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("tilemode", name)) {
-        attr.tilemode.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("tilemode" == attrCfg.name) {
+        attr.tilemode = attrCfg.value;
         return true;
-      } else if (equals("debug", name)) {
-        attr.debug.copy(value);
+      } else if ("debug" == attrCfg.name) {
+        attr.debug = attrCfg.value;
         return true;
-      } else if (equals("tilewidthpx", name)) {
-        attr.tilewidthpx.copy(value);
+      } else if ("tilewidthpx" == attrCfg.name) {
+        attr.tilewidthpx = attrCfg.value;
         return true;
-      } else if (equals("tileheightpx", name)) {
-        attr.tileheightpx.copy(value);
+      } else if ("tileheightpx" == attrCfg.name) {
+        attr.tileheightpx = attrCfg.value;
         return true;
-      } else if (equals("minlevel", name)) {
-        attr.minlevel.copy(value);
+      } else if ("minlevel" == attrCfg.name) {
+        attr.minlevel = attrCfg.value;
         return true;
-      } else if (equals("maxlevel", name)) {
-        attr.maxlevel.copy(value);
+      } else if ("maxlevel" == attrCfg.name) {
+        attr.maxlevel = attrCfg.value;
         return true;
-      } else if (equals("maxtilesinimage", name)) {
-        attr.maxtilesinimage.copy(value);
+      } else if ("maxtilesinimage" == attrCfg.name) {
+        attr.maxtilesinimage = attrCfg.value;
         return true;
-      } else if (equals("threads", name)) {
-        attr.threads.copy(value);
+      } else if ("threads" == attrCfg.name) {
+        attr.threads = attrCfg.value;
         return true;
-      } else if (equals("autotile", name)) {
-        attr.autotile.copy(value);
+      } else if ("autotile" == attrCfg.name) {
+        attr.autotile = attrCfg.value;
         return true;
-      } else if (equals("optimizeextent", name)) {
-        attr.optimizeextent.copy(value);
+      } else if ("optimizeextent" == attrCfg.name) {
+        attr.optimizeextent = attrCfg.value;
         return true;
-      } else if (equals("tilepath", name)) {
-        attr.tilepath.copy(value);
+      } else if ("tilepath" == attrCfg.name) {
+        attr.tilepath = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Group : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string value;
-      CT::string collection;
+  struct XMLE_Group : CXMLObjectInterface {
+    struct Cattr {
+      std::string value;
+      std::string collection;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("value", name)) {
-        attr.value.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("value" == attrCfg.name) {
+        attr.value = attrCfg.value;
         return true;
       }
-      if (equals("collection", name)) {
-        attr.collection.copy(value);
+      if ("collection" == attrCfg.name) {
+        attr.collection = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_LatLonBox : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
+  struct XMLE_LatLonBox : CXMLObjectInterface {
+    struct Cattr {
       float minx, miny, maxx, maxy;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("minx", name)) {
-        attr.minx = parseFloat(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("minx" == attrCfg.name) {
+        attr.minx = parseDouble(attrCfg);
         return true;
-      } else if (equals("miny", name)) {
-        attr.miny = parseFloat(value);
+      } else if ("miny" == attrCfg.name) {
+        attr.miny = parseDouble(attrCfg);
         return true;
-      } else if (equals("maxx", name)) {
-        attr.maxx = parseFloat(value);
+      } else if ("maxx" == attrCfg.name) {
+        attr.maxx = parseDouble(attrCfg);
         return true;
-      } else if (equals("maxy", name)) {
-        attr.maxy = parseFloat(value);
+      } else if ("maxy" == attrCfg.name) {
+        attr.maxy = parseDouble(attrCfg);
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Dimension : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
+  struct XMLE_Dimension : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
-      CT::string type = "dimtype_none";
+      std::string type = "dimtype_none";
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("units", attrname)) {
-        attr.units.copy(attrvalue);
+      } else if ("units" == attrCfg.name) {
+        attr.units = attrCfg.value;
         return true;
-      } else if (equals("default", attrname)) {
-        attr.defaultV.copy(attrvalue);
+      } else if ("default" == attrCfg.name) {
+        attr.defaultV = attrCfg.value;
         return true;
-      } else if (equals("interval", attrname)) {
-        attr.interval.copy(attrvalue);
+      } else if ("interval" == attrCfg.name) {
+        attr.interval = attrCfg.value;
         return true;
-      } else if (equals("quantizeperiod", attrname)) {
-        attr.quantizeperiod.copy(attrvalue);
+      } else if ("quantizeperiod" == attrCfg.name) {
+        attr.quantizeperiod = attrCfg.value;
         return true;
-      } else if (equals("fixvalue", attrname)) {
-        attr.fixvalue.copy(attrvalue);
+      } else if ("fixvalue" == attrCfg.name) {
+        attr.fixvalue = attrCfg.value;
         return true;
-      } else if (equals("hidden", attrname)) {
-        if (equals("false", attrvalue)) {
-          attr.hidden = false;
-        }
-        if (equals("true", attrvalue)) {
-          attr.hidden = true;
-        }
+      } else if ("hidden" == attrCfg.name) {
+        attr.hidden = parseBool(attrCfg);
         return true;
-      } else if (equals("quantizemethod", attrname)) {
-        attr.quantizemethod.copy(attrvalue);
+      } else if ("quantizemethod" == attrCfg.name) {
+        attr.quantizemethod = attrCfg.value;
         return true;
-      } else if (equals("type", attrname)) {
-        if (equals(attrvalue, "vertical")) {
+      } else if ("type" == attrCfg.name) {
+        if (attrCfg.value == "vertical") {
           attr.type = "dimtype_vertical";
-        } else if (equals(attrvalue, "custom")) {
+        } else if (attrCfg.value == "custom") {
           attr.type = "dimtype_custom";
-        } else if (equals(attrvalue, "time")) {
+        } else if (attrCfg.value == "time") {
           attr.type = "dimtype_time";
-        } else if (equals(attrvalue, "reference_time")) {
+        } else if (attrCfg.value == "reference_time") {
           attr.type = "dimtype_reference_time";
         }
         return true;
@@ -1373,185 +1277,166 @@ public:
     }
   };
 
-  class XMLE_Path : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string value;
+  struct XMLE_Path : CXMLObjectInterface {
+    struct Cattr {
+      std::string value;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", attrname)) {
-        attr.value.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("value" == attrCfg.name) {
+        attr.value = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_TempDir : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string value;
+  struct XMLE_TempDir : CXMLObjectInterface {
+    struct Cattr {
+      std::string value;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", attrname)) {
-        attr.value.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("value" == attrCfg.name) {
+        attr.value = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Environment : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, defaultVal;
+  struct XMLE_Environment : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, defaultVal;
     } attr;
-    bool addAttribute(const char *name, const char *value) {
-      if (equals("name", name)) {
-        attr.name.copy(value);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("default", name)) {
-        attr.defaultVal.copy(value);
+      } else if ("default" == attrCfg.name) {
+        attr.defaultVal = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_Settings : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
-      CT::string enable_edr = "true";
+  struct XMLE_Settings : CXMLObjectInterface {
+    struct Cattr {
+      std::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
+      std::string enable_edr = "true";
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enablemetadatacache", attrname)) {
-        attr.enablemetadatacache.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("enablemetadatacache" == attrCfg.name) {
+        attr.enablemetadatacache = attrCfg.value;
         return true;
-      } else if (equals("enablecleanupsystem", attrname)) {
-        attr.enablecleanupsystem.copy(attrvalue);
+      } else if ("enablecleanupsystem" == attrCfg.name) {
+        attr.enablecleanupsystem = attrCfg.value;
         return true;
-      } else if (equals("cleanupsystemlimit", attrname)) {
-        attr.cleanupsystemlimit.copy(attrvalue);
+      } else if ("cleanupsystemlimit" == attrCfg.name) {
+        attr.cleanupsystemlimit = attrCfg.value;
         return true;
-      } else if (equals("cache_age_cacheableresources", attrname)) {
-        attr.cache_age_cacheableresources.copy(attrvalue);
+      } else if ("cache_age_cacheableresources" == attrCfg.name) {
+        attr.cache_age_cacheableresources = attrCfg.value;
         return true;
-      } else if (equals("cache_age_volatileresources", attrname)) {
-        attr.cache_age_volatileresources.copy(attrvalue);
+      } else if ("cache_age_volatileresources" == attrCfg.name) {
+        attr.cache_age_volatileresources = attrCfg.value;
         return true;
-      } else if (equals("enable_edr", attrname)) {
-        attr.enable_edr.copy(attrvalue);
+      } else if ("enable_edr" == attrCfg.name) {
+        attr.enable_edr = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_OnlineResource : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string value;
+  struct XMLE_OnlineResource : CXMLObjectInterface {
+    struct Cattr {
+      std::string value;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", attrname)) {
-        attr.value.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("value" == attrCfg.name) {
+        attr.value = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_DataBase : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string parameters, maxquerylimit;
+  struct XMLE_DataBase : CXMLObjectInterface {
+    struct Cattr {
+      std::string parameters, maxquerylimit;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("parameters", attrname)) {
-        attr.parameters.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("parameters" == attrCfg.name) {
+        attr.parameters = attrCfg.value;
         return true;
-      } else if (equals("maxquerylimit", attrname)) {
-        attr.maxquerylimit.copy(attrvalue);
+      } else if ("maxquerylimit" == attrCfg.name) {
+        attr.maxquerylimit = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_Projection : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string id, proj4;
+  struct XMLE_Projection : CXMLObjectInterface {
+    struct Cattr {
+      std::string id, proj4;
     } attr;
     std::vector<XMLE_LatLonBox *> LatLonBox;
     ~XMLE_Projection() { XMLE_DELOBJ(LatLonBox); }
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("id", attrname)) {
-        attr.id.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("id" == attrCfg.name) {
+        attr.id = attrCfg.value;
         return true;
       }
-      if (equals("proj4", attrname)) {
-        attr.proj4.copy(attrvalue);
+      if ("proj4" == attrCfg.name) {
+        attr.proj4 = attrCfg.value;
         return true;
       }
       return false;
     }
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("LatLonBox", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("LatLonBox" == elName) {
         XMLE_ADDOBJ(LatLonBox);
       }
       return nullptr;
     }
   };
-  class XMLE_Cache : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string enabled, optimizeextent;
+  struct XMLE_Cache : CXMLObjectInterface {
+    struct Cattr {
+      std::string enabled, optimizeextent;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", attrname)) {
-        attr.enabled.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("enabled" == attrCfg.name) {
+        attr.enabled = attrCfg.value;
         return true;
-      } else if (equals("optimizeextent", attrname)) {
-        attr.optimizeextent.copy(attrvalue);
+      } else if ("optimizeextent" == attrCfg.name) {
+        attr.optimizeextent = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-  class XMLE_WCSFormat : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, driver, mimetype, options;
+  struct XMLE_WCSFormat : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, driver, mimetype, options;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
       }
-      if (equals("driver", attrname)) {
-        attr.driver.copy(attrvalue);
+      if ("driver" == attrCfg.name) {
+        attr.driver = attrCfg.value;
         return true;
       }
-      if (equals("mimetype", attrname)) {
-        attr.mimetype.copy(attrvalue);
+      if ("mimetype" == attrCfg.name) {
+        attr.mimetype = attrCfg.value;
         return true;
       }
-      if (equals("options", attrname)) {
-        attr.options.copy(attrvalue);
+      if ("options" == attrCfg.name) {
+        attr.options = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_RootLayer : public CXMLObjectInterface {
-  public:
+  struct XMLE_RootLayer : CXMLObjectInterface {
     std::vector<XMLE_Name *> Name;
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
@@ -1560,23 +1445,22 @@ public:
       XMLE_DELOBJ(Title);
       XMLE_DELOBJ(Abstract);
     }
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Name", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Name" == elName) {
         XMLE_SETOBJ(Name);
-      } else if (equals("Title", name)) {
+      } else if ("Title" == elName) {
         XMLE_SETOBJ(Title);
-      } else if (equals("Abstract", name)) {
+      } else if ("Abstract" == elName) {
         XMLE_SETOBJ(Abstract);
       }
       return nullptr;
     }
   };
 
-  class XMLE_ViewServiceCSW : public CXMLObjectInterface {};
-  class XMLE_DatasetCSW : public CXMLObjectInterface {};
+  struct XMLE_ViewServiceCSW : CXMLObjectInterface {};
+  struct XMLE_DatasetCSW : CXMLObjectInterface {};
 
-  class XMLE_Inspire : public CXMLObjectInterface {
-  public:
+  struct XMLE_Inspire : CXMLObjectInterface {
     std::vector<XMLE_ViewServiceCSW *> ViewServiceCSW;
     std::vector<XMLE_DatasetCSW *> DatasetCSW;
     std::vector<XMLE_AuthorityURL *> AuthorityURL;
@@ -1588,22 +1472,21 @@ public:
       XMLE_DELOBJ(Identifier);
     }
 
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("ViewServiceCSW", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("ViewServiceCSW" == elName) {
         XMLE_ADDOBJ(ViewServiceCSW);
-      } else if (equals("DatasetCSW", name)) {
+      } else if ("DatasetCSW" == elName) {
         XMLE_ADDOBJ(DatasetCSW);
-      } else if (equals("AuthorityURL", name)) {
+      } else if ("AuthorityURL" == elName) {
         XMLE_ADDOBJ(AuthorityURL);
-      } else if (equals("Identifier", name)) {
+      } else if ("Identifier" == elName) {
         XMLE_ADDOBJ(Identifier);
       }
       return nullptr;
     }
   };
 
-  class XMLE_WMS : public CXMLObjectInterface {
-  public:
+  struct XMLE_WMS : CXMLObjectInterface {
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
     std::vector<XMLE_RootLayer *> RootLayer;
@@ -1633,56 +1516,53 @@ public:
 
       XMLE_DELOBJ(Inspire);
     }
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Title", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Title" == elName) {
         XMLE_SETOBJ(Title);
-      } else if (equals("GridFont", name)) {
+      } else if ("GridFont" == elName) {
         XMLE_SETOBJ(GridFont);
-      } else if (equals("Abstract", name)) {
+      } else if ("Abstract" == elName) {
         XMLE_SETOBJ(Abstract);
-      } else if (equals("RootLayer", name)) {
+      } else if ("RootLayer" == elName) {
         XMLE_SETOBJ(RootLayer);
-      } else if (equals("WMSFormat", name)) {
+      } else if ("WMSFormat" == elName) {
         XMLE_ADDOBJ(WMSFormat);
-      } else if (equals("WMSExceptions", name)) {
+      } else if ("WMSExceptions" == elName) {
         XMLE_ADDOBJ(WMSExceptions);
-      } else if (equals("TitleFont", name)) {
+      } else if ("TitleFont" == elName) {
         XMLE_ADDOBJ(TitleFont);
-      } else if (equals("ContourFont", name)) {
+      } else if ("ContourFont" == elName) {
         XMLE_ADDOBJ(ContourFont);
-      } else if (equals("LegendFont", name)) {
+      } else if ("LegendFont" == elName) {
         XMLE_SETOBJ(LegendFont);
-      } else if (equals("SubTitleFont", name)) {
+      } else if ("SubTitleFont" == elName) {
         XMLE_ADDOBJ(SubTitleFont);
-      } else if (equals("DimensionFont", name)) {
+      } else if ("DimensionFont" == elName) {
         XMLE_ADDOBJ(DimensionFont);
-      } else if (equals("Inspire", name)) {
+      } else if ("Inspire" == elName) {
         XMLE_ADDOBJ(Inspire);
       }
       return nullptr;
     }
   };
 
-  class XMLE_OpenDAP : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string enabled, path;
+  struct XMLE_OpenDAP : CXMLObjectInterface {
+    struct Cattr {
+      std::string enabled, path;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", attrname)) {
-        attr.enabled.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("enabled" == attrCfg.name) {
+        attr.enabled = attrCfg.value;
         return true;
-      } else if (equals("path", attrname)) {
-        attr.path.copy(attrvalue);
+      } else if ("path" == attrCfg.name) {
+        attr.path = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_WCS : public CXMLObjectInterface {
-  public:
+  struct XMLE_WCS : CXMLObjectInterface {
     std::vector<XMLE_Name *> Name;
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
@@ -1693,140 +1573,128 @@ public:
       XMLE_DELOBJ(Abstract);
       XMLE_DELOBJ(WCSFormat);
     }
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Name", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Name" == elName) {
         XMLE_ADDOBJ(Name);
-      } else if (equals("Title", name)) {
+      } else if ("Title" == elName) {
         XMLE_ADDOBJ(Title);
-      } else if (equals("Abstract", name)) {
+      } else if ("Abstract" == elName) {
         XMLE_ADDOBJ(Abstract);
-      } else if (equals("WCSFormat", name)) {
+      } else if ("WCSFormat" == elName) {
         XMLE_ADDOBJ(WCSFormat);
       }
       return nullptr;
     }
   };
 
-  class XMLE_CacheDocs : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string enabled, cachefile;
+  struct XMLE_CacheDocs : CXMLObjectInterface {
+    struct Cattr {
+      std::string enabled, cachefile;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", attrname)) {
-        attr.enabled.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("enabled" == attrCfg.name) {
+        attr.enabled = attrCfg.value;
         return true;
-      } else if (equals("cachefile", attrname)) {
-        attr.cachefile.copy(attrvalue);
+      } else if ("cachefile" == attrCfg.name) {
+        attr.cachefile = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_WMSLayer : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string service, layer, bgcolor, style;
+  struct XMLE_WMSLayer : CXMLObjectInterface {
+    struct Cattr {
+      std::string service, layer, bgcolor, style;
       bool transparent;
 
       Cattr() {
         transparent = true;
-        bgcolor.copy("");
-        style.copy("");
+        bgcolor = ("");
+        style = ("");
       }
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("layer", attrname)) {
-        attr.layer.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("layer" == attrCfg.name) {
+        attr.layer = attrCfg.value;
         return true;
-      } else if (equals("service", attrname)) {
-        attr.service.copy(attrvalue);
+      } else if ("service" == attrCfg.name) {
+        attr.service = attrCfg.value;
         return true;
-      } else if (equals("transparent", attrname)) {
-        attr.transparent = parseBool(attrvalue);
+      } else if ("transparent" == attrCfg.name) {
+        attr.transparent = parseBool(attrCfg);
         return true;
-      } else if (equals("bgcolor", attrname)) {
-        attr.bgcolor.copy(attrvalue);
+      } else if ("bgcolor" == attrCfg.name) {
+        attr.bgcolor = attrCfg.value;
         return true;
-      } else if (equals("style", attrname)) {
-        attr.style.copy(attrvalue);
-        return true;
-      }
-      return false;
-    }
-  };
-  class XMLE_Position : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string top, left, right, bottom;
-    } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("top", attrname)) {
-        attr.top.copy(attrvalue);
-        return true;
-      } else if (equals("left", attrname)) {
-        attr.left.copy(attrvalue);
-        return true;
-      } else if (equals("right", attrname)) {
-        attr.right.copy(attrvalue);
-        return true;
-      } else if (equals("bottom", attrname)) {
-        attr.bottom.copy(attrvalue);
+      } else if ("style" == attrCfg.name) {
+        attr.style = attrCfg.value;
         return true;
       }
       return false;
     }
   };
-
-  class XMLE_Grid : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string name, precision, resolution;
+  struct XMLE_Position : CXMLObjectInterface {
+    struct Cattr {
+      std::string top, left, right, bottom;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", attrname)) {
-        attr.name.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("top" == attrCfg.name) {
+        attr.top = attrCfg.value;
         return true;
-      } else if (equals("precision", attrname)) {
-        attr.precision.copy(attrvalue);
+      } else if ("left" == attrCfg.name) {
+        attr.left = attrCfg.value;
         return true;
-      } else if (equals("resolution", attrname)) {
-        attr.resolution.copy(attrvalue);
+      } else if ("right" == attrCfg.name) {
+        attr.right = attrCfg.value;
+        return true;
+      } else if ("bottom" == attrCfg.name) {
+        attr.bottom = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_AdditionalLayer : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string replace, style;
+  struct XMLE_Grid : CXMLObjectInterface {
+    struct Cattr {
+      std::string name, precision, resolution;
     } attr;
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("replace", attrname)) {
-        attr.replace.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("name" == attrCfg.name) {
+        attr.name = attrCfg.value;
         return true;
-      } else if (equals("style", attrname)) {
-        attr.style.copy(attrvalue);
+      } else if ("precision" == attrCfg.name) {
+        attr.precision = attrCfg.value;
+        return true;
+      } else if ("resolution" == attrCfg.name) {
+        attr.resolution = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Layer : public CXMLObjectInterface {
-  public:
-    class Cattr {
-    public:
-      CT::string type, hidden;
-      CT::string enable_edr = "";
+  struct XMLE_AdditionalLayer : CXMLObjectInterface {
+    struct Cattr {
+      std::string replace, style;
+    } attr;
+    bool addAttribute(const attribute &attrCfg) {
+      if ("replace" == attrCfg.name) {
+        attr.replace = attrCfg.value;
+        return true;
+      } else if ("style" == attrCfg.name) {
+        attr.style = attrCfg.value;
+        return true;
+      }
+      return false;
+    }
+  };
+
+  struct XMLE_Layer : CXMLObjectInterface {
+    struct Cattr {
+      std::string type, hidden;
+      std::string enable_edr = "";
     } attr;
 
     std::vector<XMLE_Name *> Name;
@@ -1905,99 +1773,98 @@ public:
       XMLE_DELOBJ(AdditionalLayer);
       XMLE_DELOBJ(FeatureInterval);
     }
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Name", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Name" == elName) {
         XMLE_ADDOBJ(Name);
-      } else if (equals("Group", name)) {
+      } else if ("Group" == elName) {
         XMLE_ADDOBJ(Group);
-      } else if (equals("Title", name)) {
+      } else if ("Title" == elName) {
         XMLE_ADDOBJ(Title);
-      } else if (equals("Abstract", name)) {
+      } else if ("Abstract" == elName) {
         XMLE_ADDOBJ(Abstract);
-      } else if (equals("DataBaseTable", name)) {
+      } else if ("DataBaseTable" == elName) {
         XMLE_ADDOBJ(DataBaseTable);
-      } else if (equals("Variable", name)) {
+      } else if ("Variable" == elName) {
         XMLE_ADDOBJ(Variable);
-      } else if (equals("FilePath", name)) {
+      } else if ("FilePath" == elName) {
         XMLE_ADDOBJ(FilePath);
-      } else if (equals("TileSettings", name)) {
+      } else if ("TileSettings" == elName) {
         XMLE_ADDOBJ(TileSettings);
-      } else if (equals("DataReader", name)) {
+      } else if ("DataReader" == elName) {
         XMLE_ADDOBJ(DataReader);
-      } else if (equals("Dimension", name)) {
+      } else if ("Dimension" == elName) {
         XMLE_ADDOBJ(Dimension);
-      } else if (equals("Legend", name)) {
+      } else if ("Legend" == elName) {
         XMLE_ADDOBJ(Legend);
-      } else if (equals("Scale", name)) {
+      } else if ("Scale" == elName) {
         XMLE_ADDOBJ(Scale);
-      } else if (equals("Offset", name)) {
+      } else if ("Offset" == elName) {
         XMLE_ADDOBJ(Offset);
-      } else if (equals("Min", name)) {
+      } else if ("Min" == elName) {
         XMLE_ADDOBJ(Min);
-      } else if (equals("Max", name)) {
+      } else if ("Max" == elName) {
         XMLE_ADDOBJ(Max);
-      } else if (equals("Log", name)) {
+      } else if ("Log" == elName) {
         XMLE_ADDOBJ(Log);
-      } else if (equals("ShadeInterval", name)) {
+      } else if ("ShadeInterval" == elName) {
         XMLE_ADDOBJ(ShadeInterval);
-      } else if (equals("ContourLine", name)) {
+      } else if ("ContourLine" == elName) {
         XMLE_ADDOBJ(ContourLine);
-      } else if (equals("ContourIntervalL", name)) {
+      } else if ("ContourIntervalL" == elName) {
         XMLE_ADDOBJ(ContourIntervalL);
-      } else if (equals("ContourIntervalH", name)) {
+      } else if ("ContourIntervalH" == elName) {
         XMLE_ADDOBJ(ContourIntervalH);
-      } else if (equals("ValueRange", name)) {
+      } else if ("ValueRange" == elName) {
         XMLE_ADDOBJ(ValueRange);
-      } else if (equals("ImageText", name)) {
+      } else if ("ImageText" == elName) {
         XMLE_ADDOBJ(ImageText);
-      } else if (equals("LatLonBox", name)) {
+      } else if ("LatLonBox" == elName) {
         XMLE_ADDOBJ(LatLonBox);
-      } else if (equals("Projection", name)) {
+      } else if ("Projection" == elName) {
         XMLE_ADDOBJ(Projection);
-      } else if (equals("Styles", name)) {
+      } else if ("Styles" == elName) {
         XMLE_ADDOBJ(Styles);
-      } else if (equals("RenderMethod", name)) {
+      } else if ("RenderMethod" == elName) {
         XMLE_ADDOBJ(RenderMethod);
-      } else if (equals("MetadataURL", name)) {
+      } else if ("MetadataURL" == elName) {
         XMLE_ADDOBJ(MetadataURL);
-      } else if (equals("Cache", name)) {
+      } else if ("Cache" == elName) {
         XMLE_ADDOBJ(Cache);
-      } else if (equals("WMSLayer", name)) {
+      } else if ("WMSLayer" == elName) {
         XMLE_ADDOBJ(WMSLayer);
-      } else if (equals("DataPostProc", name)) {
+      } else if ("DataPostProc" == elName) {
         XMLE_ADDOBJ(DataPostProc);
-      } else if (equals("SmoothingFilter", name)) {
+      } else if ("SmoothingFilter" == elName) {
         XMLE_ADDOBJ(SmoothingFilter);
-      } else if (equals("Position", name)) {
+      } else if ("Position" == elName) {
         XMLE_ADDOBJ(Position);
-      } else if (equals("WMSFormat", name)) {
+      } else if ("WMSFormat" == elName) {
         XMLE_ADDOBJ(WMSFormat);
-      } else if (equals("Grid", name)) {
+      } else if ("Grid" == elName) {
         XMLE_ADDOBJ(Grid);
-      } else if (equals("AdditionalLayer", name)) {
+      } else if ("AdditionalLayer" == elName) {
         XMLE_ADDOBJ(AdditionalLayer);
-      } else if (equals("FeatureInterval", name)) {
+      } else if ("FeatureInterval" == elName) {
         XMLE_ADDOBJ(FeatureInterval);
       }
       return nullptr;
     }
-    bool addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("type", attrname)) {
-        attr.type.copy(attrvalue);
+    bool addAttribute(const attribute &attrCfg) {
+      if ("type" == attrCfg.name) {
+        attr.type = attrCfg.value;
         return true;
-      } else if (equals("hidden", attrname)) {
-        attr.hidden.copy(attrvalue);
+      } else if ("hidden" == attrCfg.name) {
+        attr.hidden = attrCfg.value;
         return true;
-      } else if (equals("enable_edr", attrname)) {
-        attr.enable_edr.copy(attrvalue);
+      } else if ("enable_edr" == attrCfg.name) {
+        attr.enable_edr = attrCfg.value;
         return true;
       }
       return false;
     }
   };
 
-  class XMLE_Configuration : public CXMLObjectInterface {
-  public:
+  struct XMLE_Configuration : CXMLObjectInterface {
     std::vector<XMLE_Legend *> Legend;
     std::vector<XMLE_WMS *> WMS;
     std::vector<XMLE_WCS *> WCS;
@@ -2038,42 +1905,42 @@ public:
       XMLE_DELOBJ(Environment);
     }
 
-    CXMLObjectInterface *addElement(const char *name) {
-      if (equals("Legend", name)) {
+    CXMLObjectInterface *addElement(const std::string &elName) {
+      if ("Legend" == elName) {
         XMLE_ADDOBJ(Legend);
-      } else if (equals("WMS", name)) {
+      } else if ("WMS" == elName) {
         XMLE_SETOBJ(WMS);
-      } else if (equals("WCS", name)) {
+      } else if ("WCS" == elName) {
         XMLE_SETOBJ(WCS);
-      } else if (equals("Path", name)) {
+      } else if ("Path" == elName) {
         XMLE_ADDOBJ(Path);
-      } else if (equals("OpenDAP", name)) {
+      } else if ("OpenDAP" == elName) {
         XMLE_ADDOBJ(OpenDAP);
-      } else if (equals("TempDir", name)) {
+      } else if ("TempDir" == elName) {
         XMLE_ADDOBJ(TempDir);
-      } else if (equals("OnlineResource", name)) {
+      } else if ("OnlineResource" == elName) {
         XMLE_ADDOBJ(OnlineResource);
-      } else if (equals("DataBase", name)) {
+      } else if ("DataBase" == elName) {
         XMLE_ADDOBJ(DataBase);
-      } else if (equals("Projection", name)) {
+      } else if ("Projection" == elName) {
         XMLE_ADDOBJ(Projection);
-      } else if (equals("Layer", name)) {
+      } else if ("Layer" == elName) {
         XMLE_ADDOBJ(Layer);
-      } else if (equals("Style", name)) {
+      } else if ("Style" == elName) {
         XMLE_ADDOBJ(Style);
-      } else if (equals("AutoResource", name)) {
+      } else if ("AutoResource" == elName) {
         XMLE_ADDOBJ(AutoResource);
-      } else if (equals("Dataset", name)) {
+      } else if ("Dataset" == elName) {
         XMLE_ADDOBJ(Dataset);
-      } else if (equals("Include", name)) {
+      } else if ("Include" == elName) {
         XMLE_ADDOBJ(Include);
-      } else if (equals("Logging", name)) {
+      } else if ("Logging" == elName) {
         XMLE_ADDOBJ(Logging);
-      } else if (equals("Symbol", name)) {
+      } else if ("Symbol" == elName) {
         XMLE_ADDOBJ(Symbol);
-      } else if (equals("Settings", name)) {
+      } else if ("Settings" == elName) {
         XMLE_ADDOBJ(Settings);
-      } else if (equals("Environment", name)) {
+      } else if ("Environment" == elName) {
         XMLE_ADDOBJ(Environment);
       }
       return nullptr;
@@ -2082,8 +1949,8 @@ public:
 
   std::vector<XMLE_Configuration *> Configuration;
 
-  CXMLObjectInterface *addElement(const char *name) {
-    if (equals("Configuration", name)) {
+  CXMLObjectInterface *addElement(const std::string &elName) {
+    if ("Configuration" == elName) {
       XMLE_SETOBJ(Configuration);
     }
     return nullptr;

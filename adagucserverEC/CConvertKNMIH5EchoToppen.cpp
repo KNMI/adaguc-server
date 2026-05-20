@@ -92,7 +92,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     /* Define the X variable using the X dimension */
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("xet");
+    varX->name = ("xet");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -111,7 +111,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     /* Define the Y variable using the X dimension */
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("yet");
+    varY->name = ("yet");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);

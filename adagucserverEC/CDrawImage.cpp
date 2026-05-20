@@ -116,8 +116,7 @@ int CDrawImage::createImage(int _dW, int _dH) {
 int CDrawImage::createImage(GeoParameters &_Geo) {
   // CDBDebug("CreateImage from GeoParams");
 #ifdef MEASURETIME
-  StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]", _Geo.dWidth, _Geo.dHeight, _bEnableTrueColor, _bEnableTransparency,
-                 currentGraphicsRenderer);
+  StopWatch_Stop("start createImage of size");
 #endif
   if (dImageCreated == 1) {
     CDBError("createImage: image already created");
@@ -134,7 +133,7 @@ int CDrawImage::createImage(GeoParameters &_Geo) {
   }
   dImageCreated = 1;
 #ifdef MEASURETIME
-  StopWatch_Stop("image created with renderer %d.", currentGraphicsRenderer);
+  StopWatch_Stop("image created");
 #endif
 
   return 0;
@@ -612,7 +611,7 @@ int CDrawImage::create685Palette() {
   const char *paletteName685 = "685Palette";
 
   for (size_t j = 0; j < legends.size(); j++) {
-    if (legends[j]->legendName.equals(paletteName685)) {
+    if (legends[j]->legendName == (paletteName685)) {
       CDBDebug("Found legend");
       currentLegend = legends[j];
       return 0;
@@ -688,7 +687,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   currentLegend = NULL;
   if (legend != NULL) {
     for (size_t j = 0; j < legends.size(); j++) {
-      if (legends[j]->legendName.equals(legend->attr.name.c_str())) {
+      if (legends[j]->legendName == (legend->attr.name.c_str())) {
         currentLegend = legends[j];
         return 0;
       }
@@ -716,7 +715,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   if (legend == NULL) {
     return _createStandard();
   }
-  if (legend->attr.type.equals("colorRange")) {
+  if (legend->attr.type == ("colorRange")) {
 
     float cx;
     float rc[4];
@@ -756,7 +755,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
 
     return _createStandard();
   }
-  if (legend->attr.type.equals("interval")) {
+  if (legend->attr.type == ("interval")) {
 
     for (size_t j = 0; j < legend->palette.size(); j++) {
 
@@ -789,7 +788,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     }
     return _createStandard();
   }
-  if (legend->attr.type.equals("svg")) {
+  if (legend->attr.type == ("svg")) {
     if (legend->attr.file.empty()) {
       CDBError("Legend type file has no file attribute specified");
       return 1;

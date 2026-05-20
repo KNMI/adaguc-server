@@ -23,8 +23,8 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  int targetNrOfTilesX = floor((srvParam->geoParams.width / tileSettings->attr.tilewidthpx.toInt()) + 0.0) + 2;
-  int targetNrOfTilesY = floor((srvParam->geoParams.height / tileSettings->attr.tileheightpx.toInt()) + 0.0) + 2;
+  int targetNrOfTilesX = floor((srvParam->geoParams.width / atoi(tileSettings->attr.tilewidthpx.c_str())) + 0.0) + 2;
+  int targetNrOfTilesY = floor((srvParam->geoParams.height / atoi(tileSettings->attr.tileheightpx.c_str())) + 0.0) + 2;
   return targetNrOfTilesX * targetNrOfTilesY;
 }
 
@@ -65,9 +65,9 @@ f8box reprojectExtent(CT::string targetProjection, CT::string sourceProjection, 
 CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  bool tileSettingsDebug = tileSettings->attr.debug.equals("true");
+  bool tileSettingsDebug = tileSettings->attr.debug == "true";
   int initialRequestLimit = DEFAULT_REQUEST_LIMIT;
-  size_t maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? tileSettings->attr.maxtilesinimage.toInt() : DEFAULT_MAX_TILES_IN_IMAGE;
+  size_t maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? atoi(tileSettings->attr.maxtilesinimage.c_str()) : DEFAULT_MAX_TILES_IN_IMAGE;
 
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   int targetNrOfTiles = estimateNrOfTargetTiles(dataSource);
@@ -102,7 +102,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
 
   // Put the results per tiling level into a map, so we can find the closest matching tile level.
   std::map<int, int> levelMap;
-  for (auto record : store->records) {
+  for (auto record: store->records) {
     auto tilingLevel = record.get("adaguctilinglevel")->toInt();
     if (tilingLevel > 0) {
       levelMap[tilingLevel]++;
@@ -124,7 +124,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
 
   // Now filter out the unwanted tiling levels from the list
   std::vector<CDBStore::Record> filteredRecords;
-  for (auto record : store->records) {
+  for (auto record: store->records) {
     // Make sure that there are not too many tiles
     if (filteredRecords.size() >= maxTilesInImage) {
       break;
@@ -138,7 +138,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   store->records = filteredRecords;
 
   if (tileSettingsDebug) {
-    srvParam->mapTitle.print("level %d, tiles %d targetNrOfTiles %d", dataSource->queryLevel, store->getSize(), targetNrOfTiles);
+    srvParam->mapTitle = CT::printf("level %d, tiles %lu targetNrOfTiles %d", dataSource->queryLevel, store->getSize(), targetNrOfTiles);
   }
 
   // Return the store for CRequest.

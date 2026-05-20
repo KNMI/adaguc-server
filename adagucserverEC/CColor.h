@@ -31,7 +31,7 @@
 #define CCOLOR_H
 struct CColor {
 
-  unsigned char r, g, b, a;
+  unsigned char r = 0, g = 0, b = 0, a = 255;
   CColor() {
     r = 0;
     g = 0;
@@ -46,9 +46,14 @@ struct CColor {
   }
   CColor(const char *color) { parse(color); }
 
-  CColor(std::string color) { parse(color.c_str()); }
-
   CColor &operator=(const char *color) {
+    this->parse(color);
+    return *this;
+  }
+
+  CColor(const std::string &color) { parse(color); }
+
+  CColor &operator=(const std::string &color) {
     this->parse(color);
     return *this;
   }
@@ -58,18 +63,18 @@ struct CColor {
     r.print("#%s%s%s%s", CT::string::getHex(this->r).c_str(), CT::string::getHex(this->g).c_str(), CT::string::getHex(this->b).c_str(), CT::string::getHex(this->a).c_str());
     return r;
   }
-  void parse(const char *color) {
+  void parse(const std::string &color) {
     /**
      * color can have format #RRGGBB or #RRGGBBAA
      */
-    size_t l = strlen(color);
+    size_t l = color.length();
 
-    if (l == 7 && color[0] == '#') {
+    if (l == 7 && color.at(0) == '#') {
       r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
       g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
       b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
       a = 255;
-    } else if (l == 9 && color[0] == '#') {
+    } else if (l == 9 && color.at(0) == '#') {
       r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
       g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
       b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);

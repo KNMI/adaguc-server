@@ -108,7 +108,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 #endif
       dataSource->statistics = new Statistics();
       dataSource->statistics->setMinMax(minMax);
-        }
+    }
   }
 
   // Make the width and height of the new regular grid field the same as the viewing window
@@ -193,7 +193,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
       }
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

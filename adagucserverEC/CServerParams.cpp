@@ -30,74 +30,11 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
+#include <algorithm>
 
-CServerParams::CServerParams() {
+void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
-  serviceType = -1;
-  requestType = -1;
-  OGCVersion = -1;
-
-  Transparent = false;
-  cfg = NULL;
-  configObj = new CServerConfig();
-  imageFormat = IMAGEFORMAT_IMAGEPNG8;
-  imageMode = SERVERIMAGEMODE_8BIT;
-  autoOpenDAPEnabled = -1;
-  autoLocalFileResourceEnabled = -1;
-  showDimensionsInImage = false;
-  showLegendInImage = "false";
-  showScaleBarInImage = false;
-  figWidth = -1;
-  figHeight = -1;
-  imageQuality = 85;
-  dfResX = 0;
-  dfResY = 0;
-}
-
-CServerParams::~CServerParams() {
-  if (configObj != NULL) {
-    delete configObj;
-    configObj = NULL;
-  }
-  requestDims.clear();
-}
-
-// Table names need to be different between dims like time and height.
-//  Therefor create unique tablenames like tablename_time and tablename_height
-CT::string CServerParams::makeCorrectTableName(CT::string tableName, CT::string dimName) {
-  CT::string correctedTableName;
-  correctedTableName.print("%s_%s", tableName.c_str(), dimName.c_str());
-  correctedTableName.replaceSelf("-", "_m_");
-  correctedTableName.replaceSelf("+", "_p_");
-  correctedTableName.replaceSelf(".", "_");
-  correctedTableName.toLowerCaseSelf();
-  return correctedTableName;
-}
-
-void CServerParams::showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
-
-int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE_Layer *cfgLayer) {
-  /*
-  if(cfgLayer->Variable.size()!=0){
-  _layerName=cfgLayer->Variable[0]->value.c_str();
-}*/
-
-  CT::string layerName;
-  groupName->copy("");
-  if (cfgLayer->Group.size() == 1) {
-    if (cfgLayer->Group[0]->attr.value.c_str() != NULL) {
-      CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
-      auto groupElements = layerName.split("/");
-      if (groupElements.size() > 0) {
-        groupName->copy(groupElements[0].c_str());
-      }
-    }
-  }
-
-  return 0;
-}
-
-char CServerParams::debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
+char debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
 
 bool CServerParams::isDebugLoggingEnabled() const {
   if (debugLoggingIsEnabled == 0)
@@ -105,7 +42,7 @@ bool CServerParams::isDebugLoggingEnabled() const {
   else if (debugLoggingIsEnabled == 1)
     return true;
   else if (cfg && cfg->Logging.size() > 0) {
-    if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug.equals("false")) {
+    if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug == ("false")) {
       debugLoggingIsEnabled = 0;
       return false;
     }
@@ -121,7 +58,7 @@ bool CServerParams::isAutoOpenDAPResourceEnabled() {
   if (autoOpenDAPEnabled == -1) {
     autoOpenDAPEnabled = 0;
     if (cfg->AutoResource.size() > 0) {
-      if (cfg->AutoResource[0]->attr.enableautoopendap.equals("true")) autoOpenDAPEnabled = 1;
+      if (cfg->AutoResource[0]->attr.enableautoopendap == ("true")) autoOpenDAPEnabled = 1;
     }
   }
   if (autoOpenDAPEnabled == 1) return true;
@@ -136,7 +73,7 @@ bool CServerParams::isAutoLocalFileResourceEnabled() {
   if (autoLocalFileResourceEnabled == -1) {
     autoLocalFileResourceEnabled = 0;
     if (cfg->AutoResource.size() > 0) {
-      if (cfg->AutoResource[0]->attr.enablelocalfile.equals("true")) autoLocalFileResourceEnabled = 1;
+      if (cfg->AutoResource[0]->attr.enablelocalfile == ("true")) autoLocalFileResourceEnabled = 1;
     }
   }
   if (autoLocalFileResourceEnabled == 1) return true;
@@ -148,12 +85,12 @@ bool CServerParams::isAutoResourceEnabled() {
   return false;
 }
 
-bool CServerParams::checkIfPathHasValidTokens(const char *path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
+bool checkIfPathHasValidTokens(const std::string &path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
 
-bool CServerParams::checkForValidTokens(const char *path, const char *validPATHTokens) {
+bool checkForValidTokens(const std::string &path, const std::string &validPATHTokens) {
   // Check for valid tokens
-  size_t pathLength = strlen(path);
-  size_t allowedTokenLength = strlen(validPATHTokens);
+  size_t pathLength = path.length();
+  size_t allowedTokenLength = validPATHTokens.length();
   for (size_t j = 0; j < pathLength; j++) {
     bool isInvalid = true;
     for (size_t i = 0; i < allowedTokenLength; i++) {
@@ -163,14 +100,14 @@ bool CServerParams::checkForValidTokens(const char *path, const char *validPATHT
       }
     }
     if (isInvalid) {
-      CDBDebug("Invalid token '%c' in '%s'", path[j], path);
+      CDBDebug("Invalid token '%c' in '%s'", path[j], path.c_str());
       return false;
     }
 
     // Check for sequences
     if (j > 0) {
       if (path[j - 1] == '.' && path[j] == '.') {
-        CDBDebug("Invalid sequence in '%s'", path);
+        CDBDebug("Invalid sequence in '%s'", path.c_str());
         return false;
       }
     }
@@ -178,7 +115,7 @@ bool CServerParams::checkForValidTokens(const char *path, const char *validPATHT
   return true;
 }
 
-bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath) {
+bool CServerParams::checkResolvePath(const std::string &path, std::string &outputtedResolvedPath) {
   if (cfg->AutoResource.size() > 0) {
     // Needs to be configured otherwise it will be denied.
     if (cfg->AutoResource[0]->Dir.size() == 0) {
@@ -186,7 +123,10 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
       return false;
     }
 
-    if (checkIfPathHasValidTokens(path) == false) return false;
+    if (checkIfPathHasValidTokens(path) == false) {
+      CDBDebug("Invalid tokens in path");
+      return false;
+    }
 
     for (size_t d = 0; d < cfg->AutoResource[0]->Dir.size(); d++) {
       const char *_baseDir = cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
@@ -200,14 +140,13 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
 
       if (strlen(baseDir) > 0 && strlen(dirPrefix) > 0) {
         // Prepend the prefix to make the absolute path
-        CT::string pathToCheck;
-        pathToCheck.print("%s/%s", dirPrefix, path);
+        std::string pathToCheck = CT::printf("%s/%s", dirPrefix, path.c_str());
         // Make a realpath
         char szResolvedPath[PATH_MAX];
         if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL) {
-          CT::string resolvedPathStr = szResolvedPath;
-          if (resolvedPathStr.indexOf(baseDir) == 0) {
-            resolvedPath->copy(szResolvedPath);
+          std::string resolvedPathStr = szResolvedPath;
+          if (CT::startsWith(resolvedPathStr, baseDir)) {
+            outputtedResolvedPath = resolvedPathStr;
             return true;
           }
         }
@@ -226,14 +165,9 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
   return false;
 }
 
-void CServerParams::encodeTableName(CT::string *tableName) {
-  tableName->replaceSelf("/", "_");
-  tableName->toLowerCaseSelf();
-}
+void CServerParams::setOnlineResource(std::string r) { _onlineResource = r; };
 
-void CServerParams::setOnlineResource(CT::string r) { _onlineResource = r; };
-
-CT::string CServerParams::getOnlineResource() {
+std::string CServerParams::getOnlineResource() {
   if (_onlineResource.length() > 0) {
     return _onlineResource;
   }
@@ -280,11 +214,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
     } else {
       projNameString = projName;
     }
-    if (projNameString.equals("EPSG:4326"))
+    if (projNameString == ("EPSG:4326"))
       return true;
-    else if (projNameString.equals("EPSG:4258"))
+    else if (projNameString == ("EPSG:4258"))
       return true;
-    else if (projNameString.equals("CRS:84"))
+    else if (projNameString == ("CRS:84"))
       return true;
   }
   return false;
@@ -296,27 +230,21 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<std::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
+std::vector<std::string> getLegendNames(const std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    std::vector<std::string> legendList;
-    legendList.push_back("rainbow");
-    return legendList;
+    return {"rainbow"};
   }
   std::vector<std::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
-    CT::string legendValue = Legend[j]->value.c_str();
-    std::vector<CT::string> l1 = legendValue.split(",");
-    for (auto li: l1) {
-      if (li.length() > 0) {
-        stringList.push_back(li);
-      }
-    }
+    std::vector<std::string> l1 = CT::split(Legend[j]->elementValue, ",");
+    std::erase_if(l1, [](const std::string &s) { return s.empty(); });
+    stringList.insert(stringList.end(), l1.begin(), l1.end());
   }
   return stringList;
 }
 
-int CServerParams::dataRestriction = -1;
-int CServerParams::checkDataRestriction() {
+int dataRestriction = -1;
+int checkDataRestriction() {
   if (dataRestriction != -1) return dataRestriction;
 
   // By default no restrictions
@@ -326,20 +254,20 @@ int CServerParams::checkDataRestriction() {
     dr = ALLOW_NONE;
     CT::string temp(data);
     temp.toUpperCaseSelf();
-    if (temp.equals("TRUE")) {
+    if (temp == ("TRUE")) {
       dr = ALLOW_NONE;
     }
-    if (temp.equals("FALSE")) {
+    if (temp == ("FALSE")) {
       dr = ALLOW_WCS | ALLOW_GFI | ALLOW_METADATA;
     }
     // Decompose into stringlist and check each item
     std::vector<CT::string> items = temp.split("|");
     for (size_t j = 0; j < items.size(); j++) {
       items[j].replaceSelf("\"", "");
-      if (items[j].equals("ALLOW_GFI")) dr |= ALLOW_GFI;
-      if (items[j].equals("ALLOW_WCS")) dr |= ALLOW_WCS;
-      if (items[j].equals("ALLOW_METADATA")) dr |= ALLOW_METADATA;
-      if (items[j].equals("SHOW_QUERYINFO")) dr |= SHOW_QUERYINFO;
+      if (items[j] == ("ALLOW_GFI")) dr |= ALLOW_GFI;
+      if (items[j] == ("ALLOW_WCS")) dr |= ALLOW_WCS;
+      if (items[j] == ("ALLOW_METADATA")) dr |= ALLOW_METADATA;
+      if (items[j] == ("SHOW_QUERYINFO")) dr |= SHOW_QUERYINFO;
     }
   }
 
@@ -348,7 +276,8 @@ int CServerParams::checkDataRestriction() {
 }
 
 const char *timeFormatAllowedChars = "0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
-bool CServerParams::checkTimeFormat(const std::string &timeToCheck) {
+
+bool checkTimeFormat(const std::string &timeToCheck) {
   if (timeToCheck.length() < 1) return false;
   //  bool isValidTime = false;
   // First test wether invalid characters are in this string
@@ -368,62 +297,80 @@ bool CServerParams::checkTimeFormat(const std::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string pszConfigFile) {
+int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
   // Find variables to substitute
   std::vector<CServerConfig::XMLE_Environment> extraEnvironment;
+
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile start first  %s", pszConfigFile.c_str());
+#endif
   CServerParams tempServerParam;
   tempServerParam._parseConfigFile(pszConfigFile, nullptr);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile done first %s", pszConfigFile.c_str());
+#endif
 
-  if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
-    for (size_t j = 0; j < tempServerParam.configObj->Configuration[0]->Environment.size(); j++) {
+  if (tempServerParam.configObj.Configuration.size() > 0 && tempServerParam.configObj.Configuration[0]->Environment.size() > 0) {
+    for (size_t j = 0; j < tempServerParam.configObj.Configuration[0]->Environment.size(); j++) {
       CServerConfig::XMLE_Environment tmpEnv;
-      tmpEnv.attr.name = (*tempServerParam.configObj->Configuration[0]->Environment[j]).attr.name;
-      tmpEnv.attr.defaultVal = (*tempServerParam.configObj->Configuration[0]->Environment[j]).attr.defaultVal;
+      tmpEnv.attr.name = (*tempServerParam.configObj.Configuration[0]->Environment[j]).attr.name;
+      tmpEnv.attr.defaultVal = (*tempServerParam.configObj.Configuration[0]->Environment[j]).attr.defaultVal;
       extraEnvironment.push_back(tmpEnv);
     }
   }
-
-  return _parseConfigFile(pszConfigFile, &extraEnvironment);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile start second  %s", pszConfigFile.c_str());
+#endif
+  int status = _parseConfigFile(pszConfigFile, &extraEnvironment);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::parseConfigFile done second  %s", pszConfigFile.c_str());
+#endif
+  return status;
 }
 
-int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
-  CT::string configFileData = "";
+int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
+  std::string configFileData = "";
 
   try {
     try {
-      configFileData = CReadFile::open(pszConfigFile.c_str());
+      configFileData = readFile(pszConfigFile);
     } catch (int e) {
       CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
       return 1;
     }
-
+#ifdef MEASURETIME
+    StopWatch_Stop("CServerParams::_parseConfigFile Start substitutions");
+#endif
     /* Substitute ADAGUC_PATH */
     const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
     if (pszADAGUC_PATH != NULL) {
-      CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
+      CT::string adagucPath = makeCleanPath(pszADAGUC_PATH);
       adagucPath = adagucPath + "/";
-      configFileData.replaceSelf("{ADAGUC_PATH}", adagucPath.c_str());
+      CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath.c_str());
     }
 
     /* Substitute ADAGUC_TMP */
     const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
-    configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
+    CT::replaceSelf(configFileData, "{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
 
     /* Substitute ADAGUC_DB */
     const char *pszADAGUC_DB = getenv("ADAGUC_DB");
-    if (pszADAGUC_DB != NULL) configFileData.replaceSelf("{ADAGUC_DB}", pszADAGUC_DB);
+    if (pszADAGUC_DB != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DB}", pszADAGUC_DB);
 
     /* Substitute ADAGUC_DATASET_DIR */
     const char *pszADAGUC_DATASET_DIR = getenv("ADAGUC_DATASET_DIR");
-    if (pszADAGUC_DATASET_DIR != NULL) configFileData.replaceSelf("{ADAGUC_DATASET_DIR}", pszADAGUC_DATASET_DIR);
+    if (pszADAGUC_DATASET_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DATASET_DIR}", pszADAGUC_DATASET_DIR);
 
     /* Substitute ADAGUC_DATA_DIR */
     const char *pszADAGUC_DATA_DIR = getenv("ADAGUC_DATA_DIR");
-    if (pszADAGUC_DATA_DIR != NULL) configFileData.replaceSelf("{ADAGUC_DATA_DIR}", pszADAGUC_DATA_DIR);
+    if (pszADAGUC_DATA_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DATA_DIR}", pszADAGUC_DATA_DIR);
 
     /* Substitute ADAGUC_AUTOWMS_DIR */
     const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
-    if (pszADAGUC_AUTOWMS_DIR != NULL) configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+    if (pszADAGUC_AUTOWMS_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+#ifdef MEASURETIME
+    StopWatch_Stop("CServerParams::_parseConfigFile Start extra substitutions");
+#endif
 
     if (extraEnvironment != nullptr) {
       /* Substitute any others as specified in env */
@@ -433,30 +380,29 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
           if (env != nullptr) {
             if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
 
-              if (env->attr.name.startsWith(CSERVERPARAMS_ADAGUCENV_PREFIX)) {
+              if (CT::startsWith(env->attr.name, CSERVERPARAMS_ADAGUCENV_PREFIX)) {
                 const char *environmentVarName = env->attr.name.c_str();
                 const char *environmentVarDefault = env->attr.defaultVal.c_str();
                 const char *environmentValue = getenv(environmentVarName);
-                CT::string substituteName;
-                substituteName.print("{%s}", environmentVarName);
+                std::string substituteName = CT::printf("{%s}", environmentVarName);
                 const char *environmentSubstituteName = substituteName.c_str();
 
                 if (environmentValue != NULL) {
                   if (verbose) {
                     CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
                   }
-                  configFileData.replaceSelf(environmentSubstituteName, environmentValue);
+                  CT::replaceSelf(configFileData, environmentSubstituteName, environmentValue);
                 } else {
                   if (verbose) {
                     CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
                   }
-                  configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
+                  CT::replaceSelf(configFileData, environmentSubstituteName, environmentVarDefault);
                 }
               } else {
                 CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
               }
             } else {
-              CDBWarning("Environment element found, but either name or default are not set");
+              CDBWarning("Environment element found, but either name or default are not set [%s] [%s]", env->attr.name.c_str(), env->attr.defaultVal.c_str());
             }
           }
         }
@@ -467,9 +413,17 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
   }
 
   std::string datasetName = CT::basename(pszConfigFile.c_str());
-  int status = parseConfig(configObj, configFileData, datasetName);
 
-  if (status == 0 && configObj->Configuration.size() == 1) {
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::_parseConfigFile Start parseConfig");
+#endif
+
+  int status = parseConfig(&configObj, configFileData, datasetName);
+#ifdef MEASURETIME
+  StopWatch_Stop("CServerParams::_parseConfigFile Done parseConfig");
+#endif
+
+  if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
   } else {
     // cfg=NULL;
@@ -478,21 +432,21 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
   }
 }
 
-CT::string CServerParams::getResponseHeaders(int mode) {
+std::string CServerParams::getResponseHeaders(int mode) {
   auto tracingHeaders = traceTimingsGetHeader();
   if (cfg != nullptr && cfg->Settings.size() > 0) {
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
-        if (cfg->Settings[0]->attr.cache_age_volatileresources.toInt() != 0) {
-          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_volatileresources.toInt());
+        if (atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()) != 0) {
+          cacheString.printconcat("%d", atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }
     } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
       if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
-        if (cfg->Settings[0]->attr.cache_age_cacheableresources.toInt() != 0) {
-          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_cacheableresources.toInt());
+        if (atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()) != 0) {
+          cacheString.printconcat("%d", atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }
@@ -507,7 +461,7 @@ std::tuple<float, std::string> CServerParams::getContourFont() {
   for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
     for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->ContourFont.size(); fontNr += 1) {
       if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.empty()) {
-        contourFontSize = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.toDouble();
+        contourFontSize = atof(this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.c_str());
       }
       if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location.empty()) {
         legendfontLocation = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location;
@@ -526,7 +480,7 @@ std::tuple<float, std::string> CServerParams::getLegendFont() {
   for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
     for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->LegendFont.size(); fontNr += 1) {
       if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.empty()) {
-        legendFontSize = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.toDouble();
+        legendFontSize = atof(this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.c_str());
       }
       if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location.empty()) {
         legendfontLocation = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location;
@@ -541,7 +495,7 @@ bool CServerParams::useMetadataTable() {
   size_t numSettings = this->cfg->Settings.size();
   if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
     auto settings = this->cfg->Settings[numSettings - 1];
-    if (settings->attr.enablemetadatacache.equalsIgnoreCase("false")) {
+    if (CT::equalsIgnoreCase(settings->attr.enablemetadatacache, "false")) {
       return false;
     }
   }
@@ -552,33 +506,29 @@ bool CServerParams::isEdrEnabled() {
   size_t numSettings = this->cfg->Settings.size();
   if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
     auto settings = this->cfg->Settings[numSettings - 1];
-    if (settings->attr.enable_edr.equalsIgnoreCase("false")) {
-      return false;
-    } else if (settings->attr.enable_edr.equalsIgnoreCase("true")) {
-      return true;
-    }
+    return CT::equalsIgnoreCase(settings->attr.enable_edr, "true");
   }
   return true;
 }
 
-int CServerParams::getServerLegendIndexByName(CT::string legendName) {
-  auto comp = [legendName](CServerConfig::XMLE_Legend *a) { return a->attr.name.equals(legendName); };
+int CServerParams::getServerLegendIndexByName(std::string legendName) {
+  auto comp = [legendName](CServerConfig::XMLE_Legend *a) { return a->attr.name == (legendName); };
   auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), comp);
   return it == cfg->Legend.end() ? -1 : it - cfg->Legend.begin();
 }
 
-int CServerParams::getServerStyleIndexByName(CT::string styleName) {
+int CServerParams::getServerStyleIndexByName(std::string styleName) {
   if (styleName.empty()) {
     CDBError("No style name provided");
     return -1;
   }
-  if (styleName.equals("default")) {
+  if (styleName == ("default")) {
     return -1;
   }
   // Remove last slash (/). E.g. windbarbs/shaded => windbarbs
-  CT::string sanitizedStyleName = styleName.substring(0, styleName.indexOf("/"));
+  std::string sanitizedStyleName = CT::substring(styleName, 0, CT::indexOf(styleName, "/"));
 
-  auto comp = [sanitizedStyleName](CServerConfig::XMLE_Style *a) { return a->attr.name.equals(sanitizedStyleName); };
+  auto comp = [sanitizedStyleName](CServerConfig::XMLE_Style *a) { return a->attr.name == (sanitizedStyleName); };
   auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);
   int index = it == cfg->Style.end() ? -1 : it - cfg->Style.begin();
 

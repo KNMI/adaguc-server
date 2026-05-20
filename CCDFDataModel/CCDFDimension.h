@@ -38,7 +38,7 @@ namespace CDF {
     Dimension(const char *_name, size_t _length) {
       isIterative = false;
       length = _length;
-      name.copy(_name);
+      name = (_name);
       id = -1;
     }
     CT::string name;
@@ -47,7 +47,7 @@ namespace CDF {
     int id;
     size_t getSize() { return length; }
     void setSize(size_t _length) { length = _length; }
-    void setName(const char *value) { name.copy(value); }
+    void setName(const char *value) { name = (value); }
     CT::string getName() { return name; }
     // Returns a new copy of this dimension
     Dimension *clone() {

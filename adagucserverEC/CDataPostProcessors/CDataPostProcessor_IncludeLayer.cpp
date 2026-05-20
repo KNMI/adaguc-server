@@ -8,7 +8,7 @@
 
 const char *CDPPIncludeLayer::getId() { return "include_layer"; }
 int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals("include_layer")) {
+  if (proc->attr.algorithm == ("include_layer")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -105,7 +105,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       return 1;
     }
     auto baseCDFObject = dataSource->dataObjects[0].cdfVariable->getParentCDFObject();
-    int appendOrPrepend = proc->attr.mode.equals("prepend"); // 0:append, 1:prepend
+    int appendOrPrepend = proc->attr.mode == ("prepend"); // 0:append, 1:prepend
 
     for (const auto &dataObjectToInClude: dataSourceToInclude->dataObjects) {
       if (dataObjectToInClude.cdfVariable == NULL) {

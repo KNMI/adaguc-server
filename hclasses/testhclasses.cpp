@@ -237,6 +237,18 @@ TEST(string, replace) {
   CHECK_EQUAL("abefgabefg", CT::replace(test, "cd", ""));
 }
 
+TEST(string, replaceSelf) {
+  std::string testA = "abcdefgabcdefg";
+  CT::replaceSelf(testA, "cd", "!!!");
+  CHECK_EQUAL("ab!!!efgab!!!efg", testA);
+  std::string testB = "abcdefgabcdefg";
+  CT::replaceSelf(testB, "cd", "!");
+  CHECK_EQUAL("ab!efgab!efg", testB);
+  std::string testC = "abcdefgabcdefg";
+  CT::replaceSelf(testC, "cd", "");
+  CHECK_EQUAL("abefgabefg", testC);
+}
+
 TEST(string, toLowerCase) {
   std::string test = "abcdefgabcdefg";
   CHECK_EQUAL("abcd", CT::toLowerCase("AbCd"));
@@ -261,6 +273,17 @@ TEST(string, indexOf) {
   LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello planet earth, you are a great planet."));
   LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "Hello planet earth, you are a great planet. ---------------------------"));
   LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
+}
+
+TEST(string, lastIndexOf) {
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
+  LONGS_EQUAL(-1, CT::lastIndexOf(valueToCheck, "mars"));
+  LONGS_EQUAL(36, CT::lastIndexOf(valueToCheck, "planet"));
+  LONGS_EQUAL(0, CT::lastIndexOf(valueToCheck, "Hello"));
+  LONGS_EQUAL(0, CT::lastIndexOf(valueToCheck, ""));
+  LONGS_EQUAL(0, CT::lastIndexOf(valueToCheck, "Hello planet earth, you are a great planet."));
+  LONGS_EQUAL(-1, CT::lastIndexOf(valueToCheck, "Hello planet earth, you are a great planet. ---------------------------"));
+  LONGS_EQUAL(-1, CT::lastIndexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
 }
 
 TEST(string, endsWith) {

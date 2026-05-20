@@ -79,7 +79,7 @@ int CDFCSVReader::open(const char *fileName) {
   cdfObject->addAttribute(new CDF::Attribute("history", "Metadata adjusted by ADAGUC from CSV to NetCDF-CF"));
 
   /* Read the CSV file */
-  this->csvData = CReadFile::open(fileName);
+  this->csvData = readFile(fileName);
 
   /* Detect variables from header */
   this->csvLines = csvData.split("\r\n");

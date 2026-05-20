@@ -34,7 +34,7 @@ struct ContourLineStructure {
 };
 
 bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
-  for (auto &textLocation : textLocations) {
+  for (auto &textLocation: textLocations) {
     int dx = x - textLocation.x;
     int dy = y - textLocation.y;
     if ((dx * dx + dy * dy) < 10 * 10) {
@@ -87,7 +87,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     float closestValue;
     int definedIntervalIndex = 0;
     int j = 0;
-    for (auto c : contourDefinition.classes) {
+    for (auto c: contourDefinition.classes) {
       float d = fabs(lineSegmentsValue - c);
       if (j == 0)
         closestValue = d;
@@ -210,7 +210,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
 
   } else {
-    for (auto &lineSegment : lineSegments) {
+    for (auto &lineSegment: lineSegments) {
       drawImage->lineTo(lineSegment.x, lineSegment.y, scaledLineWidth, contourDefinition.lineColor);
     }
   }
@@ -229,7 +229,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   double defaultLineWidth = 4;
   double defaultStrokeWidth = 0.75;
-  double defaultFontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
+  double defaultFontSize = atof(dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.c_str());
   CColor defaultLineColor = CColor(0, 0, 0, 255);
   CColor defaultTextColor = CColor(0, 0, 0, 255);
   CColor defaultTextStrokeColor = CColor(0, 0, 0, 0);
@@ -246,22 +246,22 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   std::vector<ContourLineStructure> contourlineList;
 
-  for (auto contourLine : (styleConfiguration->contourLines)) {
+  for (auto contourLine: (styleConfiguration->contourLines)) {
     auto &attr = contourLine->attr;
     std::vector<double> classes;
     double interval = 0;
     if (attr.classes.empty() == false) {
-      auto classesString = attr.classes.split(",");
-      for (auto classString : classesString) {
-        classes.push_back(classString.toDouble());
+      auto classesString = CT::split(attr.classes, ",");
+      for (const auto &classString: classesString) {
+        classes.push_back(atof(classString.c_str()));
       }
     } else if (attr.interval.empty() == false) {
-      interval = attr.interval.toDouble();
+      interval = atof(attr.interval.c_str());
     }
     std::vector<double> dashes;
-    auto dashesStrings = attr.dashing.split(",");
-    for (auto dashString : dashesStrings) {
-      dashes.push_back(dashString.toDouble());
+    auto dashesStrings = CT::split(attr.dashing, ",");
+    for (const auto &dashString: dashesStrings) {
+      dashes.push_back(atof(dashString.c_str()));
     }
 
     // Check for lines at specified classes
@@ -272,9 +272,9 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
                                .lineColor = attr.linecolor.empty() ? defaultLineColor : CColor(attr.linecolor),
                                .textColor = attr.textcolor.empty() ? defaultTextColor : CColor(attr.textcolor),
                                .textstrokecolor = attr.textstrokecolor.empty() ? defaultTextStrokeColor : CColor(attr.textstrokecolor),
-                               .lineWidth = attr.width.empty() ? defaultLineWidth : attr.width.toDouble(),
-                               .fontSize = attr.textsize.empty() ? defaultFontSize : attr.textsize.toDouble(),
-                               .textStrokeWidth = attr.textstrokewidth.empty() ? defaultStrokeWidth : attr.textstrokewidth.toDouble(),
+                               .lineWidth = attr.width.empty() ? defaultLineWidth : atof(attr.width.c_str()),
+                               .fontSize = attr.textsize.empty() ? defaultFontSize : atof(attr.textsize.c_str()),
+                               .textStrokeWidth = attr.textstrokewidth.empty() ? defaultStrokeWidth : atof(attr.textstrokewidth.c_str()),
                                .dashes = dashes});
   }
 
@@ -286,12 +286,12 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
       // Check if all pixels have values...
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
         int mask = 1;
-        for (auto &contourLine : contourlineList) {
+        for (auto &contourLine: contourlineList) {
           // Check for lines at specified classes
           float min = std::min(val[0], std::min(val[1], std::min(val[2], val[3])));
           float max = std::max(val[0], std::max(val[1], std::max(val[2], val[3])));
 
-          for (double cc : contourLine.classes) {
+          for (double cc: contourLine.classes) {
             if (cc >= min && cc < max) {
               distance[p1] |= mask;
               break;
@@ -316,7 +316,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   DISTANCEFIELDTYPE lineMask = 1;
 
   // CDBDebug("B %d", styleConfiguration->contourLines.size());
-  for (auto &contourLine : contourlineList) {
+  for (auto &contourLine: contourlineList) {
 
     /* Everywhere */
     for (int y = 0; y < dImageHeight; y++) {

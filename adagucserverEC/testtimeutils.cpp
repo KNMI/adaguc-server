@@ -104,7 +104,7 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   dataSource.cfgLayer = new CServerConfig::XMLE_Layer();
 
   auto timeDim = new CServerConfig::XMLE_Dimension();
-  timeDim->value = "time";
+  timeDim->elementValue = "time";
   dataSource.cfgLayer->Dimension.push_back(timeDim);
   std::vector<LayerMetadataDim> dimList;
   result = checkDependenciesBetweenDims(&dataSource, dimList);
@@ -120,7 +120,7 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   CHECK(dimList[0].defaultValue == "");
 
   auto refTimeDim = new CServerConfig::XMLE_Dimension();
-  refTimeDim->value = "reference_time";
+  refTimeDim->elementValue = "reference_time";
   dataSource.cfgLayer->Dimension.push_back(refTimeDim);
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)

@@ -317,7 +317,7 @@ public:
               for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
                 CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
                 // Algorithm ax+b:
-                if (proc->attr.algorithm.equals("ax+b")) {
+                if (proc->attr.algorithm == ("ax+b")) {
                   double dfadd_offset = 0;
                   double dfscale_factor = 1;
 
@@ -391,7 +391,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
   //   for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
   //     CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
   //     //Algorithm ax+b:
-  //     if(proc->attr.algorithm.equals("ax+b")){
+  //     if(proc->attr.algorithm ==("ax+b")){
   //       uniqueRequest.readDataAsCDFDouble = true;
   //       break;
   //     }
@@ -566,7 +566,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
   }
 
-  if (dataSource->srvParams->InfoFormat.equals("application/json")) {
+  if (dataSource->srvParams->InfoFormat == "application/json") {
     float *data = (float *)varRange->data;
     eProfileJson->concat("{");
     CT::string units = dObjgetUnits(*dataSource->getDataObject(0));
