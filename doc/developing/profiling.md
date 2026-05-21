@@ -2,45 +2,49 @@
 
 This page describes how to use [linux perf](https://en.wikipedia.org/wiki/Perf_%28Linux%29) to profile `adagucserver`. `perf` records events that can be used to generate a [flamegraph](https://github.com/brendangregg/FlameGraph) or [callgraph](https://github.com/jrfonseca/gprof2dot).
 
-These instructions are tested on a physical x86_64 Linux machine, and adaguc-server is executed from within a docker container using the `docker compose` setup.
+These instructions are tested from within a docker container using the `docker compose` setup. These instructions are not tested when running Adaguc in a cloud environment.
 
-These instructions are not tested when running Adaguc in a cloud environment.
+## Prerequisites
 
-## Generate binary with debug symbols
-
-Edit `CMakeLists.txt` to add the following compiler flags: `-g -p -fno-omit-frame-pointer`.
-
-This works:
-```txt
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -p -fno-omit-frame-pointer")
-  set(CMAKE_CXX_FLAGS_RELEASE "-ggdb -Wall -Wextra -g3 -p -fno-omit-frame-pointer")
+Install flamegraph tools:
+```bash
+git clone https://github.com/brendangregg/FlameGraph
 ```
 
-## Docker changes
+Make sure host is allowed to capture `perf` events:
+```bash
+docker run --rm --privileged --net=host --pid=host alpine \
+  sysctl -w kernel.perf_event_paranoid=-1 \
+  kernel.kptr_restrict=0
+```
 
-To allow the (root) user to capture linux perf events, you need to add the `SYS_ADMIN` capability to `docker-compose.yml`.
-
-You also need to use your locally compiled adaguc image that contains debug symbols.
-
-To do this, edit `./Docker/docker-compose.yml` and modify it like below:
-
+Edit `./Docker/docker-compose.yml` to create profiling build and allow capturing perf events in the container:
 ```yml
   adaguc-server:
+    build:
+      context: ..
+      args:
+        BUILD_TYPE: --profile
+      extra_hosts:
+      - "host.docker.internal:host-gateway"
     cap_add:
       - SYS_ADMIN
-    # image: knmiadaguc/adaguc-server
-    build: ..
+      - PERFMON
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
 ```
 
 Then restart the containers:
-
 ```bash
 cd ./Docker/
 docker compose down
 docker compose up -d --build
 ```
 
-After adaguc-server is running again, `exec` in the container as root:
+## Inside docker container
+
+ `exec` into the container as root.
 
 ```bash
 docker exec -u0 --privileged -it my-adaguc-server /bin/bash
@@ -48,12 +52,21 @@ docker exec -u0 --privileged -it my-adaguc-server /bin/bash
 
 The next steps will be performed as root from within the adaguc-server container.
 
-## Setup environment
-
-Install `linux-perf`, which will provide the tool `perf`:
+Install `linux-perf` and debug symbols of adaguc-server's dependencies.
 ```bash
-apt update; apt install -y linux-perf
+cat << EOF > /etc/apt/sources.list.d/debug.list
+deb http://deb.debian.org/debian-debug bookworm-debug main contrib non-free
+deb http://deb.debian.org/debian-debug bookworm-backports-debug main contrib non-free
+deb http://deb.debian.org/debian-debug bookworm-proposed-updates-debug main contrib non-free
+deb http://deb.debian.org/debian-debug bookworm-backports-sloppy-debug main contrib non-free
+deb http://security.debian.org bookworm-security main
+EOF
+
+apt update
+apt install procps linux-perf libpng16-16 libpng16-16-dbgsym libproj25-dbgsym libsqlite3-0-dbgsym libc6-dbg
 ```
+
+### Profile
 
 Setup environment variables for adaguc:
 ```bash
@@ -79,64 +92,41 @@ If you execute `adagucserver` manually, it will write the (binary) response to t
 
 ## Profile
 
-The following command will sample `./bin/adagucserver` with 1000 Hz, try to generate a callgraph in the "dwarf" format, and store the result in `perf.out`:
+With `perf record`, we create a `perf.out` file by sampling `./bin/adagucserver`. We then post process the `perf.data` file. This creates a `perf.filt` file which we will use for visualization.
+
+There are different recording modes. If `--call-graph fp` does not work well, try `--call-graph dwarf`.
 
 ```bash
-perf record -o perf.out -F1000 -g --call-graph dwarf ./bin/adagucserver
-```
-
-
-You need to "post process" the outputted file. This step needs to happen inside the docker container as well:
-```bash
-perf script -i perf.out | c++filt > perf.data
+perf record -o perf.data -F max -g --call-graph fp ./bin/adagucserver
+perf script -i perf.data | c++filt > perf.filt
 ```
 
 Profiling is done!
 
-The next section is about visualizing the recorded data. This can be done on your host system (non-root). Make sure to copy your generated profile data by running the following command from the host OS:
-```bash
-docker cp my-adaguc-server:/adaguc/adaguc-server-master/perf.data ./
-```
-
-### Optional profiling info
-- You can run `perf report -i perf.out` inside the container which opens a TUI in which you can explore the perf report.
-
-- The `perf record` command supports multiple options. For completeness, the following commands can generate different variants of perf data:
-```
-perf record -o perf.out -F1000 -g ./bin/adagucserver
-perf record -o perf.out -F1000 -g --call-graph fp ./bin/adagucserver
-```
 
 ## Visualize
 
-### Flamegraph
-
-Install FlameGraph tools from github:
-
+The next section is about visualizing the recorded data. This is done on your host system (non-root). Make sure to copy your generated profile data by running the following command from the host OS:
 ```bash
-git clone https://github.com/brendangregg/FlameGraph 
+docker cp my-adaguc-server:/adaguc/adaguc-server-master/perf.filt ./;
 ```
 
-Raw profile data needs to be "collapsed", and can then be transformed to a flamegraph. The flamegraph is an interactive .svg file. View this svg file using your favorite `$BROWSER`.
-
-Assuming you installed the `FlameGraph` repo in `~/src`, you can run the following commands to generate a flamegraph:
+The "filtered" data needs to be "collapsed" by a tool provided in the flamegraph repo. It can then be visualized using a website like [speedscope](https://www.speedscope.app):
 
 ```bash
-cat perf.data | ~/src/FlameGraph/stackcollapse-perf.pl | ~/src/FlameGraph/flamegraph.pl > perf.svg
+cat perf.filt | ~/src/FlameGraph/stackcollapse-perf.pl > perf.collapsed
+firefox https://www.speedscope.app
+```
+
+![speedscope flamegraph image](./adaguc-speedscope.png)
+
+You can also turn the collapsed data into an interactive .svg file:
+```bash
+cat perf.filt | ~/src/FlameGraph/stackcollapse-perf.pl | ~/src/FlameGraph/flamegraph.pl > perf.svg
 firefox perf.svg
 ```
 
 ![flamegraph image](./adaguc-flamegraph.png)
-
-The "collapsed" data can also be viewed in an interactive tool, e.g. [speedscope](https://www.speedscope.app):
-```bash
-cat perf.data | ~/src/FlameGraph/stackcollapse-perf.pl > perf.collapsed
-firefox https://www.speedscope.app
-```
-
-Then drag the `perf.collapsed` file in your browser to see something like this:
-
-![speedscope flamegraph image](./adaguc-speedscope.png)
 
 ### Callgraph
 
