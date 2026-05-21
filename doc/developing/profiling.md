@@ -25,6 +25,8 @@ Edit `./Docker/docker-compose.yml` to create profiling build and allow capturing
       context: ..
       args:
         BUILD_TYPE: --profile
+      extra_hosts:
+      - "host.docker.internal:host-gateway"
     cap_add:
       - SYS_ADMIN
       - PERFMON
@@ -91,6 +93,8 @@ If you execute `adagucserver` manually, it will write the (binary) response to t
 ## Profile
 
 With `perf record`, we create a `perf.out` file by sampling `./bin/adagucserver`. We then post process the `perf.data` file. This creates a `perf.filt` file which we will use for visualization.
+
+There are different recording modes. If `--call-graph fp` does not work well, try `--call-graph dwarf`.
 
 ```bash
 perf record -o perf.data -F max -g --call-graph fp ./bin/adagucserver
