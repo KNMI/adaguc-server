@@ -76,17 +76,13 @@ def makezip(tmpdir, OUTFILE):
 
 
 def callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, env={}) -> tuple[int, bytes]:
-    if LOGFILE != None:
-        env["ADAGUC_ERRORFILE"] = LOGFILE
     try:
         os.remove(tmpdir + "/adaguclog.log")
     except:
         pass
     env["ADAGUC_LOGFILE"] = tmpdir + "/adaguclog.log"
 
-    status, headers, processErr, output = asyncio.run(
-        CGIRunner().run([adagucexecutable], url, env=env)
-    )
+    status, headers, processErr, output = asyncio.run(CGIRunner().run([adagucexecutable], url, env=env))
     return status, output
 
 
@@ -107,25 +103,13 @@ def describeCoverage(adagucexecutable, tmpdir, LOGFILE, WCSURL, COVERAGE, env=No
 
     if len(output) == 0:
         adaguclog = openfile(tmpdir + "/adaguclog.log")
-        raise ValueError(
-            "Succesfully completed WCS DescribeCoverage, but no data found. Log is: "
-            + url
-            + "\n"
-            + adaguclog
-            + "\n"
-        )
+        raise ValueError("Succesfully completed WCS DescribeCoverage, but no data found. Log is: " + url + "\n" + adaguclog + "\n")
 
     try:
         xmldoc = minidom.parseString(output)
     except:
         adaguclog = openfile(tmpdir + "/adaguclog.log")
-        raise ValueError(
-            "Succesfully completed WCS DescribeCoverage, but unable to parse file for "
-            + url
-            + "\n"
-            + adaguclog
-            + "\n"
-        )
+        raise ValueError("Succesfully completed WCS DescribeCoverage, but unable to parse file for " + url + "\n" + adaguclog + "\n")
     try:
         itemlist = xmldoc.getElementsByTagName("gml:timePosition")
         if len(itemlist) != 0:
@@ -135,13 +119,9 @@ def describeCoverage(adagucexecutable, tmpdir, LOGFILE, WCSURL, COVERAGE, env=No
                 listtoreturn.append(isodate.parse_datetime(s.childNodes[0].nodeValue))
             return listtoreturn
         else:
-            start_date = (
-                xmldoc.getElementsByTagName("gml:begin")[0].childNodes[0].nodeValue
-            )
+            start_date = xmldoc.getElementsByTagName("gml:begin")[0].childNodes[0].nodeValue
             end_date = xmldoc.getElementsByTagName("gml:end")[0].childNodes[0].nodeValue
-            res_date = (
-                xmldoc.getElementsByTagName("gml:duration")[0].childNodes[0].nodeValue
-            )
+            res_date = xmldoc.getElementsByTagName("gml:duration")[0].childNodes[0].nodeValue
             logging.debug(start_date)
             logging.debug(end_date)
             logging.debug(res_date)
@@ -187,16 +167,12 @@ def iteratewcs(
     adagucenv = os.environ.copy()
     # adagucenv.update(env)
     ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
-    adagucenv.update(
-        {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
-    )
+    adagucenv.update({"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"})
     adagucenv.update({"ADAGUC_TMP": TMP})
     adagucexecutable = ADAGUC_PATH + "/bin/adagucserver"
     """ Check if adagucserver is in the path """
     if which(adagucexecutable) == None:
-        raise ValueError(
-            "ADAGUC Executable '" + adagucexecutable + "' not found in PATH"
-        )
+        raise ValueError("ADAGUC Executable '" + adagucexecutable + "' not found in PATH")
 
     CALLBACK("Starting iterateWCS", 1)
     tmpdir = TMP + "/iteratewcstmp"
@@ -206,9 +182,7 @@ def iteratewcs(
     """ Determine which dates to do based on describe coverage call"""
     CALLBACK("Starting WCS DescribeCoverage request", 1)
 
-    founddates = describeCoverage(
-        adagucexecutable, tmpdir, LOGFILE, WCSURL, COVERAGE, env=adagucenv
-    )
+    founddates = describeCoverage(adagucexecutable, tmpdir, LOGFILE, WCSURL, COVERAGE, env=adagucenv)
 
     start_date = ""
     end_date = ""
@@ -266,17 +240,13 @@ def iteratewcs(
             if wcsdate != "*":
                 if j > 0:
                     wcstime = wcstime + ","
-                wcstime = wcstime + time.strftime(
-                    "%Y-%m-%dT%H:%M:%SZ", wcsdate.timetuple()
-                )
+                wcstime = wcstime + time.strftime("%Y-%m-%dT%H:%M:%SZ", wcsdate.timetuple())
                 filetime = (
                     time.strftime("%Y%m%dT%H%M%SZ", single_date[0].timetuple())
                     + "-"
                     + time.strftime("%Y%m%dT%H%M%SZ", single_date[-1].timetuple())
                 )
-                messagetime = time.strftime(
-                    "%Y%m%dT%H%M%SZ", single_date[0].timetuple()
-                )
+                messagetime = time.strftime("%Y%m%dT%H%M%SZ", single_date[0].timetuple())
                 url = url + "TIME=" + urllib.parse.quote_plus(wcstime) + "&"
 
         url = url + "BBOX=" + BBOX + "&"
@@ -300,9 +270,7 @@ def iteratewcs(
         if FORMAT == "aaigrid":
             filetogenerate = filetogenerate + ".grd"
 
-        status, output = callADAGUC(
-            adagucexecutable, tmpdir, LOGFILE, url, env=env
-        )
+        status, output = callADAGUC(adagucexecutable, tmpdir, LOGFILE, url, env=env)
         with open(filetogenerate, "wb") as fd:
             fd.write(output)
         if status != 0:
@@ -311,13 +279,7 @@ def iteratewcs(
 
         if os.path.isfile(filetogenerate) != True:
             adaguclog = openfile(tmpdir + "/adaguclog.log")
-            raise ValueError(
-                "Succesfully completed WCS GetCoverage, but no data found for "
-                + url
-                + "\n"
-                + adaguclog
-                + "\n"
-            )
+            raise ValueError("Succesfully completed WCS GetCoverage, but no data found for " + url + "\n" + adaguclog + "\n")
 
         if CALLBACK == None:
             print(str(int((float(datesdone) / numdatestodo) * 90.0)))
@@ -367,9 +329,7 @@ def iteratewcs(
 
                 data = getlog(tmpdir)
 
-                raise ValueError(
-                    "Unable to aggregate: statuscode=" + str(status) + "\n" + data
-                )
+                raise ValueError("Unable to aggregate: statuscode=" + str(status) + "\n" + data)
 
     else:
         makezip(tmpdir, OUTFILE)
