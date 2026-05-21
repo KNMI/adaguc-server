@@ -139,7 +139,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 
   for (auto renderSetting: styleConfiguration->renderSettings) {
     /* When using the nearest or bilinear rendermethod, discrete classes defined by ShadeInterval can be used if the renderhint is set to RENDERHINT_DISCRETECLASSES */
-    if (renderSetting->attr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
+    if (renderSetting->attr.renderhint == (RENDERHINT_DISCRETECLASSES)) {
       legendType = discrete;
     }
   }

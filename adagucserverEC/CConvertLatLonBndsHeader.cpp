@@ -96,7 +96,7 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
+    varX->name = ("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -109,7 +109,7 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
+    varY->name = ("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);

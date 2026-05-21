@@ -1,3 +1,7 @@
+**Version 7.2.2 - 2026-05-11**
+
+- More CT::string to std::string refactoring.
+
 **Version 7.2.1 - 2026-05-04**
 
 - Patch for GetLayerMetadata to work gracefully when a mix of ground level dimensions with different values are used

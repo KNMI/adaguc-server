@@ -1,50 +1,28 @@
 #include "CReadFile.h"
 #include <sys/stat.h>
+#include <string>
+#include <fstream>
+#include <streambuf>
 
-CT::string CReadFile::open(const char *fileName) {
-  FILE *fp = fopen(fileName, "r");
-  if (fp == NULL) {
+std::string readFile(const std::string &fileName) {
+  std::ifstream t(fileName);
+  std::string str;
+  if (!t.seekg(0, std::ios::end)) {
     throw(CREADFILE_FILENOTFOUND);
   }
-  fseek(fp, 0L, SEEK_END);
-  size_t size = ftell(fp);
-
-  if (size == 0) {
-    fclose(fp);
-    return "";
+  str.reserve(t.tellg());
+  if (!t.seekg(0, std::ios::beg)) {
+    throw(CREADFILE_FILENOTFOUND);
   }
-  char *data = new char[size + 1];
-  fseek(fp, 0L, SEEK_SET);
-  size_t result = fread(data, 1, size, fp);
-  if (result != size) {
-    delete[] data;
-    fclose(fp);
-    throw CREADFILE_FILENOTREAD;
-  }
-  data[size] = '\0';
-  CT::string dataString;
-  dataString.copy(data, size);
-  delete[] data;
-  fclose(fp);
-  return dataString;
+  str.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+  return str;
 }
 
-void CReadFile::write(const char *fileName, const char *buffer, size_t length) {
-  if (buffer == NULL) {
+void writeFile(const std::string &fileName, const std::string &buffer) {
+  std::ofstream out(fileName);
+  if (!out.is_open()) {
     throw CREADFILE_FILENOTWRITE;
   }
-  FILE *pFile = fopen(fileName, "wb");
-  if (pFile == NULL) {
-    throw CREADFILE_FILENOTWRITE;
-  }
-  size_t bytesWritten = fwrite(buffer, sizeof(char), length, pFile);
-  fflush(pFile);
-  fclose(pFile);
-
-  if (bytesWritten != length) {
-    throw CREADFILE_FILENOTWRITE;
-  }
-  if (chmod(fileName, 0777) < 0) {
-    throw CREADFILE_FILENOTWRITE;
-  }
+  out << buffer;
+  out.close();
 }

@@ -43,21 +43,6 @@ int findClosestPoint(std::vector<PointDVWithLatLon> &points, double lon_coordina
   return closestIndex;
 }
 
-bool isLonLatProjection(CT::string *projectionName) {
-  if (projectionName->indexOf("+proj=longlat") == 0) {
-    return true;
-  }
-  if (projectionName->equals("EPSG:4326")) {
-    return true;
-  }
-  return false;
-}
-bool isMercatorProjection(CT::string *projectionName) {
-  if (projectionName->indexOf("+proj=merc") == 0) {
-    return true;
-  }
-  if (projectionName->equals("EPSG:3857") || projectionName->equals("EPSG:900913")) {
-    return true;
-  }
-  return false;
-}
+bool isLonLatProjection(const std::string &projectionName) { return CT::indexOf(projectionName, "+proj=longlat") == 0 || projectionName == "EPSG:4326"; }
+
+bool isMercatorProjection(const std::string &projectionName) { return CT::indexOf(projectionName, "+proj=merc") == 0 || projectionName == "EPSG:3857" || projectionName == "EPSG:900913"; }

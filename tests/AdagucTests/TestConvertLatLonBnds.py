@@ -32,8 +32,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
         filename = "test_ConvertLatLonBnds_getCapabilities.xml"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=example_file_latlonbnds.nc&SERVICE=WMS&request=getcapabilities",
-            env=self.env,
+            "source=example_file_latlonbnds.nc&SERVICE=WMS&request=getcapabilities", env=self.env, showLog=True
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)

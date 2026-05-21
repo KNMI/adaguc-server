@@ -277,7 +277,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     time_counter_dim->name = "counter";
     CDF::Variable *time_counter_var = new CDF::Variable();
     time_counter_var->setType(CDF_DOUBLE);
-    time_counter_var->name.copy(time_counter_dim->name.c_str());
+    time_counter_var->name = (time_counter_dim->name.c_str());
     time_counter_var->isDimension = true;
     time_counter_var->dimensionlinks.push_back(time_counter_dim);
     cdfObject->addVariable(time_counter_var);
@@ -301,7 +301,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adaguccoordinatex");
+    varX->name = ("adaguccoordinatex");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -314,7 +314,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("adaguccoordinatey");
+    varY->name = ("adaguccoordinatey");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
@@ -623,7 +623,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       // Apply once
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

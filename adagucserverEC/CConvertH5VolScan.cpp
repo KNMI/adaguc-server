@@ -200,7 +200,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adaguccoordinatex");
+    varX->name = ("adaguccoordinatex");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -213,7 +213,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("adaguccoordinatey");
+    varY->name = ("adaguccoordinatey");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
@@ -238,7 +238,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     dimT->setSize(1);
     cdfObject->addDimension(dimT);
     timeVar->setType(CDF_DOUBLE);
-    timeVar->name.copy("time");
+    timeVar->name = ("time");
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->isDimension = true;
@@ -270,7 +270,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     dimElevation->setSize(nrscans);
     cdfObject->addDimension(dimElevation);
     varElevation->setType(CDF_STRING);
-    varElevation->name.copy("scan_elevation");
+    varElevation->name = ("scan_elevation");
     CDF::Attribute *unit = new CDF::Attribute("units", "degrees");
     varElevation->addAttribute(unit);
     varElevation->isDimension = true;
@@ -280,7 +280,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
 
     CDF::Variable *varScan = new CDF::Variable();
     varScan->setType(CDF_UINT);
-    varScan->name.copy("scan_number");
+    varScan->name = ("scan_number");
     varScan->isDimension = false;
     varScan->dimensionlinks.push_back(dimElevation);
     cdfObject->addVariable(varScan);
@@ -299,7 +299,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
-    var->name.copy(param);
+    var->name = (param);
     cdfObject->addVariable(var);
     var->setAttributeText("standard_name", param.c_str());
     var->setAttributeText("long_name", param.c_str());
@@ -389,7 +389,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDBDebug("Adding customgridprojection");
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

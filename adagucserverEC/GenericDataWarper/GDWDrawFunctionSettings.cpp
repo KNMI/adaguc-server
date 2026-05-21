@@ -24,22 +24,22 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   if (styleConfiguration->renderSettings.size() > 0) {
     auto renderSetting = styleConfiguration->renderSettings.back();
     auto &renderSettingsAttr = renderSetting->attr;
-    if (renderSettingsAttr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
+    if (renderSettingsAttr.renderhint == (RENDERHINT_DISCRETECLASSES)) {
       settings.isUsingShadeIntervals = true;
     }
     // Obtain interpolationmethod
-    if (renderSettingsAttr.interpolationmethod.equals("nearest")) {
+    if (renderSettingsAttr.interpolationmethod == ("nearest")) {
       settings.interpolationMethod = InterpolationMethodNearest;
-    } else if (renderSettingsAttr.interpolationmethod.equals("bilinear")) {
+    } else if (renderSettingsAttr.interpolationmethod == ("bilinear")) {
       settings.interpolationMethod = InterpolationMethodBilinear;
     }
-    if (renderSettingsAttr.drawgrid.equals("false")) {
+    if (renderSettingsAttr.drawgrid == ("false")) {
       settings.drawgrid = false;
-    } else if (renderSettingsAttr.drawgrid.equals("true")) {
+    } else if (renderSettingsAttr.drawgrid == ("true")) {
       settings.drawgrid = true;
     }
 
-    if (renderSettingsAttr.drawgridboxoutline.equals("true")) {
+    if (renderSettingsAttr.drawgridboxoutline == ("true")) {
       settings.drawgridboxoutline = true;
     }
   }
@@ -56,21 +56,21 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   if (styleConfiguration->smoothingFilterVector.size() > 0) {
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
 
-    if (!smoothingFilter->value.empty()) {
-      settings.smoothingFiter = smoothingFilter->value.toDouble();
+    if (!smoothingFilter->elementValue.empty()) {
+      settings.smoothingFiter = atof(smoothingFilter->elementValue.c_str());
     }
   }
 
   /* Make a shorthand vector from the shadeInterval configuration*/
   if (settings.isUsingShadeIntervals) {
     int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
-    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].value.empty()) {
-      settings.shadeInterval = styleConfiguration->shadeIntervals[0].value.toDouble();
+    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].elementValue.empty()) {
+      settings.shadeInterval = atof(styleConfiguration->shadeIntervals[0].elementValue.c_str());
     } else {
       settings.intervals.reserve(numShadeDefs);
       for (int j = 0; j < numShadeDefs; j++) {
         const CServerConfig::XMLE_ShadeInterval &shadeInterVal = styleConfiguration->shadeIntervals[j];
-        settings.intervals.push_back(Interval({.min = shadeInterVal.attr.min.toFloat(), .max = shadeInterVal.attr.max.toFloat(), .color = CColor(shadeInterVal.attr.fillcolor.c_str())}));
+        settings.intervals.push_back(Interval({.min = atof(shadeInterVal.attr.min.c_str()), .max = atof(shadeInterVal.attr.max.c_str()), .color = CColor(shadeInterVal.attr.fillcolor.c_str())}));
         /* Check for bgcolor */
         if (j == 0) {
           if (shadeInterVal.attr.bgcolor.empty() == false) {

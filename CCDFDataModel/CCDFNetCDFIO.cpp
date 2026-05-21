@@ -610,7 +610,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       bool varIsUnsigned = false;
       CDF::Attribute *_Unsigned = var->getAttributeNE("_Unsigned");
       if (_Unsigned != NULL) {
-        if (_Unsigned->toString().equals("true")) {
+        if (_Unsigned->toString() == "true") {
           varIsUnsigned = true;
         }
       }

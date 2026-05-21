@@ -63,17 +63,16 @@ struct attribute {
   std::string value;
 };
 
+int parseInt(const attribute &attrCfg);
 /**
  * Base objects
  */
-class CXMLObjectInterface {
-public:
-  CT::string value;
+struct CXMLObjectInterface {
+  std::string elementValue;
   virtual ~CXMLObjectInterface() {}
-
-  virtual CXMLObjectInterface *addElement(const char *) { return nullptr; };
+  virtual CXMLObjectInterface *addElement(const std::string &) { return nullptr; };
   virtual void handleValue() {};
-  virtual bool addAttribute(const char *, const char *) { return false; }
+  virtual bool addAttribute(const attribute &) { return false; }
 };
 
 /**
@@ -81,33 +80,30 @@ public:
  * Inherits the CXMLObjectInterface base object
  */
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName);
+int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::string datasetName);
 
 /**
  * parses a character string to int
- * @param pszValue The string to parse
+ * @param attribute to parse
  */
-int parseInt(const char *pszValue);
+int parseInt(const attribute &attrCfg);
 
 /**
  * parses a character string to float
- * @param pszValue The string to parse
+ * @param attribute to parse
  */
-float parseFloat(const char *pszValue);
+float parseFloat(const attribute &attrCfg);
 
 /**
  * parses a character string to double
- * @param pszValue The string to parse
+ * @param attribute to parse
  */
-double parseDouble(const char *pszValue);
+double parseDouble(const attribute &attrCfg);
 
 /**
  * parses a character string to bool
- * @param pszValue The string to parse
+ * @param attribute to parse
  */
-bool parseBool(const char *pszValue);
-
-// Functions specfically for CXMLSerializer
-bool equals(const char *val1, const char *val2);
+bool parseBool(const attribute &attrCfg);
 
 #endif

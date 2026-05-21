@@ -322,9 +322,9 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
              */
             for (auto proc: dataSource->cfgLayer->DataPostProc) {
               // Algorithm ax+b:
-              if (proc->attr.algorithm.equals("ax+b")) {
-                auto dfadd_offset = proc->attr.b.toDouble();
-                auto dfscale_factor = proc->attr.a.toDouble();
+              if (proc->attr.algorithm == ("ax+b")) {
+                auto dfadd_offset = atof(proc->attr.b.c_str());
+                auto dfscale_factor = atof(proc->attr.a.c_str());
                 double *_data = (double *)variable->data;
                 for (size_t j = 0; j < variable->getSize(); j++) {
                   _data[j] = _data[j] * dfscale_factor + dfadd_offset;

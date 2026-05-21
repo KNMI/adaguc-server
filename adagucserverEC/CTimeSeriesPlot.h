@@ -165,7 +165,7 @@ public:
 
             size_t elNr = dimIter * nrOfFeatures + featureNr;
             GetFeatureInfoResult::Element *element = getFeatureInfoResultList[layerNr]->elements[elNr];
-            plotObject->name.copy(getFeatureInfoResultList[layerNr]->layerName.c_str());
+            plotObject->name = (getFeatureInfoResultList[layerNr]->layerName.c_str());
             plotObject->name.concat("/");
             plotObject->name.concat(features[layerNr][featureNr].c_str());
             for (size_t j = 1; j < element->cdfDims.dimensions.size(); j++) {

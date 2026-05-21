@@ -451,6 +451,7 @@ namespace CT {
    */
 
   std::string replace(const std::string &input, const std::string &from, const std::string &to);
+  void replaceSelf(std::string &input, const std::string &from, const std::string &to);
 
   /**
    * Converts a string to lowercase
@@ -497,6 +498,8 @@ namespace CT {
    * @return Index of pattern in input. -1 if not found. 0 if pattern is an empty string
    */
   int indexOf(const std::string &input, const std::string pattern);
+
+  int lastIndexOf(const std::string &input, const std::string pattern);
 
   /**
    * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.

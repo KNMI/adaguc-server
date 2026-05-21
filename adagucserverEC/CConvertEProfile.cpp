@@ -151,7 +151,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
+    varX->name = ("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -164,7 +164,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
+    varY->name = ("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
@@ -246,7 +246,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   cdfObject->addDimension(dimT);
   CDF::Variable *varT = new CDF::Variable();
   varT->setType(CDF_DOUBLE);
-  varT->name.copy("time");
+  varT->name = ("time");
   varT->setAttributeText("standard_name", "time");
   varT->setAttributeText("units", timev->getAttributeThrows("units")->toString().c_str());
   varT->isDimension = true;
@@ -679,7 +679,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
       }
       if (cdfObject0->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject0->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);

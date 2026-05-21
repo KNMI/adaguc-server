@@ -98,13 +98,13 @@ int processCMDArgs(int argc, char **argv, char **) {
         configSet = 1;
       }
       if (strncmp(long_options[opt_idx].name, "tailpath", 8) == 0) {
-        tailPath.copy(optarg);
+        tailPath = (optarg);
       }
       if (strncmp(long_options[opt_idx].name, "layername", 9) == 0) {
-        layerName.copy(optarg);
+        layerName = (optarg);
       }
       if (strncmp(long_options[opt_idx].name, "path", 4) == 0) {
-        layerPathToScan.copy(optarg);
+        layerPathToScan = (optarg);
       }
       if (strncmp(long_options[opt_idx].name, "rescan", 6) == 0) {
         CDBDebug("RESCAN: Forcing rescan of dataset");

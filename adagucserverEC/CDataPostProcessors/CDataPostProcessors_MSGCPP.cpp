@@ -6,7 +6,7 @@
 
 const char *CDPPMSGCPPVisibleMask::getId() { return "MSGCPP_VISIBLEMASK"; }
 int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("msgcppvisiblemask")) {
+  if (proc->attr.algorithm == ("msgcppvisiblemask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
         CDBError("2 or 3 variables are needed for msgcppvisiblemask, found %lu", dataSource->getNumDataObjects());
@@ -78,12 +78,12 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     float fa = 72, fb = 75;
     if (proc->attr.b.empty() == false) {
       CT::string b;
-      b.copy(proc->attr.b.c_str());
+      b = (proc->attr.b.c_str());
       fb = b.toDouble();
     }
     if (proc->attr.a.empty() == false) {
       CT::string a;
-      a.copy(proc->attr.a.c_str());
+      a = (proc->attr.a.c_str());
       fa = a.toDouble();
     }
     for (size_t j = 0; j < l; j++) {
@@ -103,7 +103,7 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 const char *CDPPMSGCPPHIWCMask::getId() { return "MSGCPP_HIWCMASK"; }
 
 int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("msgcpphiwcmask")) {
+  if (proc->attr.algorithm == ("msgcpphiwcmask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
         CDBError("4 or 5 variables are needed for msgcpphiwcmask, found %lu", dataSource->getNumDataObjects());
@@ -199,7 +199,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
 
 const char *CDPPDATAMASK::getId() { return "datamask"; }
 int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("datamask")) {
+  if (proc->attr.algorithm == ("datamask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
         CDBError("2 or 3 variables are needed for datamask, found %lu", dataSource->getNumDataObjects());
@@ -362,17 +362,17 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     double fc = 0;
     if (proc->attr.a.empty() == false) {
       CT::string a;
-      a.copy(proc->attr.a.c_str());
+      a = (proc->attr.a.c_str());
       fa = a.toDouble();
     }
     if (proc->attr.b.empty() == false) {
       CT::string b;
-      b.copy(proc->attr.b.c_str());
+      b = (proc->attr.b.c_str());
       fb = b.toDouble();
     }
     if (proc->attr.c.empty() == false) {
       CT::string c;
-      c.copy(proc->attr.c.c_str());
+      c = (proc->attr.c.c_str());
       fc = c.toDouble();
     }
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
@@ -380,12 +380,12 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     int mode = 0; // replace with noDataValue
 
     if (proc->attr.mode.empty() == false) {
-      if (proc->attr.mode.equals("if_mask_includes_then_nodata_else_data")) mode = 0;
-      if (proc->attr.mode.equals("if_mask_excludes_then_nodata_else_data")) mode = 1;
-      if (proc->attr.mode.equals("if_mask_includes_then_valuec_else_data")) mode = 2;
-      if (proc->attr.mode.equals("if_mask_excludes_then_valuec_else_data")) mode = 3;
-      if (proc->attr.mode.equals("if_mask_includes_then_mask_else_data")) mode = 4;
-      if (proc->attr.mode.equals("if_mask_excludes_then_mask_else_data")) mode = 5;
+      if (proc->attr.mode == ("if_mask_includes_then_nodata_else_data")) mode = 0;
+      if (proc->attr.mode == ("if_mask_excludes_then_nodata_else_data")) mode = 1;
+      if (proc->attr.mode == ("if_mask_includes_then_valuec_else_data")) mode = 2;
+      if (proc->attr.mode == ("if_mask_excludes_then_valuec_else_data")) mode = 3;
+      if (proc->attr.mode == ("if_mask_includes_then_mask_else_data")) mode = 4;
+      if (proc->attr.mode == ("if_mask_excludes_then_mask_else_data")) mode = 5;
     }
 
     void *newData = dataSource->getDataObject(0)->cdfVariable->data;
