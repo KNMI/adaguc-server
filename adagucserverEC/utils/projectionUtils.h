@@ -3,8 +3,8 @@
 
 #include "Types/GeoParameters.h"
 #include "Types/CPointTypes.h"
-bool isLonLatProjection(CT::string *projectionName);
-bool isMercatorProjection(CT::string *projectionName);
+bool isLonLatProjection(const std::string &projectionName);
+bool isMercatorProjection(const std::string &projectionName);
 void CoordinatesXYtoScreenXY(double &x, double &y, GeoParameters &geoParam);
 void CoordinatesXYtoScreenXY(f8point &p, GeoParameters &geoParam);
 void CoordinatesXYtoScreenXY(f8box &b, GeoParameters &geoParam);

@@ -23,7 +23,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   projectionVarX = new CDF::Variable();
   cdfObject->addVariable(projectionVarX);
   projectionVarX->setType(CDF_DOUBLE);
-  projectionVarX->name.copy(projectionDimX->name.c_str());
+  projectionVarX->name = (projectionDimX->name.c_str());
   projectionVarX->isDimension = true;
   projectionVarX->dimensionlinks.push_back(projectionDimX);
   projectionVarX->allocateData(width);
@@ -40,7 +40,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   projectionVarY = new CDF::Variable();
   cdfObject->addVariable(projectionVarY);
   projectionVarY->setType(CDF_DOUBLE);
-  projectionVarY->name.copy(projectionDimY->name.c_str());
+  projectionVarY->name = (projectionDimY->name.c_str());
   projectionVarY->isDimension = true;
   projectionVarY->dimensionlinks.push_back(projectionDimY);
 
@@ -116,9 +116,9 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       srvParam->geoParams.bbox = dfSrcBBOX;
       srvParam->geoParams.width = dataSource->dWidth;
       srvParam->geoParams.height = dataSource->dHeight;
-      srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
+      srvParam->geoParams.crs = dataSource->nativeProj4;
 
-      if (srvParam->Format.length() == 0) srvParam->Format.copy("adagucnetcdf");
+      if (srvParam->Format.length() == 0) srvParam->Format = ("adagucnetcdf");
     }
 
     CT::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->responceCrs);
@@ -142,7 +142,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       srvParam->geoParams.bbox.toArray(dfDstBBOX);
 
       /* BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates */
-      if (srvParam->responceCrs.empty() == false && srvParam->responceCrs.equals(srvParam->geoParams.crs) == false) {
+      if (srvParam->responceCrs.empty() == false && srvParam->responceCrs != srvParam->geoParams.crs) {
         CDBDebug("BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates ");
 
         CImageWarper warper;
@@ -221,7 +221,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double rx = fabs((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->geoParams.width);
     double ry = fabs((dfDstBBOX[3] - dfDstBBOX[1]) / srvParam->geoParams.height);
     adagucwcsdestgrid.print("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->geoParams.width, srvParam->geoParams.height, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2],
-                            dfDstBBOX[3], srvParam->geoParams.crs.trim().c_str());
+                            dfDstBBOX[3], CT::trim(srvParam->geoParams.crs).c_str());
 
     CT::string newHistoryText;
     newHistoryText.print("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
@@ -323,7 +323,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       } else {
         destinationVar->setType(sourceVar->getType());
       }
-      destinationVar->name.copy(dim->name.c_str());
+      destinationVar->name = (dim->name.c_str());
       destinationVar->isDimension = true;
       destinationVar->dimensionlinks.push_back(dim);
 
@@ -454,7 +454,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     CDF::Variable *destVar = new CDF::Variable();
     destCDFObject->addVariable(destVar);
     CDF::Variable *sourceVar = dataSource->getDataObject(j)->cdfVariable;
-    destVar->name.copy(sourceVar->name.c_str());
+    destVar->name = (sourceVar->name.c_str());
 
 #ifdef CNetCDFDataWriter_DEBUG
     CDBDebug("Name = %s, type = %d", sourceVar->name.c_str(), sourceVar->getType());
@@ -583,7 +583,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     bool usePixelExtent = false;
     bool optimizeExtentForTiles = false;
     if (dataSource->cfgLayer->TileSettings.size() == 1 && !dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.empty()) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.equals("true")) {
+      if (dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent == "true") {
         optimizeExtentForTiles = true;
       }
     }
@@ -812,14 +812,14 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("DataStep index = %d, timestep = %d", dataStepIndex, dataSource->getCurrentTimeStep());
 #endif
 
-      CT::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
+      std::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
       destCDFObject->getVariableThrows("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
 
       /* Lookup possible projection EPSG codes based on this */
       std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
       destCDFObject->getVariableThrows("crs")->setAttributeText("id", "unknown");
       for (size_t j = 0; j < (*prj).size(); j++) {
-        if ((*prj)[j]->attr.proj4.trim().equals(dataSourceProjectionString)) {
+        if (CT::trim((*prj)[j]->attr.proj4) == dataSourceProjectionString) {
           destCDFObject->getVariableThrows("crs")->setAttributeText("id", (*prj)[j]->attr.id);
           break;
         }
@@ -1059,7 +1059,7 @@ int CNetCDFDataWriter::end() {
   }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
 
-  if (srvParam->Format.equals("NetCDF3")) {
+  if (CT::equalsIgnoreCase(srvParam->Format, "NetCDF3")) {
     netCDFWriter->setNetCDFMode(3);
   } else {
     netCDFWriter->setNetCDFMode(4);
@@ -1076,7 +1076,7 @@ int CNetCDFDataWriter::end() {
   }
 
   CT::string humanReadableString;
-  humanReadableString.copy(srvParam->Format.c_str());
+  humanReadableString = (srvParam->Format.c_str());
   humanReadableString.concat("_");
   humanReadableString.concat(dObjgetVariableName(*baseDataSource->getDataObject(0)).c_str());
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {

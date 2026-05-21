@@ -56,15 +56,15 @@ int CDFGeoJSONReader::open(const char *fileName) {
   CT::string fileBaseName;
   const char *last = rindex(fileName, '/');
   if ((last != NULL) && (*last)) {
-    fileBaseName.copy(last + 1);
+    fileBaseName = (last + 1);
   } else {
-    fileBaseName.copy(fileName);
+    fileBaseName = (fileName);
   }
 
   if (!((strlen(fileName) > 4) || (strcmp("json", fileName + strlen(fileName - 4)) == 0))) {
     return 1;
   }
-  CT::string jsonData = CReadFile::open(fileName);
+  std::string jsonData = readFile(fileName);
   CDF::Variable *jsonVar = new CDF::Variable();
 
   // jsonVar->setCDFReaderPointer((void*)this); TODO: Check if this is really needed.

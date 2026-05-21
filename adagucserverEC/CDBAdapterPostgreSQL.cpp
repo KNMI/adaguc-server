@@ -34,6 +34,12 @@
 // #define CDBAdapterPostgreSQL_DEBUG
 // #define MEASURETIME
 
+// Table names need to be different between dims like time and height.
+//  Therefor create unique tablenames like tablename_time and tablename_height
+std::string makeCorrectTableName(const std::string &tableName, const std::string &dimName) {
+  return CT::toLowerCase(CT::replace(CT::replace(CT::replace(CT::printf("%s_%s", tableName.c_str(), dimName.c_str()), "-", "_m_"), "+", "_p_"), ".", "_"));
+}
+
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL() {
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("CDBAdapterPostgreSQL()");
@@ -292,7 +298,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
     dims.push_back(dimString);
   }
   std::map<CT::string, DimInfo> mapping =
-      getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
+      getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
   // Compose the query
   for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
@@ -338,9 +344,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
+    if ((checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
     setExceptionType(InvalidDimensionValue);
-    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
@@ -383,7 +389,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     dims.push_back(dimString);
   }
   std::map<CT::string, DimInfo> mapping =
-      getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
+      getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
   for (const auto &m: mapping) {
@@ -482,7 +488,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
+    if ((checkDataRestriction() & SHOW_QUERYINFO) == false) query = ("hidden");
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
@@ -525,7 +531,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     dimString.toLowerCaseSelf();
     dims.push_back(dimString);
   }
-  std::map<CT::string, DimInfo> mapping = getTableNamesForPathFilterAndDimensions(cfgLayer->FilePath[0]->value.c_str(), cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
+  std::map<CT::string, DimInfo> mapping = getTableNamesForPathFilterAndDimensions(cfgLayer->FilePath[0]->elementValue.c_str(), cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
   for (const auto &m: mapping) {
     dimName = m.first;
@@ -547,7 +553,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
           }
           databaseTime.setChar(10, 'T');
 
-          CT::string fileDate = CDirReader::getFileDate(store->getRecord(0)->get(0)->c_str());
+          const auto fileDate = getFileDate(store->getRecord(0)->get(0)->c_str());
 
           if (databaseTime.equals(fileDate) == false) {
             CDBDebug("Table was found, %s ~ %s : %d", fileDate.c_str(), databaseTime.c_str(), databaseTime.equals(fileDate));
@@ -588,7 +594,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
       CDBDebug("Updating database");
       int status = CDBFileScanner::updatedb(dataSource, "", "", 0);
       if (status != 0) {
-        CDBError("Could not update db for: %s", cfgLayer->Name[0]->value.c_str());
+        CDBError("Could not update db for: %s", cfgLayer->Name[0]->elementValue.c_str());
         return 2;
       }
     } else {
@@ -656,10 +662,10 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   std::vector<CT::string> tableList;
   // If config has a hardcoded db table name for layer, use it too
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
-    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
     for (const auto &cfgDimension: dataSource->cfgLayer->Dimension) {
-      CT::string dimString = cfgDimension->attr.name.toLowerCase();
-      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
+      CT::string dimString = CT::toLowerCase(cfgDimension->attr.name);
+      CT::string correctedTableName = makeCorrectTableName(tableName, dimString);
       tableList.push_back(correctedTableName);
       CDBDebug("Adding custom table %s", correctedTableName.c_str());
     }
@@ -671,7 +677,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
     CDBError("Unable to connect to DB");
     throw(1);
   }
-  auto path = dataSource->cfgLayer->FilePath[0]->value;
+  auto path = dataSource->cfgLayer->FilePath[0]->elementValue;
   auto filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
   CT::string query;
   // Only select tables which really exist in the database by looking it up in pg_tables.
@@ -708,8 +714,8 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     for (auto &dim: dimensions) {
-      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
-      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dim);
+      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
+      CT::string correctedTableName = makeCorrectTableName(tableName, dim);
       mapping[dim] = {correctedTableName, ""};
     }
 #ifdef MEASURETIME
@@ -813,7 +819,7 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(CDataSour
     throw __LINE__;
   }
   const char *pszDimName = dataSource->cfgLayer->Dimension[0]->attr.name.c_str();
-  return getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), pszDimName, dataSource);
+  return getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), pszDimName, dataSource);
 }
 
 CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource) {
@@ -1188,7 +1194,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
 
     CT::string query;
     if (datasetName != nullptr) {
-      if (CServerParams::checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+      if (checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
         CDBError("Invalid dataset name. ");
         throw(__LINE__);
       }

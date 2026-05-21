@@ -64,11 +64,8 @@ public:
    */
   static std::vector<std::string> listDir(const char *directory, bool recursive = false, const char *ext_filter = nullptr, int filesAndOrDirs = CDIRREADER_INCLUDE_FILES,
                                           bool exceptionOnError = false);
-  static CT::string makeCleanPath(const char *_path);
-  static int getFileDate(CT::string *date, const char *file);
-  static int testRegEx(const char *string, const char *pattern);
 
-  static CT::string getFileDate(const char *fileName);
+  static int testRegEx(const char *string, const char *pattern);
 
   static bool isDir(const char *fileName);
 
@@ -95,5 +92,12 @@ public:
   static CDirReader *getDirReader(const char *directory, const char *ext_filter);
   static void removeFileFromCachedList(std::string fileToRemove);
 };
+
+/* Removes the double //'s from the string and makes sure that the string does not end with a / */
+std::string makeCleanPath(const std::string &_path);
+
+std::string getFileDateUnCached(const std::string &file);
+
+std::string getFileDate(const std::string &fileName);
 
 #endif

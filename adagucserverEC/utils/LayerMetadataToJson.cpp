@@ -189,7 +189,7 @@ ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &resu
     for (auto [dataSetName, layers]: datasetNames) {
       // List all datasets.
       // CDBDebug("Checking %s = %s", srvParams->datasetLocation.c_str(), dataSetName.c_str());
-      if (srvParams->datasetLocation.empty() || srvParams->datasetLocation.equals(dataSetName)) {
+      if (srvParams->datasetLocation.empty() || srvParams->datasetLocation == dataSetName) {
         result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
       }
     }

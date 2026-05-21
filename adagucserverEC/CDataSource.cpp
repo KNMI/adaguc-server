@@ -101,30 +101,30 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
   // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject newDataObject;
-    newDataObject.dataObjectName = "";                         // Should not have a name yet!
-    newDataObject.variableName = cfgLayer->Variable[j]->value; // Has a name, but no cdfVariable yet.
+    newDataObject.dataObjectName = "";                                // Should not have a name yet!
+    newDataObject.variableName = cfgLayer->Variable[j]->elementValue; // Has a name, but no cdfVariable yet.
     this->dataObjects.push_back(newDataObject);
   }
 
   // Set the layername
   layerName = makeUniqueLayerName(cfgLayer);
 
-  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
+  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->elementValue.empty() ? cfgLayer->Title[0]->elementValue.c_str() : layerName.c_str();
 
   if (debugDataSource) {
     CDBDebug("LayerName=\"%s\"", layerName.c_str());
   }
   // Defaults to database
   dLayerType = CConfigReaderLayerTypeDataBase;
-  if (cfgLayer->attr.type.equals("database")) {
+  if (cfgLayer->attr.type == ("database")) {
     dLayerType = CConfigReaderLayerTypeDataBase;
-  } else if (cfgLayer->attr.type.equals("grid")) {
+  } else if (cfgLayer->attr.type == ("grid")) {
     dLayerType = CConfigReaderLayerTypeGraticule;
-  } else if (cfgLayer->attr.type.equals("autoscan")) {
+  } else if (cfgLayer->attr.type == ("autoscan")) {
     dLayerType = CConfigReaderLayerTypeUnknown;
-  } else if (cfgLayer->attr.type.equals("baselayer")) {
+  } else if (cfgLayer->attr.type == ("baselayer")) {
     dLayerType = CConfigReaderLayerTypeBaseLayer;
-  } else if (cfgLayer->attr.type.equals("liveupdate")) {
+  } else if (cfgLayer->attr.type == ("liveupdate")) {
     dLayerType = CConfigReaderLayerTypeLiveUpdate;
   } else if (cfgLayer->attr.type.empty() == false) {
     if (strlen(cfgLayer->attr.type.c_str()) > 0) {
@@ -134,7 +134,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
     }
   }
   // Deprecated
-  if (cfgLayer->attr.type.equals("file")) {
+  if (cfgLayer->attr.type == ("file")) {
     dLayerType = CConfigReaderLayerTypeDataBase; // CConfigReaderLayerTypeFile;
   }
 
@@ -260,10 +260,10 @@ std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::
     CDBDebug("getLegendListForDataSource");
   }
   if (this->cfgLayer->Legend.size() > 0) {
-    return CServerParams::getLegendNames(this->cfgLayer->Legend);
+    return getLegendNames(this->cfgLayer->Legend);
   } else {
     if (style != NULL) {
-      return CServerParams::getLegendNames(style->Legend);
+      return getLegendNames(style->Legend);
     }
   }
   //  CDBError("No legendlist for layer %s",this->layerName.c_str());
@@ -285,7 +285,7 @@ std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerCo
 
     for (size_t j = 0; j < this->cfgLayer->RenderMethod.size(); j++) {
       if (renderMethodList.length() > 0) renderMethodList.concat(",");
-      renderMethodList.concat(this->cfgLayer->RenderMethod[j]->value.c_str());
+      renderMethodList.concat(this->cfgLayer->RenderMethod[j]->elementValue.c_str());
     }
   }
 
@@ -293,7 +293,7 @@ std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerCo
     if (style->RenderMethod.size() > 0) {
       for (size_t j = 0; j < style->RenderMethod.size(); j++) {
         if (renderMethodList.length() > 0) renderMethodList.concat(",");
-        renderMethodList.concat(style->RenderMethod[j]->value.c_str());
+        renderMethodList.concat(style->RenderMethod[j]->elementValue.c_str());
       }
     } else {
       return {"generic"};
@@ -473,8 +473,8 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
 std::vector<std::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
   std::vector<std::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
-    if (Styles[j]->value.empty()) continue;
-    std::vector<CT::string> l1 = Styles[j]->value.split(",");
+    if (Styles[j]->elementValue.empty()) continue;
+    std::vector<std::string> l1 = CT::split(Styles[j]->elementValue, ",");
     for (auto styleValue: l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
@@ -512,7 +512,7 @@ CStyleConfiguration *CDataSource::getStyle() {
   // Copy default style
   currentStyle = styleList.at(0);
 
-  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return styleName.equals(a.styleName); });
+  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return styleName == (a.styleName); });
   if (it != styleList.end()) {
     currentStyle = (*it);
   } else {
@@ -523,7 +523,7 @@ CStyleConfiguration *CDataSource::getStyle() {
     } else {
       // Try without rendermethod
       CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
-      it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod.equals(a.styleName); });
+      it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod == (a.styleName); });
       if (it != styleList.end()) {
         currentStyle = (*it);
         CDBDebug("Selected style %s", currentStyle.styleName.c_str());
@@ -640,7 +640,7 @@ double CDataSource::getScaling() {
   if (styleConfiguration != nullptr) {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalewidth.empty()) {
-        double scaleWidth = renderSetting->attr.scalewidth.toDouble();
+        double scaleWidth = atof(renderSetting->attr.scalewidth.c_str());
         double imageWidth = (double)this->srvParams->geoParams.width;
         return imageWidth / scaleWidth;
       }
@@ -654,7 +654,7 @@ double CDataSource::getContourScaling() {
   if (styleConfiguration != nullptr) {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalecontours.empty()) {
-        double scalecontours = renderSetting->attr.scalecontours.toDouble();
+        double scalecontours = atof(renderSetting->attr.scalecontours.c_str());
         return scalecontours;
       }
     }
@@ -674,7 +674,7 @@ DataObject *CDataSource::getDataObjectByName(const char *name) {
     if (dataObject.variableName == name) {
       return &dataObject;
     }
-    if (dataObject.cdfVariable->name.equals(name)) {
+    if (dataObject.cdfVariable->name == (name)) {
       return &dataObject;
     }
   }
@@ -710,11 +710,11 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
     return 1;
   }
   if (isConfigured == false) {
-    CDBError("Datasource %s is not configured", cfgLayer->Name[0]->value.c_str());
+    CDBError("Datasource %s is not configured", cfgLayer->Name[0]->elementValue.c_str());
     return 1;
   }
   if (getNumDataObjects() <= 0) {
-    CDBError("No variables found for datasource %s", cfgLayer->Name[0]->value.c_str());
+    CDBError("No variables found for datasource %s", cfgLayer->Name[0]->elementValue.c_str());
     return 1;
   }
   for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
@@ -731,7 +731,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
   }
   // Shorthand to variable configuration in the layer.
   for (auto *cfgVar: cfgLayer->Variable) {
-    CDF::Variable *var = cdfObject->getVar(cfgVar->value);
+    CDF::Variable *var = cdfObject->getVar(cfgVar->elementValue);
     if (var != nullptr) {
 
       // Set long_name

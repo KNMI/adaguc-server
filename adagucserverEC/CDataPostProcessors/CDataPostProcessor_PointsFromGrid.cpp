@@ -30,7 +30,7 @@
 
 const char *CDPPointsFromGrid::getId() { return CDATAPOSTPROCESSOR_PointsFromGrid_ID; }
 int CDPPointsFromGrid::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_PointsFromGrid_ID)) {
+  if (proc->attr.algorithm == (CDATAPOSTPROCESSOR_PointsFromGrid_ID)) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -54,7 +54,7 @@ f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSour
 }
 
 void getPixelCoordinateListFromGetMapCoordinateListInPlace(std::vector<f8point> &in, CDataSource &dataSource) {
-  for (auto &p : in) {
+  for (auto &p: in) {
     p = getPixelCoordinateFromGetMapCoordinate(p, dataSource);
   }
 }
@@ -119,7 +119,7 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
   f8point pixelOffset = {.x = 1, .y = 1};
   if (!proc->attr.a.empty()) {
-    auto value = proc->attr.a.toDouble();
+    auto value = atof(proc->attr.a.c_str());
     if (value < 1) value = 1;
     pixelOffset.x = value;
     pixelOffset.y = value;
@@ -152,7 +152,8 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   getPixelCoordinateListFromGetMapCoordinateListInPlace(pointsInPixel, (*dataSource));
 
   int id = 0; // TODO check if not grows besided number of available objects
-  for (auto con : proc->attr.select.split(",")) {
+  const auto selectItems = CT::split(proc->attr.select, ",");
+  for (auto &con: selectItems) {
     auto ob = dataSource->getDataObjectByName(con.c_str());
     if (ob == nullptr) {
       CDBWarning("Cannot select variable %s in datapostproc PointsFromGrid, skipping point rendering", con.c_str());

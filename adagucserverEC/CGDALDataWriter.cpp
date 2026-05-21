@@ -38,9 +38,9 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   int status;
   _dataSource = dataSource;
   // Init projections
-  if (srvParam->geoParams.crs.indexOf("PROJ4:") == 0) {
+  if (CT::startsWith(srvParam->geoParams.crs, "PROJ4:")) {
     CT::string temp(srvParam->geoParams.crs.c_str() + 6);
-    srvParam->geoParams.crs.copy(&temp);
+    srvParam->geoParams.crs = temp;
   }
   // Load metadata from the dataSource
 #ifdef CGDALDATAWRITER_DEBUG
@@ -86,8 +86,8 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     srvParam->geoParams.bbox = dfSrcBBOX;
     srvParam->geoParams.width = dataSource->dWidth;
     srvParam->geoParams.height = dataSource->dHeight;
-    srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
-    if (srvParam->Format.length() == 0) srvParam->Format.copy("NetCDF4");
+    srvParam->geoParams.crs = dataSource->nativeProj4;
+    if (srvParam->Format.length() == 0) srvParam->Format = "NetCDF4";
   } else {
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
@@ -132,20 +132,20 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
 
   // Retrieve output format
   for (size_t j = 0; j < srvParam->cfg->WCS[0]->WCSFormat.size(); j++) {
-    if (srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())) {
-      driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
-      mimeType.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
-      customOptions.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
+    if (srvParam->Format == srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name) {
+      driverName = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
+      mimeType = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
+      customOptions = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
       break;
     }
   }
-  srvParam->Format.toUpperCaseSelf();
+  std::string serverFormat = CT::toUpperCase(srvParam->Format);
   if (driverName.length() == 0) {
-    if (srvParam->Format.equals("GEOTIFF")) {
-      driverName.copy("GTiff");
+    if (serverFormat == "GEOTIFF") {
+      driverName = ("GTiff");
     }
-    if (srvParam->Format.equals("AAIGRID")) {
-      driverName.copy("AAIGRID");
+    if (serverFormat == "AAIGRID") {
+      driverName = ("AAIGRID");
       if (NrOfBands > 1) {
         CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.", srvParam->Format.c_str());
         return 1;
@@ -370,7 +370,7 @@ int CGDALDataWriter::end() {
   }
   OGRSpatialReference oSRS;
   CImageWarper imageWarper;
-  CT::string destinationCRS(&srvParam->geoParams.crs);
+  CT::string destinationCRS(srvParam->geoParams.crs);
   if (oSRS.SetFromUserInput(destinationCRS.c_str()) != OGRERR_NONE) {
     CDBError("WCS: Invalid destination projection: [%s]", destinationCRS.c_str());
     return 1;
@@ -538,7 +538,7 @@ int CGDALDataWriter::end() {
 
   /* Output the file to stdout */
 
-  if (mimeType.length() < 2) mimeType.copy("Content-Type:text/plain");
+  if (mimeType.length() < 2) mimeType = ("Content-Type:text/plain");
   //  printf("%s\n",tmpFileName.c_str());
   int returnCode = 0;
   FILE *fp = fopen(tmpFileName.c_str(), "r");
@@ -587,7 +587,7 @@ int CGDALDataWriter::end() {
 
 CT::string CGDALDataWriter::generateGetCoverageFileName() {
   CT::string humanReadableString;
-  humanReadableString.copy(srvParam->Format.c_str());
+  humanReadableString = (srvParam->Format.c_str());
   humanReadableString.concat("_");
   humanReadableString.concat(dObjgetVariableName(*_dataSource->getDataObject(0)).c_str());
 
@@ -600,7 +600,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
 
   CT::string extension = ".bin";
   CT::string formatUpperCase;
-  formatUpperCase.copy(srvParam->Format.c_str());
+  formatUpperCase = (srvParam->Format.c_str());
   formatUpperCase.toUpperCaseSelf();
   if (formatUpperCase.equals("AAIGRID")) {
     extension = ".asc";

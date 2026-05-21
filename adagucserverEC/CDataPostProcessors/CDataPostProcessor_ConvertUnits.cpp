@@ -53,10 +53,10 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
   // Not in lookup, use the a an b from DataProcessor configuration
   LookupUnits l = {.a = 1, .b = 0, .units = "", .from_units = ""};
   if (!proc.attr.a.empty()) {
-    l.a = proc.attr.a.toDouble();
+    l.a = atof(proc.attr.a.c_str());
   }
   if (!proc.attr.b.empty()) {
-    l.b = proc.attr.b.toDouble();
+    l.b = atof(proc.attr.b.c_str());
   }
   if (!proc.attr.units.empty()) {
     l.units = proc.attr.units;
@@ -123,7 +123,7 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
       auto attrNeedsConversion = dataObject.cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
       // Check if we need to convert the data
-      if (attrNeedsConversion != nullptr && attrNeedsConversion->toString().equals("true")) {
+      if (attrNeedsConversion != nullptr && attrNeedsConversion->toString() == "true") {
         CDBDebug("AFTER (grid): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
         CDFType type = dataObject.cdfVariable->getType();
 
@@ -159,7 +159,7 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     }
     auto attrNeedsConversion = dataObject.cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
     // Check if we need to convert the data
-    if (attrNeedsConversion != nullptr && attrNeedsConversion->toString().equals("true")) {
+    if (attrNeedsConversion != nullptr && attrNeedsConversion->toString() == "true") {
       if (adagucPostProcVerboseLog) {
         CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
       }

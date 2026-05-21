@@ -96,7 +96,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adx");
+    varX->name = ("adx");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
@@ -109,7 +109,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("ady");
+    varY->name = ("ady");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);

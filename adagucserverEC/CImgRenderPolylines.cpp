@@ -80,16 +80,16 @@ FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleCon
     if (status != 0) continue;
     return {.backgroundColor = backgroundColor,
             .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
-            .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((featureAttr.borderwidth.toDouble()) > 0)) ? featureAttr.borderwidth.toDouble() : 0,
+            .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((atof(featureAttr.borderwidth.c_str())) > 0)) ? atof(featureAttr.borderwidth.c_str()) : 0,
             .fillColor = featureAttr.fillcolor.empty() ? "#6060FFFF" : featureAttr.fillcolor.c_str(),
             .hasFill = styleConfig->renderMethod == RM_POLYGON && !featureAttr.fillcolor.empty(),
             .fontFile = featureAttr.labelfontfile.empty() ? fontLoc : featureAttr.labelfontfile.c_str(),
-            .fontSize = ((featureAttr.labelfontsize.empty() == false) && (featureAttr.labelfontsize.toDouble() > 0)) ? featureAttr.labelfontsize.toDouble() : 0,
+            .fontSize = ((featureAttr.labelfontsize.empty() == false) && (atof(featureAttr.labelfontsize.c_str()) > 0)) ? atof(featureAttr.labelfontsize.c_str()) : 0,
             .fontColor = featureAttr.labelcolor.empty() ? "#000000FF" : featureAttr.labelcolor.c_str(),
             .propertyName = featureAttr.labelpropertyname,
             .propertyFormat = featureAttr.labelpropertyformat.empty() ? "%s" : featureAttr.labelpropertyformat,
-            .angle = ((featureAttr.labelangle.empty() == false) && (featureAttr.labelangle.isNumeric())) ? featureAttr.labelangle.toDouble() * M_PI / 180 : 0,
-            .padding = ((featureAttr.labelpadding.empty() == false) && (featureAttr.labelpadding.isInt())) ? featureAttr.labelpadding.toInt() : 3};
+            .angle = ((featureAttr.labelangle.empty() == false) && (CT::isNumeric(featureAttr.labelangle))) ? atof(featureAttr.labelangle.c_str()) * M_PI / 180 : 0,
+            .padding = ((featureAttr.labelpadding.empty() == false) && (CT::isInt(featureAttr.labelpadding))) ? atoi(featureAttr.labelpadding.c_str()) : 3};
   }
 
   return {.backgroundColor = backgroundColor,
@@ -179,10 +179,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   bool randomStart = false;
   for (auto renderSetting: styleConfiguration->renderSettings) {
     if (!renderSetting->attr.featuresoverlap.empty()) {
-      noOverlap = !renderSetting->attr.featuresoverlap.equals("true");
+      noOverlap = renderSetting->attr.featuresoverlap != "true";
     }
     if (!renderSetting->attr.randomizefeatures.empty()) {
-      randomStart = renderSetting->attr.randomizefeatures.equals("true"); // TODO: Ask Ernst if this is correct?
+      randomStart = renderSetting->attr.randomizefeatures == ("true"); // TODO: Ask Ernst if this is correct?
     }
   }
 
@@ -340,6 +340,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
 int CImgRenderPolylines::set(const char *values) {
 
-  settings.copy(values);
+  settings = (values);
   return 0;
 }

@@ -11,7 +11,7 @@
 const char *CDDPFilterDataObjects::getId() { return CDATAPOSTPROCESSOR_CDDPFILTERDATAOBJECTS_ID; }
 
 int CDDPFilterDataObjects::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(getId())) {
+  if (proc->attr.algorithm == (getId())) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -25,9 +25,9 @@ int CDDPFilterDataObjects::execute(CServerConfig::XMLE_DataPostProc *proc, CData
   for (auto &d: dataSource->dataObjects) {
     d.filterFromOutput = true;
   }
-  auto itemsToFilter = proc->attr.select.split(",");
-  for (auto item: itemsToFilter) {
-    auto d = dataSource->getDataObjectByName(item.trim().c_str());
+  auto itemsToFilter = CT::split(proc->attr.select, ",");
+  for (auto &item: itemsToFilter) {
+    auto d = dataSource->getDataObjectByName(CT::trim(item));
     if (d != nullptr) {
       d->filterFromOutput = false;
       if (d->cdfVariable != nullptr) {

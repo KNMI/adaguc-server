@@ -28,7 +28,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
 
     for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
 
-      if (srvParam->cfg->Dataset[j]->attr.enabled.equals("true") && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
+      if (srvParam->cfg->Dataset[j]->attr.enabled == "true" && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
 
         datasetEnabled = true;
         break;
@@ -40,7 +40,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       return 1;
     }
 
-    if (CServerParams::checkForValidTokens(srvParam->datasetLocation.c_str(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+    if (checkForValidTokens(srvParam->datasetLocation.c_str(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
       CDBError("Invalid dataset name. ");
       return 1;
     }
@@ -126,13 +126,13 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, CT::string serverTitl
         CT::string title = "";
         title.concat(serverTitle.c_str());
         // title.replaceSelf(" ","_");
-        srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
+        srvParam->cfg->WMS[0]->Title[0]->elementValue = (title.c_str());
       }
       if (srvParam->cfg->WMS[0]->RootLayer.size() > 0) {
         if (srvParam->cfg->WMS[0]->RootLayer[0]->Title.size() > 0) {
           CT::string title = "WMS of  ";
           title.concat(serverTitle.c_str());
-          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
+          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue = (title.c_str());
         }
       }
     }
@@ -140,7 +140,7 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, CT::string serverTitl
       if (srvParam->cfg->WCS[0]->Title.size() > 0) {
         CT::string title = "ADAGUC_AUTO_WCS_";
         title.concat(serverTitle.c_str());
-        srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
+        srvParam->cfg->WCS[0]->Title[0]->elementValue = (title.c_str());
       }
     }
   }
@@ -161,21 +161,21 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     bool isValidResource = false;
     // TODO should be placed in a a more generic place
     if (srvParam->isAutoOpenDAPResourceEnabled()) {
-      if (srvParam->autoResourceLocation.indexOf("http://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("https://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("dodsc://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("dods://") == 0) isValidResource = true;
-      if (srvParam->autoResourceLocation.indexOf("ncdods://") == 0) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "http://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "https://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "dodsc://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "dods://")) isValidResource = true;
+      if (CT::startsWith(srvParam->autoResourceLocation, "ncdods://")) isValidResource = true;
     }
 
     // Error messages should be the same for different 'dir' attempts, otherwise someone can find out directory structures
     if (isValidResource == false) {
       if (srvParam->isAutoLocalFileResourceEnabled()) {
-        if (srvParam->checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str()) == false) {
+        if (checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str()) == false) {
           CDBError("Invalid token(s), unable to read file %s", srvParam->autoResourceLocation.c_str());
           return 1;
         }
-        if (srvParam->checkResolvePath(srvParam->autoResourceLocation.c_str(), &srvParam->internalAutoResourceLocation) == false) {
+        if (srvParam->checkResolvePath(srvParam->autoResourceLocation, srvParam->internalAutoResourceLocation) == false) {
           CDBDebug("Unable to resolve path for autoresource file %s", srvParam->autoResourceLocation.c_str());
           CDBDebug("Please note that only absolute paths without symbolic links can be used");
           return 1;
@@ -191,9 +191,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     }
 
     // Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
-    if (srvParam->autoResourceVariable.empty() || srvParam->autoResourceVariable.equals("*")) {
+    if (srvParam->autoResourceVariable.empty() || srvParam->autoResourceVariable == "*") {
       // Try to retrieve a list of variables from the OpenDAPURL.
-      srvParam->autoResourceVariable.copy("");
+      srvParam->autoResourceVariable = ("");
       // Open the opendap resource
       CDBDebug("OGC REQUEST Remote resource %s", srvParam->internalAutoResourceLocation.c_str());
       CDFObject *cdfObject = NULL;
@@ -220,8 +220,8 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
                   }
                 }
                 if (skip == false) {
-                  if (srvParam->autoResourceVariable.length() > 0) srvParam->autoResourceVariable.concat(",");
-                  srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
+                  if (srvParam->autoResourceVariable.length() > 0) srvParam->autoResourceVariable += ",";
+                  srvParam->autoResourceVariable += cdfObject->variables[j]->name;
                 }
                 // CDBDebug("%s",cdfObject->variables[j]->name.c_str());
               }
@@ -355,13 +355,13 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     if (serverAbstract.length() > 0) {
       if (srvParam->cfg->WMS.size() > 0) {
         if (srvParam->cfg->WMS[0]->Abstract.size() > 0) {
-          srvParam->cfg->WMS[0]->Abstract[0]->value.copy(serverAbstract.c_str());
+          srvParam->cfg->WMS[0]->Abstract[0]->elementValue = (serverAbstract.c_str());
         }
       }
     }
 
     // Generate layers based on the OpenDAP variables
-    std::vector<CT::string> variables = srvParam->autoResourceVariable.split(",");
+    std::vector<std::string> variables = CT::split(srvParam->autoResourceVariable, ",");
     for (size_t j = 0; j < variables.size(); j++) {
       std::vector<CT::string> variableNames;
       variableNames.push_back(variables[j].c_str());
@@ -371,9 +371,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Find derived wind parameters
     std::vector<CT::string> detectStrings;
     for (size_t v = 0; v < variables.size(); v++) {
-      int dirLoc = variables[v].indexOf("_dir");
+      int dirLoc = CT::indexOf(variables[v], "_dir");
       if (dirLoc > 0) {
-        detectStrings.push_back(variables[v].substring(0, dirLoc));
+        detectStrings.push_back(CT::substring(variables[v], 0, dirLoc));
       }
     }
 
@@ -455,19 +455,19 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
   CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
 
-  xmleLayer->attr.type.copy("database");
-  xmleFilePath->value.copy(location);
-  xmleFilePath->attr.filter.copy("");
+  xmleLayer->attr.type = ("database");
+  xmleFilePath->elementValue = (location);
+  xmleFilePath->attr.filter = ("");
 
   if (group != NULL) {
     CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
-    xmleGroup->attr.value.copy(group);
+    xmleGroup->attr.value = (group);
     xmleLayer->Group.push_back(xmleGroup);
   }
 
   for (size_t j = 0; j < variableNames->size(); j++) {
     CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
-    xmleVariable->value.copy((*variableNames)[j].c_str());
+    xmleVariable->elementValue = ((*variableNames)[j].c_str());
     xmleLayer->Variable.push_back(xmleVariable);
   }
 
@@ -480,7 +480,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         if (featureType->toString().equals("timeSeries") || featureType->toString().equals("point")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           // CREPORT_INFO_NODOC((*variableNames)[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->value.copy("point");
+          xmleRenderMethod->elementValue = ("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
       }
@@ -490,21 +490,21 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         if (adaguc_data_type->toString().equals("CConvertGeoJSON")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->value.copy("polyline");
+          xmleRenderMethod->elementValue = ("polyline");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
 
         if (adaguc_data_type->toString().equals("CConvertGeoJSONPOLYGON")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOLYGON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->value.copy("polyline");
+          xmleRenderMethod->elementValue = ("polyline");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
 
         if (adaguc_data_type->toString().equals("CConvertGeoJSONPOINT")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOINT. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->value.copy("point");
+          xmleRenderMethod->elementValue = ("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
       }
@@ -519,7 +519,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         if (attribute->toString().equals("rgba")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("Only one variable. Assuming grid and setting render method to rgba. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
-          xmleRenderMethod->value.copy("rgba");
+          xmleRenderMethod->elementValue = ("rgba");
           xmleLayer->RenderMethod.push_back(xmleRenderMethod);
         }
       }
@@ -531,7 +531,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     newName.print("%s + %s", (*variableNames)[0].c_str(), (*variableNames)[1].c_str());
 
     CServerConfig::XMLE_Title *xmleTitle = new CServerConfig::XMLE_Title();
-    xmleTitle->value.copy(newName.c_str());
+    xmleTitle->elementValue = (newName.c_str());
     xmleLayer->Title.push_back(xmleTitle);
 
     CServerConfig::XMLE_Name *xmleName = new CServerConfig::XMLE_Name();
@@ -539,11 +539,11 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     newName.replaceSelf("+", "and");
     newName.replaceSelf(" ", "_");
     newName.encodeURLSelf();
-    xmleName->value.copy(newName.c_str());
+    xmleName->elementValue = (newName.c_str());
     xmleLayer->Name.push_back(xmleName);
     CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
     CREPORT_INFO_NODOC("Exactly two variables: Assuming wind and setting render method to nearestpoint. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
-    xmleRenderMethod->value.copy("nearestpoint");
+    xmleRenderMethod->elementValue = ("nearestpoint");
     xmleLayer->RenderMethod.push_back(xmleRenderMethod);
   }
 
@@ -554,11 +554,11 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     if (srvParam->cfg->AutoResource[0]->ImageText.size() > 0) {
       CServerConfig::XMLE_ImageText *xmleImageText = new CServerConfig::XMLE_ImageText();
       xmleLayer->ImageText.push_back(xmleImageText);
-      if (srvParam->cfg->AutoResource[0]->ImageText[0]->value.empty() == false) {
-        xmleImageText->value.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str());
+      if (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.empty() == false) {
+        xmleImageText->elementValue = (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.c_str());
       }
       if (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.empty() == false) {
-        xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
+        xmleImageText->attr.attribute = (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
       }
     }
   }

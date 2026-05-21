@@ -9,7 +9,7 @@
 
 const char *CDPPWFP::getId() { return "WFP"; }
 int CDPPWFP::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("WFP")) {
+  if (proc->attr.algorithm == ("WFP")) {
     if (dataSource->getNumDataObjects() == 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       // if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3 && dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
       CDBError("2 variables are needed for WFP, found %lu", dataSource->getNumDataObjects());

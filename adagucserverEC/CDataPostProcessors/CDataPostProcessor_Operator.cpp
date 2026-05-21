@@ -7,7 +7,7 @@
 const char *CDPPOperator::getId() { return "operator"; }
 
 int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (proc->attr.algorithm.equals("operator")) {
+  if (proc->attr.algorithm == ("operator")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         CDBError("2 variables are needed for operator, found %lu", dataSource->getNumDataObjects());
@@ -92,28 +92,28 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     CDFType typeA = dataObjectA->cdfVariable->getType();
     CDFType typeB = dataObjectB->cdfVariable->getType();
 
-    if (proc->attr.mode.equals("-")) {
+    if (proc->attr.mode == ("-")) {
       for (size_t j = 0; j < l; j++) {
         float a = getElement(dataA, typeA, j);
         float b = getElement(dataB, typeB, j);
         result[j] = a - b;
       }
     }
-    if (proc->attr.mode.equals("+")) {
+    if (proc->attr.mode == ("+")) {
       for (size_t j = 0; j < l; j++) {
         float a = getElement(dataA, typeA, j);
         float b = getElement(dataB, typeB, j);
         result[j] = a + b;
       }
     }
-    if (proc->attr.mode.equals("*")) {
+    if (proc->attr.mode == ("*")) {
       for (size_t j = 0; j < l; j++) {
         float a = getElement(dataA, typeA, j);
         float b = getElement(dataB, typeB, j);
         result[j] = b * a;
       }
     }
-    if (proc->attr.mode.equals("/")) {
+    if (proc->attr.mode == ("/")) {
       for (size_t j = 0; j < l; j++) {
         float a = getElement(dataA, typeA, j);
         float b = getElement(dataB, typeB, j);

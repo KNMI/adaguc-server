@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <CCDFObject.h>
 #include "CCDFVariable.h"
+#include "CStopWatch.h"
 
 MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
   MinMax minMax;

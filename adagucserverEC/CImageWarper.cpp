@@ -264,7 +264,7 @@ int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, st
     return 1;
   }
   if (dataSource->nativeProj4.empty()) {
-    dataSource->nativeProj4.copy(LATLONPROJECTION);
+    dataSource->nativeProj4 = (LATLONPROJECTION);
     // CDBWarning("dataSource->CRS.empty() setting to default latlon");
   }
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);
@@ -562,8 +562,9 @@ CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string proj
     return bboxProj4Params;
   }
   std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
-  for (size_t j = 0; j < (*prj).size(); j++) {
-    if ((*prj)[j]->attr.id.equals(projectionId.trim())) {
+  std::string trimmedProjectionId = projectionId.trim();
+  for (size_t j = 0; j < (*prj).size(); j++) { // TODO: use find_if
+    if ((*prj)[j]->attr.id == trimmedProjectionId) {
       bboxProj4Params = (*prj)[j]->attr.proj4;
       return bboxProj4Params;
       break;
