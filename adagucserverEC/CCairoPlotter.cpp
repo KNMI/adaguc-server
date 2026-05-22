@@ -180,16 +180,17 @@ CCairoPlotter::CCairoPlotter(int width, int height, float fontSize, std::string 
   stride = cairo_format_stride_for_width(FORMAT, width);
   size_t bufferSize = size_t(height) * stride;
   ARGBByteBuffer = new unsigned char[bufferSize];
+
   if (a == 0 && r == 0 && g == 0 && b == 0) {
-    for (size_t j = 0; j < bufferSize; j++) {
-      ARGBByteBuffer[j] = 0;
-    }
+    std::memset(ARGBByteBuffer, 0, bufferSize);
   } else {
-    for (size_t j = 0; j < bufferSize / 4; j++) {
-      ARGBByteBuffer[j * 4 + 3] = a;
-      ARGBByteBuffer[j * 4 + 2] = r;
-      ARGBByteBuffer[j * 4 + 1] = g;
-      ARGBByteBuffer[j * 4 + 0] = b;
+    uint32_t pixel = (a << 24) | (r << 16) | (g << 8) | b;
+
+    auto *quadBuffer = reinterpret_cast<uint32_t *>(ARGBByteBuffer);
+    size_t pixelCount = bufferSize / 4;
+
+    for (size_t i = 0; i < pixelCount; ++i) {
+      quadBuffer[i] = pixel;
     }
   }
   _cairoPlotterInit(width, height, fontSize, std::move(fontLocation));
