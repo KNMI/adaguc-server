@@ -933,6 +933,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
   }
 
+#ifdef MEASURETIME
+  StopWatch_Stop("Start creating CImageWarper");
+#endif
   CImageWarper imageWarper;
   status = imageWarper.initreproj(dataSource, drawImage->geoParams, &srvParam->cfg->Projection);
   if (status != 0) {
@@ -940,6 +943,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     reader.close();
     return 1;
   }
+#ifdef MEASURETIME
+  StopWatch_Stop("Stop creating CImageWarper");
+#endif
 
   traceTimingsSpanStart(TraceTimingType::WARPIMAGERENDER);
   /**
