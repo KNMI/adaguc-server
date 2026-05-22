@@ -13,7 +13,6 @@ from starlette.responses import Response
 
 from .is_br_encoding_needed import requires_encoding
 
-
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
 MAX_SIZE_FOR_CACHING = 10_000_000
@@ -67,6 +66,10 @@ def generate_key(request):
     key = request.url.path.encode("utf-8")
     if len(request["query_string"]) > 0:
         key += b"?" + request["query_string"]
+    # Add Host: and/or x-forwarded-host headers to cache key to prevent cache-poisoning
+    for n, h in request.headers.items():
+        if n.decode("utf-8").lower() in ["host", "x-forwarded-host"]:
+            key += str(n)
     return key
 
 
