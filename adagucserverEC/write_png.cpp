@@ -198,13 +198,19 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
     bool valid;
   };
 
-  ColorCacheEntry *fast_cache = new ColorCacheEntry[4096]();
+  ColorCacheEntry fast_cache[4096] = {};
   const int stride = width * 4;
-  unsigned char *RGBARow = new unsigned char[width];
+
+  unsigned char *imageBuffer = new unsigned char[width * height];
+  png_bytep *row_ptrs = new png_bytep[height];
 
   for (int y = 0; y < height; y++) {
-    unsigned char *dst = RGBARow;
-    unsigned char *src = ARGBByteBuffer + y * stride;
+    row_ptrs[y] = imageBuffer + (y * width);
+  }
+
+  for (int y = 0; y < height; y++) {
+    unsigned char *dst = row_ptrs[y];
+    unsigned char *src = ARGBByteBuffer + (y * stride);
 
     for (int x = 0; x < width; x++, src += 4) {
       uint8_t b = src[0];
@@ -217,7 +223,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
         continue;
       }
 
-      uint8_t qb = use8bitpalAlpha ? (b >> 3) + ((a >> 5) << 5) : b;
+      uint8_t qb = use8bitpalAlpha ? ((b >> 3) + ((a >> 5) << 5)) : b;
       uint32_t key = (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(qb);
 
       auto &entry = fast_cache[key & 4095];
@@ -247,20 +253,22 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
 
       *dst++ = idx;
     }
-
-    png_bytep row_ptr = RGBARow;
-    png_write_rows(png_ptr, &row_ptr, 1);
   }
 
-  delete[] RGBARow;
-  delete[] fast_cache;
+#ifdef MEASURETIME
+  StopWatch_Stop("Before png_write_image");
+#endif
+  png_write_image(png_ptr, row_ptrs);
+
+  delete[] row_ptrs;
+  delete[] imageBuffer;
 }
 
 int writePng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, int bitDepth, bool use8bitpalAlpha) {
   OctreeType *tree = NULL;
 
 #ifdef MEASURETIME
-  StopWatch_Stop("start writeRGBAPng.");
+  StopWatch_Stop("Start writePNG");
 #endif
 
   png_structp png_ptr;
@@ -312,12 +320,15 @@ int writePng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, i
   } else if (bitDepth == 8) {
     write8BppPayload(png_ptr, tree, width, height, ARGBByteBuffer, use8bitpalAlpha);
   }
+#ifdef MEASURETIME
+  StopWatch_Stop("PNG image written");
+#endif
 
   png_write_end(png_ptr, NULL);
   png_destroy_write_struct(&png_ptr, &info_ptr);
 
 #ifdef MEASURETIME
-  StopWatch_Stop("PNG data written");
+  StopWatch_Stop("End writePNG");
 #endif
   return 0;
 }
