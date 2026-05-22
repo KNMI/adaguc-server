@@ -18,22 +18,26 @@ static void MakeReducible(int level, OctreeType *node);
 static OctreeType *GetReducible(void);
 // InsertTree -- Insert a color into the octree
 //
-void InsertTree(OctreeType **tree, RGBType *color, uint depth) {
-  //   int level;
+void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count) {
   if (*tree == (OctreeType *)NULL) {
     *tree = CreateOctNode(depth);
   }
+
   if ((*tree)->isleaf) {
-    (*tree)->npixels++;
-    (*tree)->redsum += color->r;
-    (*tree)->greensum += color->g;
-    (*tree)->bluesum += color->b;
-    (*tree)->realbluesum += color->realblue;
-    (*tree)->realalphasum += color->realalpha;
+    (*tree)->npixels += count;
+
+    (*tree)->redsum += ulong(color->r) * count;
+    (*tree)->greensum += ulong(color->g) * count;
+    (*tree)->bluesum += ulong(color->b) * count;
+
+    (*tree)->realbluesum += ulong(color->realblue) * count;
+    (*tree)->realalphasum += ulong(color->realalpha) * count;
   } else {
-    InsertTree(&((*tree)->child[LEVEL(color, TREEDEPTH - depth)]), color, depth + 1);
+    InsertTreeCount(&((*tree)->child[LEVEL(color, TREEDEPTH - depth)]), color, depth + 1, count);
   }
 }
+
+void InsertTree(OctreeType **tree, RGBType *color, uint depth) { InsertTreeCount(tree, color, depth, 1); }
 // ReduceTree -- Combines all the children of a node into the parent,
 // makes the parent into a leaf
 //
