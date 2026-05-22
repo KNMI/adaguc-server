@@ -34,7 +34,6 @@
 
 #ifndef CCAIROPLOTTER_H_
 #define CCAIROPLOTTER_H_
-#include <png.h>
 #include <cairo.h>
 #include "CDebugger.h"
 #include "CTString.h"
