@@ -320,6 +320,12 @@ void CDrawImage::poly(float *x, float *y, int n, float lineWidth, CColor lineCol
   cairo->poly(x, y, n, lineWidth, close, fill);
 }
 
+void CDrawImage::poly(const std::vector<f8point> &polyPoints, float lineWidth, CColor lineColor, CColor fillColor, bool close, bool fill) {
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+  cairo->poly(polyPoints, lineWidth, close, fill);
+}
+
 void CDrawImage::line(float x1, float y1, float x2, float y2, int color) {
   if (currentLegend == NULL) return;
   if (color >= 0 && color < 256) {

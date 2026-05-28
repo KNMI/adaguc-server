@@ -1,3 +1,6 @@
+**Version 7.3.0 - 2026-05-28**
+
+- FeatureInterval now supports min/max
 
 **Version 7.2.2 - 2026-05-11**
 
