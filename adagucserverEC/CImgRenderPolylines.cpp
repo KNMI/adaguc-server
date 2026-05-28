@@ -61,7 +61,7 @@ FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleCo
     if (!featureAttr.matchid.empty()) {
 
       // Either enable this featureinterval when match is set, or when min and max are set.
-      // if (featureAttr.match.empty() && (featureAttr.min.empty() || featureAttr.max.empty())) continue;
+      if (featureAttr.match.empty() && (featureAttr.min.empty() || featureAttr.max.empty())) continue;
 
       // Find the matchId in the feature properties
       auto attIt = feature->paramMap.find(featureAttr.matchid);
@@ -299,7 +299,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         }
 
         std::vector<Polyline> *polylines = feature->getPolylines();
-        CT::string idl = feature->getId();
 
         for (std::vector<Polyline>::iterator itpoly = polylines->begin(); itpoly != polylines->end(); ++itpoly) {
           auto *polyX = itpoly->getLons();
@@ -308,11 +307,11 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           std::vector<f8point> polyPoints;
           polyPoints.reserve(numPoints);
           for (int j = 0; j < numPoints; j++) {
-            double tprojectedX = polyX[j], tprojectedY = polyY[j];
             int status = 0;
-            if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
+            f8point sourcePoint = {.x = polyX[j], .y = polyY[j]};
+            if (projectionRequired) status = imageWarper->reprojfromLatLon(sourcePoint);
             if (!status && cellSizeX > 0 && cellSizeY > 0) {
-              polyPoints.push_back({.x = ((tprojectedX - offsetX) / cellSizeX) + 1, .y = height - (tprojectedY - offsetY) / cellSizeY});
+              polyPoints.push_back({.x = ((sourcePoint.x - offsetX) / cellSizeX) + 1, .y = height - (sourcePoint.y - offsetY) / cellSizeY});
             }
           }
           drawImage->poly(polyPoints, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, false, featureStyle.hasFill);
@@ -322,7 +321,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         StopWatch_Stop("Feature drawn %d", featureIndex);
 #endif
       }
-      drawImage->endLine();
       // Draw polygon labels here, so they end up on top
       for (CRectangleText rect: rects) {
         // drawImage->setDisc(rect.llx, rect.lly, 2, rect.color, rect.color); // dot
