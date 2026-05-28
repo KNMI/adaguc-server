@@ -50,8 +50,8 @@ async def add_hsts_header(request: Request, call_next):
 
 
 trusted_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
-if len(trusted_hosts) > 0:
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.split() for host in trusted_hosts.split(",")])
+if trusted_hosts is not None:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in trusted_hosts.split(",")])
 
 app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 

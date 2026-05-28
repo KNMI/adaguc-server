@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 
 from starlette.types import Receive
@@ -36,19 +37,31 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
             return await self.app(scope, receive, send)
 
         prefix = ""
-        if b"x-forwarded-prefix" in headers:
+        external_address = os.environ.get("EXTERNALADDRESS")
+        prefix = ""
+        external_host = ""
+        external_port = ""
+        if external_address:
+            url_parts = urllib.parse.urlsplit(external_address)
+            prefix = url_parts.path
+            external_host = url_parts.hostname
+            external_port = f":{url_parts.port}" if url_parts.port else ""
+            logging.info("EXTERNAL prefix %s %s", prefix, external_host)
+
+        if prefix == "" and b"x-forwarded-prefix" in headers:
             prefix = headers[b"x-forwarded-prefix"].decode("ascii").strip()
 
             # Prevent malicious input, while still allowing slashes
             prefix = urllib.parse.quote(prefix, safe="/")
 
+        if len(prefix) > 0:
             # This mimics how uvicorn is setting the root_path
             # https://github.com/encode/uvicorn/blob/6ffaaf7c2f78274889da1572832dd307a8b117d3/uvicorn/protocols/http/httptools_impl.py#L250
             scope["root_path"] = prefix
             scope["path"] = prefix + scope["path"]
             scope["raw_path"] = prefix.encode("ascii") + scope["raw_path"]
 
-        if b"x-forwarded-host" in headers:
+        if external_host == "" and b"x-forwarded-host" in headers:
             forwarded_host = headers[b"x-forwarded-host"].decode("ascii").strip()
 
             # Prevent malicious input
