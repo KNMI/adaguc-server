@@ -82,3 +82,12 @@ class TestGeoJSON:
 
         assert status == 0
         assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
+
+    def test_CVE_GHSA_mwgv_59vv_rp2m(self):
+        """
+        Fixes CVE_GHSA_mwgv_59vv_rp2m as found by Sebastian Alba Vives
+        https://github.com/KNMI/adaguc-server/security/advisories/GHSA-mwgv-59vv-rp2m
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.tests.CVE_GHSA_mwgv_59vv_rp2m.xml")
+        update_db(env)
