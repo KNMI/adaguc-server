@@ -676,6 +676,10 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                     //                          CDBDebug("polygon: %d", polygon.u.array.length);
                     for (unsigned int i = 0; i < polygon.u.array.length; i++) {
                       json_value pt = *polygon.u.array.values[i];
+                      if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                        continue;
+                      }
+
                       json_value lo = *pt.u.array.values[0];
                       json_value la = *pt.u.array.values[1];
                       double lon = (double)lo;
@@ -701,6 +705,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                   feat->newPolyline();
                   for (unsigned int i = 0; i < coords.u.array.length; i++) {
                     json_value pt = *coords.u.array.values[i];
+                    if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                      continue;
+                    }
                     json_value lo = *pt.u.array.values[0];
                     json_value la = *pt.u.array.values[1];
                     double lon = (double)lo;
@@ -726,6 +733,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                       feat->newPolyline();
                       for (unsigned int i = 0; i < coords.u.array.length; i++) {
                         json_value pt = *coords.u.array.values[i];
+                        if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                          continue;
+                        }
                         json_value lo = *pt.u.array.values[0];
                         json_value la = *pt.u.array.values[1];
                         double lon = (double)lo;
@@ -760,6 +770,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                         //                              CDBDebug("polygon: %d", polygon.u.array.length);
                         for (unsigned int k = 0; k < polygon.u.array.length; k++) {
                           json_value pt = *polygon.u.array.values[k];
+                          if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                            continue;
+                          }
                           json_value lo = *pt.u.array.values[0];
                           json_value la = *pt.u.array.values[1];
                           double lon = (double)lo;
