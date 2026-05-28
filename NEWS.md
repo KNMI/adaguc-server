@@ -1,5 +1,8 @@
+
 **Version 7.2.2 - 2026-05-11**
 
+- Fix for CVE_GHSA_mwgv_59vv_rp2m as found by Sebastian Alba Vives
+- Update python packages
 - More CT::string to std::string refactoring.
 
 **Version 7.2.1 - 2026-05-04**

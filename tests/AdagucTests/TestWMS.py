@@ -1204,7 +1204,7 @@ class TestWMS(unittest.TestCase):
         foundTimeFromXML = obj1.findall("Capability/Layer/Layer/Dimension")[0]
 
         fileToCheck = f"{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc"
-        foundTimeFromFile = datetime.datetime.utcfromtimestamp(os.path.getmtime(fileToCheck)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        foundTimeFromFile = datetime.datetime.fromtimestamp(os.path.getmtime(fileToCheck), datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         self.assertEqual(foundTimeFromXML, foundTimeFromFile)
 
@@ -1318,7 +1318,7 @@ class TestWMS(unittest.TestCase):
             newDateTime = newDateTime.replace(second=0)
             return newDateTime.replace(microsecond=0)
 
-        recenttimesteptowrite = roundSeconds(datetime.datetime.utcnow()).isoformat() + "Z"
+        recenttimesteptowrite = roundSeconds(datetime.datetime.now(datetime.UTC)).isoformat()[0:19] + "Z"
 
         # Make the three filenames
         oldfile1 = f"{ADAGUC_TMP}/cleandb/csv-20200601T000000.csv"
