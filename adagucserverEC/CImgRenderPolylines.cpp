@@ -58,28 +58,29 @@ FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleCo
     if (styleConfig->renderMethod == RM_POLYGON && !featureAttr.bgcolor.empty()) {
       backgroundColor = featureAttr.bgcolor.c_str();
     }
-    if (featureAttr.matchid.empty()) continue;
+    if (!featureAttr.matchid.empty()) {
 
-    // Either enable this featureinterval when match is set, or when min and max are set.
-    if (featureAttr.match.empty() && (featureAttr.min.empty() || featureAttr.max.empty())) continue;
+      // Either enable this featureinterval when match is set, or when min and max are set.
+      // if (featureAttr.match.empty() && (featureAttr.min.empty() || featureAttr.max.empty())) continue;
 
-    // Find the matchId in the feature properties
-    auto attIt = feature->paramMap.find(featureAttr.matchid);
-    std::string matchString = (attIt != feature->paramMap.end()) ? attIt->second : id;
+      // Find the matchId in the feature properties
+      auto attIt = feature->paramMap.find(featureAttr.matchid);
+      std::string matchString = (attIt != feature->paramMap.end()) ? attIt->second : id;
 
-    if (!featureAttr.match.empty()) {
-      // Match via regexp on match property
-      regex_t regex;
-      int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
-      if (ret) continue;
-      int status = regexec(&regex, matchString.c_str(), 0, NULL, 0);
-      regfree(&regex);
-      if (status != 0) continue;
-    }
-    if (!featureAttr.min.empty() || !featureAttr.max.empty()) {
-      // Match if value of matchString is within range of min/max
-      double attrMatchValue = atof(matchString.c_str());
-      if (attrMatchValue < atof(featureAttr.min.c_str()) || attrMatchValue >= atof(featureAttr.max.c_str())) continue;
+      if (!featureAttr.match.empty()) {
+        // Match via regexp on match property
+        regex_t regex;
+        int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
+        if (ret) continue;
+        int status = regexec(&regex, matchString.c_str(), 0, NULL, 0);
+        regfree(&regex);
+        if (status != 0) continue;
+      }
+      if (!featureAttr.min.empty() || !featureAttr.max.empty()) {
+        // Match if value of matchString is within range of min/max
+        double attrMatchValue = atof(matchString.c_str());
+        if (attrMatchValue < atof(featureAttr.min.c_str()) || attrMatchValue >= atof(featureAttr.max.c_str())) continue;
+      }
     }
     return {.backgroundColor = backgroundColor,
             .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
