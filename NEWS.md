@@ -1,7 +1,9 @@
 **Version 7.3.0 - 2026-05-21**
 
-- Changed method of running behind a proxy. Instead of using a single EXTERNALADDRESS environment variable the service's hostname is derived from
-HTTP headers: normally from the Host header, but optionally from X-Forwarded-Host, X-Forwarderd-Proto, X-Forwarded-Prefix and X-Forwarded-Port, if an environment variable named ADAGUC_TRUSTED_PROXIES exists, that defines trusted proxies allowed to specify these headers. The combined result of these heades is then used in for example GetCapabilities to specify the service hostname.
+- Changed method of running behind a proxy. 
+Besides our standard way of using the EXTERNALADDRESS environment variable, 
+it is now possible to derive the service external url from HTTP headers: normally from the Host header, but optionally from X-Forwarded-Host, X-Forwarderd-Proto, X-Forwarded-Prefix and X-Forwarded-Port.
+If an environment variable named ADAGUC_TRUSTED_PROXIES exists, that defines trusted proxies allowed to specify these headers. The combined result of these heades is then used in for example GetCapabilities to specify the service hostname. The trusted ADAGUC_TRUSTED_HOSTS environment variable defines which hosts are allowed in the OnlineResource, which is for example used in the GetCapabilities document.
 
 **Version 7.2.2 - 2026-05-11**
 

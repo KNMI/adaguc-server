@@ -68,7 +68,7 @@ def generate_key(request):
         key += b"?" + request["query_string"]
     # Add Host: and/or x-forwarded-host headers to cache key to prevent cache-poisoning
     for n, h in request.headers.items():
-        if n.lower() in ["host", "x-forwarded-host"]:
+        if n.lower() in ["host", "x-forwarded-host", "x-forwarded-prefix", "x-forwarded-proto", "x-forwarded-port"]:
             key += bytes(h, encoding="UTF-8")
     logging.info("key: %s", key)
     return key

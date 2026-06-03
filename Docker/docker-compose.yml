@@ -63,6 +63,7 @@ services:
       - "ADAGUC_REDIS=redis://adaguc-redis:6379"
       - "ADAGUC_TRACE_TIMINGS=TRUE"
       - "ADAGUC_TRUSTED_PROXIES=*"
+      - "ADAGUC_TRUSTED_HOST=*"
     env_file:
       - .env
     restart: unless-stopped

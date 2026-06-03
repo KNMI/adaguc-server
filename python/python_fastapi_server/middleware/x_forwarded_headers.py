@@ -65,7 +65,7 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
             # Prevent malicious input
             forwarded_host = urllib.parse.quote(forwarded_host)
 
-            if b"x-forwarded-port" in headers:
+            if b"x-forwarded-port" in headers and len(headers[b"x-forwarded-port"]) > 0:
                 logging.info("x-forwarded-port: %s", headers[b"x-forwarded-port"].decode("ascii"))
                 port = ":" + headers[b"x-forwarded-port"].decode("ascii")
             else:
@@ -73,6 +73,7 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
 
             # Replace the Host header with the value of the X-Forwarded-Host header
             scope["headers"] = [(k, f"{forwarded_host}{port}".encode("ascii")) if k == b"host" else (k, v) for k, v in scope["headers"]]
+            logging.info(f"{forwarded_host}{port}")
 
         # Calling the parent ProxyHeadersMiddleware **after** replacing these headers, as ProxyHeadersMiddleware
         # will replace the client addresss if X-Forwarded-For has been set
