@@ -30,7 +30,6 @@ async def handle_wms(req: Request):
 
     # Set required environment variables
     base_url = str(req.base_url)
-    logging.info("base_url in wmswcs.py: %s", base_url)
     adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
