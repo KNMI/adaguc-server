@@ -8,9 +8,9 @@ then
    exit 1
 fi
 
-if [ "$ADAGUC_PORT" = "" ]
+if [ "$ADAGUC_SERVER_PORT" = "" ]
 then
-   export ADAGUC_PORT=8080
+   export ADAGUC_SERVER_PORT=8080
 fi
 
 
@@ -39,4 +39,4 @@ fi
 echo "Start serving on 0.0.0.0"
 # keep-alive should be greater than the idle timout of the proxy/load balancer sitting in front of adaguc
 # See: https://iximiuz.com/en/posts/reverse-proxy-http-keep-alive-and-502s/
-gunicorn --bind 0.0.0.0:${ADAGUC_PORT} --workers=1 -k no_proxy_headers_uvicorn_worker.NoProxyHeadersUvicornWorker --disable-redirect-access-to-syslog --keep-alive 200 --access-logfile - main:app
+gunicorn --bind 0.0.0.0:${ADAGUC_SERVER_PORT} --workers=1 -k no_proxy_headers_uvicorn_worker.NoProxyHeadersUvicornWorker --disable-redirect-access-to-syslog --keep-alive 200 --access-logfile - main:app
