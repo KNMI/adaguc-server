@@ -3,7 +3,6 @@
 import logging
 import os
 import time
-from urllib.parse import urlsplit
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,9 +48,9 @@ async def add_hsts_header(request: Request, call_next):
     return response
 
 
-trusted_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
-if trusted_hosts is not None:
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in trusted_hosts.split(",")])
+allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
+if allowed_hosts is not None and len(allowed_hosts) > 0:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
 
 app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 
