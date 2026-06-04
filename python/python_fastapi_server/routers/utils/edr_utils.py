@@ -11,7 +11,6 @@ KNMI
 from __future__ import annotations
 import json
 import logging
-import os
 import re
 from datetime import datetime, timezone
 
@@ -99,10 +98,7 @@ def get_ref_times_for_coll(metadata) -> list[str]:
 def get_base_url(req: Request = None) -> str:
     """Returns the base url of this service"""
 
-    base_url_from_request = f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}" if req else None
-    base_url = os.getenv("EXTERNALADDRESS", base_url_from_request) or "http://localhost:8080"
-
-    return base_url.strip("/")
+    return str(req.base_url).strip("/")
 
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"
@@ -198,6 +194,7 @@ def get_extent_from_md(metadata: dict, parameter: str):
 def get_collectioninfo_from_md(
     metadata: dict,
     collection_name: str,
+    base_url_: str,
     instance: str = None,
 ) -> Collection:
     """
@@ -228,7 +225,7 @@ def get_collectioninfo_from_md(
     if first_param is None or metadata[first_param]["layer"]["variables"] is None:
         return []
 
-    base_url = get_base_url() + f"/edr/collections/{collection_name}"
+    base_url = base_url_ + f"/edr/collections/{collection_name}"
 
     if instance is not None:
         base_url += f"/instances/{instance}"
@@ -251,6 +248,12 @@ def get_collectioninfo_from_md(
         query_type="position",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
+        crs_details=[
+            {
+                "crs": "EPSG:4326",
+                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+            }
+        ],
     )
     position_link = EDRQueryLink(
         href=f"{base_url}/position",
@@ -260,9 +263,15 @@ def get_collectioninfo_from_md(
         variables=position_variables,
     )
     cube_variables = Variables(
-        query_type="position",
+        query_type="cube",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
+        crs_details=[
+            {
+                "crs": "EPSG:4326",
+                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+            }
+        ],
     )
     cube_link = EDRQueryLink(
         href=f"{base_url}/cube",
@@ -413,7 +422,7 @@ def parse_interval_string(time_interval: str, ref_time: datetime):
     if match and match.group(2):
         offset_steps = int(match.group(2))
     # "{reference_time}", ref_time.strftime(DATETIME_ISO8601_FMT))
-    (repeat_s, _, period) = time_interval.split("/")
+    repeat_s, _, period = time_interval.split("/")
     repeat = int(repeat_s[1:])
 
     delta = parse_period_string(period)

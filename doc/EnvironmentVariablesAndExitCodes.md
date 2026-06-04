@@ -45,5 +45,8 @@ The following exit codes are supported:
 | `ADAGUCENV_ENABLECLEANUP` | Enables or disables automatic cleanup of files based on the retention period.<br>See also [environment.md](/doc/configuration/Environment.md). | -|
 | `ADAGUCENV_RETENTIONPERIOD` | ISO 8601 duration specifying how long generated or cached files should be retained.<br>See also [environment.md](/doc/configuration/Environment.md). | -|
 | `EXTERNALADDRESS`         | Hostname where Adaguc Viewer and Adaguc Explorer are reachable. | -|
+| `ADAGUC_SERVER_PORT`      | The http port on which adaguc-server will be available. | 8080 |
+| `ADAGUC_TRUSTED_HOSTS`    | When EXTERNALADDRESS is unset, this is the allowed hosts list that can be advertised as online resource in the WMS GetCapabilities | * |
+| `ADAGUC_TRUSTED_PROXIES`  | When EXTERNALADDRESS is unset, this is the list of trusted proxies from which adaguc-server will determine its external address. (Via the x-forwared- headers) | * |
 | `PGBOUNCER_DISABLE_SSL`   | Disables SSL when connecting through PgBouncer. | `true` |
 | `PGBOUNCER_ENABLE`        | Enables or disables PostgreSQL connection pooling through PgBouncer. | `true` |

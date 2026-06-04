@@ -29,6 +29,11 @@ router = APIRouter()
     response_model=Instances,
     response_model_exclude_none=True,
 )
+@router.get(
+    "/collections/{collection_name}/instances/",
+    response_model=Instances,
+    response_model_exclude_none=True,
+)
 async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, response: Response):
     """
     GET: Returns all available instances for the collection
@@ -47,7 +52,7 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
         instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
-        instance_info = get_collectioninfo_from_md(metadata[collection_name], collection_name, instance)
+        instance_info = get_collectioninfo_from_md(metadata[collection_name], collection_name, get_base_url(request), instance)
         instances.extend(instance_info)
 
     # Instance ordering should be most recent first
@@ -64,12 +69,12 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_collection_info(collection_name: str, instance: str):
+async def rest_get_collection_info(collection_name: str, req: Request, instance: str):
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
     metadata = await get_metadata(collection_name, instance)
     instance = get_instance(metadata, collection_name, instance)
 
-    coll = get_collectioninfo_from_md(metadata[collection_name], collection_name, instance)
+    coll = get_collectioninfo_from_md(metadata[collection_name], collection_name, get_base_url(req), instance)
     return coll[0]
