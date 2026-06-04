@@ -659,6 +659,34 @@ void CCairoPlotter::poly(float x[], float y[], int n, bool closePath, bool fill)
   cairo_set_antialias(cr, aa);
 }
 
+void CCairoPlotter::poly(const std::vector<f8point> &polyPoints, float lineWidth, bool closePath, bool fill) {
+  if (polyPoints.size() < 2) return;
+  double lWx = lineWidth;
+  double lWy = lineWidth;
+
+  cairo_antialias_t aa = cairo_get_antialias(cr);
+  cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+
+  cairo_device_to_user_distance(cr, &lWx, &lWy);
+  cairo_set_line_width(cr, lWx);
+
+  cairo_move_to(cr, polyPoints[0].x, polyPoints[0].y);
+  for (const auto &polyPoint: polyPoints) {
+    cairo_line_to(cr, polyPoint.x, polyPoint.y);
+  }
+  if (closePath) {
+    cairo_close_path(cr);
+    if (fill) {
+      cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
+      cairo_fill_preserve(cr);
+    }
+  }
+  cairo_set_source_rgba(cr, rr, rg, rb, ra);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
+  cairo_stroke(cr);
+  cairo_set_antialias(cr, aa);
+}
+
 void CCairoPlotter::poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill) {
   double lWx = lineWidth;
   double lWy = lineWidth;

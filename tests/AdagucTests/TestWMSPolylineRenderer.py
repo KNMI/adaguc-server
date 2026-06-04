@@ -176,3 +176,22 @@ class TestWMSPolylineRenderer:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+
+    def test_WMSPolyLineRendererFeatureIntervalMinMax(self):
+        """
+        min max attribute is now supported.
+        <FeatureInterval min="-INF" max="-90" matchid="ascent" linecolor="#020200" linewidth="16"/>
+        <FeatureInterval min="-90" max="-80" matchid="ascent" linecolor="#171004" linewidth="15"/>
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.testwmspolylinerenderer.xml")
+        update_db(env)
+
+        filename = "test_WMSPolyLineRendererFeatureIntervalMinMax.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.testwmspolylinerenderer&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=trajks_min_max_featureinterval&WIDTH=614&HEIGHT=959&CRS=EPSG%3A3857&BBOX=558568.9178586475,5277594.368541769,2039816.5167390213,7591139.071027565&STYLES=polygon_innerparts_coloured%2Fpolyline&FORMAT=image/png&TRANSPARENT=TRUE&&time=2026-05-19T12%3A00%3A00Z&elevation=800&0.9213509111711713",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)

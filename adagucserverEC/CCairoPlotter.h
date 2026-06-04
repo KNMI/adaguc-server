@@ -50,6 +50,7 @@
 #include "CColor.h"
 
 #include "COctTreeColorQuantizer.h"
+#include "Types/GeoParameters.h"
 
 #define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0
 
@@ -120,6 +121,7 @@ public:
   void circle(int x, int y, int r, float lineWidth);
   void poly(float x[], float y[], int n, bool closePath, bool fill);
   void poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill);
+  void poly(const std::vector<f8point> &polyPoints, float lineWidth, bool closePath, bool fill);
   void drawText(int x, int y, double angle, const char *text);
   void drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText = false);
 

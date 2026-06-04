@@ -7,11 +7,12 @@ The FeatureInterval element is used to confiure the styling of GeoJSON Features:
 
 -   match - Required, The regular expression to match with the attribute value
 -   matchid - Required, The attribute name to match with. The complete set of attributes per feature can be queried with GetFeatureInfo (click on the map in ADAGUCViewer).
+-   min and max - Optional, in case the attribute assigned with `matchid` is a value and not a string, min/max can be used to enable this FeatureInterval.
 -   label - Recommended, the label to display inside the legend
 -   bgcolor - Optional, the background color for the map, can only be configured in the first FeatureInterval
 -   fillcolor - Required, the color to shade.
--   borderwidth - Optional, the width used for drawing the border
--   bordercolor - Optional, the color used for drawing the border
+-   borderwidth or linewidth - Optional, the width used for drawing the border
+-   bordercolor or linecolor - Optional, the color used for drawing the border or the line
 
 It is also possible to add text labels to the displayed features. These labels can be styled with the following attributes:
 

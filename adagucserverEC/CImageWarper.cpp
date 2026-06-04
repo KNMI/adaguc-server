@@ -94,6 +94,26 @@ int CImageWarper::reprojpoint(double &dfx, double &dfy) {
 int CImageWarper::reprojpoint(f8point &p) { return reprojpoint(p.x, p.y); }
 int CImageWarper::reprojpoint_inv(f8point &p) { return reprojpoint_inv(p.x, p.y); }
 
+int CImageWarper::reprojfromLatLon(f8point &p) {
+  if (p.x < -180 || p.x > 180 || p.y < -90 || p.y > 90) {
+    p.x = 0;
+    p.y = 0;
+    return 1;
+  }
+
+  if (proj_trans_generic(projLatlonToDest, PJ_FWD, &p.x, sizeof(double), 1, &p.y, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    p.x = 0;
+    p.y = 0;
+    return 1;
+  }
+  if (std::isnan(p.x) || std::isnan(p.y || p.x == HUGE_VAL || p.y == HUGE_VAL)) {
+    p.x = 0;
+    p.y = 0;
+    return 1;
+  }
+  return 0;
+}
+
 int CImageWarper::reprojToLatLon(double &dfx, double &dfy) {
   if (proj_trans_generic(projLatlonToDest, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
     // throw("reprojfromLatLon error");

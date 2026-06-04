@@ -50,34 +50,38 @@ struct FeatureStyle {
   int padding;
 };
 
-FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
+FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleConfiguration *styleConfig) {
 
   CColor backgroundColor = CColor(0, 0, 0, 0);
-  for (auto featureIntervalCfg: styleConfig->featureIntervals) {
-    auto &featureAttr = featureIntervalCfg->attr;
+  for (const auto featureIntervalCfg: styleConfig->featureIntervals) {
+    const auto &featureAttr = featureIntervalCfg->attr;
     if (styleConfig->renderMethod == RM_POLYGON && !featureAttr.bgcolor.empty()) {
       backgroundColor = featureAttr.bgcolor.c_str();
     }
-    if (featureAttr.match.empty()) continue;
-
-    CT::string matchString = id;
     if (!featureAttr.matchid.empty()) {
-      // match on matchid
-      std::string matchId = featureAttr.matchid.c_str();
-      std::map<std::string, std::string>::iterator attributeValueItr = feature->paramMap.find(matchId);
-      if (attributeValueItr != feature->paramMap.end()) {
-        matchString = attributeValueItr->second.c_str();
+
+      // Either enable this featureinterval when match is set, or when min and max are set.
+      if (featureAttr.match.empty() && (featureAttr.min.empty() || featureAttr.max.empty())) continue;
+
+      // Find the matchId in the feature properties
+      auto attIt = feature->paramMap.find(featureAttr.matchid);
+      std::string matchString = (attIt != feature->paramMap.end()) ? attIt->second : id;
+
+      if (!featureAttr.match.empty()) {
+        // Match via regexp on match property
+        regex_t regex;
+        int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
+        if (ret) continue;
+        int status = regexec(&regex, matchString.c_str(), 0, NULL, 0);
+        regfree(&regex);
+        if (status != 0) continue;
+      }
+      if (!featureAttr.min.empty() || !featureAttr.max.empty()) {
+        // Match if value of matchString is within range of min/max
+        double attrMatchValue = atof(matchString.c_str());
+        if (attrMatchValue < atof(featureAttr.min.c_str()) || attrMatchValue >= atof(featureAttr.max.c_str())) continue;
       }
     }
-
-    // CDBDebug("getAttributesForFeature %s", matchString.c_str());
-
-    regex_t regex;
-    int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
-    if (ret) continue;
-    int status = regexec(&regex, matchString.c_str(), 0, NULL, 0);
-    regfree(&regex);
-    if (status != 0) continue;
     return {.backgroundColor = backgroundColor,
             .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
             .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((atof(featureAttr.borderwidth.c_str())) > 0)) ? atof(featureAttr.borderwidth.c_str()) : 0,
@@ -197,13 +201,11 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       if (randomStart) {
         featureRandomStart = rand() % featureStoreSize; // Random start for first feature to draw
       }
-
       for (size_t featureStepper = 0; featureStepper < featureStoreSize; featureStepper++) {
         size_t featureIndex = (featureStepper + featureRandomStart) % featureStoreSize;
         Feature *feature = featureStore[fileName][featureIndex];
         // FindAttributes for this feature
         FeatureStyle featureStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
-
         if (backgroundDrawn == false && featureStyle.backgroundColor.a > 0) {
           backgroundDrawn = true;
           drawImage->rectangle(0, 0, width, height, featureStyle.backgroundColor, featureStyle.backgroundColor);
@@ -297,34 +299,24 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         }
 
         std::vector<Polyline> *polylines = feature->getPolylines();
-        CT::string idl = feature->getId();
-        for (std::vector<Polyline>::iterator itpoly = polylines->begin(); itpoly != polylines->end(); ++itpoly) {
-          float *polyX = itpoly->getLons();
-          float *polyY = itpoly->getLats();
-          int numPoints = itpoly->getSize();
-          float *projectedX = new float[numPoints];
-          float *projectedY = new float[numPoints];
 
-          int cnt = 0;
+        for (std::vector<Polyline>::iterator itpoly = polylines->begin(); itpoly != polylines->end(); ++itpoly) {
+          auto *polyX = itpoly->getLons();
+          auto *polyY = itpoly->getLats();
+          int numPoints = itpoly->getSize();
+          std::vector<f8point> polyPoints;
+          polyPoints.reserve(numPoints);
           for (int j = 0; j < numPoints; j++) {
-            double tprojectedX = polyX[j];
-            double tprojectedY = polyY[j];
             int status = 0;
-            if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
-            int dlon, dlat;
+            f8point sourcePoint = {.x = polyX[j], .y = polyY[j]};
+            if (projectionRequired) status = imageWarper->reprojfromLatLon(sourcePoint);
             if (!status && cellSizeX > 0 && cellSizeY > 0) {
-              dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
-              dlat = int((tprojectedY - offsetY) / cellSizeY);
-              projectedX[cnt] = dlon;
-              projectedY[cnt] = height - dlat;
-              cnt++;
+              polyPoints.push_back({.x = ((sourcePoint.x - offsetX) / cellSizeX) + 1, .y = height - (sourcePoint.y - offsetY) / cellSizeY});
             }
           }
-
-          drawImage->poly(projectedX, projectedY, cnt, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, false, featureStyle.hasFill);
-          delete[] projectedX;
-          delete[] projectedY;
+          drawImage->poly(polyPoints, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, false, featureStyle.hasFill);
         }
+
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);
 #endif

@@ -723,6 +723,7 @@ struct CServerConfig : CXMLObjectInterface {
       std::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
       std::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
       std::string labelpadding;
+      std::string min, max;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("match" == attrCfg.name) {
@@ -730,6 +731,12 @@ struct CServerConfig : CXMLObjectInterface {
         return true;
       } else if ("label" == attrCfg.name) {
         attr.label = attrCfg.value;
+        return true;
+      } else if ("min" == attrCfg.name) {
+        attr.min = attrCfg.value;
+        return true;
+      } else if ("max" == attrCfg.name) {
+        attr.max = attrCfg.value;
         return true;
       } else if ("matchid" == attrCfg.name) {
         attr.matchid = attrCfg.value;
@@ -740,10 +747,10 @@ struct CServerConfig : CXMLObjectInterface {
       } else if ("bgcolor" == attrCfg.name) {
         attr.bgcolor = attrCfg.value;
         return true;
-      } else if ("borderwidth" == attrCfg.name) {
+      } else if ("borderwidth" == attrCfg.name || "linewidth" == attrCfg.name) {
         attr.borderwidth = attrCfg.value;
         return true;
-      } else if ("bordercolor" == attrCfg.name) {
+      } else if ("bordercolor" == attrCfg.name || "linecolor" == attrCfg.name) {
         attr.bordercolor = attrCfg.value;
         return true;
       } else if ("labelfontsize" == attrCfg.name) {
