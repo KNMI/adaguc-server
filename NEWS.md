@@ -1,6 +1,9 @@
-**Version 7.3.0 - 2026-05-28**
+**Version 7.3.0 - 2026-06-04**
 
-- FeatureInterval now supports min/max
+- Changed method of running behind a proxy. 
+When EXTERNALADDRESS is unset, adaguc will determine its external address based on HTTP headers: normally from the Host header, but optionally from X-Forwarded-Host, X-Forwarderd-Proto, X-Forwarded-Prefix and X-Forwarded-Port. This is useful for running adaguc behind a proxy. If an environment variable named ADAGUC_TRUSTED_PROXIES exists, that defines which trusted proxies are allowed to specify these headers. The combined result of these headers is then used as OnlineResource in for example GetCapabilities to specify the service hostname. The trusted ADAGUC_TRUSTED_HOSTS environment variable defines which hosts are allowed in the OnlineResource, which is used in the GetCapabilities document and EDR endpoints.
+- FeatureInterval now supports min/max attributes
+
 
 **Version 7.2.2 - 2026-05-11**
 
