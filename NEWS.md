@@ -1,3 +1,7 @@
+**Version 7.3.1 - 2026-06-11**
+
+- Patch correct projected transform of points from latlon
+
 **Version 7.3.0 - 2026-06-04**
 
 - Changed method of running behind a proxy. 
