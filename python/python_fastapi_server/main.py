@@ -39,6 +39,12 @@ logging.getLogger("access").propagate = False
 @app.middleware("http")
 async def add_hsts_header(request: Request, call_next):
     """Middleware to HTTP Strict Transport Security (HSTS) header"""
+    logger.info(
+        "Allowed hosts: " + str([host.strip() for host in os.environ.get("ADAGUC_TRUSTED_HOSTS", "").split(",")])
+    )
+    logger.info("URL: " + str(request.url))
+    logger.info("Host: " + str(request.headers.get("Host")))
+    logger.info("X-Forwarded headers: " + str({k: v for k, v in request.headers.items() if k.lower().startswith("x-")}))
     response = await call_next(request)
     if request.scope["scheme"] == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -52,7 +58,9 @@ allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
 if allowed_hosts is not None and len(allowed_hosts) > 0:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
 
-app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
+app.add_middleware(
+    ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1")
+)
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
