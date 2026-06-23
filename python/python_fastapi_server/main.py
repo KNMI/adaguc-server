@@ -39,12 +39,6 @@ logging.getLogger("access").propagate = False
 @app.middleware("http")
 async def add_hsts_header(request: Request, call_next):
     """Middleware to HTTP Strict Transport Security (HSTS) header"""
-    logger.info(
-        "Allowed hosts: " + str([host.strip() for host in os.environ.get("ADAGUC_TRUSTED_HOSTS", "").split(",")])
-    )
-    logger.info("URL: " + str(request.url))
-    logger.info("Host: " + str(request.headers.get("Host")))
-    logger.info("X-Forwarded headers: " + str({k: v for k, v in request.headers.items() if k.lower().startswith("x-")}))
     response = await call_next(request)
     if request.scope["scheme"] == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -76,6 +70,17 @@ async def add_process_time_header(request: Request, call_next):
         logger.log(35, str(request.query_params) + response.headers["X-Trace-Timings"])
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+@app.middleware("http")
+async def extra_logging(request: Request, call_next):
+    logger.info(
+        "Allowed hosts: " + str([host.strip() for host in os.environ.get("ADAGUC_TRUSTED_HOSTS", "").split(",")])
+    )
+    logger.info("URL: " + str(request.url))
+    logger.info("Host: " + str(request.headers.get("Host")))
+    logger.info("X-Forwarded headers: " + str({k: v for k, v in request.headers.items() if k.lower().startswith("x-")}))
+    response = await call_next(request)
     return response
 
 
