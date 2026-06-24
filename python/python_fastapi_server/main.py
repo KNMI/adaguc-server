@@ -43,7 +43,10 @@ async def extra_logging(request: Request, call_next):
     )
     logger.info("URL: " + str(request.url))
     logger.info("Host: " + str(request.headers.get("Host")))
-    logger.info("X-Forwarded headers: " + str({k: v for k, v in request.headers.items() if k.lower().startswith("x-")}))
+    logger.info("Headers: " + str(request.headers))
+    logger.info("Query Params: " + str(request.query_params))
+    logger.info("Scope: " + str(request.scope))
+    logger.info("Body: " + str(request.body()))
     response = await call_next(request)
     return response
 
@@ -91,7 +94,10 @@ async def extra_logging(request: Request, call_next):
     )
     logger.info("URL: " + str(request.url))
     logger.info("Host: " + str(request.headers.get("Host")))
-    logger.info("X-Forwarded headers: " + str({k: v for k, v in request.headers.items() if k.lower().startswith("x-")}))
+    logger.info("Headers: " + str(request.headers))
+    logger.info("Query Params: " + str(request.query_params))
+    logger.info("Scope: " + str(request.scope))
+    logger.info("Body: " + str(request.body()))
     response = await call_next(request)
     return response
 
