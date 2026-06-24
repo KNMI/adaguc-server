@@ -38,6 +38,7 @@ logging.getLogger("access").propagate = False
 
 @app.middleware("http")
 async def extra_logging(request: Request, call_next):
+    logger.info("First middleware:")
     logger.info(
         "Allowed hosts: " + str([host.strip() for host in os.environ.get("ADAGUC_TRUSTED_HOSTS", "").split(",")])
     )
@@ -47,6 +48,7 @@ async def extra_logging(request: Request, call_next):
     logger.info("Query Params: " + str(request.query_params))
     logger.info("Scope: " + str(request.scope))
     logger.info("Body: " + str(request.body()))
+    logger.info("~~~~~~~~~~~")
     response = await call_next(request)
     return response
 
@@ -89,6 +91,7 @@ async def add_process_time_header(request: Request, call_next):
 
 @app.middleware("http")
 async def extra_logging(request: Request, call_next):
+    logger.info("Last middleware:")
     logger.info(
         "Allowed hosts: " + str([host.strip() for host in os.environ.get("ADAGUC_TRUSTED_HOSTS", "").split(",")])
     )
@@ -98,6 +101,7 @@ async def extra_logging(request: Request, call_next):
     logger.info("Query Params: " + str(request.query_params))
     logger.info("Scope: " + str(request.scope))
     logger.info("Body: " + str(request.body()))
+    logger.info("#############")
     response = await call_next(request)
     return response
 
