@@ -16,7 +16,8 @@ static uint glbTotalLeaves = 0;
 static void *getMem(size_t size);
 static void MakeReducible(int level, OctreeType *node);
 static OctreeType *GetReducible(void);
-// InsertTree -- Insert a color into the octree
+
+// InsertTreeCount -- Insert a color into the octree, for a number of pixels
 //
 void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count) {
   if (*tree == (OctreeType *)NULL) {
@@ -25,11 +26,9 @@ void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count) 
 
   if ((*tree)->isleaf) {
     (*tree)->npixels += count;
-
     (*tree)->redsum += ulong(color->r) * count;
     (*tree)->greensum += ulong(color->g) * count;
     (*tree)->bluesum += ulong(color->b) * count;
-
     (*tree)->realbluesum += ulong(color->realblue) * count;
     (*tree)->realalphasum += ulong(color->realalpha) * count;
   } else {
@@ -37,6 +36,8 @@ void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count) 
   }
 }
 
+// InsertTree -- Insert a color into the octree
+//
 void InsertTree(OctreeType **tree, RGBType *color, uint depth) { InsertTreeCount(tree, color, depth, 1); }
 // ReduceTree -- Combines all the children of a node into the parent,
 // makes the parent into a leaf
@@ -162,6 +163,18 @@ int QuantizeColor(OctreeType *tree, RGBType *color) {
   }
   return QuantizeColor(tree->child[LEVEL(color, 6 - tree->level)], color);
 }
+
+// Return octree leaf containing given color. Similar as QuantizeColorMapped but non-recursive.
+OctreeType *FindLeaf(OctreeType *tree, const RGBType &color) {
+  OctreeType *node = tree;
+  while (!node->isleaf) {
+    int shift_depth = TREEDEPTH - node->level;
+    uint32_t child_idx = LEVEL(&color, shift_depth);
+    node = node->child[child_idx];
+  }
+  return node;
+}
+
 // TotalLeafNodes -- Returns the total leaves in the tree (glbTotalLeaves)
 //
 ulong TotalLeafNodes() { return glbTotalLeaves; }

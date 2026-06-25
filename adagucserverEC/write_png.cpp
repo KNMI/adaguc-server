@@ -34,60 +34,68 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
   OctreeType *tree = NULL;
 
   RGBType color;
-  bool something = false;
-  bool have_run = false;
+  bool insertedVisiblePixel = false;
+  bool has_active_run = false;
   uint32_t last_pixel = 0;
   uint run_length = 0;
 
-  auto flush_run = [&](uint32_t pixel, uint count) {
+  auto insertGroupedPixels = [&](uint32_t pixel, uint count) {
     uint8_t alpha = (pixel >> 24) & 0xFF;
     if (!use8bitpalAlpha && alpha <= 64) return;
 
-    something = true;
+    insertedVisiblePixel = true;
     color.r = (pixel >> 16) & 0xFF;
     color.g = (pixel >> 8) & 0xFF;
     color.realblue = pixel & 0xFF;
     color.realalpha = alpha;
+    // if use8bitpalAlpha, store top 3 bits of alpha + bottom 5 bits of blue
     color.b = use8bitpalAlpha ? ((color.realblue >> 3) + ((alpha >> 5) << 5)) : color.realblue;
 
     InsertTreeCount(&tree, &color, -1, count);
   };
 
+  // Instead of inserting individual pixels into the octree, group identical pixels together and add them once.
+  // This keeps palette generation identical, while reducing octree traversal.
   for (int j = 0; j < totalPixels; j++) {
     uint32_t current_pixel = src32[j];
     uint8_t alpha = (current_pixel >> 24) & 0xFF;
 
+    // Encountered transparant pixel, end current run
     if (!use8bitpalAlpha && alpha <= 64) {
-      if (have_run) {
-        flush_run(last_pixel, run_length);
-        have_run = false;
+      if (has_active_run) {
+        insertGroupedPixels(last_pixel, run_length);
+        has_active_run = false;
       }
       continue;
     }
 
-    if (!have_run) {
+    // This pixel isn't grouped together yet, start new run
+    if (!has_active_run) {
       last_pixel = current_pixel;
       run_length = 1;
-      have_run = true;
+      has_active_run = true;
       continue;
     }
 
+    // Current pixel is same as the last pixel, extend run
     if (current_pixel == last_pixel) {
       run_length++;
       continue;
     }
 
-    flush_run(last_pixel, run_length);
+    // Encountered a different pixel color, insert last run
+    insertGroupedPixels(last_pixel, run_length);
 
     last_pixel = current_pixel;
     run_length = 1;
   }
 
-  if (have_run) {
-    flush_run(last_pixel, run_length);
+  // Store the last pixels
+  if (has_active_run) {
+    insertGroupedPixels(last_pixel, run_length);
   }
 
-  if (!something) {
+  if (!insertedVisiblePixel) {
     color.r = 0;
     color.g = 0;
     color.b = 0;
@@ -112,15 +120,18 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
   StopWatch_Stop("Tree reduction completed");
 #endif
 
+  // Set PNG palette
+  int numColors = 0;
+  RGBType table[256];
+  MakePaletteTable(tree, table, &numColors);
+
+  palette[0].red = 0;
+  palette[0].green = 0;
+  palette[0].blue = 0;
+
   if (use8bitpalAlpha) {
-    int numColors = 0;
-    RGBType table[256];
-    MakePaletteTable(tree, table, &numColors);
     if (numColors > 255) numColors = 255;
     int numAlphaColors = 0;
-    palette[0].red = 0;
-    palette[0].green = 0;
-    palette[0].blue = 0;
     for (int j = 0; j < 256 && j < numColors; j++) {
       palette[j].red = table[j].r;
       palette[j].green = table[j].g;
@@ -132,13 +143,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
     png_set_PLTE(png_ptr, info_ptr, palette, numColors);
     png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
   } else {
-    int numColors = 0;
-    RGBType table[256];
-    MakePaletteTable(tree, table, &numColors);
     if (numColors > 254) numColors = 254;
-    palette[0].red = 0;
-    palette[0].green = 0;
-    palette[0].blue = 0;
     for (int j = 1; j < 256 && j < numColors + 1; j++) {
       palette[j].red = table[j - 1].r;
       palette[j].green = table[j - 1].g;
@@ -198,7 +203,8 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
     bool valid;
   };
 
-  ColorCacheEntry fast_cache[4096] = {};
+  // Small cache to avoid octree lookups
+  ColorCacheEntry color_lookup[4096] = {};
   const int stride = width * 4;
 
   unsigned char *imageBuffer = new unsigned char[width * height];
@@ -226,7 +232,8 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       uint8_t qb = use8bitpalAlpha ? ((b >> 3) + ((a >> 5) << 5)) : b;
       uint32_t key = (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(qb);
 
-      auto &entry = fast_cache[key & 4095];
+      // Most images contain many repeated colors, making octree traversal not needed.
+      auto &entry = color_lookup[key & 4095];
       if (entry.valid && entry.key == key) {
         *dst++ = entry.index;
         continue;
@@ -237,14 +244,10 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       color.g = g;
       color.b = qb;
 
-      OctreeType *node = tree;
-      while (!node->isleaf) {
-        int shift_depth = 6 - node->level;
-        uint32_t child_idx = (((color.r >> shift_depth) & 1) << 2) | (((color.g >> shift_depth) & 1) << 1) | (((color.b >> shift_depth) & 1));
-        node = node->child[child_idx];
-      }
-      unsigned char idx = node->index;
+      // Traverse octree until the leaf containing this color is reached
+      unsigned char idx = FindLeaf(tree, color)->index;
 
+      // Index 0 is reserved for transparency in non-alpha-palette mode
       if (!use8bitpalAlpha) idx += 1;
 
       entry.valid = true;
