@@ -54,7 +54,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
     InsertTreeCount(&tree, &color, -1, count);
   };
 
-  // Instead of inserting individual pixels into the octree, group identical pixels together and add them once.
+  // Instead of inserting individual pixels into the octree, group identical sequential pixels together and add them once.
   // This keeps palette generation identical, while reducing octree traversal.
   for (int j = 0; j < totalPixels; j++) {
     uint32_t current_pixel = src32[j];

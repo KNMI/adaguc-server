@@ -168,8 +168,8 @@ int QuantizeColor(OctreeType *tree, RGBType *color) {
 OctreeType *FindLeaf(OctreeType *tree, const RGBType &color) {
   OctreeType *node = tree;
   while (!node->isleaf) {
-    int shift_depth = TREEDEPTH - node->level;
-    uint32_t child_idx = LEVEL(&color, shift_depth);
+    int depth = TREEDEPTH - node->level;
+    uint32_t child_idx = (((color.r >> depth) & 1) << 2) | (((color.g >> depth) & 1) << 1) | ((color.b >> depth) & 1);
     node = node->child[child_idx];
   }
   return node;
