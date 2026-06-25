@@ -1740,8 +1740,8 @@ int CRequest::process_querystring() {
         return 1;
       }
       drawImage.crop(1);
-      const char *cacheControl = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE).c_str();
-      printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl, 13, 10);
+      auto cacheControl = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
+      printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
       drawImage.printImagePng8(true);
       return 0;
     }
