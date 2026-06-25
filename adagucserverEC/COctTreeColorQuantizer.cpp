@@ -4,6 +4,7 @@
 //
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
 
 #define COLORBITS 8
 #define TREEDEPTH 6
