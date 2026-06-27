@@ -37,9 +37,6 @@ void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count) 
   }
 }
 
-// InsertTree -- Insert a color into the octree
-//
-void InsertTree(OctreeType **tree, RGBType *color, uint depth) { InsertTreeCount(tree, color, depth, 1); }
 // ReduceTree -- Combines all the children of a node into the parent,
 // makes the parent into a leaf
 //

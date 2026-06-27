@@ -181,18 +181,11 @@ CCairoPlotter::CCairoPlotter(int width, int height, float fontSize, std::string 
   size_t bufferSize = size_t(height) * stride;
   ARGBByteBuffer = new unsigned char[bufferSize];
 
-  if (a == 0 && r == 0 && g == 0 && b == 0) {
-    std::memset(ARGBByteBuffer, 0, bufferSize);
-  } else {
-    uint32_t pixel = (a << 24) | (r << 16) | (g << 8) | b;
+  // Fill ARGBByteBuffer with desired color. It's faster to write per 32-bits pixel instead of per 8-bits color channel.
+  uint32_t pixel = (a << 24) | (r << 16) | (g << 8) | b;
+  auto *quadBuffer = reinterpret_cast<uint32_t *>(ARGBByteBuffer);
+  std::fill_n(quadBuffer, bufferSize / 4, pixel);
 
-    auto *quadBuffer = reinterpret_cast<uint32_t *>(ARGBByteBuffer);
-    size_t pixelCount = bufferSize / 4;
-
-    for (size_t i = 0; i < pixelCount; ++i) {
-      quadBuffer[i] = pixel;
-    }
-  }
   _cairoPlotterInit(width, height, fontSize, std::move(fontLocation));
 }
 

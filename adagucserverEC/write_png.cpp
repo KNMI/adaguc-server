@@ -103,7 +103,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
     color.realblue = 0;
     color.realalpha = 0;
 
-    InsertTree(&tree, &color, -1);
+    InsertTreeCount(&tree, &color, -1, 1);
   }
 #ifdef MEASURETIME
   StopWatch_Stop("Tree filled, starting reduction");
