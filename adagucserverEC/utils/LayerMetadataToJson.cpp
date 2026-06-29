@@ -46,7 +46,7 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
   }
   dataSource.requiredDims = newRequiredDims;
 
-  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, getMaxQueryLimit(dataSource), false);
+  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, -1, false);
   if (store == nullptr || store->getSize() == 0) {
     delete store;
     CDBWarning("getAllDimensionCombinationsFromDb: No results for %s", dataSource.layerName.c_str());
