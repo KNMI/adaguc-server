@@ -109,4 +109,5 @@
   "python.testing.pytestEnabled": true,
   "python.testing.cwd": "${workspaceFolder}/tests",
   "black-formatter.args": ["--config", "${workspaceFolder}/pyproject.toml"],
+  "C_Cpp.default.cppStandard": "c++20",
 }
