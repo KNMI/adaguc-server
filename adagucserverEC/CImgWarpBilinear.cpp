@@ -161,8 +161,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   ValueClass *valObj = new ValueClass[sourceImage->getNumDataObjects()];
   for (size_t dNr = 0; dNr < sourceImage->getNumDataObjects(); dNr++) {
 #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Allocating valObj[%d].fpValues: numDestPixels %d x %d", dNr, dPixelDestW, dPixelDestH);
-    CDBDebug("Allocating valObj[%d].valueData: imageSize %d x %d", dNr, dImageWidth, dImageHeight);
+    CDBDebug("Allocating valObj[%ld].fpValues: numDestPixels %d x %d", dNr, dPixelDestW, dPixelDestH);
+    CDBDebug("Allocating valObj[%ld].valueData: imageSize %d x %d", dNr, dImageWidth, dImageHeight);
 #endif
     valObj[dNr].fpValues = new float[numDestPixels];
     valObj[dNr].valueData = new float[dImageWidth * dImageHeight];
