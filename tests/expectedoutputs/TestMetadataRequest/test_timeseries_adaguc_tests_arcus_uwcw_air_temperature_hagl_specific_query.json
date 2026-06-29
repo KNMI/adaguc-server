@@ -15,12 +15,12 @@
         "member": {
           "cdfName": "member",
           "defaultValue": "1",
-          "hasMultipleValues": 0,
+          "hasMultipleValues": 1,
           "hidden": false,
           "serviceName": "member",
           "type": "dimtype_custom",
-          "units": "ISO8601",
-          "values": "1/5/P"
+          "units": "-",
+          "values": "1,2,3,4,5"
         },
         "reference_time": {
           "cdfName": "forecast_reference_time",

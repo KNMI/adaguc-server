@@ -25,7 +25,7 @@
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="temp_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
-    <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
+    <Dimension name="member" units="-" default="min" type="custom" hidden="false">member</Dimension>
   </Layer>
 
 

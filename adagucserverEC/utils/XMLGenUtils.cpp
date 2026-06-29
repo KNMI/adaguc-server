@@ -420,6 +420,11 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
   std::vector<tm> tms(timeStampList.size());
   size_t timeIndex = 0;
   for (const auto &timeStamp: timeStampList) {
+    if (!checkTimeFormat(timeStamp)) {
+      // If one of the timestamps does not make sense, we cannot generate an interval. In that case return an empty string.
+      return "";
+    }
+
     const char *isotime = timeStamp.c_str();
     CT::string year, month, day, hour, minute, second;
     if (timeStamp.length() > 4) {
@@ -581,7 +586,7 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == ("time") || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == ("ISO8601")))) {
+  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
     return timeStampList;
   }
   // Get the tablename
@@ -621,8 +626,8 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
     if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name == ("none")) break;
     if (cfgDim->attr.interval.empty()) {
       const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
-      const auto &timeList = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
-      const auto &interval = makeIntervalFromTimeList(timeList);
+      const auto &dimValues = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
+      const auto &interval = makeIntervalFromTimeList(dimValues);
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;
