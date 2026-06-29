@@ -120,6 +120,14 @@ public:
   CT::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table);
+
+  /**
+   * Returns a pointer to a store with files and their corresponding indices
+   * @param dataSource: to query
+   * @param limit: the max query limit, use -1 to avoid using a limit
+   * @param raiseExceptionWhenOverLimit: set to true to raise an exception when limit is reached
+   * @return Returns a pointer to a store with files and their corresponding indices
+   */
   CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit, bool raiseExceptionWhenOverLimit);
   CDBStore::Store *getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *stride, int limit);
 

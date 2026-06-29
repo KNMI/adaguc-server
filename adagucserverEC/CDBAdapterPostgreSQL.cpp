@@ -476,11 +476,13 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     query.printconcat(", %s", dataSource->requiredDims[i].netCDFDimName.c_str());
   }
 
-  if (raiseExceptionWhenOverLimit) {
-    // We limit on `maxquery limit` + 1 and we'll check if we reached it later
-    query.printconcat(" LIMIT %d", limit + 1);
-  } else {
-    query.printconcat(" LIMIT %d", limit);
+  if (limit > 0) {
+    if (raiseExceptionWhenOverLimit) {
+      // We limit on `maxquery limit` + 1 and we'll check if we reached it later
+      query.printconcat(" LIMIT %d", limit + 1);
+    } else {
+      query.printconcat(" LIMIT %d", limit);
+    }
   }
 
   // Execute the query
@@ -492,7 +494,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
-  if (raiseExceptionWhenOverLimit) {
+  if (raiseExceptionWhenOverLimit && limit > 0) {
     if (int(store->size()) > limit) {
       delete store;
       CDBError("Requested data exceeded maxquerylimit=%d", limit);

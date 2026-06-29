@@ -1,6 +1,6 @@
 {
   "adaguc.tests.arcus_uwcw": {
-    "air_temperature_hagl": {
+    "air_temperature_hagl_with_limit": {
       "dims": {
         "height_above_ground_level_in_m": {
           "cdfName": "temp_at_hagl",
@@ -14,13 +14,13 @@
         },
         "member": {
           "cdfName": "member",
-          "defaultValue": "5",
+          "defaultValue": "1",
           "hasMultipleValues": 1,
           "hidden": false,
           "serviceName": "member",
           "type": "dimtype_custom",
-          "units": "NA",
-          "values": "5"
+          "units": "-",
+          "values": "1,2,3,4,5"
         },
         "reference_time": {
           "cdfName": "forecast_reference_time",
@@ -48,12 +48,7 @@
         "collection": "hagl_member",
         "enable_edr": true,
         "gridspec": {
-          "bbox": [
-            -0.014499999999999957,
-            48.99100000000001,
-            11.2955,
-            56.011
-          ],
+          "bbox": [-0.014499999999999957, 48.99100000000001, 11.2955, 56.011],
           "cellsizex": 2.262,
           "cellsizey": -1.404,
           "height": 5,
@@ -63,14 +58,11 @@
         "hidden": false,
         "isqueryable": 1,
         "latlonbox": [
-          -0.014499999999999957,
-          48.99100000000001,
-          11.2955,
-          56.011
+          -0.014499999999999957, 48.99100000000001, 11.2955, 56.011
         ],
-        "layername": "air_temperature_hagl",
+        "layername": "air_temperature_hagl_with_limit",
         "nativeepsg": "PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs",
-        "title": "UWCW_HA43ENS(NL) Air temperature at 2 m",
+        "title": "UWCW_HA43ENS(NL) Air temperature at 2 m with max query limit",
         "variables": [
           {
             "label": "Air temperature at height above ground level",

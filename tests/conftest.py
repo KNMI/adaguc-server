@@ -205,4 +205,4 @@ def run_adaguc_and_compare_json(env, filename, query_string, expected_status_cod
     )
     assert status == expected_status_code
     AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data)
-    AdagucTestTools().compareJson(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
+    assert AdagucTestTools().compareJson(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)

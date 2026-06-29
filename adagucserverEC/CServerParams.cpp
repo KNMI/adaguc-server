@@ -275,26 +275,13 @@ int checkDataRestriction() {
   return dataRestriction;
 }
 
-const char *timeFormatAllowedChars = "0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
-
+const std::string timeFormatAllowedCharsString = "0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
+// Checks if time is an iso time format
+// 2024-05-25T08:00:00Z or 2024-05-25T08:00:00, '*' is also allowed.
 bool checkTimeFormat(const std::string &timeToCheck) {
-  if (timeToCheck.length() < 1) return false;
-  //  bool isValidTime = false;
-  // First test wether invalid characters are in this string
-  int numValidChars = strlen(timeFormatAllowedChars);
-  const char *timeChars = timeToCheck.c_str();
-  int numTimeChars = strlen(timeChars);
-  for (int j = 0; j < numTimeChars; j++) {
-    int i = 0;
-    for (i = 0; i < numValidChars; i++)
-      if (timeChars[j] == timeFormatAllowedChars[i]) break;
-    if (i == numValidChars) return false;
-  }
-  return true;
-  /*for(int j=0;j<NUMTIMEFORMATS&&isValidTime==false;j++){
-    isValidTime = timeToCheck.testRegEx(timeFormats[j].pattern);
-  }
-  return isValidTime;*/
+  if (timeToCheck == "*") return true;
+  if (timeToCheck.length() < 18 || timeToCheck.at(10) != 'T') return false;
+  return timeToCheck.find_first_not_of(timeFormatAllowedCharsString) == std::string::npos;
 }
 
 int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
