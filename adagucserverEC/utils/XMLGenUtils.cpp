@@ -8,6 +8,7 @@
 #include "LayerUtils.h"
 #include <sstream>
 #include "CRequestUtils.h"
+#include <timeutils.h>
 
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->readFromDb = readFromDB;
@@ -412,161 +413,13 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   return dim;
 }
 
-std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList) {
-  bool verboseLog = false;
-  if (timeStampList.size() < 2) {
+std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList, size_t limit) {
+
+  if (timeStampList.size() < limit) {
     return "";
   }
-  std::vector<tm> tms(timeStampList.size());
-  size_t timeIndex = 0;
-  for (const auto &timeStamp: timeStampList) {
-    if (!checkTimeFormat(timeStamp)) {
-      // If one of the timestamps does not make sense, we cannot generate an interval. In that case return an empty string.
-      return "";
-    }
 
-    const char *isotime = timeStamp.c_str();
-    CT::string year, month, day, hour, minute, second;
-    if (timeStamp.length() > 4) {
-      year.copy(isotime + 0, 4);
-      tms[timeIndex].tm_year = year.toInt() - 1900;
-    } else {
-      tms[timeIndex].tm_year = 0;
-    }
-    if (timeStamp.length() > 5) {
-      month.copy(isotime + 5, 2);
-      tms[timeIndex].tm_mon = month.toInt() - 1;
-    } else {
-      tms[timeIndex].tm_mon = 0;
-    }
-    if (timeStamp.length() > 8) {
-      day.copy(isotime + 8, 2);
-      tms[timeIndex].tm_mday = day.toInt();
-    } else {
-      tms[timeIndex].tm_mday = 0;
-    }
-    if (timeStamp.length() > 11) {
-      hour.copy(isotime + 11, 2);
-      tms[timeIndex].tm_hour = hour.toInt();
-    } else {
-      tms[timeIndex].tm_hour = 0;
-    }
-    if (timeStamp.length() > 14) {
-      minute.copy(isotime + 14, 2);
-      tms[timeIndex].tm_min = minute.toInt();
-    } else {
-      tms[timeIndex].tm_min = 0;
-    }
-    if (timeStamp.length() > 17) {
-      second.copy(isotime + 17, 2);
-      tms[timeIndex].tm_sec = second.toInt();
-    } else {
-      tms[timeIndex].tm_sec = 0;
-    }
-    timeIndex++;
-  }
-
-  try {
-
-    size_t nrTimes = tms.size() - 1;
-    bool isConst = true;
-    if (nrTimes < 4) {
-      isConst = false;
-    }
-
-    CT::string iso8601timeRes = "P";
-    CT::string yearPart = "";
-    CT::string hourPart = "";
-    if (nrTimes >= 1) {
-      if (tms[1].tm_year - tms[0].tm_year != 0) {
-        if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
-          yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
-        } else {
-          isConst = false;
-          if (verboseLog) {
-            CDBDebug("year is irregular");
-          }
-        }
-      }
-      if (tms[1].tm_mon - tms[0].tm_mon != 0) {
-        if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
-          yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
-        else {
-          isConst = false;
-          if (verboseLog) {
-            CDBDebug("month is irregular");
-          }
-        }
-      }
-
-      if (tms[1].tm_mday - tms[0].tm_mday != 0) {
-        if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
-          yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
-        else {
-          isConst = false;
-          if (verboseLog) {
-            CDBDebug("day irregular");
-            for (size_t j = 0; j < nrTimes; j++) {
-              CDBDebug("Day %lu = %d", j, tms[j].tm_mday);
-            }
-          }
-        }
-      }
-
-      if (tms[1].tm_hour - tms[0].tm_hour != 0) {
-        hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
-      }
-      if (tms[1].tm_min - tms[0].tm_min != 0) {
-        hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
-      }
-      if (tms[1].tm_sec - tms[0].tm_sec != 0) {
-        hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
-      }
-
-      int sd = (tms[1].tm_hour * 3600 + tms[1].tm_min * 60 + tms[1].tm_sec) - (tms[0].tm_hour * 3600 + tms[0].tm_min * 60 + tms[0].tm_sec);
-      for (size_t j = 2; j < tms.size() && isConst; j++) {
-        int d = (tms[j].tm_hour * 3600 + tms[j].tm_min * 60 + tms[j].tm_sec) - (tms[j - 1].tm_hour * 3600 + tms[j - 1].tm_min * 60 + tms[j - 1].tm_sec);
-        if (d > 0) {
-          if (sd != d) {
-            isConst = false;
-            if (verboseLog) {
-              CDBDebug("hour/min/sec is irregular %lu ", j);
-            }
-          }
-        }
-      }
-    }
-
-    // Check whether we found a time resolution
-    if (isConst == false) {
-
-      if (verboseLog) {
-        CDBDebug("Not a continous time dimension, multipleValues required");
-      }
-      return "";
-    } else {
-      if (verboseLog) {
-        CDBDebug("Continous time dimension, Time resolution needs to be calculated");
-      }
-    }
-
-    if (isConst) {
-      if (yearPart.length() > 0) {
-        iso8601timeRes.concat(&yearPart);
-      }
-      if (hourPart.length() > 0) {
-        iso8601timeRes.concat("T");
-        iso8601timeRes.concat(&hourPart);
-      }
-      if (verboseLog) {
-        CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
-      }
-      return iso8601timeRes;
-    }
-  } catch (int e) {
-  }
-
-  return "";
+  return estimateISO8601Duration(timeStampList, 1);
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {

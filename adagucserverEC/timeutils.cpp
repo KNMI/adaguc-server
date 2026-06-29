@@ -75,19 +75,19 @@ TimeInterval calculateTimeInterval(const CTime::Date &start, const CTime::Date &
   return interval;
 }
 
-CT::string toISO8601Interval(const TimeInterval &interval) {
+std::string toISO8601Interval(const TimeInterval &interval) {
   // Start with the period 'P'
-  CT::string result("P");
+  std::string result = "P";
 
   // Append years, months, or days if present
   if (interval.years > 0) {
-    result.printconcat("%dY", interval.years);
+    CT::printfconcat(result, "%dY", interval.years);
   }
   if (interval.months > 0) {
-    result.printconcat("%dM", interval.months);
+    CT::printfconcat(result, "%dM", interval.months);
   }
   if (interval.days > 0) {
-    result.printconcat("%dD", interval.days);
+    CT::printfconcat(result, "%dD", interval.days);
   }
 
   // Add hour part T if there are hours, minutes, or seconds
@@ -95,13 +95,13 @@ CT::string toISO8601Interval(const TimeInterval &interval) {
     result += "T";
 
     if (interval.hours > 0) {
-      result.printconcat("%dH", interval.hours);
+      CT::printfconcat(result, "%dH", interval.hours);
     }
     if (interval.minutes > 0) {
-      result.printconcat("%dM", interval.minutes);
+      CT::printfconcat(result, "%dM", interval.minutes);
     }
     if (interval.seconds > 0) {
-      result.printconcat("%dS", interval.seconds);
+      CT::printfconcat(result, "%dS", interval.seconds);
     }
   }
   return result;
@@ -110,9 +110,9 @@ CT::string toISO8601Interval(const TimeInterval &interval) {
 // Heuristic estimation of duration in ISO8601 format, given an array of timestamps
 // Checks that a consistent interval is (generally found), with room for inaccuracies (holes in data)
 // controlled by the threshold argument.
-CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, double threshold) {
+std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, double threshold) {
   // Size considered too small to find a pattern
-  if (timestamps.size() < 4) return CT::string("");
+  if (timestamps.size() < 4) return "";
 
   std::vector<TimeInterval> intervals;
 
@@ -120,7 +120,7 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
 
   // Parse all timestamps into tm structs
   std::vector<CTime::Date> parsedTimes;
-  for (const auto &timestamp : timestamps) {
+  for (const auto &timestamp: timestamps) {
     parsedTimes.push_back(ctime->ISOStringToDate(timestamp.c_str()));
   }
 
@@ -133,7 +133,7 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
 
   // Count occurrences of each interval in terms of total seconds
   std::map<TimeInterval, int> intervalFrequency;
-  for (const auto &interval : intervals) {
+  for (const auto &interval: intervals) {
     intervalFrequency[interval]++;
   }
 
@@ -146,6 +146,7 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
   // If the smallest interval is not the most frequent, we do not have a regular interval
   if (!(smallestInterval == mostFrequentInterval)) return "";
 
+  CDBDebug("T!!!! = %f %f", (double(mostFrequentIntervalInfo.second) / double(timestamps.size() - 1)), threshold);
   // Otherwise, it is possible we have some missing data. Check if frequency is over threshold
   if ((double(mostFrequentIntervalInfo.second) / double(timestamps.size() - 1)) >= threshold) {
     // We return the interval corresponding to this estimation

@@ -25,4 +25,6 @@ int getTitleForLayer(MetadataLayer *metadataLayer);
 int getFileNameForLayer(MetadataLayer *metadataLayer);
 bool multiTypeSort(const CT::string &a, const CT::string &b);
 int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList);
+
+std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList, size_t limit = 5);
 #endif
