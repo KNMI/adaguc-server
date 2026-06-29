@@ -146,8 +146,7 @@ std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, 
   // If the smallest interval is not the most frequent, we do not have a regular interval
   if (!(smallestInterval == mostFrequentInterval)) return "";
 
-  CDBDebug("T!!!! = %f %f", (double(mostFrequentIntervalInfo.second) / double(timestamps.size() - 1)), threshold);
-  // Otherwise, it is possible we have some missing data. Check if frequency is over threshold
+    // Otherwise, it is possible we have some missing data. Check if frequency is over threshold
   if ((double(mostFrequentIntervalInfo.second) / double(timestamps.size() - 1)) >= threshold) {
     // We return the interval corresponding to this estimation
     return toISO8601Interval(mostFrequentInterval);
