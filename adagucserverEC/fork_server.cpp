@@ -21,11 +21,10 @@ See also: doc/fork_server.md
 
 // Check this many seconds for old left-over processes
 const int CHECK_CHILD_PROC_INTERVAL = 30;
-// Allow a backlog of this many connections. Uses `ADAGUC_NUMPARALLELPROCESSES` env var.
-const int DEFAULT_QUEUED_CONNECTIONS = 4 * 32;
-// Old left-over child process should be killed after this many seconds. Uses `ADAGUC_MAX_PROC_TIMEOUT` env var.
-// const int DEFAULT_MAX_PROC_TIMEOUT = 300;
-const int MAX_CHILD_PROC_TIMEOUT = 120;
+// Default for ADAGUC_NUMPARALLELPROCESSES, matches the python default
+const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
+// Default for ADAGUC_MAX_PROC_TIMEOUT, matches the python default.
+const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 180;
 
 typedef struct {
   int child_socket_fd;
@@ -35,10 +34,22 @@ typedef struct {
 static std::map<pid_t, child_proc_t> child_procs;
 int self_pipe[2];
 
-
 int mother_get_env_var_int(const char *env, int default_val) {
   CT::string env_var(getenv(env));
-  return env_var.isInt() ? env_var.toInt() : default_val;
+  if (!env_var.isInt()) return default_val;
+  int value = env_var.toInt();
+  return value > 0 ? value : default_val;
+}
+
+/**
+ * Set the filedescriptor for the "self-pipe" to non-blocking
+ *
+ * @param fd The file descriptor
+ */
+int mother_set_fd_nonblocking(int fd) {
+  int flags = fcntl(fd, F_GETFL, 0);
+  if (flags == -1) return 1;
+  return fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1;
 }
 
 /**
@@ -53,13 +64,12 @@ int mother_get_env_var_int(const char *env, int default_val) {
  * @param request A string view containing the environment variable definitions,
  *                each on a separate line.
  */
-void child_set_env_from_request(const std::string_view& request) {
+void child_set_env_from_request(const std::string_view &request) {
   size_t start = 0;
 
   while (start < request.size()) {
     size_t end = request.find('\n', start);
-    if (end == std::string::npos)
-      end = request.size();
+    if (end == std::string::npos) end = request.size();
 
     std::string_view line(request.data() + start, end - start);
 
@@ -103,9 +113,9 @@ void child_handle_client(int child_socket_fd, int (*run_adaguc_once)(int, char *
 
   std::string_view request_view(recv_buf.data(), data_recv);
   if (request_view.starts_with("PING")) {
-      std::string_view resp = "PONG\n";
-      send(child_socket_fd, resp.data(), resp.size(), 0);
-      exit(0);
+    std::string_view resp = "PONG\n";
+    send(child_socket_fd, resp.data(), resp.size(), 0);
+    exit(0);
   }
 
   // The request will contain environment variables. Parse and set these for the child process
@@ -132,11 +142,15 @@ void child_handle_client(int child_socket_fd, int (*run_adaguc_once)(int, char *
  * To safely notify the main process, this handler writes a single byte to the self-pipe, which the main select loop
  * monitors. The main loop is then responsible for calling `waitpid` and handling the actual child exit events.
  *
+ * If the pipe is full, write() can fail with EAGAIN. Ignoring the error is fine because a wakeup is already pending
+ * and the main loop reaps all exited children.
+ *
  * @param Unused signal number (required by the signal handler signature).
  */
 void mother_signal_handler_for_children(int) {
   char buf = 1;
-  write(self_pipe[1], &buf, 1);
+  ssize_t result = write(self_pipe[1], &buf, 1);
+  (void)result;
 }
 
 /**
@@ -166,7 +180,7 @@ void mother_handle_child_exited_events() {
   while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
     auto node = child_procs.extract(pid);
     if (!node.empty()) {
-      auto& [child_socket_fd, forked_at] = node.mapped();
+      auto &[child_socket_fd, forked_at] = node.mapped();
       int child_status;
 
       if (WIFEXITED(status))
@@ -187,12 +201,12 @@ void mother_handle_child_exited_events() {
  * Terminates child processes that have exceeded the maximum allowed runtime.
  *
  * Iterates over all entries in `child_procs` and compares the current time against the recorded `forked_at` timestamp for each child.
- * If a child has been running longer than `MAX_CHILD_PROC_TIMEOUT`, it is forcefully terminated using `SIGKILL`.
+ * If a child has been running longer than `max_child_proc_timeout`, it is forcefully terminated using `SIGKILL`.
  */
-void mother_kill_old_child_procs() {
+void mother_kill_old_child_procs(int max_child_proc_timeout) {
   time_t now = time(NULL);
   for (auto it = child_procs.begin(); it != child_procs.end(); ++it) {
-    if (difftime(now, it->second.forked_at) > MAX_CHILD_PROC_TIMEOUT) {
+    if (difftime(now, it->second.forked_at) > max_child_proc_timeout) {
       kill(it->first, SIGKILL);
     }
   }
@@ -224,8 +238,11 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     perror("pipe");
     return 1;
   }
-  // Make self-pipe non-blocking, so we can read until there are no bytes left
-  fcntl(self_pipe[0], F_SETFL, O_NONBLOCK);
+  // Make self-pipe non-blocking, so reads can drain it and signal-handler writes never block.
+  if (mother_set_fd_nonblocking(self_pipe[0]) != 0 || mother_set_fd_nonblocking(self_pipe[1]) != 0) {
+    CDBError("Error setting self-pipe non-blocking");
+    return 1;
+  }
 
   // Create a signal handler for all children (all received SIGCHLD signals)
   // Signal mask is empty, meaning no additional signals are blocked while the handler is executed
@@ -261,10 +278,14 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     return 1;
   }
 
-  // Start listening on the socket. Can have `max_pending_connections` number of connections queued.
-  int max_pending_connections = mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_QUEUED_CONNECTIONS);
-  CDBDebug("Max pending connections: %d", max_pending_connections);
-  if (listen(listen_socket, max_pending_connections) != 0) {
+  // Keep one extra child slot above the request limit so ping messages can still be handled when Python's request semaphore is full.
+  int max_child_procs = mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES) + 1;
+  int max_child_proc_timeout = mother_get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_CHILD_PROC_TIMEOUT);
+  CDBDebug("Max child processes: %d", max_child_procs);
+  CDBDebug("Max child process timeout: %d", max_child_proc_timeout);
+
+  // Start listening on the socket. Can only accept `max_child_procs` number of children.
+  if (listen(listen_socket, max_child_procs) != 0) {
     CDBError("Error on listen call");
     return 1;
   }
@@ -276,8 +297,13 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     // fd_set is modified by select(); reinitialize it each loop to monitor listen_socket and self_pipe again
     fd_set readfds;
     FD_ZERO(&readfds);
-    FD_SET(listen_socket, &readfds);
     FD_SET(self_pipe[0], &readfds);
+
+    // Only wake on select if forkserver is able to handle new connections.
+    bool can_accept_child = child_procs.size() < static_cast<size_t>(max_child_procs);
+    if (can_accept_child) {
+      FD_SET(listen_socket, &readfds);
+    }
 
     int maxfd = std::max(listen_socket, self_pipe[0]);
 
@@ -297,8 +323,8 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     // Check for dead processes
     time_t now = time(NULL);
     if (now - last_cleanup >= CHECK_CHILD_PROC_INTERVAL) {
-        mother_kill_old_child_procs();
-        last_cleanup = now;
+      mother_kill_old_child_procs(max_child_proc_timeout);
+      last_cleanup = now;
     }
 
     // Only run if there is activity on the self_pipe (to handle exit events)
@@ -307,7 +333,7 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     }
 
     // Only run if there is activity on the listen_socket (to handle the WMS requests)
-    if (FD_ISSET(listen_socket, &readfds)) {
+    if (can_accept_child && FD_ISSET(listen_socket, &readfds)) {
       socklen_t sock_len = sizeof(remote);
 
       // Once someone connects to the unix socket, immediately fork and execute the client request in `child_handle_client`
@@ -317,7 +343,7 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
       pid_t pid = fork();
 
       // `fork` returns 0 for the child process, and returns the child pid to the mother process
-      // Both if/else if paths are taken. Mother process takes pid > 0, child process takes pid == 0.
+      // Both if/else paths are taken. Mother process takes pid > 0, child process takes pid == 0.
       if (pid == 0) {
         // Child process handles request. Communication with python happens through `child_socket_fd`
         close(listen_socket);

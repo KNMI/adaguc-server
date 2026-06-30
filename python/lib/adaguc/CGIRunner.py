@@ -8,11 +8,10 @@ import os
 import re
 import sys
 from asyncio.subprocess import Process
-from io import BytesIO
 from subprocess import PIPE
 from typing import NamedTuple
 
-from adaguc.fork_settings import ADAGUC_FORK_SOCKET_PATH, is_fork_enabled
+from adaguc.fork_settings import get_fork_socket_path, is_fork_enabled
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
@@ -40,7 +39,7 @@ class AdagucResponse(NamedTuple):
     process_error: bytes
 
 
-async def wait_socket_communicate(url: str, env: dict, timeout) -> AdagucResponse:
+async def wait_socket_communicate(url: str, env: dict[str, str], timeout: float | None) -> AdagucResponse:
     """
     Call `socket_communicate` with a timeout.
 
@@ -57,7 +56,7 @@ async def wait_socket_communicate(url: str, env: dict, timeout) -> AdagucRespons
     return resp
 
 
-async def socket_communicate(url: str, env: dict) -> AdagucResponse:
+async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     """
     Send a request to the ADAGUC fork server through a Unix socket.
 
@@ -66,7 +65,7 @@ async def socket_communicate(url: str, env: dict) -> AdagucResponse:
     """
 
     process_output = bytearray()
-    reader, writer = await asyncio.open_unix_connection(ADAGUC_FORK_SOCKET_PATH)
+    reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
 
     data = [
         f"ADAGUC_LOGFILE={env['ADAGUC_LOGFILE']}",
@@ -91,44 +90,38 @@ async def socket_communicate(url: str, env: dict) -> AdagucResponse:
     return AdagucResponse(status_code=status_code, process_output=process_output, process_error=b"")
 
 
-async def wait_process_communicate(cmds: list[str], localenv: dict, timeout) -> AdagucResponse:
+async def wait_process_communicate(cmds: list[str], localenv: dict[str, str], timeout: float | None) -> AdagucResponse:
     """
     Spawn an adagucserver process and wait for completion with a timeout.
 
     If the process does not finish within `timeout`, it is terminated and a timeout response is returned.
     """
 
-    # process: Process | None = None
+    # Keep process creation in this scope so the timeout handler can terminate it.
+    process = await asyncio.create_subprocess_exec(*cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
 
     try:
-        process = None
-        resp = await asyncio.wait_for(process_communicate(process, cmds, localenv), timeout=timeout)
+        resp = await asyncio.wait_for(process_communicate(process), timeout=timeout)
     except asyncio.exceptions.TimeoutError:
-        if process:
-            process.kill()
-            await process.communicate()
-
-        return AdagucResponse(status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None, process_error=b"")
+        process.kill()
+        await process.communicate()
+        return AdagucResponse(
+            status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None, process_error=b"Adaguc server process timed out"
+        )
     return resp
 
 
-async def process_communicate(process: Process, cmds, localenv) -> AdagucResponse:
+async def process_communicate(process: Process) -> AdagucResponse:
     """
     Wait for a subprocess to finish and collect its output.
 
     The process stdout is returned as the response body, and the subprocess exit code is returned as the status code.
     """
 
-    process = await asyncio.create_subprocess_exec(
-        *cmds,
-        stdout=PIPE,
-        stderr=PIPE,
-        env=localenv,
-        close_fds=ON_POSIX,
-    )
-
     process_output, process_error = await process.communicate()
-    status = await process.wait()
+    status = process.returncode
+    if status is None:
+        status = await process.wait()
 
     return AdagucResponse(status_code=status, process_output=process_output, process_error=process_error)
 

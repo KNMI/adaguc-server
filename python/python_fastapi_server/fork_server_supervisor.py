@@ -1,12 +1,11 @@
 import asyncio
 import logging
-import socket
 import os
 import signal
 
 from configure_logging import configure_logging
 from adaguc.runAdaguc import runAdaguc
-from adaguc.fork_settings import ADAGUC_FORK_SOCKET_PATH
+from adaguc.fork_settings import get_fork_socket_path
 
 configure_logging(logging)
 logger = logging.getLogger(__name__)
@@ -70,17 +69,22 @@ class ForkServerSupervisor:
         await self.stop_process()
         await self.start_process()
 
-    def health_check_mother(self, timeout=10) -> bool:
+    async def health_check_mother(self, timeout: float = 1.0) -> bool:
         """Check forkserver health via UNIX socket ping."""
 
         try:
-            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-                s.settimeout(timeout)
-                s.connect(ADAGUC_FORK_SOCKET_PATH)
-                s.sendall(b"PING\n")
-                data = s.recv(1024)
-                return data.strip() == b"PONG"
-        except Exception:
+            # Use asyncio socket IO so the health check never blocks the FastAPI event loop.
+            async with asyncio.timeout(timeout):
+                reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
+                try:
+                    writer.write(b"PING\n")
+                    await writer.drain()
+                    data = await reader.readline()
+                    return data.strip() == b"PONG"
+                finally:
+                    writer.close()
+                    await writer.wait_closed()
+        except OSError, asyncio.TimeoutError:
             return False
 
     async def _loop(self):
@@ -96,7 +100,7 @@ class ForkServerSupervisor:
                     await self.start_process()
 
                 # Health check
-                elif not self.health_check_mother():
+                elif not await self.health_check_mother():
                     await self.restart_process()
 
                 await asyncio.sleep(self.interval)
