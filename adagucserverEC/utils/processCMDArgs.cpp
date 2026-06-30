@@ -40,6 +40,7 @@ static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
 int processCMDArgs(int argc, char **argv, char **) {
 
   /* Initialize error functions */
+
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
