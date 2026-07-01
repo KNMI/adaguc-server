@@ -109,9 +109,9 @@ int storemetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer) {
   return 0;
 }
 
-CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metadataKey) {
-  CT::string layerName = metadataLayer->dataSource->getLayerName();
-  CT::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
+std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, std::string metadataKey) {
+  std::string layerName = metadataLayer->dataSource->getLayerName();
+  std::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
   if (datasetName.empty()) {
     // CDBDebug("Not a dataset");
     return "";
@@ -122,7 +122,7 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
   }
   auto &records = layerMetaDataStore->records;
   for (auto record: records) {
-    if (record.get("layername") == layerName.c_str() && record.get("metadatakey") == metadataKey.c_str()) {
+    if (record.get("layername") == layerName && record.get("metadatakey") == metadataKey) {
 #ifdef MEASURETIME
       StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
@@ -137,14 +137,14 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
   throw __LINE__;
 }
 
-int storeLayerMetadataInDb(MetadataLayer *metadataLayer, CT::string metadataKey, std::string metadataBlob) {
+int storeLayerMetadataInDb(MetadataLayer *metadataLayer, std::string metadataKey, std::string metadataBlob) {
   try {
-    CT::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
+    std::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
     if (datasetName.empty()) {
       CDBDebug("Not a dataset");
       return 1;
     }
-    CT::string layerName = metadataLayer->dataSource->getLayerName();
+    std::string layerName = metadataLayer->dataSource->getLayerName();
 
     return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName.c_str(), layerName.c_str(), metadataKey.c_str(), metadataBlob.c_str());
   } catch (int e) {
@@ -174,12 +174,12 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     return 1;
   }
   try {
-    CT::string layerMetadataAsJson = getLayerMetadataFromDb(metadataLayer, "layermetadata");
+    std::string layerMetadataAsJson = getLayerMetadataFromDb(metadataLayer, "layermetadata");
     if (layerMetadataAsJson.empty()) {
       return 1;
     }
     json a;
-    auto i = a.parse(layerMetadataAsJson.c_str());
+    auto i = a.parse(layerMetadataAsJson);
     metadataLayer->layerMetadata.name = i["layername"].get<std::string>();
     metadataLayer->layerMetadata.title = i["title"].get<std::string>();
     metadataLayer->layerMetadata.wmsgroup = i["wmsgroup"].get<std::string>();
@@ -248,12 +248,12 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
     return 1;
   }
   try {
-    CT::string projInfo = getLayerMetadataFromDb(metadataLayer, "projected_extents");
+    std::string projInfo = getLayerMetadataFromDb(metadataLayer, "projected_extents");
     if (projInfo.empty()) {
       return 1;
     }
     json a;
-    auto c = json::parse(projInfo.c_str());
+    auto c = json::parse(projInfo);
     for (const auto &d: c.items()) {
       auto bboxArray = d.value();
       double bbox[4] = {
@@ -306,13 +306,13 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
   }
   try {
 
-    CT::string styleListAsJson = getLayerMetadataFromDb(metadataLayer, "stylelist");
+    std::string styleListAsJson = getLayerMetadataFromDb(metadataLayer, "stylelist");
     if (styleListAsJson.empty()) {
       return 1;
     }
 
     json a;
-    auto c = a.parse(styleListAsJson.c_str());
+    auto c = a.parse(styleListAsJson);
 
     for (auto styleJson: c.items()) {
       auto styleProperties = styleJson.value();
@@ -356,13 +356,13 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
     return 1;
   }
   try {
-    CT::string dimensionListAsJson = getLayerMetadataFromDb(metadataLayer, "dimensionlist");
+    std::string dimensionListAsJson = getLayerMetadataFromDb(metadataLayer, "dimensionlist");
     if (dimensionListAsJson.empty()) {
       return 1;
     }
 
     json a;
-    auto c = a.parse(dimensionListAsJson.c_str());
+    auto c = a.parse(dimensionListAsJson);
 
     for (auto d: c.items()) {
       auto dimensionProperties = d.value();
