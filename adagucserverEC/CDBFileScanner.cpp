@@ -927,7 +927,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, std::string _tailPath, std
       CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
     }
     std::string fileToCheckAgainstRegexp = CT::basename(fileToUpdate);
-    if (fileToUpdate == (dataSource->cfgLayer->FilePath[0]->elementValue) || CDirReader::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str()) == 1) {
+    if (fileToUpdate == (dataSource->cfgLayer->FilePath[0]->elementValue) || CT::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str())) {
       if (verbose) {
         CDBDebug("Add specified file %s with filter %s for scanning", fileToCheckAgainstRegexp.c_str(), filter.c_str());
       }
@@ -1043,7 +1043,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, std::
       filePath = (tailPath);
 
       std::string baseName = CT::substring(filePath, CT::lastIndexOf(filePath, "/") + 1, -1);
-      if (CDirReader::testRegEx(baseName.c_str(), expr.c_str()) != 1) {
+      if (CT::testRegEx(baseName.c_str(), expr.c_str()) == false) {
         CDBWarning("Filter [%s] does not match path [%s]. Tailpath = [%s]", expr.c_str(), baseName.c_str(), tailPath);
         throw(__LINE__);
       }

@@ -132,7 +132,7 @@ int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter)
       return 2;
     }
     /* Check filter*/
-    if (testRegEx(directory, ext_filter) == 1) {
+    if (CT::testRegEx(directory, ext_filter)) {
       fileList.push_back(makeCleanPath(directory).c_str());
     } else {
       CDBWarning("Regexp failed.");
@@ -158,7 +158,7 @@ int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recu
       dirpath.concatlength(ep->d_name, filename_len);
       bool isdir = isDir(dirpath.c_str());
       if (isdir == false) {
-        if (testRegEx(ep->d_name, ext_filter) == 1) {
+        if (CT::testRegEx(ep->d_name, ext_filter)) {
 
           /* This is a file */
           CT::string fullName;
@@ -198,23 +198,6 @@ bool CDirReader::isFile(const char *filename) {
     return false;
   }
   return S_ISREG(fileattr.st_mode);
-}
-
-int CDirReader::testRegEx(const char *string, const char *pattern) {
-  if (string == nullptr || pattern == nullptr) return 1;
-  int status;
-  regex_t re;
-
-  if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
-    return (0); /* Report error. */
-  }
-  status = regexec(&re, string, (size_t)0, NULL, 0);
-  regfree(&re);
-  if (status != 0) {
-    return (0); /* Report error. */
-  }
-
-  return (1);
 }
 
 void CDirReader::makePublicDirectory(const char *dirname) {

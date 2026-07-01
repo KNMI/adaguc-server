@@ -65,8 +65,6 @@ public:
   static std::vector<std::string> listDir(const char *directory, bool recursive = false, const char *ext_filter = nullptr, int filesAndOrDirs = CDIRREADER_INCLUDE_FILES,
                                           bool exceptionOnError = false);
 
-  static int testRegEx(const char *string, const char *pattern);
-
   static bool isDir(const char *fileName);
 
   static bool isFile(const char *fileName);
