@@ -68,5 +68,12 @@ public:
    * @return CDB::Store containing the results. Returns NULL or throws exceptions when fails.
    */
   CDBStore::Store *queryToStore(const char *pszQuery, bool throwException);
+
+  /**
+   * Queries to a store
+   * @param pszQuery The query to execute
+   * @return CDB::Store containing the results. Returns NULL when fails.
+   */
+  CDBStore::Store *queryToStore(const char *pszQuery) { return queryToStore(pszQuery, false); }
 };
 #endif

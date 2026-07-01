@@ -99,7 +99,7 @@ CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, co
 
   CT::string query;
   query.print("select * from %s where path = '%s' limit 1", table, filename);
-  CDBStore::Store *store = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *store = DB->queryToStore(query.c_str());
   if (store == NULL || store->records.size() == 0) {
     setExceptionType(InvalidDimensionValue);
     CDBError("Invalid filename value for  %s", filename);
@@ -125,7 +125,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name, const char *tabl
 
   CT::string query;
   query.print("select max(%s) from %s", name, table);
-  CDBStore::Store *maxStore = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if (maxStore == NULL) {
     setExceptionType(InvalidDimensionValue);
     CDBDebug("Unable to find latest timestep from table. Skipping...");
@@ -148,7 +148,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMin(const char *name, const char *tabl
   CT::string query;
 
   query.print("select min(%s) from %s", name, table);
-  CDBStore::Store *maxStore = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if (maxStore == NULL) {
     setExceptionType(InvalidDimensionValue);
     CDBError("Invalid dimension value for  %s", name);
@@ -173,7 +173,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *m
   CT::string query;
   query.print("select path, %s FROM %s WHERE %s between '%s' and '%s' order by %s asc limit %d ", colname, table, colname, min, max, colname, limit);
 
-  CDBStore::Store *maxStore = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if (maxStore == NULL) {
     setExceptionType(InvalidDimensionValue);
     CDBError("Invalid dimension value for  %s", colname);
@@ -200,7 +200,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue(const char 
   if (limit > 0) {
     query.printconcat(" limit %d", limit);
   }
-  CDBStore::Store *store = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *store = DB->queryToStore(query.c_str());
   if (store == NULL) {
     CDBDebug("Query %s failed", query.c_str());
   }
@@ -227,7 +227,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char 
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex");
 #endif
-  return DB->queryToStore(query.c_str(), false);
+  return DB->queryToStore(query.c_str());
 }
 
 CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfReferenceTimeDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName,
@@ -247,7 +247,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfRefere
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getReferenceTime");
 #endif
-  return DB->queryToStore(query.c_str(), false);
+  return DB->queryToStore(query.c_str());
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName) {
@@ -265,7 +265,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime");
 #endif
-  return DB->queryToStore(query.c_str(), false);
+  return DB->queryToStore(query.c_str());
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *, int) {
@@ -540,7 +540,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
 
     CT::string query;
     query.print("select path,filedate,%s from %s limit 1", dimName.c_str(), m.second.tableName.c_str());
-    CDBStore::Store *store = dataBaseConnection->queryToStore(query.c_str(), false);
+    CDBStore::Store *store = dataBaseConnection->queryToStore(query.c_str());
     if (store == NULL) {
       tableNotFound = true;
       CDBDebug("No table found for dimension %s", dimName.c_str());
@@ -689,7 +689,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   query.print("select p.tablename from pg_tables inner join %s as p on pg_tables.tablename = p.tablename where path=E'P_%s' AND filter=E'F_%s';", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP,
               path.c_str(), filter.c_str());
   // CDBDebug("QUERY: %s", query.c_str());
-  CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
     for (size_t i = 0; i < tableNameStore->records.size(); i++) {
       tableList.push_back(tableNameStore->records[i].get("tablename"));
@@ -771,7 +771,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   auto query = CT::printf("SELECT p.tablename, p.dimension, (SELECT format_type(a.atttypid, a.atttypmod) AS data_type FROM pg_attribute a JOIN pg_class b ON (a.attrelid=b.relfilenode) WHERE "
                           "b.relname=p.tablename and a.attname=p.dimension and a.attstattarget=-1) FROM %s p WHERE path=E'P_%s' AND filter=E'F_%s' AND dimension IN (%s)",
                           CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path, filter, dimList.c_str());
-  CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str(), false);
+  CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
   if (tableDimStore == nullptr) {
     throw 1;
   }
@@ -859,7 +859,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getDimensionInfoForLayerTableAndLayerName
 
   CT::string query;
   query.print("SELECT * FROM autoconfigure_dimensions where layerid=E'%s_%s'", layertable, layername);
-  CDBStore::Store *store = dataBaseConnection->queryToStore(query.c_str(), false);
+  CDBStore::Store *store = dataBaseConnection->queryToStore(query.c_str());
   if (store == NULL) {
     CDBDebug("No dimension info stored for %s", layername);
   }
@@ -997,7 +997,7 @@ int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename, const char
 
   CT::string query;
   query.print("select path from %s where path = '%s' limit 1", tablename, filename);
-  CDBStore::Store *pathValues = dataBaseConnection->queryToStore(query.c_str(), false);
+  CDBStore::Store *pathValues = dataBaseConnection->queryToStore(query.c_str());
   if (pathValues == NULL) {
     CDBError("Query failed");
     throw(__LINE__);
@@ -1208,7 +1208,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
       query.print("SELECT datasetname, layername, metadatakey, blob FROM layermetadata");
     }
 
-    this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str(), false);
+    this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
     if (layerMetaDataStore == nullptr) {
 #ifdef CDBAdapterPostgreSQL_DEBUG
       CDBDebug("Unable query: \"%s\"", query.c_str());
@@ -1243,7 +1243,7 @@ bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
   }
   CT::string query;
   query.print("SELECT pg_try_advisory_lock(%d) as \"result\";", key);
-  auto *store = dataBaseConnection->queryToStore(query.c_str(), false);
+  auto *store = dataBaseConnection->queryToStore(query.c_str());
   if (store == nullptr || store->records.size() != 1) {
     CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
     return false;
@@ -1266,7 +1266,7 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
   CT::string query;
 
   query.print("SELECT pg_advisory_unlock(%d) as \"result\";", key);
-  auto store = dataBaseConnection->queryToStore(query.c_str(), false);
+  auto store = dataBaseConnection->queryToStore(query.c_str());
   if (store == nullptr || store->records.size() != 1) {
     CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
     return false;
@@ -1285,7 +1285,7 @@ f8box CDBAdapterPostgreSQL::getExtent(CDataSource *dataSource) {
   auto tableName = getTableNameForPathFilterAndDimension(dataSource);
   CT::string query;
   query.print("select min(minx) as minx, min(miny) as miny, max(maxx) as maxx, max(maxy) as maxy from %s;", tableName.c_str());
-  auto store = dataBaseConnection->queryToStore(query.c_str(), false);
+  auto store = dataBaseConnection->queryToStore(query.c_str());
   if (store == NULL || store->records.size() == 0) {
     CDBDebug("Unable to getExtent: No results from db");
     throw __LINE__;
