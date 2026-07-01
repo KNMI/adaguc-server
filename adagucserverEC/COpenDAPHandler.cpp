@@ -57,7 +57,7 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
       try {
         tableName =
             CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str(), dataSource);
+                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dim.c_str(), dataSource);
       } catch (int e) {
         CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
         return -1;

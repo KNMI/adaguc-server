@@ -106,11 +106,11 @@ public:
    * @param dataSource The dataSource
    * @return Tablename on succes, throws integer exception on failure.
    */
-  std::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
-  std::map<std::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<std::string> dimensions, CDataSource *dataSource);
+  std::string getTableNameForPathFilterAndDimension(const std::string &path, const std::string &filter, const char *dimension, CDataSource *dataSource);
+  std::map<std::string, DimInfo> getTableNamesForPathFilterAndDimensions(const std::string &path, const std::string &filter, std::vector<std::string> dimensions, CDataSource *dataSource);
 
   void assertLookupTableExists();
-  void addToLookupTable(const char *path, const char *filter, std::string dimensionName, std::string tableName);
+  void addToLookupTable(const std::string &path, const std::string &filter, std::string dimensionName, std::string tableName);
   std::string generateRandomTableName();
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);

@@ -57,7 +57,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       CDBError("Unable to get a getDBAdapter");
       return 1;
     }
-    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, NULL, dataSource);
 
   } catch (int e) {
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");

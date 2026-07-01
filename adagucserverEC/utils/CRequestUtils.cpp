@@ -75,9 +75,8 @@ std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
   auto srvParam = dataSource.srvParams;
   std::string tableName;
   try {
-    tableName =
-        CDBFactory::getDBAdapter(srvParam->cfg)
-            ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0]->elementValue.c_str(), dataSource.cfgLayer->FilePath[0]->attr.filter.c_str(), refTimeDim.c_str(), &dataSource);
+    tableName = CDBFactory::getDBAdapter(srvParam->cfg)
+                    ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0]->elementValue, dataSource.cfgLayer->FilePath[0]->attr.filter, refTimeDim.c_str(), &dataSource);
   } catch (int e) {
     CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource.cfgLayer->FilePath[0]->elementValue.c_str(), dataSource.cfgLayer->FilePath[0]->attr.filter.c_str(), refTimeDim.c_str());
     return {};

@@ -252,7 +252,7 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
 
     // Get the tablename
     std::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
                                                                         cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
@@ -352,7 +352,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
     // This is an interval defined as start/stop/resolution
     // Retrieve the minimum dimension value
     CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
                                                                        cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
@@ -444,8 +444,8 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
   }
   // Get the tablename
   CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
-                                                                     cfgDim->attr.name.c_str(), dataSource);
+                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgDim->attr.name.c_str(),
+                                                                     dataSource);
 
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
@@ -718,7 +718,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name);
     try {
       tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),
+                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue, metadataLayer->layer->FilePath[0]->attr.filter, dimName.c_str(),
                                                               metadataLayer->dataSource);
     } catch (int e) {
       CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
