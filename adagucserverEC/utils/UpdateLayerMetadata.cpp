@@ -69,16 +69,14 @@ int updateLayerMetadata(CRequest &request) {
   if (layerMetaDataStore == nullptr) {
     return 1;
   }
-  auto records = layerMetaDataStore->getRecords();
+  auto &records = layerMetaDataStore->records;
 
   std::set<DatasetAndLayerPair> datasetNamesFromDB;
 
   for (auto record : records) {
-    std::string *datasetName = record.get("datasetname");
-    std::string *layerName = record.get("layername");
-    if (datasetName != nullptr && layerName != nullptr) {
-      datasetNamesFromDB.insert(std::make_pair(datasetName->c_str(), layerName->c_str()));
-    }
+    const std::string &datasetName = record.get("datasetname");
+    const std::string &layerName = record.get("layername");
+    datasetNamesFromDB.insert(std::make_pair(datasetName.c_str(), layerName.c_str()));
   }
 
   std::set<DatasetAndLayerPair> layersToDeleteFromMetadataTable;

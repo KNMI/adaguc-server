@@ -176,22 +176,17 @@ CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwExcepti
     }
     return NULL;
   }
-  CDBStore::ColumnModel *colModel = new CDBStore::ColumnModel();
-  // colModel
 
+  CDBStore::Store *store = new CDBStore::Store();
   for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
-    colModel->push(PQfname(result, colNumber));
+    store->columnModel.push(PQfname(result, colNumber));
   }
-
-  CDBStore::Store *store = new CDBStore::Store(colModel);
-
   for (size_t rowNumber = 0; rowNumber < numRows; rowNumber++) {
-    CDBStore::Record record;
-    record.setColumnModel(colModel);
+    CDBStore::Record record(store->columnModel);
     for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
-      record.push(PQgetvalue(result, rowNumber, colNumber));
+      record.values.push_back(PQgetvalue(result, rowNumber, colNumber));
     }
-    store->push(record);
+    store->records.push_back(record);
   }
 
   clearResult();

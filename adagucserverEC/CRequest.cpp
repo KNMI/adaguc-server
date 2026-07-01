@@ -330,7 +330,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   CDBError("Unable to get max dimension value");
                   return 1;
                 }
-                ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
+                ogcDim.value = maxStore->records[0].get(0).c_str();
                 delete maxStore;
               } else {
                 // For models with a reference_time, select the nearest time to current system clock
@@ -343,7 +343,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
                     throw ServiceExceptionType::InvalidDimensionValue;
                   }
-                  ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
+                  ogcDim.value = maxStore->records[0].get(0).c_str();
 
                   delete maxStore;
                   CDBDebug("%s %s", ogcDim.netCDFDimName.c_str(), ogcDim.value.c_str());
@@ -354,7 +354,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
                     throw ServiceExceptionType::InvalidDimensionValue;
                   }
-                  ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
+                  ogcDim.value = maxStore->records[0].get(0).c_str();
                   delete maxStore;
                 }
               }
@@ -457,7 +457,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
           throw ServiceExceptionType::InvalidDimensionValue;
         }
-        ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
+        ogcDim.value = maxStore->records[0].get(0).c_str();
 
         delete maxStore;
       }
@@ -556,7 +556,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     bool hasTileSettings = dataSource->cfgLayer->TileSettings.size() > 0;
     if (!srvParam->geoParams.crs.empty() && hasTileSettings) {
       store = handleTileRequest(dataSource);
-      if (store == nullptr || store->getSize() == 0) {
+      if (store == nullptr || store->records.size() == 0) {
         CDBDebug("Unable to handleTileRequest");
         return 0;
       }
@@ -578,7 +578,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
       throw ServiceExceptionType::InvalidDimensionValue;
     }
-    if (store->getSize() == 0) {
+    if (store->records.size() == 0) {
       delete store;
       if (dataSource->queryBBOX) {
         // No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong dims or
@@ -595,21 +595,21 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       throw ServiceExceptionType::InvalidDimensionValue;
     }
 
-    for (size_t k = 0; k < store->getSize(); k++) {
-      CDBStore::Record *record = store->getRecord(k);
+    for (size_t k = 0; k < store->records.size(); k++) {
+      const CDBStore::Record *record = &store->records[k];
       // CDBDebug("Addstep");
-      dataSource->addStep(record->get(0)->c_str());
+      dataSource->addStep(record->get(0).c_str());
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Step %lu: [%s]", k, record->get(0)->c_str());
+      CDBDebug("Step %lu: [%s]", k, record->get(0).c_str());
 #endif
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-        std::string value = record->get(1 + i * 2)->c_str();
-        size_t idx = size_t(atoi(record->get(2 + i * 2)->c_str()));
+        std::string value = record->get(1 + i * 2).c_str();
+        size_t idx = size_t(atoi(record->get(2 + i * 2).c_str()));
         dataSource->getCDFDims()->push_back({.name = dataSource->requiredDims[i].netCDFDimName.c_str(), .value = value.c_str(), .index = idx});
 #ifdef CREQUEST_DEBUG
         CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
-        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record->get(2 + i * 2)->c_str()), value.c_str());
+        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record->get(2 + i * 2).c_str()), value.c_str());
 #endif
         auto it = std::find_if(dataSource->requiredDims[i].uniqueValues.begin(), dataSource->requiredDims[i].uniqueValues.end(), [&value](std::string &a) { return a == value; });
         // Check if not already there. TODO: Would be nice to turn into a set.

@@ -263,12 +263,12 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
       throw __LINE__;
     }
     if (isTimeDim) {
-      for (size_t j = 0; j < values->size(); j++) {
-        queryValues.push_back(makeIsoStringFromDbString(*(values->getRecord(j)->get(0))));
+      for (size_t j = 0; j < values->records.size(); j++) {
+        queryValues.push_back(makeIsoStringFromDbString(values->records[j].get(0)));
       }
     } else {
-      for (size_t j = 0; j < values->size(); j++) {
-        queryValues.push_back(*(values->getRecord(j)->get(0)));
+      for (size_t j = 0; j < values->records.size(); j++) {
+        queryValues.push_back(values->records[j].get(0));
       }
     }
     delete values;
@@ -357,14 +357,14 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
 
     auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
 
-    if (values != nullptr && values->getSize() > 0) {
-      minTimeStamp = (makeIsoStringFromDbString(*values->getRecord(0)->get(0)));
+    if (values != nullptr && values->records.size() > 0) {
+      minTimeStamp = (makeIsoStringFromDbString(values->records[0].get(0)));
     }
     delete values;
     // Retrieve the max dimension value
     values = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(cfgLayerDim->attr.name.c_str(), tableName.c_str());
-    if (values != nullptr && values->getSize() > 0) {
-      maxTimeStamp = (makeIsoStringFromDbString(*values->getRecord(0)->get(0)));
+    if (values != nullptr && values->records.size() > 0) {
+      maxTimeStamp = (makeIsoStringFromDbString(values->records[0].get(0)));
     }
     delete values;
   } else {
@@ -449,14 +449,14 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
 
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
-  if (store == nullptr || store->size() == 0) {
+  if (store == nullptr || store->records.size() == 0) {
     delete store;
     CDBDebug("No data available in database for dimension %s", cfgDim->attr.name.c_str());
     return timeStampList;
   }
   try {
-    for (size_t j = 0; j < store->size(); j++) {
-      timeStampList.push_back(makeIsoStringFromDbString(*(store->getRecord(j)->get("time"))));
+    for (size_t j = 0; j < store->records.size(); j++) {
+      timeStampList.push_back(makeIsoStringFromDbString(store->records[j].get("time")));
     }
   } catch (int e) {
   }
@@ -734,11 +734,11 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
       databaseError = true;
     }
     if (databaseError == false) {
-      if (values->getSize() > 0) {
+      if (values->records.size() > 0) {
 #ifdef CXMLGEN_DEBUG
-        CDBDebug("Query  succeeded: Filename = %s", values->getRecord(0)->get(0)->c_str());
+        CDBDebug("Query  succeeded: Filename = %s", values->records[0].get(0).c_str());
 #endif
-        metadataLayer->fileName = *(values->getRecord(0)->get(0));
+        metadataLayer->fileName = values->records[0].get(0);
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
         // Ignore the file for now too

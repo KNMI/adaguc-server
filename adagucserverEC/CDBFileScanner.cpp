@@ -791,15 +791,15 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           } else {
             std::vector<std::string> oldList;
             std::vector<std::string> newList;
-            for (size_t j = 0; j < values->getSize(); j++) {
-              oldList.push_back(values->getRecord(j)->get(0)->c_str());
+            for (size_t j = 0; j < values->records.size(); j++) {
+              oldList.push_back(values->records[j].get(0).c_str());
             }
             for (size_t i = 0; i < fileList.size(); i++) {
               newList.push_back((fileList)[i].c_str());
             }
             filesToDeleteFromDB.clear();
             CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
-            CDBDebug("The database contains %lu files, found %lu files in DB which are missing on filesystem.", values->getSize(), filesToDeleteFromDB.size());
+            CDBDebug("The database contains %lu files, found %lu files in DB which are missing on filesystem.", values->records.size(), filesToDeleteFromDB.size());
             for (size_t j = 0; j < filesToDeleteFromDB.size(); j++) {
               CDBDebug("Deleting file %s from db", filesToDeleteFromDB[j].c_str());
               CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), filesToDeleteFromDB[j].c_str());

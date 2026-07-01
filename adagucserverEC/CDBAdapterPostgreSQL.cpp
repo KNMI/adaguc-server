@@ -100,7 +100,7 @@ CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, co
   CT::string query;
   query.print("select * from %s where path = '%s' limit 1", table, filename);
   CDBStore::Store *store = DB->queryToStore(query.c_str());
-  if (store == NULL || store->size() == 0) {
+  if (store == NULL || store->records.size() == 0) {
     setExceptionType(InvalidDimensionValue);
     CDBError("Invalid filename value for  %s", filename);
     CDBError("query failed");
@@ -109,7 +109,7 @@ CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, co
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getDimValueForFileName");
 #endif
-  CT::string dimValue = *store->getRecord(0)->get(1);
+  CT::string dimValue = store->records[0].get(1);
   delete store;
   return dimValue;
 };
@@ -495,7 +495,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     return NULL;
   }
   if (raiseExceptionWhenOverLimit && limit > 0) {
-    if (int(store->size()) > limit) {
+    if (int(store->records.size()) > limit) {
       delete store;
       CDBError("Requested data exceeded maxquerylimit=%d", limit);
       throw UnprocessableEntity;
@@ -544,18 +544,21 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     if (store == NULL) {
       tableNotFound = true;
       CDBDebug("No table found for dimension %s", dimName.c_str());
+    } else if (store->records.size() == 0) {
+      tableNotFound = true;
+      CDBDebug("No records in table found for dimension %s", dimName.c_str());
     }
 
     if (tableNotFound == false) {
       if (srvParams->isAutoLocalFileResourceEnabled() == true) {
         try {
-          CT::string databaseTime = *store->getRecord(0)->get(1);
+          CT::string databaseTime = store->records[0].get(1);
           if (databaseTime.length() < 20) {
             databaseTime.concat("Z");
           }
           databaseTime.setChar(10, 'T');
 
-          const auto fileDate = getFileDate(store->getRecord(0)->get(0)->c_str());
+          const auto fileDate = getFileDate(store->records[0].get(0).c_str());
 
           if (databaseTime.equals(fileDate) == false) {
             CDBDebug("Table was found, %s ~ %s : %d", fileDate.c_str(), databaseTime.c_str(), databaseTime.equals(fileDate));
@@ -688,8 +691,8 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   // CDBDebug("QUERY: %s", query.c_str());
   CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
-    for (size_t i = 0; i < tableNameStore->size(); i++) {
-      tableList.push_back(*tableNameStore->getRecord(i)->get("tablename"));
+    for (size_t i = 0; i < tableNameStore->records.size(); i++) {
+      tableList.push_back(tableNameStore->records[i].get("tablename"));
     }
   }
   delete tableNameStore;
@@ -772,12 +775,12 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   if (tableDimStore == nullptr) {
     throw 1;
   }
-  for (size_t i = 0; i < tableDimStore->size(); i++) {
-    CT::string dim = *tableDimStore->getRecord(i)->get("dimension");
+  for (size_t i = 0; i < tableDimStore->records.size(); i++) {
+    CT::string dim = tableDimStore->records[i].get("dimension");
 
     if (mapping[dim].tableName.length() == 0) {
-      mapping[dim].tableName = *tableDimStore->getRecord(i)->get("tablename");
-      mapping[dim].dataType = *tableDimStore->getRecord(i)->get("data_type");
+      mapping[dim].tableName = tableDimStore->records[i].get("tablename");
+      mapping[dim].dataType = tableDimStore->records[i].get("data_type");
 
       // Found tablename in SQL lookup table, also add to the lookupTableNameCacheMap
       CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim);
@@ -787,7 +790,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   }
 
   // Found all tablenames for requested dimensions in lookup table
-  size_t found = tableDimStore->size();
+  size_t found = tableDimStore->records.size();
   delete tableDimStore;
   if (found == mapping.size()) {
 #ifdef MEASURETIME
@@ -999,7 +1002,7 @@ int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename, const char
     CDBError("Query failed");
     throw(__LINE__);
   }
-  if (pathValues->getSize() == 1) {
+  if (pathValues->records.size() == 1) {
     fileIsOK = 0;
   } else {
     fileIsOK = 1;
@@ -1241,12 +1244,11 @@ bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
   CT::string query;
   query.print("SELECT pg_try_advisory_lock(%d) as \"result\";", key);
   auto *store = dataBaseConnection->queryToStore(query.c_str());
-  if (store == nullptr || store->getSize() != 1) {
+  if (store == nullptr || store->records.size() != 1) {
     CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
     return false;
   }
-  auto result = store->getRecord(0)->get("result");
-  bool succesfullylocked = result != nullptr && *result == "t";
+  bool succesfullylocked = store->records[0].get("result") == "t";
   if (succesfullylocked) {
     CDBDebug("pg_try_advisory_lock succesfully locked");
   } else {
@@ -1265,12 +1267,11 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
 
   query.print("SELECT pg_advisory_unlock(%d) as \"result\";", key);
   auto store = dataBaseConnection->queryToStore(query.c_str());
-  if (store == nullptr || store->getSize() != 1) {
+  if (store == nullptr || store->records.size() != 1) {
     CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
     return false;
   }
-  auto result = store->getRecord(0)->get("result");
-  bool succesfullyunlocked = result != nullptr && *result == "t";
+  bool succesfullyunlocked = store->records[0].get("result") == "t";
   if (succesfullyunlocked) {
     CDBDebug("pg_advisory_unlock succesfully unlocked");
   } else {
@@ -1285,10 +1286,10 @@ f8box CDBAdapterPostgreSQL::getExtent(CDataSource *dataSource) {
   CT::string query;
   query.print("select min(minx) as minx, min(miny) as miny, max(maxx) as maxx, max(maxy) as maxy from %s;", tableName.c_str());
   auto store = dataBaseConnection->queryToStore(query.c_str());
-  if (store == NULL || store->size() == 0) {
+  if (store == NULL || store->records.size() == 0) {
     CDBDebug("Unable to getExtent: No results from db");
     throw __LINE__;
   }
-  auto record = store->getRecord(0);
-  return {.left = std::stod(*record->get("minx")), .bottom = std::stod(*record->get("miny")), .right = std::stod(*record->get("maxx")), .top = std::stod(*record->get("maxy"))};
+  auto &record = store->records[0];
+  return {.left = std::stod(record.get("minx")), .bottom = std::stod(record.get("miny")), .right = std::stod(record.get("maxx")), .top = std::stod(record.get("maxy"))};
 }

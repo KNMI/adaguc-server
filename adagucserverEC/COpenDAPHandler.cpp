@@ -68,11 +68,11 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
       size_t dimSize = 0;
       CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getUniqueValuesOrderedByValue(dim.c_str(), 0, true, tableName.c_str());
       if (store != NULL) {
-        if (store->size() != 0) {
+        if (store->records.size() != 0) {
 #ifdef COPENDAPHANDLER_DEBUG
-          CDBDebug("getDimSize %d", store->size());
+          CDBDebug("getDimSize %d", store->records.size());
 #endif
-          dimSize = store->size();
+          dimSize = store->records.size();
         }
       }
       delete store;
@@ -887,9 +887,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                   store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesForIndices(dataSource, start.data(), count.data(), stride.data(), 0);
                   if (store != NULL) {
 #ifdef COPENDAPHANDLER_DEBUG
-                    CDBDebug("STORE SIZE %d varSize = %d", store->size(), varSize);
+                    CDBDebug("STORE SIZE %d varSize = %d", store->records.size(), varSize);
 #endif
-                    if (store->size() != 0) {
+                    if (store->records.size() != 0) {
                       int intVarSize = varSize;
                       if (!jsonWriter) {
                         writeInt(intVarSize);
@@ -934,9 +934,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                               } else {
                                 CDBDebug("%s name is not time ", v->name.c_str());
                               }
-                              //                               CDBDebug("%s",store->getRecord(storeIndex)->get(0)->c_str());
-                              //                               CDBDebug("%s",store->getRecord(storeIndex)->get(1)->c_str());//value
-                              //                               CDBDebug("%s",store->getRecord(storeIndex)->get(2)->c_str());
+                              //                               CDBDebug("%s",store->records[storeIndex].get(0)->c_str());
+                              //                               CDBDebug("%s",store->records[storeIndex].get(1)->c_str());//value
+                              //                               CDBDebug("%s",store->records[storeIndex].get(2)->c_str());
                             } else {
                               CDBDebug("%s name not equal", v->name.c_str());
                             }
@@ -952,10 +952,10 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #endif
                       }
 
-                      for (size_t storeIndex = 0; storeIndex < store->size(); storeIndex++) {
+                      for (size_t storeIndex = 0; storeIndex < store->records.size(); storeIndex++) {
 
                         if (readFromDB) {
-                          CT::string dimValue = *store->getRecord(storeIndex)->get(1);
+                          CT::string dimValue = store->records[storeIndex].get(1);
 
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Dimension value from DB = [%s] units = [%s] standard_name = [%s]", dimValue.c_str(), dimUnits.c_str(), dimStandardName.c_str());
@@ -966,12 +966,12 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                         }
 
                         if (readFromDB == false) {
-                          CT::string fileName = store->getRecord(storeIndex)->get(0)->c_str();
+                          CT::string fileName = store->records[storeIndex].get(0).c_str();
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Found file %s", fileName.c_str());
 #endif
                           cdfObjectToRead = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, fileName.c_str());
-                          start[0] = std::stoi(*store->getRecord(storeIndex)->get(2));
+                          start[0] = std::stoi(store->records[storeIndex].get(2));
                           count[0] = 1;
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Start reading data for variable %s", v->name.c_str());

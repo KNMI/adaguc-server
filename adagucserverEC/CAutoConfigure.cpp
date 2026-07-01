@@ -69,18 +69,18 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   if (store != NULL) {
     try {
 
-      for (size_t j = 0; j < store->size(); j++) {
+      for (size_t j = 0; j < store->records.size(); j++) {
         CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
 
-        xmleDim->elementValue = (store->getRecord(j)->get("ogcname")->c_str());
-        xmleDim->attr.name = (store->getRecord(j)->get("ncname")->c_str());
-        xmleDim->attr.units = (store->getRecord(j)->get("units")->c_str());
+        xmleDim->elementValue = (store->records[j].get("ogcname").c_str());
+        xmleDim->attr.name = (store->records[j].get("ncname").c_str());
+        xmleDim->attr.units = (store->records[j].get("units").c_str());
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
 #ifdef CAUTOCONFIGURE_DEBUG
         CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
       }
-      size_t storeSize = store->size();
+      size_t storeSize = store->records.size();
       delete store;
       if (storeSize > 0) {
         dataSource->dimsAreAutoConfigured = true;
@@ -450,8 +450,8 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
       }
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
-    if (store != NULL && store->getSize() > 0) {
-      CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
+    if (store != NULL && store->records.size() > 0) {
+      CT::string fileNamestr = store->records[0].get(0).c_str();
       // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
       foundFileName = fileNamestr;
     }
