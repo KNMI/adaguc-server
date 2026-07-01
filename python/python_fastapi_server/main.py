@@ -4,11 +4,12 @@ import logging
 import os
 import time
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
+from middleware.short_circuit_healthcheck import ShortCircuitHealthCheckMiddleware
 from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
@@ -49,8 +50,9 @@ async def add_hsts_header(request: Request, call_next):
 
 
 allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
+# TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
 if allowed_hosts is not None and len(allowed_hosts) > 0:
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
+    app.add_middleware(ShortCircuitHealthCheckMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
 
 app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 
