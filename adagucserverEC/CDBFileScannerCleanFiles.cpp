@@ -24,7 +24,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   std::set<std::string> retentionTypes = {CDBFILESCANNER_RETENTIONTYPE_DATATIME, CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE};
 
-  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str()) == retentionTypes.end()) {
+  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0]->attr.retentiontype) == retentionTypes.end()) {
     CDBDebug("retentiontype is set to unknown value %s, no cleaning done", dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
     return std::make_pair(0, filesDeletedFromFS);
   }
@@ -75,7 +75,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     auto isTypeTime = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [](const COGCDims &ogcdim) { return ogcdim.isATimeDimension; });
     if (isTypeTime != dataSource->requiredDims.end()) {
       CDBDebug("Using %s instead.", (*isTypeTime).netCDFDimName.c_str());
-      colName = (*isTypeTime).netCDFDimName.c_str();
+      colName = (*isTypeTime).netCDFDimName;
     } else {
       CDBWarning("no time like dimension not seem to exist in this layer");
     }
@@ -109,7 +109,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   // CDBDebug("currentDate\t\t\t%s", ctime->dateToISOString(date).c_str());
 
-  CT::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod.c_str()));
+  CT::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod));
 
   // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
@@ -117,12 +117,12 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   if (store != NULL && store->records.size() > 0) {
     CDBDebug("Found (at least) %lu files which are too old.", store->records.size());
     for (size_t j = 0; j < store->records.size(); j++) {
-      std::string fileNamestr = store->records[j].get(0).c_str();
+      std::string fileNamestr = store->records[j].get(0);
       if (enableCleanupIsInform) {
         CDBDebug("[INFO] Would clean: [%s]", fileNamestr.c_str());
       }
       if (enableCleanupIsTrue) {
-        _removeFileFromTables(fileNamestr.c_str(), dataSource);
+        _removeFileFromTables(fileNamestr, dataSource);
         /* Don't delete files which where already deleted */
         if (filesDeletedFromFS.find(fileNamestr) == filesDeletedFromFS.end()) {
           int status = remove(fileNamestr.c_str());

@@ -23,10 +23,10 @@ int updateLayerMetadata(CRequest &request) {
   std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
 
   for (auto &dataset : datasetList) {
-    CT::string datasetAsCTString = dataset.c_str();
+    CT::string datasetAsCTString = dataset;
     CT::string baseDataSetNameCT = CT::basename(datasetAsCTString);
     baseDataSetNameCT.replaceSelf(".xml", "");
-    std::string datasetBaseName = baseDataSetNameCT.c_str();
+    std::string datasetBaseName = baseDataSetNameCT;
 
     if (dataset.length() > 0) {
       CDBDebug("\n\n *********************************** Updating metadatatable for dataset [%s] **************************************************", dataset.c_str());
@@ -36,7 +36,7 @@ int updateLayerMetadata(CRequest &request) {
     }
     CRequest requestPerDataset;
 
-    int status = setCRequestConfigFromEnvironment(&requestPerDataset, dataset.c_str());
+    int status = setCRequestConfigFromEnvironment(&requestPerDataset, dataset);
     if (status != 0) {
       CDBError("Unable to read configuration file");
       continue;
@@ -48,7 +48,7 @@ int updateLayerMetadata(CRequest &request) {
       CDBDebug("Found %lu layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
     }
     for (auto layer : requestPerDataset.getServerParams()->cfg->Layer) {
-      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer).c_str()));
+      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer)));
     }
     CT::string layerPathToScan;
     CT::string tailPath;
@@ -76,7 +76,7 @@ int updateLayerMetadata(CRequest &request) {
   for (auto record : records) {
     const std::string &datasetName = record.get("datasetname");
     const std::string &layerName = record.get("layername");
-    datasetNamesFromDB.insert(std::make_pair(datasetName.c_str(), layerName.c_str()));
+    datasetNamesFromDB.insert(std::make_pair(datasetName, layerName));
   }
 
   std::set<DatasetAndLayerPair> layersToDeleteFromMetadataTable;

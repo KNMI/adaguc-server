@@ -109,7 +109,7 @@ CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, co
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getDimValueForFileName");
 #endif
-  CT::string dimValue = store->records[0].get(1);
+  CT::string dimValue = store->records[0].values.at(1);
   delete store;
   return dimValue;
 };
@@ -329,7 +329,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 #endif
 
   query.print("select distinct * from (%s)T order by ", queryOrderedDESC.c_str());
-  query.concat(dataSource->requiredDims[0].netCDFDimName.c_str());
+  query.concat(dataSource->requiredDims[0].netCDFDimName);
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {
     query.printconcat(",%s", dataSource->requiredDims[i].netCDFDimName.c_str());
   }
@@ -552,13 +552,13 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     if (tableNotFound == false) {
       if (srvParams->isAutoLocalFileResourceEnabled() == true) {
         try {
-          CT::string databaseTime = store->records[0].get(1);
+          CT::string databaseTime = store->records[0].values.at(1);
           if (databaseTime.length() < 20) {
             databaseTime.concat("Z");
           }
           databaseTime.setChar(10, 'T');
 
-          const auto fileDate = getFileDate(store->records[0].get(0).c_str());
+          const auto fileDate = getFileDate(store->records[0].values.at(0));
 
           if (databaseTime.equals(fileDate) == false) {
             CDBDebug("Table was found, %s ~ %s : %d", fileDate.c_str(), databaseTime.c_str(), databaseTime.equals(fileDate));
@@ -667,7 +667,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   std::vector<CT::string> tableList;
   // If config has a hardcoded db table name for layer, use it too
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
-    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
+    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue;
     for (const auto &cfgDimension: dataSource->cfgLayer->Dimension) {
       CT::string dimString = CT::toLowerCase(cfgDimension->attr.name);
       CT::string correctedTableName = makeCorrectTableName(tableName, dimString);
@@ -719,7 +719,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     for (auto &dim: dimensions) {
-      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue.c_str();
+      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->elementValue;
       CT::string correctedTableName = makeCorrectTableName(tableName, dim);
       mapping[dim] = {correctedTableName, ""};
     }
@@ -733,10 +733,10 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   bool done = true;
   for (const auto &dim: dimensions) {
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim);
-    std::map<std::string, DimInfo>::iterator it = lookupTableNameCacheMap.find(lookupIdentifier.c_str());
+    std::map<std::string, DimInfo>::iterator it = lookupTableNameCacheMap.find(lookupIdentifier);
 
     if (it != lookupTableNameCacheMap.end()) {
-      mapping[dim].tableName = (*it).second.tableName.c_str();
+      mapping[dim].tableName = (*it).second.tableName;
       mapping[dim].dataType = (*it).second.dataType;
     } else {
       mapping[dim].tableName = "";
@@ -785,7 +785,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
       // Found tablename in SQL lookup table, also add to the lookupTableNameCacheMap
       CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim);
       DimInfo d = {mapping[dim].tableName, mapping[dim].dataType};
-      lookupTableNameCacheMap[lookupIdentifier.c_str()] = d;
+      lookupTableNameCacheMap[lookupIdentifier] = d;
     }
   }
 
@@ -805,11 +805,11 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 
     std::string tableName = generateRandomTableName();
 
-    addToLookupTable(path, filter, m.first.c_str(), tableName.c_str());
+    addToLookupTable(path, filter, m.first, tableName);
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, m.first);
     DimInfo d = {tableName, m.second.dataType};
-    lookupTableNameCacheMap[lookupIdentifier.c_str()] = d;
-    mapping[m.first.c_str()] = d;
+    lookupTableNameCacheMap[lookupIdentifier] = d;
+    mapping[m.first] = d;
   }
 
 #ifdef MEASURETIME
@@ -1066,7 +1066,7 @@ int CDBAdapterPostgreSQL::setFileInt(const char *tablename, const char *file, in
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding INT %s", values.c_str());
 #endif
-  fileListPerTable[tablename].push_back(values.c_str());
+  fileListPerTable[tablename].push_back(values);
   return 0;
 }
 int CDBAdapterPostgreSQL::setFileReal(const char *tablename, const char *file, double dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
@@ -1076,7 +1076,7 @@ int CDBAdapterPostgreSQL::setFileReal(const char *tablename, const char *file, d
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding REAL %s", values.c_str());
 #endif
-  fileListPerTable[tablename].push_back(values.c_str());
+  fileListPerTable[tablename].push_back(values);
   return 0;
 }
 int CDBAdapterPostgreSQL::setFileString(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
@@ -1086,7 +1086,7 @@ int CDBAdapterPostgreSQL::setFileString(const char *tablename, const char *file,
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding STRING %s", values.c_str());
 #endif
-  fileListPerTable[tablename].push_back(values.c_str());
+  fileListPerTable[tablename].push_back(values);
   return 0;
 }
 int CDBAdapterPostgreSQL::setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
@@ -1096,7 +1096,7 @@ int CDBAdapterPostgreSQL::setFileTimeStamp(const char *tablename, const char *fi
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding TIMESTAMP %s", values.c_str());
 #endif
-  fileListPerTable[tablename].push_back(values.c_str());
+  fileListPerTable[tablename].push_back(values);
   return 0;
 }
 int CDBAdapterPostgreSQL::addFilesToDataBase() {
@@ -1123,7 +1123,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
         multiInsert.print("INSERT into %s VALUES ", it->first.c_str());
         for (size_t j = 0; j < maxIters; j++) {
           if (j > 0) multiInsert.concat(",");
-          multiInsert.concat(it->second[rowNumber].c_str());
+          multiInsert.concat(it->second[rowNumber]);
           rowNumber++;
           if (rowNumber >= it->second.size()) break;
         }
@@ -1164,7 +1164,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     throw(__LINE__);
   }
 
-  CT::string updateTime = CTime::currentDateTime().c_str();
+  CT::string updateTime = CTime::currentDateTime();
   CT::string query;
   query.print("INSERT INTO layermetadata (datasetname, layername, metadatakey, updatetime, blob) "
               "VALUES (E'%s',E'%s', E'%s', E'%s', E'%s') "

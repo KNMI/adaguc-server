@@ -179,7 +179,7 @@ CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwExcepti
 
   CDBStore::Store *store = new CDBStore::Store();
   for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
-    store->columnModel.push(PQfname(result, colNumber));
+    store->columnModel.columnNames.push_back(PQfname(result, colNumber));
   }
   for (size_t rowNumber = 0; rowNumber < numRows; rowNumber++) {
     CDBStore::Record record(store->columnModel);

@@ -54,8 +54,6 @@ struct CDBStore {
       }
       throw(CDB_UNKNOWN_COLUMNNAME);
     }
-    void push(const std::string &name) { columnNames.emplace_back(name); }
-    size_t getSize() const { return columnNames.size(); }
   };
 
   struct Record {
@@ -63,13 +61,10 @@ struct CDBStore {
     const ColumnModel *_columnModel; // Reference to columnmodel in store, this is the same for all records.
     Record(const ColumnModel &columnModel) {
       this->_columnModel = &columnModel;
-      values.reserve(columnModel.getSize());
+      values.reserve(columnModel.columnNames.size());
     }
-    const std::string &get(size_t index) const {
-      if (index >= values.size()) throw(CDB_INDEX_OUT_OF_BOUNDS);
-      return values[index];
-    }
-    const std::string &get(const std::string &name) const { return get(_columnModel->getIndex(name)); }
+    const std::string &get(size_t index) const { return values.at(index); }
+    const std::string &get(const std::string &name) const { return values.at(_columnModel->getIndex(name)); }
   };
 
   struct Store {
