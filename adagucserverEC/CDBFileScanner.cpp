@@ -607,7 +607,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 if (requiresProjectionInfo) {
                   CDataReader reader;
                   // reader.enableReporting(false); //Functional tests fail if set to false
-                  dataSource->addStep((fileList)[j].c_str());
+                  dataSource->addStep((fileList)[j]);
                   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
                   //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
                   //                      CDBDebug("---> BBOX: [%f %f %f
@@ -620,7 +620,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                    level = 1 ; //Highest detail, highest resolution, most files.
                   */
                   geoOptions.level = 0;
-                  geoOptions.proj4 = dataSource->nativeProj4.c_str();
+                  geoOptions.proj4 = dataSource->nativeProj4;
                   geoOptions.bbox[0] = dataSource->dfBBOX[0];
                   geoOptions.bbox[1] = dataSource->dfBBOX[1];
                   geoOptions.bbox[2] = dataSource->dfBBOX[2];

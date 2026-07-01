@@ -594,21 +594,20 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       throw ServiceExceptionType::InvalidDimensionValue;
     }
 
-    for (size_t k = 0; k < store->records.size(); k++) {
-      const CDBStore::Record *record = &store->records[k];
+    for (auto &record: store->records) {
       // CDBDebug("Addstep");
-      dataSource->addStep(record->values.at(0).c_str());
+      dataSource->addStep(record.values.at(0));
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Step %lu: [%s]", k, record->values.at(0).c_str());
+      CDBDebug("Step: [%s]", record.values.at(0).c_str());
 #endif
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-        const auto &value = record->values.at(1 + i * 2);
-        size_t idx = size_t(atoi(record->values.at(2 + i * 2).c_str()));
+        const auto &value = record.values.at(1 + i * 2);
+        size_t idx = size_t(atoi(record.values.at(2 + i * 2).c_str()));
         dataSource->getCDFDims()->push_back({.name = dataSource->requiredDims[i].netCDFDimName, .value = value, .index = idx});
 #ifdef CREQUEST_DEBUG
         CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
-        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record->values.at(2 + i * 2).c_str()), value.c_str());
+        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record.values.at(2 + i * 2).c_str()), value.c_str());
 #endif
         auto it = std::find_if(dataSource->requiredDims[i].uniqueValues.begin(), dataSource->requiredDims[i].uniqueValues.end(), [&value](std::string &a) { return a == value; });
         // Check if not already there. TODO: Would be nice to turn into a set.
@@ -2072,7 +2071,7 @@ int CRequest::determineTypesForDataSources() {
         }
 
         CDBDebug("Addstep");
-        dataSources[j]->addStep(fileList[0].c_str());
+        dataSources[j]->addStep(fileList[0]);
         // dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }

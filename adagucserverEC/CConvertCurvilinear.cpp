@@ -557,7 +557,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       CDF::Variable *projectionVar = new CDF::Variable();
       projectionVar->name = ("customgridprojection");
       cdfObject->addVariable(projectionVar);
-      dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
+      dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
       imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
       CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
       if (dataSource->nativeProj4.length() == 0) {
@@ -569,7 +569,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
         CDBDebug("Reprojection is needed");
       }
 
-      projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+      projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
     }
   }
 

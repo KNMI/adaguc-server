@@ -227,10 +227,8 @@ int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
   }
   return 0;
 }
-//   int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS){
-//     return decodeCRS(outputCRS,inputCRS,prj);
-//   }
-int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
+
+int CImageWarper::decodeCRS(std::string *outputCRS, std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
   if (prj == NULL) {
     CDBError("decodeCRS: prj==NULL");
     return 1;
@@ -239,35 +237,23 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
     CDBError("decodeCRS: prj==NULL");
     return 1;
   }
-  outputCRS->copy(inputCRS);
-  // if(inputCRS->indexOf("+proj")!=-1)return 0;
+  *outputCRS = *inputCRS;
   dMaxExtentDefined = 0;
-  // CDBDebug("Check");
-  //  outputCRS->decodeURLSelf();
-  // CDBDebug("Check");
-  // CDBDebug("Check %d",(*prj).size());
   for (size_t j = 0; j < (*prj).size(); j++) {
-    // CDBDebug("Check");
-    if (outputCRS->equals((*prj)[j]->attr.id.c_str())) {
-      outputCRS->copy((*prj)[j]->attr.proj4.c_str());
-      // outputCRS->concat("+over");
+    if (*outputCRS == (*prj)[j]->attr.id) {
+      *outputCRS = (*prj)[j]->attr.proj4;
       if ((*prj)[j]->LatLonBox.size() == 1) {
-        // if(getMaxExtentBBOX!=NULL)
-        {
-          dMaxExtentDefined = 1;
-          dfMaxExtent[0] = (*prj)[j]->LatLonBox[0]->attr.minx;
-          dfMaxExtent[1] = (*prj)[j]->LatLonBox[0]->attr.miny;
-          dfMaxExtent[2] = (*prj)[j]->LatLonBox[0]->attr.maxx;
-          dfMaxExtent[3] = (*prj)[j]->LatLonBox[0]->attr.maxy;
-        }
+        dMaxExtentDefined = 1;
+        dfMaxExtent[0] = (*prj)[j]->LatLonBox[0]->attr.minx;
+        dfMaxExtent[1] = (*prj)[j]->LatLonBox[0]->attr.miny;
+        dfMaxExtent[2] = (*prj)[j]->LatLonBox[0]->attr.maxx;
+        dfMaxExtent[3] = (*prj)[j]->LatLonBox[0]->attr.maxy;
       }
       break;
     }
   }
-  //     CDBDebug("Check [%s]", outputCRS->c_str());
-  if (outputCRS->indexOf("PROJ4:") == 0) {
-    CT::string temp(outputCRS->c_str() + 6);
-    outputCRS->copy(&temp);
+  if (CT::startsWith(*outputCRS, "PROJ4:")) {
+    *outputCRS = outputCRS->substr(6);
   }
   return 0;
 }
@@ -309,9 +295,15 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   std::tie(sourceProjectionUndec, std::ignore) = fixProjection(sourceProjectionUndec);
   CT::string sourceProjection = sourceProjectionUndec;
   CT::string latLonProjection = LATLONPROJECTION;
-  if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
-    CDBError("decodeCRS failed");
-    return 1;
+  {
+    std::string sourceProjectionStd = sourceProjection;
+    std::string sourceProjectionUndecStd = sourceProjectionUndec;
+    if (decodeCRS(&sourceProjectionStd, &sourceProjectionUndecStd, _prj) != 0) {
+      CDBError("decodeCRS failed");
+      return 1;
+    }
+    sourceProjection = sourceProjectionStd;
+    sourceProjectionUndec = sourceProjectionUndecStd;
   }
 
   this->sourceIsLatLonProjection = latLonProjection.equals(sourceProjection);
@@ -319,9 +311,14 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
 
   dMaxExtentDefined = 0;
-  if (decodeCRS(&destinationCRS, &sourceCRS, _prj) != 0) {
-    CDBError("decodeCRS failed");
-    return 1;
+  {
+    std::string destinationCRSStd = destinationCRS;
+    std::string sourceCRSStd = sourceCRS;
+    if (decodeCRS(&destinationCRSStd, &sourceCRSStd, _prj) != 0) {
+      CDBError("decodeCRS failed");
+      return 1;
+    }
+    destinationCRS = destinationCRSStd;
   }
   if (destinationCRS.empty()) {
     CDBDebug("Assuming latlon for destination CRS");
@@ -495,7 +492,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
 
   if (dMaxExtentDefined == 0 && 1 == 0) {
     // CDBDebug("dataSource->nativeProj4 %s %d",dataSource->nativeProj4.c_str(), dataSource->nativeProj4.indexOf("geos")>0);
-    if (dataSource->nativeProj4.indexOf("geos") != -1) {
+    if (CT::indexOf(dataSource->nativeProj4, "geos") != -1) {
       dfMaxExtent[0] = -82 * 2;
       dfMaxExtent[1] = -82;
       dfMaxExtent[2] = 82 * 2;

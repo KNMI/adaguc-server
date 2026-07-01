@@ -90,7 +90,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
 
     if (metadataLayer->dataSource->timeSteps.size() == 0) {
-      metadataLayer->dataSource->addStep(metadataLayer->fileName.c_str());
+      metadataLayer->dataSource->addStep(metadataLayer->fileName);
     }
 
     if (getTitleForLayer(metadataLayer) != 0) {

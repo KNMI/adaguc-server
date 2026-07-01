@@ -623,7 +623,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
         return 1;
       }
       //       CDBDebug("No file selected for datasource");
-      dataSource->addStep(fileList[0].c_str());
+      dataSource->addStep(fileList[0]);
       dataSource->getCDFDims()->push_back({.name = "time", .value = "0", .index = 0});
     }
   }

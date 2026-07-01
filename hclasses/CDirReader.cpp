@@ -79,8 +79,7 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
           }
           if (recursive && d_type == DT_DIR) {
             auto dirFiles = listDir(fullName.c_str(), recursive, ext_filter, filesAndOrDirs, exceptionOnError);
-            // Move elements from dirFiles to result.
-            // dirFiles is left in undefined but safe-to-destruct state.
+            // Move elements from dirFiles to result. dirFiles is left in undefined but safe-to-destruct state.
             result.insert(result.end(), std::make_move_iterator(dirFiles.begin()), std::make_move_iterator(dirFiles.end()));
             dirFiles.clear();
           }
@@ -95,10 +94,6 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
       throw "Error";
     }
   }
-
-  // if (re != nullptr && ext_filter != nullptr) {
-  //   regfree(re);
-  // }
   return result;
 }
 
@@ -109,7 +104,6 @@ int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) 
       return 1;
     } else {
       /* Already done */
-      // CDBDebug("Using cached results for [%s]", directory);
       return 0;
     }
   }
@@ -359,8 +353,7 @@ std::string getFileDate(const std::string &fileName) {
 
   std::map<std::string, std::string>::iterator it = lookupTableFileModificationDateMap.find(fileName);
   if (it != lookupTableFileModificationDateMap.end()) {
-    std::string filemoddate = (*it).second.c_str();
-    return filemoddate;
+    return it->second;
   }
   auto fileDate = getFileDateUnCached(fileName);
   if (fileDate.length() < 10) fileDate = ("1970-01-01T00:00:00Z");

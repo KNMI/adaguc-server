@@ -301,14 +301,14 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
           projectionRequired = false;
         }
-        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
       }
     }
 
