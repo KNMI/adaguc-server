@@ -8,7 +8,7 @@
 #include "CRequest.h"
 std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 
-void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
+void CDBFileScanner::_removeFileFromTables(std::string fileNamestr, CDataSource *dataSource) {
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   auto tableList = dbAdapter->getTableNames(dataSource);
   for (auto tableName: tableList) {
@@ -33,7 +33,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     CDBWarning("Note, more Settings elements were configured. Using the first one.");
   };
 
-  CT::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
+  std::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem == ("true");
   bool enableCleanupIsInform = enableCleanupSystem == ("dryrun");
   int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? atoi(dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.c_str())
@@ -43,8 +43,8 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(1, filesDeletedFromFS);
   }
 
-  CT::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
-  CT::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
+  std::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
+  std::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
   CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s], limit %d", retentiontype.c_str(), retentionperiod.c_str(), cleanupSystemLimit);
 
   if (enableCleanupIsInform) {
@@ -63,9 +63,9 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(1, filesDeletedFromFS);
   }
 
-  CT::string tableNameForTimeDimension;
+  std::string tableNameForTimeDimension;
 
-  CT::string colName = "time";
+  std::string colName = "time";
 
   // Check if this netcdf has a time dim. Use other time dim if available.
   auto hasTimeDim = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [&colName](const COGCDims &ogcdim) { return colName == ogcdim.netCDFDimName; });
@@ -104,12 +104,12 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   CTime *ctime = CTime::GetCTimeEpochInstance();
 
-  CT::string currentTime = CTime::currentDateTime();
+  std::string currentTime = CTime::currentDateTime();
   CTime::Date date = ctime->freeDateStringToDate(currentTime.c_str());
 
   // CDBDebug("currentDate\t\t\t%s", ctime->dateToISOString(date).c_str());
 
-  CT::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod));
+  std::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod));
 
   // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
