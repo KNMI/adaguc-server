@@ -83,8 +83,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
     return 1;
   }
 
-  CT::string queryString;
-  queryString.print("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s') AS table_existence;", pszTableName);
+  std::string queryString = CT::printf("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s') AS table_existence;", pszTableName);
 #ifdef CPGSQLDB_DEBUG_H
   CDBDebug("checkTable PQexec SELECT EXISTS  %s", pszTableName);
 #endif
@@ -103,7 +102,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
   clearResult();
 
   // No table exists yet
-  queryString.print("CREATE TABLE %s (%s)", pszTableName, pszColumns);
+  queryString = CT::printf("CREATE TABLE %s (%s)", pszTableName, pszColumns);
 #ifdef CPGSQLDB_DEBUG_H
   CDBDebug("checkTable PQexec CREATE TABLE %s", pszTableName);
 #endif

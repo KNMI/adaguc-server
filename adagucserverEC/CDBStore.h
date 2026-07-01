@@ -45,13 +45,21 @@ struct CDBStore {
   };
 
   /**
-   * Record is a set of values for each row from the database. The set of values have the length of the columnmodel.
+   * Record is a set of values for each row from the database. The vector of values has the length of the columnmodel.
    */
   struct Record {
     std::vector<std::string> values;
     const ColumnModel *_columnModel; // Reference to columnmodel in store, this is the same for all records.
     Record(const ColumnModel &columnModel);
+    /**
+     * @param name Index of the column
+     * @return The value corresponding with the requested column index in this record, throws exception if not found.
+     */
     const std::string &get(size_t index) const;
+    /**
+     * @param name Name of the column
+     * @return The value corresponding with the requested column name in this record, throws exception if not found.
+     */
     const std::string &get(const std::string &name) const;
   };
 
