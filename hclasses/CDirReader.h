@@ -26,20 +26,20 @@
 #ifndef CDirReader_H
 #define CDirReader_H
 
-#include "CTString.h"
-#include "CDebugger.h"
 #include <string>
+#include <vector>
 #include <map>
-static std::map<std::string, std::string> lookupTableFileModificationDateMap;
 
 #define CDIRREADER_INCLUDE_FILES 1
 #define CDIRREADER_INCLUDE_DIRECTORIES 2
 #define CDIRREADER_INCLUDE_ALL 3
+
+static std::map<std::string, std::string> lookupTableFileModificationDateMap;
 class CDirReader {
 private:
   int _ReadDir(const char *directory, const char *ext_filter, int recursive);
   int _listDirRecursive(const char *directory, const char *ext_filter);
-  CT::string currentDir;
+  std::string currentDir;
 
 public:
   std::vector<std::string> fileList;
@@ -62,8 +62,8 @@ public:
    * @param exceptionOnError Whether it should raise an exception if something goes wrong
    * @returns: A vector with strings, listing the fullpath of the directory(ies)
    */
-  static std::vector<std::string> listDir(const char *directory, bool recursive = false, const char *ext_filter = nullptr, int filesAndOrDirs = CDIRREADER_INCLUDE_FILES,
-                                          bool exceptionOnError = false);
+  static const std::vector<std::string> listDir(const char *directory, bool recursive = false, const char *ext_filter = nullptr, int filesAndOrDirs = CDIRREADER_INCLUDE_FILES,
+                                                bool exceptionOnError = false);
 
   static bool isDir(const char *fileName);
 

@@ -35,12 +35,14 @@
 #include <algorithm> /* For std::sort */
 #include <regex>
 #include "CDirReader.h"
+#include "CTString.h"
+#include "CDebugger.h"
 
 CDirReader::CDirReader() {}
 
 CDirReader::~CDirReader() { fileList.clear(); }
 
-std::vector<std::string> CDirReader::listDir(const char *directory, bool recursive, const char *ext_filter, int filesAndOrDirs, bool exceptionOnError) {
+const std::vector<std::string> CDirReader::listDir(const char *directory, bool recursive, const char *ext_filter, int filesAndOrDirs, bool exceptionOnError) {
   std::vector<std::string> result;
   std::regex self_regex;
   if (ext_filter != nullptr) {
@@ -52,9 +54,9 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
   if ((dir = opendir(directory)) != NULL) {
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
-      CT::string fullName = directory;
-      fullName.concat("/");
-      fullName.concat(ent->d_name);
+      std::string fullName = directory;
+      fullName += fullName + "/" + ent->d_name;
+
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
@@ -102,7 +104,7 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
 
 int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) {
   if (fileList.size() != 0) {
-    if (!currentDir.equals(directory)) {
+    if (currentDir != directory) {
       CDBError("Trying to do listDirRecursive twice with different paths");
       return 1;
     } else {
@@ -142,45 +144,29 @@ int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter)
   }
 }
 int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recursive) {
-  DIR *dp;
   struct dirent *ep;
-  int filename_len;
-  int dir_len = strlen(directory);
-
-  dp = opendir(directory);
-  if (dp != NULL) {
-    ep = readdir(dp);
-    while (ep) {
-      filename_len = strlen(ep->d_name);
-      CT::string dirpath;
-      dirpath.copy(directory, dir_len);
-      dirpath.concatlength("/", 1);
-      dirpath.concatlength(ep->d_name, filename_len);
-      bool isdir = isDir(dirpath.c_str());
-      if (isdir == false) {
-        if (CT::testRegEx(ep->d_name, ext_filter)) {
-
-          /* This is a file */
-          CT::string fullName;
-          filename_len = strlen(ep->d_name);
-          fullName.copy(directory, dir_len);
-          fullName.concatlength("/", 1);
-          fullName.concatlength(ep->d_name, filename_len);
-          fullName = makeCleanPath(fullName.c_str());
-          fileList.push_back(fullName.c_str());
-        }
-      } else if (recursive == 1) {
-        if (ep->d_name[0] != '.') {
-          _ReadDir(dirpath.c_str(), ext_filter, recursive);
-        }
-      }
-      ep = readdir(dp);
-    }
-    (void)closedir(dp);
-  } else {
-    /* Could not open the directory */
+  auto dp = opendir(directory);
+  if (dp == NULL) {
     throw 1;
   }
+  ep = readdir(dp);
+  while (ep) {
+    std::string fullName = std::string(directory) + "/" + ep->d_name;
+    bool isdir = isDir(fullName.c_str());
+    if (isdir == false) {
+      if (CT::testRegEx(ep->d_name, ext_filter)) {
+        /* This is a file */
+        fileList.push_back(makeCleanPath(fullName));
+      }
+    } else if (recursive == 1) {
+      if (ep->d_name[0] != '.') {
+        _ReadDir(fullName.c_str(), ext_filter, recursive);
+      }
+    }
+    ep = readdir(dp);
+  }
+  (void)closedir(dp);
+
   return 0;
 }
 
@@ -205,12 +191,12 @@ void CDirReader::makePublicDirectory(const char *dirname) {
   struct stat stFileInfo;
   int intStat = stat(dirname, &stFileInfo);
   if (intStat != 0) {
-    CT::string directory = dirname;
-    auto directorySplitted = directory.split("/");
+    std::string directory = dirname;
+    auto directorySplitted = CT::split(directory, "/");
     directory = "";
     for (auto &directoryPart: directorySplitted) {
-      directory.concat("/");
-      directory.concat(directoryPart);
+      directory += "/";
+      directory += directoryPart;
       const char *part = directory.c_str();
       int intStat = stat(part, &stFileInfo);
       if (intStat != 0) {
@@ -273,7 +259,7 @@ void CDirReader::test_compareLists() {
 }
 
 int CDirReader::test_makeCleanPath() {
-  CT::string t;
+  std::string t;
   t = makeCleanPath("data");
   CDBDebug("[%s]", t.c_str());
   ;
@@ -373,7 +359,7 @@ std::string getFileDate(const std::string &fileName) {
 
   std::map<std::string, std::string>::iterator it = lookupTableFileModificationDateMap.find(fileName);
   if (it != lookupTableFileModificationDateMap.end()) {
-    CT::string filemoddate = (*it).second.c_str();
+    std::string filemoddate = (*it).second.c_str();
     return filemoddate;
   }
   auto fileDate = getFileDateUnCached(fileName);
