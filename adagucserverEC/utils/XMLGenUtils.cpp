@@ -263,12 +263,12 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
       throw __LINE__;
     }
     if (isTimeDim) {
-      for (size_t j = 0; j < values->records.size(); j++) {
-        queryValues.push_back(makeIsoStringFromDbString(values->records[j].get(0)));
+      for (auto &record: values->records) {
+        queryValues.push_back(makeIsoStringFromDbString(record.get(0)));
       }
     } else {
-      for (size_t j = 0; j < values->records.size(); j++) {
-        queryValues.push_back(values->records[j].get(0));
+      for (auto &record: values->records) {
+        queryValues.push_back(record.get(0));
       }
     }
     delete values;
@@ -455,8 +455,8 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
     return timeStampList;
   }
   try {
-    for (size_t j = 0; j < store->records.size(); j++) {
-      timeStampList.push_back(makeIsoStringFromDbString(store->records[j].get("time")));
+    for (auto &record: store->records) {
+      timeStampList.push_back(makeIsoStringFromDbString(record.get("time")));
     }
   } catch (int e) {
   }

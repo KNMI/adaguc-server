@@ -23,10 +23,7 @@ int updateLayerMetadata(CRequest &request) {
   std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
 
   for (auto &dataset : datasetList) {
-    CT::string datasetAsCTString = dataset;
-    CT::string baseDataSetNameCT = CT::basename(datasetAsCTString);
-    baseDataSetNameCT.replaceSelf(".xml", "");
-    std::string datasetBaseName = baseDataSetNameCT;
+    std::string datasetBaseName = CT::replace(CT::basename(dataset), ".xml", "");
 
     if (dataset.length() > 0) {
       CDBDebug("\n\n *********************************** Updating metadatatable for dataset [%s] **************************************************", dataset.c_str());
@@ -50,9 +47,9 @@ int updateLayerMetadata(CRequest &request) {
     for (auto layer : requestPerDataset.getServerParams()->cfg->Layer) {
       dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer)));
     }
-    CT::string layerPathToScan;
-    CT::string tailPath;
-    status = requestPerDataset.updatedb(&tailPath, &layerPathToScan, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
+    std::string layerPathToScan;
+    std::string tailPath;
+    status = requestPerDataset.updatedb(tailPath, layerPathToScan, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
     if (status != 0) {
       CDBError("Error occured in updating the database");
       continue;

@@ -952,10 +952,10 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #endif
                       }
 
-                      for (size_t storeIndex = 0; storeIndex < store->records.size(); storeIndex++) {
+                      for (auto &record: store->records) {
 
                         if (readFromDB) {
-                          CT::string dimValue = store->records[storeIndex].values.at(1);
+                          CT::string dimValue = record.values.at(1);
 
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Dimension value from DB = [%s] units = [%s] standard_name = [%s]", dimValue.c_str(), dimUnits.c_str(), dimStandardName.c_str());
@@ -966,12 +966,12 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                         }
 
                         if (readFromDB == false) {
-                          CT::string fileName = store->records[storeIndex].values.at(0);
+                          CT::string fileName = record.values.at(0);
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Found file %s", fileName.c_str());
 #endif
                           cdfObjectToRead = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, fileName.c_str());
-                          start[0] = std::stoi(store->records[storeIndex].values.at(2));
+                          start[0] = std::stoi(record.values.at(2));
                           count[0] = 1;
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Start reading data for variable %s", v->name.c_str());

@@ -53,9 +53,9 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
     throw ServiceExceptionType::InvalidDimensionValue;
   }
   for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
-    for (size_t k = 0; k < store->records.size(); k++) {
+    for (auto &record: store->records) {
       const auto &reqDim = dataSource.requiredDims[d];
-      std::string dimValueFromDb = store->records[k].values.at(1 + d * 2);
+      std::string dimValueFromDb = record.values.at(1 + d * 2);
       auto &reqDimList = dimensionNameAndValues[reqDim.name];
       // Only add if not already there.
       auto it = std::find_if(reqDimList.begin(), reqDimList.end(), [&dimValueFromDb](const auto &a) { return a == dimValueFromDb; });

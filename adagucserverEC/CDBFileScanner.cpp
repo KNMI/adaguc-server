@@ -790,8 +790,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           } else {
             std::vector<std::string> oldList;
             std::vector<std::string> newList;
-            for (size_t j = 0; j < values->records.size(); j++) {
-              oldList.push_back(values->records[j].get(0));
+            for (auto &record: values->records) {
+              oldList.push_back(record.get(0));
             }
             for (size_t i = 0; i < fileList.size(); i++) {
               newList.push_back((fileList)[i]);

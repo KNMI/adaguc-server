@@ -89,8 +89,8 @@ std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
     return {};
   }
   std::vector<std::string> resultList;
-  for (size_t k = 0; k < store->records.size(); k++) {
-    resultList.push_back(makeIsoStringFromDbString(store->records[k].get(0)));
+  for (auto &record: store->records) {
+    resultList.push_back(makeIsoStringFromDbString(record.get(0)));
   }
   delete store;
 

@@ -69,12 +69,12 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   if (store != NULL) {
     try {
 
-      for (size_t j = 0; j < store->records.size(); j++) {
+      for (auto &record: store->records) {
         CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
 
-        xmleDim->elementValue = (store->records[j].get("ogcname"));
-        xmleDim->attr.name = (store->records[j].get("ncname"));
-        xmleDim->attr.units = (store->records[j].get("units"));
+        xmleDim->elementValue = (record.get("ogcname"));
+        xmleDim->attr.name = (record.get("ncname"));
+        xmleDim->attr.units = (record.get("units"));
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
 #ifdef CAUTOCONFIGURE_DEBUG
         CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());

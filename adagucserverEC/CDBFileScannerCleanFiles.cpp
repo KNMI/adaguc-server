@@ -116,8 +116,8 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   CDBStore::Store *store = dbAdapter->getBetween("0001-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
   if (store != NULL && store->records.size() > 0) {
     CDBDebug("Found (at least) %lu files which are too old.", store->records.size());
-    for (size_t j = 0; j < store->records.size(); j++) {
-      std::string fileNamestr = store->records[j].get(0);
+    for (auto &record: store->records) {
+      std::string fileNamestr = record.get(0);
       if (enableCleanupIsInform) {
         CDBDebug("[INFO] Would clean: [%s]", fileNamestr.c_str());
       }

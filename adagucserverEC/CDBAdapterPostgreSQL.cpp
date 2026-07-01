@@ -669,8 +669,8 @@ std::vector<std::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSo
   // CDBDebug("QUERY: %s", query.c_str());
   CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
-    for (size_t i = 0; i < tableNameStore->records.size(); i++) {
-      tableList.push_back(tableNameStore->records[i].get("tablename"));
+    for (auto &record: tableNameStore->records) {
+      tableList.push_back(record.get("tablename"));
     }
   }
   delete tableNameStore;
@@ -754,12 +754,12 @@ std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterA
   if (tableDimStore == nullptr) {
     throw 1;
   }
-  for (size_t i = 0; i < tableDimStore->records.size(); i++) {
-    std::string dim = tableDimStore->records[i].get("dimension");
+  for (auto &record: tableDimStore->records) {
+    std::string dim = record.get("dimension");
 
     if (mapping[dim].tableName.length() == 0) {
-      mapping[dim].tableName = tableDimStore->records[i].get("tablename");
-      mapping[dim].dataType = tableDimStore->records[i].get("data_type");
+      mapping[dim].tableName = record.get("tablename");
+      mapping[dim].dataType = record.get("data_type");
 
       // Found tablename in SQL lookup table, also add to the lookupTableNameCacheMap
       std::string lookupIdentifier = getLookupIdentifier(path, filter, dim);
