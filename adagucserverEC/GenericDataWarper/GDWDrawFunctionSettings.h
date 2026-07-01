@@ -6,6 +6,7 @@
 #include "CGenericDataWarper.h"
 #include "CColor.h"
 #include "CDrawImage.h"
+#include <vector>
 
 enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
@@ -34,6 +35,7 @@ struct GDWDrawFunctionSettings {
   bool drawgrid = true;
   InterpolationMethod interpolationMethod = InterpolationMethodNearest;
   std::vector<Interval> intervals;
+  bool intervalsCanUseBinarySearch = false;
   CDrawImage *drawImage;
   CDFType destinationDataType;
   void *destinationGrid = nullptr;

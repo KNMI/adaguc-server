@@ -68,9 +68,16 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
       settings.shadeInterval = atof(styleConfiguration->shadeIntervals[0].elementValue.c_str());
     } else {
       settings.intervals.reserve(numShadeDefs);
+      settings.intervalsCanUseBinarySearch = numShadeDefs > 0;
       for (int j = 0; j < numShadeDefs; j++) {
         const CServerConfig::XMLE_ShadeInterval &shadeInterVal = styleConfiguration->shadeIntervals[j];
         settings.intervals.push_back(Interval({.min = atof(shadeInterVal.attr.min.c_str()), .max = atof(shadeInterVal.attr.max.c_str()), .color = CColor(shadeInterVal.attr.fillcolor.c_str())}));
+
+        // If intervals are not sorted, we cannot use binary search
+        const Interval &interval = settings.intervals.back();
+        if (interval.min >= interval.max || (j > 0 && interval.min < settings.intervals[j - 1].max)) {
+          settings.intervalsCanUseBinarySearch = false;
+        }
         /* Check for bgcolor */
         if (j == 0) {
           if (shadeInterVal.attr.bgcolor.empty() == false) {
