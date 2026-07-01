@@ -23,41 +23,30 @@
  *
  ******************************************************************************/
 
-#ifndef CDBSTORE_H
-#define CDBSTORE_H
-#include <string>
-#include <vector>
+#include "CDBStore.h"
+#include <algorithm>
+#include <cstddef>
 
-#define CDB_UNKNOWN_ERROR 0
-#define CDB_UNKNOWN_COLUMNNAME 1
-#define CDB_INDEX_OUT_OF_BOUNDS 2
-#define CDB_CONNECTION_ERROR 3
-#define CDB_NODATA 5
-#define CDB_QUERYFAILED 6
+std::string CDBStore::getErrorMessage(int e) {
+  if (e == CDB_UNKNOWN_ERROR) return "CDB_UNKNOWN_ERROR";
+  if (e == CDB_UNKNOWN_COLUMNNAME) return "CDB_UNKNOWN_COLUMNNAME";
+  if (e == CDB_INDEX_OUT_OF_BOUNDS) return "CDB_INDEX_OUT_OF_BOUNDS";
+  return getErrorMessage(0);
+}
 
-struct CDBStore {
+size_t CDBStore::ColumnModel::getIndex(const std::string &name) const {
+  auto it = std::find_if(columnNames.begin(), columnNames.end(), [&name](const auto &a) { return a == name; });
+  if (it != columnNames.end()) {
+    return std::distance(columnNames.begin(), it);
+  }
+  throw(CDB_UNKNOWN_COLUMNNAME);
+}
 
-  static std::string getErrorMessage(int e);
+CDBStore::Record::Record(const ColumnModel &columnModel) {
+  this->_columnModel = &columnModel;
+  values.reserve(columnModel.columnNames.size());
+}
 
-  struct ColumnModel {
-    std::vector<std::string> columnNames;
-    size_t getIndex(const std::string &name) const;
-  };
+const std::string &CDBStore::Record::get(size_t index) const { return values.at(index); }
 
-  /**
-   * Record is a set of values for each row from the database. The set of values have the length of the columnmodel.
-   */
-  struct Record {
-    std::vector<std::string> values;
-    const ColumnModel *_columnModel; // Reference to columnmodel in store, this is the same for all records.
-    Record(const ColumnModel &columnModel);
-    const std::string &get(size_t index) const;
-    const std::string &get(const std::string &name) const;
-  };
-
-  struct Store {
-    std::vector<Record> records;
-    ColumnModel columnModel;
-  };
-};
-#endif
+const std::string &CDBStore::Record::get(const std::string &name) const { return values.at(_columnModel->getIndex(name)); }

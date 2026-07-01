@@ -566,7 +566,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
           }
 
         } catch (int e) {
-          CDBDebug("Unable to get filedate from database, error: %s", CDBStore::getErrorMessage(e));
+          CDBDebug("Unable to get filedate from database, error: %s", CDBStore::getErrorMessage(e).c_str());
           fileNeedsUpdate = true;
         }
       }

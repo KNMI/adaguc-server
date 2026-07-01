@@ -88,7 +88,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       }
     } catch (int e) {
       delete store;
-      CDBError("DB Exception: %s\n", CDBStore::getErrorMessage(e));
+      CDBError("DB Exception: %s\n", CDBStore::getErrorMessage(e).c_str());
     }
   }
 
