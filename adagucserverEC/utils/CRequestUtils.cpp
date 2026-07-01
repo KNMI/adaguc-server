@@ -60,7 +60,9 @@ std::string makeIsoStringFromDbString(std::string input) {
   if (input.length() < 12) {
     return input;
   }
-  input.at(10) = 'T';
+  if (input.length() > 10) {
+    input.at(10) = 'T';
+  }
   // 01234567890123456789
   // YYYY-MM-DDTHH:MM:SSZ
   if (input.length() == 19) {

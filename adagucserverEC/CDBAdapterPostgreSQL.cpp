@@ -29,6 +29,7 @@
 #include "CDebugger.h"
 #include "CServerError.h"
 #include "Types/GeoParameters.h"
+#include "utils/CRequestUtils.h"
 
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 // #define CDBAdapterPostgreSQL_DEBUG
@@ -233,7 +234,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfRefere
     return NULL;
   }
   std::string query = CT::printf("select max(forecast_reference_time) from (select %s,%s as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path )a0",
-                                  netcdfReferenceTimeDimName, netcdfTimeDimName, referenceTimeTableName, timeTableName, netcdfTimeDimName, timeValue);
+                                 netcdfReferenceTimeDimName, netcdfTimeDimName, referenceTimeTableName, timeTableName, netcdfTimeDimName, timeValue);
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getReferenceTime");
@@ -249,8 +250,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
   if (DB == NULL) {
     return NULL;
   }
-  std::string query =
-      CT::printf("SELECT %s,abs(EXTRACT(EPOCH FROM (to_timestamp(%s) - now()))) as t from %s order by t asc limit 1", netcdfDimName, netcdfDimName, tableName);
+  std::string query = CT::printf("SELECT %s,abs(EXTRACT(EPOCH FROM (to_timestamp(%s) - now()))) as t from %s order by t asc limit 1", netcdfDimName, netcdfDimName, tableName);
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime");
@@ -284,8 +284,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   for (const auto &dim: dataSource->requiredDims) {
     dims.push_back(CT::toLowerCase(dim.netCDFDimName));
   }
-  std::map<std::string, DimInfo> mapping =
-      getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dims, dataSource);
+  std::map<std::string, DimInfo> mapping = getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dims, dataSource);
 
   // Compose the query
   for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
@@ -372,8 +371,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   for (const auto &dim: dataSource->requiredDims) {
     dims.push_back(CT::toLowerCase(dim.netCDFDimName));
   }
-  std::map<std::string, DimInfo> mapping =
-      getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dims, dataSource);
+  std::map<std::string, DimInfo> mapping = getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dims, dataSource);
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
   for (const auto &m: mapping) {
@@ -532,13 +530,8 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     if (tableNotFound == false) {
       if (srvParams->isAutoLocalFileResourceEnabled() == true) {
         try {
-          std::string databaseTime = store->records[0].values.at(1);
-          if (databaseTime.length() < 20) {
-            databaseTime += "Z";
-          }
-          databaseTime[10] = 'T';
-
-          const auto fileDate = getFileDate(store->records[0].values.at(0));
+          const auto databaseTime = makeIsoStringFromDbString(store->records[0].values.at(1));
+          const auto fileDate = makeIsoStringFromDbString(getFileDate(store->records[0].values.at(0)));
 
           if (databaseTime != fileDate) {
             CDBDebug("Table was found, %s ~ %s : %d", fileDate.c_str(), databaseTime.c_str(), databaseTime == fileDate);
@@ -665,7 +658,7 @@ std::vector<std::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSo
   auto filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
   // Only select tables which really exist in the database by looking it up in pg_tables.
   std::string query = CT::printf("select p.tablename from pg_tables inner join %s as p on pg_tables.tablename = p.tablename where path=E'P_%s' AND filter=E'F_%s';",
-                                  CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter.c_str());
+                                 CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter.c_str());
   // CDBDebug("QUERY: %s", query.c_str());
   CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
@@ -679,7 +672,7 @@ std::vector<std::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSo
 }
 
 std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const std::string &path, const std::string &filter, std::vector<std::string> dimensions,
-                                                                                              CDataSource *dataSource) {
+                                                                                             CDataSource *dataSource) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
 #endif
@@ -1031,7 +1024,7 @@ int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablena
 
 int CDBAdapterPostgreSQL::setFileInt(const char *tablename, const char *file, int dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
   std::string values = CT::printf("('%s',%d,'%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1],
-                                   geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
+                                  geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding INT %s", values.c_str());
 #endif
@@ -1040,7 +1033,7 @@ int CDBAdapterPostgreSQL::setFileInt(const char *tablename, const char *file, in
 }
 int CDBAdapterPostgreSQL::setFileReal(const char *tablename, const char *file, double dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
   std::string values = CT::printf("('%s',%f,'%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1],
-                                   geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
+                                  geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding REAL %s", values.c_str());
 #endif
@@ -1048,8 +1041,8 @@ int CDBAdapterPostgreSQL::setFileReal(const char *tablename, const char *file, d
   return 0;
 }
 int CDBAdapterPostgreSQL::setFileString(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
-  std::string values = CT::printf("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0],
-                                   geoOptions->bbox[1], geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
+  std::string values = CT::printf("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1],
+                                  geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding STRING %s", values.c_str());
 #endif
@@ -1058,7 +1051,7 @@ int CDBAdapterPostgreSQL::setFileString(const char *tablename, const char *file,
 }
 int CDBAdapterPostgreSQL::setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions) {
   std::string values = CT::printf("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1],
-               geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
+                                  geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding TIMESTAMP %s", values.c_str());
 #endif
