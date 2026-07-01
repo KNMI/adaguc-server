@@ -11,11 +11,11 @@
 CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName, const char *layerName, const char *metadataKey) {
   auto records = layerMetaDataStore->getRecords();
   for (auto record: records) {
-    if (record.get("datasetname")->equals(datasetName) && record.get("layername")->equals(layerName) && record.get("metadatakey")->equals(metadataKey)) {
+    if (*record.get("datasetname") == datasetName && *record.get("layername") == layerName && *record.get("metadatakey") == metadataKey) {
 #ifdef MEASURETIME
       StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-      return record.get("blob");
+      return *record.get("blob");
     }
   }
   return "";

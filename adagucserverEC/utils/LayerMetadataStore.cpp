@@ -122,11 +122,11 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
   }
   auto records = layerMetaDataStore->getRecords();
   for (auto record: records) {
-    if (record.get("layername")->equals(layerName) && record.get("metadatakey")->equals(metadataKey)) {
+    if (*record.get("layername") == layerName.c_str() && *record.get("metadatakey") == metadataKey.c_str()) {
 #ifdef MEASURETIME
       StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-      return record.get("blob");
+      return *record.get("blob");
     }
   }
 

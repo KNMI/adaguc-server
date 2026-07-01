@@ -109,7 +109,7 @@ CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, co
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getDimValueForFileName");
 #endif
-  CT::string dimValue = store->getRecord(0)->get(1);
+  CT::string dimValue = *store->getRecord(0)->get(1);
   delete store;
   return dimValue;
 };
@@ -549,7 +549,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     if (tableNotFound == false) {
       if (srvParams->isAutoLocalFileResourceEnabled() == true) {
         try {
-          CT::string databaseTime = store->getRecord(0)->get(1);
+          CT::string databaseTime = *store->getRecord(0)->get(1);
           if (databaseTime.length() < 20) {
             databaseTime.concat("Z");
           }
@@ -689,7 +689,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
     for (size_t i = 0; i < tableNameStore->size(); i++) {
-      tableList.push_back(tableNameStore->getRecord(i)->get("tablename"));
+      tableList.push_back(*tableNameStore->getRecord(i)->get("tablename"));
     }
   }
   delete tableNameStore;
@@ -773,11 +773,11 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
     throw 1;
   }
   for (size_t i = 0; i < tableDimStore->size(); i++) {
-    CT::string dim = tableDimStore->getRecord(i)->get("dimension");
+    CT::string dim = *tableDimStore->getRecord(i)->get("dimension");
 
     if (mapping[dim].tableName.length() == 0) {
-      mapping[dim].tableName = tableDimStore->getRecord(i)->get("tablename");
-      mapping[dim].dataType = tableDimStore->getRecord(i)->get("data_type");
+      mapping[dim].tableName = *tableDimStore->getRecord(i)->get("tablename");
+      mapping[dim].dataType = *tableDimStore->getRecord(i)->get("data_type");
 
       // Found tablename in SQL lookup table, also add to the lookupTableNameCacheMap
       CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim);
@@ -1246,7 +1246,7 @@ bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
     return false;
   }
   auto result = store->getRecord(0)->get("result");
-  bool succesfullylocked = result != nullptr && result->equals("t");
+  bool succesfullylocked = result != nullptr && *result == "t";
   if (succesfullylocked) {
     CDBDebug("pg_try_advisory_lock succesfully locked");
   } else {
@@ -1270,7 +1270,7 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
     return false;
   }
   auto result = store->getRecord(0)->get("result");
-  bool succesfullyunlocked = result != nullptr && result->equals("t");
+  bool succesfullyunlocked = result != nullptr && *result == "t";
   if (succesfullyunlocked) {
     CDBDebug("pg_advisory_unlock succesfully unlocked");
   } else {
@@ -1290,5 +1290,5 @@ f8box CDBAdapterPostgreSQL::getExtent(CDataSource *dataSource) {
     throw __LINE__;
   }
   auto record = store->getRecord(0);
-  return {.left = record->get("minx")->toDouble(), .bottom = record->get("miny")->toDouble(), .right = record->get("maxx")->toDouble(), .top = record->get("maxy")->toDouble()};
+  return {.left = std::stod(*record->get("minx")), .bottom = std::stod(*record->get("miny")), .right = std::stod(*record->get("maxx")), .top = std::stod(*record->get("maxy"))};
 }

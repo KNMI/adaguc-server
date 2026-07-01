@@ -25,9 +25,9 @@
 
 #ifndef CDBSTORE_H
 #define CDBSTORE_H
+#include <string>
 #include <vector>
 #include <algorithm>
-#include "../hclasses/CTString.h"
 
 #define CDB_UNKNOWN_ERROR 0
 #define CDB_UNKNOWN_COLUMNNAME 1
@@ -63,18 +63,18 @@ public:
   };
 
   struct Record {
-    std::vector<CT::string> values;
+    std::vector<std::string> values;
     ColumnModel *columnModel;
     void setColumnModel(ColumnModel *columnModel) {
       this->columnModel = columnModel;
       values.reserve(columnModel->getSize());
     }
-    CT::string *get(int index) { return get((size_t)index); }
-    CT::string *get(size_t index) {
+    std::string *get(int index) { return get((size_t)index); }
+    std::string *get(size_t index) {
       if (index >= values.size()) throw(CDB_INDEX_OUT_OF_BOUNDS);
       return &(values[index]);
     }
-    CT::string *get(const char *name) { return get(columnModel->getIndex(name)); }
+    std::string *get(const char *name) { return get(columnModel->getIndex(name)); }
     void push(const char *value) { values.emplace_back(value); }
   };
 

@@ -738,7 +738,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
         CDBDebug("Query  succeeded: Filename = %s", values->getRecord(0)->get(0)->c_str());
 #endif
-        metadataLayer->fileName = (values->getRecord(0)->get(0));
+        metadataLayer->fileName = *(values->getRecord(0)->get(0));
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
         // Ignore the file for now too
