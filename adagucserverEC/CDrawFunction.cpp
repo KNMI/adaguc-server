@@ -55,21 +55,12 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
         return settings->drawImage->getColorForIndex(determinePixelIndexFromValue(f, *settings));
 
       } else {
-        if (settings->intervalsCanUseBinarySearch) {
-          // If ShadeIntervals are sorted and non-overlapping, use binary search.
-          auto intervalIt = std::upper_bound(settings->intervals.begin(), settings->intervals.end(), val, [](auto value, const Interval &interval) { return value < interval.min; });
-          if (intervalIt != settings->intervals.begin()) {
-            intervalIt--;
-            if (val < intervalIt->max) {
-              return intervalIt->color;
-            }
-          }
-        } else {
-          // Cannot use binary search, just loop through intervals manually.
-          for (size_t j = 0; (j < settings->intervals.size()); j += 1) {
-            if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
-              return settings->intervals[j].color;
-            }
+        // use binary search to find matching interval
+        auto intervalIt = std::upper_bound(settings->intervals.begin(), settings->intervals.end(), val, [](auto value, const Interval &interval) { return value < interval.min; });
+        if (intervalIt != settings->intervals.begin()) {
+          intervalIt--;
+          if (val < intervalIt->max) {
+            return intervalIt->color;
           }
         }
       }

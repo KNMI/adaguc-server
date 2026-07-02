@@ -35,7 +35,6 @@ struct GDWDrawFunctionSettings {
   bool drawgrid = true;
   InterpolationMethod interpolationMethod = InterpolationMethodNearest;
   std::vector<Interval> intervals;
-  bool intervalsCanUseBinarySearch = false;
   CDrawImage *drawImage;
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
