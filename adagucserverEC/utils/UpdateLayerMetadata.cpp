@@ -23,10 +23,7 @@ int updateLayerMetadata(CRequest &request) {
   std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
 
   for (auto &dataset : datasetList) {
-    CT::string datasetAsCTString = dataset.c_str();
-    CT::string baseDataSetNameCT = CT::basename(datasetAsCTString);
-    baseDataSetNameCT.replaceSelf(".xml", "");
-    std::string datasetBaseName = baseDataSetNameCT.c_str();
+    std::string datasetBaseName = CT::replace(CT::basename(dataset), ".xml", "");
 
     if (dataset.length() > 0) {
       CDBDebug("\n\n *********************************** Updating metadatatable for dataset [%s] **************************************************", dataset.c_str());
@@ -36,7 +33,7 @@ int updateLayerMetadata(CRequest &request) {
     }
     CRequest requestPerDataset;
 
-    int status = setCRequestConfigFromEnvironment(&requestPerDataset, dataset.c_str());
+    int status = setCRequestConfigFromEnvironment(&requestPerDataset, dataset);
     if (status != 0) {
       CDBError("Unable to read configuration file");
       continue;
@@ -48,11 +45,11 @@ int updateLayerMetadata(CRequest &request) {
       CDBDebug("Found %lu layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
     }
     for (auto layer : requestPerDataset.getServerParams()->cfg->Layer) {
-      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer).c_str()));
+      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer)));
     }
-    CT::string layerPathToScan;
-    CT::string tailPath;
-    status = requestPerDataset.updatedb(&tailPath, &layerPathToScan, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
+    std::string layerPathToScan;
+    std::string tailPath;
+    status = requestPerDataset.updatedb(tailPath, layerPathToScan, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
     if (status != 0) {
       CDBError("Error occured in updating the database");
       continue;
@@ -69,16 +66,14 @@ int updateLayerMetadata(CRequest &request) {
   if (layerMetaDataStore == nullptr) {
     return 1;
   }
-  auto records = layerMetaDataStore->getRecords();
+  auto &records = layerMetaDataStore->records;
 
   std::set<DatasetAndLayerPair> datasetNamesFromDB;
 
   for (auto record : records) {
-    CT::string *datasetName = record.get("datasetname");
-    CT::string *layerName = record.get("layername");
-    if (datasetName != nullptr && layerName != nullptr) {
-      datasetNamesFromDB.insert(std::make_pair(datasetName->c_str(), layerName->c_str()));
-    }
+    const std::string &datasetName = record.get("datasetname");
+    const std::string &layerName = record.get("layername");
+    datasetNamesFromDB.insert(std::make_pair(datasetName, layerName));
   }
 
   std::set<DatasetAndLayerPair> layersToDeleteFromMetadataTable;

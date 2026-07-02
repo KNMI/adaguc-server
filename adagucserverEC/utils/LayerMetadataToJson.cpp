@@ -9,9 +9,9 @@
 #include <ranges>
 
 CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName, const char *layerName, const char *metadataKey) {
-  auto records = layerMetaDataStore->getRecords();
+  auto &records = layerMetaDataStore->records;
   for (auto record: records) {
-    if (record.get("datasetname")->equals(datasetName) && record.get("layername")->equals(layerName) && record.get("metadatakey")->equals(metadataKey)) {
+    if (record.get("datasetname") == datasetName && record.get("layername") == layerName && record.get("metadatakey") == metadataKey) {
 #ifdef MEASURETIME
       StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
@@ -47,15 +47,15 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
   dataSource.requiredDims = newRequiredDims;
 
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource.srvParams->cfg)->getFilesAndIndicesForDimensions(&dataSource, -1, false);
-  if (store == nullptr || store->getSize() == 0) {
+  if (store == nullptr || store->records.size() == 0) {
     delete store;
     CDBWarning("getAllDimensionCombinationsFromDb: No results for %s", dataSource.layerName.c_str());
     throw ServiceExceptionType::InvalidDimensionValue;
   }
   for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
-    for (size_t k = 0; k < store->getSize(); k++) {
+    for (auto &record: store->records) {
       const auto &reqDim = dataSource.requiredDims[d];
-      std::string dimValueFromDb = store->getRecord(k)->get(1 + d * 2)->c_str();
+      std::string dimValueFromDb = record.values.at(1 + d * 2);
       auto &reqDimList = dimensionNameAndValues[reqDim.name];
       // Only add if not already there.
       auto it = std::find_if(reqDimList.begin(), reqDimList.end(), [&dimValueFromDb](const auto &a) { return a == dimValueFromDb; });
@@ -131,7 +131,7 @@ json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetNa
         // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());
         // layer["projected_extents"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "projected_extents").c_str());
 
-        datasetJSON[layerName.c_str()] = layer;
+        datasetJSON[layerName] = layer;
 
       } catch (json::exception &e) {
         CDBWarning("Unable to parse json for layer %s", layerName.c_str());
@@ -150,12 +150,12 @@ ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &resu
     CDBError("Unable to get layer metadata store");
     return ServiceExceptionType::UnprocessableEntity;
   }
-  auto records = layerMetaDataStore->getRecords();
+  auto &records = layerMetaDataStore->records;
   // CDBDebug("Found %lu records in database", records.size());
   std::map<std::string, std::set<std::string>> datasetNames;
   for (auto record: records) {
-    std::string datasetName = record.get("datasetname")->c_str();
-    std::string layerName = record.get("layername")->c_str();
+    std::string datasetName = record.get("datasetname");
+    std::string layerName = record.get("layername");
     if (!datasetName.empty() && !layerName.empty()) {
       datasetNames[datasetName].insert(layerName);
     }

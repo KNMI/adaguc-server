@@ -112,7 +112,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     return 1;
   }
 
-  dataSourceToTile->addStep(fileToTile.c_str());
+  dataSourceToTile->addStep(fileToTile);
   dataSourceToTile->setTimeStep(0);
 
   CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName().c_str());
@@ -161,7 +161,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     }
   }
 
-  srvParam->responceCrs = baseDataSource->nativeProj4.c_str();
+  srvParam->responceCrs = baseDataSource->nativeProj4;
   srvParam->geoParams.crs = srvParam->responceCrs;
   srvParam->WCS_GoNative = false;
   srvParam->geoParams.width = atoi(tileSettings->attr.tilewidthpx.c_str());

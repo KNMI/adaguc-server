@@ -20,7 +20,7 @@ bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Lay
         return true;
         // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
       } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash.c_str())) {
-        if (CDirReader::testRegEx(CT::basename(layerPathToScan).c_str(), filter.c_str()) == 1) {
+        if (CT::testRegEx(CT::basename(layerPathToScan).c_str(), filter.c_str())) {
           return true;
         }
       }

@@ -57,7 +57,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       CDBError("Unable to get a getDBAdapter");
       return 1;
     }
-    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, NULL, dataSource);
 
   } catch (int e) {
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
@@ -69,18 +69,18 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   if (store != NULL) {
     try {
 
-      for (size_t j = 0; j < store->size(); j++) {
+      for (auto &record: store->records) {
         CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
 
-        xmleDim->elementValue = (store->getRecord(j)->get("ogcname")->c_str());
-        xmleDim->attr.name = (store->getRecord(j)->get("ncname")->c_str());
-        xmleDim->attr.units = (store->getRecord(j)->get("units")->c_str());
+        xmleDim->elementValue = (record.get("ogcname"));
+        xmleDim->attr.name = (record.get("ncname"));
+        xmleDim->attr.units = (record.get("units"));
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
 #ifdef CAUTOCONFIGURE_DEBUG
         CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
       }
-      size_t storeSize = store->size();
+      size_t storeSize = store->records.size();
       delete store;
       if (storeSize > 0) {
         dataSource->dimsAreAutoConfigured = true;
@@ -88,7 +88,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       }
     } catch (int e) {
       delete store;
-      CDBError("DB Exception: %s\n", CDBStore::getErrorMessage(e));
+      CDBError("DB Exception: %s\n", CDBStore::getErrorMessage(e).c_str());
     }
   }
 
@@ -162,7 +162,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
             CT::string units = "";
 
-            CT::string netcdfdimname = dim->name.c_str();
+            CT::string netcdfdimname = dim->name;
 
             CT::string OGCDimName;
 
@@ -186,12 +186,12 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 #endif
             CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
             dataSource->cfgLayer->Dimension.push_back(xmleDim);
-            xmleDim->elementValue = (OGCDimName.c_str());
-            xmleDim->attr.name = (netcdfdimname.c_str());
+            xmleDim->elementValue = (OGCDimName);
+            xmleDim->attr.name = (netcdfdimname);
             if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
               xmleDim->attr.units = ("ISO8601");
             } else {
-              xmleDim->attr.units = (units.c_str());
+              xmleDim->attr.units = (units);
             }
 
             /* Store the data in the db for quick access. */
@@ -233,8 +233,8 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
                 dataSource->cfgLayer->Dimension.push_back(xmleDim);
                 xmleDim->elementValue = ("reference_time");
-                xmleDim->attr.name = (cdfObject->variables[j]->name.c_str());
-                xmleDim->attr.units = (units.c_str());
+                xmleDim->attr.name = (cdfObject->variables[j]->name);
+                xmleDim->attr.units = (units);
                 /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                     ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), xmleDim->attr.name.c_str(), "reference_time", xmleDim->attr.units.c_str());
@@ -328,18 +328,18 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
         CT::string units;
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.empty() == false) {
-          standard_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
+          standard_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name);
           standard_name.toLowerCaseSelf();
         }
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.empty() == false) {
-          variable_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.c_str());
+          variable_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name);
           variable_name.toLowerCaseSelf();
         }
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.units.empty() == false) {
 
-          units = (dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
+          units = (dataSource->cfg->Style[j]->StandardNames[i]->attr.units);
         }
         units.toLowerCaseSelf();
 
@@ -396,7 +396,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 #ifdef CAUTOCONFIGURE_DEBUG
                 CDBDebug("*** Match: \"%s\"== \"%s\"", searchStandardName.c_str(), standardNameList[n].c_str());
 #endif
-                styleList.push_back(dataSource->cfg->Style[j]->attr.name.c_str());
+                styleList.push_back(dataSource->cfg->Style[j]->attr.name);
               }
             }
           }
@@ -409,12 +409,12 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 
   for (size_t j = 0; j < styleList.size(); j++) {
     if (styles.length() != 0) styles.concat(",");
-    styles.concat(styleList[j].c_str());
+    styles.concat(styleList[j]);
   }
 
   if (styles.length() == 0) styles = "auto,autogeneric,autobilinear,autobilinear_deprecated";
 
-  xmleStyle->elementValue = (styles.c_str());
+  xmleStyle->elementValue = (styles);
 #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("/[DONE] [AutoConfigureStyles]");
 #endif
@@ -426,7 +426,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
   CT::string foundFileName = dataSource->getFileName();
   if (foundFileName.empty()) {
     /* Use the file specified as header file */
-    foundFileName = dataSource->headerFilename.c_str();
+    foundFileName = dataSource->headerFilename;
   }
   if (foundFileName.empty()) {
 
@@ -450,8 +450,8 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
       }
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
-    if (store != NULL && store->getSize() > 0) {
-      CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
+    if (store != NULL && store->records.size() > 0) {
+      CT::string fileNamestr = store->records[0].get(0);
       // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
       foundFileName = fileNamestr;
     }
@@ -468,7 +468,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
       return 1;
     }
   }
-  fileName = foundFileName.c_str();
+  fileName = foundFileName;
   return 0;
 }
 

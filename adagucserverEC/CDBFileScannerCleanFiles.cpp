@@ -8,7 +8,7 @@
 #include "CRequest.h"
 std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 
-void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
+void CDBFileScanner::_removeFileFromTables(std::string fileNamestr, CDataSource *dataSource) {
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   auto tableList = dbAdapter->getTableNames(dataSource);
   for (auto tableName: tableList) {
@@ -24,7 +24,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   std::set<std::string> retentionTypes = {CDBFILESCANNER_RETENTIONTYPE_DATATIME, CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE};
 
-  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str()) == retentionTypes.end()) {
+  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0]->attr.retentiontype) == retentionTypes.end()) {
     CDBDebug("retentiontype is set to unknown value %s, no cleaning done", dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
     return std::make_pair(0, filesDeletedFromFS);
   }
@@ -33,7 +33,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     CDBWarning("Note, more Settings elements were configured. Using the first one.");
   };
 
-  CT::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
+  std::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem == ("true");
   bool enableCleanupIsInform = enableCleanupSystem == ("dryrun");
   int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? atoi(dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.c_str())
@@ -43,8 +43,8 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(1, filesDeletedFromFS);
   }
 
-  CT::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
-  CT::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
+  std::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
+  std::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
   CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s], limit %d", retentiontype.c_str(), retentionperiod.c_str(), cleanupSystemLimit);
 
   if (enableCleanupIsInform) {
@@ -63,9 +63,9 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(1, filesDeletedFromFS);
   }
 
-  CT::string tableNameForTimeDimension;
+  std::string tableNameForTimeDimension;
 
-  CT::string colName = "time";
+  std::string colName = "time";
 
   // Check if this netcdf has a time dim. Use other time dim if available.
   auto hasTimeDim = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [&colName](const COGCDims &ogcdim) { return colName == ogcdim.netCDFDimName; });
@@ -75,7 +75,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     auto isTypeTime = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [](const COGCDims &ogcdim) { return ogcdim.isATimeDimension; });
     if (isTypeTime != dataSource->requiredDims.end()) {
       CDBDebug("Using %s instead.", (*isTypeTime).netCDFDimName.c_str());
-      colName = (*isTypeTime).netCDFDimName.c_str();
+      colName = (*isTypeTime).netCDFDimName;
     } else {
       CDBWarning("no time like dimension not seem to exist in this layer");
     }
@@ -92,7 +92,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   try {
     tableNameForTimeDimension =
-        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
+        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, colName.c_str(), dataSource);
   } catch (int e) {
     CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
     return std::make_pair(1, filesDeletedFromFS);
@@ -104,25 +104,25 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   CTime *ctime = CTime::GetCTimeEpochInstance();
 
-  CT::string currentTime = CTime::currentDateTime();
+  std::string currentTime = CTime::currentDateTime();
   CTime::Date date = ctime->freeDateStringToDate(currentTime.c_str());
 
   // CDBDebug("currentDate\t\t\t%s", ctime->dateToISOString(date).c_str());
 
-  CT::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod.c_str()));
+  std::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod));
 
   // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
   CDBStore::Store *store = dbAdapter->getBetween("0001-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
-  if (store != NULL && store->getSize() > 0) {
-    CDBDebug("Found (at least) %lu files which are too old.", store->getSize());
-    for (size_t j = 0; j < store->getSize(); j++) {
-      std::string fileNamestr = store->getRecord(j)->get(0)->c_str();
+  if (store != NULL && store->records.size() > 0) {
+    CDBDebug("Found (at least) %lu files which are too old.", store->records.size());
+    for (auto &record: store->records) {
+      std::string fileNamestr = record.get(0);
       if (enableCleanupIsInform) {
         CDBDebug("[INFO] Would clean: [%s]", fileNamestr.c_str());
       }
       if (enableCleanupIsTrue) {
-        _removeFileFromTables(fileNamestr.c_str(), dataSource);
+        _removeFileFromTables(fileNamestr, dataSource);
         /* Don't delete files which where already deleted */
         if (filesDeletedFromFS.find(fileNamestr) == filesDeletedFromFS.end()) {
           int status = remove(fileNamestr.c_str());

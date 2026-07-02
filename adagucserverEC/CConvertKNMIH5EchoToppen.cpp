@@ -171,14 +171,14 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
     if (dataSource->dHeight < 2) dataSource->dHeight = 2;
 
-    /* Get the X and Y dimensions previousely defined and adjust them to the new settings and new grid (Grid in screenview space) */
+    /* Get the X and Y dimensions previously defined and adjust them to the new settings and new grid (Grid in screenview space) */
     CDF::Dimension *dimX = cdfObject0->getDimensionThrows("xet");
     dimX->setSize(dataSource->dWidth);
 
     CDF::Dimension *dimY = cdfObject0->getDimensionThrows("yet");
     dimY->setSize(dataSource->dHeight);
 
-    /* Get the X and Y variables from the cdfobject (previousely defined in the header function) */
+    /* Get the X and Y variables from the cdfobject (previously defined in the header function) */
     CDF::Variable *varX = cdfObject0->getVariableThrows("xet");
     CDF::Variable *varY = cdfObject0->getVariableThrows("yet");
 

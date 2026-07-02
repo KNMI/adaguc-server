@@ -71,6 +71,8 @@ add_library(
     CDBFileScanner.cpp
     CDBFileScanner.h
     CDBFileScannerCleanFiles.cpp
+    CDBStore.cpp
+    CDBStore.h
     CDFObjectStore.cpp
     CDFObjectStore.h
     handleTileRequest.h

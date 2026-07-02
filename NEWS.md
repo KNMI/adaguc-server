@@ -714,7 +714,7 @@ When EXTERNALADDRESS is unset, adaguc will determine its external address based 
 
 **Version 2.5.1 2020-11-13**
 
-- Support for 32 contourline definitions (previousely 8)
+- Support for 32 contourline definitions (previously 8)
 
 **Version 2.5.0 2020-11-13**
 
