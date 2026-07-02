@@ -1,4 +1,5 @@
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include <algorithm>
 #include <sys/types.h>
 #include <CImageOperators/smoothRasterField.h>
 
@@ -64,19 +65,22 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   /* Make a shorthand vector from the shadeInterval configuration*/
   if (settings.isUsingShadeIntervals) {
     int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
-    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].elementValue.empty()) {
-      settings.shadeInterval = atof(styleConfiguration->shadeIntervals[0].elementValue.c_str());
-    } else {
-      settings.intervals.reserve(numShadeDefs);
-      for (int j = 0; j < numShadeDefs; j++) {
-        const CServerConfig::XMLE_ShadeInterval &shadeInterVal = styleConfiguration->shadeIntervals[j];
-        settings.intervals.push_back(Interval({.min = atof(shadeInterVal.attr.min.c_str()), .max = atof(shadeInterVal.attr.max.c_str()), .color = CColor(shadeInterVal.attr.fillcolor.c_str())}));
-        /* Check for bgcolor */
-        if (j == 0) {
-          if (shadeInterVal.attr.bgcolor.empty() == false) {
-            settings.bgColorDefined = true;
-            settings.bgColor = CColor(shadeInterVal.attr.bgcolor.c_str());
-          }
+    if (numShadeDefs > 0) {
+      if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].elementValue.empty()) {
+        settings.shadeInterval = atof(styleConfiguration->shadeIntervals[0].elementValue.c_str());
+      } else {
+        settings.intervals.reserve(numShadeDefs);
+        for (const auto &shadeInterval : styleConfiguration->shadeIntervals) {
+          settings.intervals.push_back(Interval({.min = atof(shadeInterval.attr.min.c_str()), .max = atof(shadeInterval.attr.max.c_str()), .color = CColor(shadeInterval.attr.fillcolor.c_str())}));
+        }
+        // Sort shaded intervals on min value
+        std::sort(settings.intervals.begin(), settings.intervals.end(), [](const Interval &left, const Interval &right) { return left.min < right.min; });
+
+        // Check for bgcolor in first element
+        const std::string &firstElemBgColor = styleConfiguration->shadeIntervals.front().attr.bgcolor;
+        if (!firstElemBgColor.empty()) {
+          settings.bgColorDefined = true;
+          settings.bgColor = CColor(firstElemBgColor);
         }
       }
     }
