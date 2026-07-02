@@ -212,7 +212,7 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 
   // Read the EPSG-code from configuration.
   if (dataSource->cfgLayer->Projection[0]->attr.id.empty() == false) {
-    dataSource->nativeEPSG = (dataSource->cfgLayer->Projection[0]->attr.id.c_str());
+    dataSource->nativeEPSG = dataSource->cfgLayer->Projection[0]->attr.id;
   } else {
     CT::string defaultEPSGCode = "EPSG:4326";
     CREPORT_WARN_NODOC(CT::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
@@ -221,7 +221,7 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 
   // Read proj4 string from configuration.
   if (dataSource->cfgLayer->Projection[0]->attr.proj4.empty() == false) {
-    dataSource->nativeProj4 = (dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
+    dataSource->nativeProj4 = dataSource->cfgLayer->Projection[0]->attr.proj4;
   } else {
     CT::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
     CREPORT_WARN_NODOC(CT::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
@@ -296,14 +296,15 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
     CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(),
                        CReportMessage::Categories::GENERAL);
   }
-  dataSource->nativeProj4 = (proj4Attr->toString().c_str());
+  dataSource->nativeProj4 = proj4Attr->toString();
 
   // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
-  dataSource->nativeProj4.replaceSelf("\n", " ");
-  dataSource->nativeProj4.trimSelf();
-  if (dataSource->nativeProj4.startsWith("\"") && dataSource->nativeProj4.endsWith("\"")) {
-    dataSource->nativeProj4.substringSelf(1, dataSource->nativeProj4.length() - 1);
-    dataSource->nativeProj4.trimSelf();
+  CT::replaceSelf(dataSource->nativeProj4, "\n", " ");
+
+  dataSource->nativeProj4 = CT::trim(dataSource->nativeProj4);
+  if (CT::startsWith(dataSource->nativeProj4, "\"") && CT::endsWith(dataSource->nativeProj4, "\"")) {
+    dataSource->nativeProj4 = CT::substring(dataSource->nativeProj4, 1, dataSource->nativeProj4.length() - 1);
+    dataSource->nativeProj4 = CT::trim(dataSource->nativeProj4);
     CDBDebug("Note: Removed start and ending double quotes for projstring [%s]", dataSource->nativeProj4.c_str());
   }
 
@@ -328,7 +329,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   if (verbose) {
     CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
   }
-  dataSource->nativeProj4 = (projString.c_str());
+  dataSource->nativeProj4 = projString;
   projVar->setAttributeText("autogen_proj", projString.c_str());
 
   // Copy the EPSG code.
@@ -350,11 +351,13 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
     if (this->_enableReporting) {
       CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
     }
-    dataSource->nativeEPSG.print("PROJ4:%s", dataSource->nativeProj4.c_str());
-    dataSource->nativeEPSG.replaceSelf("\"", "");
-    dataSource->nativeEPSG.replaceSelf("\n", "");
-    dataSource->nativeEPSG.trimSelf();
-    dataSource->nativeEPSG.encodeURLSelf();
+    dataSource->nativeEPSG = CT::printf("PROJ4:%s", dataSource->nativeProj4.c_str());
+    CT::replaceSelf(dataSource->nativeEPSG, "\"", "");
+    CT::replaceSelf(dataSource->nativeEPSG, "\n", "");
+    dataSource->nativeEPSG = CT::trim(dataSource->nativeEPSG);
+    CT::string encodedEPSG = dataSource->nativeEPSG;
+    encodedEPSG.encodeURLSelf();
+    dataSource->nativeEPSG = encodedEPSG;
   }
 }
 
@@ -624,7 +627,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
                 CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
               }
 
-              dataSource->nativeProj4 = (UpdatedProjString.c_str());
+              dataSource->nativeProj4 = UpdatedProjString;
 
               projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
             }

@@ -55,5 +55,5 @@ struct TimeInterval {
 };
 
 struct TimeInterval calculateTimeInterval(const CTime::Date &start, const CTime::Date &end);
-CT::string toISO8601Interval(const TimeInterval &interval);
-CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, double threshold = 0.8);
+std::string toISO8601Interval(const TimeInterval &interval);
+std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, double threshold = 0.8);

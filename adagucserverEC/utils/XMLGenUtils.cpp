@@ -8,6 +8,7 @@
 #include "LayerUtils.h"
 #include <sstream>
 #include "CRequestUtils.h"
+#include <timeutils.h>
 
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->readFromDb = readFromDB;
@@ -32,7 +33,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   CT::string layerGroup = "";
   if (metadataLayer->layer->Group.size() > 0) {
     if (metadataLayer->layer->Group[0]->attr.value.empty() == false) {
-      layerGroup = (metadataLayer->layer->Group[0]->attr.value.c_str());
+      layerGroup = (metadataLayer->layer->Group[0]->attr.value);
     }
   }
   metadataLayer->layerMetadata.wmsgroup = (&layerGroup);
@@ -47,7 +48,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   CT::string collection = "";
   if (metadataLayer->layer->Group.size() > 0) {
     if (metadataLayer->layer->Group[0]->attr.collection.empty() == false) {
-      collection = (metadataLayer->layer->Group[0]->attr.collection.c_str());
+      collection = (metadataLayer->layer->Group[0]->attr.collection);
     }
   }
   metadataLayer->layerMetadata.collection = (&collection);
@@ -74,9 +75,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)
   if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
-    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Title[0]->elementValue.c_str());
+    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Title[0]->elementValue);
   } else {
-    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Name[0]->elementValue.c_str());
+    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Name[0]->elementValue);
   }
   bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
   if (readFileInfo) {
@@ -89,7 +90,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
 
     if (metadataLayer->dataSource->timeSteps.size() == 0) {
-      metadataLayer->dataSource->addStep(metadataLayer->fileName.c_str());
+      metadataLayer->dataSource->addStep(metadataLayer->fileName);
     }
 
     if (getTitleForLayer(metadataLayer) != 0) {
@@ -163,7 +164,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   std::map<std::string, LayerMetadataProjection> projectionMap;
   // Make a unique list of projections
   for (const auto &p: metadataLayer->layerMetadata.projectionList) {
-    projectionMap.emplace(p.name.c_str(), p);
+    projectionMap.emplace(p.name, p);
   }
   metadataLayer->layerMetadata.projectionList.clear();
   for (const auto &p: projectionMap) {
@@ -251,7 +252,7 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
 
     // Get the tablename
     std::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
                                                                         cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
@@ -262,12 +263,12 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
       throw __LINE__;
     }
     if (isTimeDim) {
-      for (size_t j = 0; j < values->size(); j++) {
-        queryValues.push_back(makeIsoStringFromDbString(*(values->getRecord(j)->get(0))));
+      for (auto &record: values->records) {
+        queryValues.push_back(makeIsoStringFromDbString(record.get(0)));
       }
     } else {
-      for (size_t j = 0; j < values->size(); j++) {
-        queryValues.push_back(*(values->getRecord(j)->get(0)));
+      for (auto &record: values->records) {
+        queryValues.push_back(record.get(0));
       }
     }
     delete values;
@@ -282,14 +283,14 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   layerMetadataDim.cdfName = cfgLayerDim->attr.name;
   if (queryValues.size() > 0) {
     layerMetadataDim.serviceName = cfgLayerDim->elementValue;
-    layerMetadataDim.cdfName = (cfgLayerDim->attr.name.c_str());
+    layerMetadataDim.cdfName = (cfgLayerDim->attr.name);
 
     // // Try to get units from the variable
     layerMetadataDim.units = "NA";
     if (cfgLayerDim->attr.units.empty()) {
       try {
         if (dataSource->getDataObject(0)->cdfObject != nullptr) {
-          layerMetadataDim.units = dataSource->getDataObject(0)->cdfObject->getVariableThrows(cfgLayerDim->attr.name.c_str())->getAttributeThrows("units")->toString();
+          layerMetadataDim.units = dataSource->getDataObject(0)->cdfObject->getVariableThrows(cfgLayerDim->attr.name)->getAttributeThrows("units")->toString();
         }
       } catch (int e) {
       }
@@ -301,7 +302,7 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
     }
 
     if (!cfgLayerDim->attr.units.empty()) {
-      layerMetadataDim.units = (cfgLayerDim->attr.units.c_str());
+      layerMetadataDim.units = (cfgLayerDim->attr.units);
     }
 
     if (cfgLayerDim->attr.defaultV == ("max")) {
@@ -337,8 +338,8 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   LayerMetadataDim dim;
   dim.hidden = false;
   dim.type = "dimtype_none";
-  dim.serviceName = (cfgLayerDim->elementValue.c_str());
-  dim.cdfName = (cfgLayerDim->attr.name.c_str());
+  dim.serviceName = (cfgLayerDim->elementValue);
+  dim.cdfName = (cfgLayerDim->attr.name);
   if (cfgLayerDim->attr.interval.empty()) {
     CDBError("Dimension interval not defined");
     throw __LINE__;
@@ -351,19 +352,19 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
     // This is an interval defined as start/stop/resolution
     // Retrieve the minimum dimension value
     CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
                                                                        cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
 
-    if (values != nullptr && values->getSize() > 0) {
-      minTimeStamp = (makeIsoStringFromDbString(*values->getRecord(0)->get(0)));
+    if (values != nullptr && values->records.size() > 0) {
+      minTimeStamp = (makeIsoStringFromDbString(values->records[0].get(0)));
     }
     delete values;
     // Retrieve the max dimension value
     values = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(cfgLayerDim->attr.name.c_str(), tableName.c_str());
-    if (values != nullptr && values->getSize() > 0) {
-      maxTimeStamp = (makeIsoStringFromDbString(*values->getRecord(0)->get(0)));
+    if (values != nullptr && values->records.size() > 0) {
+      maxTimeStamp = (makeIsoStringFromDbString(values->records[0].get(0)));
     }
     delete values;
   } else {
@@ -374,11 +375,11 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   CT::string dimUnits("ISO8601");
 
   if (cfgLayerDim->attr.units.empty() == false) {
-    dimUnits = (cfgLayerDim->attr.units.c_str());
+    dimUnits = (cfgLayerDim->attr.units);
   }
-  dim.serviceName = (cfgLayerDim->elementValue.c_str());
-  dim.cdfName = (cfgLayerDim->attr.name.c_str());
-  dim.units = (dimUnits.c_str());
+  dim.serviceName = (cfgLayerDim->elementValue);
+  dim.cdfName = (cfgLayerDim->attr.name);
+  dim.units = (dimUnits);
   dim.hasMultipleValues = false;
   // cfgLayerDim->attr.defaultV.c_str()
   const char *pszDefaultV = cfgLayerDim->attr.defaultV.c_str();
@@ -412,160 +413,17 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   return dim;
 }
 
-std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList) {
-  bool verboseLog = false;
-  if (timeStampList.size() < 2) {
+std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList, size_t limit) {
+
+  if (timeStampList.size() < limit) {
     return "";
   }
-  std::vector<tm> tms(timeStampList.size());
-  size_t timeIndex = 0;
-  for (const auto &timeStamp: timeStampList) {
-    const char *isotime = timeStamp.c_str();
-    CT::string year, month, day, hour, minute, second;
-    if (timeStamp.length() > 4) {
-      year.copy(isotime + 0, 4);
-      tms[timeIndex].tm_year = year.toInt() - 1900;
-    } else {
-      tms[timeIndex].tm_year = 0;
-    }
-    if (timeStamp.length() > 5) {
-      month.copy(isotime + 5, 2);
-      tms[timeIndex].tm_mon = month.toInt() - 1;
-    } else {
-      tms[timeIndex].tm_mon = 0;
-    }
-    if (timeStamp.length() > 8) {
-      day.copy(isotime + 8, 2);
-      tms[timeIndex].tm_mday = day.toInt();
-    } else {
-      tms[timeIndex].tm_mday = 0;
-    }
-    if (timeStamp.length() > 11) {
-      hour.copy(isotime + 11, 2);
-      tms[timeIndex].tm_hour = hour.toInt();
-    } else {
-      tms[timeIndex].tm_hour = 0;
-    }
-    if (timeStamp.length() > 14) {
-      minute.copy(isotime + 14, 2);
-      tms[timeIndex].tm_min = minute.toInt();
-    } else {
-      tms[timeIndex].tm_min = 0;
-    }
-    if (timeStamp.length() > 17) {
-      second.copy(isotime + 17, 2);
-      tms[timeIndex].tm_sec = second.toInt();
-    } else {
-      tms[timeIndex].tm_sec = 0;
-    }
-    timeIndex++;
-  }
 
-  try {
-
-    size_t nrTimes = tms.size() - 1;
-    bool isConst = true;
-    if (nrTimes < 4) {
-      isConst = false;
-    }
-
-    CT::string iso8601timeRes = "P";
-    CT::string yearPart = "";
-    CT::string hourPart = "";
-    if (nrTimes >= 1) {
-      if (tms[1].tm_year - tms[0].tm_year != 0) {
-        if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
-          yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
-        } else {
-          isConst = false;
-          if (verboseLog) {
-            CDBDebug("year is irregular");
-          }
-        }
-      }
-      if (tms[1].tm_mon - tms[0].tm_mon != 0) {
-        if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
-          yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
-        else {
-          isConst = false;
-          if (verboseLog) {
-            CDBDebug("month is irregular");
-          }
-        }
-      }
-
-      if (tms[1].tm_mday - tms[0].tm_mday != 0) {
-        if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
-          yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
-        else {
-          isConst = false;
-          if (verboseLog) {
-            CDBDebug("day irregular");
-            for (size_t j = 0; j < nrTimes; j++) {
-              CDBDebug("Day %lu = %d", j, tms[j].tm_mday);
-            }
-          }
-        }
-      }
-
-      if (tms[1].tm_hour - tms[0].tm_hour != 0) {
-        hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
-      }
-      if (tms[1].tm_min - tms[0].tm_min != 0) {
-        hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
-      }
-      if (tms[1].tm_sec - tms[0].tm_sec != 0) {
-        hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
-      }
-
-      int sd = (tms[1].tm_hour * 3600 + tms[1].tm_min * 60 + tms[1].tm_sec) - (tms[0].tm_hour * 3600 + tms[0].tm_min * 60 + tms[0].tm_sec);
-      for (size_t j = 2; j < tms.size() && isConst; j++) {
-        int d = (tms[j].tm_hour * 3600 + tms[j].tm_min * 60 + tms[j].tm_sec) - (tms[j - 1].tm_hour * 3600 + tms[j - 1].tm_min * 60 + tms[j - 1].tm_sec);
-        if (d > 0) {
-          if (sd != d) {
-            isConst = false;
-            if (verboseLog) {
-              CDBDebug("hour/min/sec is irregular %lu ", j);
-            }
-          }
-        }
-      }
-    }
-
-    // Check whether we found a time resolution
-    if (isConst == false) {
-
-      if (verboseLog) {
-        CDBDebug("Not a continous time dimension, multipleValues required");
-      }
-      return "";
-    } else {
-      if (verboseLog) {
-        CDBDebug("Continous time dimension, Time resolution needs to be calculated");
-      }
-    }
-
-    if (isConst) {
-      if (yearPart.length() > 0) {
-        iso8601timeRes.concat(&yearPart);
-      }
-      if (hourPart.length() > 0) {
-        iso8601timeRes.concat("T");
-        iso8601timeRes.concat(&hourPart);
-      }
-      if (verboseLog) {
-        CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
-      }
-      return iso8601timeRes;
-    }
-  } catch (int e) {
-  }
-
-  return "";
+  return estimateISO8601Duration(timeStampList, 1);
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
-  std::string fileDate = getFileDate(dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
+  std::string fileDate = getFileDate(dataSource->cfgLayer->FilePath[0]->elementValue);
   LayerMetadataDim dim;
   dim.serviceName = "time";
   dim.cdfName = "time";
@@ -581,24 +439,24 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == ("time") || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == ("ISO8601")))) {
+  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
     return timeStampList;
   }
   // Get the tablename
   CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
-                                                                     cfgDim->attr.name.c_str(), dataSource);
+                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgDim->attr.name.c_str(),
+                                                                     dataSource);
 
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
-  if (store == nullptr || store->size() == 0) {
+  if (store == nullptr || store->records.size() == 0) {
     delete store;
     CDBDebug("No data available in database for dimension %s", cfgDim->attr.name.c_str());
     return timeStampList;
   }
   try {
-    for (size_t j = 0; j < store->size(); j++) {
-      timeStampList.push_back(makeIsoStringFromDbString(*(store->getRecord(j)->get("time"))));
+    for (auto &record: store->records) {
+      timeStampList.push_back(makeIsoStringFromDbString(record.get("time")));
     }
   } catch (int e) {
   }
@@ -621,8 +479,8 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
     if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name == ("none")) break;
     if (cfgDim->attr.interval.empty()) {
       const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
-      const auto &timeList = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
-      const auto &interval = makeIntervalFromTimeList(timeList);
+      const auto &dimValues = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
+      const auto &interval = makeIntervalFromTimeList(dimValues);
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;
@@ -667,7 +525,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
     GeoParameters geo;
-    geo.crs = (srvParam->cfg->Projection[p]->attr.id.c_str());
+    geo.crs = (srvParam->cfg->Projection[p]->attr.id);
 
 #ifdef MEASURETIME
     StopWatch_Stop("start initreproj %s", geo.crs.c_str());
@@ -696,7 +554,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
-    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs.c_str(), bboxToFind));
+    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs, bboxToFind));
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished findExtent");
@@ -818,7 +676,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
-      metadataLayer->fileName = (metadataLayer->dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
+      metadataLayer->fileName = (metadataLayer->dataSource->cfgLayer->FilePath[0]->elementValue);
       if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {
         CDBError("Unable to autoconfigure dimensions");
         return 1;
@@ -842,7 +700,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
         fileList = CDBFileScanner::searchFileNames(metadataLayer->dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), metadataLayer->dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
       } catch (int linenr) {
       };
-      metadataLayer->fileName = (fileList[0].c_str());
+      metadataLayer->fileName = (fileList[0]);
       return 0;
     }
 
@@ -857,10 +715,10 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 
     // Find the first occuring filename.
     CT::string tableName;
-    CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name.c_str());
+    CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name);
     try {
       tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),
+                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue, metadataLayer->layer->FilePath[0]->attr.filter, dimName.c_str(),
                                                               metadataLayer->dataSource);
     } catch (int e) {
       CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
@@ -876,11 +734,11 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
       databaseError = true;
     }
     if (databaseError == false) {
-      if (values->getSize() > 0) {
+      if (values->records.size() > 0) {
 #ifdef CXMLGEN_DEBUG
-        CDBDebug("Query  succeeded: Filename = %s", values->getRecord(0)->get(0)->c_str());
+        CDBDebug("Query  succeeded: Filename = %s", values->records[0].get(0).c_str());
 #endif
-        metadataLayer->fileName = (values->getRecord(0)->get(0));
+        metadataLayer->fileName = values->records[0].get(0);
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
         // Ignore the file for now too
@@ -917,10 +775,10 @@ bool multiTypeSort(const CT::string &a, const CT::string &b) {
   bool isANum, isBNum;
 
   isANum = false;
-  aNum = parseNumeric(a.c_str(), isANum);
+  aNum = parseNumeric(a, isANum);
 
   isBNum = false;
-  bNum = parseNumeric(b.c_str(), isBNum);
+  bNum = parseNumeric(b, isBNum);
 
   // Do numerical comparison or alphabetical comparison according to type
   if (isANum && isBNum) {

@@ -39,7 +39,7 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
         CDBError("fileList.size()==0");
         return 1;
       }
-      dataSource->addStep(fileList[0].c_str());
+      dataSource->addStep(fileList[0]);
     }
   }
   return 0;

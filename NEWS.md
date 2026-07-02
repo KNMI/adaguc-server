@@ -1,3 +1,8 @@
+**Version 7.3.2 - 2026-06-29**
+
+- Fix #723 Do not use a query limit when populating metadata in combination with a reference time
+- Refactor png writing code[ #721](https://github.com/KNMI/adaguc-server/issues/713)
+
 **Version 7.3.1 - 2026-06-11**
 
 - Patch correct projected transform of points from latlon
@@ -709,7 +714,7 @@ When EXTERNALADDRESS is unset, adaguc will determine its external address based 
 
 **Version 2.5.1 2020-11-13**
 
-- Support for 32 contourline definitions (previousely 8)
+- Support for 32 contourline definitions (previously 8)
 
 **Version 2.5.0 2020-11-13**
 

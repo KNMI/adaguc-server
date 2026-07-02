@@ -146,12 +146,12 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
   return 0;
 }
 
-void CDataSource::addStep(const char *fileName) {
+void CDataSource::addStep(const std::string &fileName) {
   timeSteps.push_back({.fileName = fileName, .dims = {}});
   currentAnimationStep = timeSteps.size() - 1;
 }
 
-void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
+void CDataSource::setHeaderFilename(const std::string &headerFilename) { this->headerFilename = headerFilename; }
 
 void CDataSource::setGeo(GeoParameters &geo) {
   nativeProj4 = geo.crs;
@@ -205,9 +205,8 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &s
         attr_flag_values = var->getAttributeNE("flag_masks");
       }
       if (attr_flag_values != NULL) {
-        CT::string flag_meanings;
-        flag_meanings = attr_flag_meanings->toString();
-        auto flagStrings = flag_meanings.split(" ");
+        std::string flag_meanings = attr_flag_meanings->toString();
+        auto flagStrings = CT::split(flag_meanings, " ");
         size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {
           size_t nrOfFlagValues = attr_flag_values->length;
@@ -278,22 +277,22 @@ std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::
  */
 std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style) {
   // List all the desired rendermethods
-  CT::string renderMethodList;
+  std::string renderMethodList;
 
   // rendermethods defined in the layers must prepend rendermethods defined in the style
   if (this->cfgLayer->RenderMethod.size() > 0) {
 
     for (size_t j = 0; j < this->cfgLayer->RenderMethod.size(); j++) {
-      if (renderMethodList.length() > 0) renderMethodList.concat(",");
-      renderMethodList.concat(this->cfgLayer->RenderMethod[j]->elementValue.c_str());
+      if (renderMethodList.length() > 0) renderMethodList += ",";
+      renderMethodList += this->cfgLayer->RenderMethod[j]->elementValue;
     }
   }
 
   if (style != NULL) {
     if (style->RenderMethod.size() > 0) {
       for (size_t j = 0; j < style->RenderMethod.size(); j++) {
-        if (renderMethodList.length() > 0) renderMethodList.concat(",");
-        renderMethodList.concat(style->RenderMethod[j]->elementValue.c_str());
+        if (renderMethodList.length() > 0) renderMethodList += ",";
+        renderMethodList += style->RenderMethod[j]->elementValue;
       }
     } else {
       return {"generic"};
@@ -386,7 +385,7 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
         } else {
           // Deprecated methods to have multiple legends and rendermethods in the same style
 
-          CT::string styleName;
+          std::string styleName;
           if (lintOutputEnabled && renderMethods.size() > 1) {
             CDBLint("In dataset \"%s\", layer \"%s\" multiple rendermethods in one style or layer is deprecated: [%s].", CT::basename(this->srvParams->datasetLocation).c_str(),
                     this->layerName.c_str(), CT::join(renderMethods).c_str());
@@ -396,10 +395,10 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
             for (size_t r = 0; r < renderMethods.size(); r++) {
               if (renderMethods[r].length() > 0) {
                 if (legendList.size() > 1) {
-                  styleName.print("%s_%s/%s", styleNames[i].c_str(), legendList[l].c_str(), renderMethods[r].c_str());
+                  styleName = CT::printf("%s_%s/%s", styleNames[i].c_str(), legendList[l].c_str(), renderMethods[r].c_str());
                   CDBWarning("Deprecated to have multiple legends in one style");
                 } else {
-                  styleName.print("%s/%s", styleNames[i].c_str(), renderMethods[r].c_str());
+                  styleName = CT::printf("%s/%s", styleNames[i].c_str(), renderMethods[r].c_str());
                   if (lintOutputEnabled) {
                     if (std::find(knownRenderMethods.begin(), knownRenderMethods.end(), renderMethods[r]) == knownRenderMethods.end()) {
                       CDBLint("In dataset \"%s\", layer \"%s\" and style \"%s\", rendermethod \"%s\" is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str(), this->layerName.c_str(),
@@ -411,9 +410,9 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
 
                 styleConfigurationList.push_back(CStyleConfiguration());
                 CStyleConfiguration &styleConfig = styleConfigurationList.back();
-                styleConfig.styleCompositionName = styleName.c_str();
+                styleConfig.styleCompositionName = styleName;
                 styleConfig.styleName = styleNames[i];
-                styleConfig.styleTitle = styleName.c_str();
+                styleConfig.styleTitle = styleName;
                 styleConfig.renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
                 styleConfig.styleIndex = dStyleIndex;
                 styleConfig.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[l]);
@@ -493,17 +492,16 @@ CStyleConfiguration *CDataSource::getStyle() {
     CDBError("There are no styles available");
     return nullptr;
   }
-  CT::string styleName = "default";
-  CT::string styles(srvParams->Styles.c_str());
+  std::string styleName = "default";
 
   // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-  std::vector<CT::string> layerstyles = styles.split(",");
+  std::vector<std::string> layerstyles = CT::split(srvParams->Styles, ",");
   int layerIndex = datasourceIndex;
   if (layerstyles.size() != 0) {
     // Make sure default layer index is within the right bounds.
     if (layerIndex < 0) layerIndex = 0;
     if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
-    styleName = layerstyles[layerIndex].c_str();
+    styleName = layerstyles[layerIndex];
     if (styleName.length() == 0) {
       styleName = "default";
     }
@@ -522,7 +520,7 @@ CStyleConfiguration *CDataSource::getStyle() {
       currentStyle = (*it);
     } else {
       // Try without rendermethod
-      CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
+      std::string styleNameWithoutRenderMethod = CT::substring(styleName, 0, CT::indexOf(styleName, "/"));
       it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod == (a.styleName); });
       if (it != styleList.end()) {
         currentStyle = (*it);

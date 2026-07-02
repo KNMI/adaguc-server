@@ -41,13 +41,14 @@ class TestMetadataRequest:
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query(self):
         """
         This checks the metadata call for a specific reference time. The time dimension will then advertise the matching dates for the given model run.
+        Also note that the maxquerylimit is set to 2 on purpose, to demonstrate that this does have no influence on the metadata result.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
         update_db(env, True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query.json",
-            "dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl",
+            "dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl_with_limit",
         )
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime(self):

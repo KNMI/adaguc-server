@@ -60,7 +60,9 @@ std::string makeIsoStringFromDbString(std::string input) {
   if (input.length() < 12) {
     return input;
   }
-  input.at(10) = 'T';
+  if (input.length() > 10) {
+    input.at(10) = 'T';
+  }
   // 01234567890123456789
   // YYYY-MM-DDTHH:MM:SSZ
   if (input.length() == 19) {
@@ -75,9 +77,8 @@ std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
   auto srvParam = dataSource.srvParams;
   std::string tableName;
   try {
-    tableName =
-        CDBFactory::getDBAdapter(srvParam->cfg)
-            ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0]->elementValue.c_str(), dataSource.cfgLayer->FilePath[0]->attr.filter.c_str(), refTimeDim.c_str(), &dataSource);
+    tableName = CDBFactory::getDBAdapter(srvParam->cfg)
+                    ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0]->elementValue, dataSource.cfgLayer->FilePath[0]->attr.filter, refTimeDim.c_str(), &dataSource);
   } catch (int e) {
     CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource.cfgLayer->FilePath[0]->elementValue.c_str(), dataSource.cfgLayer->FilePath[0]->attr.filter.c_str(), refTimeDim.c_str());
     return {};
@@ -90,8 +91,8 @@ std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
     return {};
   }
   std::vector<std::string> resultList;
-  for (size_t k = 0; k < store->getSize(); k++) {
-    resultList.push_back(makeIsoStringFromDbString(*store->getRecord(k)->get(0)));
+  for (auto &record: store->records) {
+    resultList.push_back(makeIsoStringFromDbString(record.get(0)));
   }
   delete store;
 

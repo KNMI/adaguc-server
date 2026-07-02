@@ -83,8 +83,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
     return 1;
   }
 
-  CT::string queryString;
-  queryString.print("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s') AS table_existence;", pszTableName);
+  std::string queryString = CT::printf("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s') AS table_existence;", pszTableName);
 #ifdef CPGSQLDB_DEBUG_H
   CDBDebug("checkTable PQexec SELECT EXISTS  %s", pszTableName);
 #endif
@@ -103,7 +102,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
   clearResult();
 
   // No table exists yet
-  queryString.print("CREATE TABLE %s (%s)", pszTableName, pszColumns);
+  queryString = CT::printf("CREATE TABLE %s (%s)", pszTableName, pszColumns);
 #ifdef CPGSQLDB_DEBUG_H
   CDBDebug("checkTable PQexec CREATE TABLE %s", pszTableName);
 #endif
@@ -176,22 +175,17 @@ CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwExcepti
     }
     return NULL;
   }
-  CDBStore::ColumnModel *colModel = new CDBStore::ColumnModel();
-  // colModel
 
+  CDBStore::Store *store = new CDBStore::Store();
   for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
-    colModel->push(PQfname(result, colNumber));
+    store->columnModel.columnNames.push_back(PQfname(result, colNumber));
   }
-
-  CDBStore::Store *store = new CDBStore::Store(colModel);
-
   for (size_t rowNumber = 0; rowNumber < numRows; rowNumber++) {
-    CDBStore::Record record;
-    record.setColumnModel(colModel);
+    CDBStore::Record record(store->columnModel);
     for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
-      record.push(PQgetvalue(result, rowNumber, colNumber));
+      record.values.push_back(PQgetvalue(result, rowNumber, colNumber));
     }
-    store->push(record);
+    store->records.push_back(record);
   }
 
   clearResult();

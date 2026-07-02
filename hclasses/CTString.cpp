@@ -655,7 +655,7 @@ namespace CT {
     return pattern.size() == 0 || (input.size() >= pattern.size() && input.compare(input.size() - pattern.size(), pattern.size(), pattern) == 0);
   }
 
-  bool startsWith(const std::string &input, const std::string pattern) { return pattern.size() == 0 || (input.rfind(pattern) == 0); }
+  bool startsWith(const std::string &input, const std::string pattern) { return pattern.size() == 0 || (input.rfind(pattern, 0) == 0); }
 
   std::string encodeXml(const std::string &input) {
     auto out = input;

@@ -34,7 +34,6 @@
 
 #ifndef CCAIROPLOTTER_H_
 #define CCAIROPLOTTER_H_
-#include <png.h>
 #include <cairo.h>
 #include "CDebugger.h"
 #include "CTString.h"
@@ -88,7 +87,6 @@ public:
   CCairoPlotter(int width, int height, unsigned char *_ARGBByteBuffer, float fontSize, std::string fontLocation);
 
   ~CCairoPlotter();
-  int writeARGBPng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, int bitDepth, bool use8bitpalAlpha);
   int renderFont(FT_Bitmap *bitmap, int left, int top);
   int initializeFreeType();
 

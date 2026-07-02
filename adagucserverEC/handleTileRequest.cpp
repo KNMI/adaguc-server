@@ -94,7 +94,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   dataSource->queryLevel = -1; // All tiles
   dataSource->queryBBOX = true;
   auto store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, initialRequestLimit, false);
-  if (store->size() == 0) {
+  if (store->records.size() == 0) {
     CDBError("No tiles found");
     delete store;
     return nullptr;
@@ -103,7 +103,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   // Put the results per tiling level into a map, so we can find the closest matching tile level.
   std::map<int, int> levelMap;
   for (auto record: store->records) {
-    auto tilingLevel = record.get("adaguctilinglevel")->toInt();
+    auto tilingLevel = std::stoi(record.get("adaguctilinglevel"));
     if (tilingLevel > 0) {
       levelMap[tilingLevel]++;
     }
@@ -115,7 +115,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
 
   // If there are no tiled versions found, just pick the first result as querylevel. This is normally the untiled version
   if (v.size() == 0) {
-    dataSource->queryLevel = store->records.at(0).get("adaguctilinglevel")->toInt();
+    dataSource->queryLevel = std::stoi(store->records.at(0).get("adaguctilinglevel"));
   } else {
     // Find tiling level that has amount of tiles closest to targetNrOfTiles. If equal amount of tiles occur for tiling levels, the lowest tilinglevel is taken.
     std::stable_sort(begin(v), end(v), [targetNrOfTiles](const mypair &a, const mypair &b) { return fabs(targetNrOfTiles - a.second) < fabs(targetNrOfTiles - b.second); });
@@ -129,7 +129,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
     if (filteredRecords.size() >= maxTilesInImage) {
       break;
     }
-    if (record.get("adaguctilinglevel")->toInt() == dataSource->queryLevel) {
+    if (std::stoi(record.get("adaguctilinglevel")) == dataSource->queryLevel) {
       filteredRecords.push_back(record);
     }
   }
@@ -138,7 +138,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   store->records = filteredRecords;
 
   if (tileSettingsDebug) {
-    srvParam->mapTitle = CT::printf("level %d, tiles %lu targetNrOfTiles %d", dataSource->queryLevel, store->getSize(), targetNrOfTiles);
+    srvParam->mapTitle = CT::printf("level %d, tiles %lu targetNrOfTiles %d", dataSource->queryLevel, store->records.size(), targetNrOfTiles);
   }
 
   // Return the store for CRequest.
