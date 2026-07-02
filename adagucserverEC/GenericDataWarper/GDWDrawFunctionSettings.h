@@ -6,7 +6,6 @@
 #include "CGenericDataWarper.h"
 #include "CColor.h"
 #include "CDrawImage.h"
-#include <vector>
 
 enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
