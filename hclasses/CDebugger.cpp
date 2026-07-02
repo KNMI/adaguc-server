@@ -48,6 +48,7 @@ void printErrorStream(const char *message) { _printErrorStreamPointer(message); 
 void _printErrorStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printWarningStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printDebugStream(const char *pszMessage) { printf("%s", pszMessage); }
+// void _printDebugStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 
 void _printDebugLine(const char *a, ...) {
   logMessageNumber++;
@@ -189,3 +190,8 @@ void _printError(const char *a, ...) {
 void setDebugFunction(void (*function)(const char *)) { _printDebugStreamPointer = function; }
 void setWarningFunction(void (*function)(const char *)) { _printWarningStreamPointer = function; }
 void setErrorFunction(void (*function)(const char *)) { _printErrorStreamPointer = function; }
+
+
+void setLoggerPid() {
+  logProcessIdentifier = getpid();
+}
