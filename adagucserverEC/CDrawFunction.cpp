@@ -58,6 +58,7 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
         // use binary search to find matching interval
         auto intervalIt = std::upper_bound(settings->intervals.begin(), settings->intervals.end(), val, [](auto value, const Interval &interval) { return value < interval.min; });
         if (intervalIt != settings->intervals.begin()) {
+          // std::upper_bound returns the first element that's >=value. We need to check the element before that
           intervalIt--;
           if (val < intervalIt->max) {
             return intervalIt->color;
