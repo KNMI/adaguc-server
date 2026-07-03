@@ -318,7 +318,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
 
   CProj4ToCF proj4ToCF;
   proj4ToCF.debug = true;
-  CT::string projString = proj4ToCF.convertCFToProj(projVar);
+  std::string projString = proj4ToCF.convertCFToProj(projVar);
 
   if (projString.empty()) {
     CREPORT_WARN_NODOC(CT::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);

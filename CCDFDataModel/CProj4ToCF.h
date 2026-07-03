@@ -84,7 +84,7 @@ public:
    * @param projectionVariable The variable with CF projection attributes to convert to the proj4 string
    * @return The proj4 string which will contain the new proj string after conversion is finished or empty if an error occured
    */
-  CT::string convertCFToProj(CDF::Variable *projectionVariable);
+  std::string convertCFToProj(CDF::Variable *projectionVariable);
 
   int __checkProjString(const char *name, const char *string);
   /**

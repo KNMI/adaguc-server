@@ -475,6 +475,11 @@ namespace CT {
   std::string trim(const std::string input);
 
   /**
+   * Converts a string to double after trimming whitespace.
+   */
+  double toDouble(const std::string &input);
+
+  /**
    * Function which returns a std::vector on the stack with a list of strings allocated on the stack
    * Data is automatically freed
    * @param stdstring The string to split

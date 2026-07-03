@@ -4,13 +4,13 @@
 // File scope
 static std::map<std::string, PJ *> projections;
 
-PJ *proj_create_crs_to_crs_with_cache(CT::string source_crs, CT::string target_crs, PJ_AREA *area) {
+PJ *proj_create_crs_to_crs_with_cache(std::string source_crs, std::string target_crs, PJ_AREA *area) {
   // NOTE: This will not work when called from multiple threads!!
 
-  source_crs.trimSelf();
-  target_crs.trimSelf();
+  source_crs = CT::trim(source_crs);
+  target_crs = CT::trim(target_crs);
 
-  std::string key = (source_crs + CT::string(":") + target_crs).c_str();
+  std::string key = source_crs + ":" + target_crs;
   PJ *projSourceToDest;
   if (projections.count(key)) {
     projSourceToDest = projections[key];
@@ -23,7 +23,7 @@ PJ *proj_create_crs_to_crs_with_cache(CT::string source_crs, CT::string target_c
 }
 
 void proj_clear_cache() {
-  for (auto const& p : projections) {
+  for (auto const &p: projections) {
     proj_destroy(p.second);
   }
 }
