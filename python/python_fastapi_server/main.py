@@ -10,6 +10,8 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
 from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
+from middleware.disable_range_requests import DisableRangeRequests
+
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
@@ -53,6 +55,8 @@ if allowed_hosts is not None and len(allowed_hosts) > 0:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
 
 app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
+
+app.add_middleware(DisableRangeRequests)
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
