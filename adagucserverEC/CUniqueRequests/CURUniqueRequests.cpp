@@ -137,17 +137,12 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, DataObje
 
   layerStructure.add(CXMLParser::XMLElement("name", dataObject->dataObjectName.empty() ? dataSource->getLayerName() : dataObject->dataObjectName.c_str()));
   layerStructure.add(CXMLParser::XMLElement("layername", dataSource->getLayerName()));
-  layerStructure.add(CXMLParser::XMLElement("variablename", dataObject->variableName.c_str()));
+  layerStructure.add(CXMLParser::XMLElement("variablename", dObjgetVariableName(*dataObject).c_str()));
 
   /* Add metadata */
-  std::string standardName = dataObject->variableName.c_str();
-  CDF::Attribute *attr_standard_name = dataObject->cdfVariable->getAttributeNE("standard_name");
-  if (attr_standard_name != NULL) {
-    standardName = attr_standard_name->toString();
-  }
-
+  std::string standardName = dObjGetStdName(*dataObject);
   layerStructure.add(CXMLParser::XMLElement("standard_name", standardName.c_str()));
-  layerStructure.add(CXMLParser::XMLElement("units", dataObject->getUnits().c_str()));
+  layerStructure.add(CXMLParser::XMLElement("units", dObjgetUnits(*dataObject).c_str()));
 
   CT::string ckey;
   ckey.print("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
@@ -386,7 +381,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               }
               // Apply units:
               if (proc->attr.units.empty() == false) {
-                dataSource->getDataObject(dataObjectNr)->setUnits(proc->attr.units.c_str());
+                dataSource->getDataObject(dataObjectNr)->overruledUnits = proc->attr.units;
               }
             }
             if (readDataAsCDFDouble) {

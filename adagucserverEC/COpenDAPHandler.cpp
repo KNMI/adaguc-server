@@ -87,7 +87,7 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
 #ifdef COPENDAPHANDLER_DEBUG
     CDBDebug("getDimSize Trying to lookup in cdfObject");
 #endif
-    CDF::Dimension *v = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName())->getDimensionThrows(name);
+    CDF::Dimension *v = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName().c_str())->getDimensionThrows(name);
 #ifdef COPENDAPHANDLER_DEBUG
     CDBDebug("Length = %d", v->length);
 #endif
@@ -615,7 +615,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       return 1;
     }
 
-    if (dataSource->getFileName() == NULL) {
+    if (dataSource->getFileName().empty()) {
       if (fileList.size() == 0) {
         CDBError("fileList.size()==0");
         delete dataSource;
@@ -638,7 +638,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
   try {
 
-    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName());
+    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName().c_str());
     ; // dataSource->getDataObject(0)->cdfObject;
 
     for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
@@ -1071,7 +1071,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     }
 
     if (isDASRequest) {
-      CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName());
+      CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName().c_str());
       CT::string output = "";
       if (jsonWriter)
         output.concat("{\n  \"attributes\": {\n");

@@ -48,7 +48,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
 #endif
   status = reader.open(dataSource, CNETCDFREADER_MODE_GET_METADATA);
   if (status != 0) {
-    CDBError("Could not open file: %s", dataSource->getFileName());
+    CDBError("Could not open file: %s", dataSource->getFileName().c_str());
     return 1;
   }
 #ifdef CGDALDATAWRITER_DEBUG
@@ -231,11 +231,11 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
 
   if (status != 0) {
-    CDBError("Could not open file: %s", dataSource->getFileName());
+    CDBError("Could not open file: %s", dataSource->getFileName().c_str());
     return 1;
   }
 #ifdef CGDALDATAWRITER_DEBUG
-  CDBDebug("Reading %s for bandnr %d", dataSource->getFileName(), currentBandNr);
+  CDBDebug("Reading %s for bandnr %d", dataSource->getFileName().c_str(), currentBandNr);
 #endif
   GDALRasterBandH hSrcBand = GDALGetRasterBand(destinationGDALDataSet, currentBandNr + 1);
   dfNoData = NAN;
@@ -437,8 +437,8 @@ int CGDALDataWriter::end() {
           CDBDebug("Nr Of timesteps : %lu", _dataSource->timeSteps.size());
           for (size_t t = 0; t < _dataSource->timeSteps.size(); t++) {
             try {
-              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t]->dims[0].name.c_str());
-              myset.insert(getDimensionValue(d, &_dataSource->timeSteps[t]->dims).c_str());
+              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t].dims[0].name.c_str());
+              myset.insert(getDimensionValue(d, &_dataSource->timeSteps[t].dims).c_str());
               CDBDebug("getDimensionValue");
             } catch (int e) {
               CDBError("Exception code %d", e);
@@ -589,7 +589,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
   CT::string humanReadableString;
   humanReadableString.copy(srvParam->Format.c_str());
   humanReadableString.concat("_");
-  humanReadableString.concat(_dataSource->getDataObject(0)->variableName.c_str());
+  humanReadableString.concat(dObjgetVariableName(*_dataSource->getDataObject(0)).c_str());
 
   for (size_t i = 0; i < _dataSource->requiredDims.size(); i++) {
     humanReadableString.printconcat("_%s", _dataSource->requiredDims[i].value.c_str());
@@ -629,7 +629,7 @@ std::string generateUniqueGetCoverageFileName(CGDALDataWriter *gdalDataWriter) {
   //  "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
   auto s = gdalDataWriter->srvParam;
   auto d = gdalDataWriter->_dataSource;
-  auto variableName = d->getDataObject(0)->variableName;
+  auto variableName = dObjgetVariableName(*d->getDataObject(0));
   std::string dimSettings;
   for (size_t i = 0; i < d->cfgLayer->Dimension.size() && i < 4; i++) {
     CT::printfconcat(dimSettings, "%d_", int(d->getDimensionIndex(i)));

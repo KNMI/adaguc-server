@@ -64,35 +64,35 @@ int Statistics::calculate(CDataSource *dataSource) {
   if (dataObject->cdfVariable->data != NULL) {
     size_t size = dataObject->cdfVariable->getSize(); // dataSource->dWidth*dataSource->dHeight;
 
-    if (dataObject->cdfVariable->getType() == CDF_CHAR) calcMinMax<char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_BYTE) calcMinMax<char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_UBYTE) calcMinMax<unsigned char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_SHORT) calcMinMax<short>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_USHORT) calcMinMax<unsigned short>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_INT) calcMinMax<int>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_UINT) calcMinMax<unsigned int>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_FLOAT) calcMinMax<float>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_DOUBLE) calcMinMax<double>(size, dataSource->getDataObjectsVector());
+    if (dataObject->cdfVariable->getType() == CDF_CHAR) calcMinMax<char>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_BYTE) calcMinMax<char>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_UBYTE) calcMinMax<unsigned char>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_SHORT) calcMinMax<short>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_USHORT) calcMinMax<unsigned short>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_INT) calcMinMax<int>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_UINT) calcMinMax<unsigned int>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_FLOAT) calcMinMax<float>(size, dataSource->dataObjects);
+    if (dataObject->cdfVariable->getType() == CDF_DOUBLE) calcMinMax<double>(size, dataSource->dataObjects);
   }
   return 0;
 }
 
-template <class T> void Statistics::calcMinMax(size_t size, std::vector<DataObject *> *dataObject) {
+template <class T> void Statistics::calcMinMax(size_t size, std::vector<DataObject> &dataObject) {
 #ifdef MEASURETIME
   StopWatch_Stop("Start min/max calculation");
 #endif
-  if (dataObject->size() == 1) {
-    T *data = (T *)(*dataObject)[0]->cdfVariable->data;
-    CDFType type = (*dataObject)[0]->cdfVariable->getType();
-    double dfNodataValue = (*dataObject)[0]->dfNodataValue;
-    bool hasNodataValue = (*dataObject)[0]->hasNodataValue;
+  if (dataObject.size() == 1) {
+    T *data = (T *)dataObject[0].cdfVariable->data;
+    CDFType type = dataObject[0].cdfVariable->getType();
+    double dfNodataValue = dataObject[0].dfNodataValue;
+    bool hasNodataValue = dataObject[0].hasNodataValue;
     calculate(size, data, type, dfNodataValue, hasNodataValue);
   }
 
   // Wind vector min max calculation
-  if (dataObject->size() == 2) {
-    T *dataU = (T *)(*dataObject)[0]->cdfVariable->data;
-    T *dataV = (T *)(*dataObject)[1]->cdfVariable->data;
+  if (dataObject.size() == 2) {
+    T *dataU = (T *)dataObject[0].cdfVariable->data;
+    T *dataV = (T *)dataObject[1].cdfVariable->data;
     T _min = (T)0.0f, _max = (T)0.0f;
     int firstDone = 0;
     T s = 0;
@@ -101,8 +101,7 @@ template <class T> void Statistics::calcMinMax(size_t size, std::vector<DataObje
       T u = dataU[p];
       T v = dataV[p];
 
-      if (((((T)v) != (T)(*dataObject)[0]->dfNodataValue || (!(*dataObject)[0]->hasNodataValue)) && v == v) &&
-          ((((T)u) != (T)(*dataObject)[0]->dfNodataValue || (!(*dataObject)[0]->hasNodataValue)) && u == u)) {
+      if (((((T)v) != (T)dataObject[0].dfNodataValue || (!dataObject[0].hasNodataValue)) && v == v) && ((((T)u) != (T)dataObject[0].dfNodataValue || (!dataObject[0].hasNodataValue)) && u == u)) {
         s = (T)hypot(u, v);
         if (firstDone == 0) {
           _min = s;

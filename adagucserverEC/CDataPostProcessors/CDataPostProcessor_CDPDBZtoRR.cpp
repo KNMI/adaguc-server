@@ -21,7 +21,7 @@ CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSou
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    dataSource->getDataObject(0)->setUnits("mm/hr");
+    dataSource->getDataObject(0)->overruledUnits = "mm/hr";
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     double noDataValue = dataSource->getDataObject(0)->dfNodataValue;

@@ -100,18 +100,18 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     auto lookupUnit = getLookupUnits(*proc);
 
     auto fromUnits = CT::split(lookupUnit.from_units, ",");
-    for (const auto dataObject: dataSource->dataObjects) {
+    for (auto &dataObject: dataSource->dataObjects) {
 
-      if (fromUnits.empty() || std::find(fromUnits.begin(), fromUnits.end(), dataObject->getUnits().c_str()) != fromUnits.end()) {
+      if (fromUnits.empty() || std::find(fromUnits.begin(), fromUnits.end(), dObjgetUnits(dataObject).c_str()) != fromUnits.end()) {
         if (adagucPostProcVerboseLog) {
           CDBDebug("BEFORE: %s %f %f %s %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str(), lookupUnit.from_units.c_str());
         }
-        dataObject->cdfVariable->setAttributeText((std::string(ADAGUCPOSTPROC_ATTR_PREFIX) + "_WAS_UNITS").c_str(), dataObject->getUnits());
-        dataObject->cdfVariable->setAttributeText(getDataPostProcId(proc).c_str(), "true");
-        CDBDebug("[Unit Conversion] --> [%s] Changing unit from [%s] to [%s]", proc->attr.algorithm.c_str(), dataObject->getUnits().c_str(), lookupUnit.units.c_str());
-        dataObject->setUnits(lookupUnit.units.c_str());
+        dataObject.cdfVariable->setAttributeText((std::string(ADAGUCPOSTPROC_ATTR_PREFIX) + "_WAS_UNITS").c_str(), dObjgetUnits(dataObject));
+        dataObject.cdfVariable->setAttributeText(getDataPostProcId(proc).c_str(), "true");
+        CDBDebug("[Unit Conversion] --> [%s] Changing unit from [%s] to [%s]", proc->attr.algorithm.c_str(), dObjgetUnits(dataObject).c_str(), lookupUnit.units.c_str());
+        dataObject.overruledUnits = lookupUnit.units;
         // Also set the unit directly in the datamodel.
-        dataObject->cdfVariable->setAttributeText("units", lookupUnit.units.c_str());
+        dataObject.cdfVariable->setAttributeText("units", lookupUnit.units.c_str());
       }
     }
   }
@@ -119,26 +119,26 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     auto lookupUnit = getLookupUnits(*proc);
 
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    for (const auto dataObject: dataSource->dataObjects) {
+    for (auto &dataObject: dataSource->dataObjects) {
 
-      auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
+      auto attrNeedsConversion = dataObject.cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
       // Check if we need to convert the data
       if (attrNeedsConversion != nullptr && attrNeedsConversion->toString().equals("true")) {
         CDBDebug("AFTER (grid): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
-        CDFType type = dataObject->cdfVariable->getType();
+        CDFType type = dataObject.cdfVariable->getType();
 
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
-  if (type == CDFTYPE) do_convert<CPPTYPE>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (CPPTYPE *)dataObject->cdfVariable->data, lookupUnit.a, lookupUnit.b);
+  if (type == CDFTYPE) do_convert<CPPTYPE>(dataObject.hasNodataValue ? dataObject.dfNodataValue : NAN, l, (CPPTYPE *)dataObject.cdfVariable->data, lookupUnit.a, lookupUnit.b);
         ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
 
         // Convert point data if needed
-        size_t nrPoints = dataObject->points.size();
-        float noDataValue = dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN;
+        size_t nrPoints = dataObject.points.size();
+        float noDataValue = dataObject.hasNodataValue ? dataObject.dfNodataValue : NAN;
 
         for (size_t pointNo = 0; pointNo < nrPoints; pointNo++) {
-          if (!(dataObject->points[pointNo].v == noDataValue)) {
-            dataObject->points[pointNo].v = lookupUnit.a * dataObject->points[pointNo].v + lookupUnit.b;
+          if (!(dataObject.points[pointNo].v == noDataValue)) {
+            dataObject.points[pointNo].v = lookupUnit.a * dataObject.points[pointNo].v + lookupUnit.b;
           }
         }
       }
@@ -153,17 +153,17 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   }
   size_t l = numDataPoints;
   auto lookupUnit = getLookupUnits(*proc);
-  for (const auto dataObject: dataSource->dataObjects) {
+  for (const auto &dataObject: dataSource->dataObjects) {
     if (adagucPostProcVerboseLog) {
-      CDBDebug("Using var %s", dataObject->cdfVariable->name.c_str());
+      CDBDebug("Using var %s", dataObject.cdfVariable->name.c_str());
     }
-    auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
+    auto attrNeedsConversion = dataObject.cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
     // Check if we need to convert the data
     if (attrNeedsConversion != nullptr && attrNeedsConversion->toString().equals("true")) {
       if (adagucPostProcVerboseLog) {
         CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
       }
-      do_convert<double>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (double *)data, lookupUnit.a, lookupUnit.b);
+      do_convert<double>(dataObject.hasNodataValue ? dataObject.dfNodataValue : NAN, l, (double *)data, lookupUnit.a, lookupUnit.b);
     }
   }
   return 0;

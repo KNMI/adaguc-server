@@ -1,6 +1,7 @@
 #include <CImgRenderFieldVectors.h>
 #include "CImgWarpBilinear.h"
 #include "f8vector.h"
+#include <utils.h>
 
 bool verboseLog = true;
 
@@ -80,7 +81,7 @@ bool isGridRelative(CDataSource *dataSource) {
     // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
     // if eastward_wind/northward_wind then gridRelative=false
     // default is gridRelative=true
-    CT::string standard_name = dataSource->getDataObject(4)->getStandardName();
+    CT::string standard_name = getStandardName(*dataSource->getDataObject(4)->cdfVariable);
 
     if (standard_name.equals("x_wind") || standard_name.equals("grid_eastward_wind") || standard_name.equals("y_wind") || standard_name.equals("grid_northward_wind")) {
       gridRelative = true;
@@ -119,7 +120,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
                                                                                    float *vValueData, int *dpDestX, int *dpDestY) {
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
   CT::string units = "m/s";
-  units = dataSource->getDataObject(0)->getUnits();
+  units = dObjgetUnits(*dataSource->getDataObject(0));
 
   // Wind VECTOR
   int dImageWidth = drawImage->geoParams.width + 1;

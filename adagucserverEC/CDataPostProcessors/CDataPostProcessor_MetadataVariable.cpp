@@ -33,7 +33,7 @@ int CDDPMetadataVariable::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
 
         auto dataObject = dataSource->getDataObjectByName(proc->attr.variable.c_str());
         if (dataObject != NULL) {
-          dataObject->setUnits(proc->attr.units.c_str());
+          dataObject->overruledUnits = proc->attr.units.c_str();
         }
       }
       // Adjust standard_name

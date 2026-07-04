@@ -16,4 +16,6 @@
 
 CDFReader *findReaderByFileName(CT::string fileName);
 
+std::string getStandardName(const CDF::Variable &variable);
+
 #endif

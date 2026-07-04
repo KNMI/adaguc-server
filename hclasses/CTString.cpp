@@ -703,4 +703,19 @@ namespace CT {
     return input.substr(start, end - start);
   }
 
+  bool testRegEx(const std::string &input, const char *pattern) {
+    int status;
+    regex_t re;
+    /* TODO: Maarten Plieger 2021-12-31, cache compiled regcomp */
+    if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
+      return false;
+    }
+    status = regexec(&re, input.c_str(), (size_t)0, nullptr, 0);
+    regfree(&re);
+    if (status != 0) {
+      return false;
+    }
+    return true;
+  }
+
 } /* namespace CT */

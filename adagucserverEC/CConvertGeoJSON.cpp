@@ -995,7 +995,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   size_t nrDataObjects = dataSource->getNumDataObjects();
 
   if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC || (dataSource->dWidth == 1 && dataSource->dHeight == 1)) {
-    if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dataSource->getDataObject(0)->variableName.equals("features") == true)) {
+    if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dObjgetVariableName(*dataSource->getDataObject(0)) == "features")) {
       // CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false or variable name is features");
       dataSource->srvParams->geoParams.bbox.toArray(dataSource->dfBBOX);
       return 0;
@@ -1013,12 +1013,11 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
     // CDBDebug("convertGeoJSONData OPEN ALL (*)");
 
-    DataObject *dataObject;
     for (size_t d = 0; d < nrDataObjects; d++) {
-      dataObject = dataSource->getDataObject(d);
+      auto &dataObject = dataSource->dataObjects[d];
 
       CDF::Variable *polygonIndexVar;
-      polygonIndexVar = dataObject->cdfVariable;
+      polygonIndexVar = dataObject.cdfVariable;
       // Width needs to be at least 2 in this case.
       if (dataSource->dWidth == 1) dataSource->dWidth = 2;
       if (dataSource->dHeight == 1) dataSource->dHeight = 2;
@@ -1086,20 +1085,20 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
 
       // Determine the fillvalue
-      dataObject->dfNodataValue = CCONVERTGEOJSON_FILL;
+      dataObject.dfNodataValue = CCONVERTGEOJSON_FILL;
 
       CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
       if (fillValue == NULL) {
-        polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObject->dfNodataValue);
+        polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObject.dfNodataValue);
         fillValue = polygonIndexVar->getAttributeNE("_FillValue");
-        // CDBDebug("Setting fill value to %f", dataObject->dfNodataValue);
+        // CDBDebug("Setting fill value to %f", dataObject.dfNodataValue);
       }
 
-      dataObject->hasNodataValue = true;
-      fillValue->getData(&dataObject->dfNodataValue, 1);
+      dataObject.hasNodataValue = true;
+      fillValue->getData(&dataObject.dfNodataValue, 1);
 
       // Fill the data with the nodatavalue
-      CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject->dfNodataValue, fieldSize);
+      CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject.dfNodataValue, fieldSize);
 
 #ifdef MEASURETIME
       StopWatch_Stop("GeoJSON DATA");
@@ -1139,15 +1138,15 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         drawPoints(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY, min, max);
 
         for (std::map<std::string, FeatureProperty *>::iterator ftit = featurePropertyMap->begin(); ftit != featurePropertyMap->end(); ++ftit) {
-          if (dataObject->features.count(featureIndex) == 0) {
-            dataObject->features[featureIndex] = CFeature(featureIndex);
+          if (dataObject.features.count(featureIndex) == 0) {
+            dataObject.features[featureIndex] = CFeature(featureIndex);
           }
-          dataObject->features[featureIndex].addProperty(ftit->first.c_str(), ftit->second->toString().c_str());
+          dataObject.features[featureIndex].addProperty(ftit->first.c_str(), ftit->second->toString().c_str());
         }
         featureIndex++;
       }
       if (dataSource && dataSource->statistics != NULL) {
-        if (dataObject->variableName.equals("features") == false) {
+        if (dObjgetVariableName(dataObject) != "features") {
           if (min != NAN) dataSource->statistics->min = min;
           if (max != NAN) dataSource->statistics->max = max;
         }
@@ -1280,10 +1279,9 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int, CDataSour
                                  double offsetY, float &min, float &max) {
   std::vector<GeoPoint> *points = feature->getPoints();
   if (points->size() == 0) return;
-  size_t nrDataObjects = dataSource->getNumDataObjects();
-  for (size_t d = 0; d < nrDataObjects; d++) {
-    DataObject *dataObject = dataSource->getDataObject(d);
-    CDF::Variable *pointGridVariable = dataObject->cdfVariable;
+
+  for (auto &dataObject: dataSource->dataObjects) {
+    CDF::Variable *pointGridVariable = dataObject.cdfVariable;
 
     std::map<std::string, FeatureProperty *> *fp = feature->getFp();
 
@@ -1316,13 +1314,13 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int, CDataSour
         dlat = int((tprojectedY - offsetY) / cellSizeY);
       }
       float f = isString ? NAN : pointValue.toFloat();
-      dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
+      dataObject.points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
 
       if (pointGridVariable->getType() == CDF_FLOAT) {
         if (f < min || min != min) min = f;
         if (f > max || max != max) max = f;
       }
-      PointDVWithLatLon *lastPoint = &(dataObject->points.back());
+      PointDVWithLatLon *lastPoint = &(dataObject.points.back());
       // Get the last pushed point from the array and push the character text data in the paramlist
       lastPoint->paramList.push_back({.key = pointName.c_str(), .description = pointDescription.c_str(), .value = pointValue.c_str()});
     }

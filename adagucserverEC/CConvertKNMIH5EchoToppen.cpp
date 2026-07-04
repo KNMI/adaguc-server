@@ -273,7 +273,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       imageWarperEchoToppen.reprojToLatLon(lon, lat);
 
       /* Finally add the found point to the datasource, these will become visibile when the point rendermethod is selected */
-      dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
+      dataSource->dataObjects[0].points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
 
       /* Also draw a dot on the virtual echotoppen grid, useful to see something in neartest neighbour rendermethod
          The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a grid.

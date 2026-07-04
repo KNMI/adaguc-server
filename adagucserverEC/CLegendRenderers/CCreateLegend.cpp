@@ -78,7 +78,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     estimateMinMax = false;
   }
 
-  if (dataSource->getFileName() != NULL && strlen(dataSource->getFileName()) > 0) {
+  if (!dataSource->getFileName().empty()) {
     if (estimateMinMax) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
