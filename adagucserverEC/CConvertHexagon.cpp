@@ -277,11 +277,11 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     time_counter_dim->name = "counter";
     CDF::Variable *time_counter_var = new CDF::Variable();
     time_counter_var->setType(CDF_DOUBLE);
-    time_counter_var->name.copy(time_counter_dim->name.c_str());
+    time_counter_var->name = (time_counter_dim->name.c_str());
     time_counter_var->isDimension = true;
     time_counter_var->dimensionlinks.push_back(time_counter_dim);
     cdfObject->addVariable(time_counter_var);
-    CDF::allocateData(CDF_DOUBLE, &time_counter_var->data, time_counter_dim->length);
+    time_counter_var->allocateData(time_counter_dim->length);
     for (size_t j = 0; j < time_counter_dim->length; j++) {
       ((double *)time_counter_var->data)[j] = j;
     }
@@ -301,11 +301,11 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adaguccoordinatex");
+    varX->name = ("adaguccoordinatex");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -314,11 +314,11 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("adaguccoordinatey");
+    varY->name = ("adaguccoordinatey");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
 #ifdef CCONVERTHEXAGON_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables");
@@ -581,8 +581,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     varX = cdfObject->getVariableThrows("adaguccoordinatex");
     varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
 #ifdef CCONVERTHEXAGON_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables");
@@ -600,7 +600,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
     new2DVar->setSize(fieldSize);
-    CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
+    new2DVar->allocateData(fieldSize);
 
     // Draw data!
     if (dataObjects[0]->hasNodataValue) {
@@ -623,16 +623,16 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       // Apply once
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
           projectionRequired = false;
         }
-        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
       }
     }
 

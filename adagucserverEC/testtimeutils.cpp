@@ -53,9 +53,9 @@ TEST(CalculateTimeInterval, TimeUtils) {
 
 TEST(ToISO8601Interval, TimeUtils) {
   TimeInterval interval = {1, 2, 10, 5, 30, 45};
-  CT::string expected("P1Y2M10DT5H30M45S");
+  std::string expected("P1Y2M10DT5H30M45S");
 
-  CT::string result = toISO8601Interval(interval);
+  std::string result = toISO8601Interval(interval);
   CHECK(result == expected);
 }
 
@@ -69,29 +69,29 @@ TEST(ToSeconds, TimeUtils) {
 
 TEST(EstimateISO8601Duration, TimeUtils) {
   // Most straightforward case
-  std::vector<CT::string> timestamps = {"2024-07-29T15:30:45Z", "2024-07-29T16:30:45Z", "2024-07-29T17:30:45Z", "2024-07-29T18:30:45Z"};
-  CT::string expected("PT1H");
-  CT::string result = estimateISO8601Duration(timestamps);
-  std::cout << "Result: " << result.c_str() << "\n";
-  CHECK(result == expected);
+  std::vector<std::string> timestamps = {"2024-07-29T15:30:45Z", "2024-07-29T16:30:45Z", "2024-07-29T17:30:45Z", "2024-07-29T18:30:45Z"};
+
+  auto result = estimateISO8601Duration(timestamps);
+
+  CHECK(result == "PT1H");
 
   // Case with one timestep missing
-  std::vector<CT::string> timestamps_with_gap = {"2024-07-29T15:30:45Z", "2024-07-29T16:30:45Z", "2024-07-29T18:30:45Z", "2024-07-29T19:30:45Z",
-                                                 "2024-07-29T20:30:45Z", "2024-07-29T21:30:45Z", "2024-07-29T22:30:45Z", "2024-07-29T23:30:45Z"};
-  CT::string expected_with_gap("PT1H");
-  CT::string result_with_gap = estimateISO8601Duration(timestamps_with_gap);
+  std::vector<std::string> timestamps_with_gap = {"2024-07-29T15:30:45Z", "2024-07-29T16:30:45Z", "2024-07-29T18:30:45Z", "2024-07-29T19:30:45Z",
+                                                  "2024-07-29T20:30:45Z", "2024-07-29T21:30:45Z", "2024-07-29T22:30:45Z", "2024-07-29T23:30:45Z"};
+  std::string expected_with_gap("PT1H");
+  std::string result_with_gap = estimateISO8601Duration(timestamps_with_gap);
   CHECK(result_with_gap == expected_with_gap);
 
   // Case in February of a leap year
-  std::vector<CT::string> leap_year_timestamps = {"2024-02-28T23:30:45Z", "2024-02-29T00:30:45Z", "2024-02-29T01:30:45Z", "2024-02-29T02:30:45Z"};
-  CT::string expected_leap_year("PT1H");
-  CT::string result_leap_year = estimateISO8601Duration(leap_year_timestamps);
+  std::vector<std::string> leap_year_timestamps = {"2024-02-28T23:30:45Z", "2024-02-29T00:30:45Z", "2024-02-29T01:30:45Z", "2024-02-29T02:30:45Z"};
+  std::string expected_leap_year("PT1H");
+  std::string result_leap_year = estimateISO8601Duration(leap_year_timestamps);
   CHECK(result_leap_year == expected_leap_year);
 
   // Case of a complex interval (5 days and 10 hours)
-  std::vector<CT::string> complex_interval_timestamps = {"2024-07-01T08:00:00Z", "2024-07-06T18:00:00Z", "2024-07-12T04:00:00Z", "2024-07-17T14:00:00Z", "2024-07-23T00:00:00Z"};
-  CT::string expected_complex_interval("P5DT10H");
-  CT::string result_complex_interval = estimateISO8601Duration(complex_interval_timestamps);
+  std::vector<std::string> complex_interval_timestamps = {"2024-07-01T08:00:00Z", "2024-07-06T18:00:00Z", "2024-07-12T04:00:00Z", "2024-07-17T14:00:00Z", "2024-07-23T00:00:00Z"};
+  std::string expected_complex_interval("P5DT10H");
+  std::string result_complex_interval = estimateISO8601Duration(complex_interval_timestamps);
   CHECK(result_complex_interval == expected_complex_interval);
 
   CTime::cleanInstances();
@@ -99,88 +99,133 @@ TEST(EstimateISO8601Duration, TimeUtils) {
 
 TEST(checkDependenciesBetweenDims, TimeUtils) {
   int result = 0;
-  MetadataLayer ml;
-  ml.dataSource = new CDataSource();
-  ml.dataSource->cfgLayer = new CServerConfig::XMLE_Layer();
+
+  CDataSource dataSource;
+  dataSource.cfgLayer = new CServerConfig::XMLE_Layer();
 
   auto timeDim = new CServerConfig::XMLE_Dimension();
-  timeDim->value = "time";
-  ml.dataSource->cfgLayer->Dimension.push_back(timeDim);
-  result = checkDependenciesBetweenDims(&ml);
+  timeDim->elementValue = "time";
+  dataSource.cfgLayer->Dimension.push_back(timeDim);
+  std::vector<LayerMetadataDim> dimList;
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
   timeDim->attr.defaultV = "reference_time+PT1H";
 
-  result = checkDependenciesBetweenDims(&ml);
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
 
-  ml.layerMetadata.dimList.push_back({.serviceName = "time", .cdfName = "", .units = "", .values = "", .defaultValue = "?", .type = "", .hasMultipleValues = 1, .hidden = false});
-  result = checkDependenciesBetweenDims(&ml);
+  dimList.push_back({.serviceName = "time", .cdfName = "", .units = "", .values = "", .defaultValue = "?", .type = "", .hasMultipleValues = 1, .hidden = false});
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals(""));
 
   auto refTimeDim = new CServerConfig::XMLE_Dimension();
-  refTimeDim->value = "reference_time";
-  ml.dataSource->cfgLayer->Dimension.push_back(refTimeDim);
-
-  result = checkDependenciesBetweenDims(&ml);
+  refTimeDim->elementValue = "reference_time";
+  dataSource.cfgLayer->Dimension.push_back(refTimeDim);
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
 
-  ml.layerMetadata.dimList.push_back(
-      {.serviceName = "reference_time", .cdfName = "", .units = "", .values = "", .defaultValue = "2025-05-10T12:00:00Z", .type = "", .hasMultipleValues = 1, .hidden = false});
-  result = checkDependenciesBetweenDims(&ml);
+  dimList.push_back({.serviceName = "reference_time", .cdfName = "", .units = "", .values = "", .defaultValue = "2025-05-10T12:00:00Z", .type = "", .hasMultipleValues = 1, .hidden = false});
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
   // New default value should be 1 hour more then default value of reference time
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T13:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-10T13:00:00Z");
 
   // Try other cases
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T08:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T08:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T09:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-10T09:00:00Z");
 
   // Try other cases
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T23:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-11T00:00:00Z");
 
   // Try other cases
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-10T19:00:00Z");
 
   timeDim->attr.defaultV = "reference_time+PT1S";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:00:59Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T23:00:59Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T23:01:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-10T23:01:00Z");
 
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:59:59Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T23:59:59Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-11T00:00:00Z");
 
   timeDim->attr.defaultV = "reference_time+PT3600S";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-10T19:00:00Z");
 
   timeDim->attr.defaultV = "reference_time";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
 
   timeDim->attr.defaultV = "reference_time+PT0H";
-  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
-  result = checkDependenciesBetweenDims(&ml);
+  dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
-  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T18:00:00Z") == true)
+  CHECK(dimList[0].defaultValue == "2025-05-10T18:00:00Z");
 
-  delete ml.dataSource->cfgLayer;
-  delete ml.dataSource;
+  delete dataSource.cfgLayer;
   CTime::cleanInstances();
+}
+
+TEST(makeIntervalFromTimeList, TimeUtils) {
+  CHECK(makeIntervalFromTimeList({""}) == "")
+
+  CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z", "2020-10-02T00:20:00Z"}) == "PT5M")
+  CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z"}) == "")
+
+  CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z", "2020-10-02T00:20:00Z", "2020-10-02T00:25:00Z",
+                                  "2020-10-02T00:30:00Z", "2020-10-02T00:35:00Z", "2020-10-02T00:40:00Z", "2020-10-02T00:45:00Z", "2020-10-02T00:50:00Z"}) == "PT5M")
+  CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z", "2020-10-02T00:20:00Z", "2020-10-02T00:25:00Z",
+                                  "2020-10-02T00:30:00Z", "2020-10-02T00:35:00Z", "2020-10-02T00:40:00Z", "2020-10-02T00:45:10Z", "2020-10-02T00:50:00Z"}) == "")
+
+  CHECK(makeIntervalFromTimeList({
+            "2020-01-02T00:00:00Z",
+            "2022-02-04T01:05:00Z",
+            "2024-03-06T02:10:00Z",
+            "2026-04-08T03:15:00Z",
+            "2028-05-10T04:20:00Z",
+            "2030-06-12T05:25:00Z",
+        }) == "P2Y1M2DT1H5M")
+
+  CHECK(makeIntervalFromTimeList({
+            "2020-10-02T00:00:00Z",
+            "2020-11-02T00:00:00Z",
+            "2020-12-02T00:00:00Z",
+            "2021-01-02T00:00:00Z",
+            "2021-02-02T00:00:00Z",
+            "2021-03-02T00:00:00Z",
+        }) == "P1M")
+
+  CHECK(makeIntervalFromTimeList({
+            "2020-02-02T00:55:00Z",
+            "2020-02-02T01:00:00Z",
+            "2020-02-02T01:05:00Z",
+            "2020-02-02T01:10:00Z",
+            "2020-02-02T01:15:00Z",
+            "2020-02-02T01:20:00Z",
+        }) == "PT5M")
+
+  CHECK(makeIntervalFromTimeList({
+            "2020-02-02T00:55:00Z",
+            "2020-02-02T01:00:00Z",
+            "2020-02-02T01:05:00Z",
+            "2020-02-02T01:10:00Z",
+            "2020-02-02T01:15:01Z",
+            "2020-02-02T01:20:00Z",
+        }) == "")
 }
 
 int main() {

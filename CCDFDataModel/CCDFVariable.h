@@ -114,22 +114,22 @@ namespace CDF {
     void setName(const char *value);
     void setSize(size_t size);
     size_t getSize();
-    Attribute *getAttributeThrows(const char *name) const;
+    Attribute *getAttributeThrows(const std::string &name) const;
     /**
      * Returns the dimension for given name. Throws error code  when something goes wrong
      * @param name The name of the dimension to look for
      * @return Pointer to the dimension
      */
-    Dimension *getDimensionThrows(const char *name);
-    Dimension *getDimensionIgnoreCaseThrows(const char *name);
-    int getDimensionIndexThrows(const char *name);
+    Dimension *getDimensionThrows(const std::string &name) const;
+    Dimension *getDimensionIgnoreCaseThrows(const std::string &name) const;
 
-    Dimension *getDim(std::string name) const;
-    Dimension *getDimensionNE(const char *name);
-    int getDimensionIndexNE(const char *name);
+    Dimension *getDim(const std::string &name) const;
+    Dimension *getDimNoCase(const std::string &name) const;
+    int getDimIndex(const std::string &name) const;
+    Dimension *getDimensionNE(const std::string &name) const;
 
     Attribute *getAttr(std::string name) const;
-    Attribute *getAttributeNE(const char *name) const;
+    Attribute *getAttributeNE(const std::string &name) const;
 
     /**
      * Gets text for given attribute name.
@@ -139,7 +139,7 @@ namespace CDF {
     std::string getAttrText(std::string name) const;
 
     int addAttribute(Attribute *attr);
-    int removeAttribute(const char *name);
+    int removeAttribute(const std::string &name);
     int removeAttributes();
     int setAttribute(const char *attrName, CDFType attrType, const void *attrData, size_t attrLen);
     template <class T> int setAttribute(const char *attrName, CDFType attrType, T data);

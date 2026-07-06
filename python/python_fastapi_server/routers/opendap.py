@@ -24,21 +24,16 @@ async def handle_opendap(req: Request, opendappath: str):
         query_string += f"&{k}={req.query_params[k]}"
 
     # Set required environment variables
-    base_url = f"{url.scheme}://{url.hostname}:{url.port}"
-    adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", base_url) + "/adagucopendap?"
-    )
-    adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
-    )
+    base_url = req.base_url
+    adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adagucopendap?"
+
+    adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     logger.info("Setting request_uri to %s", base_url)
     adagucenv["REQUEST_URI"] = url.path
     adagucenv["SCRIPT_NAME"] = ""
 
-    status, data, headers = await adaguc_instance.runADAGUCServer(
-        query_string, env=adagucenv, showLogOnError=False
-    )
+    status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
@@ -50,11 +45,11 @@ async def handle_opendap(req: Request, opendappath: str):
     if status != 0:
         logger.info("Adaguc status code was %d", status)
         response_code = 500
-    response = Response(content=data.getvalue(), status_code=response_code)
+    response = Response(content=data, status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:
-        key = header.split(":")[0]
-        value = header.split(":")[1].strip()
-        response.headers[key] = value
+        key, value = header.split(":", 1)
+        response.headers[key] = value.strip()
+
     return response

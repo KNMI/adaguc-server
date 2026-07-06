@@ -61,8 +61,6 @@ public:
   */
   int checkTable(const char *pszTableName, const char *pszColumns);
   int query(const char *pszQuery);
-  //     CT::string* query_select_deprecated(const char *pszQuery);
-  //     CT::string* query_select_deprecated(const char *pszQuery,int dColumn);
   /**
    * Queries to a store
    * @param pszQuery The query to execute

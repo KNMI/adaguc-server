@@ -92,11 +92,11 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     /* Define the X variable using the X dimension */
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("xet");
+    varX->name = ("xet");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     /* Set the bbox in the data, since the virtual grid is 2x2 pixels we can directly apply the bbox */
     ((double *)varX->data)[0] = dfBBOX[0];
@@ -111,11 +111,11 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     /* Define the Y variable using the X dimension */
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("yet");
+    varY->name = ("yet");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     ((double *)varY->data)[0] = dfBBOX[1];
     ((double *)varY->data)[1] = dfBBOX[3];
@@ -171,20 +171,20 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
     if (dataSource->dHeight < 2) dataSource->dHeight = 2;
 
-    /* Get the X and Y dimensions previousely defined and adjust them to the new settings and new grid (Grid in screenview space) */
+    /* Get the X and Y dimensions previously defined and adjust them to the new settings and new grid (Grid in screenview space) */
     CDF::Dimension *dimX = cdfObject0->getDimensionThrows("xet");
     dimX->setSize(dataSource->dWidth);
 
     CDF::Dimension *dimY = cdfObject0->getDimensionThrows("yet");
     dimY->setSize(dataSource->dHeight);
 
-    /* Get the X and Y variables from the cdfobject (previousely defined in the header function) */
+    /* Get the X and Y variables from the cdfobject (previously defined in the header function) */
     CDF::Variable *varX = cdfObject0->getVariableThrows("xet");
     CDF::Variable *varY = cdfObject0->getVariableThrows("yet");
 
     /* Re-allocate data for these coordinate variables with the new grid size */
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
     /* Get the echotoppen variable from the datasource */
     CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
@@ -192,7 +192,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     /* Calculate the gridsize, allocate data and fill the data with a fillvalue */
     size_t fieldSize = dimX->length * dimY->length;
     echoToppenVar->setSize(fieldSize);
-    CDF::allocateData(echoToppenVar->getType(), &(echoToppenVar->data), fieldSize);
+    echoToppenVar->allocateData(fieldSize);
     float fillValue = CConvertKNMIH5EchoToppen_FillValue;
     CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue, fieldSize);
 

@@ -11,7 +11,7 @@
 const char *CDDPMetadataVariable::getId() { return CDATAPOSTPROCESSOR_CDDPMETADATA_VARIABLE_ID; }
 
 int CDDPMetadataVariable::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(getId())) {
+  if (proc->attr.algorithm == (getId())) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;

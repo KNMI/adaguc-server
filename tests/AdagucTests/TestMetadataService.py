@@ -31,6 +31,6 @@ class TestMetadataService(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=test/testdata_timedim.nc&SERVICE=metadata&request=getmetadata&", env=self.env
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))

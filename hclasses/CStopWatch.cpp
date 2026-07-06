@@ -25,12 +25,17 @@
 
 #include "CStopWatch.h"
 #include "CTString.h"
+#include <sys/time.h>
 /* Stopwatch functions for timing */
+
+extern unsigned int logMessageNumber;
+extern unsigned long logProcessIdentifier;
 
 timespec starttime, stoptime, currenttime;
 double CSTOPWATCH_H_prevTime = 0;
 int content_type_provided = 0;
 int firstTime = 0;
+
 void StopWatch_Start() {
 #if _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &starttime);
@@ -44,6 +49,7 @@ void StopWatch_Start() {
   stop = double(stoptime.tv_nsec) / 1000000 + stoptime.tv_sec * 1000;
   CSTOPWATCH_H_prevTime = stop;
 }
+
 void __StopWatch_Stop(const char *msg) {
 #if _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &stoptime);
@@ -60,27 +66,22 @@ void __StopWatch_Stop(const char *msg) {
     CSTOPWATCH_H_prevTime = stop;
     firstTime = 1;
   }
-  _printDebugLine("[T] %.1f ms\t%.3f ms: %s", stop - start, stop - CSTOPWATCH_H_prevTime, msg);
+  _printDebugLine("[T] %5.1f ms %5.3f ms: %s", stop - start, stop - CSTOPWATCH_H_prevTime, msg);
   CSTOPWATCH_H_prevTime = stop;
 }
 
 void _StopWatch_Stop(const char *a, ...) {
+  std::vector<char> buf(300 + 1);
   va_list ap;
-  char szTemp[8192 + 1];
   va_start(ap, a);
-  vsnprintf(szTemp, 8192, a, ap);
+  int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
   va_end(ap);
-  szTemp[8192] = '\0';
-  /*
-  CT::string t=szTemp;
-  int i=t.indexOf("]")+1;
-  CT::string t1=t.substringr(0,i);
-  CT::string t2=t.substringr(i,-1);
-  size_t l=t1.length();
-  for(int j=l;j<40;j++){
-    t1.concat(" ");
+  if (numWritten > 300) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    vsnprintf(&buf[0], buf.size(), a, ap);
+    va_end(ap);
   }
-  t1.concat(&t2);*/
-
-  __StopWatch_Stop(szTemp);
+  __StopWatch_Stop(std::string(buf.begin(), buf.end()).c_str());
 }

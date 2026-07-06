@@ -116,8 +116,7 @@ int CDrawImage::createImage(int _dW, int _dH) {
 int CDrawImage::createImage(GeoParameters &_Geo) {
   // CDBDebug("CreateImage from GeoParams");
 #ifdef MEASURETIME
-  StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]", _Geo.dWidth, _Geo.dHeight, _bEnableTrueColor, _bEnableTransparency,
-                 currentGraphicsRenderer);
+  StopWatch_Stop("start createImage of size");
 #endif
   if (dImageCreated == 1) {
     CDBError("createImage: image already created");
@@ -134,7 +133,7 @@ int CDrawImage::createImage(GeoParameters &_Geo) {
   }
   dImageCreated = 1;
 #ifdef MEASURETIME
-  StopWatch_Stop("image created with renderer %d.", currentGraphicsRenderer);
+  StopWatch_Stop("image created");
 #endif
 
   return 0;
@@ -319,6 +318,12 @@ void CDrawImage::poly(float *x, float *y, int n, float lineWidth, CColor lineCol
   cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
   cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
   cairo->poly(x, y, n, lineWidth, close, fill);
+}
+
+void CDrawImage::poly(const std::vector<f8point> &polyPoints, float lineWidth, CColor lineColor, CColor fillColor, bool close, bool fill) {
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+  cairo->poly(polyPoints, lineWidth, close, fill);
 }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2, int color) {
@@ -612,7 +617,7 @@ int CDrawImage::create685Palette() {
   const char *paletteName685 = "685Palette";
 
   for (size_t j = 0; j < legends.size(); j++) {
-    if (legends[j]->legendName.equals(paletteName685)) {
+    if (legends[j]->legendName == (paletteName685)) {
       CDBDebug("Found legend");
       currentLegend = legends[j];
       return 0;
@@ -688,7 +693,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   currentLegend = NULL;
   if (legend != NULL) {
     for (size_t j = 0; j < legends.size(); j++) {
-      if (legends[j]->legendName.equals(legend->attr.name.c_str())) {
+      if (legends[j]->legendName == (legend->attr.name.c_str())) {
         currentLegend = legends[j];
         return 0;
       }
@@ -716,7 +721,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   if (legend == NULL) {
     return _createStandard();
   }
-  if (legend->attr.type.equals("colorRange")) {
+  if (legend->attr.type == ("colorRange")) {
 
     float cx;
     float rc[4];
@@ -756,7 +761,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
 
     return _createStandard();
   }
-  if (legend->attr.type.equals("interval")) {
+  if (legend->attr.type == ("interval")) {
 
     for (size_t j = 0; j < legend->palette.size(); j++) {
 
@@ -789,7 +794,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     }
     return _createStandard();
   }
-  if (legend->attr.type.equals("svg")) {
+  if (legend->attr.type == ("svg")) {
     if (legend->attr.file.empty()) {
       CDBError("Legend type file has no file attribute specified");
       return 1;
@@ -799,15 +804,15 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     CXMLParserElement element;
 
     try {
-      element.parse(legend->attr.file.c_str());
-      CXMLParser::XMLElement::XMLElementPointerList stops = element.get("svg")->get("g")->get("defs")->get("linearGradient")->getList("stop");
+      element.parseFile(legend->attr.file.c_str());
+      auto stops = element.getThrows("svg")->getThrows("g")->getThrows("defs")->getThrows("linearGradient")->getList("stop");
       float cx;
       float rc[4];
       unsigned char prev_red = 0, prev_green = 0, prev_blue = 0, prev_alpha = 0;
       int prev_offset = 0;
       for (size_t j = 0; j < stops.size(); j++) {
         // CDBDebug("%s",stops.get(j)->toString().c_str());
-        int offset = (int)(stops.at(j).getAttrValue("offset").toFloat() * 2.4);
+        int offset = (int)(std::stof(stops.at(j).getAttrValue("offset")) * 2.4);
         CT::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
         color.setSize(color.length() - 1);
         auto colors = color.split(",");
@@ -818,7 +823,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
         unsigned char red = colors[0].toInt();
         unsigned char green = colors[1].toInt();
         unsigned char blue = colors[2].toInt();
-        unsigned char alpha = (char)(stops.at(j).getAttrValue("stop-opacity").toFloat() * 255);
+        unsigned char alpha = (char)(std::stof(stops.at(j).getAttrValue("stop-opacity")) * 255);
         // CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
         if (offset > 255)
           offset = 255;

@@ -33,7 +33,7 @@ f8box reprojBBox(GeoParameters &input, CImageWarper *warper) {
   f8box output = input.bbox;
   if (input.bbox.top < input.bbox.bottom) {
     if (input.bbox.bottom > -360 && input.bbox.top < 360 && input.bbox.left > -720 && input.bbox.right < 720) {
-      if (isLonLatProjection(&input.crs) == false) {
+      if (isLonLatProjection(input.crs) == false) {
         double checkBBOX[4];
         input.bbox.toArray(checkBBOX);
         bool hasError = false;
@@ -204,6 +204,8 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
   int sxw = floor(fabs(xScale)) + 1;
   int syh = floor(fabs(yScale)) + 1;
+  bool yDirPositive = span.y > 0;
+  bool xDirPositive = span.x > 0;
   for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
     for (int x = pixelspan.left; x < pixelspan.right; x++) {
       double dfx = x + halfCell;
@@ -241,8 +243,8 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       for (int sjy = sy1; sjy < sy2; sjy++) {
         for (int sjx = sx1; sjx < sx2; sjx++) {
           if (sjx >= 0 && sjy >= 0 && sjx < warperState.destGridWidth && sjy < warperState.destGridHeight) {
-            warperState.sourceTileDy = (sjy - sy1) / h; // TODO: Check why sourceTileDy is upside down.
-            warperState.sourceTileDx = (sjx - sx1) / w;
+            warperState.sourceTileDy = yDirPositive ? (sjy - sy1) / h : ((sy2 - sjy) / h);
+            warperState.sourceTileDx = xDirPositive ? (sjx - sx1) / w : (sx2 - sjx) / w;
             warperState.destIndexX = sjx;
             warperState.destIndexY = sjy;
             drawFunction(sjx, sjy, value, warperState);
@@ -318,8 +320,8 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
   double avgDX = 0;
   double avgDY = 0;
   double pLengthD = 0;
-  bool isMercator = isMercatorProjection(&destGeoParams.crs);
-  bool isLonLatOrMercatorProjection = isLonLatProjection(&destGeoParams.crs) == true || isMercator;
+  bool isMercator = isMercatorProjection(destGeoParams.crs);
+  bool isLonLatOrMercatorProjection = isLonLatProjection(destGeoParams.crs) == true || isMercator;
   double sphereWidth = isMercator ? 40000000 : 360;
   int offs1 = 0;
   int offs2 = 1;

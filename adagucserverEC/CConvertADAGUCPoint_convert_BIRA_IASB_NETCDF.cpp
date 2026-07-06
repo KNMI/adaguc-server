@@ -18,13 +18,13 @@ void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
       cdfObject->addDimension(realTimeDim);
       realTimeVar = new CDF::Variable();
       realTimeVar->setType(CDF_DOUBLE);
-      realTimeVar->name.copy("time");
+      realTimeVar->name = ("time");
       realTimeVar->setAttributeText("standard_name", "time");
       realTimeVar->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
       realTimeVar->isDimension = true;
       realTimeVar->dimensionlinks.push_back(realTimeDim);
       cdfObject->addVariable(realTimeVar);
-      CDF::allocateData(CDF_DOUBLE, &realTimeVar->data, realTimeDim->length);
+      realTimeVar->allocateData(realTimeDim->length);
       CTime ctime;
       ctime.init("seconds since 1970-01-01 0:0:0", "");
       ((double *)realTimeVar->data)[0] = ctime.dateToOffset(ctime.freeDateStringToDate(timeString.c_str()));

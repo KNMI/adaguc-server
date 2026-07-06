@@ -212,20 +212,20 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 
   // Read the EPSG-code from configuration.
   if (dataSource->cfgLayer->Projection[0]->attr.id.empty() == false) {
-    dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
+    dataSource->nativeEPSG = dataSource->cfgLayer->Projection[0]->attr.id;
   } else {
     CT::string defaultEPSGCode = "EPSG:4326";
     CREPORT_WARN_NODOC(CT::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
-    dataSource->nativeEPSG.copy(defaultEPSGCode);
+    dataSource->nativeEPSG = (defaultEPSGCode);
   }
 
   // Read proj4 string from configuration.
   if (dataSource->cfgLayer->Projection[0]->attr.proj4.empty() == false) {
-    dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
+    dataSource->nativeProj4 = dataSource->cfgLayer->Projection[0]->attr.proj4;
   } else {
     CT::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
     CREPORT_WARN_NODOC(CT::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
-    dataSource->nativeProj4.copy(defaultProj4String);
+    dataSource->nativeProj4 = (defaultProj4String);
   }
 
   return true;
@@ -233,8 +233,8 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 
 void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
   // CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
-  dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-  dataSource->nativeEPSG.copy("EPSG:4326");
+  dataSource->nativeProj4 = ("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+  dataSource->nativeEPSG = ("EPSG:4326");
 }
 
 bool CDataReader::copyCRSFromProjectionVariable(CDataSource *dataSource) const {
@@ -296,14 +296,15 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
     CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(),
                        CReportMessage::Categories::GENERAL);
   }
-  dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
+  dataSource->nativeProj4 = proj4Attr->toString();
 
   // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
-  dataSource->nativeProj4.replaceSelf("\n", " ");
-  dataSource->nativeProj4.trimSelf();
-  if (dataSource->nativeProj4.startsWith("\"") && dataSource->nativeProj4.endsWith("\"")) {
-    dataSource->nativeProj4.substringSelf(1, dataSource->nativeProj4.length() - 1);
-    dataSource->nativeProj4.trimSelf();
+  CT::replaceSelf(dataSource->nativeProj4, "\n", " ");
+
+  dataSource->nativeProj4 = CT::trim(dataSource->nativeProj4);
+  if (CT::startsWith(dataSource->nativeProj4, "\"") && CT::endsWith(dataSource->nativeProj4, "\"")) {
+    dataSource->nativeProj4 = CT::substring(dataSource->nativeProj4, 1, dataSource->nativeProj4.length() - 1);
+    dataSource->nativeProj4 = CT::trim(dataSource->nativeProj4);
     CDBDebug("Note: Removed start and ending double quotes for projstring [%s]", dataSource->nativeProj4.c_str());
   }
 
@@ -328,7 +329,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   if (verbose) {
     CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
   }
-  dataSource->nativeProj4.copy(projString.c_str());
+  dataSource->nativeProj4 = projString;
   projVar->setAttributeText("autogen_proj", projString.c_str());
 
   // Copy the EPSG code.
@@ -350,11 +351,13 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
     if (this->_enableReporting) {
       CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
     }
-    dataSource->nativeEPSG.print("PROJ4:%s", dataSource->nativeProj4.c_str());
-    dataSource->nativeEPSG.replaceSelf("\"", "");
-    dataSource->nativeEPSG.replaceSelf("\n", "");
-    dataSource->nativeEPSG.trimSelf();
-    dataSource->nativeEPSG.encodeURLSelf();
+    dataSource->nativeEPSG = CT::printf("PROJ4:%s", dataSource->nativeProj4.c_str());
+    CT::replaceSelf(dataSource->nativeEPSG, "\"", "");
+    CT::replaceSelf(dataSource->nativeEPSG, "\n", "");
+    dataSource->nativeEPSG = CT::trim(dataSource->nativeEPSG);
+    CT::string encodedEPSG = dataSource->nativeEPSG;
+    encodedEPSG.encodeURLSelf();
+    dataSource->nativeEPSG = encodedEPSG;
   }
 }
 
@@ -624,7 +627,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
                 CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
               }
 
-              dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+              dataSource->nativeProj4 = UpdatedProjString;
 
               projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
             }
@@ -664,7 +667,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 
   if (dataSource->formatConverterActive == false && dataSource->dfCellSizeX > 0) {
 
-    if (isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(dataSource->nativeProj4)) {
       // If the lon variable name contains an X, it is probably not longitude.
       if (dataSource->varX->name.indexOf("x") == -1 && dataSource->varX->name.indexOf("X") == -1) {
         size_t j = 0;
@@ -745,7 +748,7 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
   if (styleConfiguration != nullptr) {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (renderSetting->attr.striding.empty() == false) {
-        dataSource->stride2DMap = renderSetting->attr.striding.toInt();
+        dataSource->stride2DMap = atoi(renderSetting->attr.striding.c_str());
         CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + renderSetting->attr.striding + CT::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
         return;
       }
@@ -872,7 +875,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     singleCellMode = true;
   }
   CT::string dataSourceFilename;
-  dataSourceFilename.copy(dataSource->getFileName());
+  dataSourceFilename = (dataSource->getFileName());
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   // Use autoscale of legendcolors when the legendscale factor has been set to zero.
@@ -1011,7 +1014,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     if (varUnits != NULL) {
       dataSource->getDataObject(varNr)->overruledUnits = varUnits->toString();
     } else
-      dataSource->getDataObject(varNr)->overruledUnits = ("");
+      dataSource->getDataObject(varNr)->overruledUnits = "";
 
     // Check for packed data / hasScaleOffset
 

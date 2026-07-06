@@ -93,8 +93,8 @@ std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxVal
   for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
     const auto &s = styleConfiguration->shadeIntervals[j];
     if (!s.attr.min.empty() && !s.attr.max.empty()) {
-      float intervalMinf = parseFloat(s.attr.min.c_str());
-      float intervalMaxf = parseFloat(s.attr.max.c_str());
+      float intervalMinf = atof(s.attr.min.c_str());
+      float intervalMaxf = atof(s.attr.max.c_str());
       if (intervalMaxf >= maxValue && intervalMinf <= maxValue) {
         maxInterval = j + 1;
       }
@@ -249,7 +249,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     int angle = 0; // Text angle (in radians)
 
     for (auto renderSetting: styleConfiguration->renderSettings) {
-      if (renderSetting->attr.cliplegend.equals("true")) {
+      if (renderSetting->attr.cliplegend == "true") {
         std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
       }
     }
@@ -279,7 +279,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         size_t realj = minInterval + j;
         const auto &s = (styleConfiguration->shadeIntervals)[realj];
         if (!s.attr.min.empty() && !s.attr.max.empty()) {
-          if ((int)std::abs(parseFloat(s.attr.min.c_str())) % 5 != 0) continue;
+          if ((int)std::abs(atof(s.attr.min.c_str())) % 5 != 0) continue;
           int tw = legendImage->getTextWidth(s.attr.min.c_str(), fontLocation, fontSize, angle);
           if (tw > maxTextWidth) maxTextWidth = tw;
         }
@@ -302,13 +302,13 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
         if (yBottom <= yTop) continue;
 
-        CColor color = s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s.attr.min.c_str()))) : CColor(s.attr.fillcolor.c_str());
+        CColor color = s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, atof(s.attr.min.c_str()))) : CColor(s.attr.fillcolor.c_str());
 
         // This rectangle is borderless, and the resulting classes have no vertical blank space between them
         legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
 
         // We print every label that's multiple of 5. Revisit later if something else needed.
-        if ((int)std::abs(parseFloat(s.attr.min.c_str())) % 5 != 0) continue;
+        if ((int)std::abs(atof(s.attr.min.c_str())) % 5 != 0) continue;
 
         int textY = yBottom + pTop - ((fontSize * scaling) / 4) + 3;
         if (textY >= pTop) {
@@ -335,7 +335,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         if (s.attr.fillcolor.empty() == false) {
           color = CColor(s.attr.fillcolor.c_str());
         } else {
-          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s.attr.min.c_str())));
+          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, atof(s.attr.min.c_str())));
         }
         legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 

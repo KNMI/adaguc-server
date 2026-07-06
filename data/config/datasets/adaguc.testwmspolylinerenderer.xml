@@ -4,57 +4,57 @@
   See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
   This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL 
   -->
-  
+
   <Style name="polygon_innerparts_coloured">
     <RenderMethod>polygon</RenderMethod>
-    <FeatureInterval match="1" matchid="warning_code"  fillcolor="#CCCCCCFF"/>
-    <FeatureInterval match="2_15" matchid="warning_code_leadtime"  fillcolor="#FFFF0080"/>
-    <FeatureInterval match="2_30" matchid="warning_code_leadtime"  fillcolor="#FFFF8080"/>
-    <FeatureInterval match="2_60" matchid="warning_code_leadtime"  fillcolor="#CCCCCC80"/>
-    <FeatureInterval match="3_15" matchid="warning_code_leadtime"  fillcolor="#FF800080"/>
-    <FeatureInterval match="3_30" matchid="warning_code_leadtime"  fillcolor="#FFa08080"/>
-    <FeatureInterval match="3_60" matchid="warning_code_leadtime"  fillcolor="#CCCCCC80"/>
-    <FeatureInterval match="4_15" matchid="warning_code_leadtime"  fillcolor="#FF000080"/>
-    <FeatureInterval match="4_30" matchid="warning_code_leadtime"  fillcolor="#FF808080"/>
-    <FeatureInterval match="4_60" matchid="warning_code_leadtime"  fillcolor="#CCCCCC80"/>
+    <FeatureInterval match="1" matchid="warning_code" fillcolor="#CCCCCCFF"/>
+    <FeatureInterval match="2_15" matchid="warning_code_leadtime" fillcolor="#FFFF0080"/>
+    <FeatureInterval match="2_30" matchid="warning_code_leadtime" fillcolor="#FFFF8080"/>
+    <FeatureInterval match="2_60" matchid="warning_code_leadtime" fillcolor="#CCCCCC80"/>
+    <FeatureInterval match="3_15" matchid="warning_code_leadtime" fillcolor="#FF800080"/>
+    <FeatureInterval match="3_30" matchid="warning_code_leadtime" fillcolor="#FFa08080"/>
+    <FeatureInterval match="3_60" matchid="warning_code_leadtime" fillcolor="#CCCCCC80"/>
+    <FeatureInterval match="4_15" matchid="warning_code_leadtime" fillcolor="#FF000080"/>
+    <FeatureInterval match="4_30" matchid="warning_code_leadtime" fillcolor="#FF808080"/>
+    <FeatureInterval match="4_60" matchid="warning_code_leadtime" fillcolor="#CCCCCC80"/>
   </Style>
 
   <Style name="polyline_black_0.5px" title="border 0.5px black" abstract="border 0.5px black">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="0.5"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#000000" borderwidth="0.5"/>
   </Style>
-  
+
   <Style name="polyline_blue_0.5px" title="border 0.5px blue" abstract="border 0.5px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#0000FFFF" borderwidth="0.5"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#0000FFFF" borderwidth="0.5"/>
   </Style>
-  
+
   <Style name="polyline_blue_1px" title="border 1px blue" abstract="border 1px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#0000FFFF" borderwidth="1"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#0000FFFF" borderwidth="1"/>
   </Style>
 
   <Style name="polyline_blue_2px" title="border 2px blue" abstract="border 2px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#0000FFFF" borderwidth="2"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#0000FFFF" borderwidth="2"/>
   </Style>
 
   <Style name="polyline_yellow_2px" title="border 2px yellow" abstract="border 2px yellow">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#FFFF00" borderwidth="2"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#FFFF00" borderwidth="2"/>
   </Style>
 
   <Style name="polyline_red_6px" title="border 6px red" abstract="border 6px red">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#FF0000" borderwidth="6"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#FF0000" borderwidth="6"/>
   </Style>
-  
+
   <Layer type="database">
     <Name>neddis</Name>
     <Title>Neddis</Title>
@@ -62,8 +62,8 @@
     <Variable>features</Variable>
     <Styles>polyline_black_0.5px,polyline_blue_0.5px,polyline_blue_1px,polyline_blue_2px,polyline_yellow_2px,polyline_red_6px</Styles>
   </Layer>
-  
-    
+
+
   <Layer type="database">
     <Name>cellwarn_hail_combined</Name>
     <Title>Warning inner parts (combined)</Title>
@@ -71,7 +71,41 @@
     <Variable>features</Variable>
     <Styles>polygon_innerparts_coloured</Styles>
   </Layer>
-  
-    
-</Configuration>
 
+
+
+  <Style name="trajks_min_max_featureinterval">
+    <RenderMethod>polyline</RenderMethod>
+    <FeatureInterval min="-INF" max="-90" matchid="ascent" linecolor="#020200" linewidth="16"/>
+    <FeatureInterval min="-90" max="-80" matchid="ascent" linecolor="#171004" linewidth="15"/>
+    <FeatureInterval min="-80" max="-70" matchid="ascent" linecolor="#2D1C0A" linewidth="14"/>
+    <FeatureInterval min="-70" max="-60" matchid="ascent" linecolor="#462410" linewidth="13"/>
+    <FeatureInterval min="-60" max="-50" matchid="ascent" linecolor="#63271B" linewidth="12"/>
+    <FeatureInterval min="-50" max="-40" matchid="ascent" linecolor="#802632" linewidth="11"/>
+    <FeatureInterval min="-40" max="-30" matchid="ascent" linecolor="#9A2254" linewidth="10"/>
+    <FeatureInterval min="-30" max="-20" matchid="ascent" linecolor="#B11D80" linewidth="9"/>
+    <FeatureInterval min="-20" max="-10" matchid="ascent" linecolor="#BD22B7" linewidth="8"/>
+    <FeatureInterval min="-10" max="0" matchid="ascent" linecolor="#BE37F3" linewidth="7"/>
+    <FeatureInterval min="0" max="10" matchid="ascent" linecolor="#010104" linewidth="7"/>
+    <FeatureInterval min="10" max="20" matchid="ascent" linecolor="#071122" linewidth="8"/>
+    <FeatureInterval min="20" max="30" matchid="ascent" linecolor="#0C2233" linewidth="9"/>
+    <FeatureInterval min="30" max="40" matchid="ascent" linecolor="#103341" linewidth="10"/>
+    <FeatureInterval min="40" max="50" matchid="ascent" linecolor="#14434C" linewidth="11"/>
+    <FeatureInterval min="50" max="60" matchid="ascent" linecolor="#185556" linewidth="12"/>
+    <FeatureInterval min="60" max="70" matchid="ascent" linecolor="#1D665B" linewidth="13"/>
+    <FeatureInterval min="70" max="80" matchid="ascent" linecolor="#24795A" linewidth="14"/>
+    <FeatureInterval min="80" max="90" matchid="ascent" linecolor="#338B4A" linewidth="15"/>
+    <FeatureInterval min="90" max="INF" matchid="ascent" linecolor="#5E9A20" linewidth="16"/>
+    <FeatureInterval match="." matchid="ascent" linecolor="#0000FF" linewidth="0.1"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>trajks_min_max_featureinterval</Name>
+    <Title>Trajks Ascent</Title>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/knmi/cellwarn/trajks_test_0.geojson</FilePath>
+    <Variable>features</Variable>
+    <Styles>trajks_min_max_featureinterval</Styles>
+    <RenderMethod>polyline</RenderMethod>
+  </Layer>
+
+</Configuration>

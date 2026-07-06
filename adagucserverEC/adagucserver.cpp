@@ -45,11 +45,14 @@ int processQueryStringRequest() {
     CDBError("Unable to read configuration file.");
   }
   request.runRequest();
-  readyerror();
+  readyHandleError();
   return getStatusCode();
 }
 
 int main(int argc, char **argv, char **envp) {
+
+  StopWatch_Start();
+
   traceTimingsCheckEnabled();
   checkLogSettings();
 
@@ -73,8 +76,11 @@ int main(int argc, char **argv, char **envp) {
 
   proj_clear_cache();
   BBOXProjectionClearCache();
-  closeLogFile();
+#ifdef MEASURETIME
+  StopWatch_Stop("Finished");
+#endif
   varCacheClear();
+  closeLogFile();
 
   return status;
 }

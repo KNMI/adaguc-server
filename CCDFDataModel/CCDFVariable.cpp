@@ -827,16 +827,16 @@ bool CDF::Variable::isString(bool isString) {
 }
 
 void CDF::Variable::setName(const char *value) {
-  name.copy(value);
+  name = (value);
   // TODO Implement this correctly in readvariabledata....
-  if (orgName.length() == 0) orgName.copy(value);
+  if (orgName.length() == 0) orgName = (value);
 }
 
 void CDF::Variable::setSize(size_t size) { currentSize = size; }
 
 size_t CDF::Variable::getSize() { return currentSize; }
 
-CDF::Attribute *CDF::Variable::getAttributeThrows(const char *name) const {
+CDF::Attribute *CDF::Variable::getAttributeThrows(const std::string &name) const {
   Attribute *a = getAttr(name);
   if (a == nullptr) {
     throw(CDF_E_ATTNOTFOUND);
@@ -857,63 +857,50 @@ std::string CDF::Variable::getAttrText(std::string name) const {
   return attr->toString();
 }
 
-CDF::Attribute *CDF::Variable::getAttributeNE(const char *name) const { return getAttr(name); }
+CDF::Attribute *CDF::Variable::getAttributeNE(const std::string &name) const { return getAttr(name); }
 
-CDF::Dimension *CDF::Variable::getDim(std::string name) const {
+CDF::Dimension *CDF::Variable::getDim(const std::string &name) const {
   auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name.equals(name); });
   return it != dimensionlinks.end() ? *it : nullptr;
 }
 
-CDF::Dimension *CDF::Variable::getDimensionThrows(const char *name) {
-  for (size_t j = 0; j < dimensionlinks.size(); j++) {
-    if (dimensionlinks[j]->name.equals(name)) {
-      return dimensionlinks[j];
-    }
-  }
-  throw(CDF_E_DIMNOTFOUND);
-  return NULL;
+CDF::Dimension *CDF::Variable::getDimNoCase(const std::string &name) const {
+  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return CT::toLowerCase(a->name) == CT::toLowerCase(name); });
+  return it != dimensionlinks.end() ? *it : nullptr;
 }
 
-CDF::Dimension *CDF::Variable::getDimensionIgnoreCaseThrows(const char *name) {
-  for (size_t j = 0; j < dimensionlinks.size(); j++) {
-    if (dimensionlinks[j]->name.equalsIgnoreCase(name)) {
-      return dimensionlinks[j];
-    }
-  }
-  throw(CDF_E_DIMNOTFOUND);
-  return NULL;
-}
+int CDF::Variable::getDimIndex(const std::string &name) const {
+  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name.equals(name); });
+  return it != dimensionlinks.end() ? std::distance(std::begin(dimensionlinks), it) : -1;
+};
 
-CDF::Dimension *CDF::Variable::getDimensionNE(const char *name) { return getDim(name); }
-
-int CDF::Variable::getDimensionIndexNE(const char *name) {
-  for (size_t j = 0; j < dimensionlinks.size(); j++) {
-    if (dimensionlinks[j]->name.equals(name)) {
-      return j;
-    }
-  }
-  return -1;
-}
-
-int CDF::Variable::getDimensionIndexThrows(const char *name) {
-  for (size_t j = 0; j < dimensionlinks.size(); j++) {
-    if (dimensionlinks[j]->name.equals(name)) {
-      return j;
-    }
+CDF::Dimension *CDF::Variable::getDimensionThrows(const std::string &name) const {
+  auto dim = getDim(name);
+  if (dim != nullptr) {
+    return dim;
   }
   throw(CDF_E_DIMNOTFOUND);
 }
+
+CDF::Dimension *CDF::Variable::getDimensionIgnoreCaseThrows(const std::string &name) const {
+  auto dim = getDimNoCase(name);
+  if (dim != nullptr) {
+    return dim;
+  }
+  throw(CDF_E_DIMNOTFOUND);
+}
+
+CDF::Dimension *CDF::Variable::getDimensionNE(const std::string &name) const { return getDim(name); }
 
 int CDF::Variable::addAttribute(Attribute *attr) {
   attributes.push_back(attr);
   return 0;
 }
 
-int CDF::Variable::removeAttribute(const char *name) {
+int CDF::Variable::removeAttribute(const std::string &name) {
   for (size_t j = 0; j < attributes.size(); j++) {
     if (attributes[j]->name.equals(name)) {
       delete attributes[j];
-      attributes[j] = NULL;
       attributes.erase(attributes.begin() + j);
     }
   }
@@ -933,7 +920,7 @@ int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, const vo
   Attribute *attr = getAttr(attrName);
   if (attr == nullptr) {
     attr = new Attribute();
-    attr->name.copy(attrName);
+    attr->name = (attrName);
     addAttribute(attr);
   }
 
@@ -994,7 +981,7 @@ template <class T> int CDF::Variable::setAttribute(const char *attrName, CDFType
   Attribute *attr = getAttr(attrName);
   if (attr == nullptr) {
     attr = new Attribute();
-    attr->name.copy(attrName);
+    attr->name = (attrName);
     addAttribute(attr);
   }
   attr->type = attrType;

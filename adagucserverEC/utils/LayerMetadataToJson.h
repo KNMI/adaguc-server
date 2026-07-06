@@ -1,8 +1,9 @@
 #ifndef LAYERMETADATATOJSON_H
 #define LAYERMETADATATOJSON_H
-#include <CDataSource.h>
+#include "CDataSource.h"
+#include "CServerError.h"
 #include <json_adaguc.h>
 
-int getLayerMetadataAsJson(CServerParams *srvParams, json &result);
+ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &result);
 
 #endif

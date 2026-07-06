@@ -32,7 +32,9 @@ OctreeType *CreateOctNode(int level);
 void MakePaletteTable(OctreeType *tree, RGBType table[], int *index);
 ulong TotalLeafNodes(void);
 void ReduceTree(void);
+void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count);
 void InsertTree(OctreeType **tree, RGBType *color, uint depth);
 int QuantizeColorMapped(OctreeType *tree, RGBType *color);
 int QuantizeColor(OctreeType *tree, RGBType *color);
+OctreeType *FindLeaf(OctreeType *tree, const RGBType &color);
 #endif

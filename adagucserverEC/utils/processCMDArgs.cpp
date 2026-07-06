@@ -40,8 +40,7 @@ static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
 int processCMDArgs(int argc, char **argv, char **) {
 
   /* Initialize error functions */
-  seterrormode(EXCEPTIONS_PLAINTEXT);
-  setStatusCode(HTTP_STATUSCODE_200_OK);
+
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
@@ -99,13 +98,13 @@ int processCMDArgs(int argc, char **argv, char **) {
         configSet = 1;
       }
       if (strncmp(long_options[opt_idx].name, "tailpath", 8) == 0) {
-        tailPath.copy(optarg);
+        tailPath = (optarg);
       }
       if (strncmp(long_options[opt_idx].name, "layername", 9) == 0) {
-        layerName.copy(optarg);
+        layerName = (optarg);
       }
       if (strncmp(long_options[opt_idx].name, "path", 4) == 0) {
-        layerPathToScan.copy(optarg);
+        layerPathToScan = (optarg);
       }
       if (strncmp(long_options[opt_idx].name, "rescan", 6) == 0) {
         CDBDebug("RESCAN: Forcing rescan of dataset");
@@ -189,7 +188,7 @@ int processCMDArgs(int argc, char **argv, char **) {
         return SCAN_EXITCODE_SCANERROR;
       }
     }
-    readyerror();
+    readyHandleError();
     return status;
   } else if (scanFlags & CDBUPDATE_LAYER_METADATA) {
     CRequest baseRequest;
@@ -238,7 +237,7 @@ int processCMDArgs(int argc, char **argv, char **) {
     printf("%s\n", fileInfo.c_str());
     status = 0;
 
-    readyerror();
+    readyHandleError();
     return status;
   }
   return -1;

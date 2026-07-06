@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 6.6.0, of Mar 11 2026 09:23:04 </Keyword>
+            <Keyword>ADAGUCServer version 7.2.0, of Apr 16 2026 13:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -73,6 +73,7 @@
 <CRS>EPSG:4258</CRS>
 <CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
+<CRS>EPSG:5041</CRS>
 <CRS>EPSG:54030</CRS>
 <CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
@@ -92,6 +93,7 @@
 <BoundingBox CRS="EPSG:4258" minx="51.150654" miny="4.945222" maxx="53.159329" maxy="4.968126" />
 <BoundingBox CRS="EPSG:4326" minx="52.149667" miny="4.944852" maxx="52.158341" maxy="4.967753" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="2375375.107913" miny="-2339707.406920" maxx="2377200.221029" maxy="-2338490.189162" />
 <BoundingBox CRS="EPSG:54030" minx="399084.043013" miny="5548268.037319" maxx="400958.369008" maxy="5549156.983893" />
 <BoundingBox CRS="EPSG:7399" minx="365219.491349" miny="6096796.961151" maxx="366955.352464" maxy="6097689.931110" />
 <BoundingBox CRS="EPSG:900913" minx="550458.429538" miny="6827232.541487" maxx="553007.690403" maxy="6828806.267347" />
@@ -119,16 +121,13 @@
 <BoundingBox CRS="EPSG:4258" minx="51.150654" miny="4.945222" maxx="53.159329" maxy="4.968126" />
 <BoundingBox CRS="EPSG:4326" minx="52.149667" miny="4.944852" maxx="52.158341" maxy="4.967753" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="2375375.107913" miny="-2339707.406920" maxx="2377200.221029" maxy="-2338490.189162" />
 <BoundingBox CRS="EPSG:54030" minx="399084.043013" miny="5548268.037319" maxx="400958.369008" maxy="5549156.983893" />
 <BoundingBox CRS="EPSG:7399" minx="365219.491349" miny="6096796.961151" maxx="366955.352464" maxy="6097689.931110" />
 <BoundingBox CRS="EPSG:900913" minx="550458.429538" miny="6827232.541487" maxx="553007.690403" maxy="6828806.267347" />
 <BoundingBox CRS="PROJ4:%2Bproj%3Dsterea%20%2Blat_0%3D52%2E15616055555555%20%2Blon_0%3D5%2E38763888888889%20%2Bk%3D0%2E9999079%20%2Bx_0%3D155000%20%2By_0%3D463000%20%2Bellps%3Dbessel%20%2Btowgs84%3D565%2E4171%2C50%2E3319%2C465%2E5524%2C%2D0%2E398957388243134%2C0%2E343987817378283%2C%2D1%2E87740163998045%2C4%2E0725%20%2Bunits%3Dm%20%2Bno_defs" minx="124730.272197" miny="462479.663931" maxx="126291.845180" maxy="463435.448045" />
-
-<!-- Dimensions -->
 <Dimension name="time" units="ISO8601" default="2020-01-01T22:00:00Z" multipleValues="1" nearestValue="0" current="1">2020-01-01T00:00:00Z/2020-01-01T22:00:00Z/PT1H</Dimension>
 <Dimension name="ensemble" units="1" default="3" multipleValues="1" nearestValue="0" >1,2,3</Dimension>
-
-<!-- Styles -->
    <Style>
     <Name>auto/nearest</Name>
     <Title>Auto style blue-white-red</Title>

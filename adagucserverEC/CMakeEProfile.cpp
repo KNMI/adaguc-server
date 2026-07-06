@@ -164,13 +164,13 @@ public:
 #ifdef CMakeEProfile_DEBUG
         CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
-        map_type_dimvalindex *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
+        auto *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
         int dimindex = 0;
 
         int startDimIndex = 0;
         std::vector<std::string> dimValues;
-        for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
+        for (auto dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
           // const char *filename=(filemapiterator->first).c_str();
           // const char *dimname=(diminfomapiterator->first).c_str();
           dimindex = dimvalindexmapiterator->first;
@@ -317,7 +317,7 @@ public:
               for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
                 CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
                 // Algorithm ax+b:
-                if (proc->attr.algorithm.equals("ax+b")) {
+                if (proc->attr.algorithm == ("ax+b")) {
                   double dfadd_offset = 0;
                   double dfscale_factor = 1;
 
@@ -391,7 +391,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
   //   for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
   //     CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
   //     //Algorithm ax+b:
-  //     if(proc->attr.algorithm.equals("ax+b")){
+  //     if(proc->attr.algorithm ==("ax+b")){
   //       uniqueRequest.readDataAsCDFDouble = true;
   //       break;
   //     }
@@ -566,7 +566,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
   }
 
-  if (dataSource->srvParams->InfoFormat.equals("application/json")) {
+  if (dataSource->srvParams->InfoFormat == "application/json") {
     float *data = (float *)varRange->data;
     eProfileJson->concat("{");
     CT::string units = dObjgetUnits(*dataSource->getDataObject(0));

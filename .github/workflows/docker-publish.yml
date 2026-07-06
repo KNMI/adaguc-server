@@ -66,11 +66,9 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
-          context: .
-          # ensure latest base image is used
-          pull: true
           platforms: ${{ matrix.platform }}
-#          push: ${{ github.repository == 'KNMI/adaguc-server' }}
+          context: .
+          pull: true # ensure latest base image is used
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
@@ -150,3 +148,33 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+
+  build-sanitize:
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: adaguc
+          POSTGRES_PASSWORD: adaguc
+          POSTGRES_DB: adaguc
+        ports:
+        - 54321:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Build sanitize
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64
+          push: false
+          context: .
+          pull: true # ensure latest base image is used
+          network: host
+          build-args: |
+            TEST_IN_CONTAINER=github_build
+            BUILD_TYPE=--sanitize

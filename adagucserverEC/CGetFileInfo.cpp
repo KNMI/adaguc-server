@@ -28,7 +28,7 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
 
       CT::string title = variableList[j].c_str();
 
-      // CT::string filePath = CDirReader::makeCleanPath(filename);
+      // CT::string filePath = makeCleanPath(filename);
       // filePath.setSize(filePath.lastIndexOf("/")+1);
 
       try {

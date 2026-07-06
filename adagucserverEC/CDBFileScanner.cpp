@@ -58,9 +58,9 @@ void CDBFileScanner::markTableDirty(const std::string &tableName) {
  *
  * @return Positive on error, zero on succes, negative on skip.
  */
-int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> *fileList, bool recreateTables) {
+int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> &fileList, bool recreateTables) {
   bool verbose = dataSource->srvParams->verbose;
-  if (fileList->size() == 0) {
+  if (fileList.size() == 0) {
     CDBDebug("createDBUpdateTables: no files");
     return 0;
   }
@@ -68,8 +68,8 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   CDBDebug("createDBUpdateTables");
 #endif
   int status = 0;
-  CT::string query;
-  dataSource->headerFilename = (*fileList)[0].c_str();
+  std::string query;
+  dataSource->headerFilename = fileList[0];
 
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dbAdapter == nullptr) {
@@ -97,18 +97,18 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   if (dataSource->cfgLayer->Dimension.size() == 0) {
 
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
-      CREPORT_ERROR_NODOC(CT::string("Unable to configure dimensions automatically"), CReportMessage::Categories::GENERAL);
+      CREPORT_ERROR_NODOC(std::string("Unable to configure dimensions automatically"), CReportMessage::Categories::GENERAL);
       return 1;
     }
   }
 
 #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("dataSource->dimsAreAutoConfigured %d", dataSource->dimsAreAutoConfigured);
-  CDBDebug("fileList->size() = %d", fileList->size());
+  CDBDebug("fileList.size() = %d", fileList.size());
 #endif
 
   if (dataSource->cfgLayer->Dimension.size() == 0) {
-    CREPORT_ERROR_NODOC(CT::string("Still No dims"), CReportMessage::Categories::GENERAL);
+    CREPORT_ERROR_NODOC(std::string("Still No dims"), CReportMessage::Categories::GENERAL);
     return 1;
   }
 
@@ -119,22 +119,22 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
 
     /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
-    if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
-      dataSource->cfgLayer->Dimension[d]->value.copy("0");
-      dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
-      dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
+    if (dataSource->cfgLayer->Dimension[d]->attr.defaultV == ("filetimedate")) {
+      dataSource->cfgLayer->Dimension[d]->elementValue = "0";
+      dataSource->cfgLayer->Dimension[d]->attr.name = ("none");
+      dataSource->cfgLayer->Dimension[d]->attr.units = ("none");
     }
 
-    CT::string dimName = "";
+    std::string dimName = "";
     if (dataSource->cfgLayer->Dimension[d]->attr.name.empty() == false) {
-      dimName = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
+      dimName = dataSource->cfgLayer->Dimension[d]->attr.name;
     }
 
     if (verbose) {
       CDBDebug("Checking dim [%s]", dimName.c_str());
     }
 
-    CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, dimName.c_str());
+    CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, dimName);
     if (dtype == CDataReader::dtype_none) {
       CDBWarning("dtype_none %d for  %s", dtype, dimName.c_str());
       if (CDataReader::addBlankDimVariable(cdfObject, dimName.c_str()) != NULL) {
@@ -148,12 +148,11 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
     }
 
     // Create database tableNames
-    CT::string tableName;
+    std::string tableName;
     try {
-      tableName =
-          dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(), dataSource);
+      tableName = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dimName.c_str(), dataSource);
     } catch (int e) {
-      CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
     }
 #ifdef CDBFILESCANNER_DEBUG
@@ -184,7 +183,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
         try {
           bool dimensionlessmode = false;
 
-          if (dimName.equals("none")) {
+          if (dimName == ("none")) {
 #ifdef CDBFILESCANNER_DEBUG
             CDBDebug("dimensionlessmode");
 #endif
@@ -197,7 +196,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
           if (dimensionlessmode == false) {
             dimVar = cdfObject->getVariableNE(dimName.c_str());
             if (dimVar == NULL) {
-              CREPORT_ERROR_NODOC(CT::string("Dimension ") + dimName + CT::string(" not found."), CReportMessage::Categories::GENERAL);
+              CREPORT_ERROR_NODOC(std::string("Dimension ") + dimName + std::string(" not found."), CReportMessage::Categories::GENERAL);
               throw(__LINE__);
             }
           }
@@ -251,10 +250,10 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   return 0;
 }
 
-int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> *fileList, int scanFlags) {
+int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> &fileList, int scanFlags) {
   //  CDBDebug("DBLoopFiles");
   bool verbose = dataSource->srvParams->verbose;
-  CT::string query;
+  std::string query;
   CDFObject *cdfObject = NULL;
   int status = 0;
 
@@ -263,7 +262,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     // Loop dimensions and files
     // CDBDebug("Checking files that are already in the database...");
     // char ISOTime[ISO8601TIME_LEN+1];
-    CT::string isoString;
+    std::string isoString;
 
     // Setup variables like tableNames and timedims for each dimension
     size_t numDims = dataSource->cfgLayer->Dimension.size();
@@ -273,19 +272,19 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     std::vector<std::string> dimNames(numDims);
     std::vector<std::string> tableNames(numDims);
 
-    CT::string queryString;
-    // CT::string VALUES;
+    std::string queryString;
+    // std::string VALUES;
     // CADAGUC_time *ADTime  = NULL;
     CTime *adagucTime = nullptr;
 
     // Sort the fileList alphabetically, which normally corresponds to time order
-    std::sort(fileList->begin(), fileList->end());
+    std::sort(fileList.begin(), fileList.end());
 
     CDFObject *cdfObjectOfFirstFile = NULL;
     try {
-      cdfObjectOfFirstFile = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[0].c_str());
+      cdfObjectOfFirstFile = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (fileList)[0].c_str());
     } catch (int e) {
-      CDBError("Unable to get CDFObject for file %s", (*fileList)[0].c_str());
+      CDBError("Unable to get CDFObject for file %s", (fileList)[0].c_str());
       return 1;
     }
 
@@ -297,13 +296,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       skipDim[d] = false;
 
       /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
-      if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
-        dataSource->cfgLayer->Dimension[d]->value.copy("0");
-        dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
-        dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
+      if (dataSource->cfgLayer->Dimension[d]->attr.defaultV == "filetimedate") {
+        dataSource->cfgLayer->Dimension[d]->elementValue = ("0");
+        dataSource->cfgLayer->Dimension[d]->attr.name = ("none");
+        dataSource->cfgLayer->Dimension[d]->attr.units = ("none");
       }
 
-      CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile, dimNames[d].c_str());
+      CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile, dimNames[d]);
 
       if (dtype == CDataReader::dtype_none) {
         CDBWarning("dtype_none for %s", dimNames[d].c_str());
@@ -317,17 +316,18 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
 
       try {
-        tableNames[d] =
-            dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str(), dataSource);
+        tableNames[d] = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dimNames[d].c_str(),
+                                                                         dataSource);
       } catch (int e) {
-        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
+        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+                 dimNames[d].c_str());
         return 1;
       }
 #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("Found table name %s", tableNames[d].c_str());
 #endif
       //       //Create temporary tableName
-      //       tableNames_temp[d].copy(&(tableNames[d]));
+      //       tableNames_temp[d]= (&(tableNames[d]));
       //       if(removeNonExistingFiles==1){
       //         tableNames_temp[d].concat("_temp");
       //       }
@@ -348,27 +348,27 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     }
 
     size_t numberOfUpdatesToDbStore = 0;
-    for (size_t j = 0; j < fileList->size(); j++) {
+    for (size_t j = 0; j < fileList.size(); j++) {
 // Loop through all configured dimensions.
 #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("Loop through all configured dimensions.");
 #endif
 
-      CT::string fileDate = CDirReader::getFileDate((*fileList)[j].c_str());
-      CT::string fileDateToCompareWith = fileDate;
+      const auto fileDate = getFileDate(fileList[j]);
+      std::string fileDateToCompareWith = fileDate;
 
       if (scanFlags & CDBFILESCANNER_RESCAN) {
         fileDateToCompareWith = "";
         CDBDebug("--rescan set: fileDate is ignored.");
       }
 
-      CT::string dimensionTextList = "none";
+      std::string dimensionTextList = "none";
       if (dataSource->cfgLayer->Dimension.size() > 0) {
-        dimensionTextList.print("(%s", dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
+        dimensionTextList = CT::printf("(%s", dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
         for (size_t d = 1; d < dataSource->cfgLayer->Dimension.size(); d++) {
-          dimensionTextList.printconcat(", %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+          CT::printfconcat(dimensionTextList, ", %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
         }
-        dimensionTextList.concat(")");
+        dimensionTextList += ")";
       }
 
       /* If there is only one dimension for the list of files, and if this dimension is done, skip */
@@ -393,10 +393,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
 // Delete files with non-matching creation date
 #ifdef CDBFILESCANNER_DEBUG
-          CDBDebug("removeFilesWithChangedCreationDate [%s] [%s] [%s]", tableNames[d].c_str(), (*fileList)[j].c_str(), fileDateToCompareWith.c_str());
+          CDBDebug("removeFilesWithChangedCreationDate [%s] [%s] [%s]", tableNames[d].c_str(), (fileList)[j].c_str(), fileDateToCompareWith.c_str());
 #endif
           try {
-            dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(), (*fileList)[j].c_str(), fileDateToCompareWith.c_str());
+            dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(), (fileList)[j].c_str(), fileDateToCompareWith.c_str());
           } catch (int e) {
             CDBWarning("Unable to remove files from db %d", e);
           }
@@ -405,10 +405,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 #ifdef CDBFILESCANNER_DEBUG
           CDBDebug("checkIfFileIsInTable");
 #endif
-          status = dbAdapter->checkIfFileIsInTable(tableNames[d].c_str(), (*fileList)[j].c_str());
+          status = dbAdapter->checkIfFileIsInTable(tableNames[d].c_str(), (fileList)[j].c_str());
           if (status == 0) {
             if (dataSource->srvParams->verbose) {
-              CDBDebug("Already scanned file %s", (*fileList)[j].c_str());
+              CDBDebug("Already scanned file %s", (fileList)[j].c_str());
             }
 
             // The file is there!
@@ -417,13 +417,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
             // The file is not there. If isAutoResourceEnabled and there is no file, force cleaning of
             // autoConfigureDimensions table.
             if (removeNonExistingFiles == 1) {
-              if (fileList->size() == 1) {
-                CT::string layerTableId;
+              if (fileList.size() == 1) {
+                std::string layerTableId;
                 try {
 
                   layerTableId =
                       CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+                          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, NULL, dataSource);
 
                 } catch (int e) {
                   CDBError("Unable to get layerTableId for autoconfigure_dimensions");
@@ -459,13 +459,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
               if (d == 0) {
                 if (verbose) {
-                  CDBDebug("Adding: %zu/%zu %s\t %s", j, fileList->size(), dimensionTextList.c_str(), (*fileList)[j].c_str());
+                  CDBDebug("Adding: %zu/%zu %s\t %s", j, fileList.size(), dimensionTextList.c_str(), (fileList)[j].c_str());
                 }
               };
 #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Creating new CDFObject");
 #endif
-              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[j].c_str());
+              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (fileList)[j].c_str());
               if (cdfObject == NULL) {
                 CDBError("cdfObject == NULL");
                 throw(__LINE__);
@@ -473,10 +473,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
 // Open the file
 #ifdef CDBFILESCANNER_DEBUG
-              CDBDebug("Opening file %s", (*fileList)[j].c_str());
+              CDBDebug("Opening file %s", (fileList)[j].c_str());
 #endif
               if (!verbose) {
-                CDBDebug("Scan %s", (*fileList)[j].c_str());
+                CDBDebug("Scan %s", (fileList)[j].c_str());
               }
 #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Looking for %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -486,7 +486,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
               CDF::Variable *dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
               CDF::Dimension *dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
 
-              if (dataSource->cfgLayer->Dimension[d]->attr.name.equals("none")) {
+              if (dataSource->cfgLayer->Dimension[d]->attr.name == "none") {
 #ifdef CDBFILESCANNER_DEBUG
                 CDBDebug("Creating dummy dim none");
 #endif
@@ -522,15 +522,15 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
               }
 
               if ((dimDim == NULL || dimVar == NULL)) {
-                CDBError("In file %s", (*fileList)[j].c_str());
+                CDBError("In file %s", (fileList)[j].c_str());
                 if (dimVar == NULL) {
-                  CREPORT_ERROR_NODOC(CT::string("Variable ") + dataSource->cfgLayer->Variable[0]->value + CT::string(" for dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
-                                          CT::string(" not found"),
+                  CREPORT_ERROR_NODOC(std::string("Variable ") + dataSource->cfgLayer->Variable[0]->elementValue + std::string(" for dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
+                                          std::string(" not found"),
                                       CReportMessage::Categories::GENERAL);
                 }
                 if (dimDim == NULL) {
-                  CREPORT_ERROR_NODOC(CT::string("For variable ") + dataSource->cfgLayer->Variable[0]->value + CT::string(" dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
-                                          CT::string(" not found"),
+                  CREPORT_ERROR_NODOC(std::string("For variable ") + dataSource->cfgLayer->Variable[0]->elementValue + std::string(" dimension ") + dataSource->cfgLayer->Dimension[d]->attr.name +
+                                          std::string(" not found"),
                                       CReportMessage::Categories::GENERAL);
                 }
 
@@ -542,8 +542,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                   CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                   if (dimUnits == NULL) {
                     if (isTimeDim[d]) {
-                      setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
-                      CREPORT_ERROR_NODOC(CT::string("No time units found for variable ") + dimVar->name, CReportMessage::Categories::GENERAL);
+                      setExceptionType(ServiceExceptionType::InvalidDimensionValue);
+                      CREPORT_ERROR_NODOC(std::string("No time units found for variable ") + dimVar->name.c_str(), CReportMessage::Categories::GENERAL);
                       throw(__LINE__);
                     }
                     dimVar->setAttributeText("units", "1");
@@ -567,7 +567,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                   CDBDebug("Reading dimension %s of length %d", dimVar->name.c_str(), dimDim->getSize());
 #endif
                   status = 0;
-                  if (dimVar->name.equals("none") == false) {
+                  if (dimVar->name != "none") {
                     // Strings do never fit in a double.
                     if (dimVar->getType() != CDF_STRING) {
                       // Read the dimension data
@@ -582,7 +582,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                   //                    %d",dimVar->name.c_str(),dimDim->getSize());
                   // #endif
                   if (status != 0) {
-                    CREPORT_ERROR_NODOC(CT::string("Unable to read variable data for ") + dimVar->name, CReportMessage::Categories::GENERAL);
+                    CREPORT_ERROR_NODOC(std::string("Unable to read variable data for ") + dimVar->name.c_str(), CReportMessage::Categories::GENERAL);
                     throw(__LINE__);
                   }
 
@@ -607,7 +607,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 if (requiresProjectionInfo) {
                   CDataReader reader;
                   // reader.enableReporting(false); //Functional tests fail if set to false
-                  dataSource->addStep((*fileList)[j].c_str());
+                  dataSource->addStep((fileList)[j]);
                   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
                   //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
                   //                      CDBDebug("---> BBOX: [%f %f %f
@@ -620,7 +620,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                    level = 1 ; //Highest detail, highest resolution, most files.
                   */
                   geoOptions.level = 0;
-                  geoOptions.proj4 = dataSource->nativeProj4.c_str();
+                  geoOptions.proj4 = dataSource->nativeProj4;
                   geoOptions.bbox[0] = dataSource->dfBBOX[0];
                   geoOptions.bbox[1] = dataSource->dfBBOX[1];
                   geoOptions.bbox[2] = dataSource->dfBBOX[2];
@@ -637,11 +637,11 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                     // CDBDebug( "Found adaguctilelevel %d in NetCDF header",geoOptions.level);
                   }
                 }
-                if (dimVar->name.equals("none")) {
-                  dbAdapter->setFileInt(tableNames[d].c_str(), (*fileList)[j].c_str(), int(0), int(0), fileDate.c_str(), &geoOptions);
+                if (dimVar->name == ("none")) {
+                  dbAdapter->setFileInt(tableNames[d].c_str(), (fileList)[j].c_str(), int(0), int(0), fileDate.c_str(), &geoOptions);
                 }
 
-                if (dimVar->name.equals("none") == false) {
+                if (dimVar->name != "none") {
                   try {
                     const double *dimValues = (double *)dimVar->data;
 
@@ -652,19 +652,19 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                     bool dimIsUnique = true;
 
-                    CT::string uniqueKey;
+                    std::string uniqueKey;
                     for (size_t i = 0; i < dimDim->length; i++) {
 
-                      CT::string uniqueKey = "";
+                      std::string uniqueKey = "";
                       // Insert individual values of type char, short, int, float, double
                       if (dimVar->getType() != CDF_STRING) {
                         if (dimValues[i] != NC_FILL_DOUBLE) {
                           if (isTimeDim[d] == false) {
                             if (hasStatusFlag == true) {
-                              uniqueKey.print("%s", CDataSource::getFlagMeaning(statusFlagList, double(dimValues[i])).c_str());
-                              uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                              uniqueKey = CT::printf("%s", CDataSource::getFlagMeaning(statusFlagList, double(dimValues[i])).c_str());
+                              uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey);
                               if (uniqueDimensionValueRet.second == true) {
-                                dbAdapter->setFileString(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
+                                dbAdapter->setFileString(tableNames[d].c_str(), (fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
                               } else {
                                 dimIsUnique = false;
                               }
@@ -673,19 +673,19 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                               switch (dimVar->getType()) {
                               case CDF_FLOAT:
                               case CDF_DOUBLE:
-                                uniqueKey.print("%f", double(dimValues[i]));
-                                uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                                uniqueKey = CT::printf("%f", double(dimValues[i]));
+                                uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey);
                                 if (uniqueDimensionValueRet.second == true) {
-                                  dbAdapter->setFileReal(tableNames[d].c_str(), (*fileList)[j].c_str(), double(dimValues[i]), int(i), fileDate.c_str(), &geoOptions);
+                                  dbAdapter->setFileReal(tableNames[d].c_str(), (fileList)[j].c_str(), double(dimValues[i]), int(i), fileDate.c_str(), &geoOptions);
                                 } else {
                                   dimIsUnique = false;
                                 }
                                 break;
                               default:
-                                uniqueKey.print("%d", int(dimValues[i]));
-                                uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                                uniqueKey = CT::printf("%d", int(dimValues[i]));
+                                uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey);
                                 if (uniqueDimensionValueRet.second == true) {
-                                  dbAdapter->setFileInt(tableNames[d].c_str(), (*fileList)[j].c_str(), int(dimValues[i]), int(i), fileDate.c_str(), &geoOptions);
+                                  dbAdapter->setFileInt(tableNames[d].c_str(), (fileList)[j].c_str(), int(dimValues[i]), int(i), fileDate.c_str(), &geoOptions);
                                 } else {
                                   dimIsUnique = false;
                                 }
@@ -704,17 +704,17 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                               }
                               uniqueKey = adagucTime->dateToISOString(adagucTime->getDate(dimValues[i]));
                               if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
-                                CT::string quantizemethod = "round";
-                                CT::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;
+                                std::string quantizemethod = "round";
+                                std::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;
                                 if (!dataSource->cfgLayer->Dimension[d]->attr.quantizemethod.empty()) {
                                   quantizemethod = dataSource->cfgLayer->Dimension[d]->attr.quantizemethod;
                                 }
                                 // Start time quantization with quantizeperiod and quantizemethod
                                 uniqueKey = CTime::quantizeTimeToISO8601(uniqueKey, quantizeperiod, quantizemethod);
                               }
-                              uniqueKey.setSize(19);
-                              uniqueKey.concat("Z");
-                              dbAdapter->setFileTimeStamp(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
+                              uniqueKey.resize(19);
+                              uniqueKey += "Z";
+                              dbAdapter->setFileTimeStamp(tableNames[d].c_str(), (fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
 
                             } catch (int e) {
                               CDBDebug("Exception occurred during time conversion: %d", e);
@@ -725,13 +725,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                       if (dimVar->getType() == CDF_STRING) {
                         const char *str = ((char **)dimVar->data)[i];
-                        uniqueKey.print("%s", str);
-                        uniqueKey.replaceSelf("<", "_lt_");
-                        uniqueKey.replaceSelf(">", "_gt_");
-                        uniqueKey.replaceSelf("=", "_eq_");
-                        uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                        uniqueKey = CT::printf("%s", str);
+                        CT::replaceSelf(uniqueKey, "<", "_lt_");
+                        CT::replaceSelf(uniqueKey, ">", "_gt_");
+                        CT::replaceSelf(uniqueKey, "=", "_eq_");
+                        uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey);
                         if (uniqueDimensionValueRet.second == true) {
-                          dbAdapter->setFileString(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
+                          dbAdapter->setFileString(tableNames[d].c_str(), (fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
                         } else {
                           dimIsUnique = false;
                         }
@@ -739,8 +739,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                       // Check if this insert is unique
                       if (dimIsUnique == false) {
-                        CREPORT_ERROR_NODOC(CT::string("In file ") + (*fileList)[j].c_str() + CT::string(" dimension value [") + uniqueKey + CT::string("] not unique in dimension [") + dimVar->name +
-                                                CT::string("]"),
+                        CREPORT_ERROR_NODOC(std::string("In file ") + (fileList)[j] + std::string(" dimension value [") + uniqueKey.c_str() + std::string("] not unique in dimension [") +
+                                                dimVar->name.c_str() + std::string("]"),
                                             CReportMessage::Categories::GENERAL);
                       }
                     }
@@ -764,7 +764,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
               // cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             } catch (int linenr) {
               CDBError("Exception in DBLoopFiles at line %d", linenr);
-              CDBError(" *** SKIPPING FILE %s ***", (*fileList)[j].c_str());
+              CDBError(" *** SKIPPING FILE %s ***", (fileList)[j].c_str());
               // Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
               // delete cdfObject;cdfObject=NULL;
 
@@ -790,15 +790,15 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           } else {
             std::vector<std::string> oldList;
             std::vector<std::string> newList;
-            for (size_t j = 0; j < values->getSize(); j++) {
-              oldList.push_back(values->getRecord(j)->get(0)->c_str());
+            for (auto &record: values->records) {
+              oldList.push_back(record.get(0));
             }
-            for (size_t i = 0; i < fileList->size(); i++) {
-              newList.push_back((*fileList)[i].c_str());
+            for (size_t i = 0; i < fileList.size(); i++) {
+              newList.push_back((fileList)[i]);
             }
             filesToDeleteFromDB.clear();
             CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
-            CDBDebug("The database contains %lu files, found %lu files in DB which are missing on filesystem.", values->getSize(), filesToDeleteFromDB.size());
+            CDBDebug("The database contains %lu files, found %lu files in DB which are missing on filesystem.", values->records.size(), filesToDeleteFromDB.size());
             for (size_t j = 0; j < filesToDeleteFromDB.size(); j++) {
               CDBDebug("Deleting file %s from db", filesToDeleteFromDB[j].c_str());
               CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), filesToDeleteFromDB[j].c_str());
@@ -825,7 +825,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
   return 0;
 }
 
-int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::string _layerPathToScan, int scanFlags) {
+int CDBFileScanner::updatedb(CDataSource *dataSource, std::string _tailPath, std::string _layerPathToScan, int scanFlags) {
   bool verbose = dataSource->srvParams->verbose;
   if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase && dataSource->dLayerType != CConfigReaderLayerTypeBaseLayer && dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) return 0;
 
@@ -842,22 +842,20 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
     return 0;
   }
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
-  CT::string fileToUpdate;
+  std::string fileToUpdate;
 
   if (!_layerPathToScan.empty()) {
-    CT::string layerPath, layerPathToScan;
-    layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
-    layerPathToScan.copy(_layerPathToScan);
-    layerPath = CDirReader::makeCleanPath(layerPath.c_str());
-    layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
+
+    auto layerPath = makeCleanPath(dataSource->cfgLayer->FilePath[0]->elementValue);
+    auto layerPathToScan = makeCleanPath(_layerPathToScan);
 
     /* If this is another directory we will simply ignore it. */
-    if (layerPathToScan.startsWith(layerPath) == false) {
+    if (!CT::startsWith(layerPathToScan, layerPath)) {
       return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
     }
     fileToUpdate = layerPathToScan;
   }
-  if (fileToUpdate.empty() == false) {
+  if (!fileToUpdate.empty()) {
     dataSource->setHeaderFilename(fileToUpdate);
   }
   // This variable enables the query to remove files that no longer exist in the filesystem
@@ -866,9 +864,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
   int status;
 
   // Copy tailpath (can be provided to scan only certain subdirs)
-  CT::string tailPath(_tailPath);
-
-  tailPath = CDirReader::makeCleanPath(tailPath.c_str());
+  std::string tailPath = makeCleanPath(_tailPath);
 
   // if tailpath is defined than removeNonExistingFiles must be zero
   if (tailPath.length() > 0) removeNonExistingFiles = 0;
@@ -879,13 +875,13 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
   if (scanFlags & CDBFILESCANNER_DONTREMOVEDATAFROMDB) {
     removeNonExistingFiles = 0;
   }
-  CDBDebug("  ==> *** Starting update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("  ==> *** Starting update layer [%s] ***", dataSource->cfgLayer->Name[0]->elementValue.c_str());
 
   if (verbose) {
-    CDBDebug("Using path [%s], filter [%s] and tailpath [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), tailPath.c_str());
+    CDBDebug("Using path [%s], filter [%s] and tailpath [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), tailPath.c_str());
   }
 
-  CT::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
+  std::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
 
   if (scanFlags & CDBFILESCANNER_IGNOREFILTER) {
     filter = "^.*$";
@@ -896,9 +892,9 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
     // No file specified, just scan the directory for matching filenames.
     try {
       if (scanFlags & CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY) {
-        if (checkIfPathIsFile(dataSource->cfgLayer->FilePath[0]->value.c_str())) {
-          fileList.push_back(dataSource->cfgLayer->FilePath[0]->value.c_str());
-          CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str());
+        if (checkIfPathIsFile(dataSource->cfgLayer->FilePath[0]->elementValue)) {
+          fileList.push_back(dataSource->cfgLayer->FilePath[0]->elementValue);
+          CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
         } else {
           std::string fileName;
           if (dataSource->requiredDims.size() == 0) {
@@ -914,14 +910,14 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
           CDBDebug("Queried file from database with filename [%s]", fileName.c_str());
         }
       } else {
-        fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+        fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter, tailPath.c_str());
         if (verbose) {
           CDBDebug("SearchFileNames found %lu files", fileList.size());
         }
       }
 
     } catch (int linenr) {
-      CDBDebug("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+      CDBDebug("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
       return 0;
     }
   } else {
@@ -929,12 +925,12 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
     if (verbose) {
       CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
     }
-    CT::string fileToCheckAgainstRegexp = CT::basename(fileToUpdate);
-    if (fileToUpdate.equals(dataSource->cfgLayer->FilePath[0]->value) || CDirReader::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str()) == 1) {
+    std::string fileToCheckAgainstRegexp = CT::basename(fileToUpdate);
+    if (fileToUpdate == (dataSource->cfgLayer->FilePath[0]->elementValue) || CT::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str())) {
       if (verbose) {
         CDBDebug("Add specified file %s with filter %s for scanning", fileToCheckAgainstRegexp.c_str(), filter.c_str());
       }
-      fileList.push_back(fileToUpdate.c_str());
+      fileList.push_back(fileToUpdate);
 
     } else {
       if (verbose) {
@@ -948,7 +944,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
   if (fileList.size() == 0) {
     if (verbose) {
-      CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
     }
     // Clean up if needed
     cleanFiles(dataSource, scanFlags);
@@ -957,7 +953,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
   try {
     // First check and create all tables... returns zero on success, positive on error, negative on already done.
-    status = createDBUpdateTables(dataSource, removeNonExistingFiles, &fileList, scanFlags & CDBFILESCANNER_RECREATETABLES);
+    status = createDBUpdateTables(dataSource, removeNonExistingFiles, fileList, scanFlags & CDBFILESCANNER_RECREATETABLES);
     if (status > 0) {
       CDBError("createDBUpdateTables failed");
       throw(__LINE__);
@@ -965,7 +961,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
     if (status == 0) {
       // Loop Through all files
-      status = DBLoopFiles(dataSource, removeNonExistingFiles, &fileList, scanFlags);
+      status = DBLoopFiles(dataSource, removeNonExistingFiles, fileList, scanFlags);
       if (status != 0) {
         CDBError("DBLoopFiles failed");
         throw(__LINE__);
@@ -1018,19 +1014,19 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true") || (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("file") && fileList.size() == 1)) {
+      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile == "true" || (dataSource->cfgLayer->TileSettings[0]->attr.autotile == "file" && fileList.size() == 1)) {
         for (size_t j = 0; j < fileList.size(); j++) {
-          CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
+          CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j]);
         }
       }
     }
   }
-  CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->elementValue.c_str());
   return 0;
 }
 
 // TODO READ FILE FROM DB!
-std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::string expr, const char *tailPath) {
+std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, std::string expr, const char *tailPath) {
 #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("searchFileNames");
 #endif
@@ -1038,39 +1034,39 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
     CDBError("No path defined");
     throw(__LINE__);
   }
-  CT::string filePath = path;
+  std::string filePath = path;
   //  CDBDebug("filePath = %s",filePath.c_str());
 
   if (tailPath != NULL) {
     if (tailPath[0] == '/') {
-      filePath.copy(tailPath);
+      filePath = (tailPath);
 
-      CT::string baseName = filePath.substring(filePath.lastIndexOf("/") + 1, -1);
-      if (CDirReader::testRegEx(baseName.c_str(), expr.c_str()) != 1) {
+      std::string baseName = CT::substring(filePath, CT::lastIndexOf(filePath, "/") + 1, -1);
+      if (CT::testRegEx(baseName.c_str(), expr.c_str()) == false) {
         CDBWarning("Filter [%s] does not match path [%s]. Tailpath = [%s]", expr.c_str(), baseName.c_str(), tailPath);
         throw(__LINE__);
       }
     } else {
       if (strlen(tailPath) > 0) {
         filePath += "/";
-        filePath.concat(tailPath);
+        filePath += tailPath;
       }
     }
   }
 
   if (checkIfPathIsFile(filePath)) {
     std::vector<std::string> fileList;
-    fileList.push_back(filePath.c_str());
+    fileList.push_back(filePath);
     //    CDBDebug("%s is a file",filePath.c_str());
     return fileList;
   } else {
     // Read directory
 
-    filePath = CDirReader::makeCleanPath(filePath.c_str());
+    filePath = makeCleanPath(filePath);
     try {
-      CT::string fileFilterExpr(".*\\.nc$");
+      std::string fileFilterExpr(".*\\.nc$");
       if (expr.empty() == false) { // dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
-        fileFilterExpr.copy(&expr);
+        fileFilterExpr = expr;
       }
       CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
       CDirReader *dirReader = CCachedDirReader::getDirReader(filePath.c_str(), fileFilterExpr.c_str());
@@ -1080,7 +1076,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
       // Delete all files that start with a "." from the filelist.
       for (size_t j = 0; j < dirReader->fileList.size(); j++) {
         if (CT::basename(dirReader->fileList[j])[0] != '.') {
-          fileList.push_back(dirReader->fileList[j].c_str());
+          fileList.push_back(dirReader->fileList[j]);
         }
       }
 
@@ -1096,9 +1092,9 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
   throw(__LINE__);
 }
 
-int CDBFileScanner::scanFile(CT::string fileToScan, CDataSource *dataSource, int scanFlags) {
-  std::vector<std::string> fileList = {fileToScan.c_str()};
+int CDBFileScanner::scanFile(std::string fileToScan, CDataSource *dataSource, int scanFlags) {
+  std::vector<std::string> fileList = {fileToScan};
   auto dataSourceToScan = *dataSource;
-  int status = CDBFileScanner::DBLoopFiles(&dataSourceToScan, 0, &fileList, scanFlags);
+  int status = CDBFileScanner::DBLoopFiles(&dataSourceToScan, 0, fileList, scanFlags);
   return status;
 }

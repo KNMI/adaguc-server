@@ -16,7 +16,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   if (srvParams->requestDims.size() == 0) {
     // We put a time request for the current time
     OGCURIDims timeDim;
-    timeDim.name = ("TIME");
+    timeDim.name = "TIME";
     timeDim.value = (timeRange.defaultTime);
     srvParams->requestDims.push_back(timeDim);
   }
@@ -135,7 +135,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   CDBDebug("Preparing result with name %s", result.layerName.c_str());
   CDBDebug("lon_coordinate: %f, lat_coordinate: %f", result.lon_coordinate, result.lat_coordinate);
   CDBDebug("Preparing result with imx %d, imy %d, dWidth %d", projInfo.imx, projInfo.imy, projInfo.dWidth);
-  CDBDebug("Number of timestamps is %d", generatedTimestamps.size());
+  CDBDebug("Number of timestamps is %ld", generatedTimestamps.size());
 #endif
 
   // Generate one element per time step;

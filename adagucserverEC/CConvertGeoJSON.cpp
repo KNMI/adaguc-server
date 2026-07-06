@@ -275,11 +275,11 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
+    varX->name = ("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
     varX->setType(CDF_DOUBLE);
     // For y
     dimY = new CDF::Dimension();
@@ -288,11 +288,11 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
+    varY->name = ("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -358,8 +358,8 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     }
     featureIdVar->setType(CDF_STRING);
     featureIdVar->name = "featureids";
-    CDF::allocateData(CDF_STRING, &featureIdVar->data, nrFeatures);
     featureIdVar->setSize(nrFeatures);
+    featureIdVar->allocateData(nrFeatures);
   }
 
   int featureCnt = 0;
@@ -461,14 +461,14 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               cdfObject->addDimension(timeDim);
               CDF::Variable *timeVar = new CDF::Variable();
               timeVar->setType(CDF_DOUBLE);
-              timeVar->name.copy("time");
+              timeVar->name = ("time");
               timeVar->isDimension = true;
               timeVar->setAttributeText("units", "seconds since 1970-1-1");
               timeVar->setAttributeText("standard_name", "time");
               timeVar->dimensionlinks.push_back(timeDim);
               cdfObject->addVariable(timeVar);
-              CDF::allocateData(CDF_DOUBLE, &timeVar->data, timeDim->length);
               timeVar->setType(CDF_DOUBLE);
+              timeVar->allocateData(timeDim->length);
               ((double *)timeVar->data)[0] = timeOffset;
             } else {
               // CDBDebug("other dim: %s", dimName.c_str());
@@ -502,20 +502,20 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               }
 
               CDF::Dimension *dim = new CDF::Dimension();
-              dim->name.copy(dimName);
+              dim->name = (dimName);
               dim->setSize(1);
               cdfObject->addDimension(dim);
               CDF::Variable *dimVar = new CDF::Variable();
               dimVar->setType(CDF_DOUBLE);
-              dimVar->name.copy(dimName);
+              dimVar->name = (dimName);
               dimVar->isDimension = true;
               dimVar->setAttributeText("units", dimUnits.c_str());
               dimVar->setAttributeText("standard_name", dimName.c_str());
               dimVar->dimensionlinks.push_back(dim);
               // CDBDebug("Pushed_back %s dim", dim->name.c_str());
               cdfObject->addVariable(dimVar);
-              CDF::allocateData(CDF_DOUBLE, &dimVar->data, dim->length);
               dimVar->setType(CDF_DOUBLE);
+              dimVar->allocateData(dim->length);
               ((double *)dimVar->data)[0] = dDimVal;
 
 #ifdef USETHIS
@@ -538,13 +538,13 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               cdfObject->addDimension(timeDim);
               CDF::Variable *timeVar = new CDF::Variable();
               timeVar->setType(CDF_DOUBLE);
-              timeVar->name.copy("time");
+              timeVar->name = ("time");
               timeVar->isDimension = true;
               timeVar->setAttributeText("units", "seconds since 1970-1-1");
               timeVar->setAttributeText("standard_name", "time");
               timeVar->dimensionlinks.push_back(timeDim);
               cdfObject->addVariable(timeVar);
-              CDF::allocateData(CDF_DOUBLE, &timeVar->data, timeDim->length);
+              timeVar->allocateData(timeDim->length);
               timeVar->setType(CDF_DOUBLE);
               ((double *)timeVar->data)[0] = timeOffset;
 #endif
@@ -676,6 +676,10 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                     //                          CDBDebug("polygon: %d", polygon.u.array.length);
                     for (unsigned int i = 0; i < polygon.u.array.length; i++) {
                       json_value pt = *polygon.u.array.values[i];
+                      if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                        continue;
+                      }
+
                       json_value lo = *pt.u.array.values[0];
                       json_value la = *pt.u.array.values[1];
                       double lon = (double)lo;
@@ -701,6 +705,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                   feat->newPolyline();
                   for (unsigned int i = 0; i < coords.u.array.length; i++) {
                     json_value pt = *coords.u.array.values[i];
+                    if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                      continue;
+                    }
                     json_value lo = *pt.u.array.values[0];
                     json_value la = *pt.u.array.values[1];
                     double lon = (double)lo;
@@ -726,6 +733,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                       feat->newPolyline();
                       for (unsigned int i = 0; i < coords.u.array.length; i++) {
                         json_value pt = *coords.u.array.values[i];
+                        if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                          continue;
+                        }
                         json_value lo = *pt.u.array.values[0];
                         json_value la = *pt.u.array.values[1];
                         double lon = (double)lo;
@@ -760,6 +770,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                         //                              CDBDebug("polygon: %d", polygon.u.array.length);
                         for (unsigned int k = 0; k < polygon.u.array.length; k++) {
                           json_value pt = *polygon.u.array.values[k];
+                          if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
+                            continue;
+                          }
                           json_value lo = *pt.u.array.values[0];
                           json_value la = *pt.u.array.values[1];
                           double lon = (double)lo;
@@ -889,7 +902,7 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
         CDBDebug("Creating var %s", name.c_str());
 #endif
         CDF::Variable *newVar = new CDF::Variable();
-        newVar->name.copy(name.c_str());
+        newVar->name = (name.c_str());
         switch (iter->second->getType()) {
         case typeInt:
           newVar->setType(CDF_FLOAT);
@@ -1041,8 +1054,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       varX = cdfObject->getVariableThrows("x");
       varY = cdfObject->getVariableThrows("y");
 
-      CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-      CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+      varX->allocateData(dimX->length);
+      varY->allocateData(dimY->length);
 
       // Fill in the X and Y dimensions with the array of coordinates
       for (size_t j = 0; j < dimX->length; j++) {
@@ -1062,16 +1075,16 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         //            }
         if (cdfObject->getVariableNE("customgridprojection") == NULL) {
           CDF::Variable *projectionVar = new CDF::Variable();
-          projectionVar->name.copy("customgridprojection");
+          projectionVar->name = ("customgridprojection");
           cdfObject->addVariable(projectionVar);
-          dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
+          dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
           imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
           if (dataSource->nativeProj4.length() == 0) {
             dataSource->nativeProj4 = LATLONPROJECTION;
             dataSource->nativeEPSG = "EPSG:4326";
             projectionRequired = false;
           }
-          projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+          projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
         }
       }
 
@@ -1081,8 +1094,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 
       // Allocate data for the 2D field
       size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
-      polygonIndexVar->setSize(fieldSize);
-      CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
+      polygonIndexVar->allocateData(fieldSize);
 
       // Determine the fillvalue
       dataObject.dfNodataValue = CCONVERTGEOJSON_FILL;

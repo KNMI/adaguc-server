@@ -135,9 +135,7 @@ async def handle_ogc_api_root(
             type="application/vnd.oai.openapi;version=3.0",
         )
     )
-    landing_page = LandingPage(
-        title="ogcapi", description="ADAGUC OGCAPI-Features server", links=links
-    )
+    landing_page = LandingPage(title="ogcapi", description="ADAGUC OGCAPI-Features server", links=links)
 
     response.headers["cache-control"] = "max-age=60"
 
@@ -228,12 +226,8 @@ def request_type(wanted_format: str) -> str:
     return json
 
 
-@ogcApiApp.get(
-    "/collections/", response_model=Collections, response_model_exclude_none=True
-)
-@ogcApiApp.get(
-    "/collections", response_model=Collections, response_model_exclude_none=True
-)
+@ogcApiApp.get("/collections/", response_model=Collections, response_model_exclude_none=True)
+@ogcApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
 async def get_collections(
     req: Request,
     response: Response,
@@ -275,9 +269,7 @@ async def get_collections(
 
     if request_type(responsetype) == "HTML":
         collections_list = [c.model_dump() for c in collections]
-        return templates.TemplateResponse(
-            "collections.html", {"request": req, "collections": collections_list}
-        )
+        return templates.TemplateResponse("collections.html", {"request": req, "collections": collections_list})
 
     return Collections(
         links=links,
@@ -285,12 +277,8 @@ async def get_collections(
     )
 
 
-@ogcApiApp.get(
-    "/collections/{coll}", response_model=Collection, response_model_exclude_none=True
-)
-async def get_collection(
-    coll: str, req: Request, responsetype: str = Query(default="json", alias="f")
-):
+@ogcApiApp.get("/collections/{coll}", response_model=Collection, response_model_exclude_none=True)
+async def get_collection(coll: str, req: Request, responsetype: str = Query(default="json", alias="f")):
     """
     Return the data for a named collection
     """
@@ -303,10 +291,8 @@ async def get_collection(
         links=get_collection_links(str(req.url_for("get_collection", coll=coll))),
     )
     if request_type(responsetype) == "HTML":
-        return templates.TemplateResponse(
-            "collection.html", {"request": req, "collection": collection.model_dump()}
-        )
-    return coll
+        return templates.TemplateResponse("collection.html", {"request": req, "collection": collection.model_dump()})
+    return collection
 
 
 conformanceClasses = [
@@ -320,12 +306,8 @@ conformanceClasses = [
 ]
 
 
-@ogcApiApp.get(
-    "/conformance", response_model=ConfClasses, response_model_exclude_none=True
-)
-async def get_conformance(
-    req: Request, responsetype: str = Query(default="json", alias="f")
-):
+@ogcApiApp.get("/conformance", response_model=ConfClasses, response_model_exclude_none=True)
+async def get_conformance(req: Request, responsetype: str = Query(default="json", alias="f")):
     """
     Handle the /conformance call
     """
@@ -414,13 +396,11 @@ async def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     status, data, _ = await call_adaguc(request_url.encode("UTF-8"))
     if status == 0:
         try:
-            response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
+            response_data = json.loads(data, object_pairs_hook=OrderedDict)
         except ValueError:
             root = fromstring(data)
 
-            retval = json.dumps(
-                {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
-            )
+            retval = json.dumps({"Error": {"code": root[0].attrib["code"], "message": root[0].text}})
             return 400, retval
         features = []
         for data in response_data:
@@ -480,15 +460,11 @@ async def get_features_for_items(
         status, data, _ = await call_adaguc(request_url.encode("UTF-8"))
         if status == 0:
             try:
-                response_data = json.loads(
-                    data.getvalue(), object_pairs_hook=OrderedDict
-                )
+                response_data = json.loads(data, object_pairs_hook=OrderedDict)
             except ValueError:
                 root = fromstring(data)
 
-                retval = json.dumps(
-                    {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
-                )
+                retval = json.dumps({"Error": {"code": root[0].attrib["code"], "message": root[0].text}})
                 return 400, retval
             for data in response_data:
                 data_features = feature_from_dat(data, coll, base_url, False)
@@ -525,9 +501,7 @@ def check_observed_property_name(
     names = observed_property_name.split(",")
     if len(names) < 1:
         # Error
-        raise HTTPException(
-            status_code=404, detail="observedPropertyName should contain > 0 names"
-        )
+        raise HTTPException(status_code=404, detail="observedPropertyName should contain > 0 names")
     return names
 
 
@@ -555,9 +529,7 @@ def check_bbox_crs(bbox_crs: str | None = Query(default=None, alias="bbox-crs"))
 
     if bbox_crs not in SUPPORTED_CRS_LIST:
         # Error
-        raise HTTPException(
-            status_code=400, detail=f"bbox-crs {bbox_crs} not in supported list"
-        )
+        raise HTTPException(status_code=400, detail=f"bbox-crs {bbox_crs} not in supported list")
     return bbox_crs
 
 

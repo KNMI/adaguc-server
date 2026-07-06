@@ -189,11 +189,11 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
+    varX->name = ("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -202,11 +202,11 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
+    varY->name = ("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -606,8 +606,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     varX = cdfObject0->getVariableThrows("x");
     varY = cdfObject0->getVariableThrows("y");
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -628,7 +628,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       if (pointVar[d] != NULL) {
         size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
         new2DVar[d]->setSize(fieldSize);
-        CDF::allocateData(new2DVar[d]->getType(), &(new2DVar[d]->data), fieldSize);
+        new2DVar[d]->allocateData(fieldSize);
 
         // Fill in nodata
         if (dataSource->getDataObject(d)->hasNodataValue) {
@@ -661,16 +661,16 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       }
       if (cdfObject0->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject0->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
           projectionRequired = false;
         }
-        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
       }
     }
 
@@ -765,7 +765,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         for (auto pointInterval: styleConfiguration->pointIntervals) {
           if (!pointInterval->attr.discradius.empty()) {
             hasZoomableDiscRadius = true;
-            discSize = pointInterval->attr.discradius.toFloat();
+            discSize = atof(pointInterval->attr.discradius.c_str());
           }
         }
       }

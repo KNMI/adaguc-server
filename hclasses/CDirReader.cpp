@@ -35,12 +35,14 @@
 #include <algorithm> /* For std::sort */
 #include <regex>
 #include "CDirReader.h"
+#include "CTString.h"
+#include "CDebugger.h"
 
 CDirReader::CDirReader() {}
 
 CDirReader::~CDirReader() { fileList.clear(); }
 
-std::vector<std::string> CDirReader::listDir(const char *directory, bool recursive, const char *ext_filter, int filesAndOrDirs, bool exceptionOnError) {
+const std::vector<std::string> CDirReader::listDir(const char *directory, bool recursive, const char *ext_filter, int filesAndOrDirs, bool exceptionOnError) {
   std::vector<std::string> result;
   std::regex self_regex;
   if (ext_filter != nullptr) {
@@ -52,9 +54,9 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
   if ((dir = opendir(directory)) != NULL) {
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
-      CT::string fullName = directory;
-      fullName.concat("/");
-      fullName.concat(ent->d_name);
+      std::string fullName = directory;
+      fullName += fullName + "/" + ent->d_name;
+
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
@@ -77,8 +79,7 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
           }
           if (recursive && d_type == DT_DIR) {
             auto dirFiles = listDir(fullName.c_str(), recursive, ext_filter, filesAndOrDirs, exceptionOnError);
-            // Move elements from dirFiles to result.
-            // dirFiles is left in undefined but safe-to-destruct state.
+            // Move elements from dirFiles to result. dirFiles is left in undefined but safe-to-destruct state.
             result.insert(result.end(), std::make_move_iterator(dirFiles.begin()), std::make_move_iterator(dirFiles.end()));
             dirFiles.clear();
           }
@@ -93,21 +94,16 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
       throw "Error";
     }
   }
-
-  // if (re != nullptr && ext_filter != nullptr) {
-  //   regfree(re);
-  // }
   return result;
 }
 
 int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) {
   if (fileList.size() != 0) {
-    if (!currentDir.equals(directory)) {
+    if (currentDir != directory) {
       CDBError("Trying to do listDirRecursive twice with different paths");
       return 1;
     } else {
       /* Already done */
-      // CDBDebug("Using cached results for [%s]", directory);
       return 0;
     }
   }
@@ -132,7 +128,7 @@ int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter)
       return 2;
     }
     /* Check filter*/
-    if (testRegEx(directory, ext_filter) == 1) {
+    if (CT::testRegEx(directory, ext_filter)) {
       fileList.push_back(makeCleanPath(directory).c_str());
     } else {
       CDBWarning("Regexp failed.");
@@ -142,85 +138,30 @@ int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter)
   }
 }
 int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recursive) {
-  DIR *dp;
   struct dirent *ep;
-  int filename_len;
-  int dir_len = strlen(directory);
-
-  dp = opendir(directory);
-  if (dp != NULL) {
-    ep = readdir(dp);
-    while (ep) {
-      filename_len = strlen(ep->d_name);
-      CT::string dirpath;
-      dirpath.copy(directory, dir_len);
-      dirpath.concatlength("/", 1);
-      dirpath.concatlength(ep->d_name, filename_len);
-      bool isdir = isDir(dirpath.c_str());
-      if (isdir == false) {
-        if (testRegEx(ep->d_name, ext_filter) == 1) {
-
-          /* This is a file */
-          CT::string fullName;
-          filename_len = strlen(ep->d_name);
-          fullName.copy(directory, dir_len);
-          fullName.concatlength("/", 1);
-          fullName.concatlength(ep->d_name, filename_len);
-          fullName = makeCleanPath(fullName.c_str());
-          fileList.push_back(fullName.c_str());
-        }
-      } else if (recursive == 1) {
-        if (ep->d_name[0] != '.') {
-          _ReadDir(dirpath.c_str(), ext_filter, recursive);
-        }
-      }
-      ep = readdir(dp);
-    }
-    (void)closedir(dp);
-  } else {
-    /* Could not open the directory */
+  auto dp = opendir(directory);
+  if (dp == NULL) {
     throw 1;
   }
-  return 0;
-}
-/* Removes the double //'s from the string and makes sure that the string does not end with a / */
-CT::string CDirReader::makeCleanPath(const char *_path) {
-  CT::string path;
-  if (_path == NULL) return path;
-  path = _path;
-  if (path.length() == 0) return path;
-  path.replaceSelf("\n", "");
-  path.trimSelf();
-  std::vector<CT::string> parts = path.split("/");
-
-  int startAtIndex = 0;
-  if (path.c_str()[0] == '/') {
-    /* Check if this should start with a slash or not */
-    path.copy("/");
-  } else if (path.indexOf("://") != -1) {
-    /*Check if this should start with the original prefix"*/
-    CT::string leftPart = path.split("://")[0] + "://";
-    path.copy(leftPart);
-    startAtIndex = 1;
-  } else
-    path.copy("");
-
-  std::vector<CT::string> parts2;
-  for (size_t j = 0; j < parts.size(); j++) {
-    if (parts[j].length() > 0) {
-      parts2.push_back(parts[j]);
-    }
-  }
-
-  for (size_t j = startAtIndex; j < parts2.size(); j++) {
-    if (parts2[j].length() > 0) {
-      path.concat(&(parts2[j]));
-      if (j + 1 < parts2.size()) {
-        path.concat("/");
+  ep = readdir(dp);
+  while (ep) {
+    std::string fullName = std::string(directory) + "/" + ep->d_name;
+    bool isdir = isDir(fullName.c_str());
+    if (isdir == false) {
+      if (CT::testRegEx(ep->d_name, ext_filter)) {
+        /* This is a file */
+        fileList.push_back(makeCleanPath(fullName));
+      }
+    } else if (recursive == 1) {
+      if (ep->d_name[0] != '.') {
+        _ReadDir(fullName.c_str(), ext_filter, recursive);
       }
     }
+    ep = readdir(dp);
   }
-  return path;
+  (void)closedir(dp);
+
+  return 0;
 }
 
 bool CDirReader::isDir(const char *directory) {
@@ -239,45 +180,17 @@ bool CDirReader::isFile(const char *filename) {
   return S_ISREG(fileattr.st_mode);
 }
 
-int CDirReader::testRegEx(const char *string, const char *pattern) {
-  if (string == nullptr || pattern == nullptr) return 1;
-  int status;
-  regex_t re;
-
-  if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
-    return (0); /* Report error. */
-  }
-  status = regexec(&re, string, (size_t)0, NULL, 0);
-  regfree(&re);
-  if (status != 0) {
-    return (0); /* Report error. */
-  }
-
-  return (1);
-}
-
-int CDirReader::getFileDate(CT::string *date, const char *file) {
-  struct tm *clock;                       /* create a time structure */
-  struct stat attrib;                     /* create a file attribute structure */
-  if (stat(file, &attrib) != 0) return 1; /* get the attributes of afile.txt */
-  clock = gmtime(&(attrib.st_mtime));     /* Get the last modified time and put it into the time structure */
-  char buffer[80];
-  strftime(buffer, 80, "%Y-%m-%dT%H:%M:%SZ", clock);
-  date->copy(buffer);
-  return 0;
-}
-
 void CDirReader::makePublicDirectory(const char *dirname) {
   if (dirname == NULL) return;
   struct stat stFileInfo;
   int intStat = stat(dirname, &stFileInfo);
   if (intStat != 0) {
-    CT::string directory = dirname;
-    auto directorySplitted = directory.split("/");
+    std::string directory = dirname;
+    auto directorySplitted = CT::split(directory, "/");
     directory = "";
-    for (auto &directoryPart : directorySplitted) {
-      directory.concat("/");
-      directory.concat(directoryPart);
+    for (auto &directoryPart: directorySplitted) {
+      directory += "/";
+      directory += directoryPart;
       const char *part = directory.c_str();
       int intStat = stat(part, &stFileInfo);
       if (intStat != 0) {
@@ -287,21 +200,6 @@ void CDirReader::makePublicDirectory(const char *dirname) {
       }
     }
   }
-}
-
-CT::string CDirReader::getFileDate(const char *fileName) {
-
-  std::map<std::string, std::string>::iterator it = lookupTableFileModificationDateMap.find(fileName);
-  if (it != lookupTableFileModificationDateMap.end()) {
-    CT::string filemoddate = (*it).second.c_str();
-    return filemoddate;
-  }
-  CT::string fileDate;
-  CDirReader::getFileDate(&fileDate, fileName);
-  if (fileDate.length() < 10) fileDate.copy("1970-01-01T00:00:00Z");
-
-  lookupTableFileModificationDateMap.insert(std::pair<std::string, std::string>(fileName, fileDate.c_str()));
-  return fileDate;
 }
 
 void CDirReader::compareLists(std::vector<std::string> L1, std::vector<std::string> L2, void (*handleMissing)(std::string), void (*handleNew)(std::string)) {
@@ -355,7 +253,7 @@ void CDirReader::test_compareLists() {
 }
 
 int CDirReader::test_makeCleanPath() {
-  CT::string t;
+  std::string t;
   t = makeCleanPath("data");
   CDBDebug("[%s]", t.c_str());
   ;
@@ -414,7 +312,7 @@ CDirReader *CCachedDirReader::getDirReader(const char *directory, const char *ex
 }
 
 void CCachedDirReader::removeFileFromCachedList(std::string fileToRemove) {
-  for (auto i : dirReaderMap) {
+  for (auto i: dirReaderMap) {
     CDirReader *dirReader = i.second;
     // Find the file in the vector
     auto itr = std::find(dirReader->fileList.begin(), dirReader->fileList.end(), fileToRemove);
@@ -430,4 +328,36 @@ void CCachedDirReader::free() {
     delete it->second;
   }
   dirReaderMap.clear();
+}
+
+std::string makeCleanPath(const std::string &input) {
+  const auto newString = CT::replace(CT::trim(CT::replace(CT::trim(input), "\n", "")), "//", "/");
+  if (CT::endsWith(newString, "/")) {
+    return CT::substring(newString, 0, newString.length() - 1);
+  }
+  return newString;
+}
+
+std::string getFileDateUnCached(const std::string &file) {
+  struct tm *clock;                                /* create a time structure */
+  struct stat attrib;                              /* create a file attribute structure */
+  if (stat(file.c_str(), &attrib) != 0) return ""; /* get the attributes of afile.txt */
+  clock = gmtime(&(attrib.st_mtime));              /* Get the last modified time and put it into the time structure */
+  char buffer[80];
+  strftime(buffer, 80, "%Y-%m-%dT%H:%M:%SZ", clock);
+  std::string date = buffer;
+  return date;
+}
+
+std::string getFileDate(const std::string &fileName) {
+
+  std::map<std::string, std::string>::iterator it = lookupTableFileModificationDateMap.find(fileName);
+  if (it != lookupTableFileModificationDateMap.end()) {
+    return it->second;
+  }
+  auto fileDate = getFileDateUnCached(fileName);
+  if (fileDate.length() < 10) fileDate = ("1970-01-01T00:00:00Z");
+
+  lookupTableFileModificationDateMap.insert(std::pair<std::string, std::string>(fileName, fileDate.c_str()));
+  return fileDate;
 }

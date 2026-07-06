@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <Layer type="database" hidden="true">
+    <Name>latlon_latincreasing</Name>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/latlon_latincreasing.nc</FilePath>
+    <Variable>data_var_1</Variable>
+    <Styles>autobilinear,autogeneric</Styles>
+  </Layer>
+
+
+  <Layer type="database">
+    <Name>latlon_latdecreasing_and_increasing_genericbilinear</Name>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/latlon_latdecreasing.nc</FilePath>
+    <Variable>data_var_1</Variable>
+    <Styles>autobilinear,autogeneric</Styles>
+    <AdditionalLayer replace="false" style="autobilinear">latlon_latincreasing</AdditionalLayer>
+  </Layer>
+
+
+  <Layer type="database">
+    <Name>latlon_latdecreasing_and_increasing_genericnearest</Name>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/latlon_latdecreasing.nc</FilePath>
+    <Variable>data_var_1</Variable>
+    <Styles>autogeneric</Styles>
+    <AdditionalLayer replace="false" style="autogeneric">latlon_latincreasing</AdditionalLayer>
+  </Layer>
+
+</Configuration>

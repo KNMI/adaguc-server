@@ -64,7 +64,7 @@ int CDFObject::open(const char *fileName) {
     return 1;
   }
   clear();
-  currentFile.copy(fileName);
+  currentFile = (fileName);
   traceTimingsSpanStart(TraceTimingType::FSOPEN);
   int status = r->open(fileName);
   traceTimingsSpanEnd(TraceTimingType::FSOPEN);
@@ -155,7 +155,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
       // Rename an attribute
       if (pszOrgName != NULL) {
         try {
-          cdfObject->getVariableThrows(NCMLVarName.c_str())->getAttributeThrows(pszOrgName)->name.copy(pszAttributeName);
+          cdfObject->getVariableThrows(NCMLVarName.c_str())->getAttributeThrows(pszOrgName)->name = (pszAttributeName);
         } catch (...) {
         }
       } else {
@@ -166,7 +166,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
             var = cdfObject->getVariableThrows(NCMLVarName.c_str());
           } catch (...) {
             var = new CDF::Variable();
-            var->name.copy(NCMLVarName.c_str());
+            var->name = (NCMLVarName.c_str());
             cdfObject->addVariable(var);
           }
           CDFType attrType = cdfObject->ncmlTypeToCDFType(pszAttributeType);
@@ -181,7 +181,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
               attributeValuesAsDouble[attrN] = atof(attributeValues[attrN].c_str());
             }
             CDF::Attribute *attr = new CDF::Attribute();
-            attr->name.copy(pszAttributeName);
+            attr->name = (pszAttributeName);
             var->addAttribute(attr);
             attr->type = attrType;
             CDF::allocateData(attrType, &attr->data, attrLen);
@@ -229,14 +229,14 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
           CDBError("Can not find variable '%s' to rename", pszOrgName);
           throw(__LINE__);
         }
-        var->name.copy(pszName);
+        var->name = (pszName);
       }
       if (pszName != NULL) {
         auto var = cdfObject->getVariableNE(pszName);
         if (var == NULL) {
           var = new CDF::Variable();
           var->currentType = CDF_CHAR;
-          var->name.copy(pszName);
+          var->name = (pszName);
           cdfObject->addVariable(var);
         }
         /* Set type */
@@ -291,7 +291,7 @@ void ncmlHandleDimension(xmlNode *cur_node, CDFObject *cdfObject) {
       if (pszOrgName != NULL && pszName != NULL) {
         try {
           CDF::Dimension *dim = cdfObject->getDimensionThrows(pszOrgName);
-          dim->name.copy(pszName);
+          dim->name = (pszName);
         } catch (...) {
         }
       }
@@ -302,7 +302,7 @@ void ncmlHandleDimension(xmlNode *cur_node, CDFObject *cdfObject) {
         } catch (...) {
           if (pszOrgName == NULL) {
             dim = new CDF::Dimension();
-            dim->name.copy(pszName);
+            dim->name = (pszName);
             cdfObject->addDimension(dim);
             if (pszLength != NULL) {
               dim->setSize(atoi(pszLength));
@@ -423,7 +423,7 @@ CDFType CDFObject::ncmlTypeToCDFType(const char *type) {
 }
 
 CDFObject::CDFObject() {
-  name.copy("NC_GLOBAL");
+  name = ("NC_GLOBAL");
   reader = NULL;
 }
 
@@ -445,23 +445,6 @@ int CDFObject::getVariableIndexNE(const char *name) {
   }
   for (size_t j = 0; j < variables.size(); j++) {
     if (variables[j]->name.equals(name)) {
-      return j;
-    }
-  }
-  return -1;
-}
-
-int CDFObject::getDimensionIndexThrows(const char *name) {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      return j;
-    }
-  }
-  throw(CDF_E_DIMNOTFOUND);
-}
-int CDFObject::getDimensionIndexNE(const char *name) {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
       return j;
     }
   }

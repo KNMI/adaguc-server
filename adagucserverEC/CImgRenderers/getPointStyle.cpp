@@ -36,7 +36,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
   };
 
   if (attr.pointstyle.empty() == false) {
-    pointStyle.style = attr.pointstyle.toLowerCase().c_str();
+    pointStyle.style = CT::toLowerCase(attr.pointstyle);
   }
 
   if (attr.fillcolor.empty() == false) {
@@ -54,23 +54,23 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
     pointStyle.textOutlineColor = CColor(attr.textoutlinecolor.c_str());
   }
   if (attr.fontsize.empty() == false) {
-    pointStyle.fontSize = attr.fontsize.toDouble();
+    pointStyle.fontSize = atof(attr.fontsize.c_str());
   }
   if (attr.fontfile.empty() == false) {
     pointStyle.fontFile = attr.fontfile.c_str();
   }
   if (attr.discradius.empty() == false) {
-    pointStyle.discRadius = attr.discradius.toDouble();
+    pointStyle.discRadius = atof(attr.discradius.c_str());
     if (attr.textradius.empty()) {
       pointStyle.textRadius = pointStyle.discRadius + 4;
     }
   }
   if (attr.textradius.empty() == false) {
-    pointStyle.textRadius = attr.textradius.toDouble();
+    pointStyle.textRadius = atof(attr.textradius.c_str());
   }
 
   if (attr.dot.empty() == false) {
-    if (attr.dot.equalsIgnoreCase("true")) {
+    if (CT::equalsIgnoreCase(attr.dot, "true")) {
       pointStyle.dot = true;
     }
   }
@@ -80,7 +80,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
   }
 
   if (attr.plotstationid.empty() == false) {
-    pointStyle.plotStationId = attr.plotstationid.equalsIgnoreCase("true");
+    pointStyle.plotStationId = CT::equalsIgnoreCase(attr.plotstationid, "true");
   }
 
   if (attr.symbol.empty() == false) {

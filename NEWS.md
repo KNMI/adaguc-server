@@ -1,3 +1,45 @@
+**Version 7.3.2 - 2026-06-29**
+
+- Fix #723 Do not use a query limit when populating metadata in combination with a reference time
+- Refactor png writing code[ #721](https://github.com/KNMI/adaguc-server/issues/713)
+
+**Version 7.3.1 - 2026-06-11**
+
+- Patch correct projected transform of points from latlon
+
+**Version 7.3.0 - 2026-06-04**
+
+- Changed method of running behind a proxy. 
+When EXTERNALADDRESS is unset, adaguc will determine its external address based on HTTP headers: normally from the Host header, but optionally from X-Forwarded-Host, X-Forwarderd-Proto, X-Forwarded-Prefix and X-Forwarded-Port. This is useful for running adaguc behind a proxy. If an environment variable named ADAGUC_TRUSTED_PROXIES exists, that defines which trusted proxies are allowed to specify these headers. The combined result of these headers is then used as OnlineResource in for example GetCapabilities to specify the service hostname. The trusted ADAGUC_TRUSTED_HOSTS environment variable defines which hosts are allowed in the OnlineResource, which is used in the GetCapabilities document and EDR endpoints.
+- FeatureInterval now supports min/max attributes
+
+
+**Version 7.2.2 - 2026-05-11**
+
+- Fix for CVE_GHSA_mwgv_59vv_rp2m as found by Sebastian Alba Vives
+- Update python packages
+- More CT::string to std::string refactoring.
+
+**Version 7.2.1 - 2026-05-04**
+
+- Patch for GetLayerMetadata to work gracefully when a mix of ground level dimensions with different values are used
+
+**Version 7.2.0 - 2026-04-17**
+
+- GetLayerMetadata can now return results for specific forecast_reference_time, like: `http://localhost:8080/adagucserver?dataset=adaguc.tests.arcus_uwcw&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=2024-05-23T00:00:00Z&layer=air_temperature_hagl`
+- Fixed [#614](https://github.com/KNMI/adaguc-server/issues/614) where generic renderer caused issues with linear transform
+- Revert remove of user agent logging [#677](https://github.com/KNMI/adaguc-server/issues/677)
+- CI/CD now runs with sanitize check
+- Error handling is improved
+- EDR: When selecting a specific instance (`/edr/collections/my_collection/instances/123` or `/edr/collections/my_collection`) in a dataset with multiple instances, adaguc returned an incorrect temporal extent. Adaguc now passes `dim_reference_time=...` to the metadata service, which now returns a corresponding time range. Fixes [#675](https://github.com/KNMI/adaguc-server/issues/675).
+- EDR: Time and reftime were both calculated by looking at the first parameter in the dataset. Adaguc now checks all parameters of a dataset.
+- EDR: When performing a position or cube query without selecting an instance (e.g. `/edr/collections/my_collection/position`), adaguc now returns the most recent instance.
+- WMS GetFeatureInfo for timeseries now sorts properly when * is used for the time dimension
+- Replaced CAIRO_LINE_JOIN_MITER with BEVEL for smoother line joins 
+- Brotli encoding is now done only for certain Con'tent-Types.
+- Add EPSG:5041 as a supported projection
+- Upgraded to python 3.14
+
 **Version 7.1.2 - 2026-03-30***
 
 - Refactored dataobject and datasource properties - no heap data is owned anymore.
@@ -672,7 +714,7 @@
 
 **Version 2.5.1 2020-11-13**
 
-- Support for 32 contourline definitions (previousely 8)
+- Support for 32 contourline definitions (previously 8)
 
 **Version 2.5.0 2020-11-13**
 

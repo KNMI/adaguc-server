@@ -1,0 +1,4886 @@
+{
+  "dimensions": {
+    "elevation": { "units": "m", "value": 800.0 },
+    "time": { "units": "ISO8601", "value": "2026-05-19T12:00:00Z" }
+  },
+  "features": [
+    {
+      "geometry": { "coordinates": [5.17, 52.1], "type": "Point" },
+      "properties": { "pt_time": "19/12:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.17, 52.1],
+          [5.250491, 52.12763]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 146.24742014022195, "mean_height": 926 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.250491, 52.12763],
+          [5.328971, 52.155406]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 84.12570787260483, "mean_height": 927 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.328971, 52.155406],
+          [5.405433, 52.183158]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 17.60805117196287, "mean_height": 928 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.405433, 52.183158],
+          [5.479688, 52.210717]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -51.622353333892534, "mean_height": 928 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.479688, 52.210717],
+          [5.551378, 52.23795]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -121.23875082934683, "mean_height": 927 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.551378, 52.23795],
+          [5.622368, 52.26451]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -200.07593997218646, "mean_height": 925 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.622368, 52.26451],
+          [5.69384, 52.29026]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -281.08531989467156, "mean_height": 923 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.69384, 52.29026],
+          [5.76613, 52.315044]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -353.64025853958447, "mean_height": 920 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.76613, 52.315044],
+          [5.839573, 52.338773]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -418.95679901931726, "mean_height": 916 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.839573, 52.338773],
+          [5.914657, 52.361376]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -477.0162179283943, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.914657, 52.361376],
+          [5.991908, 52.382726]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -523.205875242129, "mean_height": 906 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [5.991908, 52.382726],
+          [6.071713, 52.402792]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -560.8021962301864, "mean_height": 901 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.071713, 52.402792],
+          [6.152605, 52.422024]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -464.9826727198524, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.152605, 52.422024],
+          [6.234503, 52.440724]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -364.36834196854034, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.234503, 52.440724],
+          [6.317523, 52.459058]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -271.0269652259012, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.317523, 52.459058],
+          [6.401466, 52.477122]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -185.59149433633138, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.401466, 52.477122],
+          [6.486067, 52.495007]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -107.71881311116158, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.486067, 52.495007],
+          [6.571021, 52.512817]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -36.33024364076846, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [6.571021, 52.512817], "type": "Point" },
+      "properties": { "height": "884", "pt_time": "19/15:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.571021, 52.512817],
+          [6.65558, 52.530308]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 6.387012734718155, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.65558, 52.530308],
+          [6.739984, 52.547303]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 33.229473448649514, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.739984, 52.547303],
+          [6.823913, 52.563955]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 55.58799584777444, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.823913, 52.563955],
+          [6.90708, 52.580433]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 73.55768418575462, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.90708, 52.580433],
+          [6.989225, 52.596913]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 87.21239632989455, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [6.989225, 52.596913],
+          [7.07012, 52.613582]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 96.59909740602598, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.07012, 52.613582],
+          [7.147784, 52.63102]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 93.42331921351433, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.147784, 52.63102],
+          [7.222391, 52.649138]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 90.75715787280933, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.222391, 52.649138],
+          [7.29437, 52.667754]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 89.99872583053366, "mean_height": 890 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.29437, 52.667754],
+          [7.364094, 52.686684]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 90.83026209584204, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.364094, 52.686684],
+          [7.431885, 52.705738]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 92.89075603535457, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.431885, 52.705738],
+          [7.498074, 52.724673]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 95.43004595483944, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.498074, 52.724673],
+          [7.562899, 52.743283]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 98.69335268011491, "mean_height": 893 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.562899, 52.743283],
+          [7.626, 52.762105]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 75.53588858875446, "mean_height": 894 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.626, 52.762105],
+          [7.687019, 52.781373]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 54.79945195215987, "mean_height": 895 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.687019, 52.781373],
+          [7.745792, 52.80124]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 37.46725834735844, "mean_height": 895 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.745792, 52.80124],
+          [7.802264, 52.821747]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 23.89587291535281, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.802264, 52.821747],
+          [7.856423, 52.842916]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 14.09628698011511, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [7.856423, 52.842916], "type": "Point" },
+      "properties": { "height": "896", "pt_time": "19/18:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.856423, 52.842916],
+          [7.908293, 52.864746]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 8.12591864146816, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.908293, 52.864746],
+          [7.957926, 52.887222]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 6.0644572938472265, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [7.957926, 52.887222],
+          [8.005399, 52.910308]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 7.984923886702745, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.005399, 52.910308],
+          [8.05105, 52.933836]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 11.647296975104837, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.05105, 52.933836],
+          [8.096936, 52.95687]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -2.1473165222996613, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.096936, 52.95687],
+          [8.143409, 52.979363]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -20.39094795336132, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.143409, 52.979363],
+          [8.190825, 53.001271]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -42.79460857057711, "mean_height": 896 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.190825, 53.001271],
+          [8.239595, 53.022534]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -68.44513674528571, "mean_height": 895 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.239595, 53.022534],
+          [8.290838, 53.042786]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -85.44518830950256, "mean_height": 895 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.290838, 53.042786],
+          [8.344632, 53.061939]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -100.50951542312396, "mean_height": 894 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.344632, 53.061939],
+          [8.401053, 53.079921]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -113.94617557220045, "mean_height": 893 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.401053, 53.079921],
+          [8.460156, 53.096668]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -125.81985486997291, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.460156, 53.096668],
+          [8.522076, 53.112156]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -136.5300030354265, "mean_height": 890 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.522076, 53.112156],
+          [8.586554, 53.126408]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -129.36180618063372, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.586554, 53.126408],
+          [8.652801, 53.139514]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -92.93936797903734, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.652801, 53.139514],
+          [8.720511, 53.151553]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -60.70576696349599, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.720511, 53.151553],
+          [8.789425, 53.162621]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -32.240975968845305, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.789425, 53.162621],
+          [8.859321, 53.172819]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -7.314655501555535, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [8.859321, 53.172819], "type": "Point" },
+      "properties": { "height": "886", "pt_time": "19/21:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.859321, 53.172819],
+          [8.93, 53.182251]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 14.163492155144922, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [8.93, 53.182251],
+          [9.001929, 53.19098]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 32.83608008932788, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.001929, 53.19098],
+          [9.074867, 53.199101]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 49.39782572738477, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.074867, 53.199101],
+          [9.148307, 53.207292]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 34.822614971897565, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.148307, 53.207292],
+          [9.222228, 53.21545]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 22.94061003079696, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.222228, 53.21545],
+          [9.296591, 53.223478]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 14.107002552467748, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.296591, 53.223478],
+          [9.371336, 53.231281]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 8.640526095157838, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.371336, 53.231281],
+          [9.446388, 53.238773]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 6.814909933658782, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.446388, 53.238773],
+          [9.521653, 53.245876]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 8.850278792684549, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.521653, 53.245876],
+          [9.596759, 53.25266]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 10.900856799038593, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.596759, 53.25266],
+          [9.670923, 53.259534]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 2.2450145472976146, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.670923, 53.259534],
+          [9.744123, 53.266618]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -10.716482091200305, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.744123, 53.266618],
+          [9.816383, 53.273974]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -26.75941428405349, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.816383, 53.273974],
+          [9.88773, 53.281644]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -45.558151229910436, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.88773, 53.281644],
+          [9.958186, 53.28965]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -66.73821756360121, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [9.958186, 53.28965],
+          [10.027774, 53.297995]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -89.88964015118836, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.027774, 53.297995],
+          [10.097731, 53.307028]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -103.9891597427486, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.097731, 53.307028],
+          [10.169929, 53.317299]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -100.99769103658036, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [10.169929, 53.317299], "type": "Point" },
+      "properties": { "height": "884", "pt_time": "20/00:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.169929, 53.317299],
+          [10.244438, 53.328831]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -95.76017120943288, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.244438, 53.328831],
+          [10.321303, 53.341612]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -87.87661481366376, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.321303, 53.341612],
+          [10.400528, 53.355598]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -76.9537256268377, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.400528, 53.355598],
+          [10.482072, 53.370704]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -62.63603625846736, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.482072, 53.370704],
+          [10.565836, 53.386802]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -44.64001888110943, "mean_height": 880 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.565836, 53.386802],
+          [10.649497, 53.401641]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -8.628741807799088, "mean_height": 880 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.649497, 53.401641],
+          [10.732239, 53.414622]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 27.152714558382286, "mean_height": 880 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.732239, 53.414622],
+          [10.813911, 53.425735]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 58.6528378444782, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.813911, 53.425735],
+          [10.894445, 53.43497]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 86.74549343182298, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.894445, 53.43497],
+          [10.973848, 53.442314]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 112.13015390155488, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [10.973848, 53.442314],
+          [11.052185, 53.447751]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 135.33015322040592, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.052185, 53.447751],
+          [11.128101, 53.452006]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 116.78567610085884, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.128101, 53.452006],
+          [11.200916, 53.455352]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 81.01626121802838, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.200916, 53.455352],
+          [11.270732, 53.457677]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 48.83136789452692, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.270732, 53.457677],
+          [11.337705, 53.458863]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 20.57232815133466, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.337705, 53.458863],
+          [11.402031, 53.458781]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -3.568691838227096, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.402031, 53.458781],
+          [11.463928, 53.457299]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -23.550352210077108, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.463928, 53.457299],
+          [11.523624, 53.454274]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -39.47890848474344, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [11.523624, 53.454274], "type": "Point" },
+      "properties": { "height": "886", "pt_time": "20/03:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.523624, 53.454274],
+          [11.581713, 53.449555]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -48.627289532276336, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.581713, 53.449555],
+          [11.639123, 53.443233]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -55.68279495081515, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.639123, 53.443233],
+          [11.695999, 53.43532]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -63.63977791102661, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.695999, 53.43532],
+          [11.752499, 53.425835]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -71.99925928495941, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.752499, 53.425835],
+          [11.808801, 53.414799]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -80.12635707814479, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.808801, 53.414799],
+          [11.865104, 53.402235]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -87.28628531089635, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.865104, 53.402235],
+          [11.92163, 53.388162]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -92.6818800696783, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.92163, 53.388162],
+          [11.978625, 53.372599]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -95.48932915767364, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [11.978625, 53.372599],
+          [12.036361, 53.355558]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -94.88827799385763, "mean_height": 880 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.036361, 53.355558],
+          [12.094766, 53.33763]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -78.01422241122054, "mean_height": 879 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.094766, 53.33763],
+          [12.153733, 53.319206]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -54.6886812037701, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.153733, 53.319206],
+          [12.213327, 53.300341]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -34.160920141410315, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.213327, 53.300341],
+          [12.273633, 53.281088]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -17.264097639388638, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.273633, 53.281088],
+          [12.334754, 53.261505]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -4.761361893557478, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.334754, 53.261505],
+          [12.396803, 53.241651]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 2.6767830119642895, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.396803, 53.241651],
+          [12.459502, 53.221452]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 5.896508667283342, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.459502, 53.221452],
+          [12.522221, 53.200757]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 5.347099124264787, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.522221, 53.200757],
+          [12.584476, 53.179918]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -0.29697713925270364, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [12.584476, 53.179918], "type": "Point" },
+      "properties": { "height": "878", "pt_time": "20/06:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.584476, 53.179918],
+          [12.645595, 53.159625]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -5.056497483892599, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.645595, 53.159625],
+          [12.705532, 53.140013]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -7.083839552491554, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.705532, 53.140013],
+          [12.76425, 53.121198]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -6.715166744048474, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.76425, 53.121198],
+          [12.821722, 53.103274]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -4.249032933876151, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.821722, 53.103274],
+          [12.877929, 53.086306]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 0.03892218752298504, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.877929, 53.086306],
+          [12.932863, 53.070334]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 5.8861289718333865, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.932863, 53.070334],
+          [12.986522, 53.055366]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 13.035633265128126, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [12.986522, 53.055366],
+          [13.038911, 53.041385]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 21.230896186083555, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.038911, 53.041385],
+          [13.090372, 53.02794]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 18.747427453636192, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.090372, 53.02794],
+          [13.141071, 53.014822]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 10.90096407259989, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.141071, 53.014822],
+          [13.191065, 53.00196]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 1.512053187165293, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.191065, 53.00196],
+          [13.240402, 52.989279]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -9.079976385168266, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.240402, 52.989279],
+          [13.289332, 52.976567]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -22.84594104620919, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.289332, 52.976567],
+          [13.337941, 52.963709]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -34.82330055712373, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.337941, 52.963709],
+          [13.386264, 52.950611]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -44.25493485745392, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.386264, 52.950611],
+          [13.434321, 52.937171]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -51.11090519060963, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.434321, 52.937171],
+          [13.482111, 52.923282]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -55.429476525227074, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.482111, 52.923282],
+          [13.529617, 52.90883]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -57.30247380807123, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [13.529617, 52.90883], "type": "Point" },
+      "properties": { "height": "875", "pt_time": "20/09:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.529617, 52.90883],
+          [13.576768, 52.893314]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -48.39041961131443, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.576768, 52.893314],
+          [13.624087, 52.876486]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -32.91532210703008, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.624087, 52.876486],
+          [13.671414, 52.858461]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -15.029039245826425, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.671414, 52.858461],
+          [13.718612, 52.839351]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 4.708838458158425, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.718612, 52.839351],
+          [13.765562, 52.819262]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 25.63762154476717, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.765562, 52.819262],
+          [13.812153, 52.798293]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 47.02533345163101, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.812153, 52.798293],
+          [13.858285, 52.776535]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 68.09312900151417, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.858285, 52.776535],
+          [13.903861, 52.754067]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 88.03699233368388, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.903861, 52.754067],
+          [13.948791, 52.730958]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 106.04899048725201, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.948791, 52.730958],
+          [13.993241, 52.70752]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 105.87796348435222, "mean_height": 878 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [13.993241, 52.70752],
+          [14.037207, 52.683909]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 96.6877675645519, "mean_height": 879 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.037207, 52.683909],
+          [14.081501, 52.660295]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 72.37513030707487, "mean_height": 880 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.081501, 52.660295],
+          [14.126363, 52.636719]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 52.00990658446972, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.126363, 52.636719],
+          [14.171869, 52.613216]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 37.878259569682996, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.171869, 52.613216],
+          [14.218071, 52.589822]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 29.53678346873494, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.218071, 52.589822],
+          [14.264996, 52.566576]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 26.479847552938736, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.264996, 52.566576],
+          [14.312646, 52.543518]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 28.15760189476714, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.312646, 52.543518],
+          [14.361001, 52.520688]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 33.98467579281714, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [14.361001, 52.520688], "type": "Point" },
+      "properties": { "height": "882", "pt_time": "20/12:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.361001, 52.520688],
+          [14.410019, 52.498122]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 43.34280482349277, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.410019, 52.498122],
+          [14.459617, 52.475851]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 56.030592799710575, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.459617, 52.475851],
+          [14.5095, 52.453861]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 74.88051768671721, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.5095, 52.453861],
+          [14.559833, 52.432181]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 88.74680348517722, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.559833, 52.432181],
+          [14.61144, 52.410895]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 83.46277684245433, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.61144, 52.410895],
+          [14.664168, 52.389967]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 78.38515170299797, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.664168, 52.389967],
+          [14.717838, 52.369349]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 73.85180574968399, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.717838, 52.369349],
+          [14.772252, 52.348986]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 70.15280530396558, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.772252, 52.348986],
+          [14.827194, 52.328816]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 67.51301183448231, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.827194, 52.328816],
+          [14.882436, 52.308756]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 66.11065638874425, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.882436, 52.308756],
+          [14.93775, 52.288655]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 65.92157580172352, "mean_height": 890 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.93775, 52.288655],
+          [14.992886, 52.268442]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 67.30972465353261, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.992886, 52.268442],
+          [15.047622, 52.248034]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 70.25431205063069, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.047622, 52.248034],
+          [15.101239, 52.227197]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 63.075355607797974, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.101239, 52.227197],
+          [15.153577, 52.205551]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 40.901927234081086, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.153577, 52.205551],
+          [15.204564, 52.183038]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 21.550693818106083, "mean_height": 893 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.204564, 52.183038],
+          [15.254154, 52.159597]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 4.57580112501455, "mean_height": 893 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.254154, 52.159597],
+          [15.302316, 52.13517]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -10.363626966267475, "mean_height": 893 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [15.302316, 52.13517], "type": "Point" },
+      "properties": { "height": "893", "pt_time": "20/15:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.302316, 52.13517],
+          [15.349029, 52.109692]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -23.529802976947394, "mean_height": 893 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.349029, 52.109692],
+          [15.394948, 52.082997]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -37.5771558474662, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.394948, 52.082997],
+          [15.440126, 52.055138]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -49.20649672653235, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.440126, 52.055138],
+          [15.484618, 52.026173]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -58.57714088022476, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.484618, 52.026173],
+          [15.528473, 51.996159]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -65.83319917912013, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.528473, 51.996159],
+          [15.57186, 51.964927]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -66.06453427365341, "mean_height": 890 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.57186, 51.964927],
+          [15.614298, 51.932108]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -61.13195702491794, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.614298, 51.932108],
+          [15.655807, 51.897861]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -57.843486643527285, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.655807, 51.897861],
+          [15.696424, 51.862344]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -55.738088251746376, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.696424, 51.862344],
+          [15.736196, 51.825715]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -54.408912502389285, "mean_height": 888 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.736196, 51.825715],
+          [15.775181, 51.788124]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -53.49841309178737, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.775181, 51.788124],
+          [15.813443, 51.749717]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -52.693956270755734, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.813443, 51.749717],
+          [15.851064, 51.710633]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -51.754345561916125, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.851064, 51.710633],
+          [15.88885, 51.670958]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -52.481200934620574, "mean_height": 886 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.88885, 51.670958],
+          [15.926812, 51.630782]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -48.979889171314426, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.926812, 51.630782],
+          [15.964967, 51.590193]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -41.060244107284234, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.964967, 51.590193],
+          [16.00333, 51.549279]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -28.605271679363796, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.00333, 51.549279],
+          [16.041906, 51.508116]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -12.346266919441405, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [16.041906, 51.508116], "type": "Point" },
+      "properties": { "height": "884", "pt_time": "20/18:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.041906, 51.508116],
+          [16.08069, 51.466641]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -4.00710008230817, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.08069, 51.466641],
+          [16.120462, 51.424879]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -13.647383215662558, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.120462, 51.424879],
+          [16.161355, 51.382857]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -26.1903028414672, "mean_height": 884 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.161355, 51.382857],
+          [16.203299, 51.340607]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -36.955148776833084, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.203299, 51.340607],
+          [16.24622, 51.298151]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -45.26869812350196, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.24622, 51.298151],
+          [16.290044, 51.255509]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -50.47623921089689, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.290044, 51.255509],
+          [16.334692, 51.212691]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -51.94864092138596, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.334692, 51.212691],
+          [16.379283, 51.170045]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -41.55824971401307, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.379283, 51.170045],
+          [16.423764, 51.127686]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -28.766939322813414, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.423764, 51.127686],
+          [16.468182, 51.085669]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -15.613964546791976, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.468182, 51.085669],
+          [16.51256, 51.04404]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -2.8527734862145735, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.51256, 51.04404],
+          [16.556893, 51.002777]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 8.430468640144682, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.556893, 51.002777],
+          [16.601118, 50.961776]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 16.725871440474293, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.601118, 50.961776],
+          [16.644311, 50.92094]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 17.376872397697298, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.644311, 50.92094],
+          [16.6864, 50.880222]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 16.320743787960964, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.6864, 50.880222],
+          [16.727343, 50.839593]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 14.505602015415207, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.727343, 50.839593],
+          [16.767079, 50.799039]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 12.487833002422121, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.767079, 50.799039],
+          [16.805524, 50.758546]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 10.708934308335301, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [16.805524, 50.758546], "type": "Point" },
+      "properties": { "height": "882", "pt_time": "20/21:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.805524, 50.758546],
+          [16.842623, 50.718122]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 9.915625642010127, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.842623, 50.718122],
+          [16.878285, 50.677947]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -12.561078248589183, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.878285, 50.677947],
+          [16.91244, 50.638123]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -41.81924805344897, "mean_height": 882 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.91244, 50.638123],
+          [16.945212, 50.598627]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -72.7030114170193, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.945212, 50.598627],
+          [16.97672, 50.559438]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -105.66141458011407, "mean_height": 880 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.97672, 50.559438],
+          [17.007086, 50.520537]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -140.90281451017654, "mean_height": 879 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.007086, 50.520537],
+          [17.036509, 50.48187]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -177.05334663913527, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.036509, 50.48187],
+          [17.065191, 50.443247]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -186.16315047898388, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.065191, 50.443247],
+          [17.093025, 50.404624]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -173.05802550223598, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.093025, 50.404624],
+          [17.120105, 50.365959]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -163.31812491062738, "mean_height": 872 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.120105, 50.365959],
+          [17.14654, 50.327185]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -156.84233051496267, "mean_height": 870 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.14654, 50.327185],
+          [17.172454, 50.288216]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -153.48285015426518, "mean_height": 869 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.172454, 50.288216],
+          [17.198011, 50.249]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -152.43743932701182, "mean_height": 867 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.198011, 50.249],
+          [17.223346, 50.209478]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -152.45692737263744, "mean_height": 866 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.223346, 50.209478],
+          [17.248387, 50.169837]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -111.069981990222, "mean_height": 864 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.248387, 50.169837],
+          [17.272873, 50.130064]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -77.8619591803581, "mean_height": 864 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.272873, 50.130064],
+          [17.296556, 50.090146]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -51.512026740500005, "mean_height": 863 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.296556, 50.090146],
+          [17.319192, 50.050058]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -30.78037653012143, "mean_height": 862 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [17.319192, 50.050058], "type": "Point" },
+      "properties": { "height": "862", "pt_time": "21/00:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.319192, 50.050058],
+          [17.340541, 50.009765]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -14.457125988716143, "mean_height": 862 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.340541, 50.009765],
+          [17.360357, 49.969218]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -1.3098639649397228, "mean_height": 862 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.360357, 49.969218],
+          [17.379128, 49.928963]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -19.75073349257582, "mean_height": 862 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.379128, 49.928963],
+          [17.396898, 49.889174]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -47.584839521194226, "mean_height": 862 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.396898, 49.889174],
+          [17.413515, 49.849825]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -74.42145131441066, "mean_height": 861 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.413515, 49.849825],
+          [17.428839, 49.810929]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -98.56829439285502, "mean_height": 860 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.428839, 49.810929],
+          [17.442792, 49.772439]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -119.7792354401463, "mean_height": 859 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.442792, 49.772439],
+          [17.455351, 49.734273]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -137.711331621118, "mean_height": 858 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.455351, 49.734273],
+          [17.466981, 49.696172]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -138.54770922973694, "mean_height": 857 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.466981, 49.696172],
+          [17.478602, 49.657889]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -115.62365269062866, "mean_height": 855 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.478602, 49.657889],
+          [17.490172, 49.619434]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -92.96868148376234, "mean_height": 854 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.490172, 49.619434],
+          [17.501665, 49.580822]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -71.0579339908727, "mean_height": 853 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.501665, 49.580822],
+          [17.513065, 49.542063]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -47.14849064408918, "mean_height": 853 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.513065, 49.542063],
+          [17.524352, 49.503019]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -21.93811537687725, "mean_height": 852 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.524352, 49.503019],
+          [17.535406, 49.463719]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 0.32885019046079833, "mean_height": 852 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.535406, 49.463719],
+          [17.546053, 49.423708]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 28.536020178624312, "mean_height": 852 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.546053, 49.423708],
+          [17.55621, 49.382982]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 55.374724220862845, "mean_height": 853 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.55621, 49.382982],
+          [17.565791, 49.341552]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 79.71363068607752, "mean_height": 854 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [17.565791, 49.341552], "type": "Point" },
+      "properties": { "height": "854", "pt_time": "21/03:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.565791, 49.341552],
+          [17.574705, 49.299414]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 101.0030153967964, "mean_height": 854 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.574705, 49.299414],
+          [17.58321, 49.256456]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 120.68933634077257, "mean_height": 856 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.58321, 49.256456],
+          [17.591178, 49.212693]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 137.2706228444731, "mean_height": 857 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.591178, 49.212693],
+          [17.598604, 49.167847]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 153.2066591638577, "mean_height": 858 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.598604, 49.167847],
+          [17.605354, 49.121866]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 165.0372776475997, "mean_height": 860 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.605354, 49.121866],
+          [17.611294, 49.074769]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 172.16483189618157, "mean_height": 862 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.611294, 49.074769],
+          [17.616267, 49.026607]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 175.19178227242082, "mean_height": 863 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.616267, 49.026607],
+          [17.61999, 48.977453]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 176.06594734278042, "mean_height": 865 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.61999, 48.977453],
+          [17.622507, 48.927588]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 172.63821830887173, "mean_height": 867 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.622507, 48.927588],
+          [17.624074, 48.877367]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 165.5811334715836, "mean_height": 869 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.624074, 48.877367],
+          [17.624803, 48.826906]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 156.06543151420192, "mean_height": 870 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.624803, 48.826906],
+          [17.624826, 48.776315]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 144.262212960326, "mean_height": 872 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.624826, 48.776315],
+          [17.624289, 48.725699]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 130.4362159812299, "mean_height": 873 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.624289, 48.725699],
+          [17.62326, 48.67517]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 111.64512185717467, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.62326, 48.67517],
+          [17.621834, 48.624825]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 86.68129749340005, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.621834, 48.624825],
+          [17.620112, 48.574741]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 61.540554474660894, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.620112, 48.574741],
+          [17.618212, 48.524982]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 36.1033238798409, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.618212, 48.524982],
+          [17.616252, 48.475602]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 10.839231404432212, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [17.616252, 48.475602], "type": "Point" },
+      "properties": { "height": "877", "pt_time": "21/06:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.616252, 48.475602],
+          [17.61427, 48.426422]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -1.6170967821235536, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.61427, 48.426422],
+          [17.612195, 48.377237]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -1.2681046711222734, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.612195, 48.377237],
+          [17.609954, 48.328055]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -1.162512554175919, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.609954, 48.328055],
+          [17.607482, 48.278882]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -1.6529578344052425, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.607482, 48.278882],
+          [17.604715, 48.229712]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -2.965462437874521, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.604715, 48.229712],
+          [17.60189, 48.18049]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -5.95404798144591, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.60189, 48.18049],
+          [17.599369, 48.131178]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -10.598190536577022, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.599369, 48.131178],
+          [17.597081, 48.081792]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -14.94807443107129, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.597081, 48.081792],
+          [17.594945, 48.032343]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -19.342510871065315, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.594945, 48.032343],
+          [17.592873, 47.982829]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -24.097197652750765, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.592873, 47.982829],
+          [17.590779, 47.933155]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -33.35662713203055, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.590779, 47.933155],
+          [17.588633, 47.883156]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -47.79429518747202, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.588633, 47.883156],
+          [17.58642, 47.832822]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -58.5553736895381, "mean_height": 875 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.58642, 47.832822],
+          [17.584103, 47.782138]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -65.45487153263821, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.584103, 47.782138],
+          [17.581631, 47.731081]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -68.3176155010442, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.581631, 47.731081],
+          [17.578943, 47.67958]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -62.50223433705105, "mean_height": 873 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.578943, 47.67958],
+          [17.576014, 47.627549]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -45.148403591898386, "mean_height": 872 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.576014, 47.627549],
+          [17.572809, 47.575011]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -23.7989807081467, "mean_height": 872 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [17.572809, 47.575011], "type": "Point" },
+      "properties": { "height": "872", "pt_time": "21/09:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.572809, 47.575011],
+          [17.569291, 47.522003]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 1.92307415875257, "mean_height": 872 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.569291, 47.522003],
+          [17.56521, 47.468234]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 33.79890135752794, "mean_height": 872 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.56521, 47.468234],
+          [17.560359, 47.413635]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 95.56779469142202, "mean_height": 873 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.560359, 47.413635],
+          [17.554594, 47.358111]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 177.10437579377322, "mean_height": 874 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.554594, 47.358111],
+          [17.547949, 47.301566]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 259.55067624434014, "mean_height": 876 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.547949, 47.301566],
+          [17.540124, 47.243959]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 339.1092258612334, "mean_height": 879 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.540124, 47.243959],
+          [17.531114, 47.185057]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 410.29469358081406, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.531114, 47.185057],
+          [17.52052, 47.125372]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 412.3467078643298, "mean_height": 887 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.52052, 47.125372],
+          [17.508373, 47.064587]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 411.38038004784903, "mean_height": 891 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.508373, 47.064587],
+          [17.494822, 47.002261]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 409.28002359328093, "mean_height": 895 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.494822, 47.002261],
+          [17.479333, 46.938582]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 395.6210681512166, "mean_height": 899 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.479333, 46.938582],
+          [17.460704, 46.876779]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 265.9453163719445, "mean_height": 903 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.460704, 46.876779],
+          [17.439371, 46.816852]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 143.0858504611533, "mean_height": 905 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.439371, 46.816852],
+          [17.41589, 46.758705]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 34.338696911290754, "mean_height": 906 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.41589, 46.758705],
+          [17.390853, 46.702234]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -57.48012590990402, "mean_height": 905 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.390853, 46.702234],
+          [17.364211, 46.647042]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -18.38414078054484, "mean_height": 905 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.364211, 46.647042],
+          [17.335904, 46.593052]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 33.32503379379341, "mean_height": 905 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.335904, 46.593052],
+          [17.305923, 46.540261]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 72.79292148187233, "mean_height": 906 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [17.305923, 46.540261], "type": "Point" },
+      "properties": { "height": "906", "pt_time": "21/12:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.305923, 46.540261],
+          [17.274297, 46.488658]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 97.90796019945992, "mean_height": 907 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.274297, 46.488658],
+          [17.241174, 46.438078]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 105.25459219132608, "mean_height": 908 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.241174, 46.438078],
+          [17.206828, 46.388102]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 95.42614528931153, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.206828, 46.388102],
+          [17.171278, 46.338826]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 80.8188973764045, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.171278, 46.338826],
+          [17.134557, 46.290326]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 61.68786663690116, "mean_height": 910 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.134557, 46.290326],
+          [17.09671, 46.242632]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 38.26022011185705, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.09671, 46.242632],
+          [17.057864, 46.195798]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 11.977787111434736, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.057864, 46.195798],
+          [17.018319, 46.149856]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -6.269870496864314, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [17.018319, 46.149856],
+          [16.978045, 46.104739]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -16.054725402675103, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.978045, 46.104739],
+          [16.937013, 46.060527]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -21.29119600742706, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.937013, 46.060527],
+          [16.895133, 46.017246]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -26.315501189106726, "mean_height": 910 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.895133, 46.017246],
+          [16.852272, 45.974792]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -30.10044235746318, "mean_height": 910 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.852272, 45.974792],
+          [16.808421, 45.933163]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -32.609208933543414, "mean_height": 910 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.808421, 45.933163],
+          [16.763752, 45.892288]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -32.22625344435801, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.763752, 45.892288],
+          [16.718416, 45.852023]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -28.503302612924017, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.718416, 45.852023],
+          [16.672564, 45.812228]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -21.376838815616793, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.672564, 45.812228],
+          [16.626349, 45.772776]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -10.856208378041629, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.626349, 45.772776],
+          [16.579934, 45.733553]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 2.948897708905861, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [16.579934, 45.733553], "type": "Point" },
+      "properties": { "height": "909", "pt_time": "21/15:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.579934, 45.733553],
+          [16.533611, 45.694223]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 8.732195664430037, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.533611, 45.694223],
+          [16.487059, 45.654212]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -7.447794385268935, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.487059, 45.654212],
+          [16.440381, 45.613548]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -33.268327049023355, "mean_height": 909 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.440381, 45.613548],
+          [16.393329, 45.572565]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -64.78080034605227, "mean_height": 908 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.393329, 45.572565],
+          [16.345687, 45.5312]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -91.83884890022455, "mean_height": 907 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.345687, 45.5312],
+          [16.297176, 45.489408]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -115.72917354953825, "mean_height": 906 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.297176, 45.489408],
+          [16.247549, 45.44715]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -134.33931285784638, "mean_height": 905 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.247549, 45.44715],
+          [16.196927, 45.404418]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -143.67503914747795, "mean_height": 904 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.196927, 45.404418],
+          [16.145273, 45.361321]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -154.1326451789064, "mean_height": 902 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.145273, 45.361321],
+          [16.092531, 45.317981]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -165.31428887404036, "mean_height": 901 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.092531, 45.317981],
+          [16.038614, 45.274529]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -176.9048712197109, "mean_height": 899 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [16.038614, 45.274529],
+          [15.983411, 45.231104]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -188.66664591171138, "mean_height": 897 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.983411, 45.231104],
+          [15.927437, 45.188085]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -234.17452066161786, "mean_height": 895 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.927437, 45.188085],
+          [15.871677, 45.145766]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -309.95748019196617, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.871677, 45.145766],
+          [15.815841, 45.103806]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -364.1544467120402, "mean_height": 889 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.815841, 45.103806],
+          [15.759693, 45.06191]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -398.6823752759228, "mean_height": 885 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.759693, 45.06191],
+          [15.703008, 45.01981]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -415.1930480086012, "mean_height": 881 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.703008, 45.01981],
+          [15.645538, 44.977244]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -415.3733014096506, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [15.645538, 44.977244], "type": "Point" },
+      "properties": { "height": "875", "pt_time": "21/18:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.645538, 44.977244],
+          [15.586564, 44.933544]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -362.35511149518425, "mean_height": 873 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.586564, 44.933544],
+          [15.525413, 44.888216]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -271.9313083602319, "mean_height": 870 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.525413, 44.888216],
+          [15.461862, 44.84124]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -181.2409000708285, "mean_height": 867 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.461862, 44.84124],
+          [15.396452, 44.794245]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 11.888870801893063, "mean_height": 867 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.396452, 44.794245],
+          [15.331634, 44.749322]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 244.04785537444695, "mean_height": 868 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.331634, 44.749322],
+          [15.269744, 44.707617]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 432.462807141128, "mean_height": 871 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.269744, 44.707617],
+          [15.210958, 44.668426]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 620.3102433499007, "mean_height": 877 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.210958, 44.668426],
+          [15.155937, 44.631542]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 776.068548023366, "mean_height": 883 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.155937, 44.631542],
+          [15.105327, 44.596778]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 897.5099758406286, "mean_height": 892 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.105327, 44.596778],
+          [15.05976, 44.563975]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 981.6899365076242, "mean_height": 901 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.05976, 44.563975],
+          [15.019718, 44.532957]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 1025.7661886015558, "mean_height": 911 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.019718, 44.532957],
+          [14.985407, 44.503461]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 1032.3818698945543, "mean_height": 922 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.985407, 44.503461],
+          [14.956537, 44.475357]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 949.6188922626752, "mean_height": 931 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.956537, 44.475357],
+          [14.929786, 44.448939]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 817.1957997655263, "mean_height": 940 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.929786, 44.448939],
+          [14.904394, 44.423657]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 702.2211096649698, "mean_height": 948 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.904394, 44.423657],
+          [14.880039, 44.399199]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 599.5724823425553, "mean_height": 954 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.880039, 44.399199],
+          [14.856512, 44.375391]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 511.311169316381, "mean_height": 960 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.856512, 44.375391],
+          [14.833729, 44.352189]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 436.2905980707292, "mean_height": 965 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [14.833729, 44.352189], "type": "Point" },
+      "properties": { "height": "967", "pt_time": "21/21:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.833729, 44.352189],
+          [14.811766, 44.32964]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 371.8164172527322, "mean_height": 969 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.811766, 44.32964],
+          [14.790558, 44.307836]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 319.7517856750201, "mean_height": 972 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.790558, 44.307836],
+          [14.770155, 44.286912]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 277.3396813391446, "mean_height": 975 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.770155, 44.286912],
+          [14.750641, 44.267003]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 242.5931267515698, "mean_height": 978 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.750641, 44.267003],
+          [14.73224, 44.24822]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 214.0391956838721, "mean_height": 980 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.73224, 44.24822],
+          [14.715177, 44.230565]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 189.28821641625836, "mean_height": 982 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.715177, 44.230565],
+          [14.699829, 44.213176]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 156.4530646034982, "mean_height": 984 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.699829, 44.213176],
+          [14.68587, 44.195878]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 130.61697144708887, "mean_height": 985 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.68587, 44.195878],
+          [14.673144, 44.178552]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 109.43226753473573, "mean_height": 986 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.673144, 44.178552],
+          [14.661444, 44.161077]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 91.49523465924722, "mean_height": 987 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.661444, 44.161077],
+          [14.650575, 44.143337]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 75.753743975627, "mean_height": 988 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.650575, 44.143337],
+          [14.640356, 44.125222]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 61.46574027482711, "mean_height": 989 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.640356, 44.125222],
+          [14.630609, 44.106624]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 48.10061863485316, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.630609, 44.106624],
+          [14.621163, 44.087433]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 35.26667491931585, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.621163, 44.087433],
+          [14.611841, 44.067538]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 22.668168259755475, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.611841, 44.067538],
+          [14.60247, 44.046822]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 10.05836740450468, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.60247, 44.046822],
+          [14.592838, 44.025163]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -2.7637885533913504, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.592838, 44.025163],
+          [14.582716, 44.002427]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -15.986884972662665, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [14.582716, 44.002427], "type": "Point" },
+      "properties": { "height": "990", "pt_time": "22/00:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.582716, 44.002427],
+          [14.571861, 43.978468]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -29.798154634336242, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.571861, 43.978468],
+          [14.560803, 43.954302]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -43.03812487529649, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.560803, 43.954302],
+          [14.549461, 43.930034]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -57.28557391052891, "mean_height": 989 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.549461, 43.930034],
+          [14.537665, 43.90563]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -72.91099477789248, "mean_height": 989 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.537665, 43.90563],
+          [14.525241, 43.881046]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -90.22175176729797, "mean_height": 988 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.525241, 43.881046],
+          [14.512007, 43.85623]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -109.56532916598371, "mean_height": 987 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.512007, 43.85623],
+          [14.497771, 43.831112]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -131.35399749076169, "mean_height": 986 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.497771, 43.831112],
+          [14.482579, 43.805693]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -152.42175974801648, "mean_height": 984 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.482579, 43.805693],
+          [14.46742, 43.780363]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -153.82926367905748, "mean_height": 983 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.46742, 43.780363],
+          [14.452223, 43.755092]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -153.18782735790592, "mean_height": 981 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.452223, 43.755092],
+          [14.436939, 43.729864]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -150.1420732944389, "mean_height": 980 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.436939, 43.729864],
+          [14.423293, 43.705101]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -118.75293268168753, "mean_height": 978 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.423293, 43.705101],
+          [14.411817, 43.680817]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -83.30724541477684, "mean_height": 977 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.411817, 43.680817],
+          [14.402515, 43.656896]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -51.79699118837016, "mean_height": 977 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.402515, 43.656896],
+          [14.395387, 43.633208]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -24.414133514583227, "mean_height": 976 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.395387, 43.633208],
+          [14.390428, 43.60961]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -1.3095502068463247, "mean_height": 976 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.390428, 43.60961],
+          [14.387625, 43.585946]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 17.431647204997716, "mean_height": 976 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.387625, 43.585946],
+          [14.386965, 43.562052]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 31.76316838193452, "mean_height": 976 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [14.386965, 43.562052], "type": "Point" },
+      "properties": { "height": "977", "pt_time": "22/03:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.386965, 43.562052],
+          [14.388428, 43.537744]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 41.58564063694212, "mean_height": 977 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.388428, 43.537744],
+          [14.392692, 43.512982]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 49.05021120519086, "mean_height": 977 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.392692, 43.512982],
+          [14.399772, 43.487616]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 52.20691840212385, "mean_height": 978 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.399772, 43.487616],
+          [14.408997, 43.461297]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 52.833793984595104, "mean_height": 978 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.408997, 43.461297],
+          [14.419594, 43.433716]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 54.1900522645592, "mean_height": 979 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.419594, 43.433716],
+          [14.431507, 43.404803]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 55.94453725020867, "mean_height": 979 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.431507, 43.404803],
+          [14.444669, 43.374492]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 58.20269452164939, "mean_height": 980 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.444669, 43.374492],
+          [14.459011, 43.342727]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 61.06477074390568, "mean_height": 980 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.459011, 43.342727],
+          [14.47446, 43.309458]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 64.62211258155003, "mean_height": 981 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.47446, 43.309458],
+          [14.490941, 43.274647]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 68.95412011766166, "mean_height": 982 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.490941, 43.274647],
+          [14.508374, 43.238268]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 74.12592626575497, "mean_height": 982 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.508374, 43.238268],
+          [14.526629, 43.200344]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 78.395832180875, "mean_height": 983 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.526629, 43.200344],
+          [14.545522, 43.160989]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 77.83400648785755, "mean_height": 984 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.545522, 43.160989],
+          [14.565028, 43.120213]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 77.38270831049886, "mean_height": 985 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.565028, 43.120213],
+          [14.585109, 43.078028]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 76.6396083302825, "mean_height": 986 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.585109, 43.078028],
+          [14.605703, 43.034438]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 75.2444498953264, "mean_height": 986 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.605703, 43.034438],
+          [14.626736, 42.989444]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 72.91089192163781, "mean_height": 987 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.626736, 42.989444],
+          [14.648339, 42.94325]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 67.8428334035707, "mean_height": 988 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [14.648339, 42.94325], "type": "Point" },
+      "properties": { "height": "988", "pt_time": "22/06:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.648339, 42.94325],
+          [14.671043, 42.896522]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 58.21157199940353, "mean_height": 988 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.671043, 42.896522],
+          [14.694608, 42.849142]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 50.71129667913192, "mean_height": 989 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.694608, 42.849142],
+          [14.718848, 42.801015]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 45.32878333165718, "mean_height": 989 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.718848, 42.801015],
+          [14.743623, 42.752062]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 42.05716388790461, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.743623, 42.752062],
+          [14.768836, 42.702225]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 40.89265847399656, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.768836, 42.702225],
+          [14.795299, 42.652351]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 24.466290879863664, "mean_height": 991 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.795299, 42.652351],
+          [14.822851, 42.602411]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 7.1197630598035175, "mean_height": 991 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.822851, 42.602411],
+          [14.851301, 42.552353]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -10.493093774784938, "mean_height": 991 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.851301, 42.552353],
+          [14.880469, 42.502141]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -28.439348845378845, "mean_height": 991 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.880469, 42.502141],
+          [14.910191, 42.451763]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -46.78294682322303, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.910191, 42.451763],
+          [14.940243, 42.402021]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -59.055087135435315, "mean_height": 990 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.940243, 42.402021],
+          [14.970503, 42.352805]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -74.13187761738664, "mean_height": 989 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [14.970503, 42.352805],
+          [15.000926, 42.303895]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -92.75072161838762, "mean_height": 988 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.000926, 42.303895],
+          [15.031533, 42.255036]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -115.06598799188214, "mean_height": 987 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.031533, 42.255036],
+          [15.062311, 42.206906]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -131.96790900999622, "mean_height": 986 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.062311, 42.206906],
+          [15.092994, 42.159922]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -136.0841024524998, "mean_height": 985 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.092994, 42.159922],
+          [15.123626, 42.11405]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -146.60781914439576, "mean_height": 983 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.123626, 42.11405],
+          [15.154259, 42.069168]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -165.41957538398856, "mean_height": 982 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [15.154259, 42.069168], "type": "Point" },
+      "properties": { "height": "981", "pt_time": "22/09:00" },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.154259, 42.069168],
+          [15.184926, 42.025098]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -192.60576609915006, "mean_height": 980 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.184926, 42.025098],
+          [15.215832, 41.981251]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -232.47288340108935, "mean_height": 978 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.215832, 41.981251],
+          [15.246502, 41.937514]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -257.7826143465063, "mean_height": 975 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.246502, 41.937514],
+          [15.276388, 41.893923]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -249.93483080301667, "mean_height": 973 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.276388, 41.893923],
+          [15.3058, 41.850407]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -235.66410710423952, "mean_height": 970 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.3058, 41.850407],
+          [15.33512, 41.806897]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -214.01295089130872, "mean_height": 968 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.33512, 41.806897],
+          [15.364793, 41.763339]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -184.16319520768593, "mean_height": 966 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.364793, 41.763339],
+          [15.395308, 41.719708]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -145.54724447175977, "mean_height": 964 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.395308, 41.719708],
+          [15.426355, 41.674576]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -97.29621281866275, "mean_height": 963 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.426355, 41.674576],
+          [15.45796, 41.627356]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -40.98998203399242, "mean_height": 962 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.45796, 41.627356],
+          [15.490849, 41.577734]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 22.56185777155042, "mean_height": 962 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.490849, 41.577734],
+          [15.525854, 41.525306]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 93.41676934163843, "mean_height": 963 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.525854, 41.525306],
+          [15.562582, 41.47207]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 166.2424939798948, "mean_height": 964 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.562582, 41.47207],
+          [15.600584, 41.420825]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 157.7989225865458, "mean_height": 966 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.600584, 41.420825],
+          [15.639999, 41.374001]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 86.75221843387408, "mean_height": 967 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.639999, 41.374001],
+          [15.681396, 41.331088]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": 23.57534252012556, "mean_height": 968 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.681396, 41.331088],
+          [15.725259, 41.291463]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -40.52497834349924, "mean_height": 968 },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [15.725259, 41.291463],
+          [15.772022, 41.254237]
+        ],
+        "type": "LineString"
+      },
+      "properties": { "ascent": -115.7951459311007, "mean_height": 967 },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [15.772022, 41.254237], "type": "Point" },
+      "properties": { "height": "966", "pt_time": "22/12:00" },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}

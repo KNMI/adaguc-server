@@ -51,11 +51,11 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig:
   }
 
   if (vectorCfg->attr.vectorstyle.empty() == false) {
-    if (vectorCfg->attr.vectorstyle.equalsIgnoreCase("barb")) {
+    if (CT::equalsIgnoreCase(vectorCfg->attr.vectorstyle, "barb")) {
       vectorStyle.drawBarb = true;
-    } else if (vectorCfg->attr.vectorstyle.equalsIgnoreCase("disc")) {
+    } else if (CT::equalsIgnoreCase(vectorCfg->attr.vectorstyle, "disc")) {
       vectorStyle.drawDiscs = true;
-    } else if (vectorCfg->attr.vectorstyle.equalsIgnoreCase("vector")) {
+    } else if (CT::equalsIgnoreCase(vectorCfg->attr.vectorstyle, "vector")) {
       vectorStyle.drawVector = true;
     } else {
       vectorStyle.drawBarb = true;
@@ -63,10 +63,10 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig:
   }
 
   if (vectorCfg->attr.plotstationid.empty() == false) {
-    vectorStyle.drawVectorPlotStationId = vectorCfg->attr.plotstationid.equalsIgnoreCase("true");
+    vectorStyle.drawVectorPlotStationId = CT::equalsIgnoreCase(vectorCfg->attr.plotstationid, "true");
   }
   if (vectorCfg->attr.plotvalue.empty() == false) {
-    vectorStyle.drawVectorPlotValue = vectorCfg->attr.plotvalue.equalsIgnoreCase("true");
+    vectorStyle.drawVectorPlotValue = CT::equalsIgnoreCase(vectorCfg->attr.plotvalue, "true");
   }
   if (vectorCfg->attr.textformat.empty() == false) {
     vectorStyle.drawVectorTextFormat = vectorCfg->attr.textformat;

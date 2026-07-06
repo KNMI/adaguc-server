@@ -4,6 +4,7 @@
 //
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
 
 #define COLORBITS 8
 #define TREEDEPTH 6
@@ -16,24 +17,26 @@ static uint glbTotalLeaves = 0;
 static void *getMem(size_t size);
 static void MakeReducible(int level, OctreeType *node);
 static OctreeType *GetReducible(void);
-// InsertTree -- Insert a color into the octree
+
+// InsertTreeCount -- Insert a color into the octree, for a number of pixels
 //
-void InsertTree(OctreeType **tree, RGBType *color, uint depth) {
-  //   int level;
+void InsertTreeCount(OctreeType **tree, RGBType *color, uint depth, uint count) {
   if (*tree == (OctreeType *)NULL) {
     *tree = CreateOctNode(depth);
   }
+
   if ((*tree)->isleaf) {
-    (*tree)->npixels++;
-    (*tree)->redsum += color->r;
-    (*tree)->greensum += color->g;
-    (*tree)->bluesum += color->b;
-    (*tree)->realbluesum += color->realblue;
-    (*tree)->realalphasum += color->realalpha;
+    (*tree)->npixels += count;
+    (*tree)->redsum += ulong(color->r) * count;
+    (*tree)->greensum += ulong(color->g) * count;
+    (*tree)->bluesum += ulong(color->b) * count;
+    (*tree)->realbluesum += ulong(color->realblue) * count;
+    (*tree)->realalphasum += ulong(color->realalpha) * count;
   } else {
-    InsertTree(&((*tree)->child[LEVEL(color, TREEDEPTH - depth)]), color, depth + 1);
+    InsertTreeCount(&((*tree)->child[LEVEL(color, TREEDEPTH - depth)]), color, depth + 1, count);
   }
 }
+
 // ReduceTree -- Combines all the children of a node into the parent,
 // makes the parent into a leaf
 //
@@ -158,6 +161,18 @@ int QuantizeColor(OctreeType *tree, RGBType *color) {
   }
   return QuantizeColor(tree->child[LEVEL(color, 6 - tree->level)], color);
 }
+
+// Return octree leaf containing given color. Similar as QuantizeColorMapped but non-recursive.
+OctreeType *FindLeaf(OctreeType *tree, const RGBType &color) {
+  OctreeType *node = tree;
+  while (!node->isleaf) {
+    int depth = TREEDEPTH - node->level;
+    uint32_t child_idx = (((color.r >> depth) & 1) << 2) | (((color.g >> depth) & 1) << 1) | ((color.b >> depth) & 1);
+    node = node->child[child_idx];
+  }
+  return node;
+}
+
 // TotalLeafNodes -- Returns the total leaves in the tree (glbTotalLeaves)
 //
 ulong TotalLeafNodes() { return glbTotalLeaves; }
