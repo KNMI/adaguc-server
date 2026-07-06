@@ -158,7 +158,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   }
 
   if (styleConfiguration->legendTickRound > 0) {
-    tickRound = int(round(log10(styleConfiguration->legendTickRound)) + 3);
+    tickRound = std::max(0, int(std::round(-std::log10(styleConfiguration->legendTickRound))));
   }
 
   if (std::abs(increment) > std::max(max, min) - std::min(max, min)) {
@@ -247,10 +247,10 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     int steps = int(round((loopMax - loopMin) / increment));
 
     // Compute decimals (for the whole series)
+    int decimals = 0;
     double absInc = fabs(increment);
     if (absInc < 1e-12) absInc = 1.0;
     double snapped = round(absInc * 1e6) / 1e6;
-    int decimals = 0;
     if (snapped < 1.0) {
       decimals = int(ceil(-log10(snapped)));
     }
@@ -265,9 +265,15 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         textFormat.print("%s", textformatting.c_str());
         snprintf(tempText, sizeof(tempText), textFormat.c_str(), v);
       } else {
-          // TODO: Reintegrate tickRound
+        // TODO: Reintegrate tickRound
+        // floatToString(tempText, sizeof(tempText), decimals, v);
+        // void floatToString(char *string, size_t maxlen, int numdigits, float number) {}
+        if (tickRound == 0) {
           floatToString(tempText, sizeof(tempText), decimals, v);
-      }
+          // floatToString(tempText, sizeof(tempText), min, max, v);
+        } else {
+          floatToString(tempText, sizeof(tempText), tickRound, v);
+        }
       }
 
       allLabels.push_back(CT::string(tempText));
