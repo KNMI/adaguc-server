@@ -265,12 +265,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         textFormat.print("%s", textformatting.c_str());
         snprintf(tempText, sizeof(tempText), textFormat.c_str(), v);
       } else {
-        // TODO: Reintegrate tickRound
-        // floatToString(tempText, sizeof(tempText), decimals, v);
-        // void floatToString(char *string, size_t maxlen, int numdigits, float number) {}
         if (tickRound == 0) {
           floatToString(tempText, sizeof(tempText), decimals, v);
-          // floatToString(tempText, sizeof(tempText), min, max, v);
         } else {
           floatToString(tempText, sizeof(tempText), tickRound, v);
         }
