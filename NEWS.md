@@ -1,3 +1,11 @@
+
+**Version 8.0.0**
+
+* Refactored makeIntervalFromTimeList by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/726
+* Refactor cdbstore by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/728
+* Use binary search for shadeinterval in bilinear interpolation by @mgrunbauer in https://github.com/KNMI/adaguc-server/pull/729
+* Support inverted BBOX axis order for EPSG:32661 in WMS 1.3.0 by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/731 - might be breaking change for clients
+
 **Version 7.3.2 - 2026-06-29**
 
 - Fix #723 Do not use a query limit when populating metadata in combination with a reference time
