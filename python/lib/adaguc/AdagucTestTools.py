@@ -311,22 +311,20 @@ class AdagucTestTools:
         except Exception:
             pass
 
-        # Boundingbox extent values are too varying by different Proj libraries
-        def removeBBOX(root):
-            if root.tag.title() == "Boundingbox":
-                # root.getparent().remove(root)
-                try:
-                    del root.attrib["minx"]
-                    del root.attrib["miny"]
-                    del root.attrib["maxx"]
-                    del root.attrib["maxy"]
-                except Exception:
-                    pass
-            for elem in root.getchildren():
-                removeBBOX(elem)
+        # Boundingbox extent values are too varying by different Proj libraries, so
+        # accept small differences instead of failing on them.
+        def compareBBOX(root1, root2, threshold=100):
+            if root1.tag.title() == "Boundingbox" and root2.tag.title() == "Boundingbox":
+                for attrName in ("minx", "miny", "maxx", "maxy"):
+                    try:
+                        if abs(float(root1.attrib[attrName]) - float(root2.attrib[attrName])) <= threshold:
+                            root2.attrib[attrName] = root1.attrib[attrName]
+                    except Exception:
+                        pass
+            for elem1, elem2 in zip(root1.getchildren(), root2.getchildren()):
+                compareBBOX(elem1, elem2)
 
-        removeBBOX(obj1)
-        removeBBOX(obj2)
+        compareBBOX(obj1, obj2)
 
         # Remove contents of problem envelopes EPSG:28992 and EPSG:7399 because they are inconsistent
         def removeGmlEnvelope(root, epsg_code):

@@ -1381,7 +1381,7 @@ struct CServerConfig : CXMLObjectInterface {
   };
   struct XMLE_Projection : CXMLObjectInterface {
     struct Cattr {
-      std::string id, proj4;
+      std::string id, proj4, invertxyforwms130;
     } attr;
     std::vector<XMLE_LatLonBox *> LatLonBox;
     ~XMLE_Projection() { XMLE_DELOBJ(LatLonBox); }
@@ -1389,9 +1389,11 @@ struct CServerConfig : CXMLObjectInterface {
       if ("id" == attrCfg.name) {
         attr.id = attrCfg.value;
         return true;
-      }
-      if ("proj4" == attrCfg.name) {
+      } else if ("proj4" == attrCfg.name) {
         attr.proj4 = attrCfg.value;
+        return true;
+      } else if ("invertxyforwms130" == attrCfg.name) {
+        attr.invertxyforwms130 = attrCfg.value;
         return true;
       }
       return false;

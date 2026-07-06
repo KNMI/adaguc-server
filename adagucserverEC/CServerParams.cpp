@@ -214,12 +214,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
     } else {
       projNameString = projName;
     }
-    if (projNameString == ("EPSG:4326"))
-      return true;
-    else if (projNameString == ("EPSG:4258"))
-      return true;
-    else if (projNameString == ("CRS:84"))
-      return true;
+    auto comp = [projNameString](CServerConfig::XMLE_Projection *a) { return a->attr.id == projNameString.c_str(); };
+    auto it = std::find_if(cfg->Projection.begin(), cfg->Projection.end(), comp);
+    if (it != cfg->Projection.end()) {
+      return CT::equalsIgnoreCase((*it)->attr.invertxyforwms130, "true");
+    }
   }
   return false;
 }
