@@ -4,7 +4,7 @@
 * Refactored makeIntervalFromTimeList by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/726
 * Refactor cdbstore by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/728
 * Use binary search for shadeinterval in bilinear interpolation by @mgrunbauer in https://github.com/KNMI/adaguc-server/pull/729
-* Support inverted BBOX axis order for EPSG:32661 in WMS 1.3.0 by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/731 - This can be a breaking change for clients. Note, EPSG:5041 is the same as EPSG:32661 but with the expected BBOX order of X,Y,X,Y and can be used instead.
+* Enforce WMS 1.3.0 inverted BBOX axis order for EPSG:32661 by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/731 - This can be a breaking change for clients. Note, EPSG:5041 has the same geographical coordinate system as EPSG:32661, but with BBOX order of X,Y,X,Y and can be used alternative to EPSG:32661.
 * Update python libs, e.g. starlette from 1.1.0 to 1.3.1
 
 **Version 7.3.2 - 2026-06-29**

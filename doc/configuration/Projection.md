@@ -11,7 +11,7 @@ define the region corresponding to the projection.
     http://spatialreference.org/ref/epsg/4326/
 -   proj4 - The proj4 string corresponding to the identifier.
     https://trac.osgeo.org/proj/
--   invertxyforwms130 -  for WMS 1.3.0, certain projections, the BBOX parameter requires to have order Y,X,Y,X instead of X,Y,X,Y This can be configured in the Projection element by setting invertxyforwms130 to true.
+-   invertxyforwms130 -  WMS 1.3.0 strictly enforces authority-defined axis order. Which means that for some projection the BBOX order is Y,X,Y,X?. Set `invertxyforwms130` to `true` to enforce this.
 
 ```xml
 
