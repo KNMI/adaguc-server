@@ -125,10 +125,6 @@ void child_handle_client(int child_socket_fd, int (*run_adaguc_once)(int, char *
   dup2(child_socket_fd, STDOUT_FILENO);
 
   int status = run_adaguc_once(argc, argv, envp);
-
-  // fflush(stdout);
-  // fflush(stderr);
-
   exit(status);
 }
 
