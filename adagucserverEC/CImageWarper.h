@@ -115,13 +115,13 @@ public:
    * @param projectionId EPSG code, or projection string, or string "native"
    * @return std::string Will return proj4 parameters for given projection id
    */
-  static std::string getProj4FromId(CDataSource *dataSource, std::string projectionId);
+  static std::string getProj4FromId(CDataSource *dataSource, const std::string &projectionId);
 
   /**
    * Returns the corrected projection string and a factor with which the x and y axis of the data need to be scaled.
    * Needed for a conversion for KM to Meter for example
    */
-  static std::tuple<std::string, double> fixProjection(std::string projectionString);
+  static std::tuple<std::string, double> fixProjection(const std::string &projectionString);
 
   /**
    * Get rotation for given point

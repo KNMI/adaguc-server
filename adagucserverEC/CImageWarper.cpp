@@ -559,7 +559,7 @@ void CImageWarper::reprojBBOX(double *df4PixelExtent) {
   df4PixelExtent[3] = ymax;
 }
 
-std::string CImageWarper::getProj4FromId(CDataSource *dataSource, std::string projectionId) {
+std::string CImageWarper::getProj4FromId(CDataSource *dataSource, const std::string &projectionId) {
   if (projectionId == "native") {
     return dataSource->nativeProj4;
   }
@@ -573,7 +573,7 @@ std::string CImageWarper::getProj4FromId(CDataSource *dataSource, std::string pr
   return projectionId;
 }
 
-std::tuple<std::string, double> CImageWarper::fixProjection(std::string projectionString) {
+std::tuple<std::string, double> CImageWarper::fixProjection(const std::string &projectionString) {
   CProj4ToCF trans;
   CDF::Variable var;
   int status = trans.convertProjToCF(&var, projectionString.c_str());
