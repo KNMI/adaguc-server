@@ -121,8 +121,8 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       if (srvParam->Format.length() == 0) srvParam->Format = ("adagucnetcdf");
     }
 
-    CT::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->responceCrs);
-    CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->geoParams.crs);
+    std::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->responceCrs);
+    std::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->geoParams.crs);
     GeoParameters serverWCSGeoParams = this->srvParam->geoParams;
     if (!srvParamBboxProj4Params.empty()) {
       serverWCSGeoParams.crs = srvParamBboxProj4Params;
@@ -568,7 +568,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     CImageWarper warper;
     dataSource->srvParams = this->srvParam;
 
-    CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->geoParams.crs);
+    std::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->geoParams.crs);
     GeoParameters clonedSrvGeoParams;
     clonedSrvGeoParams = srvParam->geoParams;
     clonedSrvGeoParams.crs = srvParamGridProj4Params;
@@ -812,7 +812,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("DataStep index = %d, timestep = %d", dataStepIndex, dataSource->getCurrentTimeStep());
 #endif
 
-      std::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
+      std::string dataSourceProjectionString = CT::trim(warper.getDestProjString());
       destCDFObject->getVariableThrows("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
 
       /* Lookup possible projection EPSG codes based on this */

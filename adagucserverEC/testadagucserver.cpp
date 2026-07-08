@@ -247,10 +247,10 @@ TEST(CProj4ToCF, azimuthal_equidistant) {
   var.setAttribute("earth_radius", CDF_DOUBLE, &earth_radius, 1);
   var.setAttribute("false_easting", CDF_DOUBLE, &false_easting, 1);
   var.setAttribute("false_northing", CDF_DOUBLE, &false_northing, 1);
-  CT::string projString = proj4ToCF.convertCFToProj(&var);
+  std::string projString = proj4ToCF.convertCFToProj(&var);
   CDBDebug("projString [%s]", projString.c_str());
 
-  CT::string expected = "+proj=aeqd +lat_0=-41.200000 +lon_0=174.700000 +k_0=1.0 +x_0=0.000000 +y_0=0.000000 +a=6378140.000000 +b=6378140.000000 ";
+  std::string expected = "+proj=aeqd +lat_0=-41.200000 +lon_0=174.700000 +k_0=1.0 +x_0=0.000000 +y_0=0.000000 +a=6378140.000000 +b=6378140.000000 ";
   CHECK(projString == expected);
 }
 

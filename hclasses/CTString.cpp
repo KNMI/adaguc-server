@@ -592,6 +592,10 @@ namespace CT {
     ltrim(result);
     return result;
   }
+
+  // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
+  double toDouble(const std::string &input) { return atof(trim(input).c_str()); }
+
   std::string randomString(const int length) {
     const char charset[] = "0123456789"
                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

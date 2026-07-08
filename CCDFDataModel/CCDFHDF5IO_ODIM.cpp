@@ -150,7 +150,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     /* Start collecting projection attributes */
     double xScale;
     double yScale;
-    CT::string projectionString;
+    std::string projectionString;
 
     CDF::Attribute *xScaleAttr = whereVar->getAttributeNE("xscale");
     if (xScaleAttr != nullptr) {
@@ -177,7 +177,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     cornerX[3] = getAttrValueDouble(whereVar, "UR_lon", -1);
     cornerY[3] = getAttrValueDouble(whereVar, "UR_lat", -1);
 
-    PJ *P = proj_create_crs_to_crs_with_cache(CT::string("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"), projectionString, nullptr);
+    PJ *P = proj_create_crs_to_crs_with_cache("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs", projectionString, nullptr);
 
     if (proj_trans_generic(P, PJ_FWD, cornerX, sizeof(double), 4, cornerY, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
       // TODO: No error handling in original code

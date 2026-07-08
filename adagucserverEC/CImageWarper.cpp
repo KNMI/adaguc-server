@@ -26,6 +26,7 @@
 #include "Types/ProjectionStore.h"
 #include "CImageWarper.h"
 #include "ProjCache.h"
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -228,7 +229,7 @@ int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
   return 0;
 }
 
-int CImageWarper::decodeCRS(std::string *outputCRS, std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
+int CImageWarper::decodeCRS(std::string *outputCRS, const std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
   if (prj == NULL) {
     CDBError("decodeCRS: prj==NULL");
     return 1;
@@ -288,37 +289,23 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
     return 1;
   }
 
-  CT::string sourceCRS = _GeoDest.crs.c_str();
-
-  CT::string sourceProjectionUndec = projString;
-
+  std::string sourceProjectionUndec = projString;
   std::tie(sourceProjectionUndec, std::ignore) = fixProjection(sourceProjectionUndec);
-  CT::string sourceProjection = sourceProjectionUndec;
-  CT::string latLonProjection = LATLONPROJECTION;
-  {
-    std::string sourceProjectionStd = sourceProjection;
-    std::string sourceProjectionUndecStd = sourceProjectionUndec;
-    if (decodeCRS(&sourceProjectionStd, &sourceProjectionUndecStd, _prj) != 0) {
-      CDBError("decodeCRS failed");
-      return 1;
-    }
-    sourceProjection = sourceProjectionStd;
-    sourceProjectionUndec = sourceProjectionUndecStd;
+
+  std::string sourceProjection;
+  if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
+    CDBError("decodeCRS failed");
+    return 1;
   }
 
-  this->sourceIsLatLonProjection = latLonProjection.equals(sourceProjection);
+  this->sourceIsLatLonProjection = sourceProjection == LATLONPROJECTION;
 
   //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
 
   dMaxExtentDefined = 0;
-  {
-    std::string destinationCRSStd = destinationCRS;
-    std::string sourceCRSStd = sourceCRS;
-    if (decodeCRS(&destinationCRSStd, &sourceCRSStd, _prj) != 0) {
-      CDBError("decodeCRS failed");
-      return 1;
-    }
-    destinationCRS = destinationCRSStd;
+  if (decodeCRS(&destinationCRS, &_GeoDest.crs, _prj) != 0) {
+    CDBError("decodeCRS failed");
+    return 1;
   }
   if (destinationCRS.empty()) {
     CDBDebug("Assuming latlon for destination CRS");
@@ -331,13 +318,13 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
     return 1;
   }
 
-  projSourceToLatlon = proj_create_crs_to_crs_with_cache(sourceProjection, latLonProjection, nullptr);
+  projSourceToLatlon = proj_create_crs_to_crs_with_cache(sourceProjection, LATLONPROJECTION, nullptr);
   if (projSourceToLatlon == nullptr) {
     CDBError("Invalid projection: from %s to %s", destinationCRS.c_str(), LATLONPROJECTION);
     return 1;
   }
 
-  projLatlonToDest = proj_create_crs_to_crs_with_cache(CT::string(LATLONPROJECTION), destinationCRS, nullptr);
+  projLatlonToDest = proj_create_crs_to_crs_with_cache(LATLONPROJECTION, destinationCRS, nullptr);
   if (projLatlonToDest == nullptr) {
     CDBError("Invalid projection: from %s to %s", LATLONPROJECTION, destinationCRS.c_str());
     return 1;
@@ -346,7 +333,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   initialized = true;
   // CDBDebug("sourceProjection = %s destinationCRS = %s",projString,destinationCRS.c_str());
 
-  if (sourceProjection.equals(destinationCRS.c_str())) {
+  if (sourceProjection == destinationCRS) {
     initialized = true;
     requireReprojection = false;
     return 0;
@@ -572,25 +559,21 @@ void CImageWarper::reprojBBOX(double *df4PixelExtent) {
   df4PixelExtent[3] = ymax;
 }
 
-CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string projectionId) {
-  CT::string bboxProj4Params;
-  if (projectionId.equals("native")) {
-    bboxProj4Params = dataSource->nativeProj4;
-    return bboxProj4Params;
+std::string CImageWarper::getProj4FromId(CDataSource *dataSource, const std::string &projectionId) {
+  if (projectionId == "native") {
+    return dataSource->nativeProj4;
   }
   std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
-  std::string trimmedProjectionId = projectionId.trim();
-  for (size_t j = 0; j < (*prj).size(); j++) { // TODO: use find_if
-    if ((*prj)[j]->attr.id == trimmedProjectionId) {
-      bboxProj4Params = (*prj)[j]->attr.proj4;
-      return bboxProj4Params;
-      break;
-    }
+  std::string trimmedProjectionId = CT::trim(projectionId);
+
+  const auto projection = std::find_if(prj->begin(), prj->end(), [&trimmedProjectionId](const auto *projection) { return projection->attr.id == trimmedProjectionId; });
+  if (projection != prj->end()) {
+    return (*projection)->attr.proj4;
   }
   return projectionId;
 }
 
-std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projectionString) {
+std::tuple<std::string, double> CImageWarper::fixProjection(const std::string &projectionString) {
   CProj4ToCF trans;
   CDF::Variable var;
   int status = trans.convertProjToCF(&var, projectionString.c_str());
@@ -606,7 +589,7 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
         majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis * scaling);
         minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis * scaling);
 
-        CT::string newProjectionString = trans.convertCFToProj(&var);
+        std::string newProjectionString = trans.convertCFToProj(&var);
         if (!newProjectionString.empty()) return std::make_tuple(newProjectionString, scaling);
       }
     }
