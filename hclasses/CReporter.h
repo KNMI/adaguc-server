@@ -46,7 +46,7 @@ class CReporter {
 private:
   static CReporter *instance;
   std::list<CReportMessage> messageList;
-  void writeMessageToLog(const std::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const;
+  void writeMessageToLog(const std::string &message, CReportMessage::Severities severity, const char *file, int line, const char *className) const;
   bool writelog = false;
   std::string _filename;
 
@@ -56,9 +56,9 @@ protected:
 public:
   static CReporter *getInstance();
   const std::list<CReportMessage> getMessageList() const;
-  void addMessage(const std::string message, CReportMessage::Severities severity, CReportMessage::Categories category, std::string documentationLink, const char *file = "", int line = -1,
+  void addMessage(const std::string &message, CReportMessage::Severities severity, CReportMessage::Categories category, const std::string &documentationLink, const char *file = "", int line = -1,
                   const char *className = "");
-  void filename(const std::string filename);
+  void filename(const std::string &filename);
   std::string filename() const;
 };
 

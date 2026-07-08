@@ -7,7 +7,7 @@ CReportMessage::CReportMessage(const CReportMessage &m) : message(m.message), se
   /* No implementation. */
 }
 
-CReportMessage::CReportMessage(std::string message, Severities severity, Categories category, std::string documentationLink)
+CReportMessage::CReportMessage(const std::string &message, Severities severity, Categories category, const std::string &documentationLink)
     : message(message), severity(severity), category(category), documentationLink(documentationLink) {
   /* No implementation. */
 }
