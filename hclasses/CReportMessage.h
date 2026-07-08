@@ -8,7 +8,7 @@ public:
   enum Severities { INFO, WARNING, ERROR };
   enum Categories { PROJECTION, GENERAL };
   CReportMessage(const CReportMessage &m);
-  CReportMessage(std::string message, Severities severity, Categories category, std::string documentationLink);
+  CReportMessage(const std::string &message, Severities severity, Categories category, const std::string &documentationLink);
   const std::string to_string() const;
   std::string getMessage() const;
   std::string getSeverity() const;

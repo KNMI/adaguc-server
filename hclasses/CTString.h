@@ -228,7 +228,7 @@ namespace CT {
      * The startsWith() method determines whether a string begins with the characters of another string, returning true or false as appropriate.
      */
     int startsWith(const char *search);
-    int startsWith(const std::string search);
+    int startsWith(const std::string &search);
 
     /**
      * String to unicode
@@ -398,9 +398,9 @@ namespace CT {
      */
     CT::string replaceAll(CT::string substr, CT::string newString);
 
-    friend CT::string join(const std::vector<std::string> &items, std::string separator);
+    friend CT::string join(const std::vector<std::string> &items, const std::string &separator);
 
-    friend std::string basename(std::string input);
+    friend std::string basename(const std::string &input);
   };
 
   // Example on how new implementation can help with moving towards fully using std::string instead of CT::String
@@ -409,14 +409,14 @@ namespace CT {
    * @param separator optional separator, defaults to ","
    * @returns new string containing all items.
    */
-  string join(const std::vector<std::string> &items, std::string separator = ",");
+  string join(const std::vector<std::string> &items, const std::string &separator = ",");
 
   /**
    * Returns posix basename of path
    * @param input The input path
    * @returns The basename of the path
    */
-  std::string basename(std::string input);
+  std::string basename(const std::string &input);
 
   /**
    * The equalsIgnoreCase() method compares two strings, ignoring lower case and upper case differences.
@@ -425,7 +425,7 @@ namespace CT {
    * @param str2 -
    * @return true if equal
    */
-  bool equalsIgnoreCase(const std::string str1, const std::string str2);
+  bool equalsIgnoreCase(const std::string &str1, const std::string &str2);
 
   /**
    * Print like printf but returns a stdstring;
@@ -458,21 +458,21 @@ namespace CT {
    * @param input The input string
    * @returns the input string converted to lowercase
    */
-  std::string toLowerCase(const std::string input);
+  std::string toLowerCase(const std::string &input);
 
   /**
    * Converts a string to uppercase
    * @param input The input string
    * @returns the input string converted to uppercase
    */
-  std::string toUpperCase(const std::string input);
+  std::string toUpperCase(const std::string &input);
 
   /**
    * Removes spaces in the string and returns the new string
    * @param input The input string
    * @returns the input string with removed spaces
    */
-  std::string trim(const std::string input);
+  std::string trim(const std::string &input);
 
   /**
    * Converts a string to double after trimming whitespace.

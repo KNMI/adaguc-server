@@ -27,22 +27,22 @@
 
 #include "CReporter.h"
 #include <CKeyValuePair.h>
+#include <algorithm>
 
 float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
   if (fValue < 50000) fValue *= 1000;
   return fValue;
 }
 
-CT::string CProj4ToCF::getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList) {
-  for (size_t j = 0; j < projKVPList.size(); j++) {
-    if (projKVPList[j].key == proj4Key) {
-      return projKVPList[j].value;
-    }
+CT::string CProj4ToCF::getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList) {
+  auto it = std::find_if(projKVPList.begin(), projKVPList.end(), [&proj4Key](const CKeyValuePair &kvp) { return kvp.key == proj4Key; });
+  if (it != projKVPList.end()) {
+    return it->value;
   }
   throw(0);
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float(*conversionfunction)(float)) {
+float CProj4ToCF::getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float(*conversionfunction)(float)) {
   float value = defaultValue;
   try {
     value = getProj4Value(proj4Key, projKVPList).toFloat();
@@ -55,7 +55,7 @@ float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair
   return value;
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue) { return getProj4ValueF(proj4Key, projKVPList, defaultValue, NULL); }
+float CProj4ToCF::getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue) { return getProj4ValueF(proj4Key, projKVPList, defaultValue, NULL); }
 
 void CProj4ToCF::initMSGPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838
@@ -413,53 +413,52 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   int foundProj = 0;
   try {
 
-    for (size_t j = 0; j < projKVPList.size(); j++) {
-      if (projKVPList[j].key == "proj") {
-        if (projKVPList[j].value == "stere") {
+    for (const auto &kvp: projKVPList) {
+      if (kvp.key == "proj") {
+        if (kvp.value == "stere") {
           initStereoGraphic(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "geos") {
-          for (size_t j2 = 0; j2 < projKVPList.size(); j2++) {
-            if (projKVPList[j2].key == "height_from_earth_center") {
-              initMSGPerspective(projectionVariable, projKVPList);
-              foundProj = 1;
-            }
+        if (kvp.value == "geos") {
+          bool hasHeightFromEarthCenter = std::any_of(projKVPList.begin(), projKVPList.end(), [](const CKeyValuePair &kvp2) { return kvp2.key == "height_from_earth_center"; });
+          if (hasHeightFromEarthCenter) {
+            initMSGPerspective(projectionVariable, projKVPList);
+            foundProj = 1;
           }
           if (foundProj == 0) {
             initGeosPerspective(projectionVariable, projKVPList);
             foundProj = 1;
           }
         }
-        if (projKVPList[j].value == "lcc") {
+        if (kvp.value == "lcc") {
           initLCCPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "ob_tran") {
+        if (kvp.value == "ob_tran") {
           initRPPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "sterea") {
+        if (kvp.value == "sterea") {
           initObliqueStereographicPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "latitude_longitude") {
+        if (kvp.value == "latitude_longitude") {
           initLatitudeLongitude(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "merc") {
+        if (kvp.value == "merc") {
           initMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "tmerc") {
+        if (kvp.value == "tmerc") {
           initTransverseMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "laea") {
+        if (kvp.value == "laea") {
           initLAEAPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value == "aeqd") {
+        if (kvp.value == "aeqd") {
           initAEQDPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
@@ -468,14 +467,14 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     if (projectionVariable->name.empty()) projectionVariable->name = "projection";
     projectionVariable->setAttributeText("proj4_params", proj4String);
     std::string kvpProjString = "";
-    for (size_t j = 0; j < projKVPList.size(); j++) {
+    for (const auto &kvp: projKVPList) {
 
-      if (projKVPList[j].key != "proj" && projKVPList[j].key != "units") {
-        if (projKVPList[j].value.empty() == false) {
-          CT::printfconcat(kvpProjString, " +%s=%f", projKVPList[j].key.c_str(), CT::toDouble(projKVPList[j].value.c_str()));
+      if (kvp.key != "proj" && kvp.key != "units") {
+        if (kvp.value.empty() == false) {
+          CT::printfconcat(kvpProjString, " +%s=%f", kvp.key.c_str(), CT::toDouble(kvp.value.c_str()));
         }
       } else {
-        CT::printfconcat(kvpProjString, " +%s=%s", projKVPList[j].key.c_str(), projKVPList[j].value.c_str());
+        CT::printfconcat(kvpProjString, " +%s=%s", kvp.key.c_str(), kvp.value.c_str());
         kvpProjString = CT::trim(kvpProjString);
       }
     }
