@@ -36,6 +36,9 @@
 #define PNG_DEBUG 3
 #include <png.h>
 
+// TODO, this pngreader should be refactored.
+#pragma GCC diagnostic ignored "-Wclobbered"
+
 bool pngDebug = false;
 // https://aiddata.rvo.nl/projects
 
@@ -107,7 +110,7 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
 
   png_read_info(png_ptr, info_ptr);
 
-  CPNGRaster *volatile pngRaster = new CPNGRaster();
+  CPNGRaster *pngRaster = new CPNGRaster();
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
   pngRaster->height = png_get_image_height(png_ptr, info_ptr);
   // CDBDebug("open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
