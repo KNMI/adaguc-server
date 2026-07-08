@@ -1,5 +1,6 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataReader.h"
+#include <algorithm>
 
 /************************/
 /*      CDPPAddFeatures     */
@@ -76,32 +77,24 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
         nrFeatures = fvar->dimensionlinks[0]->getSize();
         ptrdiff_t stride = 1;
         fvar->readData(CDF_STRING, &start, &nrFeatures, &stride, false);
-        //         for (size_t i=0; i<nrFeatures; i++) {
-        //           CDBDebug(">> %s", ((char **)fvar->data)[i]);
-        //         }
       }
       char **names = (char **)fvar->data;
 
       float destNoDataValue = dataSource->getDataObject(0)->dfNodataValue;
 
       std::vector<std::string> valueMap;
-      size_t nrPoints = dataSource->getDataObject(0)->points.size();
 
       std::vector<float> valueForFeatureNr(nrFeatures, destNoDataValue);
       for (size_t f = 0; f < nrFeatures; f++) {
         valueForFeatureNr[f] = destNoDataValue;
         const char *name = names[f];
-        bool found = false;
-        for (size_t p = 0; p < nrPoints && !found; p++) {
-          for (size_t c = 0; c < dataSource->getDataObject(0)->points[p].paramList.size() && !found; c++) {
-            auto ckv = dataSource->getDataObject(0)->points[p].paramList[c];
-            if (ckv.key == "station") {
-              if (ckv.value == name) {
-                valueForFeatureNr[f] = dataSource->getDataObject(0)->points[p].v;
-                found = true;
-              }
-            }
-          }
+
+        auto &points = dataSource->getDataObject(0)->points;
+        auto pointIt = std::find_if(points.begin(), points.end(), [name](const PointDVWithLatLon &point) {
+          return std::find_if(point.paramList.begin(), point.paramList.end(), [name](const CKeyValueDescriptionPair &kv) { return kv.key == "station" && kv.value == name; }) != point.paramList.end();
+        });
+        if (pointIt != points.end()) {
+          valueForFeatureNr[f] = pointIt->v;
         }
       }
 
