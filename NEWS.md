@@ -1,3 +1,7 @@
+**Version 8.1.0**
+
+* When the x-forwarded-for header contains 443 with protocol https, the port is not use in the onlineresource url as this is by default
+
 
 **Version 8.0.0**
 

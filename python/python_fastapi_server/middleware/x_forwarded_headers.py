@@ -65,9 +65,18 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
             # Prevent malicious input
             forwarded_host = urllib.parse.quote(forwarded_host)
 
+            if b"x-forwarded-proto" in headers and len(headers[b"x-forwarded-proto"]) > 0:
+                proto = headers[b"x-forwarded-proto"].decode("ascii")
+            else:
+                proto = ""
+
             if b"x-forwarded-port" in headers and len(headers[b"x-forwarded-port"]) > 0:
                 port = ":" + headers[b"x-forwarded-port"].decode("ascii")
             else:
+                port = ""
+
+            # Port should not be set if it matches the default of the protocol
+            if (port == ":80" and proto == "http") or (port == ":443" and proto == "https"):
                 port = ""
 
             # Replace the Host header with the value of the X-Forwarded-Host header
