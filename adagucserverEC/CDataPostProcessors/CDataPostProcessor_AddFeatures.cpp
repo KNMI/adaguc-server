@@ -95,9 +95,8 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
         for (size_t p = 0; p < nrPoints && !found; p++) {
           for (size_t c = 0; c < dataSource->getDataObject(0)->points[p].paramList.size() && !found; c++) {
             auto ckv = dataSource->getDataObject(0)->points[p].paramList[c];
-            if (ckv.key.equals("station")) {
-              CT::string station = ckv.value;
-              if (strcmp(station.c_str(), name) == 0) {
+            if (ckv.key == "station") {
+              if (ckv.value == name) {
                 valueForFeatureNr[f] = dataSource->getDataObject(0)->points[p].v;
                 found = true;
               }

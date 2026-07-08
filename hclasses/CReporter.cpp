@@ -26,7 +26,7 @@ CReporter *CReporter::getInstance() {
   return instance;
 }
 
-void CReporter::addMessage(const CT::string message, CReportMessage::Severities severity, CReportMessage::Categories category, CT::string documentationLink, const char *file, int line,
+void CReporter::addMessage(const std::string message, CReportMessage::Severities severity, CReportMessage::Categories category, std::string documentationLink, const char *file, int line,
                            const char *className) {
 
   if (this->writelog) {
@@ -37,7 +37,7 @@ void CReporter::addMessage(const CT::string message, CReportMessage::Severities 
   messageList.push_back(_message);
 }
 
-void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const {
+void CReporter::writeMessageToLog(const std::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const {
 
   if (severity == Severities::INFO) {
     _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
@@ -57,6 +57,6 @@ void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Seve
 
 const std::list<CReportMessage> CReporter::getMessageList() const { return messageList; }
 
-void CReporter::filename(const CT::string filename) { this->_filename = filename; }
+void CReporter::filename(const std::string filename) { this->_filename = filename; }
 
-CT::string CReporter::filename() const { return this->_filename; }
+std::string CReporter::filename() const { return this->_filename; }

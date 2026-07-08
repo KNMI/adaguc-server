@@ -35,14 +35,14 @@ float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
 
 CT::string CProj4ToCF::getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList) {
   for (size_t j = 0; j < projKVPList.size(); j++) {
-    if (projKVPList[j].key.equals(proj4Key) == true) {
+    if (projKVPList[j].key == proj4Key) {
       return projKVPList[j].value;
     }
   }
   throw(0);
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float))) {
+float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float(*conversionfunction)(float)) {
   float value = defaultValue;
   try {
     value = getProj4Value(proj4Key, projKVPList).toFloat();
@@ -414,14 +414,14 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   try {
 
     for (size_t j = 0; j < projKVPList.size(); j++) {
-      if (projKVPList[j].key.equals("proj")) {
-        if (projKVPList[j].value.equals("stere")) {
+      if (projKVPList[j].key == "proj") {
+        if (projKVPList[j].value == "stere") {
           initStereoGraphic(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("geos")) {
+        if (projKVPList[j].value == "geos") {
           for (size_t j2 = 0; j2 < projKVPList.size(); j2++) {
-            if (projKVPList[j2].key.equals("height_from_earth_center")) {
+            if (projKVPList[j2].key == "height_from_earth_center") {
               initMSGPerspective(projectionVariable, projKVPList);
               foundProj = 1;
             }
@@ -431,35 +431,35 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
             foundProj = 1;
           }
         }
-        if (projKVPList[j].value.equals("lcc")) {
+        if (projKVPList[j].value == "lcc") {
           initLCCPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("ob_tran")) {
+        if (projKVPList[j].value == "ob_tran") {
           initRPPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("sterea")) {
+        if (projKVPList[j].value == "sterea") {
           initObliqueStereographicPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("latitude_longitude")) {
+        if (projKVPList[j].value == "latitude_longitude") {
           initLatitudeLongitude(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("merc")) {
+        if (projKVPList[j].value == "merc") {
           initMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("tmerc")) {
+        if (projKVPList[j].value == "tmerc") {
           initTransverseMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("laea")) {
+        if (projKVPList[j].value == "laea") {
           initLAEAPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("aeqd")) {
+        if (projKVPList[j].value == "aeqd") {
           initAEQDPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
@@ -470,7 +470,7 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     std::string kvpProjString = "";
     for (size_t j = 0; j < projKVPList.size(); j++) {
 
-      if (projKVPList[j].key.equals("proj") == false && projKVPList[j].key.equals("units") == false) {
+      if (projKVPList[j].key != "proj" && projKVPList[j].key != "units") {
         if (projKVPList[j].value.empty() == false) {
           CT::printfconcat(kvpProjString, " +%s=%f", projKVPList[j].key.c_str(), CT::toDouble(projKVPList[j].value.c_str()));
         }

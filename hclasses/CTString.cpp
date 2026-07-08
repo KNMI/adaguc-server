@@ -748,4 +748,9 @@ namespace CT {
     return true;
   }
 
+  std::string fromCharPointer(const char *input) {
+    std::string s = input == nullptr ? "" : input;
+    return s;
+  }
+
 } /* namespace CT */

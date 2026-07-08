@@ -29,6 +29,7 @@
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
 #include "utils/minMax.h"
 #include "CStyleConfiguration.h"
+#include "CTString.h"
 
 void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {
@@ -858,7 +859,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               }
               /* Get the last pushed point from the array and push the character text data in the paramlist */
               const char *b = ((const char **)pointVar[d]->data)[pPoint];
-              lastPoint->paramList.push_back({.key = key, .description = description, .value = b});
+              lastPoint->paramList.push_back({.key = key, .description = description, .value = CT::fromCharPointer(b)});
             }
 
             if (pointVar[d]->currentType == CDF_CHAR) {
@@ -874,7 +875,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               } catch (int e) {
               }
               /* Get the last pushed point from the array and push the character text data in the paramlist */
-              lastPoint->paramList.push_back({.key = key, .description = description, .value = ((const char **)pointVar[d]->data)[pPoint]});
+              lastPoint->paramList.push_back({.key = key, .description = description, .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
             }
 
             if (pointVar[d]->currentType == CDF_FLOAT) {
@@ -889,7 +890,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
                   description = (const char *)pointID->getAttributeThrows("long_name")->data;
                 } catch (int e) {
                 }
-                lastPoint->paramList.push_back({.key = key, .description = description, .value = ((const char **)pointID->data)[pGeo]});
+                lastPoint->paramList.push_back({.key = key, .description = description, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
               }
               if (doDrawLinearInterpolated && roadIdData != NULL) {
                 if (hasPrevLatLon) {
@@ -916,7 +917,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               }
               // obsTimeData
 
-              lastPoint->paramList.push_back({.key = key, .description = description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint])).c_str()});
+              lastPoint->paramList.push_back({.key = key, .description = description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
             }
           }
         }

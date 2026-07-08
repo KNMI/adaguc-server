@@ -36,8 +36,7 @@
 #define PNG_DEBUG 3
 #include <png.h>
 
-// #define CREADPNG_DEBUG
-
+bool pngDebug = false;
 // https://aiddata.rvo.nl/projects
 
 CPNGRaster::~CPNGRaster() {
@@ -108,8 +107,7 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
 
   png_read_info(png_ptr, info_ptr);
 
-  CPNGRaster *pngRaster = new CPNGRaster();
-
+  CPNGRaster *volatile pngRaster = new CPNGRaster();
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
   pngRaster->height = png_get_image_height(png_ptr, info_ptr);
   // CDBDebug("open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
@@ -137,9 +135,9 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
     return pngRaster;
   }
 
-#ifdef CREADPNG_DEBUG
-  CDBDebug("read png data");
-#endif
+  if (pngDebug) {
+    CDBDebug("read png data");
+  }
 
   /* read file */
   if (setjmp(png_jmpbuf(png_ptr))) {
@@ -152,15 +150,15 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   row_pointers = (png_bytep *)malloc(sizeof(png_bytep) * pngRaster->height);
 
   for (size_t y = 0; y < pngRaster->height; y++) row_pointers[y] = (png_byte *)malloc(png_get_rowbytes(png_ptr, info_ptr));
-#ifdef CREADPNG_DEBUG
-  CDBDebug("start png_read_image");
-#endif
+  if (pngDebug) {
+    CDBDebug("start png_read_image");
+  }
   png_read_image(png_ptr, row_pointers);
 
-#ifdef CREADPNG_DEBUG
-  CDBDebug("/done png_read_image");
-  CDBDebug("PNG data: [%d, %d, %d, %d]", pngRaster->width, pngRaster->height, (int)bit_depth, color_type);
-#endif
+  if (pngDebug) {
+    CDBDebug("/done png_read_image");
+    CDBDebug("PNG data: [%lu, %lu, %d, %d]", pngRaster->width, pngRaster->height, (int)bit_depth, color_type);
+  }
 
   int pngwidthdivisor = 1;
   if (bit_depth == 4) {
@@ -282,9 +280,9 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   }
   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   fclose(fp);
-#ifdef CREADPNG_DEBUG
-  CDBDebug("done");
-#endif
+  if (pngDebug) {
+    CDBDebug("done");
+  }
   pngRaster->hasOnlyHeaders = false;
   return pngRaster;
 }

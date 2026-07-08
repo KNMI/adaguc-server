@@ -567,5 +567,11 @@ namespace CT {
    * @param pattern The 0-terminated character array containing the regular expression
    */
   bool testRegEx(const std::string &input, const char *pattern);
+
+  /**
+   * @param input Const char* to std::string. When null, it will become a string with length zero.
+   * @param output std::string
+   */
+  std::string fromCharPointer(const char *input);
 }; /* namespace CT */
 #endif

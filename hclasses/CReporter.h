@@ -26,7 +26,7 @@
 #ifndef CREPORTER_H
 #define CREPORTER_H
 #include <list>
-#include "CTString.h"
+#include <string>
 #include "CReportMessage.h"
 
 /* Set this to false if you don't want report messages in the log file also. */
@@ -46,9 +46,9 @@ class CReporter {
 private:
   static CReporter *instance;
   std::list<CReportMessage> messageList;
-  void writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const;
+  void writeMessageToLog(const std::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const;
   bool writelog = false;
-  CT::string _filename;
+  std::string _filename;
 
 protected:
   CReporter(bool report_and_log = false);
@@ -56,10 +56,10 @@ protected:
 public:
   static CReporter *getInstance();
   const std::list<CReportMessage> getMessageList() const;
-  void addMessage(const CT::string message, CReportMessage::Severities severity, CReportMessage::Categories category, CT::string documentationLink, const char *file = "", int line = -1,
+  void addMessage(const std::string message, CReportMessage::Severities severity, CReportMessage::Categories category, std::string documentationLink, const char *file = "", int line = -1,
                   const char *className = "");
-  void filename(const CT::string filename);
-  CT::string filename() const;
+  void filename(const std::string filename);
+  std::string filename() const;
 };
 
 #endif
