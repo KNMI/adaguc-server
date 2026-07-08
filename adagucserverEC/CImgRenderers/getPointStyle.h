@@ -23,7 +23,7 @@ struct PointStyle {
   double textRadius;
   bool dot;
 
-  CT::string textFormat;
+  std::string textFormat;
   bool plotStationId;
 
   // symbol used for radiusandvalue

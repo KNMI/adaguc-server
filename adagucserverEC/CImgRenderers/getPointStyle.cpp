@@ -76,7 +76,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
   }
 
   if (attr.textformat.empty() == false) {
-    pointStyle.textFormat = attr.textformat.c_str();
+    pointStyle.textFormat = attr.textformat;
   }
 
   if (attr.plotstationid.empty() == false) {

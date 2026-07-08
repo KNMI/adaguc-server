@@ -12,8 +12,8 @@ struct VectorStyle {
   double outlinewidth;
   CColor textColor;
   CColor fillColor;
-  CT::string drawVectorTextFormat;
-  CT::string fontFile;
+  std::string drawVectorTextFormat;
+  std::string fontFile;
   double fontSize;
   bool drawVectorPlotStationId;
   bool drawVectorPlotValue;
