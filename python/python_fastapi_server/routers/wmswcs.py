@@ -10,6 +10,7 @@ from adaguc.CGIRunner import HTTP_STATUSCODE_500_TIMEOUT
 from fastapi import APIRouter, Request, Response
 
 from .setup_adaguc import setup_adaguc
+from .utils.utils import get_base_url
 
 wmsWcsRouter = APIRouter(responses={404: {"description": "Not found"}})
 
@@ -29,7 +30,7 @@ async def handle_wms(req: Request):
     adagucenv = {}
 
     # Set required environment variables
-    base_url = str(req.base_url)
+    base_url = get_base_url(req)
     adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 

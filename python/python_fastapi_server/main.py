@@ -50,11 +50,14 @@ async def add_hsts_header(request: Request, call_next):
 
 
 allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
-# TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
-if allowed_hosts is not None and len(allowed_hosts) > 0:
-    app.add_middleware(ShortCircuitHealthCheckMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
+external_address = os.environ.get("EXTERNALADDRESS")
 
-app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
+if external_address is None or len(external_address) < 6:
+    # TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
+    if allowed_hosts is not None and len(allowed_hosts) > 0:
+        app.add_middleware(ShortCircuitHealthCheckMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
+
+    app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)

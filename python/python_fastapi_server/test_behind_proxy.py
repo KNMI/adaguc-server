@@ -15,7 +15,6 @@ def get_testclient(environment=None):
     """Return a fresh testclient with specific environment settings"""
 
     # Default environment
-    os.environ["EXTERNALADDRESS"] = ""
     os.environ["ADAGUC_TRUSTED_HOSTS"] = ""
     os.environ["ADAGUC_TRUSTED_PROXIES"] = ""
     os.environ["ADAGUC_CONFIG"] = os.path.join(os.environ["ADAGUC_PATH"], "data", "config", "adaguc.dataset.xml")
@@ -97,9 +96,8 @@ def test_host_header_not_trusted():
     """
     TODO: Is it expected that by default the my-host is returned in the online resource?
     """
-    response = get_testclient(environment={"EXTERNALADDRESS": ""}).get(
-        "/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"}
-    )
+    response = get_testclient().get("/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"})
+    print("R:", response.text)
     assert get_url_from_capabilities(response) == "http://my-host/adaguc-server?SERVICE=WMS&"
 
 
@@ -109,7 +107,6 @@ def test_x_forwarded_for_headers():
     """
     client = get_testclient(
         environment={
-            "EXTERNALADDRESS": "",
             "ADAGUC_TRUSTED_HOSTS": "supertestadagucserver",
             "ADAGUC_TRUSTED_PROXIES": "adaguc-testclient",  # default
         }
@@ -134,7 +131,6 @@ def test_x_forwarded_for_headers_wildcard():
     """
     client = get_testclient(
         environment={
-            "EXTERNALADDRESS": "",
             "ADAGUC_TRUSTED_HOSTS": "*",
             "ADAGUC_TRUSTED_PROXIES": "*",  # default
         }
@@ -159,7 +155,6 @@ def test_x_forwarded_for_empty_port():
     """
     client = get_testclient(
         environment={
-            "EXTERNALADDRESS": "",
             "ADAGUC_TRUSTED_HOSTS": "*",
             "ADAGUC_TRUSTED_PROXIES": "*",  # default
         }
@@ -193,7 +188,42 @@ def test_externaddress_not_trusted():
         headers={},
     )
 
+    assert response.status_code == 200
+
+
+def test_host_not_trusted():
+    """
+    Test trusted hosts not trusted
+    """
+    client = get_testclient(
+        environment={
+            # "EXTERNALADDRESS": "http://untrustedhost:1234/thepathafterhost/",
+            "ADAGUC_TRUSTED_HOSTS": "supertestadagucserver",
+        }
+    )
+    response = client.get(
+        "/adaguc-server?service=WMS&request=getCapabilities",
+        headers={"Host": "untrustedhost"},
+    )
+
     assert response.status_code == 400
+
+
+def test_externaddress_not_trusted_healthcheck():
+    """
+    Test trusted hosts not trusted
+    """
+    client = get_testclient(
+        environment={
+            "EXTERNALADDRESS": "http://untrustedhost:1234/thepathafterhost/",
+            "ADAGUC_TRUSTED_HOSTS": "supertestadagucserver",
+        }
+    )
+    response = client.get(
+        "/healthcheck",
+        headers={},
+    )
+    assert response.status_code == 200
 
 
 def test_externaddress_trusted():
@@ -203,6 +233,7 @@ def test_externaddress_trusted():
     client = get_testclient(
         environment={
             "EXTERNALADDRESS": "http://untrustedhost:1234/thepathafterhost/",
+            "ADAGUC_TRUSTED_PROXIES": "adaguc-testclient",
             "ADAGUC_TRUSTED_HOSTS": "untrustedhost",
         }
     )
@@ -210,6 +241,7 @@ def test_externaddress_trusted():
         "/adaguc-server?service=WMS&request=getCapabilities",
         headers={},
     )
+    print("R:", response.text)
 
     assert response.status_code == 200
 
