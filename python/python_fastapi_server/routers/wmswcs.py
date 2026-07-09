@@ -20,28 +20,18 @@ logger = logging.getLogger(__name__)
 @wmsWcsRouter.get("/wcs")
 @wmsWcsRouter.get("/adagucserver")
 @wmsWcsRouter.get("/adaguc-server")
-async def handle_wms(
-    req: Request,
-):
+async def handle_wms(req: Request):
     """
-    Handle /wms endpoint 
+    Handle /wms endpoint
     """
     adaguc_instance = setup_adaguc()
-    # logger.info("instance: %s", str(adaguc_instance))
-    url = req.url
-
-    # logger.info(req.url)
 
     adagucenv = {}
 
     # Set required environment variables
-    base_url = f"{url.scheme}://{url.hostname}:{url.port}"
-    adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", base_url) + "/adaguc-server?"
-    )
-    adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
-    )
+    base_url = str(req.base_url)
+    adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adaguc-server?"
+    adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     query_string = ""
     for k in req.query_params:
@@ -55,9 +45,7 @@ async def handle_wms(
             query_string += f"&{k}={query_param}"
 
     # Run adaguc-server
-    status, data, headers = await adaguc_instance.runADAGUCServer(
-        query_string, env=adagucenv, showLogOnError=False, showLog=False
-    )
+    status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False, showLog=False)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
@@ -79,13 +67,12 @@ async def handle_wms(
             response_code = 500  # Timeout
         else:
             response_code = 500
-    response = Response(content=data.getvalue(), status_code=response_code)
+    response = Response(content=data, status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:
-        key = header.split(":")[0]
-        value = header.split(":")[1].strip()
-        response.headers[key] = value
+        key, value = header.split(":", 1)
+        response.headers[key] = value.strip()
 
     return response
 
@@ -98,19 +85,12 @@ def testadaguc():
     adagucenv = {}
 
     #  Set required environment variables
-    baseurl = "---"
-    adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", baseurl) + "/adaguc-server?"
-    )
-    adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
-    )
+    adagucenv["ADAGUC_ONLINERESOURCE"] = "https://example.com/adaguc-server?"
+    adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     # Run adaguc-server
     # pylint: disable=unused-variable
-    status, _data, headers = asyncio.run(
-        adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False)
-    )
+    status, _data, headers = asyncio.run(adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False))
     assert status == 0
     assert "Content-Type:text/xml" in headers
     logger.info("adaguc-server seems [OK]")

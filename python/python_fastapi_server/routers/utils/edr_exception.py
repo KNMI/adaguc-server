@@ -9,6 +9,15 @@ KNMI
 """
 
 from fastapi import HTTPException
+from enum import Enum
+
+
+class AdagucErrorCode(str, Enum):
+    OperationNotSupported = "OperationNotSupported"
+    InvalidDimensionValue = "InvalidDimensionValue"
+    InvalidDataset = "InvalidDataset"
+    InvalidLayer = "InvalidLayer"
+    UnprocessableEntity = "UnprocessableEntity"
 
 
 class EdrException(HTTPException):
@@ -35,7 +44,7 @@ def exc_incorrect_instance(collection_name: str, instance: str) -> EdrException:
     )
 
 
-def exec_unknown_parameter(collection_name: str, param: str) -> EdrException:
+def exc_unknown_parameter(collection_name: str, param: str) -> EdrException:
     return EdrException(
         code=404,
         description=f"Incorrect parameter {param} requested for collection {collection_name}",

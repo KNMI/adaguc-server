@@ -47,6 +47,18 @@ All tests should now run against postgres via the docker build.
 To run the tests outside of Docker, make sure Postgres is reachable on port 5432, and then execute the test script directly:
 ```bash
 docker compose -f Docker/docker-compose-test.yml up -Vd
+
+source env/bin/activate
+export ADAGUC_PATH=`pwd`
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets
+export ADAGUC_DATA_DIR=/data/adaguc-data
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_NUMPARALLELPROCESSES=4
+export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
+export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_TRACE_TIMINGS=FALSE
+
 ./runtests_psql.sh
 ```
 

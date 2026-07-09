@@ -9,10 +9,11 @@ The easiest way to make use of the adaguc-server is via docker containers. Docke
 
 Adaguc comprises the following components run in separate containers:
 
-1. adaguc-server
+1. adaguc-server and autosync
 2. adaguc-viewer
 3. nginx webserver
 4. postgresql database
+5. redis elasticache
 
 ![Running adaguc-server via docker](./overview/adaguc-server-docker-compose.png)
 

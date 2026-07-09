@@ -87,9 +87,7 @@ async def get_coll_inst_cube(
     bbox: str,
     instance: str | None = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[
-        str | None, Query(alias="parameter-name", min_length=1)
-    ] = None,
+    parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
@@ -131,7 +129,7 @@ async def get_coll_inst_cube(
     parameters = {}
     datetime_arg = datetime_par
     if datetime_par is None:
-        datetime_arg = "2000/3000"
+        datetime_arg = "*"
     for parameter_name in parameter_names:
         _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
 
@@ -150,9 +148,7 @@ async def get_coll_inst_cube(
         )
 
         start = time.time()
-        status, wcs_response, headers = await call_adaguc(
-            url=urlrequest.encode("UTF-8")
-        )
+        status, wcs_response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
@@ -160,20 +156,16 @@ async def get_coll_inst_cube(
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             continue
-        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response.getvalue())
+        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response)
 
-        coveragejson = netcdf_to_covjson(
-            metadata[collection_name], result_dataset, translate_names, translate_dims
-        )
+        coveragejson = netcdf_to_covjson(metadata[collection_name], result_dataset, translate_names, translate_dims)
         if coveragejson is not None:
             coveragejsons.extend(coveragejson)
             for covjson in coveragejson:
                 parameters = parameters | covjson.parameters
 
     if len(coveragejsons) == 0:
-        raise exc_failed_call(
-            f"cube call failed for parameters {','.join(parameter_names)} [{status}]"
-        )
+        raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")
     if len(coveragejsons) == 1:
         return coveragejsons[0]
 

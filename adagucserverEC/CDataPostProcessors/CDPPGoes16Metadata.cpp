@@ -11,7 +11,7 @@ const char *CDPPGoes16Metadata::getId() {
 }
 int CDPPGoes16Metadata::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
   // CDBDebug("isApplicable");
-  if (proc->attr.algorithm.equals("goes16metadata") && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+  if (proc->attr.algorithm == ("goes16metadata") && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -41,11 +41,11 @@ int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     cdfObject->addDimension(dimT);
     CDF::Variable *varT = new CDF::Variable();
     varT->setType(CDF_DOUBLE);
-    varT->name.copy("time");
+    varT->name = ("time");
     varT->isDimension = true;
     varT->dimensionlinks.push_back(dimT);
     cdfObject->addVariable(varT);
-    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
+    varT->allocateData(dimT->length);
     varT->setAttributeText("standard_name", "time");
     try {
       varT->setAttributeText("units", productT->getAttributeThrows("time_coverage_start")->toString().c_str());

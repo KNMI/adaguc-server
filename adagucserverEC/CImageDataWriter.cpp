@@ -112,7 +112,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(std::string key, C
     projCacheInfo.CoordY = y;
 
     imageWarper->reprojpoint(x, y);
-    if (isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(dataSource->nativeProj4)) {
       if (x >= -180 && x < 180) {
         while (x < dataSource->dfBBOX[0]) x += 360;
       } else {
@@ -195,7 +195,7 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawI
       int hexa[8];
 
       for (size_t j = 0; j < 6; j++) {
-        hexa[j] = srvParam->BGColor.charAt(j + 2);
+        hexa[j] = srvParam->BGColor.at(j + 2);
         hexa[j] -= 48;
         if (hexa[j] > 16) hexa[j] -= 7;
       }
@@ -281,7 +281,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA || srvParam->Styles.indexOf("HQ") > 0) {
+  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
     drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
   }
 
@@ -303,21 +303,21 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")) {
+      if (dataSource->cfgLayer->WMSFormat[0]->attr.name == ("image/png32")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")) {
+      if (dataSource->cfgLayer->WMSFormat[0]->attr.format == ("image/png32")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png24")) {
+      if (dataSource->cfgLayer->WMSFormat[0]->attr.format == ("image/png24")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/webp")) {
+      if (dataSource->cfgLayer->WMSFormat[0]->attr.format == ("image/webp")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
       if (dataSource->cfgLayer->WMSFormat[0]->attr.quality.empty() == false) {
-        srvParam->imageQuality = dataSource->cfgLayer->WMSFormat[0]->attr.quality.toInt();
+        srvParam->imageQuality = atoi(dataSource->cfgLayer->WMSFormat[0]->attr.quality.c_str());
       }
     }
   }
@@ -506,10 +506,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           sameHeaderForAll = true;
         }
 
-        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall == ("true")) {
           openAll = true;
         }
-        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall.equals("headers")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall == ("headers")) {
           sameHeaderForAll = true;
         }
       }
@@ -528,7 +528,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         CDBError("CMakeEProfile::MakeEProfile failed");
         return status;
       }
-    } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat.equals("application/json")) {
+    } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat == ("application/json")) {
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
       if (status != 0) {
         CDBError("CMakeJSONTimeSeries::MakeJSONTimeSeries failed");
@@ -920,8 +920,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
             std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues);
             for (size_t i = 0; i < ranges.size(); i++) {
               auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
-              shadeInterval.attr.min.print("%d", ranges[i].min);
-              shadeInterval.attr.max.print("%d", ranges[i].max);
+              shadeInterval.attr.min = CT::printf("%d", ranges[i].min);
+              shadeInterval.attr.max = CT::printf("%d", ranges[i].max);
               shadeInterval.attr.fillcolor = featureInterval->attr.fillcolor;
               shadeInterval.attr.bgcolor = featureInterval->attr.bgcolor;
               shadeInterval.attr.label = featureInterval->attr.label;
@@ -1243,8 +1243,8 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         if (dataSource->cfgLayer->ImageText.size() > 0) {
 
           std::string imageText = "";
-          if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-            imageText = dataSource->cfgLayer->ImageText[0]->value;
+          if (dataSource->cfgLayer->ImageText[0]->elementValue.empty() == false) {
+            imageText = dataSource->cfgLayer->ImageText[0]->elementValue;
           }
 
           if (dataSource->getNumDataObjects() > 0) {
@@ -1270,7 +1270,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             // CDBDebug("Watermark: %s",imageText.c_str());
             float fontSize = 10;
             if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
-              fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+              fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
               fontSize = fontSize * scaling;
             }
             drawImage.drawText(int(drawImage.geoParams.width / 2 - len * 3), drawImage.geoParams.height - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
@@ -1290,16 +1290,16 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       int lineColor = 247;
 
       if (dataSource->cfgLayer->Grid[0]->attr.resolution.empty() == false) {
-        gridSize = parseFloat(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
+        gridSize = atof(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
       }
       precision = gridSize / 10;
       if (dataSource->cfgLayer->Grid[0]->attr.precision.empty() == false) {
-        precision = parseFloat(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
+        precision = atof(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
       }
 
       bool useProjection = true;
 
-      if (srvParam->geoParams.crs.equals("EPSG:4326")) {
+      if (srvParam->geoParams.crs == ("EPSG:4326")) {
         // CDBDebug("Not using projection");
         useProjection = false;
       }
@@ -1398,7 +1398,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       if (srvParam->cfg->WMS[0]->GridFont.size() == 1) {
 
         fontLoc = srvParam->cfg->WMS[0]->GridFont[0]->attr.location.c_str();
-        fontSize = parseFloat(srvParam->cfg->WMS[0]->GridFont[0]->attr.size.c_str());
+        fontSize = atof(srvParam->cfg->WMS[0]->GridFont[0]->attr.size.c_str());
         drawText = true;
       }
 
@@ -1564,16 +1564,16 @@ int CImageDataWriter::end() {
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
 
-    if (srvParam->InfoFormat.equals("text/plain")) resultFormat = textplain;
-    if (srvParam->InfoFormat.equals("text/xml")) resultFormat = textxml;
-    if (srvParam->InfoFormat.equals("image/png")) resultFormat = imagepng;
+    if (srvParam->InfoFormat == ("text/plain")) resultFormat = textplain;
+    if (srvParam->InfoFormat == ("text/xml")) resultFormat = textxml;
+    if (srvParam->InfoFormat == ("image/png")) resultFormat = imagepng;
 
-    if (srvParam->InfoFormat.equals("application/vnd.ogc.gml")) resultFormat = applicationvndogcgml;
+    if (srvParam->InfoFormat == ("application/vnd.ogc.gml")) resultFormat = applicationvndogcgml;
 
     if (isProfileData) {
       resultFormat = imagepng_eprofile;
 
-      if (srvParam->InfoFormat.equals("image/png")) {
+      if (srvParam->InfoFormat == ("image/png")) {
         printf("%s%s%c%c\n", "Content-Type:image/png", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         drawImage.printImagePng8(true);
       } else {
@@ -1584,15 +1584,14 @@ int CImageDataWriter::end() {
       return 0;
     }
 
-    if (srvParam->InfoFormat.indexOf("application/json") != -1) {
+    if (CT::indexOf(srvParam->InfoFormat, "application/json") != -1) {
 
       try {
-        if (gfiStructure.get("root") != NULL) {
-          std::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
+        if (gfiStructure.get("root") != nullptr) {
+          std::string data = xmlListToJSON(gfiStructure.getList("root"), CXMLPARSER_JSONMODE_STANDARD);
           if (srvParam->JSONP.length() == 0) {
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
-
             printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
             printf("\n%s(", srvParam->JSONP.c_str());
           }
@@ -1753,7 +1752,7 @@ int CImageDataWriter::end() {
             CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             CT::printfconcat(resultXML, "        </gml:Point>\n");
 
-            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+            if (srvParam->geoParams.crs != "EPSG:4326") {
               CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               CT::printfconcat(resultXML, "        </gml:Point>\n");
@@ -1817,7 +1816,7 @@ int CImageDataWriter::end() {
             CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             CT::printfconcat(resultXML, "        </gml:Point>\n");
 
-            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+            if (srvParam->geoParams.crs != "EPSG:4326") {
               CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               CT::printfconcat(resultXML, "        </gml:Point>\n");
@@ -1957,11 +1956,11 @@ int CImageDataWriter::end() {
 
       resetErrors();
       if (srvParam->JSONP.length() == 0) {
-        resultJSON += rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str();
+        resultJSON += xmlListToJSON(rootElement.getList("param"), CXMLPARSER_JSONMODE_STANDARD);
       } else {
         resultJSON += srvParam->JSONP.c_str();
         resultJSON += "(";
-        resultJSON += rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str();
+        resultJSON += xmlListToJSON(rootElement.getList("param"), CXMLPARSER_JSONMODE_STANDARD);
         resultJSON += ");";
       }
       printf("%s", resultJSON.c_str());
@@ -2021,9 +2020,9 @@ int CImageDataWriter::end() {
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
-      auto s = srvParam->Format.split(";");
+      auto s = CT::split(srvParam->Format, ";");
       if (s.size() > 1) {
-        int q = s[1].toInt();
+        int q = atoi(s[1].c_str());
         if (q >= 0 && q <= 100) {
           webPQuality = q;
         }

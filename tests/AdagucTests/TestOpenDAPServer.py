@@ -31,9 +31,9 @@ class TestOpenDAPServer(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_OpenDAPServer_testdatanc_DDS.txt"
         status, data, headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dds", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DDS_headers(self):
         """
@@ -53,9 +53,9 @@ class TestOpenDAPServer(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_OpenDAPServer_testdatanc_DAS.txt"
         status, data, headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.das", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DODS(self):
         """
@@ -64,9 +64,9 @@ class TestOpenDAPServer(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_OpenDAPServer_testdatanc_DODS.txt"
         status, data, headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dods", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DODS_Query_testdatayxtimeprojection(self):
         """
@@ -77,9 +77,9 @@ class TestOpenDAPServer(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             path="opendap/testdata.nc.dods", url="testdata,y,x,time,projection", env=self.env
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DODS_Query_testdatay(self):
         """
@@ -88,9 +88,9 @@ class TestOpenDAPServer(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_OpenDAPServer_testdatanc_DODS_Query_testdatay.txt"
         status, data, headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dods", url="testdata,y", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DODS_Query_projection(self):
         """
@@ -99,9 +99,9 @@ class TestOpenDAPServer(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_OpenDAPServer_testdatanc_DODS_Query_projection.txt"
         status, data, headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dods", url="projection", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DODS_Query_testdata_subset(self):
         """
@@ -110,6 +110,6 @@ class TestOpenDAPServer(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_OpenDAPServer_testdatanc_DODS_Query_testdata_subset.txt"
         status, data, headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dods", url="testdata[1:5][8:17]", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))

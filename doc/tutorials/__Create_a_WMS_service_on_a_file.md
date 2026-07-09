@@ -60,7 +60,6 @@ export PROJ_LIB=/data/build/share/proj/
 export ADAGUC_CONFIG=/data/services/config/config.xml
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_LOGFILE=data/log/server.log
-export ADAGUC_ERRORFILE=/data/log/server.errlog
 export ADAGUC_FONT=/data/fonts/FreeSans.ttf
 export ADAGUC_DATARESTRICTION="FALSE"
 

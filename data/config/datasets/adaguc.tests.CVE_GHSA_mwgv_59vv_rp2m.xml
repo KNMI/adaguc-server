@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+        Fixes CVE_GHSA_mwgv_59vv_rp2m as found by Sebastian Alba Vives
+        https://github.com/KNMI/adaguc-server/security/advisories/GHSA-mwgv-59vv-rp2m
+  -->
+
+  <Layer type="database" hidden="false">
+    <Name>poc_a</Name>
+    <Variable>features</Variable>
+    <FilePath>{ADAGUC_PATH}/data/testdata/GHSA-mwgv-59vv-rp2m/poc_a.json</FilePath>
+  </Layer>
+  <Layer type="database" hidden="false">
+    <Name>poc_b</Name>
+    <Variable>features</Variable>
+    <FilePath>{ADAGUC_PATH}/data/testdata/GHSA-mwgv-59vv-rp2m/poc_b.json</FilePath>
+  </Layer>
+  <Layer type="database" hidden="false">
+    <Name>poc_c</Name>
+    <Variable>features</Variable>
+    <FilePath>{ADAGUC_PATH}/data/testdata/GHSA-mwgv-59vv-rp2m/poc_c.json</FilePath>
+  </Layer>
+  <Layer type="database" hidden="false">
+    <Name>poc_d</Name>
+    <Variable>features</Variable>
+    <FilePath>{ADAGUC_PATH}/data/testdata/GHSA-mwgv-59vv-rp2m/poc_d.json</FilePath>
+  </Layer>
+
+</Configuration>

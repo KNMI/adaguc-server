@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 3.1.2, of Jun 30 2025 11:29:01 </Keyword>
+            <Keyword>ADAGUCServer version 7.3.2, of Jul  3 2026 16:53:34 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -73,17 +73,18 @@
 <CRS>EPSG:4258</CRS>
 <CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
+<CRS>EPSG:5041</CRS>
 <CRS>EPSG:54030</CRS>
 <CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
 <CRS>PROJ4:%2Bproj%3Dob_tran%20%2Bo_proj%3Dlonglat%20%2Blon_0%3D%2D8%2E0%20%2Bo_lat_p%3D35%2E0%20%2Bo_lon_p%3D0%2E0%20%2Ba%3D6367470%20%2Be%3D0%20%2Bno_defs</CRS>
-<BoundingBox CRS="CRS:84" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
+<BoundingBox CRS="CRS:84" minx="-5.197559" miny="41.926322" maxx="19.363445" maxy="59.916479" />
 <BoundingBox CRS="EPSG:25831" minx="-158524.476447" miny="4674976.849864" maxx="1485166.051976" maxy="6662272.916747" />
 <BoundingBox CRS="EPSG:25832" minx="-640734.840652" miny="4644137.389623" maxx="1126111.574266" maxy="6712613.598713" />
 <BoundingBox CRS="EPSG:28992" minx="-698179.856206" miny="-658358.645806" maxx="998796.634577" maxy="1363404.615714" />
 <BoundingBox CRS="EPSG:3035" minx="3106481.008370" miny="2092364.523226" maxx="4886938.084047" maxy="4166894.308911" />
 <BoundingBox CRS="EPSG:3067" minx="-2084795.387794" miny="4762634.602513" maxx="38153.856845" maxy="7049843.481081" />
-<BoundingBox CRS="EPSG:32661" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
+<BoundingBox CRS="EPSG:32661" minx="-3551923.560319" miny="1510492.846031" maxx="-1407852.277061" maxy="3243352.395372" />
 <BoundingBox CRS="EPSG:3411" minx="2190610.404942" miny="-4050561.169232" maxx="4595428.366256" maxy="-1583112.869331" />
 <BoundingBox CRS="EPSG:3412" minx="-3109314.573816" miny="26990899.047875" maxx="13777467.671867" maxy="45513687.683791" />
 <BoundingBox CRS="EPSG:3575" minx="-1311533.636248" miny="-5201751.869726" maxx="588736.834504" maxy="-3221506.782067" />
@@ -92,6 +93,7 @@
 <BoundingBox CRS="EPSG:4258" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:4326" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
 <BoundingBox CRS="EPSG:54030" minx="-442976.950433" miny="4480694.298309" maxx="1499953.844268" maxy="6327856.290422" />
 <BoundingBox CRS="EPSG:7399" minx="-424845.011613" miny="5003557.056445" maxx="1323400.052562" maxy="6868776.212061" />
 <BoundingBox CRS="EPSG:900913" minx="-578589.671269" miny="5149949.146233" maxx="2155528.800430" maxy="8381166.264714" />
@@ -104,13 +106,13 @@
   <eastBoundLongitude>19.363445</eastBoundLongitude>
   <southBoundLatitude>41.926322</southBoundLatitude>
   <northBoundLatitude>59.916479</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="-5.197559" miny="41.926322" maxx="19.363445" maxy="59.916479" />
 <BoundingBox CRS="EPSG:25831" minx="-158524.476447" miny="4674976.849864" maxx="1485166.051976" maxy="6662272.916747" />
 <BoundingBox CRS="EPSG:25832" minx="-640734.840652" miny="4644137.389623" maxx="1126111.574266" maxy="6712613.598713" />
 <BoundingBox CRS="EPSG:28992" minx="-698179.856206" miny="-658358.645806" maxx="998796.634577" maxy="1363404.615714" />
 <BoundingBox CRS="EPSG:3035" minx="3106481.008370" miny="2092364.523226" maxx="4886938.084047" maxy="4166894.308911" />
 <BoundingBox CRS="EPSG:3067" minx="-2084795.387794" miny="4762634.602513" maxx="38153.856845" maxy="7049843.481081" />
-<BoundingBox CRS="EPSG:32661" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
+<BoundingBox CRS="EPSG:32661" minx="-3551923.560319" miny="1510492.846031" maxx="-1407852.277061" maxy="3243352.395372" />
 <BoundingBox CRS="EPSG:3411" minx="2190610.404942" miny="-4050561.169232" maxx="4595428.366256" maxy="-1583112.869331" />
 <BoundingBox CRS="EPSG:3412" minx="-3109314.573816" miny="26990899.047875" maxx="13777467.671867" maxy="45513687.683791" />
 <BoundingBox CRS="EPSG:3575" minx="-1311533.636248" miny="-5201751.869726" maxx="588736.834504" maxy="-3221506.782067" />
@@ -119,6 +121,7 @@
 <BoundingBox CRS="EPSG:4258" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:4326" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
 <BoundingBox CRS="EPSG:54030" minx="-442976.950433" miny="4480694.298309" maxx="1499953.844268" maxy="6327856.290422" />
 <BoundingBox CRS="EPSG:7399" minx="-424845.011613" miny="5003557.056445" maxx="1323400.052562" maxy="6868776.212061" />
 <BoundingBox CRS="EPSG:900913" minx="-578589.671269" miny="5149949.146233" maxx="2155528.800430" maxy="8381166.264714" />
@@ -126,7 +129,16 @@
 <Dimension name="time" units="ISO8601" default="2024-07-11T03:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T03:00:00Z/2024-07-13T17:00:00Z/PT1H</Dimension>
 <Dimension name="reference_time" units="ISO8601" default="2024-07-11T05:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T02:00:00Z,2024-07-11T03:00:00Z,2024-07-11T04:00:00Z,2024-07-11T05:00:00Z</Dimension>
 <Dimension name="pressure_level_in_hpa" units="hPa" default="925" multipleValues="1" nearestValue="0" >500,700,850,925</Dimension>
-   <Style>    <Name>default</Name>    <Title>default</Title>    <Abstract>default</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_min&amp;format=image/png&amp;STYLE=default"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>default</Name>
+    <Title>default</Title>
+    <Abstract>default</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_min&amp;format=image/png&amp;STYLE=default"/>
+    </LegendURL>
+  </Style>
+</Layer>
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>time_default_max</Name>
 <Title>time_default_max</Title>
@@ -135,13 +147,13 @@
   <eastBoundLongitude>19.363445</eastBoundLongitude>
   <southBoundLatitude>41.926322</southBoundLatitude>
   <northBoundLatitude>59.916479</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="-5.197559" miny="41.926322" maxx="19.363445" maxy="59.916479" />
 <BoundingBox CRS="EPSG:25831" minx="-158524.476447" miny="4674976.849864" maxx="1485166.051976" maxy="6662272.916747" />
 <BoundingBox CRS="EPSG:25832" minx="-640734.840652" miny="4644137.389623" maxx="1126111.574266" maxy="6712613.598713" />
 <BoundingBox CRS="EPSG:28992" minx="-698179.856206" miny="-658358.645806" maxx="998796.634577" maxy="1363404.615714" />
 <BoundingBox CRS="EPSG:3035" minx="3106481.008370" miny="2092364.523226" maxx="4886938.084047" maxy="4166894.308911" />
 <BoundingBox CRS="EPSG:3067" minx="-2084795.387794" miny="4762634.602513" maxx="38153.856845" maxy="7049843.481081" />
-<BoundingBox CRS="EPSG:32661" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
+<BoundingBox CRS="EPSG:32661" minx="-3551923.560319" miny="1510492.846031" maxx="-1407852.277061" maxy="3243352.395372" />
 <BoundingBox CRS="EPSG:3411" minx="2190610.404942" miny="-4050561.169232" maxx="4595428.366256" maxy="-1583112.869331" />
 <BoundingBox CRS="EPSG:3412" minx="-3109314.573816" miny="26990899.047875" maxx="13777467.671867" maxy="45513687.683791" />
 <BoundingBox CRS="EPSG:3575" minx="-1311533.636248" miny="-5201751.869726" maxx="588736.834504" maxy="-3221506.782067" />
@@ -150,6 +162,7 @@
 <BoundingBox CRS="EPSG:4258" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:4326" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
 <BoundingBox CRS="EPSG:54030" minx="-442976.950433" miny="4480694.298309" maxx="1499953.844268" maxy="6327856.290422" />
 <BoundingBox CRS="EPSG:7399" minx="-424845.011613" miny="5003557.056445" maxx="1323400.052562" maxy="6868776.212061" />
 <BoundingBox CRS="EPSG:900913" minx="-578589.671269" miny="5149949.146233" maxx="2155528.800430" maxy="8381166.264714" />
@@ -157,7 +170,16 @@
 <Dimension name="time" units="ISO8601" default="2024-07-13T17:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T03:00:00Z/2024-07-13T17:00:00Z/PT1H</Dimension>
 <Dimension name="reference_time" units="ISO8601" default="2024-07-11T05:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T02:00:00Z,2024-07-11T03:00:00Z,2024-07-11T04:00:00Z,2024-07-11T05:00:00Z</Dimension>
 <Dimension name="pressure_level_in_hpa" units="hPa" default="925" multipleValues="1" nearestValue="0" >500,700,850,925</Dimension>
-   <Style>    <Name>default</Name>    <Title>default</Title>    <Abstract>default</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_max&amp;format=image/png&amp;STYLE=default"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>default</Name>
+    <Title>default</Title>
+    <Abstract>default</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_max&amp;format=image/png&amp;STYLE=default"/>
+    </LegendURL>
+  </Style>
+</Layer>
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>time_default_forecast_reference_time</Name>
 <Title>time_default_forecast_reference_time</Title>
@@ -166,13 +188,13 @@
   <eastBoundLongitude>19.363445</eastBoundLongitude>
   <southBoundLatitude>41.926322</southBoundLatitude>
   <northBoundLatitude>59.916479</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="-5.197559" miny="41.926322" maxx="19.363445" maxy="59.916479" />
 <BoundingBox CRS="EPSG:25831" minx="-158524.476447" miny="4674976.849864" maxx="1485166.051976" maxy="6662272.916747" />
 <BoundingBox CRS="EPSG:25832" minx="-640734.840652" miny="4644137.389623" maxx="1126111.574266" maxy="6712613.598713" />
 <BoundingBox CRS="EPSG:28992" minx="-698179.856206" miny="-658358.645806" maxx="998796.634577" maxy="1363404.615714" />
 <BoundingBox CRS="EPSG:3035" minx="3106481.008370" miny="2092364.523226" maxx="4886938.084047" maxy="4166894.308911" />
 <BoundingBox CRS="EPSG:3067" minx="-2084795.387794" miny="4762634.602513" maxx="38153.856845" maxy="7049843.481081" />
-<BoundingBox CRS="EPSG:32661" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
+<BoundingBox CRS="EPSG:32661" minx="-3551923.560319" miny="1510492.846031" maxx="-1407852.277061" maxy="3243352.395372" />
 <BoundingBox CRS="EPSG:3411" minx="2190610.404942" miny="-4050561.169232" maxx="4595428.366256" maxy="-1583112.869331" />
 <BoundingBox CRS="EPSG:3412" minx="-3109314.573816" miny="26990899.047875" maxx="13777467.671867" maxy="45513687.683791" />
 <BoundingBox CRS="EPSG:3575" minx="-1311533.636248" miny="-5201751.869726" maxx="588736.834504" maxy="-3221506.782067" />
@@ -181,6 +203,7 @@
 <BoundingBox CRS="EPSG:4258" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:4326" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
 <BoundingBox CRS="EPSG:54030" minx="-442976.950433" miny="4480694.298309" maxx="1499953.844268" maxy="6327856.290422" />
 <BoundingBox CRS="EPSG:7399" minx="-424845.011613" miny="5003557.056445" maxx="1323400.052562" maxy="6868776.212061" />
 <BoundingBox CRS="EPSG:900913" minx="-578589.671269" miny="5149949.146233" maxx="2155528.800430" maxy="8381166.264714" />
@@ -188,7 +211,16 @@
 <Dimension name="time" units="ISO8601" default="2024-07-11T05:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T03:00:00Z/2024-07-13T17:00:00Z/PT1H</Dimension>
 <Dimension name="reference_time" units="ISO8601" default="2024-07-11T05:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T02:00:00Z,2024-07-11T03:00:00Z,2024-07-11T04:00:00Z,2024-07-11T05:00:00Z</Dimension>
 <Dimension name="pressure_level_in_hpa" units="hPa" default="925" multipleValues="1" nearestValue="0" >500,700,850,925</Dimension>
-   <Style>    <Name>default</Name>    <Title>default</Title>    <Abstract>default</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_forecast_reference_time&amp;format=image/png&amp;STYLE=default"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>default</Name>
+    <Title>default</Title>
+    <Abstract>default</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_forecast_reference_time&amp;format=image/png&amp;STYLE=default"/>
+    </LegendURL>
+  </Style>
+</Layer>
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>time_default_forecast_reference_time_and_duration</Name>
 <Title>time_default_forecast_reference_time_and_duration</Title>
@@ -197,13 +229,13 @@
   <eastBoundLongitude>19.363445</eastBoundLongitude>
   <southBoundLatitude>41.926322</southBoundLatitude>
   <northBoundLatitude>59.916479</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="-5.197559" miny="41.926322" maxx="19.363445" maxy="59.916479" />
 <BoundingBox CRS="EPSG:25831" minx="-158524.476447" miny="4674976.849864" maxx="1485166.051976" maxy="6662272.916747" />
 <BoundingBox CRS="EPSG:25832" minx="-640734.840652" miny="4644137.389623" maxx="1126111.574266" maxy="6712613.598713" />
 <BoundingBox CRS="EPSG:28992" minx="-698179.856206" miny="-658358.645806" maxx="998796.634577" maxy="1363404.615714" />
 <BoundingBox CRS="EPSG:3035" minx="3106481.008370" miny="2092364.523226" maxx="4886938.084047" maxy="4166894.308911" />
 <BoundingBox CRS="EPSG:3067" minx="-2084795.387794" miny="4762634.602513" maxx="38153.856845" maxy="7049843.481081" />
-<BoundingBox CRS="EPSG:32661" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
+<BoundingBox CRS="EPSG:32661" minx="-3551923.560319" miny="1510492.846031" maxx="-1407852.277061" maxy="3243352.395372" />
 <BoundingBox CRS="EPSG:3411" minx="2190610.404942" miny="-4050561.169232" maxx="4595428.366256" maxy="-1583112.869331" />
 <BoundingBox CRS="EPSG:3412" minx="-3109314.573816" miny="26990899.047875" maxx="13777467.671867" maxy="45513687.683791" />
 <BoundingBox CRS="EPSG:3575" minx="-1311533.636248" miny="-5201751.869726" maxx="588736.834504" maxy="-3221506.782067" />
@@ -212,6 +244,7 @@
 <BoundingBox CRS="EPSG:4258" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:4326" minx="41.926322" miny="-5.197559" maxx="59.916479" maxy="19.363445" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="1510492.846031" miny="-3551923.560319" maxx="3243352.395372" maxy="-1407852.277061" />
 <BoundingBox CRS="EPSG:54030" minx="-442976.950433" miny="4480694.298309" maxx="1499953.844268" maxy="6327856.290422" />
 <BoundingBox CRS="EPSG:7399" minx="-424845.011613" miny="5003557.056445" maxx="1323400.052562" maxy="6868776.212061" />
 <BoundingBox CRS="EPSG:900913" minx="-578589.671269" miny="5149949.146233" maxx="2155528.800430" maxy="8381166.264714" />
@@ -219,7 +252,16 @@
 <Dimension name="time" units="ISO8601" default="2024-07-11T06:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T03:00:00Z/2024-07-13T17:00:00Z/PT1H</Dimension>
 <Dimension name="reference_time" units="ISO8601" default="2024-07-11T05:00:00Z" multipleValues="1" nearestValue="0" current="1">2024-07-11T02:00:00Z,2024-07-11T03:00:00Z,2024-07-11T04:00:00Z,2024-07-11T05:00:00Z</Dimension>
 <Dimension name="pressure_level_in_hpa" units="hPa" default="925" multipleValues="1" nearestValue="0" >500,700,850,925</Dimension>
-   <Style>    <Name>default</Name>    <Title>default</Title>    <Abstract>default</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_forecast_reference_time_and_duration&amp;format=image/png&amp;STYLE=default"/>    </LegendURL>  </Style></Layer>
+   <Style>
+    <Name>default</Name>
+    <Title>default</Title>
+    <Abstract>default</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.403_default_time_referenced_to_forecast_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=time_default_forecast_reference_time_and_duration&amp;format=image/png&amp;STYLE=default"/>
+    </LegendURL>
+  </Style>
+</Layer>
     </Layer>
   </Capability>
 </WMS_Capabilities>

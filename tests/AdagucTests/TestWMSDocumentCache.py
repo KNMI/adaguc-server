@@ -34,7 +34,7 @@ class TestWMSDocumentCache(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.testtimeseriescached&SERVICE=WMS&request=getcapabilities", env=self.env
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
@@ -58,7 +58,7 @@ class TestWMSDocumentCache(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.testtimeseriescached&SERVICE=WMS&request=getcapabilities", env=self.env
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
@@ -73,6 +73,6 @@ class TestWMSDocumentCache(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.testtimeseriescached&SERVICE=WMS&request=getcapabilities", env=self.env
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))

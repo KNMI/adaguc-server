@@ -43,15 +43,15 @@
 #define TABLETYPE_STRING 4
 
 struct DimInfo {
-  CT::string tableName;
-  CT::string dataType;
+  std::string tableName;
+  std::string dataType;
 };
 typedef struct DimInfo DimInfo;
 
 struct GeoOptions {
   double bbox[4];
   int indices[4];
-  CT::string proj4;
+  std::string proj4;
   int level;
 };
 
@@ -95,7 +95,7 @@ public:
    */
   CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName);
 
-  CT::string getTableNameForPathFilterAndDimension(CDataSource *dataSource);
+  std::string getTableNameForPathFilterAndDimension(CDataSource *dataSource);
 
   /**
    * getTableNameForPathFilterAndDimension
@@ -106,20 +106,28 @@ public:
    * @param dataSource The dataSource
    * @return Tablename on succes, throws integer exception on failure.
    */
-  CT::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
-  std::map<CT::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
+  std::string getTableNameForPathFilterAndDimension(const std::string &path, const std::string &filter, const char *dimension, CDataSource *dataSource);
+  std::map<std::string, DimInfo> getTableNamesForPathFilterAndDimensions(const std::string &path, const std::string &filter, std::vector<std::string> dimensions, CDataSource *dataSource);
 
   void assertLookupTableExists();
-  void addToLookupTable(const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
+  void addToLookupTable(const std::string &path, const std::string &filter, std::string dimensionName, std::string tableName);
   std::string generateRandomTableName();
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
   CDBStore::Store *getMax(const char *name, const char *table);
   CDBStore::Store *getBetween(const char *min, const char *max, const char *colname, const char *table, int limit);
-  CT::string getDimValueForFileName(const char *filename, const char *table);
+  std::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table);
+
+  /**
+   * Returns a pointer to a store with files and their corresponding indices
+   * @param dataSource: to query
+   * @param limit: the max query limit, use -1 to avoid using a limit
+   * @param raiseExceptionWhenOverLimit: set to true to raise an exception when limit is reached
+   * @return Returns a pointer to a store with files and their corresponding indices
+   */
   CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit, bool raiseExceptionWhenOverLimit);
   CDBStore::Store *getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *stride, int limit);
 
@@ -144,7 +152,7 @@ public:
   bool advisoryUnLock(size_t);
   f8box getExtent(CDataSource *dataSource);
 
-  std::vector<CT::string> getTableNames(CDataSource *dataSource);
+  std::vector<std::string> getTableNames(CDataSource *dataSource);
 };
 
 #endif

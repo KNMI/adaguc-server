@@ -7,7 +7,7 @@
 
 const char *CDPPAddFeatures::getId() { return CDATAPOSTPROCESSOR_ADDFEATURES_ID; }
 int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_ADDFEATURES_ID)) {
+  if (proc->attr.algorithm == (CDATAPOSTPROCESSOR_ADDFEATURES_ID)) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -56,7 +56,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     if (featureDataSource.setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[0], 0) != 0) {
       return 1;
     }
-    featureDataSource.addStep(proc->attr.a.c_str()); // Set filename
+    featureDataSource.addStep(proc->attr.a); // Set filename
     CDataReader reader;
     CDBDebug("Opening %s", featureDataSource.getFileName().c_str());
     int status = reader.open(&featureDataSource, CNETCDFREADER_MODE_OPEN_ALL);

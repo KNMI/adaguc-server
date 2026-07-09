@@ -126,9 +126,8 @@ public:
   std::vector<DataObject> dataObjects;
   std::vector<COGCDims> requiredDims;
 
-  // TODO, convert to std::string
-  CT::string nativeEPSG;
-  CT::string nativeProj4;
+  std::string nativeEPSG;
+  std::string nativeProj4;
 
   // References
   Statistics *statistics = nullptr;
@@ -140,9 +139,9 @@ public:
 
   // Class methods
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex);
-  void addStep(const char *fileName);
+  void addStep(const std::string &fileName);
   std::string getFileName();
-  void setHeaderFilename(CT::string headerFileName);
+  void setHeaderFilename(const std::string &headerFileName);
   void setGeo(GeoParameters &geo);
   GeoParameters getGeo();
   size_t getNumDataObjects() { return dataObjects.size(); }

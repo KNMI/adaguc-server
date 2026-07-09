@@ -68,11 +68,11 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
     // Create a new time variable for the new 2D fields.
     CDF::Variable *varT = new CDF::Variable();
     varT->setType(CDF_DOUBLE);
-    varT->name.copy(dimT->name.c_str());
+    varT->name = (dimT->name.c_str());
     varT->setAttributeText("standard_name", "time");
     varT->setAttributeText("long_name", "time");
     varT->dimensionlinks.push_back(dimT);
-    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
+    varT->allocateData(dimT->length);
     cdfObject->addVariable(varT);
 
     // Detect time from the netcdf data and copy the same units from the original time variable
@@ -137,11 +137,11 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
+    varX->name = ("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -150,11 +150,11 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
+    varY->name = ("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -382,8 +382,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     varX = cdfObject->getVariableThrows("x");
     varY = cdfObject->getVariableThrows("y");
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -400,7 +400,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     // Allocate and clear data
     for (size_t d = 0; d < nrDataObjects; d++) {
       new2DVar[d]->setSize(fieldSize);
-      CDF::allocateData(new2DVar[d]->getType(), &(new2DVar[d]->data), fieldSize);
+      new2DVar[d]->allocateData(fieldSize);
       for (size_t j = 0; j < fieldSize; j++) {
         ((float *)dataObjects[d]->cdfVariable->data)[j] = (float)dataObjects[d]->dfNodataValue;
       }
@@ -424,16 +424,16 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
       }
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
+        projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
           projectionRequired = false;
         }
-        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
       }
     }
     if (projectionRequired) {

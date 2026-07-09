@@ -3,7 +3,7 @@
 const char *CDPPAddDataObject::getId() { return CDATAPOSTPROCESSOR_AddDataObject_ID; }
 
 int CDPPAddDataObject::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_AddDataObject_ID)) {
+  if (proc->attr.algorithm == (CDATAPOSTPROCESSOR_AddDataObject_ID)) {
     if (proc->attr.name.empty() || proc->attr.a.empty()) {
       CDBError("Fill in attributes name (got: %s) and a (got: %s)", proc->attr.name.c_str(), proc->attr.a.c_str());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
@@ -66,7 +66,7 @@ int CDPPAddDataObject::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     // Store the value of a="..." into the new data object
 
-    float value = proc->attr.a.toDouble();
+    float value = atof(proc->attr.a.c_str());
     size_t size = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, size);
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;

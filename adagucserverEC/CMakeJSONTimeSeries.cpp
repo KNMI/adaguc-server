@@ -29,19 +29,20 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
   }
 
 #endif
+  std::map<std::string, CURFileInfo> fileInfoMap;
 
   /* Find all individual files. uniqueRequest will group all files to single objects, and collect all the needed entries for those files*/
   for (int step = 0; step < numberOfSteps; step++) {
     dataSource->setTimeStep(step);
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       auto &ogcDim = dataSource->requiredDims[dimnr];
-      uniqueRequest.addDimensionRangeRequest(dataSource->getFileName().c_str(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr).c_str());
+      fileInfoMap[dataSource->getFileName()].dimInfoMap[ogcDim.netCDFDimName].dimValuesMap[dataSource->getDimensionIndex(dimnr)] = dataSource->getDimensionValue(dimnr);
     }
   }
 
   /* Bundle and make the requests */
   try {
-    uniqueRequest.makeRequests(drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
+    uniqueRequest.makeRequests(fileInfoMap, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
   } catch (int e) {
     CDBError("Error in makeRequests at line %d", e);
     throw(__LINE__);

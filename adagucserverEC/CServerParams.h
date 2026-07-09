@@ -74,88 +74,54 @@ public:
 class CServerParams {
 
 private:
-  int autoOpenDAPEnabled, autoLocalFileResourceEnabled;
-
-  CT::string _onlineResource;
-  static int dataRestriction;
-  static char debugLoggingIsEnabled;
+  int autoOpenDAPEnabled = -1;
+  int autoLocalFileResourceEnabled = -1;
   int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
-  int _parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
+  std::string _onlineResource;
+  int _parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
 
 public:
-  double dfResX, dfResY;
-  int dFound_BBOX = 0;
-  double dX, dY;
+  bool Transparent = false;
   bool verbose = false;
-  std::vector<CT::string> requestedLayerNames;
-  CT::string Format;
-  CT::string InfoFormat;
-  int imageFormat;
-  int imageQuality; // 0-100
-  int imageMode;
-  CWMSExtensions wmsExtensions;
-
-  /*
-   * figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
-   */
-  int figWidth, figHeight;
-  CT::string BGColor;
-  bool Transparent;
-  GeoParameters geoParams;
-  CT::string responceCrs;
-  CT::string Styles;
-  CT::string Style;
-
-  // given location by the KVP key source=<value> parameter
-  CT::string autoResourceLocation;
-
-  CT::string datasetLocation;
-
-  // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
-  CT::string internalAutoResourceLocation;
-  // autoResourceVariable is given by the KVP key variable=<value> parameter.
-  CT::string autoResourceVariable;
-
-  CT::string mapTitle;
-  CT::string mapSubTitle;
-  bool showDimensionsInImage;
-  CT::string showLegendInImage;
-  bool showScaleBarInImage;
-  bool showNorthArrow;
-
-  CT::string JSONP, queryStrURLParam;
-
+  bool showDimensionsInImage = false;
+  bool showScaleBarInImage = false;
+  bool showNorthArrow = false;
+  int dFound_BBOX = 0;
+  int imageFormat = IMAGEFORMAT_IMAGEPNG8;
+  int imageQuality = 85; // 0-100
+  int imageMode = SERVERIMAGEMODE_8BIT;
+  int figWidth = -1; // figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
+  int figHeight = -1;
+  int serviceType = -1;
+  int requestType = -1;
+  int OGCVersion = -1;
+  int WCS_GoNative = -1;
+  double dfResX = 0;
+  double dfResY = 0;
+  double dX = 0;
+  double dY = 0;
+  std::string Format;
+  std::string InfoFormat;
+  std::string BGColor;
+  std::string responceCrs;
+  std::string Styles;
+  std::string Style;
+  std::string autoResourceLocation; // given location by the KVP key source=<value> parameter
+  std::string datasetLocation;
+  std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
+  std::string autoResourceVariable;         // autoResourceVariable is given by the KVP key variable=<value> parameter.
+  std::string mapTitle;
+  std::string mapSubTitle;
+  std::string showLegendInImage = "false";
+  std::string configFileName;
+  std::string JSONP;
   std::vector<OGCURIDims> requestDims;
-  int serviceType;
-  int requestType;
-  int OGCVersion;
-  int WCS_GoNative;
+  std::vector<std::string> requestedLayerNames;
 
-  CServerConfig *configObj;
-  CServerConfig::XMLE_Configuration *cfg = nullptr;
-  CT::string configFileName;
-
-  /**
-   * Constructor
-   */
-  CServerParams();
-
-  /**
-   * Destructor
-   */
-  ~CServerParams();
-
-  /**
-   * Function which generates a group name from the Layer's configuration
-   * @param groupName the returned name
-   * @param cfgLayer the configuration object of the corresponding layer
-   */
-  int makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE_Layer *cfgLayer);
-  /**
-   * Replaces illegal characters in a tableName
-   * @param the tableName with the characters to be tested. Same string is filled with the new name
-   */
-  void encodeTableName(CT::string *tableName);
+  CWMSExtensions wmsExtensions;
+  GeoParameters geoParams;
+  CServerConfig configObj;                          // The parsed config object representing the xml structure
+  CServerConfig::XMLE_Configuration *cfg = nullptr; // Pointer into configObj when configured.
 
   /**
    * Function which checks whether logging should be done
@@ -191,53 +157,22 @@ public:
   bool isAutoLocalFileResourceEnabled();
 
   /**
-   * This function generates generic table names based on dimension names:
-   * Table names need to be different between time and height, therefore create unique tablenames like tablename_time and tablename_height
-   * The function also replaces illegal characters.
-   *
-   * @param tableName The default table name which will be changed to a correct name
-   * @param dimName The dimension name which will be appended to the table name
-   */
-
-  static CT::string makeCorrectTableName(CT::string tableName, CT::string dimName);
-
-  /**
-   * Check whether a filepath or urlpath contains valid tokens or not
-   * @param path The filepath or urlpath to check
-   * @return true on valid, false on invalid
-   */
-  static bool checkIfPathHasValidTokens(const char *path);
-
-  /**
-   * Generic function which checks for custom tokens
-   * @param path The string sequence to check
-   * @param validTokens The string with a list of allowed tokens
-   * @return true on valid, false on invalid
-   */
-  static bool checkForValidTokens(const char *path, const char *validTokens);
-
-  /**
    * Check wether the resourcelocation is whithin the servers configured realpath. In the servers configuration a comma separated list of realpaths can be configured.
    * @param resourceLocation The location to check for
-   * @param resolvedPath The resolvedPath if a instantiated CT::string pointer is given.
+   * @param resolvedPath The resolvedPath if a instantiated std::string pointer is given.
    * @return true means valid location
    */
-  bool checkResolvePath(const char *path, CT::string *resolvedPath);
-
-  /**
-   * Generic function which will be showed when a WCS is requested while it is not compiled in
-   */
-  static void showWCSNotEnabledErrorMessage();
+  bool checkResolvePath(const std::string &path, std::string &outputtedResolvedPath);
 
   /**
    * Get configured online resource
    */
-  CT::string getOnlineResource();
+  std::string getOnlineResource();
 
   /**
    * Set online resource
    */
-  void setOnlineResource(CT::string onlineResource);
+  void setOnlineResource(std::string onlineResource);
 
   /**
    * Determine whether boundingbox y and x are swapped, for example the case with WMS 1.3.0 and EPSG:4326
@@ -247,40 +182,11 @@ public:
   bool checkBBOXXYOrder(const char *projName);
 
   /**
-   * Returns a stringlist with all possible legends available for this Legend config object.
-   * This is usually a configured legend element in a layer, or a configured legend element in a style.
-   * @param Legend a XMLE_Legend object configured in a style or in a layer
-   * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
-   */
-  static std::vector<std::string> getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend);
-
-  /**
-   * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.
-   * If not defined or set to FALSE, there are no dataset restrictions. If set to TRUE, dataaccess is restricted for WCS, GFI, metadata and queryinfo.
-   * Possible values are: ALLOW_GFI, ALLOW_WCS, ALLOW_METADATA and SHOW_QUERYINFO. Values can be combined by using the | sign without any space.
-   *
-   * ALLOW_GFI: Allows getFeatureInfo request to work.
-   *
-   * ALLOW_WCS: Allows dataaccess by the Web Coverage Service.
-   *
-   * ALLOW_METADATA: Allows to display detailed netcdf header information.
-   *
-   * SHOW_QUERYINFO: Displays failed queries, if not set "hidden" is shown instead.
-   */
-  static int checkDataRestriction();
-
-  /**
-   * Checks if the string contains valid dimension tokens *
-   * returns true if valid, otherwise false
-   */
-  static bool checkTimeFormat(const std::string &timeToCheck);
-
-  /**
    * Parses the provided configuration file. Can be called consecutively to extend the internal configuration object.
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string pszConfigFile);
+  int parseConfigFile(const std::string &pszConfigFile);
 
   /**
    * Returns cache control header
@@ -288,7 +194,7 @@ public:
    * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE is for urls which response might change often (shorter max-age)
    * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE is fully specified urls
    */
-  CT::string getResponseHeaders(int mode);
+  std::string getResponseHeaders(int mode);
 
   void setCacheControlOption(int mode) { cacheControlOption = mode; }
   int getCacheControlOption() { return cacheControlOption; }
@@ -312,7 +218,7 @@ public:
    * @param legendName The name of the legend to locate
    * @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
    */
-  int getServerLegendIndexByName(CT::string legendName);
+  int getServerLegendIndexByName(std::string legendName);
 
   /**
    * Retrieves the style index in the server configuration by stylename.
@@ -323,7 +229,54 @@ public:
    * @param styleName The name of the style to locate
    * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
    */
-  int getServerStyleIndexByName(CT::string styleName);
+  int getServerStyleIndexByName(std::string styleName);
 };
 
+/**
+ * Check whether a filepath or urlpath contains valid tokens or not
+ * @param path The filepath or urlpath to check
+ * @return true on valid, false on invalid
+ */
+bool checkIfPathHasValidTokens(const std::string &path);
+
+/**
+ * Generic function which checks for custom tokens
+ * @param path The string sequence to check
+ * @param validTokens The string with a list of allowed tokens
+ * @return true on valid, false on invalid
+ */
+bool checkForValidTokens(const std::string &path, const std::string &validTokens);
+/**
+ * Generic function which will be showed when a WCS is requested while it is not compiled in
+ */
+void showWCSNotEnabledErrorMessage();
+
+/**
+ * Returns a stringlist with all possible legends available for this Legend config object.
+ * This is usually a configured legend element in a layer, or a configured legend element in a style.
+ * @param Legend a XMLE_Legend object configured in a style or in a layer
+ * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
+ */
+std::vector<std::string> getLegendNames(const std::vector<CServerConfig::XMLE_Legend *> Legend);
+
+/**
+ * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.
+ * If not defined or set to FALSE, there are no dataset restrictions. If set to TRUE, dataaccess is restricted for WCS, GFI, metadata and queryinfo.
+ * Possible values are: ALLOW_GFI, ALLOW_WCS, ALLOW_METADATA and SHOW_QUERYINFO. Values can be combined by using the | sign without any space.
+ *
+ * ALLOW_GFI: Allows getFeatureInfo request to work.
+ *
+ * ALLOW_WCS: Allows dataaccess by the Web Coverage Service.
+ *
+ * ALLOW_METADATA: Allows to display detailed netcdf header information.
+ *
+ * SHOW_QUERYINFO: Displays failed queries, if not set "hidden" is shown instead.
+ */
+int checkDataRestriction();
+
+/**
+ * Checks if the string contains valid dimension tokens *
+ * returns true if valid, otherwise false
+ */
+bool checkTimeFormat(const std::string &timeToCheck);
 #endif

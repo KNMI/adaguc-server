@@ -59,7 +59,7 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
   // CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->DataReader.size() > 0) {
-      if (dataSource->cfgLayer->DataReader[0]->value.equals("HDF5")) {
+      if (dataSource->cfgLayer->DataReader[0]->elementValue == ("HDF5")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating HDF5 reader");
 #endif
@@ -67,21 +67,21 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
         CDFHDF5Reader *hdf5Reader = (CDFHDF5Reader *)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
         if (!dataSource->cfgLayer->DataReader[0]->attr.useendtime.empty()) {
-          if (dataSource->cfgLayer->DataReader[0]->attr.useendtime.equalsIgnoreCase("true")) {
+          if (CT::equalsIgnoreCase(dataSource->cfgLayer->DataReader[0]->attr.useendtime, "true")) {
             hdf5Reader->enableKNMIHDF5UseEndTime();
           }
         }
-      } else if (dataSource->cfgLayer->DataReader[0]->value.equals("GEOJSON")) {
+      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("GEOJSON")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating GEOJSON reader");
 #endif
         cdfReader = new CDFGeoJSONReader();
-      } else if (dataSource->cfgLayer->DataReader[0]->value.equals("PNG")) {
+      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("PNG")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating PNG reader");
 #endif
         cdfReader = new CDFPNGReader();
-      } else if (dataSource->cfgLayer->DataReader[0]->value.equals("CSV")) {
+      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("CSV")) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating CSV reader");
 #endif
@@ -235,7 +235,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   if (cdfReader == NULL) {
     if (dataSource != NULL) {
-      CDBError("Unable to get a reader for source %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBError("Unable to get a reader for source %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
     }
     delete cdfObject;
     throw(1);
@@ -278,7 +278,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
               delete cdfReader;
               return nullptr;
             }
-            var->name.copy(cfgVar->value);
+            var->name = (cfgVar->elementValue);
             // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
             uniqueIDForFile = uniqueIDForFile + "_" + CT::randomString(10).c_str();
           }

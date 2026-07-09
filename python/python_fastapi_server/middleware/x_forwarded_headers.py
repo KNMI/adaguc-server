@@ -1,0 +1,94 @@
+import os
+import urllib.parse
+import logging
+
+
+from starlette.types import Receive
+from starlette.types import Scope
+from starlette.types import Send
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+
+class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
+    """Middleware for handling the non-standard X-Forwarded-Host and X-Forwarded-Prefix header.
+
+    This middleware can be used when a known proxy is fronting the application,
+    and is trusted to be properly setting the `X-Forwarded-Host` and
+    `X-Forwarded-Prefix` headers with the connecting client information.
+
+    Modifies the `root_path` (and related variables) and `Host` header information so that they reference
+    the location where the API is hosted by the proxy, rather than where it is directly hosted.
+
+    IMPORTANT: This middleware replaces ProxyHeadersMiddleware, and makes use of the same trusted_hosts implementation.
+    When using it, you need to disable ProxyHeadersMiddleware in uvicorn by setting `proxy_headers` to false.
+    """
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "lifespan":
+            return await self.app(scope, receive, send)
+
+        # EXTERNALADDRESS is an optional adaguc specific environment variable and it should overrrule all x-forwarded-* logic.
+        if os.environ.get("EXTERNALADDRESS") is not None and os.environ.get("EXTERNALADDRESS") != "":
+            self.handle_externaladdress(scope)
+            return await super().__call__(scope, receive, send)
+
+        headers: dict[bytes, bytes] = dict(scope["headers"])
+
+        # Perform the trusted_host check (--forwarded_allow_ips). Same as in ProxyHeadersMiddleware
+        client_addr = scope.get("client")
+        client_host = client_addr[0] if client_addr else None
+        if client_host not in self.trusted_hosts:
+            logging.info(
+                "Host %s is not allowed. Allowed are one of ADAGUC_TRUSTED_PROXIES: '%s'",
+                client_host,
+                str(self.trusted_hosts.trusted_literals),
+            )
+            return await self.app(scope, receive, send)
+
+        # This following lines handles Host, X-Forwarded-Host, X-Forwarded-Prefix, X-Forwarded-Proto and X-Forwarded-Port headers set by for example a proxy.
+
+        if b"x-forwarded-prefix" in headers:
+            prefix = headers[b"x-forwarded-prefix"].decode("ascii").strip()
+
+            # Prevent malicious input, while still allowing slashes
+            prefix = urllib.parse.quote(prefix, safe="/")
+
+            # This mimics how uvicorn is setting the root_path
+            # https://github.com/encode/uvicorn/blob/6ffaaf7c2f78274889da1572832dd307a8b117d3/uvicorn/protocols/http/httptools_impl.py#L250
+            scope["root_path"] = prefix
+            scope["path"] = prefix + scope["path"]
+            scope["raw_path"] = prefix.encode("ascii") + scope["raw_path"]
+
+        if b"x-forwarded-host" in headers:
+            forwarded_host = headers[b"x-forwarded-host"].decode("ascii").strip()
+
+            # Prevent malicious input
+            forwarded_host = urllib.parse.quote(forwarded_host)
+
+            if b"x-forwarded-port" in headers and len(headers[b"x-forwarded-port"]) > 0:
+                port = ":" + headers[b"x-forwarded-port"].decode("ascii")
+            else:
+                port = ""
+
+            # Replace the Host header with the value of the X-Forwarded-Host header
+            scope["headers"] = [(k, f"{forwarded_host}{port}".encode("ascii")) if k == b"host" else (k, v) for k, v in scope["headers"]]
+
+        # Calling the parent ProxyHeadersMiddleware **after** replacing these headers, as ProxyHeadersMiddleware
+        # will replace the client addresss if X-Forwarded-For has been set
+        return await super().__call__(scope, receive, send)
+
+    def handle_externaladdress(self, scope: Scope):
+        """
+        EXTERNALADDRESS is an optional adaguc specific environment variable and it should overrrule all x-forwarded-* logic.
+        """
+        external_address = os.environ.get("EXTERNALADDRESS")
+        url_parts = urllib.parse.urlsplit(external_address)
+        prefix = url_parts.path
+        external_host = url_parts.hostname
+        external_port = f":{url_parts.port}" if url_parts.port else ""
+        scope["headers"] = [(k, f"{external_host}{external_port}".encode("ascii")) if k == b"host" else (k, v) for k, v in scope["headers"]]
+        scope["scheme"] = "https" if external_address.startswith("https://") else "http"
+        if len(prefix) > 0:
+            scope["root_path"] = prefix
+            scope["path"] = prefix + scope["path"]
+            scope["raw_path"] = prefix.encode("ascii") + scope["raw_path"]

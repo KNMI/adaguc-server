@@ -161,8 +161,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   ValueClass *valObj = new ValueClass[sourceImage->getNumDataObjects()];
   for (size_t dNr = 0; dNr < sourceImage->getNumDataObjects(); dNr++) {
 #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Allocating valObj[%d].fpValues: numDestPixels %d x %d", dNr, dPixelDestW, dPixelDestH);
-    CDBDebug("Allocating valObj[%d].valueData: imageSize %d x %d", dNr, dImageWidth, dImageHeight);
+    CDBDebug("Allocating valObj[%ld].fpValues: numDestPixels %d x %d", dNr, dPixelDestW, dPixelDestH);
+    CDBDebug("Allocating valObj[%ld].valueData: imageSize %d x %d", dNr, dImageWidth, dImageHeight);
 #endif
     valObj[dNr].fpValues = new float[numDestPixels];
     valObj[dNr].valueData = new float[dImageWidth * dImageHeight];
@@ -407,7 +407,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       bool rendertextforvectors = false;
       if (styleConfiguration != nullptr) {
         for (auto r: styleConfiguration->renderSettings) {
-          if (r->attr.rendertextforvectors.equals("true")) {
+          if (r->attr.rendertextforvectors == "true") {
             rendertextforvectors = true;
           }
         }
@@ -595,24 +595,24 @@ int CImgWarpBilinear::set(const char *pszSettings) {
     if (values.size() < 2) continue;
 
     if (values[0].equals("drawMap")) {
-      if (values[1].equals("true")) drawMap = true;
-      if (values[1].equals("false")) drawMap = false;
+      if (values[1] == "true") drawMap = true;
+      if (values[1] == "false") drawMap = false;
     }
     if (values[0].equals("drawContour")) {
-      if (values[1].equals("true")) enableContour = true;
-      if (values[1].equals("false")) enableContour = false;
+      if (values[1] == "true") enableContour = true;
+      if (values[1] == "false") enableContour = false;
     }
     if (values[0].equals("drawShaded")) {
-      if (values[1].equals("true")) enableShade = true;
-      if (values[1].equals("false")) enableShade = false;
+      if (values[1] == "true") enableShade = true;
+      if (values[1] == "false") enableShade = false;
     }
     if (values[0].equals("drawVector")) {
-      if (values[1].equals("true")) enableVector = true;
-      if (values[1].equals("false")) enableVector = false;
+      if (values[1] == "true") enableVector = true;
+      if (values[1] == "false") enableVector = false;
     }
     if (values[0].equals("drawBarb")) {
-      if (values[1].equals("true")) enableBarb = true;
-      if (values[1].equals("false")) enableBarb = false;
+      if (values[1] == "true") enableBarb = true;
+      if (values[1] == "false") enableBarb = false;
     }
 
     if (values[0].equals("shadeInterval")) {
@@ -696,7 +696,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
           interval = kvp[1].toFloat();
         }
         if (kvp[0].equals("classes")) {
-          classes.copy(kvp[1].c_str());
+          classes = (kvp[1].c_str());
         }
         if (kvp[0].equals("linecolor")) {
           kvp[1].setSize(7);
@@ -734,7 +734,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
     }
 
     if (values[0].equals("drawGridVectors")) {
-      drawGridVectors = values[1].equals("true");
+      drawGridVectors = values[1] == "true";
     }
   }
   return 0;
@@ -1194,7 +1194,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     textColor = contourDefinitions[j].textcolor;
     CColor textstrokecolor = contourDefinitions[j].textstrokecolor;
     lineWidth = contourDefinitions[j].lineWidth;
-    float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
+    float fontSize = atof(dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.c_str());
     float textStrokeWidth = 0.75;
     if (contourDefinitions[j].fontSize > 0) {
       fontSize = contourDefinitions[j].fontSize;

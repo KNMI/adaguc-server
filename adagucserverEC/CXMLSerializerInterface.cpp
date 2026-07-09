@@ -24,30 +24,21 @@
  ******************************************************************************/
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include "Definitions.h"
+#include "CStopWatch.h"
 #include "CXMLSerializerInterface.h"
 int numXMLAttributesNotRecognized = 0;
 
-int parseInt(const char *pszValue) {
-  if (pszValue == NULL) return 0;
-  int dValue = atoi(pszValue);
-  return dValue;
+int parseInt(const attribute &attrCfg) { return atoi(attrCfg.value.c_str()); }
+
+bool parseBool(const attribute &attrCfg) {
+  if (attrCfg.value.empty()) return false;
+  return CT::toLowerCase(attrCfg.value) == "true";
 }
 
-float parseFloat(const char *pszValue) {
-  if (pszValue == NULL) return 0;
-  float fValue = (float)atof(pszValue);
-  return fValue;
-}
-
-double parseDouble(const char *pszValue) {
-  if (pszValue == NULL) return 0;
-  double fValue = (double)atof(pszValue);
-  return fValue;
-}
-
-bool parseBool(const char *pszValue) {
-  if (pszValue == NULL) return false;
-  return CT::string(pszValue).equalsIgnoreCase("true");
+double parseDouble(const attribute &attrCfg) {
+  if (attrCfg.value.empty()) return 0;
+  return (double)atof(attrCfg.value.c_str());
 }
 
 void parse_element_attributes(void *_a_node, std::vector<attribute> &attributes) {
@@ -70,16 +61,17 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {
       char *content = cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE ? (char *)cur_node->children->content : nullptr;
-      addedElement = object->addElement((char *)cur_node->name);
+      addedElement = object->addElement((const char *)cur_node->name);
       if (addedElement != nullptr) {
-        addedElement->value = content;
-        addedElement->value.trimSelf(true);
+        if (content != nullptr) {
+          addedElement->elementValue = CT::trim(content);
+        }
         addedElement->handleValue();
         if (cur_node->properties != NULL) {
           std::vector<attribute> attributes;
           parse_element_attributes(cur_node->properties, attributes);
           for (auto &attribute: attributes) {
-            if (addedElement->addAttribute(attribute.name.c_str(), attribute.value.c_str()) == false) {
+            if (addedElement->addAttribute(attribute) == false) {
               CDBWarning("[LINT]: In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attribute.name.c_str(), (char *)cur_node->name);
               numXMLAttributesNotRecognized++;
             }
@@ -95,11 +87,18 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
   }
 }
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName) {
+int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::string datasetName) {
   LIBXML_TEST_VERSION
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
+
+#ifdef MEASURETIME
+  StopWatch_Stop("Start xmlParseMemory");
+#endif
   doc = xmlParseMemory(xmlData.c_str(), xmlData.length());
+#ifdef MEASURETIME
+  StopWatch_Stop("Done xmlParseMemory");
+#endif
   if (doc == NULL) {
     CDBError("error: could not parse xmldata %s", xmlData.c_str());
     xmlFreeDoc(doc);
@@ -107,10 +106,14 @@ int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string da
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
+#ifdef MEASURETIME
+  StopWatch_Stop("start parse_element_names");
+#endif
   parse_element_names(root_element, object, datasetName);
+#ifdef MEASURETIME
+  StopWatch_Stop("done parse_element_names");
+#endif
   xmlFreeDoc(doc);
   xmlCleanupParser();
   return 0;
 }
-
-bool equals(const char *val1, const char *val2) { return strcmp(val1, val2) == 0; }

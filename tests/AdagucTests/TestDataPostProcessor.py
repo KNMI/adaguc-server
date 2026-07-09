@@ -190,7 +190,7 @@ class TestDataPostProcessor(unittest.TestCase):
             "dataset=adaguc.tests.arcus_uwcw&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=wind_speed_hagl_ms_member_3_backandforth_multiple&CRS=EPSG%3A3857&FORMAT=netcdf&BBOX=229850.82433886,6364199.538544346,1015783.6170691401,7306604.405463655&RESX=157186.558546056&RESY=188480.97338386177&TIME=2024-06-06T03:00:00Z&DIM_REFERENCE_TIME=2024-06-05T03:00:00Z",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + wcs_filename, data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + wcs_filename, data)
         self.assertEqual(status, 0)
 
         # Now use the autowms on the written NetCDF file and compare the resulting GetMap request

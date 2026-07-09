@@ -237,6 +237,18 @@ TEST(string, replace) {
   CHECK_EQUAL("abefgabefg", CT::replace(test, "cd", ""));
 }
 
+TEST(string, replaceSelf) {
+  std::string testA = "abcdefgabcdefg";
+  CT::replaceSelf(testA, "cd", "!!!");
+  CHECK_EQUAL("ab!!!efgab!!!efg", testA);
+  std::string testB = "abcdefgabcdefg";
+  CT::replaceSelf(testB, "cd", "!");
+  CHECK_EQUAL("ab!efgab!efg", testB);
+  std::string testC = "abcdefgabcdefg";
+  CT::replaceSelf(testC, "cd", "");
+  CHECK_EQUAL("abefgabefg", testC);
+}
+
 TEST(string, toLowerCase) {
   std::string test = "abcdefgabcdefg";
   CHECK_EQUAL("abcd", CT::toLowerCase("AbCd"));
@@ -253,7 +265,7 @@ TEST(string, eraseTableNames) {
 }
 
 TEST(string, indexOf) {
-  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "mars"));
   LONGS_EQUAL(6, CT::indexOf(valueToCheck, "planet"));
   LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello"));
@@ -263,8 +275,19 @@ TEST(string, indexOf) {
   LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
 }
 
+TEST(string, lastIndexOf) {
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
+  LONGS_EQUAL(-1, CT::lastIndexOf(valueToCheck, "mars"));
+  LONGS_EQUAL(36, CT::lastIndexOf(valueToCheck, "planet"));
+  LONGS_EQUAL(0, CT::lastIndexOf(valueToCheck, "Hello"));
+  LONGS_EQUAL(0, CT::lastIndexOf(valueToCheck, ""));
+  LONGS_EQUAL(0, CT::lastIndexOf(valueToCheck, "Hello planet earth, you are a great planet."));
+  LONGS_EQUAL(-1, CT::lastIndexOf(valueToCheck, "Hello planet earth, you are a great planet. ---------------------------"));
+  LONGS_EQUAL(-1, CT::lastIndexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
+}
+
 TEST(string, endsWith) {
-  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(false, CT::endsWith(valueToCheck, "mars"));
   LONGS_EQUAL(true, CT::endsWith(valueToCheck, "planet."));
   LONGS_EQUAL(false, CT::endsWith(valueToCheck, "Hello"));
@@ -272,14 +295,18 @@ TEST(string, endsWith) {
 }
 
 TEST(string, startsWith) {
-  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  std::string valueToCheck = "Hello planet earth, you are a great planet.";
   LONGS_EQUAL(false, CT::startsWith(valueToCheck, "mars"));
   LONGS_EQUAL(false, CT::startsWith(valueToCheck, "planet."));
   LONGS_EQUAL(true, CT::startsWith(valueToCheck, "Hello"));
   LONGS_EQUAL(true, CT::startsWith(valueToCheck, ""));
+
+  // Note, specifying a stdstring with a starting and ending double qoute as part of the string did not work previously.
+  std::string n = "\" +proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +no_defs +<>\"";
+  LONGS_EQUAL(true, CT::startsWith(n, "\""));
 }
 
 TEST(string, encodeXml) {
-  std::string valueToCheck = ("maybe<you>are&right&amp;");
+  std::string valueToCheck = "maybe<you>are&right&amp;";
   CHECK_EQUAL("maybe&lt;you>are&amp;right&amp;", CT::encodeXml(valueToCheck));
 }

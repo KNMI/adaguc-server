@@ -65,8 +65,6 @@ public:
   int getVariableIndexThrows(const char *name);
   CDF::Variable *getVariableThrows(std::string name);
   int getVariableIndexNE(const char *name);
-  int getDimensionIndexThrows(const char *name);
-  int getDimensionIndexNE(const char *name);
 
   /**
    * Returns the variable for given name. Throws error code  when something goes wrong
