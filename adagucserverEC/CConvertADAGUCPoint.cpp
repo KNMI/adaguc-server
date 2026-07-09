@@ -24,13 +24,14 @@
  ******************************************************************************/
 
 #include "CConvertADAGUCPoint.h"
+#include <algorithm>
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
 #include "utils/minMax.h"
 #include "CStyleConfiguration.h"
 #include "CTString.h"
-
+#define MEASURETIME
 void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {
     for (int y = -4; y < 6; y++) {
@@ -225,7 +226,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 #endif
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
@@ -233,7 +234,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
         if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
             !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
             !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time")) {
-          varsToConvert.push_back(CT::string(var->name.c_str()));
+          varsToConvert.push_back(var->name);
         }
         if (var->name.equals("projection")) {
           var->setAttributeText("ADAGUC_SKIP", "true");
@@ -244,7 +245,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 
   // Create the new 2D field variables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *pointVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
+    CDF::Variable *pointVar = cdfObject->getVariableThrows(varsToConvert[v]);
 
 #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Converting %s", pointVar->name.c_str());
@@ -357,9 +358,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataSource->getDataObject(d)->cdfVariable;
-    CT::string origSwathName = new2DVar[d]->name.c_str();
-    origSwathName.concat("_backup");
-    pointVar[d] = dataSource->getDataObject(d)->cdfObject->getVariableNE(origSwathName.c_str());
+    std::string origSwathName = new2DVar[d]->name;
+    origSwathName += "_backup";
+    pointVar[d] = dataSource->getDataObject(d)->cdfObject->getVariableNE(origSwathName);
     if (pointVar[d] == NULL) {
       CDBWarning("Unable to find orignal swath variable with name %s", origSwathName.c_str());
 
@@ -632,15 +633,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         new2DVar[d]->allocateData(fieldSize);
 
         // Fill in nodata
-        if (dataSource->getDataObject(d)->hasNodataValue) {
-          for (size_t j = 0; j < fieldSize; j++) {
-            ((float *)dataSource->getDataObject(d)->cdfVariable->data)[j] = (float)dataSource->getDataObject(d)->dfNodataValue;
-          }
-        } else {
-          for (size_t j = 0; j < fieldSize; j++) {
-            ((float *)dataSource->getDataObject(d)->cdfVariable->data)[j] = NAN;
-          }
-        }
+        auto *dataObject = dataSource->getDataObject(d);
+        float *fieldData = (float *)dataObject->cdfVariable->data;
+        float fillValue = dataObject->hasNodataValue ? (float)dataObject->dfNodataValue : NAN;
+        std::fill_n(fieldData, fieldSize, fillValue);
       }
     }
 
@@ -729,7 +725,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     CDF::Variable *timeVarPerObs = cdfObject0->getVariableNE("time");
     if (timeVarPerObs != NULL) {
       if (timeVarPerObs->isDimension == false) {
-        if (timeVarPerObs->dimensionlinks[0]->getSize(), pointVar[0]->dimensionlinks[0]->getSize()) {
+        if (timeVarPerObs->dimensionlinks[0]->getSize() == pointVar[0]->dimensionlinks[0]->getSize()) {
           CDF::Attribute *timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if (timeStringAttr != NULL) {
             if (timeStringAttr->data != NULL) {
@@ -777,6 +773,41 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     bool hasPrevLatLon = false;
 
     bool doDrawLinearInterpolated = dataSource->getStyle()->renderMethod & RM_POINT_LINEARINTERPOLATION;
+
+    /* The paramlist key/description are properties of the variable itself, not of individual points,
+     * so compute them once here instead of on every iteration of the point loop below. */
+    auto getKeyAndDescription = [](CDF::Variable *variable) -> std::pair<std::string, std::string> {
+      std::string key = variable->name;
+      std::string description = key;
+      CDF::Attribute *longName = variable->getAttributeNE("long_name");
+      if (longName != NULL) {
+        description = (const char *)longName->data;
+      }
+      return {key, description};
+    };
+
+    std::vector<std::string> pointVarKey(nrDataObjects), pointVarDescription(nrDataObjects);
+    for (size_t d = 0; d < nrDataObjects; d++) {
+      if (pointVar[d] != NULL) {
+        auto [key, description] = getKeyAndDescription(pointVar[d]);
+        pointVarKey[d] = key;
+        pointVarDescription[d] = description;
+      }
+    }
+
+    std::string pointIDKey, pointIDDescription;
+    if (pointID != NULL) {
+      auto [key, description] = getKeyAndDescription(pointID);
+      pointIDKey = key;
+      pointIDDescription = description;
+    }
+
+    std::string timeVarPerObsKey, timeVarPerObsDescription;
+    if (hasTimeValuePerObs) {
+      auto [key, description] = getKeyAndDescription(timeVarPerObs);
+      timeVarPerObsKey = key;
+      timeVarPerObsDescription = description;
+    }
 
     for (int stationNr = 0; stationNr < numStations; stationNr++) {
       int pPoint = stationNr + 0; // dateDimIndex;//*numStations;
@@ -839,7 +870,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         //      if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){ remove
         for (size_t d = 0; d < nrDataObjects; d++) {
           if (pointVar[d] != NULL) {
-            float *sdata = ((float *)dataSource->getDataObject(d)->cdfVariable->data);
+            auto *dataObject = dataSource->getDataObject(d);
+            float *sdata = (float *)dataObject->cdfVariable->data;
             PointDVWithLatLon *lastPoint = NULL;
 
             /**
@@ -848,49 +880,28 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
             if (pointVar[d]->currentType == CDF_STRING) {
               float v = NAN;
               // CDBDebug("pushing stationNr %d dataobject %d,pPoint DIM %d (%d %d %f %f)", stationNr, d, pPoint, dlon, dlat, lon, lat);
-              dataSource->getDataObject(d)->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
-              lastPoint = &(dataSource->getDataObject(d)->points.back());
-              const char *key = pointVar[d]->name.c_str();
-              const char *description = key;
-              try {
-                description = (const char *)pointVar[d]->getAttributeThrows("long_name")->data;
-
-              } catch (int e) {
-              }
+              dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
+              lastPoint = &dataObject->points.back();
               /* Get the last pushed point from the array and push the character text data in the paramlist */
               const char *b = ((const char **)pointVar[d]->data)[pPoint];
-              lastPoint->paramList.push_back({.key = key, .description = description, .value = CT::fromCharPointer(b)});
+              lastPoint->paramList.push_back({.key = pointVarKey[d], .description = pointVarDescription[d], .value = CT::fromCharPointer(b)});
             }
 
             if (pointVar[d]->currentType == CDF_CHAR) {
               float v = NAN;
               // CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
-              dataSource->getDataObject(d)->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
-              lastPoint = &(dataSource->getDataObject(d)->points.back());
-              const char *key = pointVar[d]->name.c_str();
-              const char *description = key;
-              try {
-                description = (const char *)pointVar[d]->getAttributeThrows("long_name")->data;
-
-              } catch (int e) {
-              }
+              dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
+              lastPoint = &dataObject->points.back();
               /* Get the last pushed point from the array and push the character text data in the paramlist */
-              lastPoint->paramList.push_back({.key = key, .description = description, .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
+              lastPoint->paramList.push_back({.key = pointVarKey[d], .description = pointVarDescription[d], .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
             }
 
             if (pointVar[d]->currentType == CDF_FLOAT) {
               float val = ((float *)pointVar[d]->data)[pPoint];
-              dataSource->getDataObject(d)->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
-              lastPoint = &(dataSource->getDataObject(d)->points.back());
+              dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
+              lastPoint = &dataObject->points.back();
               if (pointID != NULL) {
-
-                const char *key = pointID->name.c_str();
-                const char *description = key;
-                try {
-                  description = (const char *)pointID->getAttributeThrows("long_name")->data;
-                } catch (int e) {
-                }
-                lastPoint->paramList.push_back({.key = key, .description = description, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
+                lastPoint->paramList.push_back({.key = pointIDKey, .description = pointIDDescription, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
               }
               if (doDrawLinearInterpolated && roadIdData != NULL) {
                 if (hasPrevLatLon) {
@@ -908,16 +919,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
             }
 
             if (hasTimeValuePerObs && lastPoint != NULL) {
-
-              const char *key = timeVarPerObs->name.c_str();
-              const char *description = key;
-              try {
-                description = (const char *)timeVarPerObs->getAttributeThrows("long_name")->data;
-              } catch (int e) {
-              }
-              // obsTimeData
-
-              lastPoint->paramList.push_back({.key = key, .description = description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
+              lastPoint->paramList.push_back({.key = timeVarPerObsKey, .description = timeVarPerObsDescription, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
             }
           }
         }
