@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 7.2.0, of Apr 16 2026 13:22:55 </Keyword>
+            <Keyword>ADAGUCServer version 8.0.0, of Jul  6 2026 15:55:12 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FKNMI_RAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -77,13 +77,13 @@
 <CRS>EPSG:54030</CRS>
 <CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
-<BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+<BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -104,13 +104,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -178,13 +178,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -252,13 +252,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -326,13 +326,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -400,13 +400,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -474,13 +474,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -548,13 +548,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -622,13 +622,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />
@@ -696,13 +696,13 @@
   <eastBoundLongitude>9.789118</eastBoundLongitude>
   <southBoundLatitude>48.963025</southBoundLatitude>
   <northBoundLatitude>54.710773</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.963025" miny="0.487083" maxx="54.710773" maxy="9.789118" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="0.487083" miny="48.963025" maxx="9.789118" maxy="54.710773" />
 <BoundingBox CRS="EPSG:25831" minx="316070.932906" miny="5423345.956241" maxx="996779.171807" maxy="6083785.024595" />
 <BoundingBox CRS="EPSG:25832" minx="-122795.668672" miny="5423346.137120" maxx="557760.527310" maxy="6095926.973082" />
 <BoundingBox CRS="EPSG:28992" minx="-203888.291639" miny="107848.075459" maxx="477430.777338" maxy="758299.429247" />
-<BoundingBox CRS="EPSG:3035" minx="3626428.370848" miny="2872224.029492" maxx="4307403.392030" maxy="3552004.230734" />
+<BoundingBox CRS="EPSG:3035" minx="2872224.029492" miny="3626428.370848" maxx="3552004.230734" maxy="4307403.392030" />
 <BoundingBox CRS="EPSG:3067" minx="-1428745.806714" miny="5567769.286090" maxx="-603098.878292" maxy="6390759.084356" />
-<BoundingBox CRS="EPSG:32661" minx="2034358.725388" miny="-2753348.933214" maxx="2808204.696271" maxy="-1982837.805774" />
+<BoundingBox CRS="EPSG:32661" minx="-2753348.933214" miny="2034358.725388" maxx="-1982837.805774" maxy="2808204.696271" />
 <BoundingBox CRS="EPSG:3411" minx="2812154.650457" miny="-3251680.466992" maxx="3789547.212349" maxy="-2273833.261284" />
 <BoundingBox CRS="EPSG:3412" minx="278676.636155" miny="32303987.692584" maxx="6555184.179091" maxy="38553447.992164" />
 <BoundingBox CRS="EPSG:3575" minx="-740315.616673" miny="-4479402.027538" maxx="-14262.564488" maxy="-3821796.029902" />

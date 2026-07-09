@@ -125,6 +125,31 @@ def test_x_forwarded_for_headers():
     assert get_url_from_capabilities(response) == "https://supertestadagucserver:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
 
 
+def test_x_forwarded_for_headers_https_port():
+    """
+    Test x-forward- headers
+    """
+    client = get_testclient(
+        environment={
+            "EXTERNALADDRESS": "",
+            "ADAGUC_TRUSTED_HOSTS": "supertestadagucserver",
+            "ADAGUC_TRUSTED_PROXIES": "adaguc-testclient",  # default
+        }
+    )
+    response = client.get(
+        "/adaguc-server?service=WMS&request=getCapabilities",
+        headers={
+            "Host": "my-host-to-be-ignored",
+            "x-forwarded-host": "supertestadagucserver",
+            "x-forwarded-prefix": "/thepathafterhost",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+        },
+    )
+
+    assert get_url_from_capabilities(response) == "https://supertestadagucserver/thepathafterhost/adaguc-server?SERVICE=WMS&"
+
+
 def test_x_forwarded_for_headers_wildcard():
     """
     Test x-forward- headers

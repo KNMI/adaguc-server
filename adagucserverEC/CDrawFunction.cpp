@@ -1,4 +1,5 @@
 #include "CDrawFunction.h"
+#include <algorithm>
 
 template <class T> void drawIndexPixel(int &x, int &y, T &val, GDWDrawFunctionSettings &settings) {
   if (settings.legendLog != 0) {
@@ -54,9 +55,13 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
         return settings->drawImage->getColorForIndex(determinePixelIndexFromValue(f, *settings));
 
       } else {
-        for (size_t j = 0; (j < settings->intervals.size()); j += 1) {
-          if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
-            return settings->intervals[j].color;
+        // use binary search to find matching interval
+        auto intervalIt = std::upper_bound(settings->intervals.begin(), settings->intervals.end(), val, [](auto value, const Interval &interval) { return value < interval.min; });
+        if (intervalIt != settings->intervals.begin()) {
+          // std::upper_bound returns the first element that's >=value. We need to check the element before that
+          intervalIt--;
+          if (val < intervalIt->max) {
+            return intervalIt->color;
           }
         }
       }

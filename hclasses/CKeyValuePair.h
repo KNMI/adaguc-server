@@ -30,15 +30,15 @@
 #include <cstdio>
 #include "CTString.h"
 struct CKeyValuePair {
-  CT::string key;
-  CT::string value;
+  std::string key;
+  std::string value;
 };
 typedef std::vector<CKeyValuePair> CKeyValuePairs;
 
 struct CKeyValueDescriptionPair {
-  CT::string key;
-  CT::string description;
-  CT::string value;
+  std::string key;
+  std::string description;
+  std::string value;
 };
 
 typedef std::vector<CKeyValueDescriptionPair> CKeyValueDescriptionPairs;

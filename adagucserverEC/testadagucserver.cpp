@@ -6,6 +6,7 @@
 #include "CImgRenderFieldVectors.h"
 #include "f8vector.h"
 #include "ProjCache.h"
+#include "CDrawFunction.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -246,10 +247,10 @@ TEST(CProj4ToCF, azimuthal_equidistant) {
   var.setAttribute("earth_radius", CDF_DOUBLE, &earth_radius, 1);
   var.setAttribute("false_easting", CDF_DOUBLE, &false_easting, 1);
   var.setAttribute("false_northing", CDF_DOUBLE, &false_northing, 1);
-  CT::string projString = proj4ToCF.convertCFToProj(&var);
+  std::string projString = proj4ToCF.convertCFToProj(&var);
   CDBDebug("projString [%s]", projString.c_str());
 
-  CT::string expected = "+proj=aeqd +lat_0=-41.200000 +lon_0=174.700000 +k_0=1.0 +x_0=0.000000 +y_0=0.000000 +a=6378140.000000 +b=6378140.000000 ";
+  std::string expected = "+proj=aeqd +lat_0=-41.200000 +lon_0=174.700000 +k_0=1.0 +x_0=0.000000 +y_0=0.000000 +a=6378140.000000 +b=6378140.000000 ";
   CHECK(projString == expected);
 }
 
@@ -266,4 +267,44 @@ TEST(string, knmiH5TimeToISOString) {
   t[14] = '0';
   CDBDebug("t [%s]", t.c_str());
   CHECK("20211222T123400" == t);
+}
+
+TEST(CDrawFunction, determinePixelColorFromValue) {
+  GDWDrawFunctionSettings settings = {
+      .dfNodataValue = -9999,
+      .legendValueRange = 0,
+      .legendLowerRange = 0,
+      .legendUpperRange = 0,
+      .isUsingShadeIntervals = true,
+      .bgColorDefined = false,
+      .shadeInterval = 0,
+      .legendLog = 0,
+      .legendLogAsLog = 0,
+      .legendScale = 0,
+      .legendOffset = 0,
+      .bgColor = CColor(0, 0, 0, 255),
+      .hasNodataValue = true,
+      .drawgridboxoutline = false,
+      .drawgrid = true,
+      .interpolationMethod = InterpolationMethodNearest,
+      .intervals = {},
+      .drawImage = nullptr,
+      .destinationDataType = CDF_FLOAT,
+      .destinationGrid = nullptr,
+      .smoothingFiter = 0,
+      .smoothingMemo = {},
+  };
+  // Test if it returns default color when there are no shadeintervals
+  CHECK(determinePixelColorFromValue(0, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
+
+  settings.intervals.push_back({.min = -1, .max = 0, .color = CColor(50, 50, 50, 50)});
+  settings.intervals.push_back({.min = 0, .max = 1, .color = CColor(100, 100, 100, 100)});
+  settings.intervals.push_back({.min = 1, .max = 2, .color = CColor(150, 150, 150, 150)});
+
+  // Test if correct colors are returned based on shade intervals
+  CHECK(determinePixelColorFromValue(-2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
+  CHECK(determinePixelColorFromValue(-1, &settings).c_str() == CColor(50, 50, 50, 50).c_str());
+  CHECK(determinePixelColorFromValue(0, &settings).c_str() == CColor(100, 100, 100, 100).c_str());
+  CHECK(determinePixelColorFromValue(1, &settings).c_str() == CColor(150, 150, 150, 150).c_str());
+  CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
 }

@@ -321,7 +321,7 @@ namespace CT {
 
   int string::startsWith(const char *search) { return (indexOf(search) == 0); };
 
-  int string::startsWith(const std::string search) { return (indexOf(search.c_str()) == 0); };
+  int string::startsWith(const std::string &search) { return (indexOf(search.c_str()) == 0); };
 
   string string::trim() const {
     CT::string r = stdstring.c_str();
@@ -484,7 +484,7 @@ namespace CT {
     return stringList;
   }
 
-  CT::string join(const std::vector<std::string> &items, std::string separator) {
+  CT::string join(const std::vector<std::string> &items, const std::string &separator) {
     CT::string newString;
     for (auto &item: items) {
       if (!newString.empty()) {
@@ -495,9 +495,9 @@ namespace CT {
     return newString;
   }
 
-  std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
+  std::string basename(const std::string &input) { return input.substr(input.find_last_of("/\\") + 1); }
 
-  bool equalsIgnoreCase(const std::string str1, const std::string str2) {
+  bool equalsIgnoreCase(const std::string &str1, const std::string &str2) {
     if (str1.length() != str2.length()) return false;
     for (size_t i = 0; i < str1.length(); ++i) {
       if (tolower(str1[i]) != tolower(str2[i])) return false;
@@ -564,13 +564,13 @@ namespace CT {
     return;
   }
 
-  std::string toLowerCase(const std::string input) {
+  std::string toLowerCase(const std::string &input) {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
     return result;
   }
 
-  std::string toUpperCase(const std::string input) {
+  std::string toUpperCase(const std::string &input) {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c); });
     return result;
@@ -586,12 +586,16 @@ namespace CT {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
   }
 
-  std::string trim(const std::string input) {
+  std::string trim(const std::string &input) {
     std::string result = input;
     rtrim(result);
     ltrim(result);
     return result;
   }
+
+  // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
+  double toDouble(const std::string &input) { return atof(trim(input).c_str()); }
+
   std::string randomString(const int length) {
     const char charset[] = "0123456789"
                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -742,6 +746,11 @@ namespace CT {
       return false;
     }
     return true;
+  }
+
+  std::string fromCharPointer(const char *input) {
+    std::string s = input == nullptr ? "" : input;
+    return s;
   }
 
 } /* namespace CT */
