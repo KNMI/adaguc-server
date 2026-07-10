@@ -1136,7 +1136,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
       // Swap X, Y dimensions so that pointer x+y*w works correctly
 
-      if (dataSource->swapXYDimensions) {
+      if (dataSource->hasFieldData && dataSource->swapXYDimensions) {
         size_t imgSize = dataSource->dHeight * dataSource->dWidth;
         size_t w = dataSource->dWidth;
         size_t h = dataSource->dHeight;

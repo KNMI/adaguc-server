@@ -621,10 +621,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
           // Retrieve variable names
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
-            if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
-              CDBWarning("No variable defined for dataObject %lu for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
-              continue;
-            }
+            // if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
+            //   CDBWarning("No variable defined for dataObject %lu for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
+            //   continue;
+            // }
             if (dataSource->getDataObject(o)->filterFromOutput) {
               continue;
             }
@@ -695,20 +695,21 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               }
 
               dataSource->setTimeStep(step);
-              double pixel = convertValue(dataSource->getDataObject(o)->cdfVariable->getType(), dataSource->getDataObject(o)->cdfVariable->data, ptr);
+              if (dataSource->hasFieldData) {
+                double pixel = convertValue(dataSource->getDataObject(o)->cdfVariable->getType(), dataSource->getDataObject(o)->cdfVariable->data, ptr);
 
-              if ((pixel != dataSource->getDataObject(o)->dfNodataValue && dataSource->getDataObject(o)->hasNodataValue == true && pixel == pixel && everythingIsInBBOX == true) ||
-                  dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
-                if (dataSource->getDataObject(o)->hasStatusFlag) {
-                  // Add status flag
-                  std::string flagMeaning;
-                  flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
-                  element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
-                  element.units = "";
-                } else {
-                  element.value = CT::printf("%f", pixel);
+                if ((pixel != dataSource->getDataObject(o)->dfNodataValue && dataSource->getDataObject(o)->hasNodataValue == true && pixel == pixel && everythingIsInBBOX == true) ||
+                    dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
+                  if (dataSource->getDataObject(o)->hasStatusFlag) {
+                    // Add status flag
+                    std::string flagMeaning;
+                    flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                    element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
+                    element.units = "";
+                  } else {
+                    element.value = CT::printf("%f", pixel);
+                  }
                 }
-
                 dimensionKeyValueMap[dimkey.c_str()] = true;
                 hasData = true;
 
@@ -949,9 +950,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpNearestNeighbour");
 #endif
-    imageWarperRenderer = new CImgWarpNearestNeighbour();
-    imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-    delete imageWarperRenderer;
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpNearestNeighbour();
+      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
+      delete imageWarperRenderer;
+    }
   }
 
   /**
@@ -1129,9 +1132,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpGeneric");
 #endif
-    imageWarperRenderer = new CImgWarpGeneric();
-    imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-    delete imageWarperRenderer;
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpGeneric();
+      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
+      delete imageWarperRenderer;
+    }
   }
 
   /**

@@ -91,6 +91,7 @@ public:
   bool debug = false;
   bool stretchMinMax = false;
   bool dimsAreAutoConfigured = -1;
+  bool hasFieldData = true;
   bool isConfigured = false;
   bool formatConverterActive = false;
   bool didAxisScalingConversion = false; // Some projections require the scaling of the axis with a certain number, like converting km to meter

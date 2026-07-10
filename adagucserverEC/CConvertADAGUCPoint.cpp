@@ -35,6 +35,9 @@
 
 static bool measureTime = false;
 
+static std::vector<std::string> variablesNotToConvert = {
+    "time2D", "time", "lon", "lat", "x", "y", "lat_bnds", "lon_bnds", "custom", "projection", "product", "iso_dataset", "tile_properties", "forecast_reference_time"};
+
 static bool checkIfADAGUCPointFormat(CDFObject *cdfObject) {
   /* Some conversions for non ADAGUC point data */
   CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(cdfObject);
@@ -65,65 +68,6 @@ void drawDot(int px, int py, int v, int W, int H, float *grid) {
   }
 }
 
-static void lineInterpolated(float *grid, int W, int H, int startX, int startY, int stopX, int stopY, float startVal, float stopVal) {
-  int dX = stopX - startX;
-  int dY = stopY - startY;
-  if (abs(dX) > 5000) return;
-  if (abs(dY) > 5000) return;
-  float rc = 0;
-  int numPoints = 0;
-  if (!(startVal == startVal) || !(stopVal == stopVal)) {
-    startVal = 100;
-    stopVal = 100;
-  }
-  float valD = stopVal - startVal;
-  float angle = atan2(dY, dX) + (M_PI / 2);
-  float dist = 10;
-  if (abs(dX) < abs(dY)) {
-    rc = float(dX) / float(dY);
-    int sx = startX;
-    int sy = startY;
-    float myVal = startVal;
-    if (dY > 0)
-      numPoints = dY;
-    else {
-      numPoints = -dY;
-      sx = stopX, sy = stopY;
-      myVal = stopVal;
-      valD = -valD;
-    }
-    float valRc = valD / numPoints;
-    for (int p = 0; p < numPoints; p++) {
-      float v = valRc * float(p) + myVal;
-
-      float px = float(p) * rc + sx + cos(angle) * dist;
-      float py = p + sy + sin(angle) * dist;
-      drawDot(px, py, v, W, H, grid);
-    }
-  } else {
-    int sx = startX;
-    int sy = startY;
-    float myVal = startVal;
-    rc = float(dY) / float(dX);
-    if (dX > 0)
-      numPoints = dX;
-    else {
-      numPoints = -dX;
-      sx = stopX, sy = stopY;
-      myVal = stopVal;
-      valD = -valD;
-    }
-    float valRc = valD / numPoints;
-    for (int p = 0; p < numPoints; p++) {
-      float v = valRc * float(p) + myVal;
-
-      float px = p + sx + cos(angle) * dist;
-      float py = float(p) * rc + sy + sin(angle) * dist;
-      drawDot(px, py, v, W, H, grid);
-    }
-  }
-}
-
 // Creates the new 2D field variable for a swath (point) variable: assigns X,Y dims, copies
 // attributes (applying scale/offset to _FillValue), and marks the original variable as a backup.
 static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Variable *pointVar, CDF::Variable *varY, CDF::Variable *varX) {
@@ -135,9 +79,8 @@ static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Varia
     }
   }
   // Assign X,Y dims too.
-  new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
   new2DVar->dimensionlinks.push_back(varX->dimensionlinks[0]);
-
+  new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
   // Rename the point data variable.
   pointVar->name.concat("_backup");
 
@@ -233,20 +176,14 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     StopWatch_Stop("2D Coordinate dimensions created");
   }
 
-  // Coordinate/metadata variables are never converted to 2D fields themselves.
-  auto isConvertibleToTwoDField = [](const CDF::Variable *var) {
-    return var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "x" && var->name != "y" && var->name != "lat_bnds" && var->name != "lon_bnds" &&
-           var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties" && var->name != "forecast_reference_time";
-  };
-
   // Make a list of variables which will be available as 2D fields
   std::vector<std::string> varsToConvert;
   for (auto *var: cdfObject->variables) {
+    std::string varName = var->name;
     if (var->isDimension == false) {
-      if (isConvertibleToTwoDField(var)) {
-        varsToConvert.push_back(var->name);
-      }
-      if (var->name.equals("projection")) {
+      if (std::find(variablesNotToConvert.begin(), variablesNotToConvert.end(), varName) == variablesNotToConvert.end()) {
+        varsToConvert.push_back(varName);
+      } else {
         var->setAttributeText("ADAGUC_SKIP", "true");
       }
     }
@@ -462,25 +399,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     if (measureTime) {
       StopWatch_Stop("Dimensions set");
     }
-
-    // Allocate 2D field
-    for (size_t d = 0; d < nrDataObjects; d++) {
-      if (pointVar[d] != NULL) {
-        size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
-        new2DVar[d]->setSize(fieldSize);
-        new2DVar[d]->allocateData(fieldSize);
-
-        // Fill in nodata
-        auto *dataObject = dataSource->getDataObject(d);
-        float *fieldData = (float *)dataObject->cdfVariable->data;
-        float fillValue = dataObject->hasNodataValue ? (float)dataObject->dfNodataValue : NAN;
-        std::fill_n(fieldData, fieldSize, fillValue);
-      }
-    }
-
-    if (measureTime) {
-      StopWatch_Stop("2D Field allocated");
-    }
+    dataSource->hasFieldData = false;
 
     float *lonData = (float *)pointLon->data;
     float *latData = (float *)pointLat->data;
@@ -534,17 +453,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       }
     }
 
-    CDF::Variable *roadIdVar = cdfObject0->getVariableNE("roadId_backup");
-    float *roadIdData = NULL;
-    float prevRoadId = -1;
-    if (roadIdVar != NULL) {
-      CDBDebug("Start reading data");
-      roadIdVar->readData(CDF_FLOAT);
-      CDBDebug("Done reading data");
-      roadIdData = (float *)roadIdVar->data;
-      prevRoadId = roadIdData[0];
-    }
-
     // Read dates for obs
     bool hasTimeValuePerObs = false;
     CTime *obsTime = nullptr;
@@ -580,7 +488,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
      */
     float discRadius = 8;
     float discRadiusX = discRadius;
-    float discRadiusY = discRadius;
+
     bool hasZoomableDiscRadius = false;
     float discSize = 1;
     if (dataSource != NULL) {
@@ -595,12 +503,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       }
     }
 
-    int prevLon = 0, prevLat = 0;
-    float prevVal = 0;
-    bool hasPrevLatLon = false;
-
-    bool doDrawLinearInterpolated = dataSource->getStyle()->renderMethod & RM_POINT_LINEARINTERPOLATION;
-
     auto getKeyAndDescription = [](const CDF::Variable *variable) -> CKeyValueDescriptionPair {
       CDF::Attribute *longName = variable->getAttributeNE("long_name");
       return {.key = variable->name, .description = longName != nullptr ? (const char *)longName->data : variable->name, .value = ""};
@@ -614,11 +516,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
     const auto &timeVarPerObsKeyAndDescription = hasTimeValuePerObs ? getKeyAndDescription(timeVarPerObs) : CKeyValueDescriptionPair();
 
-    // Pushes a point (plus its paramlist entries: text/char value, station id, obs time) for data object d
-    // at station index pPoint/pGeo. With string and char (text) data, the float value is set to NAN and the
-    // character data is put in the paramlist. Mutates the prevLon/prevLat/prevVal/hasPrevLatLon/prevRoadId
-    // state used for linear interpolation between successive road points.
-    auto addPointForDataObject = [&](size_t d, int pPoint, int pGeo, int dlon, int dlat, double lon, double lat, double rotation) {
+    auto addPointForDataObject = [&](size_t d, int pPoint, int dlon, int dlat, double lon, double lat) {
       if (pointVar[d] == NULL) return;
 
       auto *dataObject = dataSource->getDataObject(d);
@@ -641,30 +539,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
       }
 
-      if (pointVar[d]->currentType == CDF_FLOAT) {
-        float val = ((float *)pointVar[d]->data)[pPoint];
-        dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
-        lastPoint = &dataObject->points.back();
-        if (pointID != NULL) {
-          lastPoint->paramList.push_back(
-              {.key = pointIdKeyAndDescription.key, .description = pointIdKeyAndDescription.description, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
-        }
-        if (doDrawLinearInterpolated && roadIdData != NULL) {
-          if (hasPrevLatLon) {
-            float roadId = roadIdData[pPoint];
-            if (roadId == prevRoadId && val == val && prevVal == prevVal) {
-              float *sdata = (float *)dataObject->cdfVariable->data;
-              lineInterpolated(sdata, dataSource->dWidth, dataSource->dHeight, prevLon, prevLat, dlon, dlat, prevVal, val);
-            }
-            prevRoadId = roadId;
-          }
-        }
-        prevLon = dlon;
-        prevLat = dlat;
-        prevVal = val;
-        hasPrevLatLon = true;
-      }
-
       if (hasTimeValuePerObs && lastPoint != NULL) {
         lastPoint->paramList.push_back(
             {.key = timeVarPerObsKeyAndDescription.key, .description = timeVarPerObsKeyAndDescription.description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
@@ -678,7 +552,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       double lon = (double)lonData[pGeo];
       double lat = (double)latData[pGeo];
 
-      double rotation = 0;
       double projectedX = lon;
       double projectedY = lat;
       double projectedXOffsetY = lon;
@@ -694,7 +567,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       if (projectionRequired) {
         if (imageWarper.reprojfromLatLon(projectedX, projectedY) != 0) {
           projectionError = true;
-          hasPrevLatLon = false;
         }
         if (hasZoomableDiscRadius) {
           if (imageWarper.reprojfromLatLon(projectedXOffsetY, projectedYOffsetY) != 0) {
@@ -703,9 +575,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           if (imageWarper.reprojfromLatLon(projectedXOffsetX, projectedYOffsetX) != 0) {
             projectionError = true;
           }
-          float dX = projectedXOffsetY - projectedX;
-          float dY = projectedYOffsetY - projectedY;
-          rotation = -atan2(dY, dX) + (M_PI / 2);
         }
       }
 
@@ -714,7 +583,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         discRadius = ((dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / yDistanceProjected) / float(dataSource->srvParams->geoParams.width);
         discRadius = (discSize / 5) / discRadius;
         if (discRadius < 0.1) discRadius = 0.1;
-        discRadiusY = discRadius;
 
         float xDistanceProjected = projectedXOffsetX - projectedX;
         discRadiusX = ((dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / xDistanceProjected) / float(dataSource->srvParams->geoParams.width);
@@ -726,7 +594,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         int dlon = int((projectedX - offsetX) / cellSizeX);
         int dlat = int((projectedY - offsetY) / cellSizeY);
         for (size_t d = 0; d < nrDataObjects; d++) {
-          addPointForDataObject(d, pPoint, pGeo, dlon, dlat, lon, lat, rotation);
+          addPointForDataObject(d, pPoint, dlon, dlat, lon, lat);
         }
       }
     }
