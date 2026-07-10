@@ -24,13 +24,15 @@
  ******************************************************************************/
 
 #include "CConvertADAGUCPoint.h"
+
 #include <algorithm>
-#include "CFillTriangle.h"
+
 #include "CImageWarper.h"
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
-#include "utils/minMax.h"
 #include "CStyleConfiguration.h"
 #include "CTString.h"
+#include "utils/minMax.h"
+
 static bool measureTime = false;
 
 static bool checkIfADAGUCPointFormat(CDFObject *cdfObject) {
@@ -40,9 +42,9 @@ static bool checkIfADAGUCPointFormat(CDFObject *cdfObject) {
   return featureType == "timeSeries" || featureType == "point";
 }
 
-// Creates (or reuses) a coordinate dimension variable of the given size, filling it with evenly
-// spaced coordinates [offset + cellSize/2, offset + 0.5*cellSize, ...] if it was just created.
-static CDF::Variable *createCoordinateVariable(CDFObject *cdfObject, const char *name, int size, double offset, double cellSize) {
+// Creates (or reuses/updates) a coordinate dimension variable of the given size, filling it with evenly
+// spaced coordinates [offset + cellSize/2, offset + 0.5*cellSize, ...]
+static CDF::Variable *createOrUpdateCoordinateVariable(CDFObject *cdfObject, const char *name, int size, double offset, double cellSize) {
   CDF::Variable *var = cdfObject->getDimVarOrCreate(name, size, CDF_DOUBLE);
   if (var->data == nullptr) {
     size_t allocatedElements = var->allocateData();
@@ -176,8 +178,8 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   double offsetX = lonMinMax.min;
   double offsetY = latMinMax.min;
 
-  CDF::Variable *varX = createCoordinateVariable(cdfObject, "x", width, offsetX, cellSizeX);
-  CDF::Variable *varY = createCoordinateVariable(cdfObject, "y", height, offsetY, cellSizeY);
+  CDF::Variable *varX = createOrUpdateCoordinateVariable(cdfObject, "x", width, offsetX, cellSizeX);
+  CDF::Variable *varY = createOrUpdateCoordinateVariable(cdfObject, "y", height, offsetY, cellSizeY);
 
   if (measureTime) {
     StopWatch_Stop("2D Coordinate dimensions created");
@@ -455,8 +457,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
-    createCoordinateVariable(cdfObject0, "x", dataSource->dWidth, offsetX, cellSizeX);
-    createCoordinateVariable(cdfObject0, "y", dataSource->dHeight, offsetY, cellSizeY);
+    createOrUpdateCoordinateVariable(cdfObject0, "x", dataSource->dWidth, offsetX, cellSizeX);
+    createOrUpdateCoordinateVariable(cdfObject0, "y", dataSource->dHeight, offsetY, cellSizeY);
 
     if (measureTime) {
       StopWatch_Stop("Dimensions set");
