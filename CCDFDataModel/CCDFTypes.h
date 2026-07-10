@@ -85,7 +85,7 @@ typedef int CDFError;
 #define CDF_E_NRDIMSNOTEQUAL 1005
 #define CDF_E_VARHASNOPARENT 1006 /*Variable has no parent CDFObject*/
 #define CDF_E_VARHASNODATA 1007   /*Variable has no data*/
-#define CDF_E_VARHASWRONGDIMS 1008
+#define CDF_E_CANNOTCREATECOORDVARIABLE 1008
 
 namespace CDF {
   // Allocates data for an array, provide type, the empty array and length
