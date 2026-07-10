@@ -81,7 +81,7 @@ namespace CDF {
     CT::string name;
     CT::string orgName;
     std::vector<Attribute *> attributes;
-    std::vector<Dimension *> dimensionlinks;
+    std::vector<Dimension *> dimensionlinks; // Note, this vector does not own the Dimension. It is a link to a dimension in the CDFObject model.
     int id = -1;
     size_t currentSize = 0;
     void *data = nullptr;

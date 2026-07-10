@@ -581,5 +581,8 @@ CDF::Variable *CDFObject::getDimVarOrCreate(const std::string &name, size_t leng
     CDBError("Variable %s was not created as a coordinate variable", name.c_str());
     throw CDF_E_VARHASWRONGDIMS;
   }
+  if (var->getSize() != length) {
+    var->freeData();
+  }
   return var;
 }

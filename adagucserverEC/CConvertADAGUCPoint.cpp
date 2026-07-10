@@ -124,6 +124,54 @@ static void lineInterpolated(float *grid, int W, int H, int startX, int startY, 
   }
 }
 
+// Creates the new 2D field variable for a swath (point) variable: assigns X,Y dims, copies
+// attributes (applying scale/offset to _FillValue), and marks the original variable as a backup.
+static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Variable *pointVar, CDF::Variable *varY, CDF::Variable *varX) {
+  CDF::Variable *new2DVar = cdfObject->addVariable(new CDF::Variable(pointVar->name.c_str(), CDF_FLOAT));
+  // Assign dims but skip station.
+  for (auto *dimensionLink: pointVar->dimensionlinks) {
+    if (!dimensionLink->name.equals("station")) {
+      new2DVar->dimensionlinks.push_back(dimensionLink);
+    }
+  }
+  // Assign X,Y dims too.
+  new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
+  new2DVar->dimensionlinks.push_back(varX->dimensionlinks[0]);
+
+  // Rename the point data variable.
+  pointVar->name.concat("_backup");
+
+  // Copy variable attributes
+  for (auto *a: pointVar->attributes) {
+    if (a->name.equals("_FillValue")) {
+      float scaleFactor = pointVar->getAttrDataAt0("scale_factor", 1);
+      float addOffset = pointVar->getAttrDataAt0("addOffset", 0);
+      float fillValue = pointVar->getAttrDataAt0("_FillValue", 0);
+      fillValue *= scaleFactor + addOffset;
+      new2DVar->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
+    } else {
+      new2DVar->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
+    }
+  }
+  new2DVar->setAttributeText("ADAGUC_POINT", "true");
+
+  int typeId = pointVar->getType();
+  new2DVar->setAttribute("ADAGUC_ORGPOINT_TYPE", CDF_INT, &typeId, 1);
+  new2DVar->setAttributeText("ADAGUC_ORGPOINT_VARNAME", pointVar->name);
+
+  // The swath variable is not directly plotable, so skip it
+  pointVar->setAttributeText("ADAGUC_SKIP", "true");
+  pointVar->setAttributeText("ADAGUC_ORGPOINT", "true");
+
+  if (new2DVar->getAttributeNE("_FillValue") == NULL) {
+    float f = -9999999;
+    new2DVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
+  }
+  // Scale and offset are already applied
+  new2DVar->removeAttribute("scale_factor");
+  new2DVar->removeAttribute("add_offset");
+};
+
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
@@ -187,9 +235,8 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 
   // Coordinate/metadata variables are never converted to 2D fields themselves.
   auto isConvertibleToTwoDField = [](const CDF::Variable *var) {
-    return !var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
-           !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
-           !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time");
+    return var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "x" && var->name != "y" && var->name != "lat_bnds" && var->name != "lon_bnds" &&
+           var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties" && var->name != "forecast_reference_time";
   };
 
   // Make a list of variables which will be available as 2D fields
@@ -205,57 +252,9 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     }
   }
 
-  // Creates the new 2D field variable for a swath (point) variable: assigns X,Y dims, copies
-  // attributes (applying scale/offset to _FillValue), and marks the original variable as a backup.
-  auto createTwoDVariableFromPointVariable = [&](CDF::Variable *pointVar) {
-    CDF::Variable *new2DVar = cdfObject->addVariable(new CDF::Variable(pointVar->name.c_str(), CDF_FLOAT));
-    // Assign dims but skip station.
-    for (auto *dimensionLink: pointVar->dimensionlinks) {
-      if (!dimensionLink->name.equals("station")) {
-        new2DVar->dimensionlinks.push_back(dimensionLink);
-      }
-    }
-    // Assign X,Y dims too.
-    new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
-    new2DVar->dimensionlinks.push_back(varX->dimensionlinks[0]);
-
-    // Rename the point data variable.
-    pointVar->name.concat("_backup");
-
-    // Copy variable attributes
-    for (auto *a: pointVar->attributes) {
-      if (a->name.equals("_FillValue")) {
-        float scaleFactor = pointVar->getAttrDataAt0("scale_factor", 1);
-        float addOffset = pointVar->getAttrDataAt0("addOffset", 0);
-        float fillValue = pointVar->getAttrDataAt0("_FillValue", 0);
-        fillValue *= scaleFactor + addOffset;
-        new2DVar->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
-      } else {
-        new2DVar->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
-      }
-    }
-    new2DVar->setAttributeText("ADAGUC_POINT", "true");
-
-    int typeId = pointVar->getType();
-    new2DVar->setAttribute("ADAGUC_ORGPOINT_TYPE", CDF_INT, &typeId, 1);
-    new2DVar->setAttributeText("ADAGUC_ORGPOINT_VARNAME", pointVar->name);
-
-    // The swath variable is not directly plotable, so skip it
-    pointVar->setAttributeText("ADAGUC_SKIP", "true");
-    pointVar->setAttributeText("ADAGUC_ORGPOINT", "true");
-
-    if (new2DVar->getAttributeNE("_FillValue") == NULL) {
-      float f = -9999999;
-      new2DVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
-    }
-    // Scale and offset are already applied
-    new2DVar->removeAttribute("scale_factor");
-    new2DVar->removeAttribute("add_offset");
-  };
-
   // Create the new 2D field variables based on the swath variables
   for (const auto &varToConvert: varsToConvert) {
-    createTwoDVariableFromPointVariable(cdfObject->getVariableThrows(varToConvert));
+    createTwoDVariableFromPointVariable(cdfObject, cdfObject->getVar(varToConvert), varX, varY);
   }
 
   if (measureTime) {
