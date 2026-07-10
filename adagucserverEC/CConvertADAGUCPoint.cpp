@@ -31,13 +31,26 @@
 #include "utils/minMax.h"
 #include "CStyleConfiguration.h"
 #include "CTString.h"
-bool measureTime = false;
+static bool measureTime = false;
 
-bool checkIfADAGUCPointFormat(CDFObject *cdfObject) {
+static bool checkIfADAGUCPointFormat(CDFObject *cdfObject) {
   /* Some conversions for non ADAGUC point data */
   CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(cdfObject);
   const auto &featureType = cdfObject->getAttrText("featureType");
   return featureType == "timeSeries" || featureType == "point";
+}
+
+// Creates (or reuses) a coordinate dimension variable of the given size, filling it with evenly
+// spaced coordinates [offset + cellSize/2, offset + 0.5*cellSize, ...] if it was just created.
+static CDF::Variable *createCoordinateVariable(CDFObject *cdfObject, const char *name, int size, double offset, double cellSize) {
+  CDF::Variable *var = cdfObject->getDimVarOrCreate(name, size, CDF_DOUBLE);
+  if (var->data == nullptr) {
+    size_t allocatedElements = var->allocateData();
+    for (size_t j = 0; j < allocatedElements; j++) {
+      ((double *)var->data)[j] = offset + double(j) * cellSize + cellSize / 2;
+    }
+  }
+  return var;
 }
 
 void drawDot(int px, int py, int v, int W, int H, float *grid) {
@@ -50,7 +63,7 @@ void drawDot(int px, int py, int v, int W, int H, float *grid) {
   }
 }
 
-void lineInterpolated(float *grid, int W, int H, int startX, int startY, int stopX, int stopY, float startVal, float stopVal) {
+static void lineInterpolated(float *grid, int W, int H, int startX, int startY, int stopX, int stopY, float startVal, float stopVal) {
   int dX = stopX - startX;
   int dY = stopY - startY;
   if (abs(dX) > 5000) return;
@@ -154,32 +167,17 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   if (measureTime) {
     StopWatch_Stop("MIN/MAX Calculated");
   }
-  double dfBBOX[] = {lonMinMax.min, latMinMax.min, lonMinMax.max, latMinMax.max};
-
   // Default size of adaguc 2dField is 2x2
   int width = 2;
   int height = 2;
 
-  double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
-  double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
-  double offsetX = dfBBOX[0];
-  double offsetY = dfBBOX[1];
+  double cellSizeX = (lonMinMax.max - lonMinMax.min) / double(width);
+  double cellSizeY = (latMinMax.max - latMinMax.min) / double(height);
+  double offsetX = lonMinMax.min;
+  double offsetY = latMinMax.min;
 
-  CDF::Variable *varX = cdfObject->getDimVarOrCreate("x", width, CDF_DOUBLE);
-  if (varX->data == nullptr) {
-    size_t allocatedElements = varX->allocateData();
-    for (size_t j = 0; j < allocatedElements; j++) {
-      ((double *)varX->data)[j] = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-    }
-  }
-
-  CDF::Variable *varY = cdfObject->getDimVarOrCreate("y", width, CDF_DOUBLE);
-  if (varY->data == nullptr) {
-    size_t allocatedElements = varY->allocateData();
-    for (size_t j = 0; j < allocatedElements; j++) {
-      ((double *)varY->data)[j] = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-    }
-  }
+  CDF::Variable *varX = createCoordinateVariable(cdfObject, "x", width, offsetX, cellSizeX);
+  CDF::Variable *varY = createCoordinateVariable(cdfObject, "y", height, offsetY, cellSizeY);
 
   if (measureTime) {
     StopWatch_Stop("2D Coordinate dimensions created");
@@ -303,14 +301,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     }
   }
 
-  /* Find out which variables are point data variables */
-  std::vector<CDF::Variable *> pointVariables;
-  for (auto *variable: cdfObject0->variables) {
-    if (variable->getAttributeNE("ADAGUC_ORGPOINT") != NULL) {
-      pointVariables.push_back(variable);
-    }
-  }
-
   // Read original data first
 
   size_t numDims = pointVar[0]->dimensionlinks.size();
@@ -321,33 +311,34 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   /*
    * There is always a station dimension, we wish to read all stations and for the other dimensions just one: count=1;
    *
-   * Therefore we need to know what the station dimension index is
+   * Therefore we need to know what the station dimension index is. Finds it for `variable` (owned by
+   * `ownerCdfObject`), fills start/count/stride accordingly, and returns the station dimension's size.
    */
-
-  /*First read LAT and LON*/
-
-  /*Find which index is the station dim*/
-  int stationDimIndexInCoord = -1;
-  int numStations = 1;
-  for (size_t j = 0; j < pointLon->dimensionlinks.size(); j++) {
-    if (pointLon->dimensionlinks[j]->name.equals("station") || cdfObject0->getVariableNE(pointLon->dimensionlinks[j]->name.c_str()) == NULL) {
-      stationDimIndexInCoord = j;
-      break;
+  auto setStationDimensionIndices = [&](const CDF::Variable *variable, CDFObject *ownerCdfObject) -> size_t {
+    int stationDimIndex = -1;
+    for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
+      if (variable->dimensionlinks[j]->name.equals("station") || ownerCdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
+        stationDimIndex = j;
+        break;
+      }
     }
-  }
-  /*Set dimension indices*/
-  for (size_t j = 0; j < pointLon->dimensionlinks.size(); j++) {
-    if (stationDimIndexInCoord == int(j)) {
-      start[j] = 0;
-      numStations = pointLon->dimensionlinks[j]->getSize();
-      count[j] = numStations;
-      stride[j] = 1;
-    } else {
-      start[j] = dataSource->getDimensionIndex(pointLon->dimensionlinks[j]->name.c_str());
-      count[j] = 1;
-      stride[j] = 1;
+    size_t stationSize = 1;
+    for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
+      if (stationDimIndex == int(j)) {
+        start[j] = 0;
+        stationSize = variable->dimensionlinks[j]->getSize();
+        count[j] = stationSize;
+        stride[j] = 1;
+      } else {
+        start[j] = dataSource->getDimensionIndex(variable->dimensionlinks[j]->name.c_str());
+        count[j] = 1;
+        stride[j] = 1;
+      }
     }
-  }
+    return stationSize;
+  };
+
+  int numStations = setStationDimensionIndices(pointLon, cdfObject0);
 
   pointLon->freeData();
   pointLat->freeData();
@@ -369,28 +360,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   // compatibility) or CDF_STRING data accordingly. Returns false on read failure.
   auto readPointVariableData = [&](size_t d) -> bool {
     CDF::Variable *variable = pointVar[d];
-
-    /*Second read actual variables*/
-    int stationDimIndexInVariable = -1;
-    for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-      if (variable->dimensionlinks[j]->name.equals("station") || dataSource->getDataObject(d)->cdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
-        stationDimIndexInVariable = j;
-        break;
-      }
-    }
-
-    /*Set dimension indices*/
-    for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-      if (stationDimIndexInVariable == int(j)) {
-        start[j] = 0;
-        count[j] = variable->dimensionlinks[j]->getSize();
-        stride[j] = 1;
-      } else {
-        start[j] = dataSource->getDimensionIndex(variable->dimensionlinks[j]->name.c_str());
-        count[j] = 1;
-        stride[j] = 1;
-      }
-    }
+    setStationDimensionIndices(variable, dataSource->getDataObject(d)->cdfObject);
 
     if (variable->nativeType != CDF_STRING && variable->nativeType != CDF_CHAR) {
       variable->freeData();
@@ -475,9 +445,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   dataSource->dWidth = dataSource->srvParams->geoParams.width;
   dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
-  if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
-    dataSource->srvParams->geoParams.bbox = dataSource->srvParams->geoParams.bbox;
-  }
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
@@ -488,21 +455,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
-    CDF::Variable *varX = cdfObject0->getDimVarOrCreate("x", dataSource->dWidth, CDF_DOUBLE);
-    if (varX->data == nullptr) {
-      size_t allocatedElements = varX->allocateData();
-      for (size_t j = 0; j < allocatedElements; j++) {
-        ((double *)varX->data)[j] = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-      }
-    }
-
-    CDF::Variable *varY = cdfObject0->getDimVarOrCreate("y", dataSource->dHeight, CDF_DOUBLE);
-    if (varY->data == nullptr) {
-      size_t allocatedElements = varY->allocateData();
-      for (size_t j = 0; j < allocatedElements; j++) {
-        ((double *)varY->data)[j] = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-      }
-    }
+    createCoordinateVariable(cdfObject0, "x", dataSource->dWidth, offsetX, cellSizeX);
+    createCoordinateVariable(cdfObject0, "y", dataSource->dHeight, offsetY, cellSizeY);
 
     if (measureTime) {
       StopWatch_Stop("Dimensions set");
@@ -583,13 +537,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     float *roadIdData = NULL;
     float prevRoadId = -1;
     if (roadIdVar != NULL) {
-      {
-        CDBDebug("Start reading data");
-        roadIdVar->readData(CDF_FLOAT);
-        CDBDebug("Done reading data");
-        roadIdData = (float *)roadIdVar->data;
-        prevRoadId = roadIdData[0];
-      }
+      CDBDebug("Start reading data");
+      roadIdVar->readData(CDF_FLOAT);
+      CDBDebug("Done reading data");
+      roadIdData = (float *)roadIdVar->data;
+      prevRoadId = roadIdData[0];
     }
 
     // Read dates for obs
@@ -669,7 +621,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       if (pointVar[d] == NULL) return;
 
       auto *dataObject = dataSource->getDataObject(d);
-      float *sdata = (float *)dataObject->cdfVariable->data;
       PointDVWithLatLon *lastPoint = NULL;
 
       if (pointVar[d]->currentType == CDF_STRING) {
@@ -701,6 +652,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           if (hasPrevLatLon) {
             float roadId = roadIdData[pPoint];
             if (roadId == prevRoadId && val == val && prevVal == prevVal) {
+              float *sdata = (float *)dataObject->cdfVariable->data;
               lineInterpolated(sdata, dataSource->dWidth, dataSource->dHeight, prevLon, prevLat, dlon, dlat, prevVal, val);
             }
             prevRoadId = roadId;
@@ -733,7 +685,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       double latCorrection = 1;
       if (hasZoomableDiscRadius) {
         latCorrection = cos((lat / 90) * (M_PI / 2));
-        ;
         if (latCorrection < 0.01) latCorrection = 0.01;
       }
       double projectedXOffsetX = lon + 0.1 / latCorrection;
