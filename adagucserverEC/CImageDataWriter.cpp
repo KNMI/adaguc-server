@@ -249,6 +249,7 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
 
   // Loop over point paramlist
   for (const auto &param: point.paramList) {
+    if (param.key == "station") continue;
     getFeatureInfoResult.elements.push_back(GFIElement());
     auto &pointID = getFeatureInfoResult.elements.back();
     pointID.dataSource = dataSource;
@@ -621,10 +622,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
           // Retrieve variable names
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
-            // if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
-            //   CDBWarning("No variable defined for dataObject %lu for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
-            //   continue;
-            // }
+
             if (dataSource->getDataObject(o)->filterFromOutput) {
               continue;
             }

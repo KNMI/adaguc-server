@@ -26,7 +26,7 @@
 #ifndef CCONVERTADAGUCPOINT_H
 #define CCONVERTADAGUCPOINT_H
 #include "CDataSource.h"
-void drawDot(int px, int py, int v, int W, int H, float *grid);
+
 class CConvertADAGUCPoint {
 
 public:

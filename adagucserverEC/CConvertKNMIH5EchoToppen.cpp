@@ -32,6 +32,16 @@
 #define CConvertKNMIH5EchoToppen_FillValue -1
 #define CConvertKNMIH5EchoToppen_EchoToppenVar "echotops"
 
+void drawDot(int px, int py, int v, int W, int H, float *grid) {
+  for (int x = -4; x < 6; x++) {
+    for (int y = -4; y < 6; y++) {
+      int pointX = px + x;
+      int pointY = py + y;
+      if (pointX >= 0 && pointY >= 0 && pointX < W && pointY < H) grid[pointX + pointY * W] = v;
+    }
+  }
+}
+
 int CConvertKNMIH5EchoToppen::calcFlightLevel(float height) {
   float feet = height * 1000 * 3.281f;
   int roundedFeet = ((int)(feet / 1000 + 0.5) * 10);
