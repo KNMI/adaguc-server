@@ -99,7 +99,7 @@ namespace CDF {
     void fill(double value);
     void allocateData(size_t size);
     /**
-     * Allocated data into the data property of the variable, with the size as the shape of the linked dimensions
+     * Allocates data for the data property of this variable with size as product of the linked dimensions.
      * @returns The allocated size.
      */
     size_t allocateData();
