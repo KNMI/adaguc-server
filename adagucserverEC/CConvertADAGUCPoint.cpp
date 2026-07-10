@@ -33,7 +33,14 @@
 #include "CTString.h"
 bool measureTime = false;
 
-void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
+bool checkIfADAGUCPointFormat(CDFObject *cdfObject) {
+  /* Some conversions for non ADAGUC point data */
+  CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(cdfObject);
+  const auto &featureType = cdfObject->getAttrText("featureType");
+  return featureType == "timeSeries" || featureType == "point";
+}
+
+void drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {
     for (int y = -4; y < 6; y++) {
       int pointX = px + x;
@@ -43,7 +50,7 @@ void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *gr
   }
 }
 
-void CConvertADAGUCPoint::lineInterpolated(float *grid, int W, int H, int startX, int startY, int stopX, int stopY, float startVal, float stopVal) {
+void lineInterpolated(float *grid, int W, int H, int startX, int startY, int stopX, int stopY, float startVal, float stopVal) {
   int dX = stopX - startX;
   int dY = stopY - startY;
   if (abs(dX) > 5000) return;
@@ -102,33 +109,19 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid, int W, int H, int startX
   }
 }
 
-int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
-  /* Some conversions for non ADAGUC point data */
-  CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(cdfObject);
-
-  try {
-    if (cdfObject->getAttributeThrows("featureType")->toString().equals("timeSeries") == false && cdfObject->getAttributeThrows("featureType")->toString().equals("point") == false) return 1;
-  } catch (int e) {
-    return 1;
-  }
-  return 0;
-}
-
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   // Check whether this is really an adaguc file
-  if (CConvertADAGUCPoint::checkIfADAGUCPointFormat(cdfObject) == 1) return 1;
+  if (!checkIfADAGUCPointFormat(cdfObject)) {
+    return 1;
+  }
 
   // Standard bounding box of adaguc data is worldwide
-  CDF::Variable *pointLon;
-  CDF::Variable *pointLat;
-
-  try {
-    pointLon = cdfObject->getVariableThrows("lon");
-    pointLat = cdfObject->getVariableThrows("lat");
-  } catch (int e) {
+  CDF::Variable *pointLon = cdfObject->getVar("lon");
+  CDF::Variable *pointLat = cdfObject->getVar("lat");
+  if (pointLon == nullptr || pointLat == nullptr) {
     CDBError("lat or lon variables not found");
     return 1;
   }
@@ -172,48 +165,19 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   double offsetX = dfBBOX[0];
   double offsetY = dfBBOX[1];
 
-  // Add geo variables, only if they are not there already
-  CDF::Dimension *dimX = cdfObject->getDimensionNE("x");
-  CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
-
-  CDF::Variable *varX = cdfObject->getVariableNE("x");
-  CDF::Variable *varY = cdfObject->getVariableNE("y");
-  if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
-    // If not available, create new dimensions and variables (X,Y,T)
-    // For x
-    dimX = new CDF::Dimension();
-    dimX->name = "x";
-    dimX->setSize(width);
-    cdfObject->addDimension(dimX);
-    varX = new CDF::Variable();
-    varX->setType(CDF_DOUBLE);
-    varX->name = ("x");
-    varX->isDimension = true;
-    varX->dimensionlinks.push_back(dimX);
-    cdfObject->addVariable(varX);
-    varX->allocateData(dimX->length);
-
-    // For y
-    dimY = new CDF::Dimension();
-    dimY->name = "y";
-    dimY->setSize(height);
-    cdfObject->addDimension(dimY);
-    varY = new CDF::Variable();
-    varY->setType(CDF_DOUBLE);
-    varY->name = ("y");
-    varY->isDimension = true;
-    varY->dimensionlinks.push_back(dimY);
-    cdfObject->addVariable(varY);
-    varY->allocateData(dimY->length);
-
-    // Fill in the X and Y dimensions with the array of coordinates
-    for (size_t j = 0; j < dimX->length; j++) {
-      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-      ((double *)varX->data)[j] = x;
+  CDF::Variable *varX = cdfObject->getDimVarOrCreate("x", width, CDF_DOUBLE);
+  if (varX->data == nullptr) {
+    size_t allocatedElements = varX->allocateData();
+    for (size_t j = 0; j < allocatedElements; j++) {
+      ((double *)varX->data)[j] = offsetX + double(j) * cellSizeX + cellSizeX / 2;
     }
-    for (size_t j = 0; j < dimY->length; j++) {
-      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-      ((double *)varY->data)[j] = y;
+  }
+
+  CDF::Variable *varY = cdfObject->getDimVarOrCreate("y", width, CDF_DOUBLE);
+  if (varY->data == nullptr) {
+    size_t allocatedElements = varY->allocateData();
+    for (size_t j = 0; j < allocatedElements; j++) {
+      ((double *)varY->data)[j] = offsetY + double(j) * cellSizeY + cellSizeY / 2;
     }
   }
 
@@ -244,41 +208,26 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   // Creates the new 2D field variable for a swath (point) variable: assigns X,Y dims, copies
   // attributes (applying scale/offset to _FillValue), and marks the original variable as a backup.
   auto createTwoDVariableFromPointVariable = [&](CDF::Variable *pointVar) {
-    CDF::Variable *new2DVar = new CDF::Variable();
-    cdfObject->addVariable(new2DVar);
-
-    // Assign X,Y,T dims
+    CDF::Variable *new2DVar = cdfObject->addVariable(new CDF::Variable(pointVar->name.c_str(), CDF_FLOAT));
+    // Assign dims but skip station.
     for (auto *dimensionLink: pointVar->dimensionlinks) {
-      bool skip = dimensionLink->name.equals("station");
-      if (!skip) {
+      if (!dimensionLink->name.equals("station")) {
         new2DVar->dimensionlinks.push_back(dimensionLink);
       }
     }
+    // Assign X,Y dims too.
+    new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
+    new2DVar->dimensionlinks.push_back(varX->dimensionlinks[0]);
 
-    new2DVar->dimensionlinks.push_back(dimY);
-    new2DVar->dimensionlinks.push_back(dimX);
-
-    new2DVar->setType(CDF_FLOAT);
-
-    new2DVar->name = pointVar->name.c_str();
+    // Rename the point data variable.
     pointVar->name.concat("_backup");
 
     // Copy variable attributes
     for (auto *a: pointVar->attributes) {
       if (a->name.equals("_FillValue")) {
-        float scaleFactor = 1, addOffset = 0, fillValue = 0;
-        try {
-          pointVar->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
-        } catch (int e) {
-        }
-        try {
-          pointVar->getAttributeThrows("add_offset")->getData(&addOffset, 1);
-        } catch (int e) {
-        }
-        try {
-          pointVar->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
-        } catch (int e) {
-        }
+        float scaleFactor = pointVar->getAttrDataAt0("scale_factor", 1);
+        float addOffset = pointVar->getAttrDataAt0("addOffset", 0);
+        float fillValue = pointVar->getAttrDataAt0("_FillValue", 0);
         fillValue *= scaleFactor + addOffset;
         new2DVar->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
       } else {
@@ -322,19 +271,17 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mode) {
 
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
-  if (CConvertADAGUCPoint::checkIfADAGUCPointFormat(cdfObject0) == 1) return 1;
+  if (!checkIfADAGUCPointFormat(cdfObject0)) {
+    return 1;
+  }
 
   if (measureTime) {
     StopWatch_Stop("Reading data");
   }
 
-  CDF::Variable *pointLon;
-  CDF::Variable *pointLat;
-
-  try {
-    pointLon = cdfObject0->getVariableThrows("lon");
-    pointLat = cdfObject0->getVariableThrows("lat");
-  } catch (int e) {
+  CDF::Variable *pointLon = cdfObject0->getVar("lon");
+  CDF::Variable *pointLat = cdfObject0->getVar("lat");
+  if (pointLon == nullptr || pointLat == nullptr) {
     CDBError("lat or lon variables not found");
     return 1;
   }
@@ -541,32 +488,20 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
-    CDF::Dimension *dimX;
-    CDF::Dimension *dimY;
-    CDF::Variable *varX;
-    CDF::Variable *varY;
-
-    // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject0->getDimensionThrows("x");
-    dimX->setSize(dataSource->dWidth);
-
-    dimY = cdfObject0->getDimensionThrows("y");
-    dimY->setSize(dataSource->dHeight);
-
-    varX = cdfObject0->getVariableThrows("x");
-    varY = cdfObject0->getVariableThrows("y");
-
-    varX->allocateData(dimX->length);
-    varY->allocateData(dimY->length);
-
-    // Fill in the X and Y dimensions with the array of coordinates
-    for (size_t j = 0; j < dimX->length; j++) {
-      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-      ((double *)varX->data)[j] = x;
+    CDF::Variable *varX = cdfObject0->getDimVarOrCreate("x", dataSource->dWidth, CDF_DOUBLE);
+    if (varX->data == nullptr) {
+      size_t allocatedElements = varX->allocateData();
+      for (size_t j = 0; j < allocatedElements; j++) {
+        ((double *)varX->data)[j] = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+      }
     }
-    for (size_t j = 0; j < dimY->length; j++) {
-      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-      ((double *)varY->data)[j] = y;
+
+    CDF::Variable *varY = cdfObject0->getDimVarOrCreate("y", dataSource->dHeight, CDF_DOUBLE);
+    if (varY->data == nullptr) {
+      size_t allocatedElements = varY->allocateData();
+      for (size_t j = 0; j < allocatedElements; j++) {
+        ((double *)varY->data)[j] = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+      }
     }
 
     if (measureTime) {
@@ -605,9 +540,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         }
       }
       if (cdfObject0->getVariableNE("customgridprojection") == NULL) {
-        CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name = ("customgridprojection");
-        cdfObject0->addVariable(projectionVar);
+
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
@@ -615,6 +548,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           dataSource->nativeEPSG = "EPSG:4326";
           projectionRequired = false;
         }
+        CDF::Variable *projectionVar = cdfObject0->addVariable(new CDF::Variable("customgridprojection", CDF_NONE));
         projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4);
       }
     }

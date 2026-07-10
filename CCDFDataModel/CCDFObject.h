@@ -56,6 +56,9 @@ public:
    * @returns the matching dimension or null
    */
   CDF::Dimension *getDim(std::string name);
+
+  CDF::Dimension *getDimOrCreate(const std::string &name, size_t length);
+
   CDF::Dimension *getDimensionNE(std::string name);
   CDF::Dimension *getDimensionNE(const char *name);
 
@@ -88,6 +91,8 @@ public:
   void clear();
   int attachCDFReader(void *reader);
   void *getCDFReader() { return reader; }
+
+  CDF::Variable *getDimVarOrCreate(const std::string &name, size_t length, CDFType type);
 };
 
 #endif

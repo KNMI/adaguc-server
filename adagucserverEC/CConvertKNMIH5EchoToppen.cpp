@@ -278,7 +278,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       /* Also draw a dot on the virtual echotoppen grid, useful to see something in neartest neighbour rendermethod
          The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a grid.
        */
-      CConvertADAGUCPoint::drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
+      drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
     }
   }
   return 0;

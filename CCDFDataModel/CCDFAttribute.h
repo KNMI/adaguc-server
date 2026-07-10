@@ -54,6 +54,7 @@ namespace CDF {
 
     template <class T> int getData(T *dataToGet, size_t getlength);
     template <class T> T getDataAt(int index);
+    template <class T> T getDataAt(size_t index, T defaultValue);
     int setString(const char *dataToSet);
     CT::string toString();
     size_t size();
