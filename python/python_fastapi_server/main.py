@@ -51,9 +51,11 @@ async def add_hsts_header(request: Request, call_next):
 
 
 allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
-external_address = os.environ.get("EXTERNALADDRESS")
 
-if get_externaladdress() is None:
+external_address = get_externaladdress()
+logger.info("EXT: %s", external_address)
+
+if external_address is None:
     # TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
     if allowed_hosts is not None and len(allowed_hosts) > 0:
         app.add_middleware(ShortCircuitHealthCheckMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
@@ -105,4 +107,4 @@ logging.info("Starting server on 0.0.0.0")
 
 if __name__ == "__main__":
     testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True, proxy_headers=True)
