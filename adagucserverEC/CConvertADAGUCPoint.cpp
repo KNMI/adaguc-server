@@ -221,32 +221,33 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     StopWatch_Stop("2D Coordinate dimensions created");
   }
 
+  // Coordinate/metadata variables are never converted to 2D fields themselves.
+  auto isConvertibleToTwoDField = [](const CDF::Variable *var) {
+    return !var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
+           !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
+           !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time");
+  };
+
   // Make a list of variables which will be available as 2D fields
   std::vector<std::string> varsToConvert;
   for (auto *var: cdfObject->variables) {
     if (var->isDimension == false) {
-      {
-        if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
-            !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
-            !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time")) {
-          varsToConvert.push_back(var->name);
-        }
-        if (var->name.equals("projection")) {
-          var->setAttributeText("ADAGUC_SKIP", "true");
-        }
+      if (isConvertibleToTwoDField(var)) {
+        varsToConvert.push_back(var->name);
+      }
+      if (var->name.equals("projection")) {
+        var->setAttributeText("ADAGUC_SKIP", "true");
       }
     }
   }
 
-  // Create the new 2D field variables based on the swath variables
-  for (const auto &varToConvert: varsToConvert) {
-    CDF::Variable *pointVar = cdfObject->getVariableThrows(varToConvert);
-
+  // Creates the new 2D field variable for a swath (point) variable: assigns X,Y dims, copies
+  // attributes (applying scale/offset to _FillValue), and marks the original variable as a backup.
+  auto createTwoDVariableFromPointVariable = [&](CDF::Variable *pointVar) {
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
 
     // Assign X,Y,T dims
-
     for (auto *dimensionLink: pointVar->dimensionlinks) {
       bool skip = dimensionLink->name.equals("station");
       if (!skip) {
@@ -266,7 +267,6 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     for (auto *a: pointVar->attributes) {
       if (a->name.equals("_FillValue")) {
         float scaleFactor = 1, addOffset = 0, fillValue = 0;
-        ;
         try {
           pointVar->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
         } catch (int e) {
@@ -302,6 +302,11 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     // Scale and offset are already applied
     new2DVar->removeAttribute("scale_factor");
     new2DVar->removeAttribute("add_offset");
+  };
+
+  // Create the new 2D field variables based on the swath variables
+  for (const auto &varToConvert: varsToConvert) {
+    createTwoDVariableFromPointVariable(cdfObject->getVariableThrows(varToConvert));
   }
 
   if (measureTime) {
@@ -412,68 +417,78 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     StopWatch_Stop("Lat and lon read");
   }
 
+  // Reads the actual data for data object d's point variable: figures out the station dimension
+  // index, sets up start/count/stride for it, and reads FLOAT, CDF_CHAR (fixed-width strings, LCW
+  // compatibility) or CDF_STRING data accordingly. Returns false on read failure.
+  auto readPointVariableData = [&](size_t d) -> bool {
+    CDF::Variable *variable = pointVar[d];
+
+    /*Second read actual variables*/
+    int stationDimIndexInVariable = -1;
+    for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
+      if (variable->dimensionlinks[j]->name.equals("station") || dataSource->getDataObject(d)->cdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
+        stationDimIndexInVariable = j;
+        break;
+      }
+    }
+
+    /*Set dimension indices*/
+    for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
+      if (stationDimIndexInVariable == int(j)) {
+        start[j] = 0;
+        count[j] = variable->dimensionlinks[j]->getSize();
+        stride[j] = 1;
+      } else {
+        start[j] = dataSource->getDimensionIndex(variable->dimensionlinks[j]->name.c_str());
+        count[j] = 1;
+        stride[j] = 1;
+      }
+    }
+
+    if (variable->nativeType != CDF_STRING && variable->nativeType != CDF_CHAR) {
+      variable->freeData();
+
+      if (variable->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true) != 0) {
+        CDBError("Unable to read pointVar[d] data");
+        return false;
+      }
+    } else {
+      if (variable->nativeType == CDF_CHAR) {
+        // Compatibilty function for LCW data, reading strings stored as fixed arrays of CDF_CHAR
+        start[1] = 0;
+        count[1] = variable->dimensionlinks[1]->getSize();
+        std::vector<std::string> data(count[0]);
+
+        if (variable->readData(CDF_CHAR, start.data(), count.data(), stride.data(), false) != 0) {
+          CDBError("Unable to read pointVar[d] data");
+          return false;
+        }
+        for (size_t j = 0; j < count[0]; j++) {
+          data[j].copy(((char *)variable->data + j * count[1]), count[1] - 1);
+        }
+        variable->freeData();
+
+        variable->data = malloc(count[0] * sizeof(size_t));
+        for (size_t j = 0; j < count[0]; j++) {
+          (((char **)variable->data)[j]) = ((char *)malloc((count[1] + 1) * sizeof(char)));
+          strncpy((((char **)variable->data)[j]), data[j].c_str(), count[1]);
+        }
+      }
+      if (variable->nativeType == CDF_STRING) {
+        variable->freeData();
+        if (variable->readData(CDF_STRING, start.data(), count.data(), stride.data(), false) != 0) {
+          CDBError("Unable to read pointVar[d] data");
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
   for (size_t d = 0; d < nrDataObjects; d++) {
     if (pointVar[d] != NULL) {
-      /*Second read actual variables*/
-      int stationDimIndexInVariable = -1;
-
-      for (size_t j = 0; j < pointVar[d]->dimensionlinks.size(); j++) {
-        if (pointVar[d]->dimensionlinks[j]->name.equals("station") || dataSource->getDataObject(d)->cdfObject->getVariableNE(pointVar[d]->dimensionlinks[j]->name.c_str()) == NULL) {
-          stationDimIndexInVariable = j;
-          break;
-        }
-      }
-
-      /*Set dimension indices*/
-      for (size_t j = 0; j < pointVar[d]->dimensionlinks.size(); j++) {
-        if (stationDimIndexInVariable == int(j)) {
-          start[j] = 0;
-          count[j] = pointVar[d]->dimensionlinks[j]->getSize();
-          stride[j] = 1;
-        } else {
-          start[j] = dataSource->getDimensionIndex(pointVar[d]->dimensionlinks[j]->name.c_str());
-          count[j] = 1;
-          stride[j] = 1;
-        }
-      }
-
-      if (pointVar[d]->nativeType != CDF_STRING && pointVar[d]->nativeType != CDF_CHAR) {
-        pointVar[d]->freeData();
-
-        if (pointVar[d]->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true) != 0) {
-          CDBError("Unable to read pointVar[d] data");
-          return 1;
-        }
-      } else {
-
-        if (pointVar[d]->nativeType == CDF_CHAR) {
-          // Compatibilty function for LCW data, reading strings stored as fixed arrays of CDF_CHAR
-          start[1] = 0;
-          count[1] = pointVar[d]->dimensionlinks[1]->getSize();
-          std::vector<std::string> data(count[0]);
-
-          if (pointVar[d]->readData(CDF_CHAR, start.data(), count.data(), stride.data(), false) != 0) {
-            CDBError("Unable to read pointVar[d] data");
-            return 1;
-          }
-          for (size_t j = 0; j < count[0]; j++) {
-            data[j].copy(((char *)pointVar[d]->data + j * count[1]), count[1] - 1);
-          }
-          pointVar[d]->freeData();
-
-          pointVar[d]->data = malloc(count[0] * sizeof(size_t));
-          for (size_t j = 0; j < count[0]; j++) {
-            (((char **)pointVar[d]->data)[j]) = ((char *)malloc((count[1] + 1) * sizeof(char)));
-            strncpy((((char **)pointVar[d]->data)[j]), data[j].c_str(), count[1]);
-          }
-        }
-        if (pointVar[d]->nativeType == CDF_STRING) {
-          pointVar[d]->freeData();
-          if (pointVar[d]->readData(CDF_STRING, start.data(), count.data(), stride.data(), false) != 0) {
-            CDBError("Unable to read pointVar[d] data");
-            return 1;
-          }
-        }
+      if (!readPointVariableData(d)) {
+        return 1;
       }
     }
   }
@@ -712,6 +727,63 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
     const auto &timeVarPerObsKeyAndDescription = hasTimeValuePerObs ? getKeyAndDescription(timeVarPerObs) : CKeyValueDescriptionPair();
 
+    // Pushes a point (plus its paramlist entries: text/char value, station id, obs time) for data object d
+    // at station index pPoint/pGeo. With string and char (text) data, the float value is set to NAN and the
+    // character data is put in the paramlist. Mutates the prevLon/prevLat/prevVal/hasPrevLatLon/prevRoadId
+    // state used for linear interpolation between successive road points.
+    auto addPointForDataObject = [&](size_t d, int pPoint, int pGeo, int dlon, int dlat, double lon, double lat, double rotation) {
+      if (pointVar[d] == NULL) return;
+
+      auto *dataObject = dataSource->getDataObject(d);
+      float *sdata = (float *)dataObject->cdfVariable->data;
+      PointDVWithLatLon *lastPoint = NULL;
+
+      if (pointVar[d]->currentType == CDF_STRING) {
+        float v = NAN;
+        dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
+        lastPoint = &dataObject->points.back();
+        /* Get the last pushed point from the array and push the character text data in the paramlist */
+        const char *b = ((const char **)pointVar[d]->data)[pPoint];
+        lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(b)});
+      }
+
+      if (pointVar[d]->currentType == CDF_CHAR) {
+        float v = NAN;
+        dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
+        lastPoint = &dataObject->points.back();
+        /* Get the last pushed point from the array and push the character text data in the paramlist */
+        lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
+      }
+
+      if (pointVar[d]->currentType == CDF_FLOAT) {
+        float val = ((float *)pointVar[d]->data)[pPoint];
+        dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
+        lastPoint = &dataObject->points.back();
+        if (pointID != NULL) {
+          lastPoint->paramList.push_back(
+              {.key = pointIdKeyAndDescription.key, .description = pointIdKeyAndDescription.description, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
+        }
+        if (doDrawLinearInterpolated && roadIdData != NULL) {
+          if (hasPrevLatLon) {
+            float roadId = roadIdData[pPoint];
+            if (roadId == prevRoadId && val == val && prevVal == prevVal) {
+              lineInterpolated(sdata, dataSource->dWidth, dataSource->dHeight, prevLon, prevLat, dlon, dlat, prevVal, val);
+            }
+            prevRoadId = roadId;
+          }
+        }
+        prevLon = dlon;
+        prevLat = dlat;
+        prevVal = val;
+        hasPrevLatLon = true;
+      }
+
+      if (hasTimeValuePerObs && lastPoint != NULL) {
+        lastPoint->paramList.push_back(
+            {.key = timeVarPerObsKeyAndDescription.key, .description = timeVarPerObsKeyAndDescription.description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
+      }
+    };
+
     for (int stationNr = 0; stationNr < numStations; stationNr++) {
       int pPoint = stationNr;
       int pGeo = stationNr;
@@ -768,59 +840,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         int dlon = int((projectedX - offsetX) / cellSizeX);
         int dlat = int((projectedY - offsetY) / cellSizeY);
         for (size_t d = 0; d < nrDataObjects; d++) {
-          if (pointVar[d] != NULL) {
-            auto *dataObject = dataSource->getDataObject(d);
-            float *sdata = (float *)dataObject->cdfVariable->data;
-            PointDVWithLatLon *lastPoint = NULL;
-
-            /**
-             * With string and char (text) data, the float value is set to NAN and character data is put in the paramlist
-             */
-            if (pointVar[d]->currentType == CDF_STRING) {
-              float v = NAN;
-              dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
-              lastPoint = &dataObject->points.back();
-              /* Get the last pushed point from the array and push the character text data in the paramlist */
-              const char *b = ((const char **)pointVar[d]->data)[pPoint];
-              lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(b)});
-            }
-
-            if (pointVar[d]->currentType == CDF_CHAR) {
-              float v = NAN;
-              dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
-              lastPoint = &dataObject->points.back();
-              /* Get the last pushed point from the array and push the character text data in the paramlist */
-              lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
-            }
-
-            if (pointVar[d]->currentType == CDF_FLOAT) {
-              float val = ((float *)pointVar[d]->data)[pPoint];
-              dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
-              lastPoint = &dataObject->points.back();
-              if (pointID != NULL) {
-                lastPoint->paramList.push_back(
-                    {.key = pointIdKeyAndDescription.key, .description = pointIdKeyAndDescription.description, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
-              }
-              if (doDrawLinearInterpolated && roadIdData != NULL) {
-                if (hasPrevLatLon) {
-                  float roadId = roadIdData[pPoint];
-                  if (roadId == prevRoadId && val == val && prevVal == prevVal) {
-                    lineInterpolated(sdata, dataSource->dWidth, dataSource->dHeight, prevLon, prevLat, dlon, dlat, prevVal, val);
-                  }
-                  prevRoadId = roadId;
-                }
-              }
-              prevLon = dlon;
-              prevLat = dlat;
-              prevVal = val;
-              hasPrevLatLon = true;
-            }
-
-            if (hasTimeValuePerObs && lastPoint != NULL) {
-              lastPoint->paramList.push_back(
-                  {.key = timeVarPerObsKeyAndDescription.key, .description = timeVarPerObsKeyAndDescription.description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
-            }
-          }
+          addPointForDataObject(d, pPoint, pGeo, dlon, dlat, lon, lat, rotation);
         }
       }
     }
