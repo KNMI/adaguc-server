@@ -11,6 +11,7 @@ from asgi_logger import AccessLoggerMiddleware
 
 from middleware.short_circuit_healthcheck import ShortCircuitHealthCheckMiddleware
 from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
+from routers.utils.utils import get_externaladdress
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
@@ -52,7 +53,7 @@ async def add_hsts_header(request: Request, call_next):
 allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
 external_address = os.environ.get("EXTERNALADDRESS")
 
-if external_address is None or len(external_address) < 6:
+if get_externaladdress() is None:
     # TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
     if allowed_hosts is not None and len(allowed_hosts) > 0:
         app.add_middleware(ShortCircuitHealthCheckMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])

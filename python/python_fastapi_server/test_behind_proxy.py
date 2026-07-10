@@ -15,6 +15,7 @@ def get_testclient(environment=None):
     """Return a fresh testclient with specific environment settings"""
 
     # Default environment
+    os.environ["EXTERNALADDRESS"] = ""
     os.environ["ADAGUC_TRUSTED_HOSTS"] = ""
     os.environ["ADAGUC_TRUSTED_PROXIES"] = ""
     os.environ["ADAGUC_CONFIG"] = os.path.join(os.environ["ADAGUC_PATH"], "data", "config", "adaguc.dataset.xml")
