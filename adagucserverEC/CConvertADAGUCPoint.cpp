@@ -31,7 +31,7 @@
 #include "utils/minMax.h"
 #include "CStyleConfiguration.h"
 #include "CTString.h"
-#define MEASURETIME
+// #define MEASURETIME
 void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {
     for (int y = -4; y < 6; y++) {
@@ -774,40 +774,18 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
     bool doDrawLinearInterpolated = dataSource->getStyle()->renderMethod & RM_POINT_LINEARINTERPOLATION;
 
-    /* The paramlist key/description are properties of the variable itself, not of individual points,
-     * so compute them once here instead of on every iteration of the point loop below. */
-    auto getKeyAndDescription = [](CDF::Variable *variable) -> std::pair<std::string, std::string> {
-      std::string key = variable->name;
-      std::string description = key;
+    auto getKeyAndDescription = [](const CDF::Variable *variable) -> CKeyValueDescriptionPair {
       CDF::Attribute *longName = variable->getAttributeNE("long_name");
-      if (longName != NULL) {
-        description = (const char *)longName->data;
-      }
-      return {key, description};
+      return {.key = variable->name, .description = longName != nullptr ? (const char *)longName->data : variable->name, .value = ""};
     };
 
-    std::vector<std::string> pointVarKey(nrDataObjects), pointVarDescription(nrDataObjects);
-    for (size_t d = 0; d < nrDataObjects; d++) {
-      if (pointVar[d] != NULL) {
-        auto [key, description] = getKeyAndDescription(pointVar[d]);
-        pointVarKey[d] = key;
-        pointVarDescription[d] = description;
-      }
-    }
+    std::vector<CKeyValueDescriptionPair> pointVarKeyDesc;
+    pointVarKeyDesc.reserve(nrDataObjects);
+    for (const auto &pointV: pointVar) pointVarKeyDesc.push_back(getKeyAndDescription(pointV));
 
-    std::string pointIDKey, pointIDDescription;
-    if (pointID != NULL) {
-      auto [key, description] = getKeyAndDescription(pointID);
-      pointIDKey = key;
-      pointIDDescription = description;
-    }
+    const auto &pointIdKeyAndDescription = pointID != nullptr ? getKeyAndDescription(pointID) : CKeyValueDescriptionPair();
 
-    std::string timeVarPerObsKey, timeVarPerObsDescription;
-    if (hasTimeValuePerObs) {
-      auto [key, description] = getKeyAndDescription(timeVarPerObs);
-      timeVarPerObsKey = key;
-      timeVarPerObsDescription = description;
-    }
+    const auto &timeVarPerObsKeyAndDescription = hasTimeValuePerObs ? getKeyAndDescription(timeVarPerObs) : CKeyValueDescriptionPair();
 
     for (int stationNr = 0; stationNr < numStations; stationNr++) {
       int pPoint = stationNr + 0; // dateDimIndex;//*numStations;
@@ -884,7 +862,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               lastPoint = &dataObject->points.back();
               /* Get the last pushed point from the array and push the character text data in the paramlist */
               const char *b = ((const char **)pointVar[d]->data)[pPoint];
-              lastPoint->paramList.push_back({.key = pointVarKey[d], .description = pointVarDescription[d], .value = CT::fromCharPointer(b)});
+              lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(b)});
             }
 
             if (pointVar[d]->currentType == CDF_CHAR) {
@@ -893,7 +871,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
               lastPoint = &dataObject->points.back();
               /* Get the last pushed point from the array and push the character text data in the paramlist */
-              lastPoint->paramList.push_back({.key = pointVarKey[d], .description = pointVarDescription[d], .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
+              lastPoint->paramList.push_back({.key = pointVarKeyDesc[d].key, .description = pointVarKeyDesc[d].description, .value = CT::fromCharPointer(((const char **)pointVar[d]->data)[pPoint])});
             }
 
             if (pointVar[d]->currentType == CDF_FLOAT) {
@@ -901,7 +879,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
               lastPoint = &dataObject->points.back();
               if (pointID != NULL) {
-                lastPoint->paramList.push_back({.key = pointIDKey, .description = pointIDDescription, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
+                lastPoint->paramList.push_back(
+                    {.key = pointIdKeyAndDescription.key, .description = pointIdKeyAndDescription.description, .value = CT::fromCharPointer(((const char **)pointID->data)[pGeo])});
               }
               if (doDrawLinearInterpolated && roadIdData != NULL) {
                 if (hasPrevLatLon) {
@@ -919,7 +898,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
             }
 
             if (hasTimeValuePerObs && lastPoint != NULL) {
-              lastPoint->paramList.push_back({.key = timeVarPerObsKey, .description = timeVarPerObsDescription, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
+              lastPoint->paramList.push_back(
+                  {.key = timeVarPerObsKeyAndDescription.key, .description = timeVarPerObsKeyAndDescription.description, .value = obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint]))});
             }
           }
         }

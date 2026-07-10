@@ -278,7 +278,7 @@ int writePng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, i
   png_structp png_ptr;
   png_infop info_ptr;
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  // png_set_compression_level(png_ptr, 1); //TODO
+  // png_set_compression_level(png_ptr, 1); // TODO
 #ifdef MEASURETIME
   StopWatch_Stop("png_create_write_struct written");
 #endif
