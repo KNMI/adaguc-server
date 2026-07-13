@@ -98,6 +98,10 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
         }
       }
 
+      // dataObject(0) is the point data source: its cdfVariable->data is not allocated (hasFieldData is
+      // false), since point values normally live in dataObject(0)->points, not in a dense grid. Here we
+      // need a dense grid to hold the per-feature values, so allocate it before writing into it.
+      CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, dataSource->dWidth * dataSource->dHeight);
       CDF::allocateData(dataSource->getDataObject(1)->cdfVariable->getType(), &dataSource->getDataObject(1)->cdfVariable->data, dataSource->dWidth * dataSource->dHeight); // For a 2D field
       // Copy the gridded values from the geojson grid to the point data's grid
       size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
@@ -121,6 +125,8 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       CDBDebug("Setting ADAGUC_SKIP_POINTS");
       dataSource->getDataObject(0)->cdfVariable->setAttributeText("ADAGUC_SKIP_POINTS", "1");
       dataSource->getDataObject(1)->cdfVariable->setAttributeText("ADAGUC_SKIP_POINTS", "1");
+      // The 2D grids are now allocated and filled, so downstream code can safely read cdfVariable->data.
+      dataSource->hasFieldData = true;
     }
   }
   return 0;

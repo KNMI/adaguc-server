@@ -87,31 +87,33 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
         return 1;
       }
 
-      void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-      CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
+      if (dataSource->hasFieldData) {
+        void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+        CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
 
-      CCreateHistogramSettings settings;
-      settings.width = dataSource->srvParams->geoParams.width;
-      settings.height = dataSource->srvParams->geoParams.height;
-      settings.data = warpedData;
+        CCreateHistogramSettings settings;
+        settings.width = dataSource->srvParams->geoParams.width;
+        settings.height = dataSource->srvParams->geoParams.height;
+        settings.data = warpedData;
 
-      GeoParameters sourceGeo;
+        GeoParameters sourceGeo;
 
-      sourceGeo.width = dataSource->dWidth;
-      sourceGeo.height = dataSource->dHeight;
-      sourceGeo.bbox = dataSource->dfBBOX;
-      sourceGeo.cellsizeX = dataSource->dfCellSizeX;
-      sourceGeo.cellsizeY = dataSource->dfCellSizeY;
-      sourceGeo.crs = dataSource->nativeProj4;
+        sourceGeo.width = dataSource->dWidth;
+        sourceGeo.height = dataSource->dHeight;
+        sourceGeo.bbox = dataSource->dfBBOX;
+        sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+        sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+        sourceGeo.crs = dataSource->nativeProj4;
 
-      CDBDebug("Rendering %f,%f", sourceGeo.bbox.left, sourceGeo.bbox.bottom);
-      GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
+        CDBDebug("Rendering %f,%f", sourceGeo.bbox.left, sourceGeo.bbox.bottom);
+        GenericDataWarper genericDataWarper;
+        GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-      ENUMERATE_OVER_CDFTYPES(RENDER)
+        ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
+      }
     }
     reader.close();
     CDBDebug("Addata finished, data warped");

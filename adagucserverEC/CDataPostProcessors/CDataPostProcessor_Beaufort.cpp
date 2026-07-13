@@ -65,14 +65,16 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
       size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
       float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
       float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
-      for (size_t cnt = 0; cnt < l; cnt++) {
-        float speed = *src;
-        if (speed == speed) {
-          if (speed != noDataValue) {
-            *src = getBeaufort(factor * speed);
+      if (dataSource->hasFieldData) {
+        for (size_t cnt = 0; cnt < l; cnt++) {
+          float speed = *src;
+          if (speed == speed) {
+            if (speed != noDataValue) {
+              *src = getBeaufort(factor * speed);
+            }
           }
+          src++;
         }
-        src++;
       }
       // Convert point data if needed
       size_t nrPoints = dataSource->getDataObject(0)->points.size();
@@ -129,19 +131,21 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
         float speed;
         float speedu;
         float speedv;
-        for (size_t cnt = 0; cnt < l; cnt++) {
-          speedu = *srcu;
-          speedv = *srcv;
-          if ((speedu == speedu) && (speedv == speedv)) {
-            if ((speedu != noDataValue) && (speedv != noDataValue)) {
-              speed = factor * hypot(speedu, speedv);
-              *srcu = getBeaufort(speed);
-            } else {
-              *srcu = noDataValue;
+        if (dataSource->hasFieldData) {
+          for (size_t cnt = 0; cnt < l; cnt++) {
+            speedu = *srcu;
+            speedv = *srcv;
+            if ((speedu == speedu) && (speedv == speedv)) {
+              if ((speedu != noDataValue) && (speedv != noDataValue)) {
+                speed = factor * hypot(speedu, speedv);
+                *srcu = getBeaufort(speed);
+              } else {
+                *srcu = noDataValue;
+              }
             }
+            srcu++;
+            srcv++;
           }
-          srcu++;
-          srcv++;
         }
         // Convert point data if needed
         size_t nrPoints = dataSource->getDataObject(0)->points.size();

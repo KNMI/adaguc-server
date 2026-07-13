@@ -962,9 +962,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpNearestRGBA");
 #endif
-    imageWarperRenderer = new CImgWarpNearestRGBA();
-    imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-    delete imageWarperRenderer;
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpNearestRGBA();
+      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
+      delete imageWarperRenderer;
+    }
   }
 
   /**
@@ -974,7 +976,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpBilinear");
 #endif
-    if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
+    if (dataSource->hasFieldData && dataSource->getFirstAvailableDataObject()->points.size() == 0) {
       imageWarperRenderer = new CImgWarpBilinear();
       std::string bilinearSettings;
       bool drawMap = false;
@@ -1118,9 +1120,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpHillShaded");
 #endif
-    imageWarperRenderer = new CImgWarpHillShaded();
-    imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-    delete imageWarperRenderer;
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpHillShaded();
+      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
+      delete imageWarperRenderer;
+    }
   }
 
   /**
@@ -1144,9 +1148,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgRenderStippling");
 #endif
-    imageWarperRenderer = new CImgRenderStippling();
-    imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-    delete imageWarperRenderer;
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgRenderStippling();
+      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
+      delete imageWarperRenderer;
+    }
   }
 
   /**
