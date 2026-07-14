@@ -1,13 +1,17 @@
+#include <array>
 #include <cerrno>
 #include <csignal>
 #include <ctime>
 #include <fcntl.h>
 #include <map>
 #include <mutex>
+#include <string>
+#include <string_view>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 
 #include "CDebugger.h"
 #include "CTString.h"
@@ -24,7 +28,7 @@ const int CHECK_CHILD_PROC_INTERVAL = 30;
 // Default for ADAGUC_NUMPARALLELPROCESSES, matches the python default
 const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
 // Default for ADAGUC_MAX_PROC_TIMEOUT, matches the python default.
-const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 180;
+const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 10;
 
 typedef struct {
   int child_socket_fd;
@@ -34,10 +38,18 @@ typedef struct {
 static std::map<pid_t, child_proc_t> child_procs;
 int self_pipe[2];
 
+/**
+ * Gets a positive integer value from the environment.
+ *
+ * If the environment variable is not an integer or is less than 1, the default value is returned.
+ *
+ * @param env The name of the environment variable.
+ * @param default_val The default value to use when the environment variable is not valid.
+ */
 int mother_get_env_var_int(const char *env, int default_val) {
-  CT::string env_var(getenv(env));
-  if (!env_var.isInt()) return default_val;
-  int value = env_var.toInt();
+  std::string env_var = CT::fromCharPointer(getenv(env));
+  if (!CT::isInt(env_var)) return default_val;
+  int value = std::atoi(env_var.c_str());
   return value > 0 ? value : default_val;
 }
 
@@ -53,18 +65,37 @@ int mother_set_fd_nonblocking(int fd) {
 }
 
 /**
- * Parses a newline-separated string of key=value pairs and sets them as environment variables.
+ * Checks whether an environment variable key is allowed to be set by a child request.
+ *
+ * Only request-specific environment variables are allowed, so a client cannot overwrite
+ * process-wide configuration inherited by the fork server.
+ *
+ * @param key The environment variable key to check.
+ */
+bool child_is_allowed_env_key(std::string_view key) {
+  static constexpr std::array<std::string_view, 5> allowed_keys = {
+      "ADAGUC_LOGFILE", "SCRIPT_NAME", "REQUEST_URI", "ADAGUC_ONLINERESOURCE", "QUERY_STRING",
+  };
+
+  for (const auto &allowed_key: allowed_keys) {
+    if (key == allowed_key) return true;
+  }
+  return false;
+}
+
+/**
+ * Parses a newline-separated string of key=value pairs and sets allowed request environment variables.
  *
  * This function takes a string view containing multiple lines, where each line is expected
  * to be in the format `KEY=VALUE`. For each valid line, the function sets an environment
  * variable using `setenv()` with overwrite enabled.
  *
- * Empty lines or lines without an '=' character are ignored.
+ * Empty lines are ignored. Only allows a predetermined set of environment variables.
  *
  * @param request A string view containing the environment variable definitions,
  *                each on a separate line.
  */
-void child_set_env_from_request(const std::string_view &request) {
+bool child_set_env_from_request(const std::string_view &request) {
   size_t start = 0;
 
   while (start < request.size()) {
@@ -75,15 +106,20 @@ void child_set_env_from_request(const std::string_view &request) {
 
     if (!line.empty()) {
       size_t sep = line.find('=');
-      if (sep != std::string_view::npos) {
-        std::string key(line.substr(0, sep));
-        std::string val(line.substr(sep + 1));
-        setenv(key.c_str(), val.c_str(), 1);
-      }
+      if (sep == std::string_view::npos) return false;
+
+      std::string_view key = line.substr(0, sep);
+      if (!child_is_allowed_env_key(key)) return false;
+
+      std::string key_str(key);
+      std::string val(line.substr(sep + 1));
+      if (setenv(key_str.c_str(), val.c_str(), 1) != 0) return false;
     }
 
     start = end + 1;
   }
+
+  return true;
 }
 
 /**
@@ -105,7 +141,7 @@ void child_set_env_from_request(const std::string_view &request) {
 void child_handle_client(int child_socket_fd, int (*run_adaguc_once)(int, char **, char **), int argc, char **argv, char **envp) {
   setLoggerPid();
 
-  std::vector<char> recv_buf(4096);
+  std::vector<char> recv_buf(2048);
   int data_recv = recv(child_socket_fd, recv_buf.data(), recv_buf.size(), 0);
   if (data_recv <= 0) {
     _exit(1);
@@ -119,7 +155,10 @@ void child_handle_client(int child_socket_fd, int (*run_adaguc_once)(int, char *
   }
 
   // The request will contain environment variables. Parse and set these for the child process
-  child_set_env_from_request(request_view);
+  if (!child_set_env_from_request(request_view)) {
+    CDBError("Invalid fork server request");
+    _exit(1);
+  }
 
   // The child stdout should end up in the client socket
   dup2(child_socket_fd, STDOUT_FILENO);
@@ -258,8 +297,12 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
   struct sockaddr_un local, remote;
   local.sun_family = AF_UNIX;
 
-  CT::string socket_path(getenv("ADAGUC_PATH"));
-  socket_path.concat("/adaguc.socket");
+  std::string socket_path = CT::fromCharPointer(getenv("ADAGUC_PATH"));
+  if (socket_path.empty()) {
+    CDBError("No ADAGUC_PATH set");
+    return 1;
+  }
+  socket_path += "/adaguc.socket";
 
   strncpy(local.sun_path, socket_path.c_str(), sizeof(local.sun_path));
   local.sun_path[sizeof(local.sun_path) - 1] = '\0';
