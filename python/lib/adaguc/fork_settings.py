@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 ADAGUC_FORK_SOCKET_NAME = "adaguc.socket"
+MAX_FORK_REQUEST_BYTES = 2048
 
 
 def get_fork_socket_path() -> str:

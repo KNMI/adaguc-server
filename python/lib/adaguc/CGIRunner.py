@@ -11,11 +11,12 @@ from asyncio.subprocess import Process
 from subprocess import PIPE
 from typing import NamedTuple
 
-from adaguc.fork_settings import get_fork_socket_path, is_fork_enabled
+from adaguc.fork_settings import MAX_FORK_REQUEST_BYTES, get_fork_socket_path, is_fork_enabled
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_500_TIMEOUT = 34  # Not defined in C++, is generated from this file
+HTTP_STATUSCODE_400_BAD_REQUEST = 35  # Not defined in C++, is generated from this file
 SCAN_EXITCODE_FILENOMATCH = 64  #  File is available but does not match any of the available datasets
 SCAN_EXITCODE_DATASETNOEXIST = 65  # The reason for this status code is that the dataset configuration file does not exist.
 SCAN_EXITCODE_SCANERROR = 66  #  An error occured during scanning
@@ -29,8 +30,7 @@ sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to
 
 ON_POSIX = "posix" in sys.builtin_module_names
 
-MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "180"))
-print("Max procs: ", max(ADAGUC_NUMPARALLELPROCESSES, 2))
+MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "10"))
 
 
 class AdagucResponse(NamedTuple):
@@ -64,19 +64,27 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     The response contains the normal ADAGUC output, followed by a 4-byte exit status appended by the fork server.
     """
 
-    process_output = bytearray()
-    reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
-
     data = [
-        f"ADAGUC_LOGFILE={env['ADAGUC_LOGFILE']}",
+        f"ADAGUC_LOGFILE={env.get('ADAGUC_LOGFILE', '')}",
         f"SCRIPT_NAME={env.get('SCRIPT_NAME', '')}",
         f"REQUEST_URI={env.get('REQUEST_URI', '')}",
         f"ADAGUC_ONLINERESOURCE={env.get('ADAGUC_ONLINERESOURCE', '')}",
-        f"QUERY_STRING={url}",
+        f"QUERY_STRING={url if url else ''}",
     ]
-    message = "\n".join(data)
 
-    writer.write(message.encode())
+    # Reject call if any environment variable contains \n
+    if any("\n" in value for value in data):
+        return AdagucResponse(status_code=HTTP_STATUSCODE_400_BAD_REQUEST, process_output=None, process_error=b"")
+
+    # Reject call if message > MAX_FORK_REQUEST_BYTES
+    message = "\n".join(data)
+    message_bytes = message.encode()
+    if len(message_bytes) > MAX_FORK_REQUEST_BYTES:
+        return AdagucResponse(status_code=HTTP_STATUSCODE_400_BAD_REQUEST, process_output=None, process_error=b"")
+
+    reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
+
+    writer.write(message_bytes)
     await writer.drain()
 
     process_output = await reader.read()
@@ -162,6 +170,8 @@ class CGIRunner:
 
             if response.status_code == HTTP_STATUSCODE_500_TIMEOUT:
                 return HTTP_STATUSCODE_500_TIMEOUT, [], None, b"Adaguc server processs timed out"
+            elif response.status_code == HTTP_STATUSCODE_400_BAD_REQUEST:
+                return HTTP_STATUSCODE_400_BAD_REQUEST, [], None, b"Adaguc server processs could not handle request"
 
         process_output = response.process_output
         process_error = response.process_error
