@@ -1,6 +1,7 @@
 **Version 8.1.0**
 
 * When the x-forwarded-for header contains 443 with protocol https, the port is not advertised in the onlineresource url anymore.
+* Fixed BUG [#739](https://github.com/KNMI/adaguc-server/issues/739): When generating tiles for satellite imagery, DataPostProc conversions should only be applied on the final tiles.
 
 
 **Version 8.0.0**

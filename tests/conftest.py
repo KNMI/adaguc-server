@@ -157,7 +157,7 @@ def run_adaguc_and_compare_image(env, filename, query_string):
     assert status == 0
 
     AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data)
-    AdagucTestTools().compareImage(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
+    assert AdagucTestTools().compareImage(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
 
 
 def run_adaguc_and_compare_getcapabilities(env, filename, query_string):
@@ -173,7 +173,7 @@ def run_adaguc_and_compare_getcapabilities(env, filename, query_string):
     assert status == 0
 
     AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data)
-    AdagucTestTools().compareGetCapabilitiesXML(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
+    assert AdagucTestTools().compareGetCapabilitiesXML(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
 
 
 def run_adaguc_and_compare_file(env, filename, query_string):

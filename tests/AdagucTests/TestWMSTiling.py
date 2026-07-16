@@ -134,3 +134,22 @@ class TestWMSTiling(unittest.TestCase):
             "test_tiling_satcomp_png.png",
             "DATASET=adaguc.tests.tiling_satcomppng&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=MTG-FCI-FD_eur_atlantic_1km_true_color&WIDTH=688&HEIGHT=959&CRS=EPSG%3A3857&BBOX=-1649522.0372212431,3614598.9628729257,2283086.7198879756,9096244.018203944&STYLES=default&FORMAT=image/png&TRANSPARENT=TRUE&&time=2026-03-17T12%3A40%3A00Z&0.5279499342913613",
         )
+
+    def test_tiling_satcomp_nc(self):
+        """
+        Test tile for satcomp nc's, including a datapostproc to convert Kelvin to Celsius
+        """
+        clean_temp_dir()
+        env = make_adaguc_env("adaguc.tests.tiling_satcomp_nc_postproc.xml", self.testresultspath, self.expectedoutputsspath)
+        # Check if there are no tiles
+        files = [f for f in os.listdir(os.getenv("ADAGUC_TMP")) if f.endswith("tile.nc")]
+        assert len(files) == 0
+        update_db(env)
+        # Check if there are three tiles
+        files = [f for f in os.listdir(os.getenv("ADAGUC_TMP")) if f.endswith("tile.nc")]
+        assert len(files) == 3
+        run_adaguc_and_compare_image(
+            env,
+            "test_tiling_satcomp_nc.png",
+            "DATASET=adaguc.tests.tiling_satcomp_nc_postproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=satcomp_msg_scat_nc_testfile&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-2323337.035959122,5916248.397129867,-850102.4238202632,7354587.7408834975&STYLES=satcomp_msg_scat_nc_testfile%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2024-10-24T06%3A45%3A00Z&0.7050312129841378",
+        )
