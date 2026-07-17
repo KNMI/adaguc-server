@@ -95,12 +95,6 @@ def get_ref_times_for_coll(metadata) -> list[str]:
         raise exc_failed_call(error_msg)
 
 
-def get_base_url(req: Request = None) -> str:
-    """Returns the base url of this service"""
-
-    return str(req.base_url).strip("/")
-
-
 OWSLIB_DUMMY_URL = "http://localhost:8000"
 
 
@@ -225,10 +219,10 @@ def get_collectioninfo_from_md(
     if first_param is None or metadata[first_param]["layer"]["variables"] is None:
         return []
 
-    base_url = base_url_ + f"/edr/collections/{collection_name}"
+    base_url = base_url_ + f"edr/collections/{collection_name}"
 
     if instance is not None:
-        base_url += f"/instances/{instance}"
+        base_url += f"instances/{instance}"
 
     links: list[Link] = []
     links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
@@ -238,7 +232,7 @@ def get_collectioninfo_from_md(
         ref_times = get_ref_times_for_coll(metadata)
         if ref_times and len(ref_times) > 0:
             has_instances = True
-            instances_link = Link(href=f"{base_url}/instances", rel="collection", type="application/json")
+            instances_link = Link(href=f"{base_url}instances", rel="collection", type="application/json")
             links.append(instances_link)
 
     primary_extent = get_extent_from_md(metadata, first_param)
@@ -274,7 +268,7 @@ def get_collectioninfo_from_md(
         ],
     )
     cube_link = EDRQueryLink(
-        href=f"{base_url}/cube",
+        href=f"{base_url}cube",
         rel="data",
         hreflang="en",
         title="Cube query",
@@ -288,7 +282,7 @@ def get_collectioninfo_from_md(
             output_formats=["GeoJSON"],
         )
         locations_link = EDRQueryLink(
-            href=f"{base_url}/locations",
+            href=f"{base_url}locations",
             rel="data",
             hreflang="en",
             title="Locations query",
@@ -304,7 +298,7 @@ def get_collectioninfo_from_md(
             output_formats=["CoverageJSON", "GeoJSON"],
         )
         instances_query_link = EDRQueryLink(
-            href=f"{base_url}/instances",
+            href=f"{base_url}instances",
             rel="collection",
             hreflang="en",
             title="Instances query",

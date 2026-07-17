@@ -29,7 +29,8 @@ from .edr_locations import router as locations_router
 from .edr_position import router as position_router
 from .edr_instances import router as instances_router
 
-from .utils.edr_utils import generate_max_age, get_base_url, get_collectioninfo_from_md, get_instance, get_metadata
+from .utils.edr_utils import generate_max_age, get_collectioninfo_from_md, get_instance, get_metadata
+from .utils.utils import get_base_url
 
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
@@ -66,10 +67,10 @@ async def rest_get_edr_collections(request: Request, response: Response):
     GET /collections, returns all available collections
     """
     links: list[Link] = []
-    collection_url = get_base_url(request) + "/edr/collections"
+    base_url = get_base_url(request)
+    collection_url = base_url + "edr/collections"
     self_link = Link(href=collection_url, rel="self", type="application/json")
 
-    base_url = get_base_url(request)
     links.append(self_link)
     collections: list[Collection] = []
     ttl_set = set()
@@ -130,9 +131,10 @@ async def rest_get_edr_landing_page(request: Request):
     title = cfg.get("title")
     keywords = cfg.get("keywords")
 
-    landingpage_url = get_base_url(request) + "/edr"
-    conformance_url = get_base_url(request) + "/edr/conformance"
-    collections_url = get_base_url(request) + "/edr/collections"
+    base_url = get_base_url(request)
+    landingpage_url = base_url + "edr"
+    conformance_url = base_url + "edr/conformance"
+    collections_url = base_url + "edr/collections"
 
     links: list[Link] = []
     link = Link(href=landingpage_url, rel="self", type="application/json")

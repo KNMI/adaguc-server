@@ -27,11 +27,6 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
         if scope["type"] == "lifespan":
             return await self.app(scope, receive, send)
 
-        # EXTERNALADDRESS is an optional adaguc specific environment variable and it should overrrule all x-forwarded-* logic.
-        if os.environ.get("EXTERNALADDRESS") is not None and os.environ.get("EXTERNALADDRESS") != "":
-            self.handle_externaladdress(scope)
-            return await super().__call__(scope, receive, send)
-
         headers: dict[bytes, bytes] = dict(scope["headers"])
 
         # Perform the trusted_host check (--forwarded_allow_ips). Same as in ProxyHeadersMiddleware
@@ -85,19 +80,3 @@ class ForwardedHostAndPrefixMiddleware(ProxyHeadersMiddleware):
         # Calling the parent ProxyHeadersMiddleware **after** replacing these headers, as ProxyHeadersMiddleware
         # will replace the client addresss if X-Forwarded-For has been set
         return await super().__call__(scope, receive, send)
-
-    def handle_externaladdress(self, scope: Scope):
-        """
-        EXTERNALADDRESS is an optional adaguc specific environment variable and it should overrrule all x-forwarded-* logic.
-        """
-        external_address = os.environ.get("EXTERNALADDRESS")
-        url_parts = urllib.parse.urlsplit(external_address)
-        prefix = url_parts.path
-        external_host = url_parts.hostname
-        external_port = f":{url_parts.port}" if url_parts.port else ""
-        scope["headers"] = [(k, f"{external_host}{external_port}".encode("ascii")) if k == b"host" else (k, v) for k, v in scope["headers"]]
-        scope["scheme"] = "https" if external_address.startswith("https://") else "http"
-        if len(prefix) > 0:
-            scope["root_path"] = prefix
-            scope["path"] = prefix + scope["path"]
-            scope["raw_path"] = prefix.encode("ascii") + scope["raw_path"]

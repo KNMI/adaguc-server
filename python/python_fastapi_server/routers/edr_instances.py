@@ -14,12 +14,13 @@ from fastapi import APIRouter, Request, Response
 
 from .utils.edr_utils import (
     generate_max_age,
-    get_base_url,
     get_instance,
     get_metadata,
     get_collectioninfo_from_md,
     get_ref_times_for_coll,
 )
+
+from .utils.utils import get_base_url
 
 router = APIRouter()
 
@@ -38,7 +39,7 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
     """
     GET: Returns all available instances for the collection
     """
-    instances_url = get_base_url(request) + f"/edr/collections/{collection_name}/instances"
+    instances_url = get_base_url(request) + f"edr/collections/{collection_name}/instances"
 
     instances: list[Instance] = []
 
