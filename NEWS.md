@@ -1,8 +1,15 @@
 **Version 8.1.0**
 
-* When the x-forwarded-for header contains 443 with protocol https, the port is not advertised in the onlineresource url anymore.
-* Fixed BUG [#739](https://github.com/KNMI/adaguc-server/issues/739): When generating tiles for satellite imagery, DataPostProc conversions should only be applied on the final tiles.
+* Reduce CT::string by @mgrunbauer in https://github.com/KNMI/adaguc-server/pull/734
+* 629 unable to remove decimal in continuous legend by @belentorrente in https://github.com/KNMI/adaguc-server/pull/733
+* Changed CT::string to std::string for hclasses directory by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/737
+* Do not mention port 443 icm protocol https by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/736
+* Fix tiling bug in combination with  DataPostProc conversion. by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/740
+* Improve point render speed by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/738
+* Fix healthcheck by @ernstdevreede in https://github.com/KNMI/adaguc-server/pull/722
 
+
+**Full Changelog**: https://github.com/KNMI/adaguc-server/compare/8.0.0...8.1.0
 
 **Version 8.0.0**
 
