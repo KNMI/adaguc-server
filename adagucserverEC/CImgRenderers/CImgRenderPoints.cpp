@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include <unordered_set>
+#include <unordered_map>
 #include "CImgRenderPoints.h"
 #include "getPointStyle.h"
 #include "getVectorStyle.h"
@@ -38,7 +39,7 @@ typedef std::vector<f8point> SimpleSymbol;
 typedef std::map<std::string, SimpleSymbol> SimpleSymbolMap;
 SimpleSymbolMap simpleSymbolMapCache;
 
-void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorStyle &vectorStyle, PointDVWithLatLon *pointStrength, PointDVWithLatLon *pointDirection) {
+void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, const VectorStyle &vectorStyle, PointDVWithLatLon *pointStrength, PointDVWithLatLon *pointDirection) {
   // Draw station id
   auto strength = pointStrength->v;
   auto direction = pointDirection->v;
@@ -52,7 +53,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
     } else {
       newY = ((direction >= 90) && (direction <= 270)) ? y + 6 : y - 20;
     }
-    CT::string stationId = pointStrength->paramList[0].value;
+    const std::string &stationId = pointStrength->paramList[0].value;
     drawImage->setText(stationId.c_str(), x - stationId.length() * 3, newY, vectorStyle.textColor);
   }
 
@@ -60,8 +61,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
   if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
     if (!vectorStyle.drawDiscs) {
       int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
-      CT::string textValue;
-      textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+      std::string textValue = CT::printf(vectorStyle.drawVectorTextFormat.c_str(), strength);
       drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textColor);
     }
   }
@@ -87,7 +87,7 @@ std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, boo
   if (usePoints.size() > 0) {
     std::vector<size_t> filteredPointIndices;
     for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
-      if (p1[pointIndex].paramList.size() > 0 && usePoints.find(p1[pointIndex].paramList[0].value.c_str()) != usePoints.end()) {
+      if (p1[pointIndex].paramList.size() > 0 && usePoints.find(p1[pointIndex].paramList[0].value) != usePoints.end()) {
         filteredPointIndices.push_back(pointIndex);
       }
     }
@@ -105,20 +105,23 @@ std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, boo
   }
 
   // Check for thinning
+  double thinningRadiusSquared = thinningRadius * thinningRadius;
   std::vector<size_t> thinnedPointIndexList;
   thinnedPointIndexList.push_back(0); // Always put in first element
   for (size_t pointIndex = 1; pointIndex < filteredPointIndices.size(); pointIndex++) {
     size_t thinnedPointNr = 0;
     for (thinnedPointNr = 0; thinnedPointNr < thinnedPointIndexList.size(); thinnedPointNr++) {
       auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
-      if (hypot(p1[thinnedPointIndex].x - p1[pointIndex].x, p1[thinnedPointIndex].y - p1[pointIndex].y) < thinningRadius) break;
+      double dx = p1[thinnedPointIndex].x - p1[pointIndex].x;
+      double dy = p1[thinnedPointIndex].y - p1[pointIndex].y;
+      if (dx * dx + dy * dy < thinningRadiusSquared) break;
     }
     if (thinnedPointNr == thinnedPointIndexList.size()) thinnedPointIndexList.push_back(pointIndex);
   }
   return thinnedPointIndexList;
 }
 
-void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
+void renderVectorPoints(const std::vector<size_t> &thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
   if (styleConfiguration == nullptr || styleConfiguration->vectorIntervals.size() == 0) {
     return;
   }
@@ -137,12 +140,12 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     throw __LINE__;
   }
 
-  CT::string textValue;
+  std::string textValue;
 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   float fillValueObjectTwo = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
 
-  CT::string units = dObjgetUnits(*dataSource->getDataObject(0));
+  std::string units = dObjgetUnits(*dataSource->getDataObject(0));
   bool toKnots = !isKnotsUnit(units); // Check if conversion to knots is needed.
 
   // Make a list of vector style objects based on the configuration.
@@ -163,7 +166,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     // Adjust direction based on projection settings
     direction += warper->getRotation(*pointStrength);
 
-    for (auto vectorStyle: vectorStyles) {
+    for (const auto &vectorStyle: vectorStyles) {
       if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
       // Draw symbol barb, vector or disc.
       if (vectorStyle.drawBarb) {
@@ -177,7 +180,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         // Draw a disc with the speed value in text and the dir. value as an arrow
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
-        textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+        textValue = CT::printf(vectorStyle.drawVectorTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor,
                                vectorStyle.lineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
@@ -199,20 +202,20 @@ SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
    */
   for (size_t j = 0; j < cfg->Symbol.size(); j++) {
     auto symbolName = cfg->Symbol[j]->attr.name;
-    CT::string coordinates = cfg->Symbol[j]->attr.coordinates;
+    std::string coordinates = cfg->Symbol[j]->attr.coordinates;
     // Make a single list of numbers
-    coordinates.replaceSelf("[", "");
-    coordinates.replaceSelf("]", "");
-    coordinates.replaceSelf(" ", "");
+    coordinates = CT::replace(coordinates, "[", "");
+    coordinates = CT::replace(coordinates, "]", "");
+    coordinates = CT::replace(coordinates, " ", "");
     // Split on ","
-    auto coordinateStrings = coordinates.split(",");
+    auto coordinateStrings = CT::split(coordinates, ",");
     SimpleSymbol symbol;
 
     // Every pair is a coordinate.
     for (size_t p = 0; p < coordinateStrings.size() && p < coordinateStrings.size() + 1; p += 2) {
-      symbol.push_back({.x = coordinateStrings[p].toDouble(), .y = coordinateStrings[p + 1].toDouble()});
+      symbol.push_back({.x = CT::toDouble(coordinateStrings[p]), .y = CT::toDouble(coordinateStrings[p + 1])});
     }
-    simpleSymbolMap[symbolName.c_str()] = symbol;
+    simpleSymbolMap[symbolName] = symbol;
     CDBDebug("Created simpleSymbol %s", symbolName.c_str());
   }
   return simpleSymbolMap;
@@ -314,7 +317,7 @@ CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float v
   return drawImage->getColorForIndex(pointColorIndex);
 }
 
-void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
+void drawSymbolForPoint(CDrawImage *drawImage, std::unordered_map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
   if (symbolFile.length() == 0) return;
 
   CDrawImage *symbol = NULL;
@@ -357,16 +360,12 @@ void drawRadiusAndValueForPoint(CDrawImage *drawImage, int x, int y, CColor draw
   }
 }
 
-CT::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float value, CT::string &drawPointTextFormat) {
+std::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float value, const std::string &drawPointTextFormat) {
   // Determine text to plot for value
-  CT::string text;
   if (dataSource->getDataObject(dataObjectIndex) != nullptr && dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
-    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
-    text.print("%s", flagMeaning.c_str());
-  } else {
-    text.print(drawPointTextFormat.c_str(), value);
+    return CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
   }
-  return text;
+  return CT::printf(drawPointTextFormat.c_str(), value);
 }
 
 int calculateYForDataobject(CDataSource *dataSource, int station_y, float textRadius, int dataObjectIndex) {
@@ -382,7 +381,7 @@ int calculateYForDataobject(CDataSource *dataSource, int station_y, float textRa
   return y;
 }
 
-void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSinglePoints(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   CColor defaultColor = CColor(0, 0, 0, 255);
   bool drawRadiusAndValue = pointStyle.style == "radiusandvalue";
   bool drawZoomablePoint = pointStyle.style == "zoomablepoint";
@@ -444,7 +443,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
           }
         }
         if (pointValue->paramList.size() > 0) {
-          CT::string textValue = pointValue->paramList[0].value;
+          const std::string &textValue = pointValue->paramList[0].value;
           // Draw the string value
           drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
         }
@@ -467,7 +466,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
         }
       }
 
-      CT::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
+      std::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
       bool drawText = pointStyle.textFormat.length() >= 2;
       if (!pointStyle.useTextColor) {
         // Only calculate color for 1st dataObject, rest gets defaultColor
@@ -495,7 +494,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
         }
       }
       if (pointStyle.plotStationId && (pointValue->paramList.size() > 0) && (dataObjectIndex == 0)) {
-        CT::string stationid = pointValue->paramList[0].value;
+        const std::string &stationid = pointValue->paramList[0].value;
         drawImage->drawCenteredText(x, station_y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, stationid.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
       }
     }
@@ -509,14 +508,14 @@ std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *style
   for (auto filterPoint: styleConfiguration->filterPointList) {
     if (!filterPoint->attr.use.empty()) {
       for (const auto &token: CT::split(filterPoint->attr.use, ",")) {
-        usePoints.insert(token.c_str());
+        usePoints.insert(token);
       }
     }
   }
   return usePoints;
 }
 
-void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleVolumes(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   std::vector<int> alphaVec = buildAlphaVector(int(pointStyle.discRadius));
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
@@ -535,15 +534,15 @@ void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource 
 
       drawVolumeForPoint(drawImage, pointStyle.fillColor, x, y, pointStyle.discRadius, alphaVec);
       if (pointStyle.plotStationId && pointValue->paramList.size() > 0) {
-        CT::string stationId = pointValue->paramList[0].value;
+        const std::string &stationId = pointValue->paramList[0].value;
         drawImage->setText(stationId.c_str(), x - stationId.length() * 3, y - 20, pointStyle.textColor);
       }
     }
   }
 }
 
-void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
-  std::map<std::string, CDrawImage *> symbolCache;
+void renderSingleSymbols(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+  std::unordered_map<std::string, CDrawImage *> symbolCache;
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
@@ -564,11 +563,11 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
       for (auto symbolInterval: styleConfiguration->symbolIntervals) {
         if (!shouldDrawSymbol(symbolInterval, value)) continue;
 
-        std::string symbolFile = symbolInterval->attr.file.c_str();
+        std::string symbolFile = symbolInterval->attr.file;
         drawSymbolForPoint(drawImage, symbolCache, symbolFile, symbolInterval, x, y);
 
         if (pointStyle.plotStationId && pointValue->paramList.size() > 0) {
-          CT::string stationid = pointValue->paramList[0].value;
+          const std::string &stationid = pointValue->paramList[0].value;
           drawImage->drawCenteredText(x, y - pointStyle.textRadius - 3, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, stationid.c_str(), pointStyle.textColor);
         }
       }
@@ -580,7 +579,7 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
   }
 }
 
-void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleDiscs(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
@@ -599,14 +598,14 @@ void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *d
         pointStyle.textColor = getDrawPointColor(dataSource, drawImage, value);
       }
 
-      CT::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
+      std::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
       CColor col = pointStyle.useFillColor ? pointStyle.fillColor : getDrawPointColor(dataSource, drawImage, value);
       drawImage->setTextDisc(x, y, pointStyle.discRadius, text.c_str(), pointStyle.fontFile.c_str(), pointStyle.fontSize, pointStyle.textColor, col, pointStyle.lineColor);
     }
   }
 }
 
-void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleDot(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {

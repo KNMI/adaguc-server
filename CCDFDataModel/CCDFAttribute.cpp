@@ -237,6 +237,20 @@ template <class T> T CDF::Attribute::getDataAt(int index) {
   return dataElement;
 }
 
+template <class T> T CDF::Attribute::getDataAt(size_t index, T defaultValue) {
+  if (data == NULL || index >= length) {
+    return defaultValue;
+  }
+  T dataElement = defaultValue;
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
+  if (type == CDFTYPE) dataElement = (T)((CPPTYPE *)data)[index];
+  ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+  return dataElement;
+}
+
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template int CDF::Attribute::setData<CPPTYPE>(CDFType type, CPPTYPE data);
 ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
@@ -246,5 +260,9 @@ ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
 
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Attribute::getDataAt<CPPTYPE>(int index);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Attribute::getDataAt<CPPTYPE>(size_t index, CPPTYPE defaultValue);
 ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE

@@ -698,6 +698,17 @@ void CDF::Variable::allocateData(size_t size) {
   setSize(size);
 }
 
+size_t CDF::Variable::allocateData() {
+  freeData();
+  size_t size = 1;
+  for (auto *dim: dimensionlinks) {
+    size *= dim->length;
+  }
+  CDF::allocateData(currentType, &data, size);
+  setSize(size);
+  return size;
+}
+
 int CDF::Variable::getIterativeDimIndex() {
   for (size_t j = 0; j < dimensionlinks.size(); j++) {
     if (dimensionlinks[j]->isIterative) return j;
@@ -748,6 +759,21 @@ CDF::Variable::Variable(const char *name, CDFType type, std::vector<CDF::Dimensi
   for (size_t j = 0; j < idimensionlinks.size(); j++) {
     dimensionlinks.push_back(idimensionlinks[j]);
   }
+  isDimension = isCoordinateVariable;
+}
+
+CDF::Variable::Variable(const std::string &name, CDFType type, const std::vector<CDF::Dimension *> &dimensionlinks, bool isCoordinateVariable) {
+  data = NULL;
+  currentSize = 0;
+  currentType = CDF_NONE;
+  nativeType = CDF_NONE;
+  cdfReaderPointer = NULL;
+  parentCDFObject = NULL;
+  _hasCustomReader = false;
+  _isString = false;
+  setName(name.c_str());
+  setType(type);
+  this->dimensionlinks = dimensionlinks;
   isDimension = isCoordinateVariable;
 }
 
@@ -989,7 +1015,31 @@ template <class T> int CDF::Variable::setAttribute(const char *attrName, CDFType
   return 0;
 }
 
+template <class T> T CDF::Variable::getAttrDataAt(const std::string &name, size_t index, T defaultValue) const {
+  const auto &attr = getAttr(name);
+  if (attr == nullptr) {
+    return defaultValue;
+  }
+  return attr->getDataAt(index, defaultValue);
+};
+
+template <class T> T CDF::Variable::getAttrDataAt0(const std::string &name, T defaultValue) const {
+  const auto &attr = getAttr(name);
+  if (attr == nullptr) {
+    return defaultValue;
+  }
+  return attr->getDataAt(0, defaultValue);
+};
+
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Variable::getDataAt<CPPTYPE>(int index);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Variable::getAttrDataAt<CPPTYPE>(const std::string &name, size_t index, CPPTYPE defaultValue) const;
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Variable::getAttrDataAt0<CPPTYPE>(const std::string &name, CPPTYPE defaultValue) const;
 ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
 

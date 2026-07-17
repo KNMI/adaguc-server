@@ -103,7 +103,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
 
   CDataSource *dataSourceToTile = new CDataSource();
   dataSourceToTile->setCFGLayer(baseDataSource->srvParams, baseDataSource->cfgLayer, 0);
-
+  dataSourceToTile->enablePostProcessors = false;
   CDataReader reader;
   reader.silent = true;
 

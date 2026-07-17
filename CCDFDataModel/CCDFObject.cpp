@@ -500,6 +500,19 @@ CDF::Dimension *CDFObject::getDim(std::string name) {
   return it != dimensions.end() ? *it : nullptr;
 }
 
+CDF::Dimension *CDFObject::getDimOrCreate(const std::string &name, size_t length) {
+  auto it = std::find_if(dimensions.begin(), dimensions.end(), [&name](auto *a) { return a->name.equals(name); });
+  if (it == dimensions.end()) {
+    auto newDim = new CDF::Dimension(name, length);
+    addDimension(newDim);
+    return newDim;
+  } else {
+    auto existingDim = *it;
+    existingDim->length = length;
+    return existingDim;
+  }
+}
+
 CDF::Dimension *CDFObject::getDimensionNE(const char *name) { return getDim(name); }
 CDF::Dimension *CDFObject::getDimensionNE(std::string name) { return getDim(name); }
 
@@ -543,4 +556,33 @@ int CDFObject::aggregateDim(CDFObject *sourceCDFObject, const char *dimName) {
   }
 
   return 0;
+}
+
+CDF::Variable *CDFObject::getDimVarOrCreate(const std::string &name, size_t length, CDFType type) {
+  auto *dim = getDimOrCreate(name, length);
+  auto *var = getVar(name);
+  if (var == nullptr) {
+    var = new CDF::Variable(name, type, {dim}, true);
+    addVariable(var);
+  }
+  if (var->dimensionlinks.size() != 1) {
+    CDBError("Variable %s cannot be a coordinate variable because it has multiple dimensions assigned to it.", name.c_str());
+    throw CDF_E_CANNOTCREATECOORDVARIABLE;
+  }
+  if (var->dimensionlinks[0] != dim) {
+    CDBError("Variable %s has wrong dimension %s assigned.", name.c_str(), var->dimensionlinks[0]->name.c_str());
+    throw CDF_E_CANNOTCREATECOORDVARIABLE;
+  }
+  if (var->currentType != type) {
+    CDBError("Variable %s with type %s cannot be changed to type %s", name.c_str(), CDF::getCDFDataTypeName(var->currentType).c_str(), CDF::getCDFDataTypeName(type).c_str());
+    throw CDF_E_CANNOTCREATECOORDVARIABLE;
+  }
+  if (!var->isDimension) {
+    CDBError("Variable %s was not created as a coordinate variable", name.c_str());
+    throw CDF_E_CANNOTCREATECOORDVARIABLE;
+  }
+  if (var->getSize() != length) {
+    var->freeData();
+  }
+  return var;
 }
