@@ -15,10 +15,8 @@ def get_externaladdress() -> str | None:
 
 
 def get_base_url(req: Request) -> str:
-    # if (external_address := get_externaladdress()) is not None:
-    #     logger.info("URL (EXTERNALADDRESS): %s", external_address)
-    #     return external_address
+    if (external_address := get_externaladdress()) is not None:
+        return external_address
 
     base_url = str(req.base_url)
-    logger.info("URL (CALCULATED): %s", base_url)
     return base_url

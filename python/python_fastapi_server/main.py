@@ -11,7 +11,7 @@ from asgi_logger import AccessLoggerMiddleware
 
 from middleware.short_circuit_healthcheck import ShortCircuitHealthCheckMiddleware
 from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
-from routers.utils.utils import get_externaladdress
+from routers.utils.utils import get_base_url, get_externaladdress
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
@@ -58,12 +58,21 @@ logger.info("EXT: %s", external_address)
 if external_address is None:
     # TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
     if allowed_hosts is not None and len(allowed_hosts) > 0:
-        app.add_middleware(ShortCircuitHealthCheckMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
 
     app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
+
+
+@app.middleware("http")
+async def allow_healthcheck(req: Request, call_next):
+    if req.url.path == "/healthcheck":
+        response = Response("OK:" + get_base_url(req))
+    else:
+        response = await call_next(req)
+    return response
 
 
 @app.middleware("http")
