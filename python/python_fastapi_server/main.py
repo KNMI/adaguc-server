@@ -14,7 +14,6 @@ from routers.utils.utils import get_base_url, get_externaladdress
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
-from routers.healthcheck import health_check_router
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
@@ -52,7 +51,7 @@ async def add_hsts_header(request: Request, call_next):
 allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
 
 external_address = get_externaladdress()
-logger.info("EXT: %s", external_address)
+logger.info("ENV EXTERNALADDRESS was set to : %s", external_address)
 
 if external_address is None:
     # TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
@@ -106,7 +105,6 @@ async def root():
 app.mount("/ogcapi", ogcApiApp)
 app.mount("/edr", edrApiApp)
 
-app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)
 app.include_router(autowms_router)
 app.include_router(opendapRouter)

@@ -37,6 +37,11 @@ def get_testclient(environment=None):
     return client
 
 
+def check_healthcheck(client, headers={}):
+    response = client.get("/healthcheck", headers=headers)
+    return response.status_code == 200 and response.text == "OK"
+
+
 def get_url_from_capabilities(response: Response):
     """
     Parses the GetCapabilities and returns the online resource url
@@ -49,56 +54,62 @@ def test_getcapabilities_default():
     """
     Check default behavior
     """
-    response = get_testclient().get("/adaguc-server?service=WMS&request=getCapabilities")
+    client = get_testclient()
+    response = client.get("/adaguc-server?service=WMS&request=getCapabilities")
     assert get_url_from_capabilities(response) == "http://default-test-server/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client)
 
 
 def test_externaladdress_http():
     """
     Check behavior when EXTERNALADDRESS is set.
     """
-    response = get_testclient(environment={"EXTERNALADDRESS": "http://my-awesome-server/with-a-prefix/"}).get(
-        "/adaguc-server?service=WMS&request=getCapabilities"
-    )
+    client = get_testclient(environment={"EXTERNALADDRESS": "http://my-awesome-server/with-a-prefix/"})
+    response = client.get("/adaguc-server?service=WMS&request=getCapabilities")
     assert get_url_from_capabilities(response) == "http://my-awesome-server/with-a-prefix/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client)
 
 
 def test_externaladdress_http_port():
     """
     Check behavior when EXTERNALADDRESS is set with a prefix and a port
     """
-    response = get_testclient(environment={"EXTERNALADDRESS": "http://my-awesome-server:1234/with-a-prefix/"}).get(
-        "/adaguc-server?service=WMS&request=getCapabilities"
-    )
+    client = get_testclient(environment={"EXTERNALADDRESS": "http://my-awesome-server:1234/with-a-prefix/"})
+    response = client.get("/adaguc-server?service=WMS&request=getCapabilities")
     assert get_url_from_capabilities(response) == "http://my-awesome-server:1234/with-a-prefix/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client)
 
 
 def test_externaladdress_https():
     """
     Check behavior when EXTERNALADDRESS is set with a prefix and as https
     """
+    client = get_testclient(environment={"EXTERNALADDRESS": "https://my-awesome-server/with-a-prefix/"})
     response = get_testclient(environment={"EXTERNALADDRESS": "https://my-awesome-server/with-a-prefix/"}).get(
         "/adaguc-server?service=WMS&request=getCapabilities"
     )
     assert get_url_from_capabilities(response) == "https://my-awesome-server/with-a-prefix/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client)
 
 
 def test_externaladdress_with_host():
     """
     it should not take host header but use externaladdress
     """
-    response = get_testclient(environment={"EXTERNALADDRESS": "http://externaladdress"}).get(
-        "/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"}
-    )
+    client = get_testclient(environment={"EXTERNALADDRESS": "http://externaladdress"})
+    response = client.get("/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"})
     assert get_url_from_capabilities(response) == "http://externaladdress/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client, headers={"Host": "my-host"})
 
 
 def test_host_header_not_trusted():
     """
     TODO: Is it expected that by default the my-host is returned in the online resource?
     """
-    response = get_testclient().get("/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"})
+    client = get_testclient()
+    response = client.get("/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"})
     assert get_url_from_capabilities(response) == "http://my-host/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client, headers={"Host": "my-host"})
 
 
 def test_x_forwarded_for_headers():
@@ -111,18 +122,20 @@ def test_x_forwarded_for_headers():
             "ADAGUC_TRUSTED_PROXIES": "adaguc-testclient",  # default
         }
     )
+    headers = {
+        "Host": "my-host-to-be-ignored",
+        "x-forwarded-host": "supertestadagucserver",
+        "x-forwarded-prefix": "/thepathafterhost",
+        "x-forwarded-port": "1234",
+        "x-forwarded-proto": "https",
+    }
     response = client.get(
         "/adaguc-server?service=WMS&request=getCapabilities",
-        headers={
-            "Host": "my-host-to-be-ignored",
-            "x-forwarded-host": "supertestadagucserver",
-            "x-forwarded-prefix": "/thepathafterhost",
-            "x-forwarded-port": "1234",
-            "x-forwarded-proto": "https",
-        },
+        headers=headers,
     )
 
     assert get_url_from_capabilities(response) == "https://supertestadagucserver:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client, headers=headers)
 
 
 def test_x_forwarded_for_headers_https_port():
@@ -136,18 +149,17 @@ def test_x_forwarded_for_headers_https_port():
             "ADAGUC_TRUSTED_PROXIES": "adaguc-testclient",  # default
         }
     )
-    response = client.get(
-        "/adaguc-server?service=WMS&request=getCapabilities",
-        headers={
-            "Host": "my-host-to-be-ignored",
-            "x-forwarded-host": "supertestadagucserver",
-            "x-forwarded-prefix": "/thepathafterhost",
-            "x-forwarded-port": "443",
-            "x-forwarded-proto": "https",
-        },
-    )
+    headers = {
+        "Host": "my-host-to-be-ignored",
+        "x-forwarded-host": "supertestadagucserver",
+        "x-forwarded-prefix": "/thepathafterhost",
+        "x-forwarded-port": "443",
+        "x-forwarded-proto": "https",
+    }
+    response = client.get("/adaguc-server?service=WMS&request=getCapabilities", headers=headers)
 
     assert get_url_from_capabilities(response) == "https://supertestadagucserver/thepathafterhost/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client, headers=headers)
 
 
 def test_x_forwarded_for_headers_wildcard():
@@ -160,18 +172,21 @@ def test_x_forwarded_for_headers_wildcard():
             "ADAGUC_TRUSTED_PROXIES": "*",  # default
         }
     )
+    headers = {
+        "Host": "my-host-to-be-ignored",
+        "x-forwarded-host": "supertestadagucserver",
+        "x-forwarded-prefix": "/thepathafterhost",
+        "x-forwarded-port": "1234",
+        "x-forwarded-proto": "https",
+    }
+
     response = client.get(
         "/adaguc-server?service=WMS&request=getCapabilities",
-        headers={
-            "Host": "my-host-to-be-ignored",
-            "x-forwarded-host": "supertestadagucserver",
-            "x-forwarded-prefix": "/thepathafterhost",
-            "x-forwarded-port": "1234",
-            "x-forwarded-proto": "https",
-        },
+        headers=headers,
     )
 
     assert get_url_from_capabilities(response) == "https://supertestadagucserver:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client, headers=headers)
 
 
 def test_x_forwarded_for_empty_port():
@@ -184,18 +199,20 @@ def test_x_forwarded_for_empty_port():
             "ADAGUC_TRUSTED_PROXIES": "*",  # default
         }
     )
+    headers = {
+        "Host": "my-host-to-be-ignored",
+        "x-forwarded-host": "supertestadagucserver",
+        "x-forwarded-prefix": "/thepathafterhost",
+        "x-forwarded-port": "",
+        "x-forwarded-proto": "https",
+    }
     response = client.get(
         "/adaguc-server?service=WMS&request=getCapabilities",
-        headers={
-            "Host": "my-host-to-be-ignored",
-            "x-forwarded-host": "supertestadagucserver",
-            "x-forwarded-prefix": "/thepathafterhost",
-            "x-forwarded-port": "",
-            "x-forwarded-proto": "https",
-        },
+        headers=headers,
     )
 
     assert get_url_from_capabilities(response) == "https://supertestadagucserver/thepathafterhost/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client, headers=headers)
 
 
 def test_externaddress_not_trusted():
@@ -215,6 +232,7 @@ def test_externaddress_not_trusted():
 
     assert response.status_code == 200
     assert get_url_from_capabilities(response) == "http://untrustedhost:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client)
 
 
 def test_host_not_trusted():
@@ -223,7 +241,6 @@ def test_host_not_trusted():
     """
     client = get_testclient(
         environment={
-            # "EXTERNALADDRESS": "http://untrustedhost:1234/thepathafterhost/",
             "ADAGUC_TRUSTED_HOSTS": "supertestadagucserver",
         }
     )
@@ -250,8 +267,8 @@ def test_externaddress_not_trusted_healthcheck():
         headers={},
     )
     assert response.status_code == 200
-    print(response.text)
     assert response.text == "OK"
+    assert check_healthcheck(client)
 
 
 def test_externaddress_trusted():
@@ -273,6 +290,8 @@ def test_externaddress_trusted():
     assert response.status_code == 200
     assert get_url_from_capabilities(response) == "http://untrustedhost:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
 
+    assert check_healthcheck(client, headers={})
+
 
 def test_externaddress_wildcard():
     """
@@ -291,3 +310,4 @@ def test_externaddress_wildcard():
 
     assert response.status_code == 200
     assert get_url_from_capabilities(response) == "http://untrustedhost:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
+    assert check_healthcheck(client)
