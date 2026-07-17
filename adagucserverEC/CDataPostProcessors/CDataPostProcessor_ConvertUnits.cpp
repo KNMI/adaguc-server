@@ -124,13 +124,16 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       auto attrNeedsConversion = dataObject.cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
       // Check if we need to convert the data
       if (attrNeedsConversion != nullptr && attrNeedsConversion->toString() == "true") {
-        CDBDebug("AFTER (grid): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
-        CDFType type = dataObject.cdfVariable->getType();
-
+        if (dataSource->hasFieldData) {
+          CDBDebug("AFTER (grid): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
+          CDFType type = dataObject.cdfVariable->getType();
+          if (dataSource->hasFieldData) {
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
   if (type == CDFTYPE) do_convert<CPPTYPE>(dataObject.hasNodataValue ? dataObject.dfNodataValue : NAN, l, (CPPTYPE *)dataObject.cdfVariable->data, lookupUnit.a, lookupUnit.b);
-        ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+            ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
+          }
+        }
 
         // Convert point data if needed
         size_t nrPoints = dataObject.points.size();

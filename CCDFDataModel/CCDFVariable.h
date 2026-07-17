@@ -74,13 +74,14 @@ namespace CDF {
     Variable();
     Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable);
     Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable);
+    Variable(const std::string &name, CDFType type, const std::vector<CDF::Dimension *> &dimensionlinks, bool isCoordinateVariable);
     Variable(const char *name, CDFType type);
     CDFType nativeType;
     CDFType currentType;
     CT::string name;
     CT::string orgName;
     std::vector<Attribute *> attributes;
-    std::vector<Dimension *> dimensionlinks;
+    std::vector<Dimension *> dimensionlinks; // Note, this vector does not own the Dimension. It is a link to a dimension in the CDFObject model.
     int id = -1;
     size_t currentSize = 0;
     void *data = nullptr;
@@ -97,6 +98,11 @@ namespace CDF {
     void setCDFObjectDim(Variable *sourceVar, const char *dimName);
     void fill(double value);
     void allocateData(size_t size);
+    /**
+     * Allocates data for the data property of this variable with size as product of the linked dimensions.
+     * @returns The allocated size.
+     */
+    size_t allocateData();
     void freeData();
     int readData(CDFType type);
     int readData(bool applyScaleOffset);
@@ -132,11 +138,28 @@ namespace CDF {
     Attribute *getAttributeNE(const std::string &name) const;
 
     /**
-     * Gets text for given attribute name.
+     * Gets text for given attribute name, returns "" if not found.
      * @param name The name of the attribute
      * @returns Returns empty string if not found or if empty
      */
     std::string getAttrText(std::string name) const;
+
+    /**
+     * Gets data from the variables attribute at given index. If not able to find the attribute name, or the index is wrong, the defaultValue is returned.
+     * @param name Attribute name to find
+     * @param index index to get in the data array of the attribute
+     * @param defaultValue default value in case something does not exist or is out of range
+     * @return the value of the attribute at given index
+     */
+    template <class T> T getAttrDataAt(const std::string &name, size_t index, T defaultValue) const;
+
+    /**
+     * Gets data from the variables attribute at index 0. If not able to find the attribute name, or there is no data, the defaultValue is returned.
+     * @param name Attribute name to find
+     * @param defaultValue default value in case something does not exist or is out of range
+     * @return the value of the attribute at index 0
+     */
+    template <class T> T getAttrDataAt0(const std::string &name, T defaultValue) const;
 
     int addAttribute(Attribute *attr);
     int removeAttribute(const std::string &name);
