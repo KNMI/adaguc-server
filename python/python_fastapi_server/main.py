@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
-from middleware.short_circuit_healthcheck import ShortCircuitHealthCheckMiddleware
 from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
 from routers.utils.utils import get_base_url, get_externaladdress
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
@@ -69,7 +68,7 @@ if "ADAGUC_REDIS" in os.environ:
 @app.middleware("http")
 async def allow_healthcheck(req: Request, call_next):
     if req.url.path == "/healthcheck":
-        response = Response("OK:" + get_base_url(req))
+        response = Response("OK")
     else:
         response = await call_next(req)
     return response

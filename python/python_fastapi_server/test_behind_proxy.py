@@ -214,6 +214,7 @@ def test_externaddress_not_trusted():
     )
 
     assert response.status_code == 200
+    assert get_url_from_capabilities(response) == "http://untrustedhost:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
 
 
 def test_host_not_trusted():
@@ -249,6 +250,8 @@ def test_externaddress_not_trusted_healthcheck():
         headers={},
     )
     assert response.status_code == 200
+    print(response.text)
+    assert response.text == "OK"
 
 
 def test_externaddress_trusted():
@@ -268,6 +271,7 @@ def test_externaddress_trusted():
     )
 
     assert response.status_code == 200
+    assert get_url_from_capabilities(response) == "http://untrustedhost:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
 
 
 def test_externaddress_wildcard():
@@ -286,3 +290,4 @@ def test_externaddress_wildcard():
     )
 
     assert response.status_code == 200
+    assert get_url_from_capabilities(response) == "http://untrustedhost:1234/thepathafterhost/adaguc-server?SERVICE=WMS&"
