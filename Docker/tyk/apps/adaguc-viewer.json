@@ -1,0 +1,23 @@
+{
+  "name": "adaguc-viewer",
+  "api_id": "adaguc-viewer",
+  "org_id": "default",
+  "definition": {
+    "location": "header",
+    "key": "version"
+  },
+  "use_keyless": true,
+  "version_data": {
+    "not_versioned": true,
+    "versions": {
+      "Default": {
+        "name": "Default"
+      }
+    }
+  },
+  "proxy": {
+    "listen_path": "/",
+    "target_url": "ADAGUCTYK_ADAGUC_VIEWER_INT_URL",
+    "strip_listen_path": false
+  }
+}

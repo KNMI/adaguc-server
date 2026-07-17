@@ -1,0 +1,23 @@
+{
+  "name": "adaguc-data-explorer",
+  "api_id": "adaguc-data-explorer",
+  "org_id": "default",
+  "definition": {
+    "location": "header",
+    "key": "version"
+  },
+  "use_keyless": true,
+  "version_data": {
+    "not_versioned": true,
+    "versions": {
+      "Default": {
+        "name": "Default"
+      }
+    }
+  },
+  "proxy": {
+    "listen_path": "/explorer/",
+    "target_url": "ADAGUCTYK_ADAGUC_EXPORER_INT_URL",
+    "strip_listen_path": true
+  }
+}
