@@ -98,7 +98,6 @@ def test_host_header_not_trusted():
     TODO: Is it expected that by default the my-host is returned in the online resource?
     """
     response = get_testclient().get("/adaguc-server?service=WMS&request=getCapabilities", headers={"Host": "my-host"})
-    print("R:", response.text)
     assert get_url_from_capabilities(response) == "http://my-host/adaguc-server?SERVICE=WMS&"
 
 
@@ -267,7 +266,6 @@ def test_externaddress_trusted():
         "/adaguc-server?service=WMS&request=getCapabilities",
         headers={},
     )
-    print("R:", response.text)
 
     assert response.status_code == 200
 
