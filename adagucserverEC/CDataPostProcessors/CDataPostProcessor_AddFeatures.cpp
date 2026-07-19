@@ -1,5 +1,6 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataReader.h"
+#include <algorithm>
 
 /************************/
 /*      CDPPAddFeatures     */
@@ -76,36 +77,31 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
         nrFeatures = fvar->dimensionlinks[0]->getSize();
         ptrdiff_t stride = 1;
         fvar->readData(CDF_STRING, &start, &nrFeatures, &stride, false);
-        //         for (size_t i=0; i<nrFeatures; i++) {
-        //           CDBDebug(">> %s", ((char **)fvar->data)[i]);
-        //         }
       }
       char **names = (char **)fvar->data;
 
       float destNoDataValue = dataSource->getDataObject(0)->dfNodataValue;
 
       std::vector<std::string> valueMap;
-      size_t nrPoints = dataSource->getDataObject(0)->points.size();
 
       std::vector<float> valueForFeatureNr(nrFeatures, destNoDataValue);
       for (size_t f = 0; f < nrFeatures; f++) {
         valueForFeatureNr[f] = destNoDataValue;
         const char *name = names[f];
-        bool found = false;
-        for (size_t p = 0; p < nrPoints && !found; p++) {
-          for (size_t c = 0; c < dataSource->getDataObject(0)->points[p].paramList.size() && !found; c++) {
-            auto ckv = dataSource->getDataObject(0)->points[p].paramList[c];
-            if (ckv.key.equals("station")) {
-              CT::string station = ckv.value;
-              if (strcmp(station.c_str(), name) == 0) {
-                valueForFeatureNr[f] = dataSource->getDataObject(0)->points[p].v;
-                found = true;
-              }
-            }
-          }
+
+        auto &points = dataSource->getDataObject(0)->points;
+        auto pointIt = std::find_if(points.begin(), points.end(), [name](const PointDVWithLatLon &point) {
+          return std::find_if(point.paramList.begin(), point.paramList.end(), [name](const CKeyValueDescriptionPair &kv) { return kv.key == "station" && kv.value == name; }) != point.paramList.end();
+        });
+        if (pointIt != points.end()) {
+          valueForFeatureNr[f] = pointIt->v;
         }
       }
 
+      // dataObject(0) is the point data source: its cdfVariable->data is not allocated (hasFieldData is
+      // false), since point values normally live in dataObject(0)->points, not in a dense grid. Here we
+      // need a dense grid to hold the per-feature values, so allocate it before writing into it.
+      CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, dataSource->dWidth * dataSource->dHeight);
       CDF::allocateData(dataSource->getDataObject(1)->cdfVariable->getType(), &dataSource->getDataObject(1)->cdfVariable->data, dataSource->dWidth * dataSource->dHeight); // For a 2D field
       // Copy the gridded values from the geojson grid to the point data's grid
       size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
@@ -129,6 +125,8 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       CDBDebug("Setting ADAGUC_SKIP_POINTS");
       dataSource->getDataObject(0)->cdfVariable->setAttributeText("ADAGUC_SKIP_POINTS", "1");
       dataSource->getDataObject(1)->cdfVariable->setAttributeText("ADAGUC_SKIP_POINTS", "1");
+      // The 2D grids are now allocated and filled, so downstream code can safely read cdfVariable->data.
+      dataSource->hasFieldData = true;
     }
   }
   return 0;

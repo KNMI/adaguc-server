@@ -1334,7 +1334,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int, CDataSour
       }
       PointDVWithLatLon *lastPoint = &(dataObject.points.back());
       // Get the last pushed point from the array and push the character text data in the paramlist
-      lastPoint->paramList.push_back({.key = pointName.c_str(), .description = pointDescription.c_str(), .value = pointValue.c_str()});
+      lastPoint->paramList.push_back({.key = pointName, .description = pointDescription, .value = pointValue});
     }
   }
 }

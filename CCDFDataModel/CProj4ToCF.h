@@ -43,11 +43,11 @@ class CProj4ToCF {
 private:
   static float convertToM(float fValue);
 
-  CT::string getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList);
+  CT::string getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList);
 
-  float getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float)));
+  float getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float)));
 
-  float getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue);
+  float getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue);
 
   void initMSGPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
   void initStereoGraphic(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
@@ -84,7 +84,7 @@ public:
    * @param projectionVariable The variable with CF projection attributes to convert to the proj4 string
    * @return The proj4 string which will contain the new proj string after conversion is finished or empty if an error occured
    */
-  CT::string convertCFToProj(CDF::Variable *projectionVariable);
+  std::string convertCFToProj(CDF::Variable *projectionVariable);
 
   int __checkProjString(const char *name, const char *string);
   /**

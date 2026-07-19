@@ -318,7 +318,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
 
   CProj4ToCF proj4ToCF;
   proj4ToCF.debug = true;
-  CT::string projString = proj4ToCF.convertCFToProj(projVar);
+  std::string projString = proj4ToCF.convertCFToProj(projVar);
 
   if (projString.empty()) {
     CREPORT_WARN_NODOC(CT::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);
@@ -863,7 +863,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   int isVirtual = dataSource->getFileName().empty();
   if (isVirtual) {
     // For datasets without files, such as the Solar Terminator
-    if (enablePostProcessors) {
+    if (dataSource->enablePostProcessors) {
       getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
       getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
@@ -1043,7 +1043,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     }
   }
 
-  if (enablePostProcessors) {
+  if (dataSource->enablePostProcessors) {
     getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
 
@@ -1136,7 +1136,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
       // Swap X, Y dimensions so that pointer x+y*w works correctly
 
-      if (dataSource->swapXYDimensions) {
+      if (dataSource->hasFieldData && dataSource->swapXYDimensions) {
         size_t imgSize = dataSource->dHeight * dataSource->dWidth;
         size_t w = dataSource->dWidth;
         size_t h = dataSource->dHeight;
@@ -1296,7 +1296,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         StopWatch_Stop("Scale and offset applied");
       }
     }
-    if (enablePostProcessors) {
+    if (dataSource->enablePostProcessors) {
       getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
     // Check if we need to calculate statistics, only need in certain cases:

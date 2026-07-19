@@ -1,26 +1,26 @@
 #ifndef CREPORTMESSAGE_H
 #define CREPORTMESSAGE_H
 
-#include "CTString.h"
+#include <string>
 
 class CReportMessage {
 public:
   enum Severities { INFO, WARNING, ERROR };
   enum Categories { PROJECTION, GENERAL };
   CReportMessage(const CReportMessage &m);
-  CReportMessage(CT::string message, Severities severity, Categories category, CT::string documentationLink);
-  const CT::string to_string() const;
-  CT::string getMessage() const;
-  CT::string getSeverity() const;
-  CT::string getCategory() const;
-  CT::string getDocumentationLink() const;
+  CReportMessage(const std::string &message, Severities severity, Categories category, const std::string &documentationLink);
+  const std::string to_string() const;
+  std::string getMessage() const;
+  std::string getSeverity() const;
+  std::string getCategory() const;
+  std::string getDocumentationLink() const;
 
 protected:
 private:
-  const CT::string message;
+  const std::string message;
   const Severities severity;
   const Categories category;
-  const CT::string documentationLink;
+  const std::string documentationLink;
   static const char *severity_names[];
   static const char *category_names[];
 };

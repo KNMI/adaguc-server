@@ -50,7 +50,7 @@ int processCMDArgs(int argc, char **argv, char **) {
   int configSet = 0;
   bool getlayers = false;
   bool automaticallyFindMatchingDataset = false;
-  bool verbose = true;
+  bool verbose = false;
   CT::string tailPath, layerPathToScan;
   CT::string file;
   CT::string inspireDatasetCSW;

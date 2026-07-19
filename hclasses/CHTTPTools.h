@@ -34,7 +34,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <curl/curl.h>
-#include "CTString.h"
+#include <string>
 
 class CHTTPTools {
 
@@ -152,13 +152,13 @@ public:
     return 0;
   }
 
-  CT::string static getString(const char *url, float maxFileSize = 0) {
+  std::string static getString(const char *url, float maxFileSize = 0) {
     char *buffer = NULL;
     size_t length = 0;
     int status = getBuffer(url, buffer, length, maxFileSize);
     if (status != 0) throw 1;
     if (length == 0) throw 2;
-    return CT::string(buffer, length);
+    return std::string(buffer, length);
   }
 };
 #endif

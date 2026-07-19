@@ -120,6 +120,8 @@ std::string CDF::getErrorMessage(const int errorCode) {
   if (errorCode == CDF_E_NRDIMSNOTEQUAL) errorMessage = "CDF_E_NRDIMSNOTEQUAL";
   if (errorCode == CDF_E_VARHASNOPARENT) errorMessage = "CDF_E_VARHASNOPARENT";
   if (errorCode == CDF_E_VARHASNODATA) errorMessage = "CDF_E_VARHASNODATA";
+  if (errorCode == CDF_E_CANNOTCREATECOORDVARIABLE) errorMessage = "CDF_E_CANNOTCREATECOORDVARIABLE";
+
   return errorMessage;
 }
 

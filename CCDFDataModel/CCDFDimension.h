@@ -41,6 +41,12 @@ namespace CDF {
       name = (_name);
       id = -1;
     }
+    Dimension(const std::string &_name, size_t _length) {
+      isIterative = false;
+      length = _length;
+      name = (_name);
+      id = -1;
+    }
     CT::string name;
     size_t length;
     bool isIterative;

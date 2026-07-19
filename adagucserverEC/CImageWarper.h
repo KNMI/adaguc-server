@@ -46,9 +46,8 @@ private:
   int dMaxExtentDefined;
   bool sourceIsLatLonProjection = false;
 
-  CT::string sourceCRSString;
-  CT::string destinationCRS;
-  //     int _decodeCRS(CT::string *CRS);
+  std::string sourceCRSString;
+  std::string destinationCRS;
   std::vector<CServerConfig::XMLE_Projection *> *prj;
   bool initialized;
 
@@ -75,7 +74,7 @@ public:
     }
   }
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
-  CT::string getDestProjString() { return destinationCRS; }
+  std::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
   int init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj);
@@ -106,8 +105,7 @@ public:
   int reprojfromLatLon(double &dfx, double &dfy);
 
   int reprojToLatLon(double &dfx, double &dfy);
-  // int decodeCRS(CT::string *outputCRS, CT::string *inputCRS);
-  int decodeCRS(std::string *outputCRS, std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
+  int decodeCRS(std::string *outputCRS, const std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int findExtent(CDataSource *dataSource, double *dfBBOX);
   bool isProjectionRequired() { return requireReprojection; }
   /**
@@ -115,15 +113,15 @@ public:
    *
    * @param dataSource DataSource
    * @param projectionId EPSG code, or projection string, or string "native"
-   * @return CT::string Will return proj4 parameters for given projection id
+   * @return std::string Will return proj4 parameters for given projection id
    */
-  static CT::string getProj4FromId(CDataSource *dataSource, CT::string projectionId);
+  static std::string getProj4FromId(CDataSource *dataSource, const std::string &projectionId);
 
   /**
-   * Returns the corrected projection string and a factor with witch the x and y axis of the data need to be scaled.
+   * Returns the corrected projection string and a factor with which the x and y axis of the data need to be scaled.
    * Needed for a conversion for KM to Meter for example
    */
-  static std::tuple<CT::string, double> fixProjection(CT::string projectionString);
+  static std::tuple<std::string, double> fixProjection(const std::string &projectionString);
 
   /**
    * Get rotation for given point

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <Legend name="blackgrayrainbow" type="colorRange">
+    <palette index="0" red="0" green="0" blue="0" />
+    <palette index="145" red="255" green="255" blue="255"/>
+    <palette index="146" red="255" green="255" blue="255"/>
+    <palette index="146" red="0" green="0" blue="255"/>
+    <palette index="170" red="0" green="255" blue="255"/>
+    <palette index="193" red="0" green="255" blue="0"/>
+    <palette index="216" red="255" green="255" blue="0"/>
+    <palette index="240" red="255" green="0" blue="0"/>
+  </Legend>
+
+  <Style name="satcomp_msg_scat_nc_testfile" title="gray to rainbow" abstract="satcomp_msg_scat_nc_testfile">
+    <Legend tickinterval="5">blackgrayrainbow</Legend>
+    <RenderSettings interpolationmethod="nearest"/>
+    <RenderMethod>nearest</RenderMethod>
+    <Min>40.15</Min>
+    <Max>-80.15</Max>
+  </Style>
+
+  <Layer type="database">
+    <Name>satcomp_msg_scat_nc_testfile</Name>
+    <Variable>data</Variable>
+    <FilePath filter="satcomp_msg_scat_nc_testfile.*(\.nc$|tile\.nc)$">{ADAGUC_PATH}data/datasets/satcomp/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>satcomp_msg_scat_nc_testfile</Styles>
+    <DataPostProc algorithm="convert_units" a="1" b="-273.15" units="degrees Celsius"/>
+    <TileSettings debug="false" tilepath="{ADAGUC_TMP}" autotile="file" maxtilesinimage="32"/>
+  </Layer>
+</Configuration>

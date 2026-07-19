@@ -56,6 +56,15 @@ public:
    * @returns the matching dimension or null
    */
   CDF::Dimension *getDim(std::string name);
+
+  /**
+   * Returns the requested dimension or creates new one if not available in the model.
+   * @param name Name of the dimension to request or create
+   * @param length Length of the dimension.
+   * @returns the requested dimension or new one if not available in the model
+   */
+  CDF::Dimension *getDimOrCreate(const std::string &name, size_t length);
+
   CDF::Dimension *getDimensionNE(std::string name);
   CDF::Dimension *getDimensionNE(const char *name);
 
@@ -88,6 +97,18 @@ public:
   void clear();
   int attachCDFReader(void *reader);
   void *getCDFReader() { return reader; }
+
+  /**
+   * Returns or creates a 1 dimnensional coordinate variable of given length and size. Both the dimension and the variable are available after this. When all arguments are similar to the settings
+   * already set in the datamodel, it simply returns the existing variable.
+   * @param name Name of the coordinate variable
+   * @param length Length of the dimension
+   * @param type The data type of the variable
+   * @returns The existing of newly created coordinate variable.
+   * @throws CDF_E_CANNOTCREATECOORDVARIABLE when no coordinate with given arguments can be created.
+   *
+   */
+  CDF::Variable *getDimVarOrCreate(const std::string &name, size_t length, CDFType type);
 };
 
 #endif

@@ -4,16 +4,16 @@ import logging
 import os
 import time
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
 from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
+from routers.utils.utils import get_base_url, get_externaladdress
 from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
-from routers.healthcheck import health_check_router
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
@@ -49,13 +49,28 @@ async def add_hsts_header(request: Request, call_next):
 
 
 allowed_hosts = os.environ.get("ADAGUC_TRUSTED_HOSTS")
-if allowed_hosts is not None and len(allowed_hosts) > 0:
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
 
-app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
+external_address = get_externaladdress()
+logger.info("ENV EXTERNALADDRESS was set to : %s", external_address)
+
+if external_address is None:
+    # TrustedHostMiddleware is added if allowed_hosts is set (but skipped for /healthcheck call)
+    if allowed_hosts is not None and len(allowed_hosts) > 0:
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(",")])
+
+    app.add_middleware(ForwardedHostAndPrefixMiddleware, trusted_hosts=os.environ.get("ADAGUC_TRUSTED_PROXIES", "127.0.0.1"))
 
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
+
+
+@app.middleware("http")
+async def allow_healthcheck(req: Request, call_next):
+    if req.url.path == "/healthcheck":
+        response = Response("OK")
+    else:
+        response = await call_next(req)
+    return response
 
 
 @app.middleware("http")
@@ -90,7 +105,6 @@ async def root():
 app.mount("/ogcapi", ogcApiApp)
 app.mount("/edr", edrApiApp)
 
-app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)
 app.include_router(autowms_router)
 app.include_router(opendapRouter)
@@ -99,4 +113,4 @@ logging.info("Starting server on 0.0.0.0")
 
 if __name__ == "__main__":
     testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True, proxy_headers=True)

@@ -149,25 +149,25 @@ int CDFPNGReader::open(const char *fileName) {
       CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].key.c_str(), pngRaster->headers[j].value.c_str());
 #endif
       /* Proj4 params */
-      if (pngRaster->headers[j].key.equals("proj4_params")) {
+      if (pngRaster->headers[j].key == "proj4_params") {
         CRS->setAttributeText("proj4", pngRaster->headers[j].value.c_str());
       }
 
       /* BBOX */
-      if (pngRaster->headers[j].key.equals("bbox")) {
-        std::vector<CT::string> bboxItems = pngRaster->headers[j].value.split(",");
+      if (pngRaster->headers[j].key == "bbox") {
+        std::vector<std::string> bboxItems = CT::split(pngRaster->headers[j].value, ",");
         if (bboxItems.size() == 4) {
 
-          bbox[0] = bboxItems[0].trim().toDouble();
-          bbox[1] = bboxItems[1].trim().toDouble();
-          bbox[2] = bboxItems[2].trim().toDouble();
-          bbox[3] = bboxItems[3].trim().toDouble();
+          bbox[0] = CT::toDouble(bboxItems[0]);
+          bbox[1] = CT::toDouble(bboxItems[1]);
+          bbox[2] = CT::toDouble(bboxItems[2]);
+          bbox[3] = CT::toDouble(bboxItems[3]);
           CRS->setAttribute("bbox", CDF_DOUBLE, bbox, 4);
         }
       }
 
       /* Time dimension */
-      if (pngRaster->headers[j].key.equals("time")) {
+      if (pngRaster->headers[j].key == "time") {
         CDF::Dimension *timeDimension = cdfObject->getDimensionNE("time");
         if (!timeDimension) {
           timeDimension = cdfObject->addDimension(new CDF::Dimension("time", 1));
@@ -188,7 +188,7 @@ int CDFPNGReader::open(const char *fileName) {
         ((double *)timeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value.c_str()));
       }
       /* Reference time dimension */
-      if (pngRaster->headers[j].key.equals("reference_time")) {
+      if (pngRaster->headers[j].key == "reference_time") {
         CDF::Dimension *referenceTimeDimension = cdfObject->getDimensionNE("forecast_reference_time");
         if (!referenceTimeDimension) {
           referenceTimeDimension = cdfObject->addDimension(new CDF::Dimension("forecast_reference_time", 1));

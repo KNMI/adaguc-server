@@ -27,22 +27,22 @@
 
 #include "CReporter.h"
 #include <CKeyValuePair.h>
+#include <algorithm>
 
 float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
   if (fValue < 50000) fValue *= 1000;
   return fValue;
 }
 
-CT::string CProj4ToCF::getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList) {
-  for (size_t j = 0; j < projKVPList.size(); j++) {
-    if (projKVPList[j].key.equals(proj4Key) == true) {
-      return projKVPList[j].value;
-    }
+CT::string CProj4ToCF::getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList) {
+  auto it = std::find_if(projKVPList.begin(), projKVPList.end(), [&proj4Key](const CKeyValuePair &kvp) { return kvp.key == proj4Key; });
+  if (it != projKVPList.end()) {
+    return it->value;
   }
   throw(0);
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float))) {
+float CProj4ToCF::getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float(*conversionfunction)(float)) {
   float value = defaultValue;
   try {
     value = getProj4Value(proj4Key, projKVPList).toFloat();
@@ -55,7 +55,7 @@ float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair
   return value;
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue) { return getProj4ValueF(proj4Key, projKVPList, defaultValue, NULL); }
+float CProj4ToCF::getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue) { return getProj4ValueF(proj4Key, projKVPList, defaultValue, NULL); }
 
 void CProj4ToCF::initMSGPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838
@@ -372,7 +372,7 @@ int CProj4ToCF::convertBackAndFort(const char *projString, CDF::Variable *projec
   CDF::_dump(projectionVariable, &dumpString, CCDFDATAMODEL_DUMP_STANDARD);
   CDBDebug("\n%s", dumpString.c_str());
 
-  CT::string projCTString = convertCFToProj(projectionVariable);
+  std::string projCTString = convertCFToProj(projectionVariable);
   if (projCTString.empty()) {
     CDBError("Could not convert");
     return 1;
@@ -413,53 +413,52 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   int foundProj = 0;
   try {
 
-    for (size_t j = 0; j < projKVPList.size(); j++) {
-      if (projKVPList[j].key.equals("proj")) {
-        if (projKVPList[j].value.equals("stere")) {
+    for (const auto &kvp: projKVPList) {
+      if (kvp.key == "proj") {
+        if (kvp.value == "stere") {
           initStereoGraphic(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("geos")) {
-          for (size_t j2 = 0; j2 < projKVPList.size(); j2++) {
-            if (projKVPList[j2].key.equals("height_from_earth_center")) {
-              initMSGPerspective(projectionVariable, projKVPList);
-              foundProj = 1;
-            }
+        if (kvp.value == "geos") {
+          bool hasHeightFromEarthCenter = std::any_of(projKVPList.begin(), projKVPList.end(), [](const CKeyValuePair &kvp2) { return kvp2.key == "height_from_earth_center"; });
+          if (hasHeightFromEarthCenter) {
+            initMSGPerspective(projectionVariable, projKVPList);
+            foundProj = 1;
           }
           if (foundProj == 0) {
             initGeosPerspective(projectionVariable, projKVPList);
             foundProj = 1;
           }
         }
-        if (projKVPList[j].value.equals("lcc")) {
+        if (kvp.value == "lcc") {
           initLCCPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("ob_tran")) {
+        if (kvp.value == "ob_tran") {
           initRPPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("sterea")) {
+        if (kvp.value == "sterea") {
           initObliqueStereographicPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("latitude_longitude")) {
+        if (kvp.value == "latitude_longitude") {
           initLatitudeLongitude(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("merc")) {
+        if (kvp.value == "merc") {
           initMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("tmerc")) {
+        if (kvp.value == "tmerc") {
           initTransverseMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("laea")) {
+        if (kvp.value == "laea") {
           initLAEAPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j].value.equals("aeqd")) {
+        if (kvp.value == "aeqd") {
           initAEQDPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
@@ -467,16 +466,16 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     }
     if (projectionVariable->name.empty()) projectionVariable->name = "projection";
     projectionVariable->setAttributeText("proj4_params", proj4String);
-    CT::string kvpProjString = "";
-    for (size_t j = 0; j < projKVPList.size(); j++) {
+    std::string kvpProjString = "";
+    for (const auto &kvp: projKVPList) {
 
-      if (projKVPList[j].key.equals("proj") == false && projKVPList[j].key.equals("units") == false) {
-        if (projKVPList[j].value.empty() == false) {
-          kvpProjString.printconcat(" +%s=%f", projKVPList[j].key.c_str(), projKVPList[j].value.toDouble());
+      if (kvp.key != "proj" && kvp.key != "units") {
+        if (kvp.value.empty() == false) {
+          CT::printfconcat(kvpProjString, " +%s=%f", kvp.key.c_str(), CT::toDouble(kvp.value.c_str()));
         }
       } else {
-        kvpProjString.printconcat(" +%s=%s", projKVPList[j].key.c_str(), projKVPList[j].value.c_str());
-        kvpProjString.trimSelf();
+        CT::printfconcat(kvpProjString, " +%s=%s", kvp.key.c_str(), kvp.value.c_str());
+        kvpProjString = CT::trim(kvpProjString);
       }
     }
     projectionVariable->setAttributeText("proj4_origin", kvpProjString.c_str());
@@ -490,24 +489,20 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   return 0;
 }
 
-CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
-  CT::string proj4String;
-  proj4String = ("Unsupported projection");
+std::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
+  std::string proj4String = "Unsupported projection";
   try {
-    CT::string grid_mapping_name;
-    grid_mapping_name = projectionVariable->getAttributeThrows("grid_mapping_name")->toString();
-    // CREPORT_INFO_NODOC(CT::string("Unable to obtain projection from proj4 string variable. Trying to use CF conventions to determine projection. grid_mapping_name variable: ") + grid_mapping_name,
-    //                    CReportMessage::Categories::GENERAL);
-    grid_mapping_name.toLowerCaseSelf();
+    std::string grid_mapping_name = projectionVariable->getAttributeThrows("grid_mapping_name")->toString();
+    grid_mapping_name = CT::toLowerCase(grid_mapping_name);
 
-    if (grid_mapping_name.equals("msgnavigation")) {
+    if (grid_mapping_name == "msgnavigation") {
       // Meteosat Second Generation projection
 
-      CT::string longitude_of_projection_origin = "0.000000f";
-      CT::string latitude_of_projection_origin = "0.000000f";
-      CT::string height_from_earth_center = "42163972.000000f";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
+      std::string longitude_of_projection_origin = "0.000000f";
+      std::string latitude_of_projection_origin = "0.000000f";
+      std::string height_from_earth_center = "42163972.000000f";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
 
       try {
         longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
@@ -530,16 +525,16 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      proj4String.print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f", longitude_of_projection_origin.toDouble(), latitude_of_projection_origin.toDouble(), 35807.414063,
-                        semi_major_axis.toDouble(), semi_minor_axis.toDouble());
-    } else if (grid_mapping_name.equals("geostationary")) {
+      proj4String = CT::printf("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f", CT::toDouble(longitude_of_projection_origin), CT::toDouble(latitude_of_projection_origin), 35807.414063,
+                               CT::toDouble(semi_major_axis), CT::toDouble(semi_minor_axis));
+    } else if (grid_mapping_name == "geostationary") {
       // Meteosat Second Generation projection
-      CT::string longitude_of_projection_origin = "0.000000f";
-      CT::string latitude_of_projection_origin = "0.000000f";
-      CT::string perspective_point_height = "35807414.063f"; //"35807.414063f" ;
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
-      CT::string sweep_angle_axis = "x";
+      std::string longitude_of_projection_origin = "0.000000f";
+      std::string latitude_of_projection_origin = "0.000000f";
+      std::string perspective_point_height = "35807414.063f"; //"35807.414063f" ;
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
+      std::string sweep_angle_axis = "x";
 
       try {
         longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
@@ -566,17 +561,17 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      proj4String.print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", longitude_of_projection_origin.toDouble(), latitude_of_projection_origin.toDouble(),
-                        perspective_point_height.toDouble(), semi_major_axis.toDouble(), semi_minor_axis.toDouble(), sweep_angle_axis.c_str());
-    } else if (grid_mapping_name.equals("polar_stereographic")) {
+      proj4String = CT::printf("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", CT::toDouble(longitude_of_projection_origin), CT::toDouble(latitude_of_projection_origin),
+                               CT::toDouble(perspective_point_height), CT::toDouble(semi_major_axis), CT::toDouble(semi_minor_axis), sweep_angle_axis.c_str());
+    } else if (grid_mapping_name == "polar_stereographic") {
       // Polar stereographic projection
-      CT::string straight_vertical_longitude_from_pole = "0.000000f";
-      CT::string latitude_of_projection_origin = "90.000000f";
-      CT::string standard_parallel = "90.000000f";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
-      CT::string false_easting = "0.000000f";
-      CT::string false_northing = "0.000000f";
+      std::string straight_vertical_longitude_from_pole = "0.000000f";
+      std::string latitude_of_projection_origin = "90.000000f";
+      std::string standard_parallel = "90.000000f";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
+      std::string false_easting = "0.000000f";
+      std::string false_northing = "0.000000f";
       try {
         straight_vertical_longitude_from_pole = projectionVariable->getAttributeThrows("straight_vertical_longitude_from_pole")->toString();
       } catch (int e) {
@@ -606,21 +601,22 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      double dfsemi_major_axis = semi_major_axis.toDouble();
-      double dfsemi_minor_axis = semi_minor_axis.toDouble();
+      double dfsemi_major_axis = CT::toDouble(semi_major_axis);
+      double dfsemi_minor_axis = CT::toDouble(semi_minor_axis);
 
-      proj4String.print("+proj=stere +lat_0=%f +lon_0=%f +lat_ts=%f +a=%f +b=%f +x_0=%f +y_0=%f +ellps=WGS84 +datum=WGS84", latitude_of_projection_origin.toDouble(),
-                        straight_vertical_longitude_from_pole.toDouble(), standard_parallel.toDouble(), dfsemi_major_axis, dfsemi_minor_axis, false_easting.toDouble(), false_northing.toDouble());
-    } else if (grid_mapping_name.equals("lambert_conformal_conic")) {
+      proj4String = CT::printf("+proj=stere +lat_0=%f +lon_0=%f +lat_ts=%f +a=%f +b=%f +x_0=%f +y_0=%f +ellps=WGS84 +datum=WGS84", CT::toDouble(latitude_of_projection_origin),
+                               CT::toDouble(straight_vertical_longitude_from_pole), CT::toDouble(standard_parallel), dfsemi_major_axis, dfsemi_minor_axis, CT::toDouble(false_easting),
+                               CT::toDouble(false_northing));
+    } else if (grid_mapping_name == "lambert_conformal_conic") {
       // Lambert conformal conic projection
       //+proj=lcc +lat_0=46.8 +lat_1=45.89892 +lat_2=47.69601 +lon_0=2.337229 +k_0=1.00 +x_0=600000 +y_0=2200000
-      CT::string longitude_of_central_meridian = "0";
-      CT::string latitude_of_projection_origin = "90";
-      CT::string standard_parallel = "";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
+      std::string longitude_of_central_meridian = "0";
+      std::string latitude_of_projection_origin = "90";
+      std::string standard_parallel = "";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
 
       try {
         longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
@@ -651,32 +647,32 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      double dfsemi_major_axis = semi_major_axis.toDouble();
-      double dfsemi_minor_axis = semi_minor_axis.toDouble();
+      double dfsemi_major_axis = CT::toDouble(semi_major_axis);
+      double dfsemi_minor_axis = CT::toDouble(semi_minor_axis);
 
-      proj4String.print("+proj=lcc +lat_0=%f", latitude_of_projection_origin.toDouble());
+      proj4String = CT::printf("+proj=lcc +lat_0=%f", CT::toDouble(latitude_of_projection_origin));
 
-      auto stpList = standard_parallel.split(" ");
+      auto stpList = CT::split(standard_parallel, " ");
       if (stpList.size() == 1) {
-        proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
+        CT::printfconcat(proj4String, " +lat_1=%f", CT::toDouble(stpList[0]));
       }
       if (stpList.size() == 2) {
-        proj4String.printconcat(" +lat_1=%f +lat_2=%f", stpList[0].toDouble(), stpList[1].toDouble());
+        CT::printfconcat(proj4String, " +lat_1=%f +lat_2=%f", CT::toDouble(stpList[0]), CT::toDouble(stpList[1]));
       }
 
-      proj4String.printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f", longitude_of_central_meridian.toDouble(), false_easting.toDouble(), false_northing.toDouble(), dfsemi_major_axis,
-                              dfsemi_minor_axis);
-    } else if (grid_mapping_name.equals("lambert_azimuthal_equal_area")) {
+      CT::printfconcat(proj4String, " +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f", CT::toDouble(longitude_of_central_meridian), CT::toDouble(false_easting), CT::toDouble(false_northing),
+                       dfsemi_major_axis, dfsemi_minor_axis);
+    } else if (grid_mapping_name == "lambert_azimuthal_equal_area") {
       // Lambert conformal conic projection
       //+proj=lcc +lat_0=0 +lon_0=0 +x_0=0 +y_0=0
-      CT::string longitude_of_projection_origin = "0";
-      CT::string latitude_of_projection_origin = "90";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "-9999";
-      CT::string inverse_flattening = "-9999";
-      CT::string longitude_of_prime_meridian = "0";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
+      std::string longitude_of_projection_origin = "0";
+      std::string latitude_of_projection_origin = "90";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "-9999";
+      std::string inverse_flattening = "-9999";
+      std::string longitude_of_prime_meridian = "0";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
 
       try {
         longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
@@ -711,31 +707,30 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      double dfsemi_major_axis = semi_major_axis.toDouble();
-      double inv_flat = inverse_flattening.toDouble();
+      double dfsemi_major_axis = CT::toDouble(semi_major_axis);
+      double inv_flat = CT::toDouble(inverse_flattening);
       double dfsemi_minor_axis;
       if (inv_flat > 0) {
         dfsemi_minor_axis = dfsemi_major_axis * (1 - 1 / inv_flat);
       } else {
-        dfsemi_minor_axis = semi_minor_axis.toDouble();
+        dfsemi_minor_axis = CT::toDouble(semi_minor_axis);
         if (dfsemi_minor_axis <= 0) {
           dfsemi_minor_axis = dfsemi_major_axis;
         }
       }
 
-      proj4String.print("+proj=laea +lat_0=%f +lon_0=%f", latitude_of_projection_origin.toDouble(), longitude_of_projection_origin.toDouble());
-
-      proj4String.printconcat(" +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f +pm=%f", false_easting.toDouble(), false_northing.toDouble(), dfsemi_major_axis, dfsemi_minor_axis,
-                              longitude_of_prime_meridian.toDouble());
-    } else if (grid_mapping_name.equals("rotated_latitude_longitude")) {
+      proj4String = CT::printf("+proj=laea +lat_0=%f +lon_0=%f", CT::toDouble(latitude_of_projection_origin), CT::toDouble(longitude_of_projection_origin));
+      CT::printfconcat(proj4String, " +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f +pm=%f", CT::toDouble(false_easting), CT::toDouble(false_northing), dfsemi_major_axis, dfsemi_minor_axis,
+                       CT::toDouble(longitude_of_prime_meridian));
+    } else if (grid_mapping_name == "rotated_latitude_longitude") {
       //"+proj=ob_tran +o_proj=longlat +lon_0=15 +o_lat_p=47 +o_lon_p=0 +ellps=WGS84 +towgs84=0,0,0 +no_defs"
-      CT::string grid_north_pole_longitude = "-165"; //--> should become 15 in proj4 (-165+180)
-      CT::string grid_north_pole_latitude = "47";
-      CT::string north_pole_grid_longitude = "0";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
+      std::string grid_north_pole_longitude = "-165"; //--> should become 15 in proj4 (-165+180)
+      std::string grid_north_pole_latitude = "47";
+      std::string north_pole_grid_longitude = "0";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
       try {
         grid_north_pole_latitude = projectionVariable->getAttributeThrows("grid_north_pole_latitude")->toString();
       } catch (int e) {
@@ -764,14 +759,14 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
         false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
-      proj4String.print("+proj=ob_tran +o_proj=longlat +lon_0=%f +o_lat_p=%f +o_lon_p=%f +a=%f +b=%f +x_0=%f +y_0=%f +no_defs", grid_north_pole_longitude.toDouble() + 180.0f,
-                        grid_north_pole_latitude.toDouble(), north_pole_grid_longitude.toDouble(), semi_major_axis.toDouble(), semi_minor_axis.toDouble(), false_easting.toDouble(),
-                        false_northing.toDouble());
-    } else if (grid_mapping_name.equals("oblique_stereographic")) {
+      proj4String = CT::printf("+proj=ob_tran +o_proj=longlat +lon_0=%f +o_lat_p=%f +o_lon_p=%f +a=%f +b=%f +x_0=%f +y_0=%f +no_defs", CT::toDouble(grid_north_pole_longitude) + 180.0f,
+                               CT::toDouble(grid_north_pole_latitude), CT::toDouble(north_pole_grid_longitude), CT::toDouble(semi_major_axis), CT::toDouble(semi_minor_axis),
+                               CT::toDouble(false_easting), CT::toDouble(false_northing));
+    } else if (grid_mapping_name == "oblique_stereographic") {
       // TODO atm we cannot detect +ellps=bessel with cf conventions
-      CT::string latitude_of_projection_origin = "0";
-      CT::string longitude_of_central_meridian = "0";
-      CT::string scale_factor_at_projection_origin = "1";
+      std::string latitude_of_projection_origin = "0";
+      std::string longitude_of_central_meridian = "0";
+      std::string scale_factor_at_projection_origin = "1";
 
       // Get latitude_of_projection_origin
       try {
@@ -798,10 +793,10 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       };
 
       // Get common stuffs
-      CT::string semi_major_axis = "6377397.155"; // 299.1528128,f=a/(a-b) b=(-(a/f))+a   (-(6377397.155/299.1528128))+6377397.155 = 6356079
-      CT::string semi_minor_axis = "6356079";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
+      std::string semi_major_axis = "6377397.155"; // 299.1528128,f=a/(a-b) b=(-(a/f))+a   (-(6377397.155/299.1528128))+6377397.155 = 6356079
+      std::string semi_minor_axis = "6356079";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
       try {
         semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
@@ -819,11 +814,12 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      proj4String.print("+proj=sterea +lat_0=%f +lon_0=%f +k=%f +a=%f +b=%f +x_0=%f +y_0=%f +no_defs", latitude_of_projection_origin.toDouble(), longitude_of_central_meridian.toDouble(),
-                        scale_factor_at_projection_origin.toDouble(), semi_major_axis.toDouble(), semi_minor_axis.toDouble(), false_easting.toDouble(), false_northing.toDouble());
-    } else if (grid_mapping_name.equals("latitude_longitude")) {
-      CT::string latitude_of_projection_origin = "0";
-      CT::string longitude_of_central_meridian = "0";
+      proj4String =
+          CT::printf("+proj=sterea +lat_0=%f +lon_0=%f +k=%f +a=%f +b=%f +x_0=%f +y_0=%f +no_defs", CT::toDouble(latitude_of_projection_origin), CT::toDouble(longitude_of_central_meridian),
+                     CT::toDouble(scale_factor_at_projection_origin), CT::toDouble(semi_major_axis), CT::toDouble(semi_minor_axis), CT::toDouble(false_easting), CT::toDouble(false_northing));
+    } else if (grid_mapping_name == "latitude_longitude") {
+      std::string latitude_of_projection_origin = "0";
+      std::string longitude_of_central_meridian = "0";
 
       // Get latitude_of_projection_origin
       try {
@@ -841,8 +837,8 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       };
 
       // Get common stuffs
-      CT::string semi_major_axis = "6377397.155"; // 299.1528128,f=a/(a-b) b=(-(a/f))+a   (-(6377397.155/299.1528128))+6377397.155 = 6356079
-      CT::string semi_minor_axis = "6356079";
+      std::string semi_major_axis = "6377397.155"; // 299.1528128,f=a/(a-b) b=(-(a/f))+a   (-(6377397.155/299.1528128))+6377397.155 = 6356079
+      std::string semi_minor_axis = "6356079";
       try {
         semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
@@ -852,18 +848,18 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      proj4String.print("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_0=%f +lon_0=%f +a=%f +b=%f +no_defs", latitude_of_projection_origin.toDouble(), longitude_of_central_meridian.toDouble(),
-                        semi_major_axis.toDouble(), semi_minor_axis.toDouble());
-    } else if (grid_mapping_name.equals("mercator")) {
+      proj4String = CT::printf("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_0=%f +lon_0=%f +a=%f +b=%f +no_defs", CT::toDouble(latitude_of_projection_origin),
+                               CT::toDouble(longitude_of_central_meridian), CT::toDouble(semi_major_axis), CT::toDouble(semi_minor_axis));
+    } else if (grid_mapping_name == "mercator") {
       // Lambert conformal conic projection
       //+proj=lcc +lat_0=46.8 +lat_1=45.89892 +lat_2=47.69601 +lon_0=2.337229 +k_0=1.00 +x_0=600000 +y_0=2200000
-      CT::string longitude_of_central_meridian = "0";
-      CT::string latitude_of_projection_origin = "90";
-      CT::string standard_parallel = "";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
+      std::string longitude_of_central_meridian = "0";
+      std::string latitude_of_projection_origin = "90";
+      std::string standard_parallel = "";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
 
       try {
         longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
@@ -894,29 +890,30 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      proj4String.print("+proj=merc +lat_0=%f", latitude_of_projection_origin.toDouble());
+      proj4String = CT::printf("+proj=merc +lat_0=%f", CT::toDouble(latitude_of_projection_origin));
 
-      auto stpList = standard_parallel.split(" ");
+      auto stpList = CT::split(standard_parallel, " ");
       if (stpList.size() == 1) {
-        proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
+        CT::printfconcat(proj4String, " +lat_1=%f", CT::toDouble(stpList[0]));
       }
       if (stpList.size() == 2) {
-        proj4String.printconcat(" +lat_1=%f +lat_2=%f", stpList[0].toDouble(), stpList[1].toDouble());
+        CT::printfconcat(proj4String, " +lat_1=%f +lat_2=%f", CT::toDouble(stpList[0]), CT::toDouble(stpList[1]));
       }
 
-      proj4String.printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f ", longitude_of_central_meridian.toDouble(), false_easting.toDouble(), false_northing.toDouble(), semi_major_axis.toDouble());
-    } else if (grid_mapping_name.equals("transverse_mercator")) {
+      CT::printfconcat(proj4String, " +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f ", CT::toDouble(longitude_of_central_meridian), CT::toDouble(false_easting), CT::toDouble(false_northing),
+                       CT::toDouble(semi_major_axis));
+    } else if (grid_mapping_name == "transverse_mercator") {
       // Transverse mercator projection
       //+proj=tmerc +lat_0=46.8 +lon_0=2.337229 +k_0=1.00 +x_0=600000 +y_0=2200000
-      CT::string longitude_of_central_meridian = "0";
-      CT::string latitude_of_projection_origin = "90";
-      CT::string standard_parallel = "";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "6356750.000000f";
-      CT::string inverse_flattening = "297.183263207";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
-      CT::string scale_factor_at_projection_origin = "1.0";
+      std::string longitude_of_central_meridian = "0";
+      std::string latitude_of_projection_origin = "90";
+      std::string standard_parallel = "";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "6356750.000000f";
+      std::string inverse_flattening = "297.183263207";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
+      std::string scale_factor_at_projection_origin = "1.0";
 
       bool found;
 
@@ -975,8 +972,8 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
         } catch (int e) {
         };
         if (found) {
-          float semi_minor_axis_value = semi_major_axis.toDouble() * (1 - 1 / inverse_flattening.toDouble());
-          semi_minor_axis.print("%f", semi_minor_axis_value);
+          float semi_minor_axis_value = CT::toDouble(semi_major_axis) * (1 - 1 / CT::toDouble(inverse_flattening));
+          semi_minor_axis = CT::printf("%f", semi_minor_axis_value);
         } else {
           CREPORT_ERROR_NODOC(CT::string("Projection: ") + grid_mapping_name + CT::string(" needs semi_minor_axis or inverse_flattening"), CReportMessage::Categories::GENERAL);
           return "";
@@ -991,19 +988,19 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      proj4String.print("+proj=tmerc +lat_0=%f", latitude_of_projection_origin.toDouble());
-      proj4String.printconcat(" +lon_0=%f +k_0=%f +x_0=%f +y_0=%f +a=%f +b=%f", longitude_of_central_meridian.toDouble(), scale_factor_at_projection_origin.toDouble(), false_easting.toDouble(),
-                              false_northing.toDouble(), semi_major_axis.toDouble(), semi_minor_axis.toDouble());
-    } else if (grid_mapping_name.equals("azimuthal_equidistant")) {
+      proj4String = CT::printf("+proj=tmerc +lat_0=%f", CT::toDouble(latitude_of_projection_origin));
+      CT::printfconcat(proj4String, " +lon_0=%f +k_0=%f +x_0=%f +y_0=%f +a=%f +b=%f", CT::toDouble(longitude_of_central_meridian), CT::toDouble(scale_factor_at_projection_origin),
+                       CT::toDouble(false_easting), CT::toDouble(false_northing), CT::toDouble(semi_major_axis), CT::toDouble(semi_minor_axis));
+    } else if (grid_mapping_name == "azimuthal_equidistant") {
       // azimuthal_equidistant
       //"+proj=aeqd +lat_0=-41.2 +lon_0=174.7 +x_0=25000. +y_0=-100000. +a=6370997.0 +units=m +no_defs"
-      CT::string longitude_of_projection_origin = "0";
-      CT::string latitude_of_projection_origin = "0";
-      CT::string semi_major_axis = "6378140.000000f";
-      CT::string semi_minor_axis = "-9999";
-      CT::string inverse_flattening = "-9999";
-      CT::string false_easting = "0";
-      CT::string false_northing = "0";
+      std::string longitude_of_projection_origin = "0";
+      std::string latitude_of_projection_origin = "0";
+      std::string semi_major_axis = "6378140.000000f";
+      std::string semi_minor_axis = "-9999";
+      std::string inverse_flattening = "-9999";
+      std::string false_easting = "0";
+      std::string false_northing = "0";
 
       try {
         longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
@@ -1034,21 +1031,20 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       } catch (int e) {
       };
 
-      double dfsemi_major_axis = semi_major_axis.toDouble();
-      double inv_flat = inverse_flattening.toDouble();
+      double dfsemi_major_axis = CT::toDouble(semi_major_axis);
+      double inv_flat = CT::toDouble(inverse_flattening);
       double dfsemi_minor_axis;
       if (inv_flat > 0) {
         dfsemi_minor_axis = dfsemi_major_axis * (1 - 1 / inv_flat);
       } else {
-        dfsemi_minor_axis = semi_minor_axis.toDouble();
+        dfsemi_minor_axis = CT::toDouble(semi_minor_axis);
         if (dfsemi_minor_axis <= 0) {
           dfsemi_minor_axis = dfsemi_major_axis;
         }
       }
 
-      proj4String.print("+proj=aeqd +lat_0=%f +lon_0=%f", latitude_of_projection_origin.toDouble(), longitude_of_projection_origin.toDouble());
-
-      proj4String.printconcat(" +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f ", false_easting.toDouble(), false_northing.toDouble(), dfsemi_major_axis, dfsemi_minor_axis);
+      proj4String = CT::printf("+proj=aeqd +lat_0=%f +lon_0=%f", CT::toDouble(latitude_of_projection_origin), CT::toDouble(longitude_of_projection_origin));
+      CT::printfconcat(proj4String, " +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f ", CT::toDouble(false_easting), CT::toDouble(false_northing), dfsemi_major_axis, dfsemi_minor_axis);
     } else {
       CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + grid_mapping_name, CReportMessage::Categories::GENERAL);
       return "";
@@ -1068,10 +1064,10 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
 int CProj4ToCF::__checkProjString(const char *name, const char *string) {
   CDBDebug("Checking %s", name);
-  CT::string proj4_origin;
-  CT::string proj4_recons;
+  std::string proj4_origin;
+  std::string proj4_recons;
   CDF::Variable *projectionVariable = new CDF::Variable();
-  ;
+
   try {
     if (convertBackAndFort(string, projectionVariable) != 0) {
       CDBError("FAILED: %s: Proj string conversion for %s / [%s]", name, name, string);
@@ -1080,12 +1076,12 @@ int CProj4ToCF::__checkProjString(const char *name, const char *string) {
     }
     proj4_origin = projectionVariable->getAttributeThrows("proj4_origin")->toString();
     proj4_recons = projectionVariable->getAttributeThrows("proj4_params")->toString();
-    if (!proj4_origin.equals(string)) {
+    if (proj4_origin != string) {
       CDBError("FAILED: %s Proj string parsing failed: \nIN:  [%s]\nOUT: [%s]", name, string, proj4_origin.c_str());
       delete projectionVariable;
       return 2;
     }
-    if (!proj4_recons.equals(proj4_origin.c_str())) {
+    if (proj4_recons != proj4_origin) {
       CDBError("FAILED: %s Proj string reconstruction failed: \nIN:  [%s]\nPRS: [%s]\nREC: [%s]", name, string, proj4_origin.c_str(), proj4_recons.c_str());
       delete projectionVariable;
       return 3;

@@ -10,6 +10,7 @@ import urllib.parse
 from fastapi import APIRouter, HTTPException, Request, Response
 
 from .setup_adaguc import setup_adaguc
+from .utils.utils import get_base_url
 
 autowms_router = APIRouter(responses={404: {"description": "Not found"}})
 
@@ -110,7 +111,7 @@ async def handle_autowms(req: Request, request: str | None = None, path: str | N
     adaguc_data_set_dir = adaguc_instance.ADAGUC_DATASET_DIR
     adaguc_data_dir = adaguc_instance.ADAGUC_DATA_DIR
     adaguc_autowms_dir = adaguc_instance.ADAGUC_AUTOWMS_DIR
-    adaguc_online_resource = str(req.base_url)
+    adaguc_online_resource = get_base_url(req)
 
     if request is None or path is None:
         raise HTTPException(

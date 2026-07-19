@@ -91,11 +91,13 @@ public:
   bool debug = false;
   bool stretchMinMax = false;
   bool dimsAreAutoConfigured = -1;
+  bool hasFieldData = true;
   bool isConfigured = false;
   bool formatConverterActive = false;
   bool didAxisScalingConversion = false; // Some projections require the scaling of the axis with a certain number, like converting km to meter
   bool swapXYDimensions = false;         // Sometimes X and Y need to be swapped, this boolean indicates whether it should or not.
   bool queryBBOX = false;                // True: query on viewport
+  bool enablePostProcessors = true;      // Allows disabling of other postprocessors. For example when a datasource is output of another postprocessor.
   bool lonTransformDone = false;
 
   int dWidth = 0;
