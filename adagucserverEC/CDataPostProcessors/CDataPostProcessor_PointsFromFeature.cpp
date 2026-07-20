@@ -2,6 +2,7 @@
 #include "CDataPostProcessor_PointsFromFeature.h"
 #include <CImageWarper.h>
 #include <CConvertGeoJSON.h>
+#include <sstream>
 
 /************************/
 /*      CDPPointsFromFeature     */
@@ -9,7 +10,7 @@
 
 const char *CDPPointsFromFeature::getId() { return CDATAPOSTPROCESSOR_PointsFromFeature_ID; }
 int CDPPointsFromFeature::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_PointsFromFeature_ID)) {
+  if (proc->attr.algorithm == CDATAPOSTPROCESSOR_PointsFromFeature_ID) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -154,31 +155,34 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
 
   std::vector<Feature *> &features = it->second;
 
-  int id = 0;
+  if (dataSource->dataObjects.empty()) {
+    CDBError("PointsFromFeature: No starting data objects available in dataSource");
+    return 1;
+  }
+  auto &featuresObject = dataSource->dataObjects[0];
 
-  // Loop speed and direction components
-  for (auto con: proc->attr.select.split(",")) {
+  // Split
+  std::stringstream ss(proc->attr.select);
+  std::string con;
+  std::vector<DataObject> newObjects;
+  while (std::getline(ss, con, ',')) {
 
-    auto ob = dataSource->getDataObjectByName(con.c_str());
-    if (!ob || ob->cdfVariable == NULL) {
-      CDBWarning("PointsFromFeature: variable %s not found", con.c_str());
+    // Look up the unpacked variable directly from the cdfObject container
+    auto cdfVar = featuresObject.cdfObject->getVariableNE(con.c_str());
+    if (!cdfVar) {
+      CDBWarning("PointsFromFeature: variable %s not found in cdfObject", con.c_str());
       continue;
     }
 
-    if (ob->cdfVariable->getType() != CDF_FLOAT) {
-      CDBError("PointsFromFeature: only CDF_FLOAT supported");
-      throw __LINE__;
-    }
+    // Dada object for property
+    DataObject destob;
+    destob.cdfVariable = cdfVar;
+    std::string varName = cdfVar->name.c_str();
 
-    auto destob = dataSource->getDataObject(id);
-    std::string varName = ob->cdfVariable->name.c_str();
-
-    // All features
     for (Feature *feature: features) {
 
-      // Extract associated value
+      // Extract associated value from GeoJSON properties
       float value = NAN;
-
       auto fp = feature->getFp();
       auto itProp = fp->find(varName);
 
@@ -191,7 +195,6 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
 
       // If geometry is a point
       for (auto &pt: *feature->getPoints()) {
-
         f8point p = {.x = pt.getLon(), .y = pt.getLat()};
         warper.reprojfromLatLon(p.x, p.y);
         p = getPixelCoordinateFromGetMapCoordinate(p, *dataSource);
@@ -206,12 +209,11 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
         float val = value;
 
         auto newPoint = PointDVWithLatLon(px, py, lon, lat, val);
-        destob->points.push_back(newPoint);
+        destob.points.push_back(newPoint);
       }
 
-      // If geometry is a polygon (use centroid)
+      // If geometry is a polygon (use centroid calculation)
       for (auto &poly: *feature->getPolygons()) {
-
         int n = poly.getSize();
         if (n <= 0) continue;
 
@@ -225,12 +227,11 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
 
         if (px < 0 || py < 0 || px > width || py > height) continue;
 
-        destob->points.emplace_back(px, py, centroid.x, centroid.y, value);
+        destob.points.emplace_back(px, py, centroid.x, centroid.y, value);
       }
 
-      // If geometry is a line (first point?)
+      // If geometry is a line (use the first point)
       for (auto &line: *feature->getPolylines()) {
-
         int n = line.getSize();
         if (n <= 0) continue;
 
@@ -244,11 +245,18 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
 
         if (px < 0 || py < 0 || px > width || py > height) continue;
 
-        destob->points.emplace_back(px, py, p.x, p.y, value);
+        destob.points.emplace_back(px, py, p.x, p.y, value);
       }
     }
 
-    id++;
+    // Save data object
+    newObjects.push_back(destob);
+  }
+
+  // Clear out the original "features" placeholder object, push new data objects
+  dataSource->dataObjects.clear();
+  for (const auto &obj: newObjects) {
+    dataSource->dataObjects.push_back(obj);
   }
 
   return 0;
