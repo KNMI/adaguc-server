@@ -1,6 +1,7 @@
 #include <type_traits>
 #include "CDataPostProcessor_PointsFromGrid.h"
 #include <CImageWarper.h>
+#include <utils/GeometryUtils.h>
 
 /************************/
 /*      CDPPointsFromGrid     */
@@ -42,60 +43,6 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   }
   CDBError("Not implemented yet");
   return 1;
-}
-
-f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSource) {
-  f8point pixelCoord;
-  pixelCoord.x =
-      ((in.x - dataSource.srvParams->geoParams.bbox.left) / (dataSource.srvParams->geoParams.bbox.right - dataSource.srvParams->geoParams.bbox.left)) * dataSource.srvParams->geoParams.width;
-  pixelCoord.y =
-      ((in.y - dataSource.srvParams->geoParams.bbox.bottom) / (dataSource.srvParams->geoParams.bbox.top - dataSource.srvParams->geoParams.bbox.bottom)) * dataSource.srvParams->geoParams.height;
-  return pixelCoord;
-}
-
-void getPixelCoordinateListFromGetMapCoordinateListInPlace(std::vector<f8point> &in, CDataSource &dataSource) {
-  for (auto &p: in) {
-    p = getPixelCoordinateFromGetMapCoordinate(p, dataSource);
-  }
-}
-
-f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSource) {
-  f8point getmapCoord;
-  getmapCoord.x = (in.x / dataSource.srvParams->geoParams.width) * (dataSource.srvParams->geoParams.bbox.right - dataSource.srvParams->geoParams.bbox.left) + dataSource.srvParams->geoParams.bbox.left;
-  getmapCoord.y =
-      (in.y / dataSource.srvParams->geoParams.height) * (dataSource.srvParams->geoParams.bbox.top - dataSource.srvParams->geoParams.bbox.bottom) + dataSource.srvParams->geoParams.bbox.bottom;
-  return getmapCoord;
-}
-
-f8point getStrideFromGetMapLocation(CDataSource &dataSource, CImageWarper &warper, f8point pixelOffset) {
-
-  // Calculate center of modelgrid
-  f8point middlePointModelData = {.x = (dataSource.dfBBOX[0] + dataSource.dfBBOX[2]) / 2, .y = (dataSource.dfBBOX[1] + dataSource.dfBBOX[3]) / 2};
-  f8point middlePoint = middlePointModelData;
-
-  //  Convert to GetMap CRS coords
-  warper.reprojpoint_inv(middlePointModelData);
-
-  //  Convert to GetMap Pixel Coords
-  f8point middleBoxInPixelCoords = getPixelCoordinateFromGetMapCoordinate(middlePointModelData, dataSource);
-
-  f8point middleBoxInPixelCoordsX = middleBoxInPixelCoords;
-  f8point middleBoxInPixelCoordsY = middleBoxInPixelCoords;
-
-  // Add the desired pixel offset
-  middleBoxInPixelCoordsX.x += pixelOffset.x;
-  middleBoxInPixelCoordsY.y += pixelOffset.y;
-
-  // Back to GetMap CRS coords
-  auto getMapMiddleX = getGetMapCoordinateFromPixelCoordinate(middleBoxInPixelCoordsX, dataSource);
-  auto getMapMiddleY = getGetMapCoordinateFromPixelCoordinate(middleBoxInPixelCoordsY, dataSource);
-
-  // Back to model coords
-  warper.reprojpoint(getMapMiddleX);
-  warper.reprojpoint(getMapMiddleY);
-
-  // Substract from model center, make it absolute and round up.
-  return {.x = ceil(fabs((getMapMiddleX.x - middlePoint.x) / dataSource.dfCellSizeX)), .y = ceil(fabs((getMapMiddleY.y - middlePoint.y) / dataSource.dfCellSizeY))};
 }
 
 int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {

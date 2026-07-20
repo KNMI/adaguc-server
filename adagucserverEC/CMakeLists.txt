@@ -108,6 +108,8 @@ add_library(
     utils/parseQueryString.cpp
     utils/getFeatureInfoVirtualForSolarTerminator.h
     utils/getFeatureInfoVirtualForSolarTerminator.cpp
+    utils/GeometryUtils.h
+    utils/GeometryUtils.cpp
     Types/LayerMetadataType.h
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h

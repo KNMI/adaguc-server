@@ -9,6 +9,7 @@
 #include "CDataPostProcessor_FilterDataObjects.h"
 #include "CDataPostProcessor_MetadataVariable.h"
 #include "CDataPostProcessor_PointsFromGrid.h"
+#include "CDataPostProcessor_PointsFromFeature.h"
 #include "CDataPostProcessor_AddDataObject.h"
 
 #include "CDPPGoes16Metadata.h"
@@ -49,6 +50,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDDPFilterDataObjects());
   dataPostProcessorList->push_back(new CDDPMetadataVariable());
   dataPostProcessorList->push_back(new CDPPointsFromGrid());
+  dataPostProcessorList->push_back(new CDPPointsFromFeature());
   dataPostProcessorList->push_back(new CDPPConvertUnits());
   dataPostProcessorList->push_back(new CDPPAddDataObject());
 }
