@@ -327,14 +327,10 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
 
   // Auto configure styles, if no legends or styles are defined
   if (this->cfgLayer->Styles.size() == 0 && this->cfgLayer->Legend.size() == 0) {
-    CDBDebug("[getStyleListForDataSource] layer '%s': no Styles/Legend configured, running auto-configure", this->layerName.c_str());
     renderMethods = getRenderMethodListForDataSource(NULL);
     if (renderMethods.size() > 0) {
       CAutoConfigure::autoConfigureStyles(this);
     }
-  } else {
-    CDBDebug("[getStyleListForDataSource] layer '%s': Styles.size()=%d Legend.size()=%d, SKIPPING auto-configure", this->layerName.c_str(), (int)this->cfgLayer->Styles.size(),
-             (int)this->cfgLayer->Legend.size());
   }
 
   std::vector<std::string> styleNames = getStyleNames(this->cfgLayer->Styles);
