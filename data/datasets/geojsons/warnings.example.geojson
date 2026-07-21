@@ -1,0 +1,139 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [5.10, 52.05],
+            [5.18, 52.08],
+            [5.26, 52.06],
+            [5.24, 52.00],
+            [5.15, 51.99],
+            [5.10, 52.05]
+          ]
+        ]
+      },
+      "properties": {
+        "warning_code": 2,
+        "warning_code_leadtime": "2_60",
+        "Speed": "52.0 km/h (28.1 kts)",
+        "speed_ms": 14.4,
+        "Direction": "075°",
+        "direction_degrees": 75,
+        "Covered area": "165.2 km²",
+        "Max. Reflectivity": "55.1 dBZ",
+        "Max. MEHS": "0.40 cm",
+        "Max. VIL": "21.50 kg/m²",
+        "Max. VII": "3.10 kg/m²",
+        "Max. POSH": "15 %",
+        "Max. Gust": "72 km/h (38.9 kts)",
+        "Echo Top Height": "9.2km (FL300)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [5.15, 52.03],
+            [5.22, 52.05],
+            [5.25, 52.02],
+            [5.20, 51.98],
+            [5.14, 51.99],
+            [5.15, 52.03]
+          ]
+        ]
+      },
+      "properties": {
+        "warning_code": 2,
+        "warning_code_leadtime": "2_30",
+        "Speed": "37.4 km/h (20.2 kts)",
+        "speed_ms": 10.4,
+        "Direction": "075°",
+        "direction_degrees": 75,
+        "Covered area": "110.4 km²",
+        "Max. Reflectivity": "56.3 dBZ",
+        "Max. MEHS": "0.55 cm",
+        "Max. VIL": "24.80 kg/m²",
+        "Max. VII": "3.90 kg/m²",
+        "Max. POSH": "25 %",
+        "Max. Gust": "78 km/h (42.1 kts)",
+        "Echo Top Height": "9.8km (FL320)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [5.18, 52.02],
+            [5.22, 52.03],
+            [5.23, 52.00],
+            [5.20, 51.98],
+            [5.17, 51.99],
+            [5.18, 52.02]
+          ]
+        ]
+      },
+      "properties": {
+        "warning_code": 3,
+        "warning_code_leadtime": "3_15",
+        "Speed": "60.5 km/h (32.7 kts)",
+        "speed_ms": 16.8,
+        "Direction": "080°",
+        "direction_degrees": 80,
+        "Covered area": "62.7 km²",
+        "Max. Reflectivity": "60.8 dBZ",
+        "Max. MEHS": "1.20 cm",
+        "Max. VIL": "32.10 kg/m²",
+        "Max. VII": "5.60 kg/m²",
+        "Max. POSH": "65 %",
+        "Max. Gust": "92 km/h (49.7 kts)",
+        "Echo Top Height": "11.5km (FL380)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [5.30, 51.95],
+            [5.38, 51.97],
+            [5.42, 51.93],
+            [5.36, 51.90],
+            [5.29, 51.92],
+            [5.30, 51.95]
+          ]
+        ]
+      },
+      "properties": {
+        "warning_code": 1,
+        "warning_code_leadtime": "1_60",
+        "Speed": "38.2 km/h (20.6 kts)",
+        "speed_ms": 10.6,
+        "Direction": "065°",
+        "direction_degrees": 65,
+        "Covered area": "140.3 km²",
+        "Max. Reflectivity": "48.2 dBZ",
+        "Max. MEHS": "0.10 cm",
+        "Max. VIL": "15.40 kg/m²",
+        "Max. VII": "2.10 kg/m²",
+        "Max. POSH": "5 %",
+        "Max. Gust": "55 km/h (29.7 kts)",
+        "Echo Top Height": "7.5km (FL240)"
+      }
+    }
+  ],
+  "dimensions": {
+    "time": {
+      "value": "2026-04-07T08:00:00Z",
+      "units": "ISO8601"
+    }
+  }
+}

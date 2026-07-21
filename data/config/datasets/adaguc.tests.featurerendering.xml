@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <Style name="warning_vectors_per_feature" title="Warning vectors per feature">
+    <Vector min="0" max="5" vectorstyle="vector" linewidth="2" linecolor="#FFFF00" scale="10" plotvalue="true" textcolor="#000000"/>
+    <Vector min="5" max="15" vectorstyle="vector" linewidth="3" linecolor="#FF7B00" scale="10" plotvalue="true" textcolor="#000000" />
+    <Vector min="15" vectorstyle="vector" linewidth="5" linecolor="#FF0000" scale="10" />
+    <RenderSettings renderhint="discreteclasses" />
+    <RenderMethod>point</RenderMethod>
+    <DataPostProc algorithm="pointsfromfeature" select="speed_ms,direction_degrees"/>
+  </Style>
+
+  <Style name="polygon_per_feature_code" title="Polygons per feature code">
+    <RenderMethod>polygon</RenderMethod>
+    <FeatureInterval match="1" matchid="warning_code" linecolor="#000000" linewidth="1" fillcolor="#FF0000FF" />
+    <FeatureInterval match="2" matchid="warning_code" linecolor="#000000" linewidth="1" fillcolor="#FFFF00FF"/>
+    <FeatureInterval match="3" matchid="warning_code" linecolor="#000000" linewidth="1" fillcolor="#00FF00FF"/>
+  </Style>
+  
+  <Style name="polygon_innerparts_coloured" title="Polygons per code leadtime">
+    <RenderMethod>polygon</RenderMethod>
+    <FeatureInterval match="1" matchid="warning_code_leadtime" fillcolor="#CCCCCCFF" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="2_15" matchid="warning_code_leadtime" fillcolor="#FFFF0080" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="2_30" matchid="warning_code_leadtime" fillcolor="#FFFF8080" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="2_60" matchid="warning_code_leadtime" fillcolor="#CCCCCC80" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="3_15" matchid="warning_code_leadtime" fillcolor="#FF800080" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="3_30" matchid="warning_code_leadtime" fillcolor="#FFa08080" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="3_60" matchid="warning_code_leadtime" fillcolor="#CCCCCC80" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="4_15" matchid="warning_code_leadtime" fillcolor="#FF000080" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="4_30" matchid="warning_code_leadtime" fillcolor="#FF808080" linecolor="#000000" linewidth="1"/>
+    <FeatureInterval match="4_60" matchid="warning_code_leadtime" fillcolor="#CCCCCC80" linecolor="#000000" linewidth="1"/>
+  </Style>
+  
+  
+  <Layer type="database">
+    <Name>pff_test</Name>
+    <Title>GeoJSON Points From Feature Test</Title>
+    <FilePath>{ADAGUC_PATH}data/datasets/geojsons/warnings.example.geojson</FilePath>
+    
+    <Variable>features</Variable>
+    
+    <Styles>warning_vectors_per_feature,polygon_per_feature_code,polygon_innerparts_coloured</Styles> 
+  </Layer>
+
+</Configuration>
