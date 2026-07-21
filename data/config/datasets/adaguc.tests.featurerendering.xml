@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
 
+  <Legend name="warning_vector_legend" type="interval">
+    <palette min="0"  max="5"  red="255" green="255" blue="0"   alpha="255"/>
+    <palette min="5"  max="15" red="255" green="123" blue="0"   alpha="255"/>
+    <palette min="15" max="50" red="255" green="0"   blue="0"   alpha="255"/>
+  </Legend>
+
+  
+  <Style name="warning_vectors_per_feature" title="Warning vectors per feature">
+    <Legend fixed="true">warning_vector_legend</Legend>
+    <Min>0</Min>
+    <Max>50</Max>
+    <ShadeInterval min="0"  max="5"  label="0-5 m/s"  fillcolor="#FFFF00FF"/>
+    <ShadeInterval min="5"  max="15" label="5-15 m/s" fillcolor="#FF7B00FF"/>
+    <ShadeInterval min="15" max="50" label="15+ m/s"  fillcolor="#FF0000FF"/>
+    <Vector min="0" max="5" vectorstyle="vector" linewidth="2" linecolor="#FFFF00" scale="10" plotvalue="true" textcolor="#000000"/>
+    <Vector min="5" max="15" vectorstyle="vector" linewidth="3" linecolor="#FF7B00" scale="10" plotvalue="true" textcolor="#000000" />
+    <Vector min="15" vectorstyle="vector" linewidth="5" linecolor="#FF0000" scale="10" />
+    <RenderMethod>point</RenderMethod>
+    <DataPostProc algorithm="pointsfromfeature" select="speed_ms,direction_degrees"/>
+  </Style>
+
   <Style name="warning_vectors_per_feature" title="Warning vectors per feature">
     <Vector min="0" max="5" vectorstyle="vector" linewidth="2" linecolor="#FFFF00" scale="10" plotvalue="true" textcolor="#000000"/>
     <Vector min="5" max="15" vectorstyle="vector" linewidth="3" linecolor="#FF7B00" scale="10" plotvalue="true" textcolor="#000000" />
