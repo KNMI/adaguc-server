@@ -71,12 +71,16 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
   std::string con;
   std::vector<DataObject> newObjects;
   while (std::getline(ss, con, ',')) {
-
-    // Look up the unpacked variable directly from the cdfObject container
+    // Look up variable, or create from scratch
     auto cdfVar = featuresObject.cdfObject->getVariableNE(con.c_str());
     if (!cdfVar) {
-      CDBWarning("PointsFromFeature: variable %s not found in cdfObject", con.c_str());
-      continue;
+      CDBWarning("PointsFromFeature: variable %s not found in cdfObject. Creating.", con.c_str());
+      cdfVar = new CDF::Variable();
+      cdfVar->name = con.c_str();
+      cdfVar->setType(CDF_FLOAT);
+      cdfVar->currentType = cdfVar->nativeType = CDF_FLOAT;
+      cdfVar->setAttributeText("standard_name", con.c_str());
+      featuresObject.cdfObject->addVariable(cdfVar);
     }
 
     // Dada object for property
@@ -85,7 +89,6 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
     std::string varName = cdfVar->name.c_str();
 
     for (Feature *feature: features) {
-      CDBDebug("PointsFromFeature: Processing ONE feature");
       // Extract associated value from GeoJSON properties
       float value = NAN;
       auto fp = feature->getFp();

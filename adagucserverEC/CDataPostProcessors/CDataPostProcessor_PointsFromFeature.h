@@ -3,7 +3,7 @@
 #ifndef CDATAPOSTPROCESSOR_PointsFromFeature_H
 #define CDATAPOSTPROCESSOR_PointsFromFeature_H
 
-#define CDATAPOSTPROCESSOR_PointsFromFeature_ID "PointsFromFeature"
+#define CDATAPOSTPROCESSOR_PointsFromFeature_ID "pointsfromfeature"
 
 class CDPPointsFromFeature : public CDPPInterface {
 public:
