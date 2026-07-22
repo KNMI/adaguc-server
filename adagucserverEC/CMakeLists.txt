@@ -108,6 +108,8 @@ add_library(
     utils/parseQueryString.cpp
     utils/getFeatureInfoVirtualForSolarTerminator.h
     utils/getFeatureInfoVirtualForSolarTerminator.cpp
+    utils/GeometryUtils.h
+    utils/GeometryUtils.cpp
     Types/LayerMetadataType.h
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
@@ -152,6 +154,8 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_FilterDataObjects.cpp
     CDataPostProcessors/CDataPostProcessor_MetadataVariable.h
     CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp
+    CDataPostProcessors/CDataPostProcessor_PointsFromFeature.h
+    CDataPostProcessors/CDataPostProcessor_PointsFromFeature.cpp
     CDataPostProcessors/CDataPostProcessor_PointsFromGrid.h
     CDataPostProcessors/CDataPostProcessor_PointsFromGrid.cpp
     CDataPostProcessors/CDataPostProcessor_AddDataObject.h

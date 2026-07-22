@@ -1,3 +1,5 @@
+* - Added `pointsfromfeature` DataPostProc, which derives point/vector data (such as magnitude and direction) from the properties of GeoJSON features by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
+
 **Version 8.1.0**
 
 * Reduce CT::string by @mgrunbauer in https://github.com/KNMI/adaguc-server/pull/734

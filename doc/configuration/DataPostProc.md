@@ -41,6 +41,7 @@ simple unit conversions from Kelvin to Celsius.
 19.  *CDataPostProcessor_PointsFromGrid*  `algorithm="pointsfromgrid"`: Extracts point from a grid and makes them available for the point renderer
 20.  *CDataPostProcessor_AddDataObject*  `algorithm="add_dataobject"`: Adds a new data object (variable) to the layer with a given value
 21.  *CDataPostProcessor_ConvertUnits*  `algorithm="convert_units"`: Does unit conversions to the dataobject(s) of a variable 
+22. *CDPPointsFromFeature*    `algorithm="pointsfromfeature"`: Extracts point/vector data (such as magnitude and direction) from the properties of GeoJSON features.
 
 New datapost processors can be implemented via
 [CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor.cpp)
@@ -524,7 +525,7 @@ Can be created with this dataset configuration. Note the usage of "dummy-magnitu
 
 See also the test case `test_WMSGetMap_wave_direction_vector_with_add_dataobject` in [TestWMS.py](/tests/AdagucTests/TestWMS.py) and a tutorial [here](/doc/tutorials/Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
 
-## *CDataPostProcessor_ConvertUnits*  `algorithm="convert_units"`
+## 21. *CDataPostProcessor_ConvertUnits*  `algorithm="convert_units"`
 
 Attributes:
 - `a`: the scale factor for the conversion (default: 1.0)
@@ -555,3 +556,47 @@ In the example below the DataPostProc converts the wind-speed-kts data object to
     <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
   </Layer>
 ```
+
+## 22. *CDPPointsFromFeature*  `algorithm="pointsfromfeature"`
+
+To draw a vector, you need two components: its magnitude and its direction. The `pointsfromfeature` datapostproc lets you derive both directly from named properties on the features of a GeoJSON `FeatureCollection`.
+
+A vector element expects the first data object to contain the magnitude and the second to contain the direction, so list the `select` properties in that order.
+
+```xml
+<DataPostProc algorithm="pointsfromfeature" select="speed_ms,direction_degrees"/>
+```
+
+Attributes:
+- `select`: takes a comma-separated list of GeoJSON property names, magnitude first and direction second.
+
+Please note:
+- The named properties don't need to already exist as CDF variables. If a property isn't already registered, `pointsfromfeature` creates one automatically, bound to the source's x/y dimensions, so you can select any property present in your GeoJSON's `properties` block without further configuration.
+- Every geometry type is supported: `Point` features use their own coordinate, `Polygon` features use their centroid, and `LineString` features use their first vertex.
+
+Example configuration, deriving a wind vector from `speed_ms` and `direction_degrees` properties on a warnings GeoJSON file:
+```xml
+<Style name="warning_vectors_per_feature" title="Warning vectors per feature">
+  <RenderMethod>point</RenderMethod>
+  <Vector min="0" max="5" vectorstyle="vector" linewidth="2" linecolor="#FFFF00" scale="10" plotvalue="true" textcolor="#000000"/>
+  <Vector min="5" max="15" vectorstyle="vector" linewidth="3" linecolor="#FF7B00" scale="10" plotvalue="true" textcolor="#000000"/>
+  <Vector min="15" vectorstyle="vector" linewidth="5" linecolor="#FF0000" scale="10"/>
+  <DataPostProc algorithm="pointsfromfeature" select="speed_ms,direction_degrees"/>
+</Style>
+
+<Layer type="database">
+  <Name>pff_test</Name>
+  <Title>GeoJSON Points From Feature Test</Title>
+  <FilePath>{ADAGUC_PATH}data/datasets/geojsons/warnings.example.geojson</FilePath>
+  <Variable>features</Variable>
+  <Styles>warning_vectors_per_feature</Styles>
+</Layer>
+```
+
+Using the configuration above results in the following image:
+
+<img border="1" src="../../tests/expectedoutputs/TestPointsAndVectors/test_WMSGetMap_warning_vectors_per_feature.png" width="500">
+
+Because this style uses `RenderMethod=point`, adding `ShadeInterval` elements directly inside the style switches the legend to discrete, instead of a continuous gradient. `<AdditionalLayer>` can be used to draw more than one style over the same (or a related) GeoJSON source in a single request.
+
+See a tutorial [here](/doc/tutorials/Styling_of_vectors_derived_from_GeoJSON_feature_properties_with_pointsfromfeature.md).

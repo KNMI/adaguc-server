@@ -29,6 +29,7 @@
 #include <string>
 #include <algorithm>
 #include "CRectangleText.h"
+#include "utils/GeometryUtils.h"
 
 //   #define MEASURETIME
 
@@ -108,49 +109,6 @@ FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleCo
           .propertyFormat = "%s",
           .angle = 0,
           .padding = 3};
-}
-
-f8point compute2DPolygonCentroid(const std::vector<f8point> &vertices) {
-  f8point centroid = {0, 0};
-  double signedArea = 0.0;
-  double x0 = 0.0; // Current vertex X
-  double y0 = 0.0; // Current vertex Y
-  double x1 = 0.0; // Next vertex X
-  double y1 = 0.0; // Next vertex Y
-  double a = 0.0;  // Partial signed area
-  int vertexCount = vertices.size();
-  int lastdex = vertexCount - 1;
-  const f8point *prev = &(vertices[lastdex]);
-  const f8point *next;
-
-  // For all vertices in a loop
-  for (int i = 0; i < vertexCount; ++i) {
-    next = &(vertices[i]);
-    x0 = prev->x;
-    y0 = prev->y;
-    x1 = next->x;
-    y1 = next->y;
-    a = x0 * y1 - x1 * y0;
-    signedArea += a;
-    centroid.x += (x0 + x1) * a;
-    centroid.y += (y0 + y1) * a;
-    prev = next;
-  }
-
-  signedArea *= 0.5;
-  centroid.x /= (6.0 * signedArea);
-  centroid.y /= (6.0 * signedArea);
-
-  return centroid;
-}
-
-f8point getCentroid(const float *polyX, const float *polyY, const int numPoints) {
-  std::vector<f8point> vertices(numPoints);
-  for (int i = 0; i < numPoints; i++) {
-    vertices[i].x = polyX[i];
-    vertices[i].y = polyY[i];
-  }
-  return compute2DPolygonCentroid(vertices);
 }
 
 void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSource, CDrawImage *drawImage) {
