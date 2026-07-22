@@ -5,7 +5,9 @@
     <Legend>bluewhitered</Legend>
     <Min>990</Min>
     <Max>1030</Max>
-    <DataPostProc algorithm="highlowareadetector"/>
+    <DataPostProc algorithm="highlowareadetector" select="air-pressure-msl" />
+    <Point min="0" max="1" pointstyle="point" discradius="0" dot="false" textoutlinecolor="#FFFFFF" fillcolor="#00000001" textcolor="#0000FF" fontsize="32" textformat=" L" plotvalue="true"/>
+    <Point min="2" max="3" pointstyle="point" discradius="0" dot="false" textoutlinecolor="#FFFFFF" fillcolor="#00000001" textcolor="#FF0000" fontsize="32" textformat=" H" plotvalue="true"/>
   </Style>
 
 
