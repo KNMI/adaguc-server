@@ -20,15 +20,6 @@
     <DataPostProc algorithm="pointsfromfeature" select="speed_ms,direction_degrees"/>
   </Style>
 
-  <Style name="warning_vectors_per_feature" title="Warning vectors per feature">
-    <Vector min="0" max="5" vectorstyle="vector" linewidth="2" linecolor="#FFFF00" scale="10" plotvalue="true" textcolor="#000000"/>
-    <Vector min="5" max="15" vectorstyle="vector" linewidth="3" linecolor="#FF7B00" scale="10" plotvalue="true" textcolor="#000000" />
-    <Vector min="15" vectorstyle="vector" linewidth="5" linecolor="#FF0000" scale="10" />
-    <RenderSettings renderhint="discreteclasses" />
-    <RenderMethod>point</RenderMethod>
-    <DataPostProc algorithm="pointsfromfeature" select="speed_ms,direction_degrees"/>
-  </Style>
-
   <Style name="polygon_per_feature_code" title="Polygons per feature code">
     <RenderMethod>polygon</RenderMethod>
     <FeatureInterval match="1" matchid="warning_code" linecolor="#000000" linewidth="1" fillcolor="#FF0000FF" />
@@ -61,4 +52,14 @@
     <Styles>warning_vectors_per_feature,polygon_per_feature_code,polygon_innerparts_coloured</Styles> 
   </Layer>
 
+
+  <Layer type="database">
+    <Name>pff_test_points_and_features</Name>
+    <Title>GeoJSON Points From Feature Test</Title>
+    <FilePath>{ADAGUC_PATH}data/datasets/geojsons/warnings.example.geojson</FilePath>
+    <Variable>features</Variable>
+    <Styles>polygon_per_feature_code</Styles>
+    <AdditionalLayer replace="false" style="warning_vectors_per_feature">pff_test</AdditionalLayer>
+  </Layer>
+  
 </Configuration>

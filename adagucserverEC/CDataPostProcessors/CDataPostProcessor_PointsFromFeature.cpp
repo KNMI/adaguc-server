@@ -66,32 +66,24 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
   }
   auto &featuresObject = dataSource->dataObjects[0];
 
-  // Split
+  // Split variable list
   std::stringstream ss(proc->attr.select);
-  std::string con;
+  std::string variable;
   std::vector<DataObject> newObjects;
-  while (std::getline(ss, con, ',')) {
+  while (std::getline(ss, variable, ',')) {
     // Look up variable, or create from scratch
-    auto cdfVar = featuresObject.cdfObject->getVariableNE(con.c_str());
+    auto cdfVar = featuresObject.cdfObject->getVariableNE(variable.c_str());
     if (!cdfVar) {
-      CDBWarning("PointsFromFeature: variable %s not found in cdfObject. Creating.", con.c_str());
-      cdfVar = new CDF::Variable();
-      cdfVar->name = con.c_str();
-      cdfVar->setType(CDF_FLOAT);
-      cdfVar->currentType = cdfVar->nativeType = CDF_FLOAT;
-      cdfVar->setAttributeText("standard_name", con.c_str());
-      cdfVar->isDimension = false;
-      CDF::Dimension *dimY = featuresObject.cdfObject->getDimensionNE("y");
-      CDF::Dimension *dimX = featuresObject.cdfObject->getDimensionNE("x");
-      if (dimY != nullptr) cdfVar->dimensionlinks.push_back(dimY);
-      if (dimX != nullptr) cdfVar->dimensionlinks.push_back(dimX);
-      featuresObject.cdfObject->addVariable(cdfVar);
+      CDBWarning("PointsFromFeature: variable %s not found in cdfObject. Creating.", variable.c_str());
+      auto cdfObj = featuresObject.cdfObject;
+      cdfVar = cdfObj->addVariable(new CDF::Variable(variable, CDF_FLOAT, {cdfObj->getDimOrCreate("y", height), cdfObj->getDimOrCreate("x", width)}, false));
+      cdfVar->setAttributeText("standard_name", variable);
     }
 
     // Data object for property
     DataObject destob;
     destob.cdfVariable = cdfVar;
-    destob.variableName = con;
+    destob.variableName = variable;
     std::string varName = cdfVar->name.c_str();
 
     for (Feature *feature: features) {
@@ -116,7 +108,7 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
         int px = (int)p.x;
         int py = (int)p.y;
 
-        if (px < 0 || py < 0 || px > width || py > height) continue;
+        if (px < 0 || py < 0 || px >= width || py >= height) continue;
 
         double lon = pt.getLon();
         double lat = pt.getLat();
@@ -139,7 +131,7 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
         int px = (int)centroid.x;
         int py = (int)centroid.y;
 
-        if (px < 0 || py < 0 || px > width || py > height) continue;
+        if (px < 0 || py < 0 || px >= width || py >= height) continue;
 
         destob.points.emplace_back(px, py, centroid.x, centroid.y, value);
       }
@@ -157,7 +149,7 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
         int px = (int)p.x;
         int py = (int)p.y;
 
-        if (px < 0 || py < 0 || px > width || py > height) continue;
+        if (px < 0 || py < 0 || px >= width || py >= height) continue;
 
         destob.points.emplace_back(px, py, p.x, p.y, value);
       }
