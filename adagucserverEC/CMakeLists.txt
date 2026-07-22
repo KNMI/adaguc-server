@@ -156,6 +156,8 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_PointsFromGrid.cpp
     CDataPostProcessors/CDataPostProcessor_AddDataObject.h
     CDataPostProcessors/CDataPostProcessor_AddDataObject.cpp
+    CDataPostProcessors/CDataPostProcessor_HighLowAreaDetector.h
+    CDataPostProcessors/CDataPostProcessor_HighLowAreaDetector.cpp
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp

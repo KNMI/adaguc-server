@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <Style name="highlow_areas">
+    <Legend>bluewhitered</Legend>
+    <Min>990</Min>
+    <Max>1030</Max>
+    <DataPostProc algorithm="highlowareadetector"/>
+  </Style>
+
+
+  <Layer type="database">
+    <Name>air_pressure_at_sea_level</Name>
+    <Title>High/Low pressure areas</Title>
+    <Variable>air-pressure-msl</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/pressure-for-h-and-l-detection.nc</FilePath>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Styles>highlow_areas</Styles>
+  </Layer>
+  <!-- End of configuration /-->
+</Configuration>

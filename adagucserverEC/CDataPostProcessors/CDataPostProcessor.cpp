@@ -10,6 +10,7 @@
 #include "CDataPostProcessor_MetadataVariable.h"
 #include "CDataPostProcessor_PointsFromGrid.h"
 #include "CDataPostProcessor_AddDataObject.h"
+#include "CDataPostProcessor_HighLowAreaDetector.h"
 
 #include "CDPPGoes16Metadata.h"
 #include "CDataPostProcessors_MSGCPP.h"
@@ -51,6 +52,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPointsFromGrid());
   dataPostProcessorList->push_back(new CDPPConvertUnits());
   dataPostProcessorList->push_back(new CDPPAddDataObject());
+  dataPostProcessorList->push_back(new CDPPHighLowAreaDetector());
 }
 
 CDPPExecutor::~CDPPExecutor() {
