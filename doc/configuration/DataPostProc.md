@@ -41,6 +41,7 @@ simple unit conversions from Kelvin to Celsius.
 19.  *CDataPostProcessor_PointsFromGrid*  `algorithm="pointsfromgrid"`: Extracts point from a grid and makes them available for the point renderer
 20.  *CDataPostProcessor_AddDataObject*  `algorithm="add_dataobject"`: Adds a new data object (variable) to the layer with a given value
 21.  *CDataPostProcessor_ConvertUnits*  `algorithm="convert_units"`: Does unit conversions to the dataobject(s) of a variable 
+22. *CDPPointsFromFeature*    `algorithm="pointsfromfeature"`: Extracts point/vector data (such as magnitude and direction) from the properties of GeoJSON features.
 
 New datapost processors can be implemented via
 [CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor.cpp)
