@@ -257,3 +257,19 @@ class TestPointsAndVectors:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+
+
+    def test_warning_vectors_per_feature_thumbnail(self):
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.tests.featurerendering.xml")
+        update_db(env)
+
+        filename = "test_WMSGetMap_warning_vectors_per_feature_thumbnail.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.featurerendering&SERVICE=WMS&REQUEST=GetMap&FORMAT=image/png&LAYERS=pff_test&WIDTH=400&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&SHOWLEGEND=true",
+            env=env,
+            showLog=True,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)

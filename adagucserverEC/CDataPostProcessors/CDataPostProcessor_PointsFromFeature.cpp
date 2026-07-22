@@ -80,12 +80,18 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
       cdfVar->setType(CDF_FLOAT);
       cdfVar->currentType = cdfVar->nativeType = CDF_FLOAT;
       cdfVar->setAttributeText("standard_name", con.c_str());
+      cdfVar->isDimension = false;
+      CDF::Dimension *dimY = featuresObject.cdfObject->getDimensionNE("y");
+      CDF::Dimension *dimX = featuresObject.cdfObject->getDimensionNE("x");
+      if (dimY != nullptr) cdfVar->dimensionlinks.push_back(dimY);
+      if (dimX != nullptr) cdfVar->dimensionlinks.push_back(dimX);
       featuresObject.cdfObject->addVariable(cdfVar);
     }
 
-    // Dada object for property
+    // Data object for property
     DataObject destob;
     destob.cdfVariable = cdfVar;
+    destob.variableName = con;
     std::string varName = cdfVar->name.c_str();
 
     for (Feature *feature: features) {
