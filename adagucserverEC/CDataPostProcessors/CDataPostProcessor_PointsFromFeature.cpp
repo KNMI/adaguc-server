@@ -164,6 +164,6 @@ int CDPPointsFromFeature::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
   for (const auto &obj: newObjects) {
     dataSource->dataObjects.push_back(obj);
   }
-
+  dataSource->hasFieldData = false;
   return 0;
 }
