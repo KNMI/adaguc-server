@@ -22,7 +22,7 @@ IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR 
   # To look for memory leaks on Mac, set up the ENV to run the correct query, and run (with root privilige?):
   # leaks --quiet -atExit -- adagucserver
 ELSE()
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -Werror -g3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -g3")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -Wall -Wextra -pedantic -Werror")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -pedantic -Werror -g3 -p -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -pedantic -Werror -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
