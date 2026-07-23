@@ -4,9 +4,9 @@
 #include <iostream>
 #include <map>
 #include <chrono>
-#include "CTString.h"
+#include <string>
 
-enum TraceTimingType { DBCONNECT, DBCLOSE, DBCHECKTABLE, DB, FSREADVAR, FSOPEN, APP, WARPIMAGERENDER, WARPIMAGE, GETMETADATAJSON };
+enum TraceTimingType { DBCONNECT, DBCLOSE, DBCHECKTABLE, DB, FSREADVAR, FSOPEN, APP, WARPIMAGERENDER, WARPIMAGE, GETMETADATAJSONREQ, GETMETADATAJSONDB, GETMETADATAJSONPARSE };
 
 struct TraceTimingsInfo {
   uint64_t total;
@@ -39,12 +39,12 @@ void traceTimingsSpanEnd(TraceTimingType type);
 /**
  * Returns a report with the cumulative time taken for each type.
  */
-CT::string traceTimingsGetReport();
+std::string traceTimingsGetReport();
 
 /**
  * Returns a report in HTTP HEADER form with the cumulative time taken for each type.
  */
-CT::string traceTimingsGetHeader();
+std::string traceTimingsGetHeader();
 
 TraceTimingsReport traceTimingsGetMap();
 

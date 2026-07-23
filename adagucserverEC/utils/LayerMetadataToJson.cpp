@@ -6,19 +6,30 @@
 #include "LayerUtils.h"
 #include "CRequestUtils.h"
 #include "XMLGenUtils.h"
-#include <ranges>
+#include <unordered_set>
+#include <traceTimings/traceTimings.h>
 
-CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName, const char *layerName, const char *metadataKey) {
-  auto &records = layerMetaDataStore->records;
-  for (auto record: records) {
-    if (record.get("datasetname") == datasetName && record.get("layername") == layerName && record.get("metadatakey") == metadataKey) {
-#ifdef MEASURETIME
-      StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
-#endif
-      return record.get("blob");
+// metadataKey -> blob, for a single dataset/layer combination.
+using LayerMetadataBlobs = std::map<std::string, std::string>;
+// datasetName -> layerName -> metadataKey -> blob.
+using DatasetMetadataIndex = std::map<std::string, std::map<std::string, LayerMetadataBlobs>>;
+
+static std::string getBlob(const LayerMetadataBlobs &metadataBlobs, const char *metadataKey) {
+  auto it = metadataBlobs.find(metadataKey);
+  return it == metadataBlobs.end() ? "" : it->second;
+}
+
+static DatasetMetadataIndex buildDatasetMetadataIndex(CDBStore::Store *layerMetaDataStore) {
+  DatasetMetadataIndex index;
+  for (const auto &record: layerMetaDataStore->records) {
+    const std::string &datasetName = record.get("datasetname");
+    const std::string &layerName = record.get("layername");
+    if (datasetName.empty() || layerName.empty()) {
+      continue;
     }
+    index[datasetName][layerName][record.get("metadatakey")] = record.get("blob");
   }
-  return "";
+  return index;
 }
 
 std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromDb(CDataSource dataSource) {
@@ -53,13 +64,13 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
     throw ServiceExceptionType::InvalidDimensionValue;
   }
   for (size_t d = 0; d < dataSource.requiredDims.size(); d++) {
-    for (auto &record: store->records) {
-      const auto &reqDim = dataSource.requiredDims[d];
-      std::string dimValueFromDb = record.values.at(1 + d * 2);
-      auto &reqDimList = dimensionNameAndValues[reqDim.name];
+    const auto &reqDim = dataSource.requiredDims[d];
+    auto &reqDimList = dimensionNameAndValues[reqDim.name];
+    std::unordered_set<std::string> seenValues(reqDimList.begin(), reqDimList.end());
+    for (const auto &record: store->records) {
+      const std::string &dimValueFromDb = record.values.at(1 + d * 2);
       // Only add if not already there.
-      auto it = std::find_if(reqDimList.begin(), reqDimList.end(), [&dimValueFromDb](const auto &a) { return a == dimValueFromDb; });
-      if (it == reqDimList.end()) {
+      if (seenValues.insert(dimValueFromDb).second) {
         reqDimList.push_back(dimValueFromDb);
       }
     }
@@ -97,7 +108,7 @@ json querySpecificDims(CServerParams *srvParams, const std::string &layerName) {
   return getDimensionListAsJson(dimList);
 }
 
-json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetName, CServerParams *srvParams, CDBStore::Store *layerMetaDataStore) {
+json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &layerBlobsByLayer, const std::string &dataSetName, CServerParams *srvParams) {
   json datasetJSON;
   std::string layerNameInRequest;
   if (srvParams->requestedLayerNames.size() > 0) {
@@ -109,27 +120,27 @@ json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetNa
     hasReferenceTimeValue = (*it).value;
   }
 
-  for (auto layerName: layers) {
+  for (const auto &[layerName, metadataBlobs]: layerBlobsByLayer) {
     // CDBDebug("Checking %s = %s", layerNameInRequest.c_str(), layerName.c_str());
     if (layerNameInRequest.empty() || layerNameInRequest == layerName) {
 
       try {
         json layer;
         json a;
-        layer["layer"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "layermetadata").c_str());
+        layer["layer"] = a.parse(getBlob(metadataBlobs, "layermetadata"));
         // do a query to find the matching times to the given reference time
         if (!hasReferenceTimeValue.empty()) {
           try {
             layer["dims"] = querySpecificDims(srvParams, layerName);
           } catch (...) {
             CDBWarning("No results for %s / %s. Using defaults.", dataSetName.c_str(), layerName.c_str());
-            layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
+            layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist"));
           }
         } else {
-          layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
+          layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist"));
         }
-        // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());
-        // layer["projected_extents"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "projected_extents").c_str());
+        // layer["styles"] = a.parse(getBlob(metadataBlobs, "stylelist"));
+        // layer["projected_extents"] = a.parse(getBlob(metadataBlobs, "projected_extents"));
 
         datasetJSON[layerName] = layer;
 
@@ -142,57 +153,43 @@ json makeMetadataForDataSet(std::set<std::string> &layers, std::string dataSetNa
 }
 
 ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
-  json dataset;
-  json layer;
   std::string datasetLocation = srvParams->datasetLocation;
+  traceTimingsSpanStart(TraceTimingType::GETMETADATAJSONDB);
   CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
+  traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONDB);
   if (layerMetaDataStore == nullptr) {
     CDBError("Unable to get layer metadata store");
     return ServiceExceptionType::UnprocessableEntity;
   }
-  auto &records = layerMetaDataStore->records;
-  // CDBDebug("Found %lu records in database", records.size());
-  std::map<std::string, std::set<std::string>> datasetNames;
-  for (auto record: records) {
-    std::string datasetName = record.get("datasetname");
-    std::string layerName = record.get("layername");
-    if (!datasetName.empty() && !layerName.empty()) {
-      datasetNames[datasetName].insert(layerName);
-    }
-  }
+  traceTimingsSpanStart(TraceTimingType::GETMETADATAJSONPARSE);
+  // CDBDebug("Found %lu records in database", layerMetaDataStore->records.size());
+  DatasetMetadataIndex metadataByDataset = buildDatasetMetadataIndex(layerMetaDataStore);
 
   // The following example demonstrates how the getmetadata call can be used with DIM_REFERENCE_TIME.
   // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z
   // dataset=adaguc.tests.wikgeneric&&service=wms&version=1.3.0&request=getmetadata&format=application/json&DIM_REFERENCE_TIME=2025-11-21T00:00:00Z&time=2025-11-21T06:00:00Z
 
   if (!datasetLocation.empty()) {
-    auto ks = std::views::keys(datasetNames);
-    std::vector<std::string> keys{ks.begin(), ks.end()};
-    auto it = std::find_if(datasetNames.begin(), datasetNames.end(), [&datasetLocation](const auto &a) { return datasetLocation == a.first; });
-    if (it == datasetNames.end()) {
+    auto it = metadataByDataset.find(datasetLocation);
+    if (it == metadataByDataset.end()) {
       CDBError("DataSet not found");
       setExceptionType(ServiceExceptionType::InvalidDataset);
       return ServiceExceptionType::InvalidDataset;
-    } else {
-      // List single dataset.
-      const auto &dataSetName = (*it).first;
-      auto &layers = (*it).second;
-      try {
-        result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
-      } catch (...) {
-        CDBError("Unable to make metadata for dataset");
-        setExceptionType(ServiceExceptionType::InvalidDimensionValue);
-        return ServiceExceptionType::InvalidDimensionValue;
-      }
+    }
+    // List single dataset.
+    try {
+      result[datasetLocation] = makeMetadataForDataSet(it->second, datasetLocation, srvParams);
+    } catch (...) {
+      CDBError("Unable to make metadata for dataset");
+      setExceptionType(ServiceExceptionType::InvalidDimensionValue);
+      return ServiceExceptionType::InvalidDimensionValue;
     }
   } else {
-    for (auto [dataSetName, layers]: datasetNames) {
-      // List all datasets.
-      // CDBDebug("Checking %s = %s", srvParams->datasetLocation.c_str(), dataSetName.c_str());
-      if (srvParams->datasetLocation.empty() || srvParams->datasetLocation == dataSetName) {
-        result[dataSetName] = makeMetadataForDataSet(layers, dataSetName, srvParams, layerMetaDataStore);
-      }
+    // List all datasets.
+    for (const auto &[dataSetName, layerBlobsByLayer]: metadataByDataset) {
+      result[dataSetName] = makeMetadataForDataSet(layerBlobsByLayer, dataSetName, srvParams);
     }
   }
+  traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONPARSE);
   return ServiceExceptionType::OK;
 }
