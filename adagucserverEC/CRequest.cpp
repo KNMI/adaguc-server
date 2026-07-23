@@ -314,8 +314,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
               try {
                 tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
-                                                                        ogcDim.netCDFDimName.c_str(), dataSource);
+                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, ogcDim.netCDFDimName.c_str(),
+                                                                        dataSource);
               } catch (int e) {
                 CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                          ogcDim.netCDFDimName.c_str());
@@ -437,9 +437,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
             CT::string timeTableName;
             try {
-              timeTableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                  ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
-                                                                          netcdfTimeDimName.c_str(), dataSource);
+              timeTableName =
+                  CDBFactory::getDBAdapter(srvParam->cfg)
+                      ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, netcdfTimeDimName.c_str(), dataSource);
             } catch (int e) {
               CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
                        netcdfTimeDimName.c_str());
@@ -801,8 +801,8 @@ int CRequest::process_all_layers() {
           CDBError("Could not open file: %s", firstDataSource->getFileName().c_str());
           throw(__LINE__);
         }
-        CT::string dumpString = CDF::dump(firstDataSource->getDataObject(0)->cdfObject);
-        CT::string cacheControl = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE);
+        std::string dumpString = CDF::dump(firstDataSource->getDataObject(0)->cdfObject);
+        std::string cacheControl = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE);
         printf("%s%s%c%c\n", "Content-Type: text/plain", cacheControl.c_str(), 13, 10);
         printf("%s", dumpString.c_str());
         reader.close();
@@ -1778,9 +1778,9 @@ int CRequest::process_querystring() {
         json result;
         setErrorMode(ServiceExceptionMode::ExceptionJSON);
 
-        traceTimingsSpanStart(TraceTimingType::GETMETADATAJSON);
+        traceTimingsSpanStart(TraceTimingType::GETMETADATAJSONREQ);
         ServiceExceptionType status = getLayerMetadataAsJson(srvParam, result);
-        traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
+        traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONREQ);
         if (status != ServiceExceptionType::OK) {
           setExceptionType(status);
           return status;

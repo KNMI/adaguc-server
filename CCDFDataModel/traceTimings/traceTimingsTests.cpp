@@ -23,7 +23,7 @@
 TEST(TraceTimings, traceTimingsEnableAndInit) {
   traceTimingsEnableAndInit();
   auto report = traceTimingsGetReport();
-  CHECK(report.startsWith(",[total") == true);
+  CHECK(report.starts_with(",[total") == true);
 
   traceTimingsSpanStart(TraceTimingType::WARPIMAGE);
   traceTimingsSpanStart(TraceTimingType::DBCHECKTABLE);
