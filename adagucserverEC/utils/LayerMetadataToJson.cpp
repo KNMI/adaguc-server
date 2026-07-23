@@ -127,20 +127,20 @@ json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &lay
       try {
         json layer;
         json a;
-        layer["layer"] = a.parse(getBlob(metadataBlobs, "layermetadata").c_str());
+        layer["layer"] = a.parse(getBlob(metadataBlobs, "layermetadata"));
         // do a query to find the matching times to the given reference time
         if (!hasReferenceTimeValue.empty()) {
           try {
             layer["dims"] = querySpecificDims(srvParams, layerName);
           } catch (...) {
             CDBWarning("No results for %s / %s. Using defaults.", dataSetName.c_str(), layerName.c_str());
-            layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist").c_str());
+            layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist"));
           }
         } else {
-          layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist").c_str());
+          layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist"));
         }
-        // layer["styles"] = a.parse(getBlob(metadataBlobs, "stylelist").c_str());
-        // layer["projected_extents"] = a.parse(getBlob(metadataBlobs, "projected_extents").c_str());
+        // layer["styles"] = a.parse(getBlob(metadataBlobs, "stylelist"));
+        // layer["projected_extents"] = a.parse(getBlob(metadataBlobs, "projected_extents"));
 
         datasetJSON[layerName] = layer;
 
