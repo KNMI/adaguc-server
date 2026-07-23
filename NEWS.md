@@ -1,4 +1,8 @@
-* - Added `pointsfromfeature` DataPostProc, which derives point/vector data (such as magnitude and direction) from the properties of GeoJSON features by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
+**Version 8.2.0**
+
+* 652 feature request showing speed vectors on top of polygons based on geojson files by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
+* Optimize getmetadata json, also add extra tracing to figure out where the bottleneck is by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/748
+
 
 **Version 8.1.0**
 
