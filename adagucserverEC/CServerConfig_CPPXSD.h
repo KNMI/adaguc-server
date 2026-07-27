@@ -400,7 +400,7 @@ struct CServerConfig : CXMLObjectInterface {
 
   struct XMLE_ShadeInterval : CXMLObjectInterface {
     struct Cattr {
-      std::string min, max, label, fillcolor, bgcolor;
+      std::string min, max, label, fillcolor, fillcolor2, bgcolor;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("min" == attrCfg.name) {
@@ -414,6 +414,9 @@ struct CServerConfig : CXMLObjectInterface {
         return true;
       } else if ("fillcolor" == attrCfg.name) {
         attr.fillcolor = attrCfg.value;
+        return true;
+      } else if ("fillcolor2" == attrCfg.name) {
+        attr.fillcolor2 = attrCfg.value;
         return true;
       } else if ("bgcolor" == attrCfg.name) {
         attr.bgcolor = attrCfg.value;
