@@ -13,6 +13,7 @@ There are three types of legends,
 2.  legends with colors within certain intervals (discrete).
 3.  legends stored in a SVG gradient file as can be found on
     http://soliton.vm.bytemark.co.uk/pub/cpt-city/views/totp-cpt.html
+4.  grouped legends
 
 The first two legend types are configured by palette elements. With the
 legend object one can define a maximum of 240 different colors. The
@@ -75,3 +76,43 @@ case only the file attribute needs to be specified. E.g.
 ```xml
 <Legend name="test" type="svg" file="/data/adaguc-datasets/legends/earth.svg"/>
 ```
+
+
+Grouped legends
+---------------
+
+Grouped interval legends are intended for datasets that span a large value range,
+but where displaying every interval individually would result in an overly long 
+and difficult-to-read legend.
+
+Unlike continuous (`colorRange`) legends, grouped legends are still composed of
+individual `ShadeInterval` elements. However, a `ShadeInterval` may optionally
+define a `fillcolor2`. In that case, the interval is rendered as a linear gradient 
+between the two colors. If only `fillcolor` is specified, the interval is rendered
+as a solid color.
+
+A grouped legend is selected automatically whenever at least one `ShadeInterval` 
+defines the `fillcolor2` attribute. 
+
+Example:
+
+```xml
+<ShadeInterval min="0.2"   max="0.4"   fillcolor="#4A4A4A"/>
+<ShadeInterval min="0.4"   max="0.7"   fillcolor="#B8B8B8"/>
+<ShadeInterval min="0.7"   max="1.5"   fillcolor="#23BA46"
+               fillcolor2="#058501"/>
+<ShadeInterval min="1.5"   max="10.0"  fillcolor="#FB2600"
+               fillcolor2="#912B14"/>
+<ShadeInterval min="10.0"  max="20.0"  fillcolor="#C198B3"
+               fillcolor2="#C8106A"/>
+```
+
+Each `ShadeInterval` is displayed as a single legend band of equal height,
+regardless of the numeric width of the interval. This allows irregularly spaced
+classification intervals to be represented in a compact and readable legend.
+
+If gaps exist between consecutive `ShadeInterval` elements, they are displayed
+as blank spaces in the legend.
+
+The legend colors are generated using the same interpolation logic as the map
+renderer.

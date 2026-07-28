@@ -85,5 +85,23 @@ fillcolor="#4C4CFF"/>
 </Style>
 ```
 
+A `ShadeInterval` may optionally define a `fillcolor2` attribute in addition
+to `fillcolor`. When `fillcolor2` is specified, the interval is rendered as a
+linear gradient between the two colors. If `fillcolor2` is omitted, the
+interval is rendered as a solid color, which is the default behaviour.
+
+Example:
+
+```xml
+<ShadeInterval min="0.7" max="1.5"
+               fillcolor="#23BA46"
+               fillcolor2="#058501"/>
+```
+
+When one or more `ShadeInterval` elements define `fillcolor2`, the legend is
+automatically rendered using the grouped legend style. No additional
+configuration is required.
+
+
 See [Predefined Legends](Predefined Legends.md) for some precooked legends for several
 physical quantities like temperature, pressure, precipitation, etc..

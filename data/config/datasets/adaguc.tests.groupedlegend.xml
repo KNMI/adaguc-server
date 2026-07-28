@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <!-- Custom styles -->
+  <Style name="groupedstyle" title="Grouped legend test" abstract="Grouped legend test using ShadeInterval fillcolor2 gradients">
+    <ShadeInterval min="0.2"   max="0.7"   label="0.2-0.7 mm/h"  fillcolor="#4A4A4A" fillcolor2="#B8B8B8" />
+    <ShadeInterval min="0.7"   max="3.0"   label="0.7-3 mm/h"    fillcolor="#23BA46" fillcolor2="#058501" />
+    <ShadeInterval min="3.0"   max="5.0"   label="3-5 mm/h"      fillcolor="#FBFC00" fillcolor2="#E1E100" />
+    <ShadeInterval min="5.0"   max="10.0"  label="5-10 mm/h"     fillcolor="#F39A02" fillcolor2="#BD5902" />
+    <ShadeInterval min="10.0"  max="20.0"  label="10-20 mm/h"    fillcolor="#FB2600" fillcolor2="#912B14" />
+    <ShadeInterval min="20.0"  max="35.0"  label="20-35 mm/h"    fillcolor="#C198B3" fillcolor2="#C8106A" />
+    <ShadeInterval min="35.0"  max="50.0"  label="35-50 mm/h"    fillcolor="#A502D7" fillcolor2="#05003E" />
+    <ShadeInterval min="50.0"  max="70.0"  label="50-70 mm/h"    fillcolor="#87FFF9" fillcolor2="#245368" />
+    <ShadeInterval min="70.0"  max="90.0"  label="70-90 mm/h"    fillcolor="#690004" />
+    <ShadeInterval min="90.0"  max="120.0" label="90-120 mm/h"   fillcolor="#050000" />
+    <ShadeInterval min="120.0" max="400.0" label=">120 mm/h"     fillcolor="#ffffff" />
+
+    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderSettings renderhint="discreteclasses" settings="fast"/>
+  </Style>
+
+
+  <Style name="groupedstyle_gaps" title="Grouped legend test with gaps" abstract="Grouped legend test using ShadeInterval fillcolor2 gradients and gaps">
+    <ShadeInterval min="0.2"   max="0.7"   label="0.2-0.7 mm/h"  fillcolor="#4A4A4A" fillcolor2="#B8B8B8" />
+    <ShadeInterval min="0.7"   max="3.0"   label="0.7-3 mm/h"    fillcolor="#23BA46" fillcolor2="#058501" />
+    <ShadeInterval min="5.0"   max="10.0"  label="5-10 mm/h"     fillcolor="#F39A02" fillcolor2="#BD5902" />
+    <ShadeInterval min="10.0"  max="20.0"  label="10-20 mm/h"    fillcolor="#FB2600" fillcolor2="#912B14" />
+    <ShadeInterval min="20.0"  max="35.0"  label="20-35 mm/h"    fillcolor="#C198B3" fillcolor2="#C8106A" />
+    <ShadeInterval min="50.0"  max="70.0"  label="50-70 mm/h"    fillcolor="#87FFF9" fillcolor2="#245368" />
+  <ShadeInterval min="70.0"  max="90.0"  label="70-90 mm/h"    fillcolor="#690004" />
+    <ShadeInterval min="90.0"  max="120.0" label="90-120 mm/h"   fillcolor="#050000" />
+    <ShadeInterval min="120.0" max="400.0" label=">120 mm/h"     fillcolor="#ffffff" />
+
+    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderSettings renderhint="discreteclasses" settings="fast"/>
+  </Style>
+
+  <Layer type="database">
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+    <Styles>groupedstyle,groupedstyle_gaps</Styles>
+    <DataPostProc algorithm="ax+b" a="1154.76" b="-16.365" units="mm/h" />
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>

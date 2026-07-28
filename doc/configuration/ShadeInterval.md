@@ -26,14 +26,15 @@ Back to [Configuration](./Configuration.md)
 ### Gradients and grouped legends
 
 If one or more ShadeIntervals in a Style set fillcolor2, the legend for
-that Style switches to a "grouped" layout: every ShadeInterval is drawn as
+that Style switches to a grouped layout: every ShadeInterval is drawn as
 one equal-height band, regardless of how wide its min-max range is, and
-only the boundary values are labelled. This is intended for a small,
-curated set of intervals (roughly 10-15) rather than the long,
-fine-grained lists sometimes used to approximate a smooth color scale.
+only the boundary values are labelled. This is intended for a small set 
+of intervals rather than the long, fine-grained lists sometimes used to
+approximate a smooth color scale.
 
-If no ShadeInterval in a Style sets fillcolor2, legend rendering is
-unchanged from before.
+If no ShadeInterval in a Style sets fillcolor2, the interval is rendered
+as a solid color, which is the default behaviour.
+
 
 ```xml
 <ShadeInterval min="0.2"   max="0.4"   fillcolor="#4A4A4A"/>

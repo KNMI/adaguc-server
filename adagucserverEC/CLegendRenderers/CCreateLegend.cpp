@@ -1,8 +1,10 @@
 #include "CCreateLegend.h"
 #include "CCreateLegendRenderDiscreteLegend.cpp"
 #include "CCreateLegendRenderContinuousLegend.cpp"
+#include "CCreateLegendRenderGroupedLegend.cpp"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
+#include <algorithm>
 
 int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage) {
   createLegend(dataSource, legendImage, false);
@@ -33,7 +35,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   }
 
   int status = 0;
-  enum LegendType { undefined, continous, discrete, statusflag, custom };
+  enum LegendType { undefined, continous, discrete, statusflag, custom, grouped };
   LegendType legendType = undefined;
   bool estimateMinMax = false;
 
@@ -144,6 +146,11 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   }
 
+  // If one of the ShadeInterval has fillcolor2 set -> use grouped legend
+  if (legendType != statusflag && std::any_of(styleConfiguration->shadeIntervals.begin(), styleConfiguration->shadeIntervals.end(), [](const auto &s) { return !s.attr.fillcolor2.empty(); })) {
+    legendType = grouped;
+  }
+
   /*
    * if(legendType==continous){
    *   if(legendHeight>280)legendHeight=280;
@@ -205,6 +212,13 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   if (legendType == discrete) {
     if (renderDiscreteLegend(dataSource, legendImage, styleConfiguration, rotate, estimateMinMax) != 0) {
       CDBError("renderDiscreteLegend did not succeed.");
+      return 1;
+    }
+  }
+  // Draw grouped legend
+  if (legendType == grouped) {
+    if (renderGroupedLegend(dataSource, legendImage, styleConfiguration, rotate, estimateMinMax) != 0) {
+      CDBError("renderGroupedLegend did not succeed.");
       return 1;
     }
   }
