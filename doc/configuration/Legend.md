@@ -6,6 +6,7 @@ Back to [Configuration](./Configuration.md)
 -   name - The name of the legend
 -   type - colorRange,interval or file
 -   file - The SVG gradient file in case of legend type "file"
+-   regularspacing - Set to "true" to render a grouped legend, with every ShadeInterval shown as an equal-height band (see "Grouped legends" below)
 
 There are three types of legends,
 

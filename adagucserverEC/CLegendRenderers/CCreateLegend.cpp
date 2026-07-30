@@ -146,8 +146,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   }
 
-  // If one of the ShadeInterval has fillcolor2 set -> use grouped legend
-  if (legendType != statusflag && std::any_of(styleConfiguration->shadeIntervals.begin(), styleConfiguration->shadeIntervals.end(), [](const auto &s) { return !s.attr.fillcolor2.empty(); })) {
+  // If regularspacing is true -> use grouped legend
+  if (legendType != statusflag && styleConfiguration->legend.attr.regularspacing == "true") {
     legendType = grouped;
   }
 
