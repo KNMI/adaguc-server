@@ -92,12 +92,17 @@ define a `fillcolor2`. In that case, the interval is rendered as a linear gradie
 between the two colors. If only `fillcolor` is specified, the interval is rendered
 as a solid color.
 
-A grouped legend is selected automatically whenever at least one `ShadeInterval` 
-defines the `fillcolor2` attribute. 
+A grouped legend is selected by setting `regularspacing="true"` on the `<Legend>`
+element. Within a grouped legend, individual bands can be solid or gradient. A
+`ShadeInterval` with only `fillcolor` renders as a solid color; if it also
+defines `fillcolor2`, that band renders as a linear gradient between the two
+colors instead. A single legend can freely mix both - some groups solid, others
+gradients - depending on which intervals declare a second color.
 
 Example:
 
 ```xml
+<Legend regularspacing="true"/>
 <ShadeInterval min="0.2"   max="0.4"   fillcolor="#4A4A4A"/>
 <ShadeInterval min="0.4"   max="0.7"   fillcolor="#B8B8B8"/>
 <ShadeInterval min="0.7"   max="1.5"   fillcolor="#23BA46"

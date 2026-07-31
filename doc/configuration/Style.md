@@ -98,10 +98,10 @@ Example:
                fillcolor2="#058501"/>
 ```
 
-When one or more `ShadeInterval` elements define `fillcolor2`, the legend is
-automatically rendered using the grouped legend style. No additional
-configuration is required.
-
+Grouped legend rendering is activated by setting `regularspacing="true"` on the
+Style's `<Legend>` element (see [Legend](Legend.md)). Once a grouped legend is active,
+any `ShadeInterval` that defines `fillcolor2` renders as a gradient within that
+legend, while intervals without it render as a solid color.
 
 See [Predefined Legends](Predefined Legends.md) for some precooked legends for several
 physical quantities like temperature, pressure, precipitation, etc..
