@@ -1,0 +1,4 @@
+#ifndef CCreateLegendRenderGroupedLegend_H
+#define CCreateLegendRenderGroupedLegend_H
+
+#endif

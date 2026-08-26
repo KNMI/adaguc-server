@@ -58,9 +58,17 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
         // use binary search to find matching interval
         auto intervalIt = std::upper_bound(settings->intervals.begin(), settings->intervals.end(), val, [](auto value, const Interval &interval) { return value < interval.min; });
         if (intervalIt != settings->intervals.begin()) {
-          // std::upper_bound returns the first element that's >=value. We need to check the element before that
           intervalIt--;
           if (val < intervalIt->max) {
+            if (intervalIt->hasGradient && intervalIt->max > intervalIt->min) {
+              float frac = float((val - intervalIt->min) / (intervalIt->max - intervalIt->min));
+              CColor pixelColor = intervalIt->color;
+              pixelColor.r = intervalIt->color.r + (int)((intervalIt->color2.r - intervalIt->color.r) * frac);
+              pixelColor.g = intervalIt->color.g + (int)((intervalIt->color2.g - intervalIt->color.g) * frac);
+              pixelColor.b = intervalIt->color.b + (int)((intervalIt->color2.b - intervalIt->color.b) * frac);
+              pixelColor.a = intervalIt->color.a + (int)((intervalIt->color2.a - intervalIt->color.a) * frac);
+              return pixelColor;
+            }
             return intervalIt->color;
           }
         }
@@ -110,8 +118,17 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, GDWDrawFunction
         drawIndexPixel(x, y, f, *settings);
       } else {
         for (size_t j = 0; (j < settings->intervals.size() && pixelSet == false); j += 1) {
-          if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
-            settings->drawImage->setPixel(x, y, settings->intervals[j].color);
+          const Interval &interval = settings->intervals[j];
+          if (val >= interval.min && val < interval.max) {
+            CColor pixelColor = interval.color;
+            if (interval.hasGradient && interval.max > interval.min) {
+              float frac = float((val - interval.min) / (interval.max - interval.min));
+              pixelColor.r = interval.color.r + (int)((interval.color2.r - interval.color.r) * frac);
+              pixelColor.g = interval.color.g + (int)((interval.color2.g - interval.color.g) * frac);
+              pixelColor.b = interval.color.b + (int)((interval.color2.b - interval.color.b) * frac);
+              pixelColor.a = interval.color.a + (int)((interval.color2.a - interval.color.a) * frac);
+            }
+            settings->drawImage->setPixel(x, y, pixelColor); // was: interval.color / settings->intervals[j].color
             pixelSet = true;
           }
         }

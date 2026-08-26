@@ -70,8 +70,13 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
         settings.shadeInterval = atof(styleConfiguration->shadeIntervals[0].elementValue.c_str());
       } else {
         settings.intervals.reserve(numShadeDefs);
-        for (const auto &shadeInterval : styleConfiguration->shadeIntervals) {
-          settings.intervals.push_back(Interval({.min = atof(shadeInterval.attr.min.c_str()), .max = atof(shadeInterval.attr.max.c_str()), .color = CColor(shadeInterval.attr.fillcolor.c_str())}));
+        for (const auto &shadeInterval: styleConfiguration->shadeIntervals) {
+          Interval interval = {.min = atof(shadeInterval.attr.min.c_str()), .max = atof(shadeInterval.attr.max.c_str()), .color = CColor(shadeInterval.attr.fillcolor.c_str())};
+          if (!shadeInterval.attr.fillcolor2.empty()) {
+            interval.hasGradient = true;
+            interval.color2 = CColor(shadeInterval.attr.fillcolor2.c_str());
+          }
+          settings.intervals.push_back(interval);
         }
         // Sort shaded intervals on min value
         std::sort(settings.intervals.begin(), settings.intervals.end(), [](const Interval &left, const Interval &right) { return left.min < right.min; });

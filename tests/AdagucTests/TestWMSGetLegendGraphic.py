@@ -178,3 +178,55 @@ class TestWMSGetLegendGraphic:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+
+
+    def test_WMSGetLegendGraphic_GroupedLegend(self):
+        """New 'grouped' legend type (CCreateLegendRenderGroupedLegend): equal-height
+        bands, some flat, some gradient via ShadeInterval's fillcolor2"""
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.tests.groupedlegend.xml")
+        update_db(env)
+
+        filename = "test_WMSGetLegendGraphic_GroupedLegend.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.groupedlegend&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=testdata&WIDTH=150&HEIGHT=260&STYLES=groupedstyle%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+
+
+    def test_WMSGetLegendGraphic_GroupedLegend_gaps(self):
+        """New 'grouped' legend type (CCreateLegendRenderGroupedLegend): equal-height
+        bands, some flat, some gradient via ShadeInterval's fillcolor2"""
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.tests.groupedlegend.xml")
+        update_db(env)
+
+        filename = "test_WMSGetLegendGraphic_GroupedLegend_gaps.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.groupedlegend&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=testdata&WIDTH=150&HEIGHT=260&STYLES=groupedstyle_gaps%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+
+    def test_WMSGetMapWithGetLegendGraphic_GroupedLegend(self):
+        """Confirms fillcolor2 gradients show on the actual map raster, not just the legend"""
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.tests.groupedlegend.xml")
+        update_db(env)
+
+        filename = "test_WMSGetMapWithGetLegendGraphic_GroupedLegend.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.groupedlegend&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata"
+            "&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-3099408.36963744,3701316.1668297593,3704230.74564144,10633468.46539724"
+            "&STYLES=groupedstyle%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&showlegend=true",
+            env=env,
+        )
+        
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)

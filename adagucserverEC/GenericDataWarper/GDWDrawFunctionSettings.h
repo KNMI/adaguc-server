@@ -14,6 +14,8 @@ struct Interval {
   double min;
   double max;
   CColor color;
+  CColor color2 = CColor();
+  bool hasGradient = false;
 };
 
 struct GDWDrawFunctionSettings {

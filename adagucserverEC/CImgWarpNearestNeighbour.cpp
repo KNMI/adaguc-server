@@ -652,6 +652,8 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
     T *shadeDefMin = new T[numShadeDefs];
     T *shadeDefMax = new T[numShadeDefs];
     CColor *fillColors = new CColor[numShadeDefs];
+    CColor *fillColors2 = new CColor[numShadeDefs];
+    bool *hasGradient = new bool[numShadeDefs];
     CColor bgColor;
     bool hasBgColor = false;
     for (int j = 0; j < numShadeDefs; j++) {
@@ -659,6 +661,10 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
       shadeDefMin[j] = (T)atof(shadeInterval.attr.min.c_str());
       shadeDefMax[j] = (T)atof(shadeInterval.attr.max.c_str());
       fillColors[j] = CColor(shadeInterval.attr.fillcolor.c_str());
+      hasGradient[j] = !shadeInterval.attr.fillcolor2.empty();
+      if (hasGradient[j]) {
+        fillColors2[j] = CColor(shadeInterval.attr.fillcolor2.c_str());
+      }
       if (j == 0) {
         if (shadeInterval.attr.bgcolor.empty() == false) {
           hasBgColor = true;
@@ -682,10 +688,18 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
         if (!isNodata) {
           for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
             if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
-              if (fillColors[snr].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
-                drawImage->setPixelTrueColorOverWrite(x, (drawImage->geoParams.height - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+              CColor pixelColor = fillColors[snr];
+              if (hasGradient[snr] && shadeDefMax[snr] > shadeDefMin[snr]) {
+                float frac = float(val - shadeDefMin[snr]) / float(shadeDefMax[snr] - shadeDefMin[snr]);
+                pixelColor.r = fillColors[snr].r + (int)((fillColors2[snr].r - fillColors[snr].r) * frac);
+                pixelColor.g = fillColors[snr].g + (int)((fillColors2[snr].g - fillColors[snr].g) * frac);
+                pixelColor.b = fillColors[snr].b + (int)((fillColors2[snr].b - fillColors[snr].b) * frac);
+                pixelColor.a = fillColors[snr].a + (int)((fillColors2[snr].a - fillColors[snr].a) * frac);
+              }
+              if (pixelColor.a == 0) { // When a fully transparent color is deliberately set, force this color in the image
+                drawImage->setPixelTrueColorOverWrite(x, (drawImage->geoParams.height - 1) - y, pixelColor.r, pixelColor.g, pixelColor.b, pixelColor.a);
               } else {
-                drawImage->setPixelTrueColor(x, (drawImage->geoParams.height - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                drawImage->setPixelTrueColor(x, (drawImage->geoParams.height - 1) - y, pixelColor.r, pixelColor.g, pixelColor.b, pixelColor.a);
               }
               drawnPixel = true;
               break;
@@ -700,6 +714,8 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
     delete[] shadeDefMin;
     delete[] shadeDefMax;
     delete[] fillColors;
+    delete[] fillColors2;
+    delete[] hasGradient;
   }
 
   if (shade == false) {

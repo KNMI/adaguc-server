@@ -12,6 +12,9 @@ Back to [Configuration](./Configuration.md)
     corresponding [Legend](Legend.md). If the color does not occur in the
     legend, the nearest color is chosen. If not defined, the color is
     automatically picked from the legend.
+-   fillcolor2 - Optional, a second color for this interval. When set, the
+    interval is drawn in the legend as a smooth from fillcolor (at
+    min) to fillcolor2 (at max), instead of a single flat color.
 
 ```xml
 <ShadeInterval min="0.05" max="0.25" label="0.05-0.25" fillcolor="#E6E6FF"/>
@@ -19,3 +22,36 @@ Back to [Configuration](./Configuration.md)
 <ShadeInterval min="0.50" max="0.75" label="0.50-0.75" fillcolor="#8080FF"/>
 <ShadeInterval min="0.75" max="1.00" label="0.75-1.00" fillcolor="#4C4CFF"/>
 ```
+
+### Gradients and grouped legends
+
+fillcolor2 controls how a single ShadeInterval is rendered: with only fillcolor 
+set, the interval is a solid color (the default behaviour); with fillcolor2 also
+set, it renders as a linear gradient between the two colors instead. A Style can 
+freely mix both across its ShadeIntervals (some solid, some gradients).
+
+This is used together with a grouped legend (see [Legend](Legend.md)),
+activated by setting regularspacing="true" on the Style's `<Legend>` element.
+In a grouped legend, every ShadeInterval is drawn as one equal-height band
+regardless of how wide its min-max range is, and only the boundary values are
+labelled - intended for a small set of intervals rather than the long,
+fine-grained lists sometimes used to approximate a smooth color scale.
+
+```xml
+<Legend regularspacing="true"/>
+
+<ShadeInterval min="0.2"   max="0.4"   fillcolor="#4A4A4A"/>
+<ShadeInterval min="0.4"   max="0.7"   fillcolor="#B8B8B8"/>
+<ShadeInterval min="0.7"   max="1.5"   fillcolor="#23BA46" fillcolor2="#058501"/>
+<ShadeInterval min="1.5"   max="10.0"  fillcolor="#FB2600" fillcolor2="#912B14"/>
+<ShadeInterval min="10.0"  max="20.0"  fillcolor="#C198B3" fillcolor2="#C8106A"/>
+<ShadeInterval min="20.0"  max="35.0"  fillcolor="#A502D7" fillcolor2="#05003E"/>
+<ShadeInterval min="35.0"  max="70.0"  fillcolor="#87FFF9" fillcolor2="#245368"/>
+<ShadeInterval min="70.0"  max="90.0"  fillcolor="#690004"/>
+<ShadeInterval min="90.0"  max="120.0" fillcolor="#050000"/>
+<ShadeInterval min="120.0" max="400.0" fillcolor="#ffffff"/>
+```
+
+In this example, the 0.7-1.5, 1.5-10.0, 10.0-20.0, 20.0-35.0 and 35.0-70.0
+bands render as gradients; the rest render as flat colors, same as
+before.

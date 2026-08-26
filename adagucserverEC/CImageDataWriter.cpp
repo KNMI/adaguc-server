@@ -2100,8 +2100,28 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
     for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
       const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
       if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
-          return CColor(shadeInterval.attr.fillcolor.c_str());
+        double intervalMin = atof(shadeInterval.attr.min.c_str());
+        double intervalMax = atof(shadeInterval.attr.max.c_str());
+        if ((val >= intervalMin) && (val < intervalMax)) {
+          if (shadeInterval.attr.fillcolor2.empty()) {
+            return CColor(shadeInterval.attr.fillcolor.c_str());
+          }
+          // gradient: blend fillcolor (at min) -> fillcolor2 (at max)
+          float frac = (intervalMax > intervalMin) ? float((val - intervalMin) / (intervalMax - intervalMin)) : 0.0f;
+          auto parse = [](const std::string &hex, int &r, int &g, int &b) {
+            r = g = b = 0;
+            if (hex.size() >= 7 && hex[0] == '#') {
+              unsigned int rr = 0, gg = 0, bb = 0;
+              sscanf(hex.c_str() + 1, "%02x%02x%02x", &rr, &gg, &bb);
+              r = (int)rr;
+              g = (int)gg;
+              b = (int)bb;
+            }
+          };
+          int r1, g1, b1, r2, g2, b2;
+          parse(shadeInterval.attr.fillcolor, r1, g1, b1);
+          parse(shadeInterval.attr.fillcolor2, r2, g2, b2);
+          return CColor(r1 + int((r2 - r1) * frac), g1 + int((g2 - g1) * frac), b1 + int((b2 - b1) * frac), 255);
         }
       }
     }
