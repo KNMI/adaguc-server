@@ -1,4 +1,4 @@
-ShadeInterval (min,max,label,bgcolor,fillcolor)
+ShadeInterval (min,max,label,bgcolor,fillcolor, showInLegend)
 ===============================================
 
 Back to [Configuration](./Configuration.md)
@@ -12,6 +12,7 @@ Back to [Configuration](./Configuration.md)
     corresponding [Legend](Legend.md). If the color does not occur in the
     legend, the nearest color is chosen. If not defined, the color is
     automatically picked from the legend.
+-   showInLegend - Optional, defaults to "true", when "false", the item will not be displayed in the GetLegendGraphic request.
 
 ```xml
 <ShadeInterval min="0.05" max="0.25" label="0.05-0.25" fillcolor="#E6E6FF"/>

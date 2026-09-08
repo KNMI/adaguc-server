@@ -401,6 +401,7 @@ struct CServerConfig : CXMLObjectInterface {
   struct XMLE_ShadeInterval : CXMLObjectInterface {
     struct Cattr {
       std::string min, max, label, fillcolor, bgcolor;
+      bool showInLegend = true;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("min" == attrCfg.name) {
@@ -417,6 +418,11 @@ struct CServerConfig : CXMLObjectInterface {
         return true;
       } else if ("bgcolor" == attrCfg.name) {
         attr.bgcolor = attrCfg.value;
+        return true;
+      } else if ("showInLegend" == attrCfg.name) {
+        if (attrCfg.value == "false") {
+          attr.showInLegend = false;
+        }
         return true;
       }
       return false;

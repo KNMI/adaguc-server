@@ -1,6 +1,6 @@
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
-from conftest import make_adaguc_env, update_db
+from conftest import make_adaguc_env, run_adaguc_and_compare_image, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -178,3 +178,14 @@ class TestWMSGetLegendGraphic:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+
+    def test_WMSGetLegendGraphic_TestShowInLegend(self):
+        """This demonstrates how many shadeintervals can be filtered for the legendgraphic by using the showInLegend property"""
+
+        env = make_adaguc_env("test.uwcw_ha43_dini_5p5km_10x8", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_image(
+            env,
+            "test_WMSGetLegendGraphic_TestShowInLegend.png",
+            "DATASET=test.uwcw_ha43_dini_5p5km_10x8&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=air_temperature_pl&format=image/png&STYLE=temperature_less_items&layers=air_temperature_pl&&time=2024-07-13T17%3A00%3A00Z&DIM_reference_time=2024-07-11T05%3A00%3A00Z&DIM_pressure_level_in_hpa=925&&transparent=true&&0.1781389029024779",
+        )

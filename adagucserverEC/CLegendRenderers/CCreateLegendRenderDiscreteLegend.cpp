@@ -24,11 +24,9 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
   float numericMinVal = atof(s.attr.min.c_str());
 
   // Calculate number of decimals for min column
-  CT::string floatFormatMin;
-  floatFormatMin.print("%%.%df", maxDecimalWidth(minColumn));
+  std::string floatFormatMin = CT::printf("%%.%df", maxDecimalWidth(minColumn));
 
-  CT::string tempText;
-  tempText.print(floatFormatMin.c_str(), numericMinVal);
+  std::string tempText = CT::printf(floatFormatMin.c_str(), numericMinVal);
   const char *dotPos = strchr(tempText.c_str(), '.');
   int leftCharsMin = dotPos ? (dotPos - tempText.c_str()) : tempText.length(); // chars before dot
 
@@ -57,9 +55,8 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
 
   // Draw max, dot-aligned
   float numericMaxVal = atof(s.attr.max.c_str());
-  CT::string floatFormatMax;
-  floatFormatMax.print("%%.%df", maxDecimalWidth(maxColumn));
-  tempText.print(floatFormatMax.c_str(), numericMaxVal);
+  std::string floatFormatMax = CT::printf("%%.%df", maxDecimalWidth(maxColumn));
+  tempText = CT::printf(floatFormatMax.c_str(), numericMaxVal);
 
   const char *dotPosMax = strchr(tempText.c_str(), '.');
   int leftCharsMax = dotPosMax ? (dotPosMax - tempText.c_str()) : tempText.length(); // chars before dot
@@ -86,12 +83,12 @@ float calculateShadeClassBlockHeight(int totalHeight, int intervals) {
   return blockHeight;
 }
 
-std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxValue, CStyleConfiguration *styleConfiguration) {
+std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxValue, const std::vector<CServerConfig::XMLE_ShadeInterval> &shadeIntervals) {
   // Calculate which part of the legend to draw (only between min and max)
   int minInterval = 0;
-  int maxInterval = styleConfiguration->shadeIntervals.size();
-  for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-    const auto &s = styleConfiguration->shadeIntervals[j];
+  int maxInterval = shadeIntervals.size();
+  for (size_t j = 0; j < shadeIntervals.size(); j++) {
+    const auto &s = shadeIntervals[j];
     if (!s.attr.min.empty() && !s.attr.max.empty()) {
       float intervalMinf = atof(s.attr.min.c_str());
       float intervalMaxf = atof(s.attr.max.c_str());
@@ -125,7 +122,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   legendImage->setTTFFontLocation(fontLocation);
   legendImage->setTTFFontSize(fontSize);
 
-  CT::string textformatting;
+  std::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */
   if (styleConfiguration != nullptr && styleConfiguration->legend.attr.textformatting.empty()) {
@@ -212,8 +209,10 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   bool discreteLegendOnInterval = false;
   bool definedLegendOnShadeClasses = false;
   bool definedLegendForFeatures = false;
+  std::vector<CServerConfig::XMLE_ShadeInterval> shadeIntervalsFilteredForLegendGraphic = styleConfiguration->shadeIntervals;
+  std::erase_if(shadeIntervalsFilteredForLegendGraphic, [](const CServerConfig::XMLE_ShadeInterval &shadeInterval) { return !shadeInterval.attr.showInLegend; });
 
-  if (styleConfiguration->shadeIntervals.size() > 0) {
+  if (shadeIntervalsFilteredForLegendGraphic.size() > 0) {
     definedLegendOnShadeClasses = true;
   }
 
@@ -240,17 +239,17 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     // - If the cliplegend render option is set, only classes with the min and the max data value will be added
 
     // Initial estimation of block height
-    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->geoParams.height, styleConfiguration->shadeIntervals.size());
+    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->geoParams.height, shadeIntervalsFilteredForLegendGraphic.size());
 
     // Based on the render settings, we can clip the values on the legend to only include the values
     // present in the data
     int minInterval = 0;
-    int maxInterval = styleConfiguration->shadeIntervals.size();
+    int maxInterval = shadeIntervalsFilteredForLegendGraphic.size();
     int angle = 0; // Text angle (in radians)
 
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (renderSetting->attr.cliplegend == "true") {
-        std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
+        std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, shadeIntervalsFilteredForLegendGraphic);
       }
     }
 
@@ -258,8 +257,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     size_t drawIntervals = maxInterval - minInterval;
 
     // Calculate columns and text properties
-    std::vector<CT::string> minColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, true);
-    std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
+    std::vector<CT::string> minColumn = extractColumn(drawIntervals, minInterval, shadeIntervalsFilteredForLegendGraphic, true);
+    std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, shadeIntervalsFilteredForLegendGraphic, false);
     int dashWidth = legendImage->getTextWidth("-", fontLocation, fontSize, angle);
     int dotWidth = legendImage->getTextWidth(".", fontLocation, fontSize, angle);
     // Assume monospaced for numbers
@@ -277,7 +276,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       // For right-alignment of labels
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        const auto &s = (styleConfiguration->shadeIntervals)[realj];
+        const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
         if (!s.attr.min.empty() && !s.attr.max.empty()) {
           if ((int)std::abs(atof(s.attr.min.c_str())) % 5 != 0) continue;
           int tw = legendImage->getTextWidth(s.attr.min.c_str(), fontLocation, fontSize, angle);
@@ -287,7 +286,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        const auto &s = (styleConfiguration->shadeIntervals)[realj];
+        const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
         if (s.attr.min.empty() || s.attr.max.empty()) continue;
 
         int cY1 = (int)std::lround(cbH - (j * blockHeight));
@@ -324,7 +323,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        const auto &s = (styleConfiguration->shadeIntervals)[realj];
+        const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
         if (s.attr.min.empty() || s.attr.max.empty()) {
           continue;
         }
@@ -342,7 +341,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         if (s.attr.label.empty()) {
           int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
           plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
-
         } else {
           // Do not align to the right: this is a non-numeric label
           legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, s.attr.label.c_str(), 248);
@@ -416,15 +414,15 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       }
     }
 
-    CT::string minText, maxText;
+    std::string minText, maxText;
     for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
       // Look for the max width for the min value in this interval
-      minText.print(floatFormat.c_str(), j);
+      minText = CT::printf(floatFormat.c_str(), j);
       int widthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
       if (widthMin > maxWidthMin) maxWidthMin = widthMin;
 
       // Look for the max width for the max value in this interval
-      maxText.print(floatFormat.c_str(), j + legendInterval);
+      maxText = CT::printf(floatFormat.c_str(), j + legendInterval);
       int widthMax = legendImage->getTextWidth(maxText, fontLocation, fontSize, 0);
       if (widthMax > maxWidthMax) maxWidthMax = widthMax;
     }
@@ -453,9 +451,9 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, (colorIndex), (colorIndex));
         }
         // Prepare alignment
-        CT::string minText, maxText;
-        minText.print(floatFormat.c_str(), v);
-        maxText.print(floatFormat.c_str(), v + legendInterval);
+        std::string minText, maxText;
+        minText = CT::printf(floatFormat.c_str(), v);
+        maxText = CT::printf(floatFormat.c_str(), v + legendInterval);
         int currentWidthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
         int currentWidthMax = legendImage->getTextWidth(maxText, fontLocation, fontSize, 0);
 
@@ -481,10 +479,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   CDBDebug("set units");
 #endif
   // Get units
-  CT::string units;
-  if (dObjgetUnits(*dataSource->getDataObject(0)).length() > 0) {
-    units.concat(dObjgetUnits(*dataSource->getDataObject(0)).c_str());
-  }
+  std::string units = dObjgetUnits(*dataSource->getDataObject(0));
   if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);
   // legendImage->crop(4,4);
   return 0;
