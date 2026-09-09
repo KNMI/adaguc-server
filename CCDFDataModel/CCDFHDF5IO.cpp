@@ -761,8 +761,8 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
 
           // Set adaguc time
           CTime *ctime = new CTime();
-          if (ctime->init((char *)time_units->data, "") != 0) {
-            CDBError("Could not initialize CTIME: %s", (char *)time_units->data);
+          if (ctime->init(time_units->toString(), "") != 0) {
+            CDBError("Could not initialize CTIME: %s", time_units->toString().c_str());
             return 1;
           }
           double offset;
@@ -975,8 +975,8 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
 
           // Set adaguc time
           CTime *ctime = new CTime();
-          if (ctime->init((char *)time_units->data, "") != 0) {
-            CDBError("Could not initialize CTIME: %s", (char *)time_units->data);
+          if (ctime->init(time_units->toString(), "") != 0) {
+            CDBError("Could not initialize CTIME: %s", time_units->toString().c_str());
             return 1;
           }
           double offset;
@@ -1218,8 +1218,8 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("Detecting time parameters");
 #endif
-  auto startTime = knmiH5TimeToISOString((char *)product_datetime_start->data);
-  auto endTime = knmiH5TimeToISOString((char *)product_datetime_end->data);
+  auto startTime = knmiH5TimeToISOString(product_datetime_start->toString());
+  auto endTime = knmiH5TimeToISOString(product_datetime_end->toString());
 
   if (startTime.empty() || endTime.empty()) {
     CDBError("Could not initialize time");
@@ -1248,12 +1248,12 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     CDF::Attribute *image_acquisition_time = image1_satellite->getAttributeNE("image_acquisition_time");
     CDF::Attribute *image_generation_time = image1_satellite->getAttributeNE("image_generation_time");
     if (image_acquisition_time != NULL) {
-      auto acquisitionTime = knmiH5TimeToISOString((char *)image_acquisition_time->data);
+      auto acquisitionTime = knmiH5TimeToISOString(image_acquisition_time->toString());
 
       if (acquisitionTime.empty() == false) {
         product->addAttribute(new CDF::Attribute("image1_acquisition_time", acquisitionTime.c_str()));
       }
-      auto generationTime = knmiH5TimeToISOString((char *)image_generation_time->data);
+      auto generationTime = knmiH5TimeToISOString(image_generation_time->toString());
       if (generationTime.empty() == false) {
         product->addAttribute(new CDF::Attribute("image1_generation_time", generationTime.c_str()));
       }
@@ -1385,7 +1385,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   CDBDebug("CProj4ToCF");
 #endif
   CProj4ToCF proj4ToCF;
-  proj4ToCF.convertProjToCF(projection, (char *)proj4attr->data);
+  proj4ToCF.convertProjToCF(projection, proj4attr->toString().c_str());
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("/CProj4ToCF");
 #endif
@@ -1428,8 +1428,8 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 #endif
   // Set adaguc time
   CTime ctime;
-  if (ctime.init((char *)time_units->data, "") != 0) {
-    CDBError("Could not initialize CTIME: %s", (char *)time_units->data);
+  if (ctime.init(time_units->toString(), "") != 0) {
+    CDBError("Could not initialize CTIME: %s", time_units->toString().c_str());
     return 1;
   }
   double offset;
@@ -1469,7 +1469,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     forecast_reference_time->setType(CDF_DOUBLE);
     CDF::allocateData(forecast_reference_time->currentType, &forecast_reference_time->data, forecast_reference_time->getSize());
     cdfObject->addVariable(forecast_reference_time);
-    forecast_reference_time->setAttributeText("units", (char *)time_units->data);
+    forecast_reference_time->setAttributeText("units", time_units->toString().c_str());
     forecast_reference_time->setAttributeText("standard_name", "forecast_reference_time");
     ((double *)forecast_reference_time->data)[0] = offset;
 
@@ -1534,7 +1534,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
         CDF::Attribute *grid_mapping = new CDF::Attribute();
         grid_mapping->setName("grid_mapping");
-        grid_mapping->setData(CDF_CHAR, (char *)"projection\0", 11);
+        grid_mapping->setString("projection");
         var->addAttribute(grid_mapping);
         var->dimensionlinks.insert(var->dimensionlinks.begin(), 1, timeDim);
 

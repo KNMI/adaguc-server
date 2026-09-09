@@ -309,7 +309,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           return false;
         }
         for (size_t j = 0; j < count[0]; j++) {
-          data[j].copy(((char *)variable->data + j * count[1]), count[1] - 1);
+          data[j].assign(((char *)variable->data + j * count[1]), count[1] - 1);
         }
         variable->freeData();
 

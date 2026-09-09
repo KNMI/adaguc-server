@@ -520,7 +520,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         std::vector<std::string> data(count[0]);
         pointVar[d]->readData(CDF_CHAR, start.data(), count.data(), stride.data(), false);
         for (size_t j = 0; j < count[0]; j++) {
-          data[j].copy(((char *)pointVar[d]->data + j * count[1]), count[1] - 1);
+          data[j].assign(((char *)pointVar[d]->data + j * count[1]), count[1] - 1);
         }
         pointVar[d]->freeData();
 

@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 8.2.0, of Sep  9 2026 08:42:40 </Keyword>
+            <Keyword>ADAGUCServer version 8.2.0, of Sep  9 2026 11:02:22 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.datapostproc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -162,7 +162,7 @@
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5212368.744545" maxx="853649.694601" maxy="5936460.867117" />
 <BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5757301.056717" maxx="763611.971696" maxy="6483919.801602" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6257115.219364" maxx="1208534.698398" maxy="7553161.958695" />
-<BoundingBox CRS="PROJ4:%2Bproj%3Dstere%20%2Blat_0%3D90%2E000000%20%2Blon_0%3D0%2E000000%20%2Blat_ts%3D60%2E000000%20%2Ba%3D6378%2E140137%20%2Bb%3D6356%2E750000%20%2Bx_0%3D0%2E000000%20%2By_0%3D0%2E000000%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84" minx="0.000000" miny="-4415002.985868" maxx="700002.419949" maxy="-3649999.338064" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dstere%20%2Blat_0%3D90%20%2Blon_0%3D0%20%2Blat_ts%3D60%20%2Ba%3D6378%2E14%20%2Bb%3D6356%2E75%20%2Bx_0%3D0%20y_0%3D0" minx="0.000000" miny="-4415002.985868" maxx="700002.419949" maxy="-3649999.338064" />
 <Dimension name="time" units="ISO8601" default="2021-06-22T20:00:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-22T20:00:00Z</Dimension>
    <Style>
     <Name>radar/nearest</Name>

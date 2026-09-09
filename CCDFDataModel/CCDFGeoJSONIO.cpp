@@ -83,7 +83,7 @@ int CDFGeoJSONReader::open(const char *fileName) {
   CDF::Attribute *fileAttr = new CDF::Attribute();
   jsonVar->addAttribute(fileAttr);
   fileAttr->setName("ADAGUC_BASENAME");
-  fileAttr->setData(CDF_CHAR, fileBaseName.c_str(), fileBaseName.length() + 1);
+  fileAttr->setString(fileBaseName.c_str());
 
   return 0;
 }
