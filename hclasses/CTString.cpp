@@ -206,7 +206,7 @@ namespace CT {
     return str;
   }
 
-  std::vector<std::string> split(const std::string &stdstring, std::string value) {
+  std::vector<std::string> split(const std::string &stdstring, const std::string &value) {
     std::vector<std::string> stringList;
     const char *fo = strstr(stdstring.c_str(), value.c_str());
     const char *prevFo = stdstring.c_str();
@@ -223,7 +223,7 @@ namespace CT {
     return stringList;
   }
 
-  int indexOf(const std::string &input, const std::string pattern) {
+  int indexOf(const std::string &input, const std::string &pattern) {
     std::string::size_type loc = input.find(pattern, 0);
     if (loc != std::string::npos) {
       return loc;
@@ -231,7 +231,7 @@ namespace CT {
     return -1;
   }
 
-  int lastIndexOf(const std::string &input, const std::string pattern) {
+  int lastIndexOf(const std::string &input, const std::string &pattern) {
     if (pattern.length() == 0) {
       return 0;
     }
@@ -245,11 +245,11 @@ namespace CT {
     return c;
   }
 
-  bool endsWith(const std::string &input, const std::string pattern) {
+  bool endsWith(const std::string &input, const std::string &pattern) {
     return pattern.size() == 0 || (input.size() >= pattern.size() && input.compare(input.size() - pattern.size(), pattern.size(), pattern) == 0);
   }
 
-  bool startsWith(const std::string &input, const std::string pattern) { return pattern.size() == 0 || (input.rfind(pattern, 0) == 0); }
+  bool startsWith(const std::string &input, const std::string &pattern) { return pattern.size() == 0 || (input.rfind(pattern, 0) == 0); }
 
   std::string encodeXml(const std::string &input) {
     auto out = input;

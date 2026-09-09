@@ -122,7 +122,7 @@ namespace CT {
    * @param value The token to split the string on
    * @returns vector of split strings
    */
-  std::vector<std::string> split(const std::string &stdstring, std::string value);
+  std::vector<std::string> split(const std::string &stdstring, const std::string &value);
 
   /**
    * Generates a random string of the specified length consisting of digits, uppercase and lowercase letters
@@ -138,9 +138,9 @@ namespace CT {
    * @param pattern pattern tofind
    * @return Index of pattern in input. -1 if not found. 0 if pattern is an empty string
    */
-  int indexOf(const std::string &input, const std::string pattern);
+  int indexOf(const std::string &input, const std::string &pattern);
 
-  int lastIndexOf(const std::string &input, const std::string pattern);
+  int lastIndexOf(const std::string &input, const std::string &pattern);
 
   /**
    * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.
@@ -149,7 +149,7 @@ namespace CT {
    * @param pattern pattern tofind
    * @return True if input ends with pattern. True if pattern is empty
    */
-  bool endsWith(const std::string &input, const std::string pattern);
+  bool endsWith(const std::string &input, const std::string &pattern);
 
   /**
    * Checks if a string starts with another given string. If the argument is an empty string, then the method returns true.
@@ -158,7 +158,7 @@ namespace CT {
    * @param pattern pattern tofind
    * @return True if input starts with pattern. True if pattern is empty
    */
-  bool startsWith(const std::string &input, const std::string pattern);
+  bool startsWith(const std::string &input, const std::string &pattern);
 
   /**
    * Replaces characters so it can be used as valid xml

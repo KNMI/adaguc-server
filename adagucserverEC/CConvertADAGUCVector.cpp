@@ -73,7 +73,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
     if (var->isDimension == false) {
       if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "lat_bnds" && var->name != "lon_bnds" &&
           var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties") {
-        varsToConvert.push_back(std::string(var->name.c_str()));
+        varsToConvert.push_back(var->name);
       }
       if (var->name == "projection") {
         var->setAttributeText("ADAGUC_SKIP", "true");
@@ -99,7 +99,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
     new2DVar->dimensionlinks.push_back(cdfObject->getDimensionThrows("x"));
 
     new2DVar->setType(swathVar->getType());
-    new2DVar->name = swathVar->name.c_str();
+    new2DVar->name = swathVar->name;
     swathVar->name += "_backup";
 
     // Copy variable attributes
@@ -144,7 +144,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *swathVar;
-  std::string origSwathName = new2DVar->name.c_str();
+  std::string origSwathName = new2DVar->name;
   origSwathName += "_backup";
   swathVar = cdfObject->getVariableNE(origSwathName.c_str());
   if (swathVar == NULL) {

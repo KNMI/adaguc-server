@@ -81,7 +81,7 @@ int CSLD::processSLDUrl(std::string sldUrl) {
           }
 
           std::string uniqueStyleName = STYLE_NAME_TEMPLATE;
-          CT::printfconcat(uniqueStyleName, "%zu", i);
+          uniqueStyleName += std::to_string(i);
 
           // Initialize styling variables, to make sure they are empty and new
           CServerConfig::XMLE_Style *myOwnStyle = new CServerConfig::XMLE_Style();
@@ -94,7 +94,7 @@ int CSLD::processSLDUrl(std::string sldUrl) {
           myOwnStyle->attr.name = uniqueStyleName.c_str();
 
           std::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
-          CT::printfconcat(uniqueLegendName, "%zu", i);
+          uniqueLegendName += std::to_string(i);
           myOwnLegend->attr.name = uniqueLegendName.c_str();
           myOwnLegend->attr.type = "interval";
 

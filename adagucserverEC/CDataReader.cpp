@@ -696,8 +696,8 @@ void CDataReader::determineXAndYDimIndices(CDataSource *dataSource, const CDF::V
   dataSource->swapXYDimensions = false;
 
   // If our X dimension has a character y/lat in it, XY dims are probably swapped.
-  std::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
-  std::string dimensionYName = dataSourceVar->dimensionlinks[dataSource->dimYIndex]->name.c_str();
+  std::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name;
+  std::string dimensionYName = dataSourceVar->dimensionlinks[dataSource->dimYIndex]->name;
 
   dimensionXName = CT::toLowerCase(dimensionXName);
   if (CT::indexOf(dimensionXName, "y") != -1 || CT::indexOf(dimensionXName, "lat") != -1) {
@@ -811,7 +811,7 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
   dataSource->dfCellSizeX = (dfdim_X[dataSource->dWidth - 1] - dfdim_X[0]) / double(dataSource->dWidth - 1);
   dataSource->dfCellSizeY = (dfdim_Y[dataSource->dHeight - 1] - dfdim_Y[0]) / double(dataSource->dHeight - 1);
 
-  std::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  std::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name;
   dimensionXName = CT::toLowerCase(dimensionXName);
   if (dimensionXName == "col") {
     CREPORT_WARN_NODOC(std::string("X dimension name equals 'col', bounding box is calculated differently."), CReportMessage::Categories::GENERAL);
@@ -1345,7 +1345,7 @@ std::string CDataReader::getTimeUnit(CDataSource *dataSource) {
     throw(2);
   }
 
-  std::string timeUnitsString = timeUnits->toString().c_str();
+  std::string timeUnitsString = timeUnits->toString();
 
   return timeUnitsString;
 }

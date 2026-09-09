@@ -125,7 +125,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   for (size_t datasetCounter = 1; datasetCounter < MAX_ODIM_DATASETS; datasetCounter += 1) {
     int dataCounter = 1;
     std::string datasetId = "dataset";
-    CT::printfconcat(datasetId, "%zu", datasetCounter);
+    datasetId += std::to_string(datasetCounter);
     std::string datasetIdDataId = datasetId + ".data1.data";
 
     /* Check for the data variable */

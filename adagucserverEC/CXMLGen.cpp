@@ -155,7 +155,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
 
       // if(groupKeys[groupIndex].size()>0)
       {
-        std::string key = groupKeys[groupIndex].c_str();
+        std::string key = groupKeys[groupIndex];
         auto subGroups = CT::split(key, "/");
         groupDepth = subGroups.size();
 
@@ -336,11 +336,11 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
     // Download CSW information
 
     try {
-      std::string URL = datasetCSWURL.c_str();
+      std::string URL = datasetCSWURL;
       CT::replaceSelf(URL, "&amp;", "&");
       inspireMetadata = CInspire::readInspireMetadataFromCSW(URL.c_str());
     } catch (int a) {
-      std::string URL = datasetCSWURL.c_str();
+      std::string URL = datasetCSWURL;
 
       CT::replaceSelf(URL, "&", "&amp;");
       CDBError("Unable to read from catalog service: %s, Inspire CSW Service : \"%s\"", CInspire::getErrorMessage(a).c_str(), URL.c_str());
@@ -519,7 +519,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
 
       // if(groupKeys[groupIndex].size()>0)
       {
-        std::string key = groupKeys[groupIndex].c_str();
+        std::string key = groupKeys[groupIndex];
         auto subGroups = CT::split(key, "/");
         groupDepth = subGroups.size();
 

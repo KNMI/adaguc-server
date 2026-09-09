@@ -1627,8 +1627,8 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
             int additionSignPos = CT::indexOf(formula, "+");
             if (rightPartFormulaPos != -1 && multiplicationSignPos != -1 && additionSignPos != -1) {
 
-              float multiplicationFactor = atof(CT::trim(CT::substring(formula, rightPartFormulaPos + 1, multiplicationSignPos)).c_str());
-              float additionFactor = atof(CT::trim(CT::substring(formula, additionSignPos + 1, formula.length())).c_str());
+              float multiplicationFactor = CT::toDouble(CT::substring(formula, rightPartFormulaPos + 1, multiplicationSignPos));
+              float additionFactor = CT::toDouble(CT::substring(formula, additionSignPos + 1, formula.length()));
               // CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
               //                  CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
               CDF::Attribute *add_offset = new CDF::Attribute();

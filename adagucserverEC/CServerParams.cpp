@@ -425,14 +425,14 @@ std::string CServerParams::getResponseHeaders(int mode) {
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
         if (atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()) != 0) {
-          CT::printfconcat(cacheString, "%d", atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()));
+          cacheString += std::to_string(atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }
     } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
       if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
         if (atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()) != 0) {
-          CT::printfconcat(cacheString, "%d", atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()));
+          cacheString += std::to_string(atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }

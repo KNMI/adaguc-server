@@ -40,18 +40,18 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       return 1;
     }
 
-    if (checkForValidTokens(srvParam->datasetLocation.c_str(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+    if (checkForValidTokens(srvParam->datasetLocation, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
       CDBError("Invalid dataset name. ");
       return 1;
     }
-    std::string internalDatasetLocation = srvParam->datasetLocation.c_str();
+    std::string internalDatasetLocation = srvParam->datasetLocation;
 
     CT::replaceSelf(internalDatasetLocation, ":", "_");
     CT::replaceSelf(internalDatasetLocation, "/", "_");
 
     std::string datasetConfigFile = "";
     for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
-      std::string testDataSet = srvParam->cfg->Dataset[j]->attr.location.c_str();
+      std::string testDataSet = srvParam->cfg->Dataset[j]->attr.location;
 
       CT::printfconcat(testDataSet, "/%s.xml", internalDatasetLocation.c_str());
 
@@ -96,7 +96,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     stringToAdd += srvParam->datasetLocation;
     stringToAdd += "&amp;";
     onlineResource += stringToAdd;
-    srvParam->setOnlineResource(onlineResource.c_str());
+    srvParam->setOnlineResource(onlineResource);
 
     // Disable autoResourceLocation
     srvParam->autoResourceLocation = "";
@@ -126,13 +126,13 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, std::string serverTit
         std::string title = "";
         title += serverTitle;
         // title.replaceSelf(" ","_");
-        srvParam->cfg->WMS[0]->Title[0]->elementValue = (title.c_str());
+        srvParam->cfg->WMS[0]->Title[0]->elementValue = title;
       }
       if (srvParam->cfg->WMS[0]->RootLayer.size() > 0) {
         if (srvParam->cfg->WMS[0]->RootLayer[0]->Title.size() > 0) {
           std::string title = "WMS of  ";
           title += serverTitle;
-          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue = (title.c_str());
+          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue = title;
         }
       }
     }
@@ -140,7 +140,7 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, std::string serverTit
       if (srvParam->cfg->WCS[0]->Title.size() > 0) {
         std::string title = "ADAGUC_AUTO_WCS_";
         title += serverTitle;
-        srvParam->cfg->WCS[0]->Title[0]->elementValue = (title.c_str());
+        srvParam->cfg->WCS[0]->Title[0]->elementValue = title;
       }
     }
   }
@@ -151,7 +151,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
   // Configure the server automically based on an OpenDAP resource
   // This method does nothing if srvParam->autoResourceLocation is empty.
   if (srvParam->autoResourceLocation.empty() == false) {
-    srvParam->internalAutoResourceLocation = srvParam->autoResourceLocation.c_str();
+    srvParam->internalAutoResourceLocation = srvParam->autoResourceLocation;
 
     if (srvParam->isAutoResourceEnabled() == false) {
       CDBError("Automatic resource is not enabled");
@@ -171,7 +171,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Error messages should be the same for different 'dir' attempts, otherwise someone can find out directory structures
     if (isValidResource == false) {
       if (srvParam->isAutoLocalFileResourceEnabled()) {
-        if (checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str()) == false) {
+        if (checkIfPathHasValidTokens(srvParam->autoResourceLocation) == false) {
           CDBError("Invalid token(s), unable to read file %s", srvParam->autoResourceLocation.c_str());
           return 1;
         }
@@ -355,7 +355,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     if (serverAbstract.length() > 0) {
       if (srvParam->cfg->WMS.size() > 0) {
         if (srvParam->cfg->WMS[0]->Abstract.size() > 0) {
-          srvParam->cfg->WMS[0]->Abstract[0]->elementValue = (serverAbstract.c_str());
+          srvParam->cfg->WMS[0]->Abstract[0]->elementValue = serverAbstract;
         }
       }
     }
@@ -364,8 +364,8 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     std::vector<std::string> variables = CT::split(srvParam->autoResourceVariable, ",");
     for (size_t j = 0; j < variables.size(); j++) {
       std::vector<std::string> variableNames;
-      variableNames.push_back(variables[j].c_str());
-      addXMLLayerToConfig(srvParam, cdfObject, &variableNames, NULL, srvParam->internalAutoResourceLocation.c_str());
+      variableNames.push_back(variables[j]);
+      addXMLLayerToConfig(srvParam, cdfObject, variableNames, "", srvParam->internalAutoResourceLocation);
     }
 
     // Find derived wind parameters
@@ -382,14 +382,14 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     for (size_t v = 0; v < detectStrings.size(); v++) {
       // CDBDebug("detectStrings %s",detectStrings[v].c_str());
       searchVar = CT::printf("%s_speed", detectStrings[v].c_str());
-      CDF::Variable *varSpeed = cdfObject->getVariableNE(searchVar.c_str());
+      CDF::Variable *varSpeed = cdfObject->getVariableNE(searchVar);
       searchVar = CT::printf("%s_dir", detectStrings[v].c_str());
-      CDF::Variable *varDirection = cdfObject->getVariableNE(searchVar.c_str());
+      CDF::Variable *varDirection = cdfObject->getVariableNE(searchVar);
       if (varSpeed != NULL && varDirection != NULL) {
         std::vector<std::string> variableNames;
-        variableNames.push_back(varSpeed->name.c_str());
-        variableNames.push_back(varDirection->name.c_str());
-        addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
+        variableNames.push_back(varSpeed->name);
+        variableNames.push_back(varDirection->name);
+        addXMLLayerToConfig(srvParam, cdfObject, variableNames, "derived", srvParam->internalAutoResourceLocation);
         CREPORT_INFO_NODOC("Found derived wind parameters *_dir and *_speed. Assuming ASCAT data.", CReportMessage::Categories::GENERAL);
       }
     }
@@ -399,9 +399,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     CDF::Variable *varDirection = cdfObject->getVariableNE("dd");
     if (varSpeed != NULL && varDirection != NULL) {
       std::vector<std::string> variableNames;
-      variableNames.push_back(varSpeed->name.c_str());
-      variableNames.push_back(varDirection->name.c_str());
-      addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
+      variableNames.push_back(varSpeed->name);
+      variableNames.push_back(varDirection->name);
+      addXMLLayerToConfig(srvParam, cdfObject, variableNames, "derived", srvParam->internalAutoResourceLocation);
       CREPORT_INFO_NODOC("Detected ff and dd wind variables.", CReportMessage::Categories::GENERAL);
     }
 
@@ -421,10 +421,10 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
       if (varindex_x != -1 && varindex_y != -1) {
         std::vector<std::string> variableNames;
-        variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
-        variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
+        variableNames.push_back(cdfObject->variables[varindex_x]->name);
+        variableNames.push_back(cdfObject->variables[varindex_y]->name);
         CREPORT_INFO_NODOC("Detected standard name wind variables.", CReportMessage::Categories::GENERAL);
-        addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
+        addXMLLayerToConfig(srvParam, cdfObject, variableNames, "derived", srvParam->internalAutoResourceLocation);
         varindex_x = -1;
         varindex_y = -1;
       }
@@ -440,7 +440,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
     stringToAdd += "&amp;";
     onlineResource += stringToAdd;
-    srvParam->setOnlineResource(onlineResource.c_str());
+    srvParam->setOnlineResource(onlineResource);
     // CDBDebug("OGC REQUEST RESOURCE %s",srvParam->internalAutoResourceLocation.c_str());//,srvParam->autoResourceLocation.c_str(),);
 
 #ifdef MEASURETIME
@@ -450,35 +450,35 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
   return 0;
 };
 
-void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject *cdfObject, std::vector<std::string> *variableNames, const char *group, const char *location) {
+void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject *cdfObject, const std::vector<std::string> &variableNames, const std::string &group, const std::string &location) {
   CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
 
   xmleLayer->attr.type = ("database");
-  xmleFilePath->elementValue = (location);
+  xmleFilePath->elementValue = location;
   xmleFilePath->attr.filter = ("");
 
-  if (group != NULL) {
+  if (!group.empty()) {
     CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
-    xmleGroup->attr.value = (group);
+    xmleGroup->attr.value = group;
     xmleLayer->Group.push_back(xmleGroup);
   }
 
-  for (size_t j = 0; j < variableNames->size(); j++) {
+  for (size_t j = 0; j < variableNames.size(); j++) {
     CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
-    xmleVariable->elementValue = ((*variableNames)[j].c_str());
+    xmleVariable->elementValue = variableNames[j];
     xmleLayer->Variable.push_back(xmleVariable);
   }
 
-  if (variableNames->size() > 0) {
-    CDF::Variable *variable = cdfObject->getVariableNE((*variableNames)[0].c_str());
+  if (variableNames.size() > 0) {
+    CDF::Variable *variable = cdfObject->getVariableNE(variableNames[0]);
     if (variable != NULL) {
       CDF::Attribute *featureType = cdfObject->getAttributeNE("featureType");
       if (featureType != NULL) {
         // TODO This must be accomplished with standard name / global attribute mappings
         if (featureType->toString() == "timeSeries" || featureType->toString() == "point") {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-          // CREPORT_INFO_NODOC((*variableNames)[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
+          // CREPORT_INFO_NODOC(variableNames[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->elementValue = ("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
@@ -510,8 +510,8 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     }
   }
 
-  if (variableNames->size() == 1) {
-    CDF::Variable *variable = cdfObject->getVariableNE((*variableNames)[0].c_str());
+  if (variableNames.size() == 1) {
+    CDF::Variable *variable = cdfObject->getVariableNE(variableNames[0]);
     if (variable != NULL) {
       CDF::Attribute *attribute = variable->getAttributeNE("standard_name");
       if (attribute != NULL) {
@@ -525,12 +525,12 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     }
   }
 
-  if (variableNames->size() == 2) {
+  if (variableNames.size() == 2) {
     std::string newName;
-    newName = CT::printf("%s + %s", (*variableNames)[0].c_str(), (*variableNames)[1].c_str());
+    newName = CT::printf("%s + %s", variableNames[0].c_str(), variableNames[1].c_str());
 
     CServerConfig::XMLE_Title *xmleTitle = new CServerConfig::XMLE_Title();
-    xmleTitle->elementValue = (newName.c_str());
+    xmleTitle->elementValue = newName;
     xmleLayer->Title.push_back(xmleTitle);
 
     CServerConfig::XMLE_Name *xmleName = new CServerConfig::XMLE_Name();
@@ -538,7 +538,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     CT::replaceSelf(newName, "+", "and");
     CT::replaceSelf(newName, " ", "_");
     newName = CT::encodeURL(newName);
-    xmleName->elementValue = (newName.c_str());
+    xmleName->elementValue = newName;
     xmleLayer->Name.push_back(xmleName);
     CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
     CREPORT_INFO_NODOC("Exactly two variables: Assuming wind and setting render method to nearestpoint. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
@@ -554,10 +554,10 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
       CServerConfig::XMLE_ImageText *xmleImageText = new CServerConfig::XMLE_ImageText();
       xmleLayer->ImageText.push_back(xmleImageText);
       if (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.empty() == false) {
-        xmleImageText->elementValue = (srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue.c_str());
+        xmleImageText->elementValue = srvParam->cfg->AutoResource[0]->ImageText[0]->elementValue;
       }
       if (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.empty() == false) {
-        xmleImageText->attr.attribute = (srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
+        xmleImageText->attr.attribute = srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute;
       }
     }
   }

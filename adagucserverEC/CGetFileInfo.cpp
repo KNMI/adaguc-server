@@ -24,9 +24,9 @@ std::string CGetFileInfo::getLayersForFile(const char *filename) {
 
       CDF::Variable *var = cdfObject->getVariableThrows(variableList[j].c_str());
 
-      std::string name = variableList[j].c_str();
+      std::string name = variableList[j];
 
-      std::string title = variableList[j].c_str();
+      std::string title = variableList[j];
 
       // std::string filePath = makeCleanPath(filename);
       // filePath.setSize(filePath.lastIndexOf("/")+1);

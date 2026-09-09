@@ -383,8 +383,7 @@ int CDFNetCDFReader::readDimensions(int groupId, std::string &groupName) {
       CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq_dim: ", status);
       return 1;
     }
-    std::string name = groupName.c_str();
-    name += flatname;
+    std::string name = groupName + flatname;
     try {
       CDF::Dimension *existingDim = cdfObject->getDimensionThrows(name.c_str());
       // Only add non existing variables;
@@ -556,8 +555,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       return 1;
     }
 
-    std::string name = groupName.c_str();
-    name += flatname;
+    std::string name = groupName + flatname;
 
     //     CDBDebug("%s Numdims NC : %d",name.c_str(),ndims);
 

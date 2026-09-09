@@ -22,7 +22,7 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, GeoParameters &ge
 
   // Draw text
   std::string units = "";
-  std::string projection = geoParams.crs.c_str();
+  std::string projection = geoParams.crs;
   if (projection == "EPSG:3411") units = "meter";
   if (projection == "EPSG:3412") units = "meter";
   if (projection == "EPSG:3575") units = "meter";
