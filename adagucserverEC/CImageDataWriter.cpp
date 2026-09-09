@@ -524,7 +524,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
 #endif
     if (isProfileData) {
-      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSource, dX, dY, &eProfileJson);
+      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSource, dX, dY, eProfileJson);
       if (status != 0) {
         CDBError("CMakeEProfile::MakeEProfile failed");
         return status;

@@ -682,7 +682,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         projectionVar->name = ("customgridprojection");
         cdfObject0->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";

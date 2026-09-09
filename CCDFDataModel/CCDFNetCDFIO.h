@@ -56,7 +56,7 @@ private:
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 
-  int _findNCGroupIdForCDFVariable(std::string *varName);
+  int _findNCGroupIdForCDFVariable(const std::string &varName);
 
 public:
   CDFNetCDFReader();

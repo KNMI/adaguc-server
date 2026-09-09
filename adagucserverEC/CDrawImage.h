@@ -150,7 +150,7 @@ public:
   int getWidth();
   int getHeight();
 
-  void getHexColorForColorIndex(std::string *hexValue, int colorIndex);
+  void getHexColorForColorIndex(std::string &hexValue, int colorIndex);
   void setText(const char *text, int x, int y, int color);
   void setText(const char *text, int x, int y, CColor color);
   // void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);

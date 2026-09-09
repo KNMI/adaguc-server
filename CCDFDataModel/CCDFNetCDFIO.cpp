@@ -88,7 +88,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     int dimids[NC_MAX_VAR_DIMS];
     // bool isDimension;
     for (int j = 0; j < nVars; j++) {
-      int groupId = _findNCGroupIdForCDFVariable(&var->name);
+      int groupId = _findNCGroupIdForCDFVariable(var->name);
       if (groupId == -1) {
         CDBError("_findNCGroupIdForCDFVariable for %s = -1", var->name.c_str());
         return 1;
@@ -105,7 +105,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 #ifdef CCDFNETCDFIO_DEBUG
   CDBDebug("reading %s with id %d from file %s", var->name.c_str(), var->id, fileName.c_str());
 #endif
-  int varGroupId = _findNCGroupIdForCDFVariable(&var->name);
+  int varGroupId = _findNCGroupIdForCDFVariable(var->name);
   if (varGroupId == -1) {
     CDBError("_findNCGroupIdForCDFVariable for %s = -1", var->name.c_str());
     return 1;
@@ -461,8 +461,8 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
   return 0;
 }
 
-int CDFNetCDFReader::_findNCGroupIdForCDFVariable(std::string *varName) {
-  auto paths = CT::split(*varName, CDFNetCDFGroupSeparator);
+int CDFNetCDFReader::_findNCGroupIdForCDFVariable(const std::string &varName) {
+  auto paths = CT::split(varName, CDFNetCDFGroupSeparator);
   if (paths.size() <= 1) {
     return root_id;
   }

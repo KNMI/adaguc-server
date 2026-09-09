@@ -31,7 +31,7 @@ namespace CDF {
   private:
     void allocateData(size_t size);
     void freeData();
-    int _getDataAsString(std::string *out);
+    int _getDataAsString(std::string &out);
 
   public:
     ~Attribute();

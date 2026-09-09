@@ -369,7 +369,7 @@ int CProj4ToCF::convertBackAndFort(const char *projString, CDF::Variable *projec
   }
 
   std::string dumpString = "";
-  CDF::_dump(projectionVariable, &dumpString, CCDFDATAMODEL_DUMP_STANDARD);
+  CDF::_dump(projectionVariable, dumpString, CCDFDATAMODEL_DUMP_STANDARD);
   CDBDebug("\n%s", dumpString.c_str());
 
   std::string projCTString = convertCFToProj(projectionVariable);

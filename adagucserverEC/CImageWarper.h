@@ -105,7 +105,7 @@ public:
   int reprojfromLatLon(double &dfx, double &dfy);
 
   int reprojToLatLon(double &dfx, double &dfy);
-  int decodeCRS(std::string *outputCRS, const std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
+  int decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int findExtent(CDataSource *dataSource, double *dfBBOX);
   bool isProjectionRequired() { return requireReprojection; }
   /**

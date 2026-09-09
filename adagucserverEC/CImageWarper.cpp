@@ -242,20 +242,16 @@ int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
   return 0;
 }
 
-int CImageWarper::decodeCRS(std::string *outputCRS, const std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
+int CImageWarper::decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
   if (prj == NULL) {
     CDBError("decodeCRS: prj==NULL");
     return 1;
   }
-  if (&(*prj) == NULL) {
-    CDBError("decodeCRS: prj==NULL");
-    return 1;
-  }
-  *outputCRS = *inputCRS;
+  outputCRS = inputCRS;
   dMaxExtentDefined = 0;
   for (size_t j = 0; j < (*prj).size(); j++) {
-    if (*outputCRS == (*prj)[j]->attr.id) {
-      *outputCRS = (*prj)[j]->attr.proj4;
+    if (outputCRS == (*prj)[j]->attr.id) {
+      outputCRS = (*prj)[j]->attr.proj4;
       if ((*prj)[j]->LatLonBox.size() == 1) {
         dMaxExtentDefined = 1;
         dfMaxExtent[0] = (*prj)[j]->LatLonBox[0]->attr.minx;
@@ -266,8 +262,8 @@ int CImageWarper::decodeCRS(std::string *outputCRS, const std::string *inputCRS,
       break;
     }
   }
-  if (CT::startsWith(*outputCRS, "PROJ4:")) {
-    *outputCRS = outputCRS->substr(6);
+  if (CT::startsWith(outputCRS, "PROJ4:")) {
+    outputCRS = outputCRS.substr(6);
 
     CDBDebug("!");
   }
@@ -308,7 +304,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   std::tie(sourceProjectionUndec, std::ignore) = fixProjection(sourceProjectionUndec);
 
   std::string sourceProjection;
-  if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
+  if (decodeCRS(sourceProjection, sourceProjectionUndec, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }
@@ -318,7 +314,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
 
   dMaxExtentDefined = 0;
-  if (decodeCRS(&destinationCRS, &_GeoDest.crs, _prj) != 0) {
+  if (decodeCRS(destinationCRS, _GeoDest.crs, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }

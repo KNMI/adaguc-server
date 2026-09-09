@@ -72,9 +72,9 @@ int CRequest::process_wms_getmetadata_request() { return process_all_layers(); }
 
 CServerParams *CRequest::getServerParams() { return srvParam; }
 
-int CRequest::generateGetReferenceTimesDoc(std::string *result, CDataSource *dataSource) {
+int CRequest::generateGetReferenceTimesDoc(std::string &result, CDataSource *dataSource) {
   auto refTimeList = getReferenceTimes(*dataSource);
-  *result = CT::printf("[\"%s\"]", CT::join(refTimeList).c_str());
+  result = CT::printf("[\"%s\"]", CT::join(refTimeList).c_str());
   return 0;
 }
 
@@ -98,7 +98,7 @@ int CRequest::generateOGCGetCapabilities(std::string &XMLdocument) {
 int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
   std::string XMLdocument;
 
-  int status = generateGetReferenceTimesDoc(&XMLdocument, dataSource);
+  int status = generateGetReferenceTimesDoc(XMLdocument, dataSource);
 
   if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
 

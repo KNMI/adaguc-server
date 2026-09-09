@@ -302,7 +302,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
         projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";

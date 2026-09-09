@@ -40,12 +40,12 @@
 
 namespace CDF {
 
-  void _dump(CDFObject *cdfObject, std::string *dumpString, int returnType);
-  void _dump(CDF::Variable *cdfVariable, std::string *dumpString, int returnType);
+  void _dump(CDFObject *cdfObject, std::string &dumpString, int returnType);
+  void _dump(CDF::Variable *cdfVariable, std::string &dumpString, int returnType);
   std::string dump(CDFObject *cdfObject);
   std::string dump(CDF::Variable *cdfVariable);
   std::string dumpAsJSON(CDFObject *cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, std::string *dumpString, int returnType);
+  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, std::string &dumpString, int returnType);
 
 }; // namespace CDF
 

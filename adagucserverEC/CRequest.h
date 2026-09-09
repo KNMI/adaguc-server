@@ -41,7 +41,7 @@ private:
 
   int generateOGCGetCapabilities(std::string &XMLdocument);
   int generateGetReferenceTimes(CDataSource *dataSource);
-  int generateGetReferenceTimesDoc(std::string *result, CDataSource *dataSource);
+  int generateGetReferenceTimesDoc(std::string &result, CDataSource *dataSource);
   int generateOGCDescribeCoverage(std::string &XMLdocument);
   void autoDetectBBOX();
   int addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex);

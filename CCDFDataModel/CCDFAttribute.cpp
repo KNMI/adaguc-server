@@ -102,78 +102,78 @@ int CDF::Attribute::setString(const char *dataToSet) {
   return 0;
 }
 
-int CDF::Attribute::_getDataAsString(std::string *out) {
-  *out = "";
+int CDF::Attribute::_getDataAsString(std::string &out) {
+  out = "";
   if (type == CDF_CHAR) {
-    out->assign((const char *)data, length);
-    out->resize(strlen(out->c_str()));
+    out.assign((const char *)data, length);
+    out.resize(strlen(out.c_str()));
     return 0;
   }
   if (type == CDF_BYTE)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%d", ((char *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%d", ((char *)data)[n]);
     }
   if (type == CDF_UBYTE)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%u", ((unsigned char *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%u", ((unsigned char *)data)[n]);
     }
 
   if (type == CDF_INT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%d", ((int *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%d", ((int *)data)[n]);
     }
   if (type == CDF_UINT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%u", ((unsigned int *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%u", ((unsigned int *)data)[n]);
     }
 
   if (type == CDF_INT64)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%ld", ((long *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%ld", ((long *)data)[n]);
     }
   if (type == CDF_UINT64)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%lu", ((unsigned long *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%lu", ((unsigned long *)data)[n]);
     }
 
   if (type == CDF_SHORT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%d", ((short *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%d", ((short *)data)[n]);
     }
   if (type == CDF_USHORT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%u", ((unsigned short *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%u", ((unsigned short *)data)[n]);
     }
 
   if (type == CDF_FLOAT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%f", ((float *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%f", ((float *)data)[n]);
     }
   if (type == CDF_DOUBLE)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%f", ((double *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%f", ((double *)data)[n]);
     }
   if (type == CDF_STRING)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) *out += " ";
-      CT::printfconcat(*out, "%s", ((char **)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%s", ((char **)data)[n]);
     }
   return 0;
 }
 
 std::string CDF::Attribute::toString() {
   std::string out = "";
-  _getDataAsString(&out);
+  _getDataAsString(out);
   return out;
 }
 

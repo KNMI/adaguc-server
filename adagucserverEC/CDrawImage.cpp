@@ -408,10 +408,10 @@ const char *toHex8(char *data, unsigned char hex) {
   return data;
 }
 
-void CDrawImage::getHexColorForColorIndex(std::string *hexValue, int color) {
+void CDrawImage::getHexColorForColorIndex(std::string &hexValue, int color) {
   if (currentLegend == NULL) return;
   char data[3];
-  *hexValue = CT::printf("#%s%s%s", toHex8(data, currentLegend->CDIred[color]), toHex8(data, currentLegend->CDIgreen[color]), toHex8(data, currentLegend->CDIblue[color]));
+  hexValue = CT::printf("#%s%s%s", toHex8(data, currentLegend->CDIred[color]), toHex8(data, currentLegend->CDIgreen[color]), toHex8(data, currentLegend->CDIblue[color]));
 }
 
 void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b) { cairo->pixel_blend(x, y, r, g, b, 255); }
