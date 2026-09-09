@@ -145,6 +145,28 @@ def test_collections(client: TestClient):
     }
 
 
+def test_hrefs(client: TestClient):
+    """Test if all hrefs from a collection don't return 404"""
+    resp = client.get("/edr/collections")
+    collection = next((c for c in resp.json()["collections"] if c["id"] == "adaguc.tests.arcus_uwcw.hagl_member"))
+
+    urls = [links["href"] for links in collection["links"]]
+    urls += [query["link"]["href"] for query in collection["data_queries"].values()]
+    urls = sorted(set(urls))
+
+    assert urls == [
+        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member",
+        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/cube",
+        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances",
+        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/locations",
+        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/position",
+    ]
+
+    for url in urls:
+        resp = client.get(url)
+        assert resp.status_code != 404
+
+
 def test_coll_multi_dim_position_single_coverage(client: TestClient):
     # Querying a single datetime and single Z results in a Coverage
     resp = client.get(
