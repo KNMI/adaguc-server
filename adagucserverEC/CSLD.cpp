@@ -257,7 +257,7 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
     CXMLParserElement &colorMapEntry = colorMapEntries.at(i);
 
     CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-    shadeInterval->attr.min = colorMapEntry.getAttrValue("quantity");
+    shadeInterval->attr.min = atof(colorMapEntry.getAttrValue("quantity").c_str());
 
     // Set the max min value
     CT::string max;
@@ -267,10 +267,10 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
       // Get the quantity of the next colorMapEntry.
       max = colorMapEntries.at(i + 1).getAttrValue("quantity");
       // Set the quantity value as max on ShadeInterval
-      shadeInterval->attr.max = max;
+      shadeInterval->attr.max = atof(max.c_str());
     } else {
       if (myOwnStyle->Max.size() == 1) {
-        shadeInterval->attr.max = myOwnStyle->Max[0]->elementValue;
+        shadeInterval->attr.max = atof(myOwnStyle->Max[0]->elementValue.c_str());
       } else {
         CDBError("Missing element %s for setting the last ColorMapEntry Max attribute", RULE_MAX_SCALE_DENOMINATOR);
         return 1;
