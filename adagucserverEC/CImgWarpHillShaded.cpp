@@ -111,7 +111,7 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
 }
 
 void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  CT::string color;
+  std::string color;
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();

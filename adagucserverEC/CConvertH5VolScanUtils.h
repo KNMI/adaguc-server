@@ -34,10 +34,10 @@
 int checkIfIsH5VolScan(CDFObject *cdfObject);
 std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObject, int scan);
 std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject);
-CT::string getRadarStartTime(CDFObject *cdfObject);
-std::vector<CT::string> getScanParams(CDFObject *cdfObject);
-std::vector<CT::string> getUnits(CDFObject *cdfObject);
-bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string param);
-CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string param);
-std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, CT::string param);
+std::string getRadarStartTime(CDFObject *cdfObject);
+std::vector<std::string> getScanParams(CDFObject *cdfObject);
+std::vector<std::string> getUnits(CDFObject *cdfObject);
+bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, std::string param);
+CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, std::string param);
+std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, std::string param);
 #endif

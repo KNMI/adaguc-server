@@ -8,23 +8,22 @@
 int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
   const char *pszQueryString = getenv("QUERY_STRING");
   if (pszQueryString != nullptr) {
-    CT::string queryString(pszQueryString);
-    queryString.decodeURLSelf();
-    auto parameters = queryString.split("&");
+    std::string queryString(pszQueryString);
+    queryString = CT::decodeURL(queryString);
+    auto parameters = CT::split(queryString, "&");
     for (size_t j = 0; j < parameters.size(); j++) {
-      CT::string value0Cap;
-      CT::string values[2];
-      int equalPos = parameters[j].indexOf("="); // split("=");
+      std::string value0Cap;
+      std::string values[2];
+      int equalPos = CT::indexOf(parameters[j], "="); // split("=");
       if (equalPos != -1) {
-        values[0] = parameters[j].substring(0, equalPos);
+        values[0] = CT::substring(parameters[j], 0, equalPos);
         values[1] = parameters[j].c_str() + equalPos + 1;
       } else {
         values[0] = parameters[j].c_str();
         values[1] = "";
       }
-      value0Cap = (&values[0]);
-      value0Cap.toUpperCaseSelf();
-      if (value0Cap.equals("DATASET")) {
+      value0Cap = CT::toUpperCase(values[0]);
+      if (value0Cap == "DATASET") {
         if (srvParam.datasetLocation.empty()) {
 
           srvParam.datasetLocation = (values[1].c_str());

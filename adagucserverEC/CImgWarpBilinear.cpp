@@ -586,80 +586,80 @@ int CImgWarpBilinear::set(const char *pszSettings) {
 
   if (pszSettings == NULL) return 0;
   contourDefinitions.clear();
-  CT::string settings(pszSettings);
+  std::string settings(pszSettings);
   if (settings.empty()) return 0;
 
-  auto nodes = settings.split(";");
+  auto nodes = CT::split(settings, ";");
   for (auto &node: nodes) {
-    auto values = node.split("=");
+    auto values = CT::split(node, "=");
     if (values.size() < 2) continue;
 
-    if (values[0].equals("drawMap")) {
+    if (values[0] == "drawMap") {
       if (values[1] == "true") drawMap = true;
       if (values[1] == "false") drawMap = false;
     }
-    if (values[0].equals("drawContour")) {
+    if (values[0] == "drawContour") {
       if (values[1] == "true") enableContour = true;
       if (values[1] == "false") enableContour = false;
     }
-    if (values[0].equals("drawShaded")) {
+    if (values[0] == "drawShaded") {
       if (values[1] == "true") enableShade = true;
       if (values[1] == "false") enableShade = false;
     }
-    if (values[0].equals("drawVector")) {
+    if (values[0] == "drawVector") {
       if (values[1] == "true") enableVector = true;
       if (values[1] == "false") enableVector = false;
     }
-    if (values[0].equals("drawBarb")) {
+    if (values[0] == "drawBarb") {
       if (values[1] == "true") enableBarb = true;
       if (values[1] == "false") enableBarb = false;
     }
 
-    if (values[0].equals("shadeInterval")) {
-      shadeInterval = values[1].toFloat();
+    if (values[0] == "shadeInterval") {
+      shadeInterval = atof(values[1].c_str());
     }
-    if (values[0].equals("smoothingFilter")) {
-      smoothingFilter = values[1].toInt();
+    if (values[0] == "smoothingFilter") {
+      smoothingFilter = atoi(values[1].c_str());
       if (smoothingFilter < 0 || smoothingFilter > 20) {
         CDBWarning("invalid value given for smoothingFilter %s", pszSettings);
       }
     }
 
-    if (values[0].equals("contourBigInterval")) {
-      float f = values[1].toFloat();
+    if (values[0] == "contourBigInterval") {
+      float f = atof(values[1].c_str());
       if (f > 0) {
         contourDefinitions.push_back(ContourDefinition(1.4, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
       }
     }
 
-    if (values[0].equals("contourSmallInterval")) {
-      float f = values[1].toFloat();
+    if (values[0] == "contourSmallInterval") {
+      float f = atof(values[1].c_str());
       if (f > 0) {
         contourDefinitions.push_back(ContourDefinition(0.35, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
       }
     }
 
-    if (values[0].equals("shading")) {
+    if (values[0] == "shading") {
       CColor fillcolor = CColor(0, 0, 0, 0);
       CColor bgColor = CColor(0, 0, 0, 0);
       float max = 0, min = 0;
       bool foundColor = false;
       bool hasBGColor = false;
 
-      auto shadeSettings = values[1].split("$");
+      auto shadeSettings = CT::split(values[1], "$");
       for (auto &shadeSetting: shadeSettings) {
-        auto kvp = shadeSetting.split("(");
+        auto kvp = CT::split(shadeSetting, "(");
         if (kvp.size() < 2) continue;
-        if (kvp[0].equals("min")) min = kvp[1].toFloat();
-        if (kvp[0].equals("max")) max = kvp[1].toFloat();
+        if (kvp[0] == "min") min = atof(kvp[1].c_str());
+        if (kvp[0] == "max") max = atof(kvp[1].c_str());
 
-        if (kvp[0].equals("fillcolor")) {
-          kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
+        if (kvp[0] == "fillcolor") {
+          kvp[1].resize(kvp[1].length() - 1); // Remove trailing bracket (')')
           fillcolor = CColor(kvp[1].c_str());
           foundColor = true;
         }
-        if (kvp[0].equals("bgcolor")) {
-          kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
+        if (kvp[0] == "bgcolor") {
+          kvp[1].resize(kvp[1].length() - 1); // Remove trailing bracket (')')
           CDBDebug("Found bgcolor");
           bgColor = CColor(kvp[1].c_str());
           hasBGColor = true;
@@ -669,7 +669,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       shadeDefinitions.push_back(ShadeDefinition(min, max, fillcolor, foundColor, bgColor, hasBGColor));
     }
 
-    if (values[0].equals("contourline")) {
+    if (values[0] == "contourline") {
       float lineWidth = 1;
       CColor linecolor = CColor(0, 0, 0, 255);
       CColor textcolor = CColor(0, 0, 0, 255);
@@ -677,50 +677,50 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       float interval = 0;
       float fontSize = 0;
       float textStrokeWidth = 0;
-      CT::string textformat;
-      CT::string classes;
-      CT::string dashing;
+      std::string textformat;
+      std::string classes;
+      std::string dashing;
 
-      auto lineSettings = values[1].split("$");
+      auto lineSettings = CT::split(values[1], "$");
       for (auto &lineSetting: lineSettings) {
-        auto kvp = lineSetting.split("(");
+        auto kvp = CT::split(lineSetting, "(");
         if (kvp.size() < 2) continue;
 
-        int endOfKVP = kvp[1].lastIndexOf(")");
+        int endOfKVP = CT::lastIndexOf(kvp[1], ")");
         if (endOfKVP != -1) {
-          kvp[1].setSize(endOfKVP);
+          kvp[1].resize(endOfKVP);
         }
 
-        if (kvp[0].equals("width")) lineWidth = kvp[1].toFloat();
-        if (kvp[0].equals("interval")) {
-          interval = kvp[1].toFloat();
+        if (kvp[0] == "width") lineWidth = atof(kvp[1].c_str());
+        if (kvp[0] == "interval") {
+          interval = atof(kvp[1].c_str());
         }
-        if (kvp[0].equals("classes")) {
+        if (kvp[0] == "classes") {
           classes = (kvp[1].c_str());
         }
-        if (kvp[0].equals("linecolor")) {
-          kvp[1].setSize(7);
+        if (kvp[0] == "linecolor") {
+          kvp[1].resize(7);
           linecolor = CColor(kvp[1].c_str());
         }
-        if (kvp[0].equals("textcolor")) {
-          kvp[1].setSize(7);
+        if (kvp[0] == "textcolor") {
+          kvp[1].resize(7);
           textcolor = CColor(kvp[1].c_str());
         }
-        if (kvp[0].equals("textstrokecolor")) {
-          kvp[1].setSize(7);
+        if (kvp[0] == "textstrokecolor") {
+          kvp[1].resize(7);
           textstrokecolor = CColor(kvp[1].c_str());
         }
-        if (kvp[0].equals("textformatting")) {
-          textformat.copy(kvp[1].c_str(), kvp[1].length());
+        if (kvp[0] == "textformatting") {
+          textformat.assign(kvp[1].c_str(), kvp[1].length());
         }
-        if (kvp[0].equals("dashing")) {
-          dashing.copy(kvp[1].c_str(), kvp[1].length());
+        if (kvp[0] == "dashing") {
+          dashing.assign(kvp[1].c_str(), kvp[1].length());
         }
-        if (kvp[0].equals("textsize")) {
-          fontSize = kvp[1].toFloat();
+        if (kvp[0] == "textsize") {
+          fontSize = atof(kvp[1].c_str());
         }
-        if (kvp[0].equals("textstrokewidth")) {
-          textStrokeWidth = kvp[1].toFloat();
+        if (kvp[0] == "textstrokewidth") {
+          textStrokeWidth = atof(kvp[1].c_str());
         }
       }
 
@@ -733,7 +733,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       }
     }
 
-    if (values[0].equals("drawGridVectors")) {
+    if (values[0] == "drawGridVectors") {
       drawGridVectors = values[1] == "true";
     }
   }
@@ -756,8 +756,8 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
                                                CColor textColor, CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth) {
 
   /* Draw text */
-  CT::string text;
-  text.print(contourDefinition->textFormat.c_str(), value);
+  std::string text;
+  text = CT::printf(contourDefinition->textFormat.c_str(), value);
 
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
   double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
@@ -1206,11 +1206,11 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     double *dashes = NULL;
     int numDashes = 0;
     if (contourDefinitions[j].dashing.length() > 0) {
-      auto stringDashes = contourDefinitions[j].dashing.split(",");
+      auto stringDashes = CT::split(contourDefinitions[j].dashing, ",");
       numDashes = stringDashes.size();
       dashes = new double[numDashes];
       for (int j = 0; j < numDashes; j++) {
-        dashes[j] = stringDashes[j].toDouble();
+        dashes[j] = CT::toDouble(stringDashes[j]);
       }
     }
 

@@ -51,8 +51,8 @@ void writeLogFile4(const char *msg) {
 
 int CConvertTROPOMI::isThisTROPOMIData(CDFObject *cdfObject) {
   try {
-    if (cdfObject->getAttributeThrows("cdm_data_type")->toString().equals("Swath") == false) return 1;
-    if (cdfObject->getAttributeThrows("sensor")->toString().equals("TROPOMI") == false) return 1;
+    if (cdfObject->getAttributeThrows("cdm_data_type")->toString() != "Swath") return 1;
+    if (cdfObject->getAttributeThrows("sensor")->toString() != "TROPOMI") return 1;
   } catch (int e) {
     return 1;
   }
@@ -192,13 +192,13 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
     return 1;
   }
 
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->name.startsWith("PRODUCT/") && var->dimensionlinks.size() > 2) {
-        if (!var->name.equals("PRODUCT/longitude") && !var->name.equals("PRODUCT/latitude") && var->name.indexOf("bounds") == -1 && !var->name.equals("PRODUCT/time")) {
-          varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (CT::startsWith(var->name, "PRODUCT/") && var->dimensionlinks.size() > 2) {
+        if (var->name != "PRODUCT/longitude" && var->name != "PRODUCT/latitude" && CT::indexOf(var->name, "bounds") == -1 && var->name != "PRODUCT/time") {
+          varsToConvert.push_back(std::string(var->name.c_str()));
         }
       }
 
@@ -230,7 +230,7 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
 
     new2DVar->setType(swathVar->getType());
     new2DVar->name = swathVar->name.c_str();
-    swathVar->name.concat("_backup");
+    swathVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < swathVar->attributes.size(); j++) {
@@ -256,7 +256,7 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   //     new2DVar->dimensionlinks.push_back(dimX);
   //     new2DVar->setType(CDF_FLOAT);
   //     new2DVar->name="testno2";
-  //     CT::string data = CDF::dump(cdfObject);
+  //     std::string data = CDF::dump(cdfObject);
 
   // CDBDebug("%s",data.c_str());
   // writeLogFile4(data.c_str());
@@ -385,8 +385,8 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
 
     for (size_t d = 0; d < nrDataObjects; d++) {
       new2DVar[d] = dataSource->getDataObject(d)->cdfVariable;
-      CT::string origSwathName = new2DVar[d]->name.c_str();
-      origSwathName.concat("_backup");
+      std::string origSwathName = new2DVar[d]->name.c_str();
+      origSwathName += "_backup";
       pointVar[d] = dataSource->getDataObject(d)->cdfObject->getVariableNE(origSwathName.c_str());
       if (pointVar[d] == NULL) {
         CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());

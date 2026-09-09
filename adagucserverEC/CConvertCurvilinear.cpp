@@ -37,7 +37,7 @@ int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParam
     cdfObject->getVariableThrows("lon");
     cdfObject->getVariableThrows("lat");
     CDF::Attribute *adagucType = cdfObject->getAttributeNE("ADAGUC_DATATYPE");
-    if (adagucType != NULL && adagucType->toString().equals("ADAGUC_CURVILINEAR")) {
+    if (adagucType != NULL && adagucType->toString() == "ADAGUC_CURVILINEAR") {
       CDBDebug("Enforcing ADAGUC_TYPE ADAGUC_CURVILINEAR");
     } else {
       cdfObject->getDimensionThrows("bounds");
@@ -202,7 +202,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
   double *dfBBOX = getBBOXFromLatLonFields(swathMiddleLon, swathMiddleLat);
 
   // BBOX should be converted to projection of dataSource
-  //   CT::string proj4String = "+proj=utm +zone=31 +ellps=WGS84 +datum=WGS84 +units=m +no_defs ";
+  //   std::string proj4String = "+proj=utm +zone=31 +ellps=WGS84 +datum=WGS84 +units=m +no_defs ";
   //    if(dataSource->nativeProj4.length()>0){
   //      CImageWarper imageWarper;
   //      imageWarper.initreproj(proj4String.c_str(),NULL,NULL);
@@ -290,13 +290,13 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("wgs84") && !var->name.equals("epsg") && !var->name.equals("lon") && !var->name.equals("lat") &&
-          !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") && !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") &&
-          (var->name.indexOf("bnds") == -1)) {
+      if (var->name != "time2D" && var->name != "time" && var->name != "wgs84" && var->name != "epsg" && var->name != "lon" && var->name != "lat" &&
+          var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties" &&
+          (CT::indexOf(var->name, "bnds") == -1)) {
         if (var->dimensionlinks.size() >= 2) {
           int numDims = var->dimensionlinks.size();
 #ifdef CCONVERTCURVILINEAR_DEBUG
@@ -306,19 +306,18 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
           CDF::Variable *curviX = cdfObject->getVariableNE(var->dimensionlinks[numDims - 1]->name.c_str());
           CDF::Variable *curviY = cdfObject->getVariableNE(var->dimensionlinks[numDims - 2]->name.c_str());
           if (curviX == NULL && curviY == NULL) {
-            varsToConvert.push_back(CT::string(var->name.c_str()));
+            varsToConvert.push_back(std::string(var->name.c_str()));
           } else if (curviX->getSize() == 2 && curviY->getSize() == 2) {
-            varsToConvert.push_back(CT::string(var->name.c_str()));
+            varsToConvert.push_back(std::string(var->name.c_str()));
           } else {
-            CT::string xName = curviX->name.c_str();
-            xName.toUpperCaseSelf();
-            if (!xName.equals("X") && !xName.equals("LAT") && !xName.equals("ROW") && !xName.equals("COL")) {
-              varsToConvert.push_back(CT::string(var->name.c_str()));
+            std::string xName = CT::toUpperCase(curviX->name);
+            if (xName != "X" && xName != "LAT" && xName != "ROW" && xName != "COL") {
+              varsToConvert.push_back(std::string(var->name.c_str()));
             }
           }
         }
       }
-      if (var->name.equals("projection")) {
+      if (var->name == "projection") {
         var->setAttributeText("ADAGUC_SKIP", "true");
       }
     }
@@ -355,7 +354,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
 
     new2DVar->setType(swathVar->getType());
     new2DVar->name = swathVar->name.c_str();
-    swathVar->name.concat("_backup");
+    swathVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < swathVar->attributes.size(); j++) {
@@ -410,8 +409,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *swathVar;
-  CT::string origSwathName = new2DVar->name.c_str();
-  origSwathName.concat("_backup");
+  std::string origSwathName = new2DVar->name.c_str();
+  origSwathName += "_backup";
   swathVar = cdfObject->getVariableNE(origSwathName.c_str());
   if (swathVar == NULL) {
     CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());
@@ -426,7 +425,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
     start[dimInd] = 0;
     count[dimInd] = 1;
     stride[dimInd] = 1;
-    CT::string dimName = swathVar->dimensionlinks[dimInd]->name.c_str();
+    std::string dimName = swathVar->dimensionlinks[dimInd]->name.c_str();
 
     if (numDims - dimInd < 3) {
       start[dimInd] = 0;

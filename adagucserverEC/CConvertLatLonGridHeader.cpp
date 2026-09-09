@@ -127,13 +127,13 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->dimensionlinks.size() >= 2 && !var->name.equals("acquisition_time") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") &&
-          !var->name.equals("longitude") && !var->name.equals("latitude")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->dimensionlinks.size() >= 2 && var->name != "acquisition_time" && var->name != "time" && var->name != "lon" && var->name != "lat" &&
+          var->name != "longitude" && var->name != "latitude") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
     }
   }
@@ -188,7 +188,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
       // The newly allocated grid will always be a float grid and will be internally handled as a float
       destRegularGrid->setType(CDF_FLOAT);
       destRegularGrid->name = irregularGridVar->name.c_str();
-      irregularGridVar->name.concat("_backup");
+      irregularGridVar->name += "_backup";
 
       // Copy variable attributes
       for (size_t j = 0; j < irregularGridVar->attributes.size(); j++) {

@@ -54,7 +54,7 @@ void CDFObject::clear() {
 
 int CDFObject::open(const char *fileName) {
   // CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
-  if (currentFile.equals(fileName)) {
+  if (currentFile == fileName) {
     // CDBDebug("OK: Current file is already open");
     return 0;
   }
@@ -86,7 +86,7 @@ CDF::Variable *CDFObject::getVar(std::string name) {
   if (name == "NC_GLOBAL") {
     return this;
   }
-  auto it = std::find_if(variables.begin(), variables.end(), [&name](auto *a) { return a->name.equals(name); });
+  auto it = std::find_if(variables.begin(), variables.end(), [&name](auto *a) { return a->name == name; });
   return it != variables.end() ? *it : nullptr;
 }
 
@@ -114,22 +114,22 @@ CDF::Variable *CDFObject::getVariableThrows(std::string name) {
  * Fill in the data variable based on the value of a global attribute
  * 2019-09-24: for now it parses timestamps of Sun Sep 22 13:23:18 2019 to epoch time.
  */
-void ncmlHandletimeValueFromGlobalAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *cdfObject) {
+void ncmlHandletimeValueFromGlobalAttribute(xmlNode *cur_node, std::string NCMLVarName, CDFObject *cdfObject) {
   if (NCMLVarName.empty()) return;
   if (cur_node->properties->name != NULL) {
     xmlAttr *node = cur_node->properties;
-    CT::string timeValueFromGlobalAttribute;
-    CT::string attr_attribute;
+    std::string timeValueFromGlobalAttribute;
+    std::string attr_attribute;
     while (node != NULL) {
-      CT::string nodeName = (char *)node->name;
-      if (nodeName.equals("attribute")) attr_attribute = (char *)node->children->content;
+      std::string nodeName = (char *)node->name;
+      if (nodeName == "attribute") attr_attribute = (char *)node->children->content;
       node = node->next;
     }
     if (!attr_attribute.empty()) {
       try {
         CDF::Variable *variable = cdfObject->getVariableThrows(NCMLVarName.c_str());
         CDF::Attribute *attribute = cdfObject->getAttributeThrows(attr_attribute.c_str());
-        CT::string attributeValue = attribute->toString();
+        std::string attributeValue = attribute->toString();
         variable->allocateData(1);
         ((double *)variable->data)[0] = CTime::getEpochTimeFromDateString(attributeValue);
       } catch (...) {
@@ -138,11 +138,11 @@ void ncmlHandletimeValueFromGlobalAttribute(xmlNode *cur_node, CT::string NCMLVa
   }
 }
 
-void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *cdfObject) {
+void ncmlHandleAttribute(xmlNode *cur_node, std::string NCMLVarName, CDFObject *cdfObject) {
   if (cur_node->properties->name != NULL) {
     xmlAttr *node = cur_node->properties;
     char *pszAttributeType = NULL, *pszAttributeName = NULL, *pszAttributeValue = NULL;
-    CT::string timeValueFromGlobalAttribute;
+    std::string timeValueFromGlobalAttribute;
     char *pszOrgName = NULL;
     while (node != NULL) {
       if (strncmp("name", (char *)node->name, 4) == 0) pszAttributeName = (char *)node->children->content;
@@ -173,8 +173,8 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
           if (strncmp("String", pszAttributeType, 6) == 0) {
             var->setAttribute(pszAttributeName, attrType, pszAttributeValue, strlen(pszAttributeValue));
           } else {
-            CT::string attributeValue = pszAttributeValue;
-            auto attributeValues = attributeValue.split(",");
+            std::string attributeValue = pszAttributeValue;
+            auto attributeValues = CT::split(attributeValue, ",");
             auto attrLen = attributeValues.size();
             double *attributeValuesAsDouble = new double[attrLen];
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
@@ -205,13 +205,13 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
   }
 }
 
-CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
-  CT::string NCMLVarName = "";
+std::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
+  std::string NCMLVarName = "";
   if (cur_node->properties->name != NULL) {
     if (cur_node->properties->children->content != NULL) {
       xmlAttr *node = cur_node->properties;
       char *pszOrgName = NULL, *pszName = NULL, *pszType = NULL;
-      CT::string shape;
+      std::string shape;
       while (node != NULL) {
         if (strncmp("name", (char *)node->name, 4) == 0) {
           pszName = (char *)node->children->content;
@@ -245,7 +245,7 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
         }
         /* set shape */
         if (!shape.empty()) {
-          std::vector<CT::string> dims = shape.split(" ");
+          std::vector<std::string> dims = CT::split(shape, " ");
           var->dimensionlinks.clear();
           for (size_t d = 0; d < dims.size(); d++) {
             try {
@@ -260,12 +260,12 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
       if (cur_node->type == XML_ELEMENT_NODE && cur_node->name != NULL) {
         for (xmlNode *attributeNode = cur_node->children; attributeNode; attributeNode = attributeNode->next) {
           if (attributeNode->type == XML_ELEMENT_NODE && attributeNode->name != NULL) {
-            CT::string nodeName = (char *)attributeNode->name;
+            std::string nodeName = (char *)attributeNode->name;
             if (strncmp("attribute", (char *)attributeNode->name, 9) == 0) {
               ncmlHandleAttribute(attributeNode, NCMLVarName, cdfObject);
             }
             /* timeValueFromGlobalAttribute */
-            if (nodeName.equals("timeValueFromGlobalAttribute")) {
+            if (nodeName == "timeValueFromGlobalAttribute") {
               ncmlHandletimeValueFromGlobalAttribute(attributeNode, NCMLVarName, cdfObject);
             }
           }
@@ -273,7 +273,7 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
       }
     }
   }
-  return CT::string(NCMLVarName);
+  return std::string(NCMLVarName);
 }
 
 void ncmlHandleDimension(xmlNode *cur_node, CDFObject *cdfObject) {
@@ -432,7 +432,7 @@ int CDFObject::getVariableIndexThrows(const char *name) {
     throw(CDF_E_VARNOTFOUND);
   }
   for (size_t j = 0; j < variables.size(); j++) {
-    if (variables[j]->name.equals(name)) {
+    if (variables[j]->name == name) {
       return j;
     }
   }
@@ -444,7 +444,7 @@ int CDFObject::getVariableIndexNE(const char *name) {
     return -1;
   }
   for (size_t j = 0; j < variables.size(); j++) {
-    if (variables[j]->name.equals(name)) {
+    if (variables[j]->name == name) {
       return j;
     }
   }
@@ -460,7 +460,7 @@ CDF::Variable *CDFObject::addVariable(CDF::Variable *var) {
 
 int CDFObject::removeVariable(const char *name) {
   for (size_t j = 0; j < variables.size(); j++) {
-    if (variables[j]->name.equals(name)) {
+    if (variables[j]->name == name) {
       delete variables[j];
       variables[j] = NULL;
       variables.erase(variables.begin() + j);
@@ -471,7 +471,7 @@ int CDFObject::removeVariable(const char *name) {
 
 int CDFObject::removeDimension(const char *name) {
   for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
+    if (dimensions[j]->name == name) {
       delete dimensions[j];
       dimensions[j] = NULL;
       dimensions.erase(dimensions.begin() + j);
@@ -487,7 +487,7 @@ CDF::Dimension *CDFObject::addDimension(CDF::Dimension *dim) {
 }
 CDF::Dimension *CDFObject::getDimensionThrows(const char *name) {
   for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
+    if (dimensions[j]->name == name) {
       return dimensions[j];
     }
   }
@@ -496,12 +496,12 @@ CDF::Dimension *CDFObject::getDimensionThrows(const char *name) {
 }
 
 CDF::Dimension *CDFObject::getDim(std::string name) {
-  auto it = std::find_if(dimensions.begin(), dimensions.end(), [&name](auto *a) { return a->name.equals(name); });
+  auto it = std::find_if(dimensions.begin(), dimensions.end(), [&name](auto *a) { return a->name == name; });
   return it != dimensions.end() ? *it : nullptr;
 }
 
 CDF::Dimension *CDFObject::getDimOrCreate(const std::string &name, size_t length) {
-  auto it = std::find_if(dimensions.begin(), dimensions.end(), [&name](auto *a) { return a->name.equals(name); });
+  auto it = std::find_if(dimensions.begin(), dimensions.end(), [&name](auto *a) { return a->name == name; });
   if (it == dimensions.end()) {
     auto newDim = new CDF::Dimension(name, length);
     addDimension(newDim);
@@ -518,7 +518,7 @@ CDF::Dimension *CDFObject::getDimensionNE(std::string name) { return getDim(name
 
 CDF::Dimension *CDFObject::getDimensionIgnoreCaseThrows(const char *name) {
   for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equalsIgnoreCase(name)) {
+    if (CT::equalsIgnoreCase(dimensions[j]->name, name)) {
       return dimensions[j];
     }
   }

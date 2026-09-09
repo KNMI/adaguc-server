@@ -151,7 +151,7 @@ public:
    * @return time units for this datasource
    */
   // DEPRECATED
-  CT::string getTimeUnit(CDataSource *dataSource);
+  std::string getTimeUnit(CDataSource *dataSource);
 
   /**
    * Possible dimension types

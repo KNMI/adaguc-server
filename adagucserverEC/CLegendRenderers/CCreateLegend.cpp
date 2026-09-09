@@ -189,8 +189,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
       }
 
       std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(0)->statusFlagList, value);
-      CT::string legendMessage;
-      legendMessage.print("%d) %s", (int)value, flagMeaning.c_str());
+      std::string legendMessage;
+      legendMessage = CT::printf("%d) %s", (int)value, flagMeaning.c_str());
       legendImage->setText(legendMessage.c_str(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, 248);
     }
   }

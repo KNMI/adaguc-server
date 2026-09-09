@@ -34,15 +34,15 @@
 class CRequest {
 private:
   std::vector<CDataSource *> dataSources;
-  CT::string Version;
-  CT::string Exceptions;
+  std::string Version;
+  std::string Exceptions;
   CServerParams *srvParam;
-  std::vector<CT::string *> queryDims;
+  std::vector<std::string *> queryDims;
 
-  int generateOGCGetCapabilities(CT::string *XMLdocument);
+  int generateOGCGetCapabilities(std::string *XMLdocument);
   int generateGetReferenceTimes(CDataSource *dataSource);
-  int generateGetReferenceTimesDoc(CT::string *result, CDataSource *dataSource);
-  int generateOGCDescribeCoverage(CT::string *XMLdocument);
+  int generateGetReferenceTimesDoc(std::string *result, CDataSource *dataSource);
+  int generateOGCDescribeCoverage(std::string *XMLdocument);
   void autoDetectBBOX();
   int addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex);
   int determineTypesForDataSources();
@@ -81,7 +81,7 @@ public:
   int process_all_layers();
   int process_wms_getreferencetimes_request();
   int process_wms_gethistogram_request();
-  int updatedb(CT::string tailPath, CT::string layerPathToScan, int scanFlags, CT::string layerName);
+  int updatedb(std::string tailPath, std::string layerPathToScan, int scanFlags, std::string layerName);
 
   int runRequest();
 

@@ -394,14 +394,14 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   // Check which dims are iterative
   for (size_t j = 0; j < dstDims.size(); j++) {
     // Test if the dimensions are the same
-    if (!dstDims[j]->name.equals((srcDims)[j]->name.c_str())) {
+    if (dstDims[j]->name != (srcDims)[j]->name) {
       CDBError("setCDFReaderForDim: Dimension names are unequal: %s !=%s ", dstDims[j]->name.c_str(), srcDims[j]->name.c_str());
       throw(CDF_E_ERROR);
     }
     // TODO Also check dimension units
     // Check which dimension is not yet iterative.
     if (dstDims[j]->isIterative == false) {
-      if (srcDims[j]->name.equals(dimName)) {
+      if (srcDims[j]->name == dimName) {
         dstDims[j]->isIterative = true;
       }
     }
@@ -457,7 +457,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   bool isTimeDim = false;
 
   try {
-    if (srcDimVar->getAttributeThrows("standard_name")->toString().equals("time")) {
+    if (srcDimVar->getAttributeThrows("standard_name")->toString() == "time") {
       isTimeDim = true;
     }
   } catch (int e) {
@@ -472,15 +472,15 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   }
 
   for (size_t indimsize = 0; indimsize < srcDimVar->getSize(); indimsize++) {
-    CT::string srcDimValue;
+    std::string srcDimValue;
 
     if (isTimeDim) {
       srcDimValue = ccdftimesrc->dateToString(ccdftimesrc->getDate(srcDimVar->getDataAt<double>(indimsize)));
     } else {
       if (srcDimVar->getType() == CDF_STRING) {
-        srcDimValue.print("%s", ((const char **)srcDimVar->data)[indimsize]);
+        srcDimValue = CT::printf("%s", ((const char **)srcDimVar->data)[indimsize]);
       } else {
-        srcDimValue.print("%f", srcDimVar->getDataAt<double>(indimsize));
+        srcDimValue = CT::printf("%f", srcDimVar->getDataAt<double>(indimsize));
       }
     }
 
@@ -503,20 +503,20 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
           throw(1);
         }
       }
-      CT::string dstDimValue;
+      std::string dstDimValue;
       if (isTimeDim) {
         dstDimValue = ccdftimedst->dateToString(ccdftimedst->getDate(iterativeVar->getDataAt<double>(j)));
       } else {
         if (iterativeVar->getType() == CDF_STRING) {
-          dstDimValue.print("%s", ((const char **)iterativeVar->data)[j]);
+          dstDimValue = CT::printf("%s", ((const char **)iterativeVar->data)[j]);
         } else {
-          dstDimValue.print("%f", iterativeVar->getDataAt<double>(j));
+          dstDimValue = CT::printf("%f", iterativeVar->getDataAt<double>(j));
         }
       }
 #ifdef CCDFDATAMODEL_DEBUG
       // CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
 #endif
-      if (dstDimValue.equals(srcDimValue)) {
+      if (dstDimValue == srcDimValue) {
 #ifdef CCDFDATAMODEL_DEBUG
         CDBDebug("Found %s == %s", dstDimValue.c_str(), srcDimValue.c_str());
 #endif
@@ -532,7 +532,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
     int foundCDFObject = -1;
     for (size_t j = 0; j < cdfObjectList.size(); j++) {
       //      CDBDebug("%s==%s",cdfObjectList[j]->dimValue.c_str(),srcDimValue.c_str());
-      if (cdfObjectList[j]->dimValue.equals(srcDimValue)) {
+      if (cdfObjectList[j]->dimValue == srcDimValue) {
         foundCDFObject = j;
         break;
       }
@@ -552,7 +552,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
       cdfObjectList.push_back(c);
     }
 
-    if (sourceVar->name.equals(dimName) == true) {
+    if (sourceVar->name == dimName) {
       if (foundDimValue == -1) {
 #ifdef CCDFDATAMODEL_DEBUG
         CDBDebug("ADding value %s", srcDimValue.c_str());
@@ -582,7 +582,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
           if (isTimeDim) {
             destValue = ccdftimedst->dateToOffset(ccdftimedst->stringToDate(srcDimValue.c_str()));
           } else {
-            destValue = srcDimValue.toDouble();
+            destValue = CT::toDouble(srcDimValue);
           }
         } catch (int e) {
           CDBError("Error converting %s date", srcDimValue.c_str());
@@ -619,7 +619,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   }
 }
 
-CDF::Variable *CDF::Variable::clone(CDFType newType, CT::string newName) {
+CDF::Variable *CDF::Variable::clone(CDFType newType, std::string newName) {
   CDF::Variable *newVariable = new CDF::Variable(newName.c_str(), newType, this->dimensionlinks, this->isDimension);
 
   for (auto attribute: attributes) {
@@ -871,7 +871,7 @@ CDF::Attribute *CDF::Variable::getAttributeThrows(const std::string &name) const
 }
 
 CDF::Attribute *CDF::Variable::getAttr(std::string name) const {
-  auto it = std::find_if(attributes.begin(), attributes.end(), [&name](auto *a) { return a->name.equals(name); });
+  auto it = std::find_if(attributes.begin(), attributes.end(), [&name](auto *a) { return a->name == name; });
   return it != attributes.end() ? *it : nullptr;
 }
 
@@ -886,7 +886,7 @@ std::string CDF::Variable::getAttrText(std::string name) const {
 CDF::Attribute *CDF::Variable::getAttributeNE(const std::string &name) const { return getAttr(name); }
 
 CDF::Dimension *CDF::Variable::getDim(const std::string &name) const {
-  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name.equals(name); });
+  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name == name; });
   return it != dimensionlinks.end() ? *it : nullptr;
 }
 
@@ -896,7 +896,7 @@ CDF::Dimension *CDF::Variable::getDimNoCase(const std::string &name) const {
 }
 
 int CDF::Variable::getDimIndex(const std::string &name) const {
-  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name.equals(name); });
+  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name == name; });
   return it != dimensionlinks.end() ? std::distance(std::begin(dimensionlinks), it) : -1;
 };
 
@@ -925,7 +925,7 @@ int CDF::Variable::addAttribute(Attribute *attr) {
 
 int CDF::Variable::removeAttribute(const std::string &name) {
   for (size_t j = 0; j < attributes.size(); j++) {
-    if (attributes[j]->name.equals(name)) {
+    if (attributes[j]->name == name) {
       delete attributes[j];
       attributes.erase(attributes.begin() + j);
     }

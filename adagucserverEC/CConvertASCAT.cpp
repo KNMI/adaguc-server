@@ -168,12 +168,12 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("longitude") && !var->name.equals("latitude")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "longitude" && var->name != "latitude") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
     }
   }
@@ -201,7 +201,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
 
       new2DVar->setType(swathVar->getType());
       new2DVar->name = swathVar->name.c_str();
-      swathVar->name.concat("_backup");
+      swathVar->name += "_backup";
 
       // Copy variable attributes
       for (size_t j = 0; j < swathVar->attributes.size(); j++) {
@@ -262,8 +262,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
-    CT::string origSwathName = new2DVar[d]->name.c_str();
-    origSwathName.concat("_backup");
+    std::string origSwathName = new2DVar[d]->name.c_str();
+    origSwathName += "_backup";
     swathVar[d] = cdfObject->getVariableNE(origSwathName.c_str());
     if (swathVar[d] == NULL) {
       CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());

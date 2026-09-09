@@ -196,7 +196,7 @@ int CDataReader::getCRS(CDataSource *dataSource) {
   }
 
   // If undefined, set standard lat lon projection
-  // CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
+  // CREPORT_WARN_NODOC(std::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
   copyLatLonCRS(dataSource);
   return 0;
 }
@@ -214,8 +214,8 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
   if (dataSource->cfgLayer->Projection[0]->attr.id.empty() == false) {
     dataSource->nativeEPSG = dataSource->cfgLayer->Projection[0]->attr.id;
   } else {
-    CT::string defaultEPSGCode = "EPSG:4326";
-    CREPORT_WARN_NODOC(CT::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
+    std::string defaultEPSGCode = "EPSG:4326";
+    CREPORT_WARN_NODOC(std::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
     dataSource->nativeEPSG = (defaultEPSGCode);
   }
 
@@ -223,8 +223,8 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
   if (dataSource->cfgLayer->Projection[0]->attr.proj4.empty() == false) {
     dataSource->nativeProj4 = dataSource->cfgLayer->Projection[0]->attr.proj4;
   } else {
-    CT::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-    CREPORT_WARN_NODOC(CT::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
+    std::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+    CREPORT_WARN_NODOC(std::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
     dataSource->nativeProj4 = (defaultProj4String);
   }
 
@@ -232,7 +232,7 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 }
 
 void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
-  // CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
+  // CREPORT_INFO_NODOC(std::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4 = ("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
   dataSource->nativeEPSG = ("EPSG:4326");
 }
@@ -248,7 +248,7 @@ bool CDataReader::copyCRSFromProjectionVariable(CDataSource *dataSource) const {
   }
 
   // Determine if the grid mapping attribute is set to latitude_longitude.
-  if (projvarnameAttr != NULL && projvarnameAttr->toString().equals("latitude_longitude")) {
+  if (projvarnameAttr != NULL && projvarnameAttr->toString() == "latitude_longitude") {
     copyLatLonCRS(dataSource);
     return true;
   }
@@ -257,7 +257,7 @@ bool CDataReader::copyCRSFromProjectionVariable(CDataSource *dataSource) const {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
   if (projVar == NULL) {
-    CREPORT_WARN_NODOC(CT::string("The projection variable name defined in grid_mapping attribute is not found: ") + projvarnameAttr->toString(), CReportMessage::Categories::GENERAL);
+    CREPORT_WARN_NODOC(std::string("The projection variable name defined in grid_mapping attribute is not found: ") + projvarnameAttr->toString(), CReportMessage::Categories::GENERAL);
     return false;
   }
 
@@ -288,12 +288,12 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   }
 
   if (proj4Attr->toString().length() == 0) {
-    CREPORT_WARN_NODOC(CT::string("Found a proj4 or proj4_params attribute, but it is empty. Skipping the attribute."), CReportMessage::Categories::GENERAL);
+    CREPORT_WARN_NODOC(std::string("Found a proj4 or proj4_params attribute, but it is empty. Skipping the attribute."), CReportMessage::Categories::GENERAL);
     return false;
   }
 
   if (this->_enableReporting) {
-    CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(),
+    CREPORT_INFO_NODOC(std::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(),
                        CReportMessage::Categories::GENERAL);
   }
   dataSource->nativeProj4 = proj4Attr->toString();
@@ -321,13 +321,13 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   std::string projString = proj4ToCF.convertCFToProj(projVar);
 
   if (projString.empty()) {
-    CREPORT_WARN_NODOC(CT::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);
+    CREPORT_WARN_NODOC(std::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);
     return false;
   }
 
   // Projection string was created, set it in the datasource.
   if (verbose) {
-    CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
+    CREPORT_INFO_NODOC(std::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
   }
   dataSource->nativeProj4 = projString;
   projVar->setAttributeText("autogen_proj", projString.c_str());
@@ -343,20 +343,20 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
   CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
   if (epsgAttr != NULL) {
     if (this->_enableReporting) {
-      CREPORT_INFO_NODOC(CT::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(std::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
     }
     dataSource->nativeEPSG = epsgAttr->toString();
   } else {
     // Make a projection code based on PROJ4: namespace
     if (this->_enableReporting) {
-      CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(std::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
     }
     dataSource->nativeEPSG = CT::printf("PROJ4:%s", dataSource->nativeProj4.c_str());
     CT::replaceSelf(dataSource->nativeEPSG, "\"", "");
     CT::replaceSelf(dataSource->nativeEPSG, "\n", "");
     dataSource->nativeEPSG = CT::trim(dataSource->nativeEPSG);
-    CT::string encodedEPSG = dataSource->nativeEPSG;
-    encodedEPSG.encodeURLSelf();
+    std::string encodedEPSG = dataSource->nativeEPSG;
+    encodedEPSG = CT::encodeURL(encodedEPSG);
     dataSource->nativeEPSG = encodedEPSG;
   }
 }
@@ -419,7 +419,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   dataSource->dNetCDFNumDims = dataSourceVar->dimensionlinks.size();
 
   if (dataSource->dNetCDFNumDims < 2) {
-    CREPORT_ERROR_NODOC(CT::string("The following variable has less than two dimensions, while at least x and y dimensions are required: ") + dataSourceVar->name.c_str(),
+    CREPORT_ERROR_NODOC(std::string("The following variable has less than two dimensions, while at least x and y dimensions are required: ") + dataSourceVar->name.c_str(),
                         CReportMessage::Categories::GENERAL);
     return 1;
   }
@@ -482,7 +482,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 
     int statusX = dataSource->varX->readData(CDF_DOUBLE, sta, sto, str, true);
     if (statusX != 0) {
-      CREPORT_ERROR_NODOC(CT::string("Not possible to read data for dimension ") + dataSource->varX->name, CReportMessage::Categories::GENERAL);
+      CREPORT_ERROR_NODOC(std::string("Not possible to read data for dimension ") + dataSource->varX->name, CReportMessage::Categories::GENERAL);
       return 1;
     }
 
@@ -502,7 +502,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 
     int statusY = dataSource->varY->readData(CDF_DOUBLE, sta, sto, str, true);
     if (statusY != 0) {
-      CREPORT_ERROR_NODOC(CT::string("Not possible to read data for dimension ") + dataSource->varY->name, CReportMessage::Categories::GENERAL);
+      CREPORT_ERROR_NODOC(std::string("Not possible to read data for dimension ") + dataSource->varY->name, CReportMessage::Categories::GENERAL);
       for (size_t j = 0; j < dataSource->varY->dimensionlinks.size(); j++) {
         CDBDebug("For var %s, reading dim %s of size %lu (%lu %lu %lu)", dataSource->varY->name.c_str(), dataSource->varY->dimensionlinks[j]->name.c_str(),
                  dataSource->varY->dimensionlinks[j]->getSize(), sta[j], sto[j], str[j]);
@@ -519,8 +519,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     CDF::Attribute *units = dataSource->varX->getAttributeNE("units");
 
     if (units != NULL) {
-      const CT::string unitString = units->toString();
-      if (unitString.equals("rad") || unitString.equals("radian")) {
+      const std::string unitString = units->toString();
+      if (unitString == "rad" || unitString == "radian") {
         if (verbose) {
           CDBDebug("units: %s", units->toString().c_str());
         }
@@ -532,13 +532,13 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
             CDBWarning("projection variable '%s' not found", (char *)projvarnameAttr->data);
           } else {
             CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
-            if ((grid_mapping_name != NULL) && grid_mapping_name->toString().equals("geostationary")) {
+            if ((grid_mapping_name != NULL) && grid_mapping_name->toString() == "geostationary") {
               // Get geostationary projection attributes or providing WGS84
               CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
               double perspectiveHeight = 35786000.;
               if (perspectiveHeightAttr != NULL) {
                 try {
-                  perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
+                  perspectiveHeight = CT::toDouble(perspectiveHeightAttr->toString());
                 } catch (int e) {
                   CDBDebug("Falling back to default perspective_point_height: 35786000");
                 }
@@ -548,7 +548,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               double lon_0 = 0.0;
               if (lon_0Attr != NULL) {
                 try {
-                  lon_0 = lon_0Attr->toString().toDouble();
+                  lon_0 = CT::toDouble(lon_0Attr->toString());
                 } catch (int e) {
                   CDBDebug("Falling back to default lon_0: 0.0");
                 }
@@ -558,7 +558,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               double lat_0 = 0.0;
               if (lat_0Attr != NULL) {
                 try {
-                  lat_0 = lat_0Attr->toString().toDouble();
+                  lat_0 = CT::toDouble(lat_0Attr->toString());
                 } catch (int e) {
                   CDBDebug("Falling back to default lat_0: 0.0");
                 }
@@ -568,7 +568,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               double a = 6378137.0;
               if (aAttr != NULL) {
                 try {
-                  a = aAttr->toString().toDouble();
+                  a = CT::toDouble(aAttr->toString());
                 } catch (int e) {
                   CDBDebug("Falling back to default semimajor axis: 6378137.0");
                 }
@@ -578,14 +578,14 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               double b = 6356752.30;
               if (bAttr != NULL) {
                 try {
-                  b = bAttr->toString().toDouble();
+                  b = CT::toDouble(bAttr->toString());
                 } catch (int e) {
                   CDBDebug("Falling back to default semiminor axis: 6356752.30");
                 }
               }
 
               CDF::Attribute *sweepAttr = projVar->getAttributeNE("sweep_angle_axis");
-              CT::string sweep = "y";
+              std::string sweep = "y";
               // sweep angle y corresponds to Meteosat
               if (sweepAttr != NULL) {
                 try {
@@ -596,11 +596,11 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               }
 
               CDF::Attribute *fixedAttr = projVar->getAttributeNE("fixed_angle_axis");
-              CT::string fixed = "x";
+              std::string fixed = "x";
               if (fixedAttr != NULL) {
                 try {
                   fixed = fixedAttr->toString();
-                  if ((fixed.equals("y")) || (fixed.equals("Y"))) {
+                  if ((fixed == "y") || (fixed == "Y")) {
                     // fixed angle y, corresponds to sweep x. i.e: GOES satellite
                     sweep = "x";
                   }
@@ -610,7 +610,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               }
 
               // End of the capture of the grid_mapping
-              CT::string str_std_x_name = "undefined";
+              std::string str_std_x_name = "undefined";
               CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
               if (X_standard_name != NULL) {
                 str_std_x_name = X_standard_name->toString();
@@ -669,7 +669,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 
     if (isLonLatProjection(dataSource->nativeProj4)) {
       // If the lon variable name contains an X, it is probably not longitude.
-      if (dataSource->varX->name.indexOf("x") == -1 && dataSource->varX->name.indexOf("X") == -1) {
+      if (CT::indexOf(dataSource->varX->name, "x") == -1 && CT::indexOf(dataSource->varX->name, "X") == -1) {
         size_t j = 0;
         for (j = 0; j < dataSource->varX->getSize(); j++) {
           // CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
@@ -696,18 +696,18 @@ void CDataReader::determineXAndYDimIndices(CDataSource *dataSource, const CDF::V
   dataSource->swapXYDimensions = false;
 
   // If our X dimension has a character y/lat in it, XY dims are probably swapped.
-  CT::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
-  CT::string dimensionYName = dataSourceVar->dimensionlinks[dataSource->dimYIndex]->name.c_str();
+  std::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  std::string dimensionYName = dataSourceVar->dimensionlinks[dataSource->dimYIndex]->name.c_str();
 
-  dimensionXName.toLowerCaseSelf();
-  if (dimensionXName.indexOf("y") != -1 || dimensionXName.indexOf("lat") != -1) {
+  dimensionXName = CT::toLowerCase(dimensionXName);
+  if (CT::indexOf(dimensionXName, "y") != -1 || CT::indexOf(dimensionXName, "lat") != -1) {
     dataSource->swapXYDimensions = true;
     dataSource->dimXIndex = dataSource->dNetCDFNumDims - 2;
     dataSource->dimYIndex = dataSource->dNetCDFNumDims - 1;
 
     if (this->_enableReporting) {
-      CREPORT_WARN_NODOC(CT::string("For variable ") + dataSourceVar->name + CT::string(" the dimension on the X position, ") + dimensionXName +
-                             CT::string(", contains 'y' or 'lat' in its name, and is therefore swapped with the dimension on the Y position, ") + dimensionYName,
+      CREPORT_WARN_NODOC(std::string("For variable ") + dataSourceVar->name + std::string(" the dimension on the X position, ") + dimensionXName +
+                             std::string(", contains 'y' or 'lat' in its name, and is therefore swapped with the dimension on the Y position, ") + dimensionYName,
                          CReportMessage::Categories::GENERAL);
     }
   }
@@ -718,7 +718,7 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
   CDF::Dimension *dimY = dataSourceVar->dimensionlinks[dataSource->dimYIndex];
 
   if (dimX == NULL || dimY == NULL) {
-    CREPORT_ERROR_NODOC(CT::string("X and or Y dims not found."), CReportMessage::Categories::GENERAL);
+    CREPORT_ERROR_NODOC(std::string("X and or Y dims not found."), CReportMessage::Categories::GENERAL);
     return false;
   }
 
@@ -726,12 +726,12 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
   dataSource->varX = cdfObject->getVariableNE(dimX->name.c_str());
   dataSource->varY = cdfObject->getVariableNE(dimY->name.c_str());
   if (dataSource->varX == NULL || dataSource->varY == NULL) {
-    CREPORT_ERROR_NODOC(CT::string("Not possible to find variable for dimensions with names ") + dimX->name + CT::string(" and ") + dimY->name + CT::string(" for variable ") + dataSourceVar->name,
+    CREPORT_ERROR_NODOC(std::string("Not possible to find variable for dimensions with names ") + dimX->name + std::string(" and ") + dimY->name + std::string(" for variable ") + dataSourceVar->name,
                         CReportMessage::Categories::GENERAL);
     return false;
   }
   if (this->_enableReporting) {
-    CREPORT_INFO_NODOC(CT::string("Using variable ") + dataSource->varX->name + CT::string(" as X variable and variable ") + dataSource->varY->name + CT::string(" as Y variable."),
+    CREPORT_INFO_NODOC(std::string("Using variable ") + dataSource->varX->name + std::string(" as X variable and variable ") + dataSource->varY->name + std::string(" as Y variable."),
                        CReportMessage::Categories::GENERAL);
   }
   return true;
@@ -749,7 +749,7 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
     for (auto renderSetting: styleConfiguration->renderSettings) {
       if (renderSetting->attr.striding.empty() == false) {
         dataSource->stride2DMap = atoi(renderSetting->attr.striding.c_str());
-        CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + renderSetting->attr.striding + CT::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
+        CREPORT_INFO_NODOC(std::string("Determined a stride of ") + renderSetting->attr.striding + std::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
         return;
       }
     }
@@ -757,7 +757,7 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
 
   dataSource->stride2DMap = 1;
   if (this->_enableReporting) {
-    CREPORT_INFO_NODOC(CT::string("No stride defined in the RenderSettings, using a default stride of 1."), CReportMessage::Categories::GENERAL);
+    CREPORT_INFO_NODOC(std::string("No stride defined in the RenderSettings, using a default stride of 1."), CReportMessage::Categories::GENERAL);
   }
   return;
 }
@@ -783,7 +783,7 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
   // Check if we need to apply a gridExtent.
   if (mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL) {
     if (this->_enableReporting) {
-      CREPORT_INFO_NODOC(CT::string("Determining the width based on the given gridExtent instead of dimension lengths."), CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(std::string("Determining the width based on the given gridExtent instead of dimension lengths."), CReportMessage::Categories::GENERAL);
     }
     dataSource->dWidth = (gridExtent[2] - gridExtent[0]) / dataSource->stride2DMap;
     dataSource->dHeight = (gridExtent[3] - gridExtent[1]) / dataSource->stride2DMap;
@@ -791,7 +791,7 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
 
   // Check if we operate in single cell mode.
   if (singleCellMode) {
-    CREPORT_INFO_NODOC(CT::string("Running in single cell mode, setting width and height equal to 2."), CReportMessage::Categories::GENERAL);
+    CREPORT_INFO_NODOC(std::string("Running in single cell mode, setting width and height equal to 2."), CReportMessage::Categories::GENERAL);
     dataSource->dWidth = 2;
     dataSource->dHeight = 2;
   }
@@ -803,17 +803,18 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
   double *dfdim_Y = (double *)dataSource->varY->data;
 
   if (dfdim_X == NULL || dfdim_Y == NULL) {
-    CREPORT_ERROR_NODOC(CT::string("No data available for ") + dataSource->varX->name + CT::string(" and ") + dataSource->varY->name + CT::string(" dimensions."), CReportMessage::Categories::GENERAL);
+    CREPORT_ERROR_NODOC(std::string("No data available for ") + dataSource->varX->name + std::string(" and ") + dataSource->varY->name + std::string(" dimensions."),
+                        CReportMessage::Categories::GENERAL);
     return false;
   }
 
   dataSource->dfCellSizeX = (dfdim_X[dataSource->dWidth - 1] - dfdim_X[0]) / double(dataSource->dWidth - 1);
   dataSource->dfCellSizeY = (dfdim_Y[dataSource->dHeight - 1] - dfdim_Y[0]) / double(dataSource->dHeight - 1);
 
-  CT::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
-  dimensionXName.toLowerCaseSelf();
-  if (dimensionXName.equals("col")) {
-    CREPORT_WARN_NODOC(CT::string("X dimension name equals 'col', bounding box is calculated differently."), CReportMessage::Categories::GENERAL);
+  std::string dimensionXName = dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  dimensionXName = CT::toLowerCase(dimensionXName);
+  if (dimensionXName == "col") {
+    CREPORT_WARN_NODOC(std::string("X dimension name equals 'col', bounding box is calculated differently."), CReportMessage::Categories::GENERAL);
     dataSource->dfBBOX[2] = dfdim_X[0] - dataSource->dfCellSizeX / 2.0f;
     dataSource->dfBBOX[3] = dfdim_Y[dataSource->dHeight - 1] + dataSource->dfCellSizeY / 2.0f;
     dataSource->dfBBOX[0] = dfdim_X[dataSource->dWidth - 1] + dataSource->dfCellSizeX / 2.0f;
@@ -874,7 +875,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (x != -1 && y != -1) {
     singleCellMode = true;
   }
-  CT::string dataSourceFilename;
+  std::string dataSourceFilename;
   dataSourceFilename = (dataSource->getFileName());
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
@@ -1052,7 +1053,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("Get metadata");
     }
 
-    CT::string *variableName;
+    std::string *variableName;
     std::vector<CDF::Attribute *> *attributes;
 
     for (size_t i = 0; i < cdfObject->variables.size() + 1; i++) {
@@ -1332,7 +1333,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 CDF::Variable *CDataReader::getTimeDimension(CDataSource *dataSource) { return getDimensionVariableByType(dataSource->getDataObject(0)->cdfVariable, dtype_time); }
 
 // DEPRECATED
-CT::string CDataReader::getTimeUnit(CDataSource *dataSource) {
+std::string CDataReader::getTimeUnit(CDataSource *dataSource) {
   CDF::Variable *time = getDimensionVariableByType(dataSource->getDataObject(0)->cdfVariable, dtype_time);
   if (time == NULL) {
     CDBDebug("No time variable found");
@@ -1344,7 +1345,7 @@ CT::string CDataReader::getTimeUnit(CDataSource *dataSource) {
     throw(2);
   }
 
-  CT::string timeUnitsString = timeUnits->toString().c_str();
+  std::string timeUnitsString = timeUnits->toString().c_str();
 
   return timeUnitsString;
 }
@@ -1370,8 +1371,8 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, s
   if (dimension != NULL) {
     return getDimensionType(cdfObject, dimension);
   } else {
-    CT::string none = "none";
-    if (none.equals(ncname)) {
+    std::string none = "none";
+    if (none == ncname) {
       return dtype_normal;
     }
     return getDimensionType(cdfObject, cdfObject->getVariableNE(ncname));
@@ -1394,7 +1395,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
     return dtype_none;
   }
 
-  CT::string standardName = "";
+  std::string standardName = "";
 
   try {
     standardName = variable->getAttributeThrows("standard_name")->toString();
@@ -1410,25 +1411,25 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   // CDBDebug("Standardname of dimension [%s] is [%s]",variable->name.c_str(), standardName.c_str());
 
   // CDBDebug("%d %d",standardName.equals("time"),standardName.length());
-  if (standardName.equals("time")) return dtype_time;
-  if (standardName.equals("forecast_reference_time")) return dtype_reference_time;
-  if (standardName.equals("member")) return dtype_member;
-  if (standardName.equals("elevation")) return dtype_elevation;
-  if (standardName.equals("pressurelevel_0")) return dtype_elevation;
-  if (standardName.equals("height")) return dtype_elevation;
+  if (standardName == "time") return dtype_time;
+  if (standardName == "forecast_reference_time") return dtype_reference_time;
+  if (standardName == "member") return dtype_member;
+  if (standardName == "elevation") return dtype_elevation;
+  if (standardName == "pressurelevel_0") return dtype_elevation;
+  if (standardName == "height") return dtype_elevation;
 
   // If no standard_name matches, try to determine dimension type on _CoordinateAxisType attribute, CDM standard
-  CT::string coordinateAxisType = "";
+  std::string coordinateAxisType = "";
   try {
     coordinateAxisType = variable->getAttributeThrows("_CoordinateAxisType")->toString();
   } catch (int e) {
   }
-  coordinateAxisType.toLowerCaseSelf();
-  if (coordinateAxisType.equals("ensemble")) return dtype_member;
-  if (coordinateAxisType.equals("time")) return dtype_time;
-  if (coordinateAxisType.equals("height")) return dtype_elevation;
-  if (coordinateAxisType.equals("pressure")) return dtype_elevation;
-  if (coordinateAxisType.equals("runtime")) return dtype_reference_time;
+  coordinateAxisType = CT::toLowerCase(coordinateAxisType);
+  if (coordinateAxisType == "ensemble") return dtype_member;
+  if (coordinateAxisType == "time") return dtype_time;
+  if (coordinateAxisType == "height") return dtype_elevation;
+  if (coordinateAxisType == "pressure") return dtype_elevation;
+  if (coordinateAxisType == "runtime") return dtype_reference_time;
 
   // Try to find elevation dimension based on positive attribute existence (CF)
   try {

@@ -56,7 +56,7 @@ private:
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 
-  int _findNCGroupIdForCDFVariable(CT::string *varName);
+  int _findNCGroupIdForCDFVariable(std::string *varName);
 
 public:
   CDFNetCDFReader();
@@ -71,7 +71,7 @@ private:
   bool writeData;
   bool readData;
   bool listNCCommands;
-  CT::string NCCommands;
+  std::string NCCommands;
   const char *fileName;
   int shuffle;
   int deflate;
@@ -88,8 +88,8 @@ public:
   CDFNetCDFWriter(CDFObject *cdfObject);
   ~CDFNetCDFWriter();
   static nc_type NCtypeConversion(CDFType type);
-  static CT::string NCtypeConversionToString(CDFType type);
-  CT::string getNCCommands();
+  static std::string NCtypeConversionToString(CDFType type);
+  std::string getNCCommands();
   void setNetCDFMode(int mode);
   void disableVariableWrite();
   void disableReadData();

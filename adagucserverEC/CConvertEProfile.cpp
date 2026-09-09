@@ -36,13 +36,13 @@ bool isADAGUCProfileFormat(CDFObject *cdfObject) {
     cdfObject->getVariableThrows("range");
     cdfObject->getDimensionThrows("range");
 
-    if (cdfObject->getAttributeThrows("featureType")->toString().equalsIgnoreCase("profile") == false) {
+    if (!CT::equalsIgnoreCase(cdfObject->getAttributeThrows("featureType")->toString(), "profile")) {
 
       // The file is not a profile according to the format standards, check if it adheres to the deprecated format:
-      if (cdfObject->getAttributeThrows("source")->toString().startsWith("CHM") == false) {
+      if (!CT::startsWith(cdfObject->getAttributeThrows("source")->toString(), "CHM")) {
         return false;
       }
-      if (cdfObject->getAttributeThrows("serlom")->toString().startsWith("TUB") == false) {
+      if (!CT::startsWith(cdfObject->getAttributeThrows("serlom")->toString(), "TUB")) {
         return false;
       }
     }
@@ -61,10 +61,10 @@ bool isDeprecatedADAGUCEProfileFormat(CDFObject *cdfObject) {
     cdfObject->getVariableThrows("range");
     cdfObject->getDimensionThrows("range");
 
-    if (cdfObject->getAttributeThrows("source")->toString().startsWith("CHM") == false) {
+    if (!CT::startsWith(cdfObject->getAttributeThrows("source")->toString(), "CHM")) {
       return false;
     }
-    if (cdfObject->getAttributeThrows("serlom")->toString().startsWith("TUB") == false) {
+    if (!CT::startsWith(cdfObject->getAttributeThrows("serlom")->toString(), "TUB")) {
       return false;
     }
   } catch (int e) {
@@ -269,19 +269,19 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
 #endif
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
       if (var->getType() != CDF_STRING) {
-        if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("altitude") && !var->name.equals("longitude") &&
-            !var->name.equals("latitude") && !var->name.equals("x") && !var->name.equals("y") && !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") &&
-            !var->name.equals("projection") && !var->name.equals("product") && !var->name.equals("iso_dataset") && !var->name.equals("tile_properties")) {
+        if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "altitude" && var->name != "longitude" &&
+            var->name != "latitude" && var->name != "x" && var->name != "y" && var->name != "lat_bnds" && var->name != "lon_bnds" && var->name != "custom" &&
+            var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties") {
           bool added = false;
           if (var->dimensionlinks.size() == 2) {
             // Check if this is a profile variable which we added.
-            if (var->dimensionlinks[0]->name.equals("time_obs") && var->dimensionlinks[1]->name.equals("range")) {
-              varsToConvert.push_back(CT::string(var->name.c_str()));
+            if (var->dimensionlinks[0]->name == "time_obs" && var->dimensionlinks[1]->name == "range") {
+              varsToConvert.push_back(std::string(var->name.c_str()));
               added = true;
             }
           }
@@ -289,7 +289,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
             var->setAttributeText("ADAGUC_SKIP", "true");
           }
         }
-        if (var->name.equals("projection")) {
+        if (var->name == "projection") {
           var->setAttributeText("ADAGUC_SKIP", "true");
         }
       }
@@ -323,12 +323,12 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
     new2DVar->setType(CDF_FLOAT);
 
     new2DVar->name = pointVar->name.c_str();
-    pointVar->name.concat("_backup");
+    pointVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < pointVar->attributes.size(); j++) {
       CDF::Attribute *a = pointVar->attributes[j];
-      if (a->name.equals("_FillValue")) {
+      if (a->name == "_FillValue") {
         float scaleFactor = 1, addOffset = 0, fillValue = 0;
         ;
         try {
@@ -413,8 +413,8 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
-    CT::string origSwathName = new2DVar[d]->name.c_str();
-    origSwathName.concat("_backup");
+    std::string origSwathName = new2DVar[d]->name.c_str();
+    origSwathName += "_backup";
     pointVar[d] = dataObjects[d]->cdfObject->getVariableNE(origSwathName.c_str());
     if (pointVar[d] == NULL) {
       CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());
@@ -467,7 +467,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   StopWatch_Stop("Lat and lon read");
 #endif
 
-  //   CT::string data = CDF::dump(cdfObject0);
+  //   std::string data = CDF::dump(cdfObject0);
   //
   //   CDBDebug("%s",data.c_str());
   //
@@ -477,7 +477,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     int rangeDimIndexInVariable = -1;
 
     for (size_t j = 0; j < pointVar[d]->dimensionlinks.size(); j++) {
-      if (pointVar[d]->dimensionlinks[j]->name.equals("range")) {
+      if (pointVar[d]->dimensionlinks[j]->name == "range") {
         rangeDimIndexInVariable = j;
         break;
       }

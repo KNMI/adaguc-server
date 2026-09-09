@@ -44,7 +44,7 @@ int CDFGeoJSONReader::open(const char *fileName) {
   this->fileName = fileName;
 
   // This is opendap, there the geojson has already been converted to CDM by an IOServiceProvider.
-  if (this->fileName.indexOf("http") == 0) {
+  if (CT::startsWith(this->fileName, "http")) {
     CDBDebug("This is opendap, no conversion needed.");
 
     return 0;
@@ -53,7 +53,7 @@ int CDFGeoJSONReader::open(const char *fileName) {
   cdfObject->addAttribute(new CDF::Attribute("Conventions", "CF-1.6"));
   cdfObject->addAttribute(new CDF::Attribute("history", "Metadata adjusted by ADAGUC from GeoJSON to NetCDF-CF"));
 
-  CT::string fileBaseName;
+  std::string fileBaseName;
   const char *last = rindex(fileName, '/');
   if ((last != NULL) && (*last)) {
     fileBaseName = (last + 1);

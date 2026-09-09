@@ -67,15 +67,15 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
   createVirtualGeoVariables(cdfObject);
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") &&
-          !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") && !var->name.equals("iso_dataset") && !var->name.equals("tile_properties")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "lat_bnds" && var->name != "lon_bnds" &&
+          var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
-      if (var->name.equals("projection")) {
+      if (var->name == "projection") {
         var->setAttributeText("ADAGUC_SKIP", "true");
       }
     }
@@ -100,7 +100,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
 
     new2DVar->setType(swathVar->getType());
     new2DVar->name = swathVar->name.c_str();
-    swathVar->name.concat("_backup");
+    swathVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < swathVar->attributes.size(); j++) {
@@ -144,8 +144,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *swathVar;
-  CT::string origSwathName = new2DVar->name.c_str();
-  origSwathName.concat("_backup");
+  std::string origSwathName = new2DVar->name.c_str();
+  origSwathName += "_backup";
   swathVar = cdfObject->getVariableNE(origSwathName.c_str());
   if (swathVar == NULL) {
     CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());
@@ -356,7 +356,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
         timeData = (double *)origTimeVar->data;
 
         /* Find timerange */
-        CT::string timeStringFromURL = "";
+        std::string timeStringFromURL = "";
         for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
           CDBDebug("%s", dataSource->requiredDims[j].name.c_str());
           if (dataSource->requiredDims[j].name == "time") {
@@ -364,7 +364,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
           }
         }
         CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
-        std::vector<CT::string> timeStrings = timeStringFromURL.split("/");
+        std::vector<std::string> timeStrings = CT::split(timeStringFromURL, "/");
         if (timeStrings.size() == 2) {
           timeNotLowerThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[0].c_str()));
           timeNotMoreThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[1].c_str()));

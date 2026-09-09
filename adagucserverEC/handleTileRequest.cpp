@@ -8,7 +8,7 @@
 #define DEFAULT_MAX_TILES_IN_IMAGE 16
 #define DEFAULT_REQUEST_LIMIT 1000
 
-CT::string getProjStringFromDb(CDataSource *dataSource) {
+std::string getProjStringFromDb(CDataSource *dataSource) {
   // Obtain same proj string as base datasource
   MetadataLayer metadataLayer;
   metadataLayer.layer = dataSource->cfgLayer;
@@ -28,7 +28,7 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   return targetNrOfTilesX * targetNrOfTilesY;
 }
 
-f8box reprojectExtent(CT::string targetProjection, CT::string sourceProjection, CServerParams *srvParam, f8box inputbox) {
+f8box reprojectExtent(std::string targetProjection, std::string sourceProjection, CServerParams *srvParam, f8box inputbox) {
   CImageWarper warper;
   if (warper.init(targetProjection.c_str(), sourceProjection.c_str(), &srvParam->cfg->Projection) != 0) {
     CDBError("Unable to init projection");
@@ -73,7 +73,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   int targetNrOfTiles = estimateNrOfTargetTiles(dataSource);
 
   // Obtain same proj string as base datasource
-  CT::string tileprojection = getProjStringFromDb(dataSource);
+  std::string tileprojection = getProjStringFromDb(dataSource);
 
   // Obtain requested bbox
   f8box inputbox;

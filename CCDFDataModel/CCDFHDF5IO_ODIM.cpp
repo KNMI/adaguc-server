@@ -32,23 +32,23 @@
 double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initialValue) {
   CDF::Attribute *attr = var->getAttributeNE(attrName);
   if (attr != nullptr) {
-    return attr->toString().toDouble();
+    return CT::toDouble(attr->toString());
   }
   return initialValue;
 }
 
 CDF::Variable *CDFHDF5Reader::getWhatVar(CDFObject *cdfObject, size_t datasetCounter, int dataCounter) {
-  CT::string whatVarName;
+  std::string whatVarName;
   /* First try "dataset%d.data%d.what" */
-  whatVarName.print("dataset%d.data%d.what", datasetCounter, dataCounter);
+  whatVarName = CT::printf("dataset%zu.data%d.what", datasetCounter, dataCounter);
   CDF::Variable *whatVar = cdfObject->getVariableNE(whatVarName.c_str());
   if (whatVar == nullptr) {
     /* Second try "dataset%d.what" */
-    whatVarName.print("dataset%d.what", datasetCounter);
+    whatVarName = CT::printf("dataset%zu.what", datasetCounter);
     whatVar = cdfObject->getVariableNE(whatVarName.c_str());
     if (whatVar == nullptr) {
       /* Finally try "what" */
-      whatVarName.print("what");
+      whatVarName = CT::printf("what");
       whatVar = cdfObject->getVariableNE(whatVarName.c_str());
     }
   }
@@ -56,10 +56,10 @@ CDF::Variable *CDFHDF5Reader::getWhatVar(CDFObject *cdfObject, size_t datasetCou
 }
 
 CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t datasetCounter, int dataCounter, const char *varName, const char *attrName) {
-  CT::string nestedVarName;
+  std::string nestedVarName;
 
   /* First try "dataset%d.data%d.what" */
-  nestedVarName.print("dataset%d.data%d.%s", datasetCounter, dataCounter, varName);
+  nestedVarName = CT::printf("dataset%zu.data%d.%s", datasetCounter, dataCounter, varName);
   CDF::Variable *nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
   CDF::Attribute *attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
 
@@ -68,7 +68,7 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t d
     CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
 #endif
     /* Second try "dataset%d.what" */
-    nestedVarName.print("dataset%d.%s", datasetCounter, varName);
+    nestedVarName = CT::printf("dataset%zu.%s", datasetCounter, varName);
     nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
     attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
     if (attr == nullptr) {
@@ -76,7 +76,7 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t d
       CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
 #endif
       /* Finally try "what" */
-      nestedVarName.print("%s", varName);
+      nestedVarName = CT::printf("%s", varName);
       nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
       attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
     }
@@ -98,8 +98,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (conventionsAttr == nullptr) {
     return 2;
   }
-  CT::string conventionsString = conventionsAttr->toString();
-  if (conventionsString.startsWith("ODIM_H5") == 0) {
+  std::string conventionsString = conventionsAttr->toString();
+  if (!CT::startsWith(conventionsString, "ODIM_H5")) {
     return 2;
   }
   CDF::Variable *whatVar = cdfObject->getVariableNE("what");
@@ -110,8 +110,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (whatObjectAttr == nullptr) {
     return 2;
   }
-  CT::string whatObjectString = whatObjectAttr->toString();
-  if (not whatObjectString.equals("COMP") && not whatObjectString.equals("IMAGE")) {
+  std::string whatObjectString = whatObjectAttr->toString();
+  if (whatObjectString != "COMP" && whatObjectString != "IMAGE") {
     CDBDebug("Is not a 2D dataset, skipping parsing as 2D dataset");
     return 2;
   }
@@ -124,9 +124,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   const size_t MAX_ODIM_DATASETS = 100;
   for (size_t datasetCounter = 1; datasetCounter < MAX_ODIM_DATASETS; datasetCounter += 1) {
     int dataCounter = 1;
-    CT::string datasetId = "dataset";
-    datasetId.printconcat("%d", datasetCounter);
-    CT::string datasetIdDataId = datasetId + ".data1.data";
+    std::string datasetId = "dataset";
+    CT::printfconcat(datasetId, "%zu", datasetCounter);
+    std::string datasetIdDataId = datasetId + ".data1.data";
 
     /* Check for the data variable */
     CDF::Variable *dataVar = cdfObject->getVariableNE(datasetIdDataId.c_str());
@@ -199,7 +199,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     CDF::Attribute *quantityAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "quantity");
     if (quantityAttr != nullptr) {
       /* Try to find the units based on the quantity, otherwise forward the quantity. */
-      auto result = quantityToUnits.find(quantityAttr->toString().toUpperCase().c_str());
+      auto result = quantityToUnits.find(CT::toUpperCase(quantityAttr->toString()));
       if (result == quantityToUnits.end()) {
         dataVar->setAttributeText("units", quantityAttr->toString().c_str());
       } else {
@@ -229,8 +229,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       if (startTimeAttr == nullptr) startTimeAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "time");
       if (startDateAttr != nullptr && startTimeAttr != nullptr) {
         /* Compose the timestring based on date and time from the HDF5 ODIM file */
-        CT::string timeString;
-        timeString.print("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
+        std::string timeString;
+        timeString = CT::printf("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
         // CDBDebug("timeString %s", timeString.c_str());
 
         /* Add the time dimension and timevariable */

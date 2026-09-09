@@ -86,7 +86,7 @@ void CDrawImage::destroyImage() {
 CDrawImage::~CDrawImage() {
   //   CDBDebug("[DESC] CDrawImage %dx%d", Geo.dWidth, Geo.dHeight);
   destroyImage();
-  std::map<CT::string, CCairoPlotter *>::iterator myCCairoPlotterIter = myCCairoPlotterMap.begin();
+  std::map<std::string, CCairoPlotter *>::iterator myCCairoPlotterIter = myCCairoPlotterMap.begin();
   while (myCCairoPlotterIter != myCCairoPlotterMap.end()) {
     delete myCCairoPlotterIter->second;
     myCCairoPlotterIter++;
@@ -408,10 +408,10 @@ const char *toHex8(char *data, unsigned char hex) {
   return data;
 }
 
-void CDrawImage::getHexColorForColorIndex(CT::string *hexValue, int color) {
+void CDrawImage::getHexColorForColorIndex(std::string *hexValue, int color) {
   if (currentLegend == NULL) return;
   char data[3];
-  hexValue->print("#%s%s%s", toHex8(data, currentLegend->CDIred[color]), toHex8(data, currentLegend->CDIgreen[color]), toHex8(data, currentLegend->CDIblue[color]));
+  *hexValue = CT::printf("#%s%s%s", toHex8(data, currentLegend->CDIred[color]), toHex8(data, currentLegend->CDIgreen[color]), toHex8(data, currentLegend->CDIblue[color]));
 }
 
 void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b) { cairo->pixel_blend(x, y, r, g, b, 255); }
@@ -459,9 +459,9 @@ void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float 
 }
 
 int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, float, const char *_text, CColor fgcolor, CColor bgcolor) {
-  CT::string text;
+  std::string text;
   int offset = 0;
-  CT::string title = _text;
+  std::string title = _text;
   int length = title.length();
   CCairoPlotter *ftTitle = new CCairoPlotter(geoParams.width, geoParams.height, (cairo->getByteBuffer()), size, fontfile);
   float textY = 0;
@@ -470,7 +470,7 @@ int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, flo
   //
   do {
     do {
-      text.copy((const char *)(title.c_str() + offset), length);
+      text.assign((const char *)(title.c_str() + offset), length);
       ftTitle->getTextSize(widthOfText, heightOfText, 0.0, text.c_str());
       length--;
       // if(!needsLineBreak)if(w>width-10)needsLineBreak = true;
@@ -478,12 +478,12 @@ int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, flo
     length++;
     if (length + offset < (int)title.length()) {
       int sl = length;
-      while (text.charAt(sl) != ' ' && sl > 0) {
+      while (text[sl] != ' ' && sl > 0) {
         sl--;
       }
       if (sl > 0) length = (sl + 1);
     }
-    text.copy((const char *)(title.c_str() + offset), length);
+    text.assign((const char *)(title.c_str() + offset), length);
     ftTitle->getTextSize(widthOfText, heightOfText, 0.0, text.c_str());
     if (bgcolor.a != 0) {
       ftTitle->setColor(bgcolor.r, bgcolor.g, bgcolor.b, 0);
@@ -554,10 +554,10 @@ void CDrawImage::drawAnchoredText(int x, int y, const char *fontfile, float size
 }
 
 CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b) {
-  CT::string _key;
-  _key.print("%s_%f_%d_%d", fontfile, size, w, h);
+  std::string _key;
+  _key = CT::printf("%s_%f_%d_%d", fontfile, size, w, h);
 
-  std::map<CT::string, CCairoPlotter *>::iterator myCCairoPlotterIter = myCCairoPlotterMap.find(_key);
+  std::map<std::string, CCairoPlotter *>::iterator myCCairoPlotterIter = myCCairoPlotterMap.find(_key);
   if (myCCairoPlotterIter == myCCairoPlotterMap.end()) {
     CCairoPlotter *cairoPlotter = new CCairoPlotter(w, h, b, size, fontfile);
     myCCairoPlotterMap[_key] = cairoPlotter;
@@ -813,16 +813,16 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
       for (size_t j = 0; j < stops.size(); j++) {
         // CDBDebug("%s",stops.get(j)->toString().c_str());
         int offset = (int)(std::stof(stops.at(j).getAttrValue("offset")) * 2.4);
-        CT::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
-        color.setSize(color.length() - 1);
-        auto colors = color.split(",");
+        std::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
+        color.resize(color.length() - 1);
+        auto colors = CT::split(color, ",");
         if (colors.size() != 3) {
           CDBError("Number of specified colors is unequal to three");
           return 1;
         }
-        unsigned char red = colors[0].toInt();
-        unsigned char green = colors[1].toInt();
-        unsigned char blue = colors[2].toInt();
+        unsigned char red = atoi(colors[0].c_str());
+        unsigned char green = atoi(colors[1].c_str());
+        unsigned char blue = atoi(colors[2].c_str());
         unsigned char alpha = (char)(std::stof(stops.at(j).getAttrValue("stop-opacity")) * 255);
         // CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
         if (offset > 255)
@@ -866,7 +866,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
       }
 
     } catch (int e) {
-      CT::string message = CXMLParser::getErrorMessage(e);
+      std::string message = CXMLParser::getErrorMessage(e);
       CDBError("%s\n", message.c_str());
       return 1;
     }
@@ -1169,7 +1169,7 @@ std::string CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
 
-int CDrawImage::getTextWidth(CT::string text, const std::string &fontfile, float size, int angle) {
+int CDrawImage::getTextWidth(std::string text, const std::string &fontfile, float size, int angle) {
   auto freeType = this->getCairoPlotter(fontfile.c_str(), size, geoParams.width, geoParams.height, cairo->getByteBuffer());
   int w = 0, h = 0;
   freeType->getTextSize(w, h, angle, text.c_str());

@@ -24,27 +24,26 @@ public:
    */
   class InspireMetadataFromCSW {
   public:
-    CT::string title, identifier, abstract, pointOfContact, voiceTelephone, organisationName, email;
-    std::vector<CT::string> keywords;
+    std::string title, identifier, abstract, pointOfContact, voiceTelephone, organisationName, email;
+    std::vector<std::string> keywords;
 
-    CT::string toString() {
-      CT::string a;
-      a.print("title:           \"%s\"\n"
-              "identifier:      \"%s\"\n"
-              "abstract:        \"%s\"\n"
-              "pointOfContact:  \"%s\"\n"
-              "voiceTelephone:  \"%s\"\n"
-              "organisationName:\"%s\"\n"
-              "email:           \"%s\"\n",
-              title.c_str(), identifier.c_str(), abstract.c_str(), pointOfContact.c_str(), voiceTelephone.c_str(), organisationName.c_str(), email.c_str());
+    std::string toString() {
+      std::string a = CT::printf("title:           \"%s\"\n"
+                                  "identifier:      \"%s\"\n"
+                                  "abstract:        \"%s\"\n"
+                                  "pointOfContact:  \"%s\"\n"
+                                  "voiceTelephone:  \"%s\"\n"
+                                  "organisationName:\"%s\"\n"
+                                  "email:           \"%s\"\n",
+                                  title.c_str(), identifier.c_str(), abstract.c_str(), pointOfContact.c_str(), voiceTelephone.c_str(), organisationName.c_str(), email.c_str());
       for (size_t j = 0; j < keywords.size(); j++) {
-        a.printconcat("keyword %d:       \"%s\"\n", j, keywords[j].c_str());
+        CT::printfconcat(a, "keyword %zu:       \"%s\"\n", j, keywords[j].c_str());
       }
       return a;
     }
   };
 
-  CT::string static getErrorMessage(int a) {
+  std::string static getErrorMessage(int a) {
     if (a == CINSPIRE_HTTPGETERROR) return "INSPIRE HTTP GET FAILED";
     if (a == CINSPIRE_XMLPARSEERROR) return "INSPIRE XML INVALID";
     if (a == CINSPIRE_XMLELEMENTNOTFOUND) return "INSPIRE XML ELEMENT NOT FOUND";

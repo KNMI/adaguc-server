@@ -29,8 +29,8 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   }
   /* Find all files on disk */
   std::vector<std::string> fileList;
-  CT::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
-  CT::string tailPath;
+  std::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
+  std::string tailPath;
   if (scanFlags & CDBFILESCANNER_IGNOREFILTER) {
     filter = "^.*$";
   }
@@ -88,8 +88,8 @@ std::vector<DestinationGrids> makeTileSet(CDataSource &dataSource) {
   return destinationGrids;
 }
 
-int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::string fileToTile) {
-  if (fileToTile.endsWith("tile.nc")) {
+int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, std::string fileToTile) {
+  if (CT::endsWith(fileToTile, "tile.nc")) {
     return 0;
   }
   if (baseDataSource->cfgLayer->TileSettings.size() != 1) {
@@ -149,9 +149,9 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   std::vector<DestinationGrids> tileSet = makeTileSet(*dataSourceToTile);
 
   // Write tiles
-  CT::string basename = CT::basename(fileToTile);
-  basename = basename.substring(0, basename.lastIndexOf("."));
-  CT::string tileBasePath = fileToTile.substring(0, fileToTile.lastIndexOf("/"));
+  std::string basename = CT::basename(fileToTile);
+  basename = CT::substring(basename, 0, CT::lastIndexOf(basename, "."));
+  std::string tileBasePath = CT::substring(fileToTile, 0, CT::lastIndexOf(fileToTile, "/"));
   if (tileSettings->attr.tilepath.empty() == false) {
     tileBasePath = tileSettings->attr.tilepath;
     tileBasePath = makeCleanPath(tileBasePath.c_str());
@@ -168,15 +168,15 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   srvParam->geoParams.height = atoi(tileSettings->attr.tileheightpx.c_str());
 
   int index = 0;
-  CT::string suffix;
-  suffix.print("_tmp%d", getpid());
+  std::string suffix;
+  suffix = CT::printf("_tmp%d", getpid());
   for (auto destGrid: tileSet) {
     CDataSource tmpDataSource = *dataSourceToTile;
     index++;
-    CT::string destFileName;
-    destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
-    CT::string tmpFile = destFileName;
-    tmpFile.concat(suffix);
+    std::string destFileName;
+    destFileName = CT::printf("%s/%s-%.3d_%.3d_%.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
+    std::string tmpFile = destFileName;
+    tmpFile += suffix;
     // Only write if the file is not there already
     if (CDirReader::isFile(destFileName.c_str())) {
       continue;

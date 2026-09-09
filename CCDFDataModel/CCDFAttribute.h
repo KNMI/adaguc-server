@@ -31,7 +31,7 @@ namespace CDF {
   private:
     void allocateData(size_t size);
     void freeData();
-    int _getDataAsString(CT::string *out);
+    int _getDataAsString(std::string *out);
 
   public:
     ~Attribute();
@@ -41,7 +41,7 @@ namespace CDF {
     Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength);
     void setName(const char *value);
     CDFType type;
-    CT::string name;
+    std::string name;
     size_t length;
     void *data;
     CDFType getType();
@@ -62,7 +62,7 @@ namespace CDF {
      */
     template <class T> T getDataAt(size_t index, T defaultValue);
     int setString(const char *dataToSet);
-    CT::string toString();
+    std::string toString();
     size_t size();
   };
 } // namespace CDF

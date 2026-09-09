@@ -41,7 +41,7 @@
 class CImgRenderStippling : public CImageWarperRenderInterface {
 private:
   int xDistance, yDistance, discSize, mode;
-  CT::string color;
+  std::string color;
   CStyleConfiguration *styleConfiguration;
   CDataSource *dataSource;
   CDrawImage *drawImage;

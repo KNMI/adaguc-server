@@ -38,7 +38,7 @@ namespace CDF {
     struct CDFObjectClass {
       void *cdfObjectPointer;
       int dimIndex;
-      CT::string dimValue;
+      std::string dimValue;
     };
     class CustomReader {
     public:
@@ -78,8 +78,8 @@ namespace CDF {
     Variable(const char *name, CDFType type);
     CDFType nativeType;
     CDFType currentType;
-    CT::string name;
-    CT::string orgName;
+    std::string name;
+    std::string orgName;
     std::vector<Attribute *> attributes;
     std::vector<Dimension *> dimensionlinks; // Note, this vector does not own the Dimension. It is a link to a dimension in the CDFObject model.
     int id = -1;
@@ -87,7 +87,7 @@ namespace CDF {
     void *data = nullptr;
     bool isDimension = false;
     bool enableCache = false;
-    CDF::Variable *clone(CDFType newType, CT::string newName);
+    CDF::Variable *clone(CDFType newType, std::string newName);
     void copy(CDF::Variable *sourceVariable);
     void setCustomReader(CustomReader *customReader);
     CustomReader *getCustomReader();

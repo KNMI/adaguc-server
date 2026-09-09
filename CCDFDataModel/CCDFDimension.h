@@ -25,6 +25,7 @@
 
 #ifndef CCDFDIMENSION_H
 #define CCDFDIMENSION_H
+#include <string>
 
 namespace CDF {
   class Dimension {
@@ -47,18 +48,18 @@ namespace CDF {
       name = (_name);
       id = -1;
     }
-    CT::string name;
+    std::string name;
     size_t length;
     bool isIterative;
     int id;
     size_t getSize() { return length; }
     void setSize(size_t _length) { length = _length; }
     void setName(const char *value) { name = (value); }
-    CT::string getName() { return name; }
+    std::string getName() { return name; }
     // Returns a new copy of this dimension
     Dimension *clone() {
       Dimension *newDim = new Dimension();
-      newDim->name = name.c_str();
+      newDim->name = name;
       newDim->length = length;
       newDim->isIterative = isIterative;
       newDim->id = id;

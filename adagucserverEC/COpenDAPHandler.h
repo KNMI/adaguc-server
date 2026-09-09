@@ -29,24 +29,24 @@ private:
         this->count = count;
         this->stride = stride;
       }
-      CT::string name;
+      std::string name;
       size_t start;
       size_t count;
       ptrdiff_t stride;
     };
     VarInfo(const char *name) { this->name = name; }
-    CT::string name;
+    std::string name;
     std::vector<Dim> dimInfo;
   };
-  CT::string VarInfoToString(std::vector<VarInfo> selectedVariables);
+  std::string VarInfoToString(std::vector<VarInfo> selectedVariables);
   int putVariableDataSize(CDF::Variable *v);
   int putVariableData(CDF::Variable *v, CDFType type);
-  CT::string createDDSHeader(CT::string layerName, CDFObject *cdfObject, std::vector<VarInfo> selectedVariables);
+  std::string createDDSHeader(std::string layerName, CDFObject *cdfObject, std::vector<VarInfo> selectedVariables);
   int getDimSize(CDataSource *dataSource, const char *name);
   FILE *opendapoutstream;
   void writeInt(int &v);
   void writeDouble(double &v);
-  CT::string httpHeaderContentType;
+  std::string httpHeaderContentType;
   bool jsonWriter;
   bool jsonValuesWritten;
 

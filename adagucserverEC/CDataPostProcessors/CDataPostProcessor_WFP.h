@@ -29,7 +29,7 @@ private:
   CDF::Variable *cloneVariable(CDF::Variable *varToClone, const char *name, int size);
 
 public:
-  static CDataSource *getDataSource(CDataSource *dataSource, CT::string baseLayerName);
+  static CDataSource *getDataSource(CDataSource *dataSource, std::string baseLayerName);
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);
   virtual int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);

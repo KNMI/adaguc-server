@@ -77,7 +77,7 @@ public:
 
   CDFObject *getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached = true);
   CDFObject *getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached = true);
-  static std::vector<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
+  static std::vector<std::string> getListOfVisualizableVariables(CDFObject *cdfObject);
 
   /**
    * Returns how many objects are openend in this store

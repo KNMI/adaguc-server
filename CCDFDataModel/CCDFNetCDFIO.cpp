@@ -95,7 +95,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       }
       status = nc_inq_var(groupId, j, name, &type, &ndims, dimids, &natt);
       // CDBDebug("NAME EQUALS %s  = %s %d = %d",var->name.c_str(),name,var->id,j);
-      if (var->name.equals(name)) {
+      if (var->name == name) {
 
         var->id = j;
         break;
@@ -293,10 +293,10 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     if (useStartCount) {
       if (useStriding) {
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
-        CT::string dims = "";
+        std::string dims = "";
         for (size_t j = 0; j < var->dimensionlinks.size(); j++) {
-          if (j > 0) dims.concat(",");
-          dims.printconcat("%s[%d:%d:%d]", var->dimensionlinks[j]->name.c_str(), start[j], count[j], start[j]);
+          if (j > 0) dims += ",";
+          CT::printfconcat(dims, "%s[%d:%d:%d]", var->dimensionlinks[j]->name.c_str(), start[j], count[j], start[j]);
         }
         CDBDebug("READ NSCS: [%s](%s)", var->name.c_str(), dims.c_str());
 #endif
@@ -306,10 +306,10 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
         }
       } else {
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
-        CT::string dims = "";
+        std::string dims = "";
         for (size_t j = 0; j < var->dimensionlinks.size(); j++) {
-          if (j > 0) dims.concat(",");
-          dims.printconcat("%s[%d:%d]", var->dimensionlinks[j]->name.c_str(), start[j], count[j]);
+          if (j > 0) dims += ",";
+          CT::printfconcat(dims, "%s[%d:%d]", var->dimensionlinks[j]->name.c_str(), start[j], count[j]);
         }
         CDBDebug("READ NSC: [%s](%s)", var->name.c_str(), dims.c_str());
 #endif
@@ -383,8 +383,8 @@ int CDFNetCDFReader::readDimensions(int groupId, std::string &groupName) {
       CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq_dim: ", status);
       return 1;
     }
-    CT::string name = groupName.c_str();
-    name.concat(flatname);
+    std::string name = groupName.c_str();
+    name += flatname;
     try {
       CDF::Dimension *existingDim = cdfObject->getDimensionThrows(name.c_str());
       // Only add non existing variables;
@@ -420,7 +420,7 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
     int attributeExists = false;
 
     for (size_t k = 0; k < attributes.size(); k++) {
-      if (attributes[k]->name.equals(name)) {
+      if (attributes[k]->name == name) {
         attributeExists = true;
         break;
       }
@@ -461,8 +461,8 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
   return 0;
 }
 
-int CDFNetCDFReader::_findNCGroupIdForCDFVariable(CT::string *varName) {
-  auto paths = varName->split(CDFNetCDFGroupSeparator);
+int CDFNetCDFReader::_findNCGroupIdForCDFVariable(std::string *varName) {
+  auto paths = CT::split(*varName, CDFNetCDFGroupSeparator);
   if (paths.size() <= 1) {
     return root_id;
   }
@@ -556,8 +556,8 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       return 1;
     }
 
-    CT::string name = groupName.c_str();
-    name.concat(flatname);
+    std::string name = groupName.c_str();
+    name += flatname;
 
     //     CDBDebug("%s Numdims NC : %d",name.c_str(),ndims);
 
@@ -570,7 +570,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       isDimension = false;
       // Is this a dimension:
       for (size_t i = 0; i < cdfObject->dimensions.size(); i++) {
-        if (cdfObject->dimensions[i]->name.equals(name.c_str())) {
+        if (cdfObject->dimensions[i]->name == name) {
           isDimension = true;
           break;
         }
@@ -626,7 +626,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       }
 
       if (thisType == CDF_CHAR && var->dimensionlinks.size() == 2) {
-        if (var->dimensionlinks[1]->name.equals("maxStrlen64")) {
+        if (var->dimensionlinks[1]->name == "maxStrlen64") {
           var->dimensionlinks.pop_back();
           thisType = CDF_STRING;
           var->isString(true);
@@ -798,8 +798,8 @@ nc_type CDFNetCDFWriter::NCtypeConversion(CDFType type) {
   return NC_DOUBLE;
 }
 
-CT::string CDFNetCDFWriter::NCtypeConversionToString(CDFType type) {
-  CT::string r;
+std::string CDFNetCDFWriter::NCtypeConversionToString(CDFType type) {
+  std::string r;
   r = "NC_DOUBLE";
   if (type == CDF_BYTE) r = "NC_BYTE";
   if (type == CDF_UBYTE) r = "NC_UBYTE";
@@ -854,28 +854,28 @@ void CDFNetCDFWriter::disableReadData() { readData = false; };
 
 void CDFNetCDFWriter::recordNCCommands(bool enable) { listNCCommands = enable; }
 
-CT::string CDFNetCDFWriter::getNCCommands() { return NCCommands; };
+std::string CDFNetCDFWriter::getNCCommands() { return NCCommands; };
 
 int CDFNetCDFWriter::write(const char *fileName) { return write(fileName, NULL); }
 
 int CDFNetCDFWriter::write(const char *fileName, void (*progress)(const char *message, float percentage)) {
   NCCommands = "";
   if (listNCCommands) {
-    NCCommands.printconcat("int root_id;\n");
-    NCCommands.printconcat("size_t start[];\n");
-    NCCommands.printconcat("size_t count[];\n");
-    NCCommands.printconcat("int dimIDArray[];\n");
-    NCCommands.printconcat("int shuffle=%d;\n", shuffle);
-    NCCommands.printconcat("int deflate=%d;\n", deflate);
-    NCCommands.printconcat("int deflate_level=%d;\n", deflate_level);
-    NCCommands.printconcat("int numDims=%d;\n", 0);
-    NCCommands.printconcat("void *variable_data=NULL;\n");
+    CT::printfconcat(NCCommands, "int root_id;\n");
+    CT::printfconcat(NCCommands, "size_t start[];\n");
+    CT::printfconcat(NCCommands, "size_t count[];\n");
+    CT::printfconcat(NCCommands, "int dimIDArray[];\n");
+    CT::printfconcat(NCCommands, "int shuffle=%d;\n", shuffle);
+    CT::printfconcat(NCCommands, "int deflate=%d;\n", deflate);
+    CT::printfconcat(NCCommands, "int deflate_level=%d;\n", deflate_level);
+    CT::printfconcat(NCCommands, "int numDims=%d;\n", 0);
+    CT::printfconcat(NCCommands, "void *variable_data=NULL;\n");
 
     for (size_t j = 0; j < cdfObject->dimensions.size(); j++) {
-      NCCommands.printconcat("int dim_id_%d;\n", j);
+      CT::printfconcat(NCCommands, "int dim_id_%zu;\n", j);
     }
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
-      NCCommands.printconcat("int var_id_%d;\n", j);
+      CT::printfconcat(NCCommands, "int var_id_%zu;\n", j);
     }
   }
 
@@ -886,12 +886,12 @@ int CDFNetCDFWriter::write(const char *fileName, void (*progress)(const char *me
   if (netcdfMode > 3) {
     status = nc_create(fileName, NC_NETCDF4 | NC_CLOBBER, &root_id);
     if (listNCCommands) {
-      NCCommands.printconcat("nc_create(\"%s\" ,NC_NETCDF4|NC_CLOBBER , &root_id);\n", fileName);
+      CT::printfconcat(NCCommands, "nc_create(\"%s\" ,NC_NETCDF4|NC_CLOBBER , &root_id);\n", fileName);
     }
   } else {
     status = nc_create(fileName, NC_CLOBBER | NC_64BIT_OFFSET, &root_id);
     if (listNCCommands) {
-      NCCommands.printconcat("nc_create(\"%s\" ,NC_CLOBBER|NC_64BIT_OFFSET , &root_id);\n", fileName);
+      CT::printfconcat(NCCommands, "nc_create(\"%s\" ,NC_CLOBBER|NC_64BIT_OFFSET , &root_id);\n", fileName);
     }
   }
   if (status != NC_NOERR) {
@@ -910,7 +910,7 @@ int CDFNetCDFWriter::write(const char *fileName, void (*progress)(const char *me
   nc_close(root_id);
   root_id = -1;
   if (listNCCommands) {
-    NCCommands.printconcat("nc_close(root_id);\n");
+    CT::printfconcat(NCCommands, "nc_close(root_id);\n");
   }
 
   return status;
@@ -931,66 +931,66 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
       size_t length = cdfObject->attributes[i]->length;
       CDFType type = cdfObject->attributes[i]->getType();
       if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) {
-        CT::string out = "";
-        out.concatlength((const char *)data, length);
-        NCCommands.printconcat("nc_put_att(root_id, NC_GLOBAL, \"%s\",%s,%d,\"%s\");\n", cdfObject->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
+        std::string out = "";
+        out.append((const char *)data, length);
+        CT::printfconcat(NCCommands, "nc_put_att(root_id, NC_GLOBAL, \"%s\",%s,%zu,\"%s\");\n", cdfObject->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
                                cdfObject->attributes[i]->length, out.c_str());
       } else {
         if (type == CDF_INT || type == CDF_UINT) {
-          NCCommands.printconcat("int attrData_%d[]={", i);
+          CT::printfconcat(NCCommands, "int attrData_%zu[]={", i);
           for (size_t n = 0; n < length; n++) {
-            NCCommands.printconcat("%d", ((int *)data)[n]);
+            CT::printfconcat(NCCommands, "%d", ((int *)data)[n]);
             if (n < length - 1) {
-              NCCommands.printconcat(",");
+              CT::printfconcat(NCCommands, ",");
             }
-            NCCommands.printconcat("};\n");
+            CT::printfconcat(NCCommands, "};\n");
           }
         }
 
         if (type == CDF_INT64 || type == CDF_UINT64) {
-          NCCommands.printconcat("int64 attrData_%d[]={", i);
+          CT::printfconcat(NCCommands, "int64 attrData_%zu[]={", i);
           for (size_t n = 0; n < length; n++) {
-            NCCommands.printconcat("%ld", ((long *)data)[n]);
+            CT::printfconcat(NCCommands, "%ld", ((long *)data)[n]);
             if (n < length - 1) {
-              NCCommands.printconcat(",");
+              CT::printfconcat(NCCommands, ",");
             }
-            NCCommands.printconcat("};\n");
+            CT::printfconcat(NCCommands, "};\n");
           }
         }
 
         if (type == CDF_SHORT || type == CDF_USHORT) {
-          NCCommands.printconcat("short attrData_%d[]={", i);
+          CT::printfconcat(NCCommands, "short attrData_%zu[]={", i);
           for (size_t n = 0; n < length; n++) {
-            NCCommands.printconcat("%d", ((short *)data)[n]);
+            CT::printfconcat(NCCommands, "%d", ((short *)data)[n]);
             if (n < length - 1) {
-              NCCommands.printconcat(",");
+              CT::printfconcat(NCCommands, ",");
             }
-            NCCommands.printconcat("};\n");
+            CT::printfconcat(NCCommands, "};\n");
           }
         }
 
         if (type == CDF_FLOAT) {
-          NCCommands.printconcat("float attrData_%d[]={", i);
+          CT::printfconcat(NCCommands, "float attrData_%zu[]={", i);
           for (size_t n = 0; n < length; n++) {
-            NCCommands.printconcat("%f", ((float *)data)[n]);
+            CT::printfconcat(NCCommands, "%f", ((float *)data)[n]);
             if (n < length - 1) {
-              NCCommands.printconcat(",");
+              CT::printfconcat(NCCommands, ",");
             }
-            NCCommands.printconcat("};\n");
+            CT::printfconcat(NCCommands, "};\n");
           }
         }
 
         if (type == CDF_DOUBLE) {
-          NCCommands.printconcat("float attrData_%d[]={", i);
+          CT::printfconcat(NCCommands, "float attrData_%zu[]={", i);
           for (size_t n = 0; n < length; n++) {
-            NCCommands.printconcat("%f", ((double *)data)[n]);
+            CT::printfconcat(NCCommands, "%f", ((double *)data)[n]);
             if (n < length - 1) {
-              NCCommands.printconcat(",");
+              CT::printfconcat(NCCommands, ",");
             }
-            NCCommands.printconcat("};\n");
+            CT::printfconcat(NCCommands, "};\n");
           }
         }
-        NCCommands.printconcat("nc_put_att(root_id, NC_GLOBAL, \"%s\",%s,%d,attrData_%d_%d);\n", cdfObject->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
+        CT::printfconcat(NCCommands, "nc_put_att(root_id, NC_GLOBAL, \"%s\",%s,%zu,attrData_%zu);\n", cdfObject->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
                                cdfObject->attributes[i]->length, i);
       }
     }
@@ -1018,7 +1018,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
     CDBDebug("DEF DIM %s %d %d", dim->name.c_str(), dim->length, dim->id);
 #endif
     if (listNCCommands) {
-      NCCommands.printconcat("nc_def_dim(root_id,\"%s\" , %d, &dim_id_%d);\n", dim->name.c_str(), dim->length, j);
+      CT::printfconcat(NCCommands, "nc_def_dim(root_id,\"%s\" , %zu, &dim_id_%zu);\n", dim->name.c_str(), dim->length, j);
     }
     if (status != NC_NOERR) {
       CDBError("[%s]: %s %d", nc_strerror(status), "nc_def_dim: ", status);
@@ -1063,27 +1063,27 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
 
           size_t totalVariableSize = 0;
           // Find dim and chunk info
-          CT::string variableInfo(name);
-          variableInfo.concat("\t(");
+          std::string variableInfo(name);
+          variableInfo += "\t(";
           for (int i = 0; i < numDims; i++) {
             for (size_t k = 0; k < dimensions.size(); k++) {
-              if (dimensions[k]->name.equals(variable->dimensionlinks[i]->name)) {
+              if (dimensions[k]->name == variable->dimensionlinks[i]->name) {
                 dimIDS[i] = dimensions[k]->id;
                 NCCommandID[i] = k;
                 if (totalVariableSize == 0) totalVariableSize = 1;
                 // CDBDebug("EQUALS: %s %d",dimensions[k]->name.c_str(),dimIDS[i]);
                 totalVariableSize *= dimensions[k]->length;
                 // chunkSizes[i]=dimensions[k]->length;
-                variableInfo.printconcat("%s=%d", dimensions[k]->name.c_str(), dimensions[k]->length);
-                if (i + 1 < numDims) variableInfo.concat(",");
+                CT::printfconcat(variableInfo, "%s=%zu", dimensions[k]->name.c_str(), dimensions[k]->length);
+                if (i + 1 < numDims) variableInfo += ",";
               }
             }
           }
-          variableInfo.concat(")");
+          variableInfo += ")";
           int nc_var_id;
           status = nc_redef(root_id);
           if (listNCCommands) {
-            NCCommands.printconcat("nc_redef(root_id);\n");
+            CT::printfconcat(NCCommands, "nc_redef(root_id);\n");
           }
           status = nc_def_var(root_id, name, NCtypeConversion(variable->currentType), numDims, dimIDS.data(), &nc_var_id);
           if (status != NC_NOERR) {
@@ -1093,11 +1093,11 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
           }
           if (listNCCommands) {
 
-            NCCommands.printconcat("numDims=%d;\n", numDims);
+            CT::printfconcat(NCCommands, "numDims=%d;\n", numDims);
             for (int k = 0; k < numDims; k++) {
-              NCCommands.printconcat("dimIDArray[%d]=dim_id_%d;\n", k, NCCommandID[k]);
+              CT::printfconcat(NCCommands, "dimIDArray[%d]=dim_id_%d;\n", k, NCCommandID[k]);
             }
-            NCCommands.printconcat("nc_def_var(root_id, \"%s\",%s,numDims, dimIDArray,&var_id_%d);\n", name, NCtypeConversionToString(variable->currentType).c_str(), j);
+            CT::printfconcat(NCCommands, "nc_def_var(root_id, \"%s\",%s,numDims, dimIDArray,&var_id_%zu);\n", name, NCtypeConversionToString(variable->currentType).c_str(), j);
           }
 
           // Set chunking and deflate options
@@ -1111,8 +1111,8 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
               for (size_t m = 0; m < variable->dimensionlinks.size(); m++) {
                 chunkSizes[m] = variable->dimensionlinks[m]->getSize();
                 try {
-                  CT::string standardName = cdfObject->getVariableThrows(variable->dimensionlinks[m]->name.c_str())->getAttributeThrows("standard_name")->toString();
-                  if (standardName.equals("time")) {
+                  std::string standardName = cdfObject->getVariableThrows(variable->dimensionlinks[m]->name.c_str())->getAttributeThrows("standard_name")->toString();
+                  if (standardName == "time") {
                     chunkSizes[m] = 1;
                   }
                 } catch (int e) {
@@ -1138,23 +1138,23 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
                 return 1;
               }
               if (listNCCommands) {
-                NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n", j);
+                CT::printfconcat(NCCommands, "nc_def_var_deflate(root_id,var_id_%zu,shuffle ,deflate, deflate_level);\n", j);
               }
             }
           }
 
 // copy data
 #ifdef CCDFNETCDFWRITER_DEBUG
-          CT::string message;
-          message.print("%d/%d Copying data for variable %s: total %d bytes", nrVarsWritten + 1, cdfObject->variables.size(), variableInfo.c_str(),
+          std::string message;
+          message = CT::printf("%d/%zu Copying data for variable %s: total %d bytes", nrVarsWritten + 1, cdfObject->variables.size(), variableInfo.c_str(),
                         int(totalVariableSize) * CDF::getTypeSize(variable->getType()));
           CDBDebug("%s", message.c_str());
 #endif
           // Copy attributes for this specific variable
           for (size_t i = 0; i < variable->attributes.size(); i++) {
-            if (!variable->attributes[i]->name.equals("CLASS") && !variable->attributes[i]->name.equals("_Netcdf4Dimid")) {
+            if (variable->attributes[i]->name != "CLASS" && variable->attributes[i]->name != "_Netcdf4Dimid") {
               nc_type type = NCtypeConversion(variable->attributes[i]->getType());
-              if (variable->attributes[i]->name.equals("_FillValue")) {
+              if (variable->attributes[i]->name == "_FillValue") {
                 type = variable->getType();
               }
               status = nc_put_att(root_id, nc_var_id, variable->attributes[i]->name.c_str(), type, variable->attributes[i]->length, variable->attributes[i]->data);
@@ -1163,66 +1163,66 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
                 void *data = variable->attributes[i]->data;
                 size_t length = variable->attributes[i]->length;
                 if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) {
-                  CT::string out = "";
-                  out.concatlength((const char *)data, length);
-                  NCCommands.printconcat("nc_put_att(root_id, var_id_%d, \"%s\",%s,%d,\"%s\");\n", j, variable->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
+                  std::string out = "";
+                  out.append((const char *)data, length);
+                  CT::printfconcat(NCCommands, "nc_put_att(root_id, var_id_%zu, \"%s\",%s,%zu,\"%s\");\n", j, variable->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
                                          variable->attributes[i]->length, out.c_str());
                 } else {
                   if (type == CDF_INT || type == CDF_UINT) {
-                    NCCommands.printconcat("int attrData_%d_%d[]={", j, i);
+                    CT::printfconcat(NCCommands, "int attrData_%zu_%zu[]={", j, i);
                     for (size_t n = 0; n < length; n++) {
-                      NCCommands.printconcat("%d", ((int *)data)[n]);
+                      CT::printfconcat(NCCommands, "%d", ((int *)data)[n]);
                       if (n < length - 1) {
-                        NCCommands.printconcat(",");
+                        CT::printfconcat(NCCommands, ",");
                       }
-                      NCCommands.printconcat("};\n");
+                      CT::printfconcat(NCCommands, "};\n");
                     }
                   }
 
                   if (type == CDF_INT64 || type == CDF_UINT64) {
-                    NCCommands.printconcat("int attrData_%d_%d[]={", j, i);
+                    CT::printfconcat(NCCommands, "int attrData_%zu_%zu[]={", j, i);
                     for (size_t n = 0; n < length; n++) {
-                      NCCommands.printconcat("%ld", ((long *)data)[n]);
+                      CT::printfconcat(NCCommands, "%ld", ((long *)data)[n]);
                       if (n < length - 1) {
-                        NCCommands.printconcat(",");
+                        CT::printfconcat(NCCommands, ",");
                       }
-                      NCCommands.printconcat("};\n");
+                      CT::printfconcat(NCCommands, "};\n");
                     }
                   }
 
                   if (type == CDF_SHORT || type == CDF_USHORT) {
-                    NCCommands.printconcat("short attrData_%d_%d[]={", j, i);
+                    CT::printfconcat(NCCommands, "short attrData_%zu_%zu[]={", j, i);
                     for (size_t n = 0; n < length; n++) {
-                      NCCommands.printconcat("%d", ((short *)data)[n]);
+                      CT::printfconcat(NCCommands, "%d", ((short *)data)[n]);
                       if (n < length - 1) {
-                        NCCommands.printconcat(",");
+                        CT::printfconcat(NCCommands, ",");
                       }
-                      NCCommands.printconcat("};\n");
+                      CT::printfconcat(NCCommands, "};\n");
                     }
                   }
 
                   if (type == CDF_FLOAT) {
-                    NCCommands.printconcat("float attrData_%d_%d[]={", j, i);
+                    CT::printfconcat(NCCommands, "float attrData_%zu_%zu[]={", j, i);
                     for (size_t n = 0; n < length; n++) {
-                      NCCommands.printconcat("%f", ((float *)data)[n]);
+                      CT::printfconcat(NCCommands, "%f", ((float *)data)[n]);
                       if (n < length - 1) {
-                        NCCommands.printconcat(",");
+                        CT::printfconcat(NCCommands, ",");
                       }
-                      NCCommands.printconcat("};\n");
+                      CT::printfconcat(NCCommands, "};\n");
                     }
                   }
 
                   if (type == CDF_DOUBLE) {
-                    NCCommands.printconcat("double attrData_%d_%d[]={", j, i);
+                    CT::printfconcat(NCCommands, "double attrData_%zu_%zu[]={", j, i);
                     for (size_t n = 0; n < length; n++) {
-                      NCCommands.printconcat("%f", ((double *)data)[n]);
+                      CT::printfconcat(NCCommands, "%f", ((double *)data)[n]);
                       if (n < length - 1) {
-                        NCCommands.printconcat(",");
+                        CT::printfconcat(NCCommands, ",");
                       }
-                      NCCommands.printconcat("};\n");
+                      CT::printfconcat(NCCommands, "};\n");
                     }
                   }
-                  NCCommands.printconcat("nc_put_att(root_id, var_id_%d, \"%s\",%s,%d,attrData_%d_%d);\n", j, variable->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
+                  CT::printfconcat(NCCommands, "nc_put_att(root_id, var_id_%zu, \"%s\",%s,%zu,attrData_%zu_%zu);\n", j, variable->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
                                          variable->attributes[i]->length, j, i);
                 }
               }
@@ -1256,7 +1256,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
               return 1;
             }
             if (listNCCommands) {
-              NCCommands.printconcat("nc_enddef(root_id);\n");
+              CT::printfconcat(NCCommands, "nc_enddef(root_id);\n");
             }
 
 #ifdef CCDFNETCDFWRITER_DEBUG
@@ -1269,8 +1269,8 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
 
               for (size_t id = 0; id < variable->dimensionlinks[iterativeDimIndex]->getSize(); id++) {
 
-                CT::string progressMessage;
-                progressMessage.print("\"%d/%d iterating dim %s with index %d/%d for variable %s\"", nrVarsWritten + 1, cdfObject->variables.size(),
+                std::string progressMessage;
+                progressMessage = CT::printf("\"%d/%zu iterating dim %s with index %zu/%zu for variable %s\"", nrVarsWritten + 1, cdfObject->variables.size(),
                                       variable->dimensionlinks[iterativeDimIndex]->name.c_str(), id, variable->dimensionlinks[iterativeDimIndex]->getSize(), variable->name.c_str());
 
                 float varPercentage = float(nrVarsWritten) / float(cdfObject->variables.size());
@@ -1291,7 +1291,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
             }
             nc_sync(root_id);
             if (listNCCommands) {
-              NCCommands.printconcat("nc_sync(root_id);\n");
+              CT::printfconcat(NCCommands, "nc_sync(root_id);\n");
             }
           }
 
@@ -1341,21 +1341,21 @@ int CDFNetCDFWriter::copyVar(CDF::Variable *variable, int nc_var_id, size_t *sta
 
     status = nc_put_vara(root_id, nc_var_id, start, count, variable->data);
     if (listNCCommands) {
-      NCCommands.printconcat("//");
+      CT::printfconcat(NCCommands, "//");
       for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-        NCCommands.printconcat("%s\t", variable->dimensionlinks[j]->name.c_str());
+        CT::printfconcat(NCCommands, "%s\t", variable->dimensionlinks[j]->name.c_str());
       }
-      NCCommands.printconcat("\n");
+      CT::printfconcat(NCCommands, "\n");
       for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-        NCCommands.printconcat("start[%d]=%d;\t", j, start[j]);
+        CT::printfconcat(NCCommands, "start[%zu]=%zu;\t", j, start[j]);
       }
-      NCCommands.printconcat("\n");
+      CT::printfconcat(NCCommands, "\n");
       for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-        NCCommands.printconcat("count[%d]=%d;\t", j, count[j]);
+        CT::printfconcat(NCCommands, "count[%zu]=%zu;\t", j, count[j]);
       }
-      NCCommands.printconcat("\n");
-      NCCommands.printconcat("//variable_data should be defined here\n");
-      NCCommands.printconcat("//nc_put_vara(root_id,var_id_%d,start,count,variable_data);\n", nc_var_id);
+      CT::printfconcat(NCCommands, "\n");
+      CT::printfconcat(NCCommands, "//variable_data should be defined here\n");
+      CT::printfconcat(NCCommands, "//nc_put_vara(root_id,var_id_%d,start,count,variable_data);\n", nc_var_id);
     }
     // printf("Fake put vara\n");
     if (status != NC_NOERR) {

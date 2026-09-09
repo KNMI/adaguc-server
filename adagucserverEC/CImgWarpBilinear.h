@@ -74,14 +74,14 @@ public:
   float lineWidth;
   float fontSize;
   float textStrokeWidth;
-  CT::string textFormat;
+  std::string textFormat;
   CColor linecolor;
   CColor textcolor;
   CColor textstrokecolor;
-  CT::string dashing;
+  std::string dashing;
 
   ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, const char *_definedIntervals, const char *_textFormat, float fontSize, float textStrokeWidth,
-                    CT::string dashing) {
+                    std::string dashing) {
     this->lineWidth = lineWidth;
     this->linecolor = linecolor;
     this->textcolor = textcolor;
@@ -92,10 +92,10 @@ public:
     this->continuousInterval = 0;
 
     if (_definedIntervals != NULL) {
-      CT::string defIntervalString = _definedIntervals;
-      auto defIntervalList = defIntervalString.split(",");
+      std::string defIntervalString = _definedIntervals;
+      auto defIntervalList = CT::split(defIntervalString, ",");
       for (size_t j = 0; j < defIntervalList.size(); j++) {
-        definedIntervals.push_back(defIntervalList[j].toFloat());
+        definedIntervals.push_back(atof(defIntervalList[j].c_str()));
       }
     }
 
@@ -108,7 +108,7 @@ public:
   }
 
   ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, float continuousInterval, const char *_textFormat, float fontSize, float textStrokeWidth,
-                    CT::string dashing) {
+                    std::string dashing) {
 
     this->lineWidth = lineWidth;
     this->linecolor = linecolor;

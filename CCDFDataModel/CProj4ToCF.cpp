@@ -34,7 +34,7 @@ float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
   return fValue;
 }
 
-CT::string CProj4ToCF::getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList) {
+std::string CProj4ToCF::getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList) {
   auto it = std::find_if(projKVPList.begin(), projKVPList.end(), [&proj4Key](const CKeyValuePair &kvp) { return kvp.key == proj4Key; });
   if (it != projKVPList.end()) {
     return it->value;
@@ -45,7 +45,7 @@ CT::string CProj4ToCF::getProj4Value(const std::string &proj4Key, std::vector<CK
 float CProj4ToCF::getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float(*conversionfunction)(float)) {
   float value = defaultValue;
   try {
-    value = getProj4Value(proj4Key, projKVPList).toFloat();
+    value = atof(getProj4Value(proj4Key, projKVPList).c_str());
   } catch (int e) {
     value = defaultValue;
   }
@@ -173,15 +173,15 @@ void CProj4ToCF::initLCCPerspective(CDF::Variable *projectionVariable, std::vect
   int numStandardParallels = 0;
   float standard_parallels[2];
   try {
-    CT::string lat_1 = getProj4Value("lat_1", projKVPList);
-    standard_parallels[0] = lat_1.toFloat();
+    std::string lat_1 = getProj4Value("lat_1", projKVPList);
+    standard_parallels[0] = atof(lat_1.c_str());
     numStandardParallels++;
   } catch (int e) {
   }
 
   try {
-    CT::string lat_2 = getProj4Value("lat_2", projKVPList);
-    standard_parallels[1] = lat_2.toFloat();
+    std::string lat_2 = getProj4Value("lat_2", projKVPList);
+    standard_parallels[1] = atof(lat_2.c_str());
     numStandardParallels++;
   } catch (int e) {
   }
@@ -245,15 +245,15 @@ void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vecto
   int numStandardParallels = 0;
   float standard_parallels[2];
   try {
-    CT::string lat_1 = getProj4Value("lat_1", projKVPList);
-    standard_parallels[0] = lat_1.toFloat();
+    std::string lat_1 = getProj4Value("lat_1", projKVPList);
+    standard_parallels[0] = atof(lat_1.c_str());
     numStandardParallels++;
   } catch (int e) {
   }
 
   try {
-    CT::string lat_2 = getProj4Value("lat_2", projKVPList);
-    standard_parallels[1] = lat_2.toFloat();
+    std::string lat_2 = getProj4Value("lat_2", projKVPList);
+    standard_parallels[1] = atof(lat_2.c_str());
     numStandardParallels++;
   } catch (int e) {
   }
@@ -340,7 +340,7 @@ void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vec
   //+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838
   projectionVariable->removeAttributes();
   float v = 0;
-  CT::string s;
+  std::string s;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name", "geostationary"));
   v = getProj4ValueF("h", projKVPList, 4.2163970098E7, CProj4ToCF::convertToM);
   projectionVariable->addAttribute(new CDF::Attribute("perspective_point_height", CDF_FLOAT, &v, 1));
@@ -368,7 +368,7 @@ int CProj4ToCF::convertBackAndFort(const char *projString, CDF::Variable *projec
     return 1;
   }
 
-  CT::string dumpString = "";
+  std::string dumpString = "";
   CDF::_dump(projectionVariable, &dumpString, CCDFDATAMODEL_DUMP_STANDARD);
   CDBDebug("\n%s", dumpString.c_str());
 
@@ -387,29 +387,29 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   // Create a list with key value pairs of projection options
 
   std::vector<CKeyValuePair> projKVPList;
-  CT::string proj4CTString;
+  std::string proj4CTString;
   proj4CTString = (proj4String);
-  auto projElements = proj4CTString.split(" ");
+  auto projElements = CT::split(proj4CTString, " ");
 
   if (projElements.size() < 2) {
     return 1;
   }
   for (auto &projElement: projElements) {
 
-    auto element = projElement.split("=");
+    auto element = CT::split(projElement, "=");
     if (element.size() > 0) {
-      CT::string name, value;
+      std::string name, value;
       name = (element[0]);
       if (element.size() > 1) {
         value = (element[1]);
       }
-      if (name.startsWith("+")) {
-        name.substringSelf(1, -1);
+      if (CT::startsWith(name, "+")) {
+        name = CT::substring(name, 1, -1);
       }
       projKVPList.push_back({.key = name, .value = value});
     }
   }
-  CT::string cmpStr;
+  std::string cmpStr;
   int foundProj = 0;
   try {
 
@@ -948,7 +948,7 @@ std::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
         } catch (int e) {
         };
         if (!found) {
-          CREPORT_ERROR_NODOC(CT::string("Projection: ") + grid_mapping_name + CT::string(" needs scale_factor_at_projection_origin or scale_factor_at_central_meridian"),
+          CREPORT_ERROR_NODOC(std::string("Projection: ") + grid_mapping_name + std::string(" needs scale_factor_at_projection_origin or scale_factor_at_central_meridian"),
                               CReportMessage::Categories::GENERAL);
           return "";
         }
@@ -975,7 +975,7 @@ std::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
           float semi_minor_axis_value = CT::toDouble(semi_major_axis) * (1 - 1 / CT::toDouble(inverse_flattening));
           semi_minor_axis = CT::printf("%f", semi_minor_axis_value);
         } else {
-          CREPORT_ERROR_NODOC(CT::string("Projection: ") + grid_mapping_name + CT::string(" needs semi_minor_axis or inverse_flattening"), CReportMessage::Categories::GENERAL);
+          CREPORT_ERROR_NODOC(std::string("Projection: ") + grid_mapping_name + std::string(" needs semi_minor_axis or inverse_flattening"), CReportMessage::Categories::GENERAL);
           return "";
         }
       }
@@ -1046,16 +1046,16 @@ std::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       proj4String = CT::printf("+proj=aeqd +lat_0=%f +lon_0=%f", CT::toDouble(latitude_of_projection_origin), CT::toDouble(longitude_of_projection_origin));
       CT::printfconcat(proj4String, " +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f ", CT::toDouble(false_easting), CT::toDouble(false_northing), dfsemi_major_axis, dfsemi_minor_axis);
     } else {
-      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + grid_mapping_name, CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(std::string("Unsupported projection: ") + grid_mapping_name, CReportMessage::Categories::GENERAL);
       return "";
     }
-    // CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + proj4String, CReportMessage::Categories::GENERAL);
+    // CREPORT_INFO_NODOC(std::string("Determined the projection string using the CF conventions: ") + proj4String, CReportMessage::Categories::GENERAL);
   } catch (int e) {
     // CDBError("%s\n",CDF::lastErrorMessage.c_str());
     try {
-      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + projectionVariable->getAttributeThrows("grid_mapping_name")->toString(), CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(std::string("Unsupported projection: ") + projectionVariable->getAttributeThrows("grid_mapping_name")->toString(), CReportMessage::Categories::GENERAL);
     } catch (int e) {
-      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + projectionVariable->name, CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(std::string("Unsupported projection: ") + projectionVariable->name, CReportMessage::Categories::GENERAL);
     }
     return "";
   }

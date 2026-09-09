@@ -58,10 +58,8 @@ struct CColor {
     return *this;
   }
 
-  CT::string c_str() {
-    CT::string r;
-    r.print("#%s%s%s%s", CT::string::getHex(this->r).c_str(), CT::string::getHex(this->g).c_str(), CT::string::getHex(this->b).c_str(), CT::string::getHex(this->a).c_str());
-    return r;
+  std::string c_str() {
+    return CT::printf("#%s%s%s%s", CT::getHex(this->r).c_str(), CT::getHex(this->g).c_str(), CT::getHex(this->b).c_str(), CT::getHex(this->a).c_str());
   }
   void parse(const std::string &color) {
     /**

@@ -154,7 +154,7 @@ template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState 
 
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
 
-  CT::string color;
+  std::string color;
   void *sourceData;
   bool debug = false;
 

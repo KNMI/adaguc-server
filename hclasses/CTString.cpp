@@ -576,6 +576,39 @@ namespace CT {
     return result;
   }
 
+  std::string encodeURL(const std::string &input) {
+    std::string result;
+    result.reserve(input.length() * 3);
+    for (unsigned char szChar: input) {
+      if (szChar < 48 || (szChar > 59 && szChar < 63)) {
+        result += '%';
+        result += tohex(szChar / 16);
+        result += tohex(szChar % 16);
+      } else {
+        result += szChar;
+      }
+    }
+    return result;
+  }
+
+  std::string decodeURL(const std::string &input) {
+    std::string decoded = replace(input, "+", " ");
+    std::string result;
+    result.reserve(decoded.length());
+    for (size_t j = 0; j < decoded.length(); j++) {
+      unsigned char szChar = decoded[j];
+      if (szChar == '%' && j + 2 < decoded.length()) {
+        unsigned char d1 = fromhex(decoded[j + 1]);
+        unsigned char d2 = fromhex(decoded[j + 2]);
+        result += (char)(d1 * 16 + d2);
+        j += 2;
+      } else {
+        result += szChar;
+      }
+    }
+    return result;
+  }
+
   // Trim from the start (in place)
   void ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));

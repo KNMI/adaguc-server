@@ -384,7 +384,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
                   int variableDimIndex = -1;
                   for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
-                    if (variable->dimensionlinks[d]->name.equals(requestDimNameToFind)) {
+                    if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
                       variableDimIndex = d;
                     }
                   }

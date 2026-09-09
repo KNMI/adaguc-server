@@ -14,7 +14,7 @@
 #ifndef ADAGUCUTILS_H
 #define ADAGUCUTILS_H
 
-CDFReader *findReaderByFileName(CT::string fileName);
+CDFReader *findReaderByFileName(std::string fileName);
 
 std::string getStandardName(const CDF::Variable &variable);
 

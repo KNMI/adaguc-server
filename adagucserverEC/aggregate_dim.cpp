@@ -17,7 +17,7 @@ public:
     cdfObject = NULL;
     cdfReader = NULL;
     cdfObject = new CDFObject();
-    CT::string f = filename;
+    std::string f = filename;
     if (f.endsWith(".h5")) {
       cdfReader = new CDFHDF5Reader();
       ((CDFHDF5Reader *)cdfReader)->enableKNMIHDF5toCFConversion();
@@ -36,8 +36,8 @@ public:
   bool keep;
   CDFObject *cdfObject;
   CDFReader *cdfReader;
-  CT::string fullName;
-  CT::string baseName;
+  std::string fullName;
+  std::string baseName;
   std::string dimAggregationValue;
   static bool sortFunction(NCFileObject *i, NCFileObject *j) { return (i->dimAggregationValue < j->dimAggregationValue); }
 };
@@ -46,12 +46,12 @@ void progress(const char *message, float percentage) { printf("{\"message\":%s,\
 
 void progresswrite(const char *message, float percentage) { progress(message, percentage / 2. + 50); }
 int memberNo = 1;
-void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, std::vector<CT::string> variablesToDo, const char *dimNameToAggregate) {
+void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, std::vector<std::string> variablesToDo, const char *dimNameToAggregate) {
 
-  CT::string memberValue;
+  std::string memberValue;
 #define CLIPC_ENSEMBLES_GERICS
 #ifdef CLIPC_ENSEMBLES_KNMI
-  CT::string fileName = _fileName;
+  std::string fileName = _fileName;
   int KNMIINDEX = fileName.indexOf("ens-multiModel-");
 
   if (KNMIINDEX == -1) {
@@ -70,8 +70,8 @@ void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, std::v
 #endif
 
 #ifdef CLIPC_ENSEMBLES_GERICS
-  CT::string fileName = _fileName;
-  std::vector<CT::string> parts = fileName.split("_");
+  std::string fileName = _fileName;
+  std::vector<std::string> parts = fileName.split("_");
   memberValue = parts[3];
   memberValue.concat("_with_");
   memberValue += parts[6];
@@ -128,11 +128,11 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  CT::string inputDir = argv[1];
-  CT::string outputFile = argv[2];
+  std::string inputDir = argv[1];
+  std::string outputFile = argv[2];
 
   CDirReader dirReader;
-  CT::string dirFilter = "^.*.*\\.nc";
+  std::string dirFilter = "^.*.*\\.nc";
 
   dirReader.listDirRecursive(inputDir.c_str(), dirFilter.c_str());
   if (dirReader.fileList.size() == 0) {
@@ -144,9 +144,9 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  std::vector<CT::string> variablesToAddDimTo;
+  std::vector<std::string> variablesToAddDimTo;
   if (argc == 4) {
-    CT::string variableList = argv[3];
+    std::string variableList = argv[3];
     variablesToAddDimTo = variableList.split(",");
   }
 
@@ -157,10 +157,10 @@ int main(int argc, const char *argv[]) {
   /* Loop through all files and gather information */
   try {
     for (size_t j = 0; j < dirReader.fileList.size(); j++) {
-      NCFileObject *fileObject = new NCFileObject(CT::string(dirReader.fileList[j].c_str()).basename().c_str());
+      NCFileObject *fileObject = new NCFileObject(std::string(dirReader.fileList[j].c_str()).basename().c_str());
       fileObjects.push_back(fileObject);
       fileObject->fullName = dirReader.fileList[j].c_str();
-      fileObject->baseName = CT::string(dirReader.fileList[j].c_str()).basename().c_str();
+      fileObject->baseName = std::string(dirReader.fileList[j].c_str()).basename().c_str();
 
       status = fileObject->cdfObject->open(fileObject->fullName.c_str());
 
@@ -169,14 +169,14 @@ int main(int argc, const char *argv[]) {
         throw(__LINE__);
       }
 
-      applyChangesToCDFObject(CT::string(dirReader.fileList[j].c_str()).basename().c_str(), fileObject->cdfObject, variablesToAddDimTo, dimNameToAggregate);
+      applyChangesToCDFObject(std::string(dirReader.fileList[j].c_str()).basename().c_str(), fileObject->cdfObject, variablesToAddDimTo, dimNameToAggregate);
 
       CDF::Variable *aggregationDim = fileObject->cdfObject->getVariableNE(dimNameToAggregate);
       if (aggregationDim == NULL) {
         CDBError("Unable to find aggregation variable [%s]", dimNameToAggregate);
         throw(__LINE__);
       }
-      CT::string message;
+      std::string message;
 
       CDFType aggregationType = aggregationDim->getType();
 
@@ -193,7 +193,7 @@ int main(int argc, const char *argv[]) {
       bool isTimeDim = false;
       if (isTimeDim) {
         double value = ((double *)(aggregationDim->data))[0];
-        CT::string units;
+        std::string units;
         try {
           units = aggregationDim->getAttributeThrows("units")->toString().c_str();
         } catch (int e) {
@@ -206,7 +206,7 @@ int main(int argc, const char *argv[]) {
         CTime::Date date = time.getDate(value);
         CTime epochCTime;
         epochCTime.init("seconds since 1970-01-01 0:0:0", "");
-        CT::string a;
+        std::string a;
         a.print("%f", epochCTime.dateToOffset(date));
         fileObject->dimAggregationValue = a.c_str();
         ;
@@ -214,7 +214,7 @@ int main(int argc, const char *argv[]) {
       } else {
         if (aggregationType != CDF_STRING) {
           double value = ((double *)(aggregationDim->data))[0];
-          CT::string a;
+          std::string a;
           a.print("%f", value);
           fileObject->dimAggregationValue = a.c_str();
           message.print("\"Checking file (%d/%d) %s with value %f", j, dirReader.fileList.size(), fileObject->baseName.c_str(), value);
@@ -240,8 +240,8 @@ int main(int argc, const char *argv[]) {
   /* Sort the dates according the dimAggregationValue */
   std::sort(fileObjects.begin(), fileObjects.end(), NCFileObject::sortFunction);
 
-  CT::string netcdfFile = fileObjects[0]->fullName.c_str();
-  CT::string netcdfFileBase = fileObjects[0]->baseName.c_str();
+  std::string netcdfFile = fileObjects[0]->fullName.c_str();
+  std::string netcdfFileBase = fileObjects[0]->baseName.c_str();
   CDBDebug("Reading %s", netcdfFile.c_str());
   CDFObject *destCDFObject = new CDFObject();
   CDFReader *cdfReader;
@@ -259,7 +259,7 @@ int main(int argc, const char *argv[]) {
     throw(__LINE__);
   }
 
-  CT::string usedInputFiles = "";
+  std::string usedInputFiles = "";
   try {
     for (size_t j = 0; j < fileObjects.size(); j++) {
       try {
@@ -285,7 +285,7 @@ int main(int argc, const char *argv[]) {
   for (size_t j = 0; j < attributes.size(); j++) {
     destCDFObject->attributes.push_back(new CDF::Attribute(attributes[j]));
   }
-  CT::string history;
+  std::string history;
   history.print("Aggregated members into a single file with ADAGUC. Used input files: %s", usedInputFiles.c_str());
   destCDFObject->setAttributeText("history", history.c_str());
 

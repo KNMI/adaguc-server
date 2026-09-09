@@ -55,7 +55,7 @@ public:
   int id;
   unsigned char CDIred[256], CDIgreen[256], CDIblue[256];
   short CDIalpha[256]; // Currently alpha of 0 and 255 is supported, but nothin in between.
-  CT::string legendName;
+  std::string legendName;
 };
 
 static CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
@@ -75,7 +75,7 @@ private:
   CCairoPlotter *cairo;
   std::string TTFFontLocation;
   float TTFFontSize;
-  std::map<CT::string, CCairoPlotter *> myCCairoPlotterMap;
+  std::map<std::string, CCairoPlotter *> myCCairoPlotterMap;
   CCairoPlotter *getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b);
 
 public:
@@ -150,7 +150,7 @@ public:
   int getWidth();
   int getHeight();
 
-  void getHexColorForColorIndex(CT::string *hexValue, int colorIndex);
+  void getHexColorForColorIndex(std::string *hexValue, int colorIndex);
   void setText(const char *text, int x, int y, int color);
   void setText(const char *text, int x, int y, CColor color);
   // void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
@@ -210,7 +210,7 @@ public:
   /**
    * Get renderer width of the given text
    */
-  int getTextWidth(CT::string text, const std::string &fontPath, float size, int angle);
+  int getTextWidth(std::string text, const std::string &fontPath, float size, int angle);
 };
 
 #endif

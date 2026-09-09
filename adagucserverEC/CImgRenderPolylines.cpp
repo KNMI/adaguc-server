@@ -42,11 +42,11 @@ struct FeatureStyle {
   double borderWidth; // 0 means no border
   CColor fillColor;
   bool hasFill;
-  CT::string fontFile;
+  std::string fontFile;
   double fontSize;
   CColor fontColor;
-  CT::string propertyName;
-  CT::string propertyFormat;
+  std::string propertyName;
+  std::string propertyFormat;
   double angle;
   int padding;
 };
@@ -120,7 +120,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
-  CT::string name = dataSource->featureSet;
+  std::string name = dataSource->featureSet;
 
   bool projectionRequired = false;
   if (dataSource->srvParams->geoParams.crs.length() > 0) {
@@ -170,7 +170,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         }
 
         std::vector<Polygon> *polygons = feature->getPolygons();
-        CT::string id = feature->getId();
+        std::string id = feature->getId();
         for (std::vector<Polygon>::iterator itpoly = polygons->begin(); itpoly != polygons->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
@@ -208,10 +208,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               dlon = int((centroidX - offsetX) / cellSizeX) + 1;
               dlat = int((centroidY - offsetY) / cellSizeY);
               std::map<std::string, FeatureProperty *>::iterator it;
-              CT::string featureId;
+              std::string featureId;
               it = feature->getFp()->find(std::string(featureStyle.propertyName.c_str()));
               if (it != feature->getFp()->end()) {
-                featureId.print(it->second->toString(featureStyle.propertyFormat).c_str());
+                featureId = it->second->toString(featureStyle.propertyFormat);
               } else {
                 featureId = feature->getId();
               }

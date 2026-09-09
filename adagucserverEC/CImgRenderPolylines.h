@@ -30,7 +30,7 @@
 
 class CImgRenderPolylines : public CImageWarperRenderInterface {
 private:
-  CT::string settings;
+  std::string settings;
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);

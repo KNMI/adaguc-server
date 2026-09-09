@@ -116,7 +116,7 @@ namespace CDF {
    * @param type The CDF type
    * @return string with the name
    */
-  CT::string getCDFDataTypeName(const int type);
+  std::string getCDFDataTypeName(const int type);
 
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);

@@ -20,12 +20,12 @@ int CDPPWFP::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, CT::string baseLayerName) {
+CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, std::string baseLayerName) {
   CDataSource *tempDataSource = new CDataSource();
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    CT::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
-    if (baseLayerName.equals(layerName)) {
+    std::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
+    if (baseLayerName == layerName) {
       additionalLayerNo = j;
       break;
     }
@@ -56,7 +56,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals("WindSpeedWindparksOff")) return 0;
+    if (dataSource->getDataObject(0)->cdfVariable->name == "WindSpeedWindparksOff") return 0;
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
     dataSource->getDataObject(1)->cdfVariable->setAttributeText("long_name", "WindSpeedWindparksOn");
 

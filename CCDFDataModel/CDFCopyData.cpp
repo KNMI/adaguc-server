@@ -7,8 +7,8 @@ template <typename T> int _copy(T *destdata, void *sourcedata, CDFType sourcetyp
   if (sourcetype == CDF_STRING) {
     return 1;
   }
-  CT::string t = typeid(T).name();
-  if (t.equals(typeid(void).name())) {
+  std::string t = typeid(T).name();
+  if (t == typeid(void).name()) {
     return 1;
   }
 

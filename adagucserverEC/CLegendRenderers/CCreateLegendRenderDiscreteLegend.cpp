@@ -9,7 +9,7 @@
 
 // Aux function to plot numberic labels, optionally as two columns (representing an interval)
 void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::string &fontLocation, float fontSize, int angle, const CServerConfig::XMLE_ShadeInterval &s, int cbW, int pLeft, int textY,
-                       const std::vector<CT::string> &minColumn, const std::vector<CT::string> &maxColumn, int maxTextWidth) {
+                       const std::vector<std::string> &minColumn, const std::vector<std::string> &maxColumn, int maxTextWidth) {
 
   // With a monospaced font, this will be the spacing for every character, numeric or not
   int numberWidth = legendImage->getTextWidth("0", fontLocation, fontSize, angle);
@@ -257,8 +257,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     size_t drawIntervals = maxInterval - minInterval;
 
     // Calculate columns and text properties
-    std::vector<CT::string> minColumn = extractColumn(drawIntervals, minInterval, shadeIntervalsFilteredForLegendGraphic, true);
-    std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, shadeIntervalsFilteredForLegendGraphic, false);
+    std::vector<std::string> minColumn = extractColumn(drawIntervals, minInterval, shadeIntervalsFilteredForLegendGraphic, true);
+    std::vector<std::string> maxColumn = extractColumn(drawIntervals, minInterval, shadeIntervalsFilteredForLegendGraphic, false);
     int dashWidth = legendImage->getTextWidth("-", fontLocation, fontSize, angle);
     int dotWidth = legendImage->getTextWidth(".", fontLocation, fontSize, angle);
     // Assume monospaced for numbers

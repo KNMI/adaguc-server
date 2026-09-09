@@ -530,6 +530,16 @@ namespace CT {
   std::string encodeXml(const std::string &input);
 
   /**
+   * URL-encodes a string (percent-encoding).
+   */
+  std::string encodeURL(const std::string &input);
+
+  /**
+   * URL-decodes a string (percent-encoding), also replacing '+' with a space.
+   */
+  std::string decodeURL(const std::string &input);
+
+  /**
    * Converts to hex string from int.
    */
   std::string getHex(unsigned int number);

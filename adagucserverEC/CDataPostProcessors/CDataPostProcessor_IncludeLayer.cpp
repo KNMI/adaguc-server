@@ -16,12 +16,12 @@ int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CData
 
 CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
   CDataSource *dataSourceToInclude = new CDataSource();
-  CT::string additionalLayerName = proc->attr.name.c_str();
+  std::string additionalLayerName = proc->attr.name.c_str();
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    CT::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
+    std::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
     // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
-    if (additionalLayerName.equals(layerName)) {
+    if (additionalLayerName == layerName) {
       additionalLayerNo = j;
       break;
     }
@@ -31,7 +31,7 @@ CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *
 }
 
 int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, CDataSource *dataSourceToInclude) {
-  CT::string additionalLayerName = proc->attr.name.c_str();
+  std::string additionalLayerName = proc->attr.name.c_str();
   bool dataIsFound = false;
   try {
     if (CRequest::setDimValuesForDataSource(dataSourceToInclude, dataSource->srvParams) == 0) {
@@ -91,7 +91,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     }
 
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
-      if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
+      if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name == dataSourceToInclude->getDataObject(0)->cdfVariable->name) {
         CDBDebug("Probably already done");
         reader.close();
         delete dataSourceToInclude;
@@ -117,8 +117,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       newDataObject.variableName = dataObjectToInClude.cdfVariable->name.c_str();
       newDataObject.dataObjectName = proc->attr.name;
       newDataObject.cdfVariable = new CDF::Variable();
-      CT::string text;
-      text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", dataObjectToInClude.cdfVariable->name.c_str(), this->getId());
+      std::string text = CT::printf("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", dataObjectToInClude.cdfVariable->name.c_str(), this->getId());
       newDataObject.cdfObject = baseCDFObject; //(CDFObject*)varToClone->getParentCDFObject();
       baseCDFObject->addVariable(newDataObject.cdfVariable);
       newDataObject.cdfVariable->setName(dataObjectToInClude.cdfVariable->name.c_str());

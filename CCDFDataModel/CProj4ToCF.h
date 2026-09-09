@@ -43,7 +43,7 @@ class CProj4ToCF {
 private:
   static float convertToM(float fValue);
 
-  CT::string getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList);
+  std::string getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList);
 
   float getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float)));
 

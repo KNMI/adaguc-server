@@ -633,7 +633,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                   CDF::Attribute *adagucTileLevelAttr = dataSource->getDataObject(0)->cdfObject->getAttributeNE("adaguctilelevel");
 
                   if (adagucTileLevelAttr != NULL) {
-                    geoOptions.level = adagucTileLevelAttr->toString().toInt();
+                    geoOptions.level = atoi(adagucTileLevelAttr->toString().c_str());
                     // CDBDebug( "Found adaguctilelevel %d in NetCDF header",geoOptions.level);
                   }
                 }

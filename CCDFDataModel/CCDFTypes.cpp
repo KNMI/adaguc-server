@@ -125,10 +125,10 @@ std::string CDF::getErrorMessage(const int errorCode) {
   return errorMessage;
 }
 
-CT::string CDF::getCDFDataTypeName(const int type) {
+std::string CDF::getCDFDataTypeName(const int type) {
   char data[100];
   getCDFDataTypeName(data, 99, type);
-  CT::string d = data;
+  std::string d = data;
   return d;
 }
 

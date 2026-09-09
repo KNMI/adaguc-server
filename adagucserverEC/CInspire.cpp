@@ -2,7 +2,7 @@
 #ifdef ENABLE_INSPIRE
 
 CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char *cswService) {
-  CT::string xmlData;
+  std::string xmlData;
 
   try {
     xmlData = CHTTPTools::getString(cswService);
@@ -17,7 +17,7 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   try {
     element.parseData(xmlData);
   } catch (int e) {
-    CT::string message = CXMLParser::getErrorMessage(e);
+    std::string message = CXMLParser::getErrorMessage(e);
     CDBError("Inspire CSW parsing failed: %s ", message.c_str());
     throw CINSPIRE_XMLPARSEERROR;
 

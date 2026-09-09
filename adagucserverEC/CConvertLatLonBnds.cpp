@@ -29,7 +29,7 @@
 
 bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
   CDF::Attribute *attr = cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER");
-  if ((attr != NULL) && attr->toString().toLowerCase() == "true") {
+  if ((attr != NULL) && CT::toLowerCase(attr->toString()) == "true") {
     return true;
   }
   auto *pointLon = cdfObject->getVariableNE("lon_bnds");

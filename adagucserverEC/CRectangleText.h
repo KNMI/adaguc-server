@@ -38,8 +38,8 @@ public:
   int ury;
   float angle;
   int padding;
-  CT::string text;
-  CT::string fontFile;
+  std::string text;
+  std::string fontFile;
   float fontSize;
   CColor color;
 
@@ -52,8 +52,8 @@ public:
     this->ury = ury;
     this->angle = angle;
     this->padding = padding;
-    this->text = CT::string(text);
-    this->fontFile = CT::string(fontFile);
+    this->text = std::string(text);
+    this->fontFile = std::string(fontFile);
     this->fontSize = fontSize;
     this->color = color;
   }

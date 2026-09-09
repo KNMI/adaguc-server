@@ -30,13 +30,13 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Make the group
-  CT::string layerGroup = "";
+  std::string layerGroup = "";
   if (metadataLayer->layer->Group.size() > 0) {
     if (metadataLayer->layer->Group[0]->attr.value.empty() == false) {
       layerGroup = (metadataLayer->layer->Group[0]->attr.value);
     }
   }
-  metadataLayer->layerMetadata.wmsgroup = (&layerGroup);
+  metadataLayer->layerMetadata.wmsgroup = layerGroup;
 
   // Check if this layer is querable
   int datasetRestriction = checkDataRestriction();
@@ -45,13 +45,13 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Get collection for layer from Group def
-  CT::string collection = "";
+  std::string collection = "";
   if (metadataLayer->layer->Group.size() > 0) {
     if (metadataLayer->layer->Group[0]->attr.collection.empty() == false) {
       collection = (metadataLayer->layer->Group[0]->attr.collection);
     }
   }
-  metadataLayer->layerMetadata.collection = (&collection);
+  metadataLayer->layerMetadata.collection = collection;
 
   // Get Abstract
   if (metadataLayer->dataSource->cfgLayer->Abstract.size() > 0) {
@@ -64,7 +64,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Determine if edr is enabled for this layer
-  CT::string layer_enable_edr = metadataLayer->layer->attr.enable_edr;
+  std::string layer_enable_edr = metadataLayer->layer->attr.enable_edr;
   if (layer_enable_edr == ("false")) {
     metadataLayer->layerMetadata.enable_edr = false;
   } else if (layer_enable_edr == ("true")) {
@@ -130,7 +130,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       }
       CDF::Attribute *standardNameAttr = d.cdfVariable->getAttributeNE("standard_name");
 
-      CT::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(d).c_str();
+      std::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(d).c_str();
       LayerMetadataVariable layerMetadataVariable = {.variableName = d.cdfVariable->name, .units = dObjgetUnits(d), .label = label, .standard_name = d.cdfVariable->name};
 
       if (standardNameAttr != nullptr) {
@@ -220,7 +220,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   LayerMetadataDim layerMetadataTimeDim = lmDimTimeIt[0];
   LayerMetadataDim layerMetadataRefTimeDim = lmDimRefTimeIt[0];
 
-  CT::string isoDurationString = CT::substring(layerCfgTimeDim->attr.defaultV, hasIsoDuration + 1, -1);
+  std::string isoDurationString = CT::substring(layerCfgTimeDim->attr.defaultV, hasIsoDuration + 1, -1);
   // CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
   try {
     CTime *time = CTime::GetCTimeEpochInstance();
@@ -251,9 +251,9 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
 
     // Get the tablename
-    std::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
-                                                                        cfgLayerDim->attr.name.c_str(), dataSource);
+    std::string tableName =
+        CDBFactory::getDBAdapter(srvParam->cfg)
+            ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
                             : CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str());
@@ -351,9 +351,9 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
     // Query the values from the DB if they are not set in the map
     // This is an interval defined as start/stop/resolution
     // Retrieve the minimum dimension value
-    CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
-                                                                       cfgLayerDim->attr.name.c_str(), dataSource);
+    std::string tableName =
+        CDBFactory::getDBAdapter(srvParam->cfg)
+            ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
 
@@ -372,7 +372,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
     maxTimeStamp = dimValueInMapIt->second[dimValueInMapIt->second.size() - 1];
   }
 
-  CT::string dimUnits("ISO8601");
+  std::string dimUnits("ISO8601");
 
   if (cfgLayerDim->attr.units.empty() == false) {
     dimUnits = (cfgLayerDim->attr.units);
@@ -383,7 +383,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   dim.hasMultipleValues = false;
   // cfgLayerDim->attr.defaultV.c_str()
   const char *pszDefaultV = cfgLayerDim->attr.defaultV.c_str();
-  CT::string defaultV;
+  std::string defaultV;
   if (pszDefaultV != NULL) defaultV = pszDefaultV;
   if (defaultV.length() == 0 || defaultV == ("max")) {
     dim.defaultValue = maxTimeStamp;
@@ -443,9 +443,9 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
     return timeStampList;
   }
   // Get the tablename
-  CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgDim->attr.name.c_str(),
-                                                                     dataSource);
+  std::string tableName =
+      CDBFactory::getDBAdapter(srvParam->cfg)
+          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgDim->attr.name.c_str(), dataSource);
 
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
@@ -551,7 +551,6 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 #ifdef MEASURETIME
     StopWatch_Stop("start findExtent");
 #endif
-
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
     metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs, bboxToFind));
@@ -649,13 +648,13 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
     if (longName != nullptr) {
       metadataLayer->layerMetadata.title = (longName->toString());
       // Concat variable name prefixed with longname
-      metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
+      CT::printfconcat(metadataLayer->layerMetadata.title, " (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
     } else {
       CDF::Attribute *standardName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name");
       if (standardName != nullptr) {
         metadataLayer->layerMetadata.title = (standardName->toString());
         // Concat variable name prefixed with standardname
-        metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
+        CT::printfconcat(metadataLayer->layerMetadata.title, " (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
       } else {
         // Only variable name
         metadataLayer->layerMetadata.title = (metadataLayer->dataSource->getDataObject(0)->cdfVariable->name);
@@ -714,12 +713,12 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     }
 
     // Find the first occuring filename.
-    CT::string tableName;
-    CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name);
+    std::string tableName;
+    std::string dimName(metadataLayer->layer->Dimension[0]->attr.name);
     try {
-      tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue, metadataLayer->layer->FilePath[0]->attr.filter, dimName.c_str(),
-                                                              metadataLayer->dataSource);
+      tableName =
+          CDBFactory::getDBAdapter(srvParam->cfg)
+              ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue, metadataLayer->layer->FilePath[0]->attr.filter, dimName.c_str(), metadataLayer->dataSource);
     } catch (int e) {
       CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
@@ -769,7 +768,7 @@ double parseNumeric(std::string const &str, bool &isNumeric) {
 }
 
 // Sort values that can either be numeric of a string
-bool multiTypeSort(const CT::string &a, const CT::string &b) {
+bool multiTypeSort(const std::string &a, const std::string &b) {
   // Try to convert strings to numbers
   float aNum, bNum;
   bool isANum, isBNum;

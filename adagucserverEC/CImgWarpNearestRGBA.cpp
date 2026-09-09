@@ -262,7 +262,7 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, GeoParamete
   psy[2] = dfTiledBBOX[3];
   psy[3] = dfTiledBBOX[1];
   if (warper->isProjectionRequired()) {
-    //     CT::string destinationCRS;
+    //     std::string destinationCRS;
     //     warper->decodeCRS(&destinationCRS,&GeoDest.CRS);
     if (proj_trans_generic(warper->projSourceToDest, PJ_INV, psx, sizeof(double), 4, psy, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
       // TODO: No error handling in original code

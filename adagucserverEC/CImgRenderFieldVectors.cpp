@@ -81,9 +81,9 @@ bool isGridRelative(CDataSource *dataSource) {
     // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
     // if eastward_wind/northward_wind then gridRelative=false
     // default is gridRelative=true
-    CT::string standard_name = getStandardName(*dataSource->getDataObject(4)->cdfVariable);
+    std::string standard_name = getStandardName(*dataSource->getDataObject(4)->cdfVariable);
 
-    if (standard_name.equals("x_wind") || standard_name.equals("grid_eastward_wind") || standard_name.equals("y_wind") || standard_name.equals("grid_northward_wind")) {
+    if (standard_name == "x_wind" || standard_name == "grid_eastward_wind" || standard_name == "y_wind" || standard_name == "grid_northward_wind") {
       gridRelative = true;
     } else {
       gridRelative = false;
@@ -119,7 +119,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
                                                                                    bool enableBarb, bool drawMap, bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData,
                                                                                    float *vValueData, int *dpDestX, int *dpDestY) {
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  CT::string units = "m/s";
+  std::string units = "m/s";
   units = dObjgetUnits(*dataSource->getDataObject(0));
 
   // Wind VECTOR
@@ -146,7 +146,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   if (verboseLog) {
     CDBDebug("units = %s", units.c_str());
   }
-  if (!(units.equals("kts") || units.equals("knots"))) convertToKnots = true;
+  if (!(units == "kts" || units == "knots")) convertToKnots = true;
 
   // Number of pixels between the vectors:
   int vectorDensityPy = 60; // 22;

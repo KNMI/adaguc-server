@@ -268,6 +268,8 @@ int CImageWarper::decodeCRS(std::string *outputCRS, const std::string *inputCRS,
   }
   if (CT::startsWith(*outputCRS, "PROJ4:")) {
     *outputCRS = outputCRS->substr(6);
+
+    CDBDebug("!");
   }
   return 0;
 }

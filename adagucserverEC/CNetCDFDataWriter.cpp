@@ -82,7 +82,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     this->srvParam = srvParam;
 
     std::string randomString = CT::randomString(32);
-    tempFileName.print("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
+    tempFileName = CT::printf("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
     CDataReader reader;
     reader.silent = this->silent;
     reader.enableReporting(false);
@@ -211,20 +211,20 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     }
 
     // Adjust history
-    CT::string historyText = "";
+    std::string historyText = "";
     CDF::Attribute *historyAttr = destCDFObject->getAttributeNE("history");
     if (historyAttr != NULL) {
       historyText = historyAttr->toString();
     }
 
-    CT::string adagucwcsdestgrid;
+    std::string adagucwcsdestgrid;
     double rx = fabs((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->geoParams.width);
     double ry = fabs((dfDstBBOX[3] - dfDstBBOX[1]) / srvParam->geoParams.height);
-    adagucwcsdestgrid.print("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->geoParams.width, srvParam->geoParams.height, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2],
-                            dfDstBBOX[3], CT::trim(srvParam->geoParams.crs).c_str());
+    adagucwcsdestgrid = CT::printf("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->geoParams.width, srvParam->geoParams.height, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2],
+                                    dfDstBBOX[3], CT::trim(srvParam->geoParams.crs).c_str());
 
-    CT::string newHistoryText;
-    newHistoryText.print("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
+    std::string newHistoryText;
+    newHistoryText = CT::printf("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
     destCDFObject->setAttributeText("history", newHistoryText.c_str());
 
     // Write dest grid attribute
@@ -258,8 +258,8 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     destCDFObject->removeAttribute("geospatial_lon_min");
     destCDFObject->removeAttribute("domain");
-    CT::string software;
-    software.print("ADAGUC WCS Server version %s", ADAGUCSERVER_VERSION);
+    std::string software;
+    software = CT::printf("ADAGUC WCS Server version %s", ADAGUCSERVER_VERSION);
     destCDFObject->setAttributeText("software", software.c_str());
     destCDFObject->removeAttribute("software_platform");
     destCDFObject->removeAttribute("time_coverage_end");
@@ -275,11 +275,11 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #endif
     for (size_t d = 0; d < baseDataSource->requiredDims.size(); d++) {
 
-      CT::string dimName = "null";
+      std::string dimName = "null";
 
       dimName = baseDataSource->requiredDims[d].netCDFDimName;
       // CDBDebug("Processing dimension [%s]", dimName.c_str());
-      if (dimName.equals("none") == true) {
+      if (dimName == "none") {
         break;
       }
 
@@ -352,7 +352,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("START");
 #endif
-        CT::string dimValue = baseDataSource->requiredDims[d].uniqueValues[j].c_str();
+        std::string dimValue = baseDataSource->requiredDims[d].uniqueValues[j].c_str();
 #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("Setting dimension %s value = %s", dimName.c_str(), dimValue.c_str());
 #endif
@@ -382,37 +382,37 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #endif
             switch (destinationVar->getType()) {
             case CDF_CHAR:
-              ((char *)destinationVar->data)[j] = dimValue.toInt();
+              ((char *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_BYTE:
-              ((char *)destinationVar->data)[j] = dimValue.toInt();
+              ((char *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_UBYTE:
-              ((unsigned char *)destinationVar->data)[j] = dimValue.toInt();
+              ((unsigned char *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_SHORT:
-              ((short *)destinationVar->data)[j] = dimValue.toInt();
+              ((short *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_USHORT:
-              ((unsigned short *)destinationVar->data)[j] = dimValue.toInt();
+              ((unsigned short *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_INT:
-              ((int *)destinationVar->data)[j] = dimValue.toInt();
+              ((int *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_UINT:
-              ((unsigned int *)destinationVar->data)[j] = dimValue.toInt();
+              ((unsigned int *)destinationVar->data)[j] = atoi(dimValue.c_str());
               break;
             case CDF_INT64:
-              ((long *)destinationVar->data)[j] = dimValue.toLong();
+              ((long *)destinationVar->data)[j] = atol(dimValue.c_str());
               break;
             case CDF_UINT64: // TODO: All unsigned versions don't work if the full unsigned range is needed
-              ((unsigned long *)destinationVar->data)[j] = dimValue.toLong();
+              ((unsigned long *)destinationVar->data)[j] = atol(dimValue.c_str());
               break;
             case CDF_FLOAT:
-              ((float *)destinationVar->data)[j] = dimValue.toFloat();
+              ((float *)destinationVar->data)[j] = atof(dimValue.c_str());
               break;
             case CDF_DOUBLE:
-              ((double *)destinationVar->data)[j] = dimValue.toDouble();
+              ((double *)destinationVar->data)[j] = CT::toDouble(dimValue);
               break;
             default:
               CDBError("Unknown var type [%d] for dimension [%s]", destinationVar->getType(), dimName.c_str());
@@ -522,7 +522,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #endif
     for (size_t i = 0; i < sourceVar->attributes.size(); i++) {
       // CDBDebug("For %s: Copying attribute %s with length %d",destVar->name.c_str(),sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->length);
-      if (!sourceVar->attributes[i]->name.equals("scale_factor") && !sourceVar->attributes[i]->name.equals("add_offset") && !sourceVar->attributes[i]->name.equals("_FillValue")) {
+      if (sourceVar->attributes[i]->name != "scale_factor" && sourceVar->attributes[i]->name != "add_offset" && sourceVar->attributes[i]->name != "_FillValue") {
         destVar->setAttribute(sourceVar->attributes[i]->name.c_str(), sourceVar->attributes[i]->getType(), sourceVar->attributes[i]->data, sourceVar->attributes[i]->length);
       }
     }
@@ -678,11 +678,11 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
         dimIndices[d] = 0;
-        CT::string dimName = dataSource->requiredDims[d].netCDFDimName;
+        std::string dimName = dataSource->requiredDims[d].netCDFDimName;
         if (verbose) {
           CDBDebug("Looping dim [%s]", dimName.c_str());
         }
-        if (dimName.equals("none") == true) {
+        if (dimName == "none") {
           break;
         }
         CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(j)->cdfObject, dimName.c_str());
@@ -694,7 +694,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
           isTimeDim = true;
         }
-        CT::string dimValue = dataSource->getDimensionValueForNameAndStep(dimName.c_str(), dataSource->getCurrentTimeStep());
+        std::string dimValue = dataSource->getDimensionValueForNameAndStep(dimName.c_str(), dataSource->getCurrentTimeStep());
         int indexTofind = -1;
 
         if (verbose) {
@@ -705,7 +705,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         // CDBDebug("trying to search in var with size %d",var->getSize());
         if (var->getType() == CDF_STRING) {
           for (size_t j = 0; j < var->getSize(); j++) {
-            if (dimValue.equals(((char **)var->data)[j])) {
+            if (dimValue == ((char **)var->data)[j]) {
               indexTofind = j;
               break;
             }
@@ -731,7 +731,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               }
             }
           } else {
-            double valueToFind = dimValue.toDouble();
+            double valueToFind = CT::toDouble(dimValue);
             for (size_t j = 0; j < var->getSize(); j++) {
               double value;
               switch (var->getType()) {
@@ -948,9 +948,9 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       // Copy feature paramlist
       if (dataSource->getDataObject(j)->features.empty() == false) {
-        CT::string paramListAttr = "";
-        CT::string featureVarName = variable->name.c_str();
-        CT::string featureDimIndexName = featureVarName + "_index";
+        std::string paramListAttr = "";
+        std::string featureVarName = variable->name.c_str();
+        std::string featureDimIndexName = featureVarName + "_index";
         CDBDebug("featureDimIndexName = %s", featureDimIndexName.c_str());
         CDF::Dimension *featureIndexDim = destCDFObject->getDimensionNE(featureDimIndexName.c_str());
         CDF::Variable *featureIndexVar = NULL;
@@ -981,14 +981,14 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (feature->paramMap.empty() == false) {
             std::map<std::string, std::string>::iterator paramItemIt;
             for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
-              CT::string newfeatureVarName = variable->name.c_str();
-              newfeatureVarName.printconcat("_%s", paramItemIt->first.c_str());
+              std::string newfeatureVarName = variable->name.c_str();
+              CT::printfconcat(newfeatureVarName, "_%s", paramItemIt->first.c_str());
               CDF::Variable *featureVar = destCDFObject->getVariableNE(newfeatureVarName.c_str());
               if (featureVar == NULL) {
                 if (paramListAttr.length() > 0) {
-                  paramListAttr.concat(",");
+                  paramListAttr += ",";
                 }
-                paramListAttr.concat(newfeatureVarName);
+                paramListAttr += newfeatureVarName;
                 featureVar = new CDF::Variable();
                 featureVar->name = newfeatureVarName.c_str();
                 featureVar->setType(CDF_STRING);
@@ -1075,16 +1075,16 @@ int CNetCDFDataWriter::end() {
     return 1;
   }
 
-  CT::string humanReadableString;
+  std::string humanReadableString;
   humanReadableString = (srvParam->Format.c_str());
-  humanReadableString.concat("_");
-  humanReadableString.concat(dObjgetVariableName(*baseDataSource->getDataObject(0)).c_str());
+  humanReadableString += "_";
+  humanReadableString += dObjgetVariableName(*baseDataSource->getDataObject(0));
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {
-    humanReadableString.printconcat("_%s", baseDataSource->requiredDims[i].value.c_str());
+    CT::printfconcat(humanReadableString, "_%s", baseDataSource->requiredDims[i].value.c_str());
   }
-  humanReadableString.replaceSelf(":", "_");
-  humanReadableString.replaceSelf(".", "_");
-  humanReadableString.concat(".nc");
+  CT::replaceSelf(humanReadableString, ":", "_");
+  CT::replaceSelf(humanReadableString, ".", "_");
+  humanReadableString += ".nc";
 
   int returnCode = 0;
   FILE *fp = fopen(tempFileName.c_str(), "r");

@@ -23,7 +23,7 @@ const int ydirOuter[16] = {2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2, -2, -1, 0, 1
 struct ContourLineStructure {
   std::vector<double> classes;
   double interval = 0;
-  CT::string textformatting = "%0.1f";
+  std::string textformatting = "%0.1f";
   CColor lineColor = CColor(0, 0, 0, 255);
   CColor textColor = CColor(0, 0, 0, 255);
   CColor textstrokecolor = CColor(0, 0, 0, 0);
@@ -47,8 +47,8 @@ bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
 void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contourDefinition, int lineX, int lineY, int endX, int endY, float value, const char *fontLocation, float scaling) {
 
   /* Draw text */
-  CT::string text;
-  contourDefinition.textformatting.empty() ? text.print(contourDefinition.textformatting.c_str(), value) : text.print("%g", value);
+  std::string text;
+  text = contourDefinition.textformatting.empty() ? CT::printf("%g", value) : CT::printf(contourDefinition.textformatting.c_str(), value);
   float fontSize = contourDefinition.fontSize * scaling;
   float textStrokeWidth = contourDefinition.textStrokeWidth * scaling;
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;

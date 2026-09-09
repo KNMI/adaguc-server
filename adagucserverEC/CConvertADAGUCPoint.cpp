@@ -64,7 +64,7 @@ static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Varia
   CDF::Variable *new2DVar = cdfObject->addVariable(new CDF::Variable(pointVar->name.c_str(), CDF_FLOAT));
   // Assign dims but skip station.
   for (auto *dimensionLink: pointVar->dimensionlinks) {
-    if (!dimensionLink->name.equals("station")) {
+    if (dimensionLink->name != "station") {
       new2DVar->dimensionlinks.push_back(dimensionLink);
     }
   }
@@ -72,11 +72,11 @@ static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Varia
   new2DVar->dimensionlinks.push_back(varX->dimensionlinks[0]);
   new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
   // Rename the point data variable.
-  pointVar->name.concat("_backup");
+  pointVar->name += "_backup";
 
   // Copy variable attributes
   for (auto *a: pointVar->attributes) {
-    if (a->name.equals("_FillValue")) {
+    if (a->name == "_FillValue") {
       float scaleFactor = pointVar->getAttrDataAt0("scale_factor", 1);
       float addOffset = pointVar->getAttrDataAt0("addOffset", 0);
       float fillValue = pointVar->getAttrDataAt0("_FillValue", 0);
@@ -245,7 +245,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   auto setStationDimensionIndices = [&](const CDF::Variable *variable, CDFObject *ownerCdfObject) -> size_t {
     int stationDimIndex = -1;
     for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-      if (variable->dimensionlinks[j]->name.equals("station") || ownerCdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
+      if (variable->dimensionlinks[j]->name == "station" || ownerCdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
         stationDimIndex = j;
         break;
       }

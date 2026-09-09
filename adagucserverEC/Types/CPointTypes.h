@@ -33,7 +33,7 @@ public:
   }
   int x, y;
   float v;
-  CT::string id;
+  std::string id;
 };
 
 /**

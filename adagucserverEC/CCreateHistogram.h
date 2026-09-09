@@ -11,7 +11,7 @@
 
 class CCreateHistogram : public CBaseDataWriterInterface {
 private:
-  CT::string JSONdata;
+  std::string JSONdata;
 
   struct CCreateHistogramSettings {
     size_t width;

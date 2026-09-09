@@ -28,7 +28,7 @@ int CDPPAddDataObject::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
   CDBDebug("Applying %s", CDATAPOSTPROCESSOR_AddDataObject_ID);
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    CT::string newDataObjectName = proc->attr.name;
+    std::string newDataObjectName = proc->attr.name;
 
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 

@@ -336,21 +336,21 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("wgs84") && !var->name.equals("epsg") && !var->name.equals("lon_i") && !var->name.equals("lat_i") &&
-          !var->name.equals("bounds_lon_i") && !var->name.equals("bounds_lat_i") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
-          !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && (var->name.indexOf("bnds") == -1)) {
+      if (var->name != "time2D" && var->name != "time" && var->name != "wgs84" && var->name != "epsg" && var->name != "lon_i" && var->name != "lat_i" &&
+          var->name != "bounds_lon_i" && var->name != "bounds_lat_i" && var->name != "custom" && var->name != "projection" && var->name != "product" &&
+          var->name != "iso_dataset" && var->name != "tile_properties" && (CT::indexOf(var->name, "bnds") == -1)) {
         if (var->dimensionlinks.size() >= 1) {
           CDBDebug("Checking var %s with dimo %s", var->name.c_str(), var->dimensionlinks[1]->name.c_str());
-          if (var->dimensionlinks[1]->name.equals("cell_i")) {
-            varsToConvert.push_back(CT::string(var->name.c_str()));
+          if (var->dimensionlinks[1]->name == "cell_i") {
+            varsToConvert.push_back(std::string(var->name.c_str()));
           }
         }
       }
-      if (var->name.equals("projection") || var->name.equals("lat_bounds_i") || var->name.equals("bounds_lon_i")) {
+      if (var->name == "projection" || var->name == "lat_bounds_i" || var->name == "bounds_lon_i") {
         var->setAttributeText("ADAGUC_SKIP", "true");
       }
     }
@@ -379,7 +379,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
 
     new2DVar->setType(hexagonVar->getType());
     new2DVar->name = hexagonVar->name.c_str();
-    hexagonVar->name.concat("_backup");
+    hexagonVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < hexagonVar->attributes.size(); j++) {
@@ -441,8 +441,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *hexagonVar;
-  CT::string origSwathName = new2DVar->name.c_str();
-  origSwathName.concat("_backup");
+  std::string origSwathName = new2DVar->name.c_str();
+  origSwathName += "_backup";
   hexagonVar = cdfObject->getVariableNE(origSwathName.c_str());
   if (hexagonVar == NULL) {
     // CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
@@ -458,7 +458,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     count[dimInd] = 1;
     stride[dimInd] = 1;
 
-    CT::string dimName = hexagonVar->dimensionlinks[dimInd]->name.c_str();
+    std::string dimName = hexagonVar->dimensionlinks[dimInd]->name.c_str();
 
     if (numDims - dimInd < 2) {
       start[dimInd] = 0;

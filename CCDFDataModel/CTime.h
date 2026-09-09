@@ -57,8 +57,8 @@
 #include "CDebugger.h"
 class CTime {
 private:
-  CT::string currentUnit;
-  CT::string currentCalendar;
+  std::string currentUnit;
+  std::string currentCalendar;
   std::string scanUnits;
   void safestrcpy(char *s1, const char *s2, size_t size_s1);
   static int CTIME_CALENDARTYPE_360day_Months[];
@@ -120,9 +120,9 @@ public:
   /**
    * Static function which converts an exception into a readable message
    * @param int The value of catched exception
-   * @return CT::string with the readable message
+   * @return std::string with the readable message
    */
-  static CT::string getErrorMessage(int CTimeParserException);
+  static std::string getErrorMessage(int CTimeParserException);
 
   /**
    * resets CTime
@@ -184,20 +184,20 @@ public:
    * @param date
    * @param string Format YYYYmmddThhmmss
    */
-  CT::string dateToString(Date date);
+  std::string dateToString(Date date);
 
   /**
    * Converts date object to string
    * @param date
    * @param string Format YYYY-mm-ddThh:mm:ss
    */
-  CT::string dateToISOString(Date date);
+  std::string dateToISOString(Date date);
 
   /**
    * Get current system time as ISO string
    * @return Current system time as ISO string
    */
-  static CT::string currentDateTime();
+  static std::string currentDateTime();
 
   /**
    * Time values received in the URL as input can be rounded to more discrete time periods.
@@ -213,16 +213,16 @@ public:
    * @param method  Can be either low, high and round, defaults to round.
    * @return The quantized date as ISO8601 String
    */
-  static CT::string quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method);
+  static std::string quantizeTimeToISO8601(std::string value, std::string period, std::string method);
 
-  double quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::string method);
+  double quantizeTimeToISO8601(double offsetOrig, std::string period, std::string method);
 
   static CTime *GetCTimeInstance(CDF::Variable *timeVariable);
   static CTime *GetCTimeEpochInstance();
   static void cleanInstances();
-  static std::map<CT::string, CTime *> CTimeInstances;
+  static std::map<std::string, CTime *> CTimeInstances;
 
-  static time_t getEpochTimeFromDateString(CT::string dateString);
+  static time_t getEpochTimeFromDateString(std::string dateString);
 
   /**
    * @brief Can be used to substract an iso8601 period string from a date. The function ensures that allowed ranges for the individual time componets are preserved.
@@ -231,7 +231,7 @@ public:
    * @param period
    * @return Date
    */
-  Date subtractPeriodFromDate(CTime::Date date, CT::string period);
+  Date subtractPeriodFromDate(CTime::Date date, std::string period);
   Date subtractPeriodFromDate(CTime::Date date, Date period);
 
   /**
@@ -241,7 +241,7 @@ public:
    * @param period
    * @return Date
    */
-  Date addPeriodToDate(CTime::Date date, CT::string period);
+  Date addPeriodToDate(CTime::Date date, std::string period);
   Date addPeriodToDate(CTime::Date date, Date period);
 
   /**
@@ -250,7 +250,7 @@ public:
    * @param period
    * @return Date
    */
-  static Date periodToDate(CT::string period);
+  static Date periodToDate(std::string period);
 
   /**
    * @brief Converts a date to an iso8601 period string
@@ -258,7 +258,7 @@ public:
    * @param period
    * @return Date
    */
-  static CT::string dateToPeriod(CTime::Date date);
+  static std::string dateToPeriod(CTime::Date date);
 };
 
 /**

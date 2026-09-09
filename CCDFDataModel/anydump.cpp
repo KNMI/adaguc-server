@@ -48,12 +48,12 @@ int main(int argCount, char **argVars) {
     return 0;
   }
 
-  CT::string variableName, ncmlFile;
+  std::string variableName, ncmlFile;
   bool dumpHeader = false;
   bool dumpAsJSON = false;
 
   for (int j = 0; j < argCount; j++) {
-    CT::string cmdType = argVars[j];
+    std::string cmdType = argVars[j];
     if (cmdType.equals("-h")) dumpHeader = true;
     if (cmdType.equals("-json")) dumpAsJSON = true;
     if (cmdType.equals("-v")) {
@@ -72,7 +72,7 @@ int main(int argCount, char **argVars) {
     }
   }
 
-  CT::string inputFile = argVars[argCount - 1]; //"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
+  std::string inputFile = argVars[argCount - 1]; //"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
 
   int status = 0;
   try {
@@ -96,11 +96,11 @@ int main(int argCount, char **argVars) {
     }
 
     if (dumpHeader && !dumpAsJSON) {
-      CT::string dumpString = CDF::dump(cdfObject);
+      std::string dumpString = CDF::dump(cdfObject);
       printf("%s\n", dumpString.c_str());
     }
     if (dumpAsJSON) {
-      CT::string dumpString = CDF::dumpAsJSON(cdfObject);
+      std::string dumpString = CDF::dumpAsJSON(cdfObject);
       printf("%s\n", dumpString.c_str());
     }
 
@@ -112,7 +112,7 @@ int main(int argCount, char **argVars) {
       }
 
       printf("// Data dump for variable [%s]:\n", var->name.c_str());
-      CT::string dumpString = CDF::dump(var);
+      std::string dumpString = CDF::dump(var);
       printf("%s\n", dumpString.c_str());
 
       bool isString = var->getNativeType() == CDF_STRING;

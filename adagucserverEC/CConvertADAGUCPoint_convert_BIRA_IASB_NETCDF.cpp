@@ -1,8 +1,8 @@
 
 void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
   try {
-    if (cdfObject->getAttributeThrows("source")->toString().equals("BIRA-IASB NETCDF") && cdfObject->getVariableNE("obs") == NULL) {
-      CT::string timeString = cdfObject->getAttributeThrows("measurement_time")->toString();
+    if (cdfObject->getAttributeThrows("source")->toString() == "BIRA-IASB NETCDF" && cdfObject->getVariableNE("obs") == NULL) {
+      std::string timeString = cdfObject->getAttributeThrows("measurement_time")->toString();
       cdfObject->setAttributeText("featureType", "point");
       CDF::Variable *time = cdfObject->getVariableThrows("time");
       CDF::Dimension *dim = cdfObject->getDimensionThrows("time");
@@ -31,9 +31,9 @@ void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
       for (size_t v = 0; v < cdfObject->variables.size(); v++) {
         CDF::Variable *var = cdfObject->variables[v];
         if (var->isDimension == false) {
-          if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
-              !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
-              !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time")) {
+          if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "x" && var->name != "y" &&
+              var->name != "lat_bnds" && var->name != "lon_bnds" && var->name != "custom" && var->name != "projection" && var->name != "product" &&
+              var->name != "iso_dataset" && var->name != "tile_properties" && var->name != "forecast_reference_time") {
             var->dimensionlinks.push_back(realTimeDim);
           }
         }

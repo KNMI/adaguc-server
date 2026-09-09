@@ -55,7 +55,7 @@ private:
 public:
   static std::map<std::string, std::vector<Feature *>> featureStore;
   static void clearFeatureStore();
-  static void clearFeatureStore(CT::string name);
+  static void clearFeatureStore(std::string name);
 
   static int convertGeoJSONHeader(CDFObject *cdfObject);
   static int convertGeoJSONData(CDataSource *dataSource, int mode);

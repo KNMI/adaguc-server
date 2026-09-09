@@ -22,7 +22,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   }
 
   // Parse time
-  CT::string requestedTime, startTime, stopTime;
+  std::string requestedTime, startTime, stopTime;
   size_t timeIdx = 0;
   for (size_t i = 0; i < srvParams->requestDims.size(); i++) {
     if (CT::toLowerCase(srvParams->requestDims[i].name) == "time") {
@@ -32,7 +32,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
     }
   }
 
-  std::vector<CT::string> timeRangeStrings = requestedTime.split("/");
+  std::vector<std::string> timeRangeStrings = CT::split(requestedTime, "/");
   if (timeRangeStrings.size() == 2) {
     startTime = timeRangeStrings[0];
     stopTime = timeRangeStrings[1];
@@ -67,7 +67,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
 
   // Limit the number of generated timeSteps
   size_t expectedSteps = (size_t)((interStop - interStart) / intervalSeconds) + 1;
-  std::vector<CT::string> generatedTimestamps;
+  std::vector<std::string> generatedTimestamps;
   if (expectedSteps <= LIVEUPDATE_MAX_TIMESTEPS) {
     // Build list of timesteps with all of them
     for (double t = interStart; t <= interStop; t += intervalSeconds) {
@@ -107,8 +107,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
 #endif
 
   // Calculate the corresponding lat/lon, according to the pixel of interest
-  CT::string ckey;
-  ckey.print("%d:%d:%s", dX, dY, dataSource->nativeProj4.c_str());
+  std::string ckey = CT::printf("%d:%d:%s", dX, dY, dataSource->nativeProj4.c_str());
   CImageWarper warper;
   CImageDataWriter::ProjCacheInfo projInfo = CImageDataWriter::GetProjInfo(ckey, &img->drawImage, dataSource, &warper, srvParams, dX, dY);
 

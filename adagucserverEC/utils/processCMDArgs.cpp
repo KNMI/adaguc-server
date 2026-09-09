@@ -51,11 +51,11 @@ int processCMDArgs(int argc, char **argv, char **) {
   bool getlayers = false;
   bool automaticallyFindMatchingDataset = false;
   bool verbose = false;
-  CT::string tailPath, layerPathToScan;
-  CT::string file;
-  CT::string inspireDatasetCSW;
-  CT::string datasetPath;
-  CT::string layerName;
+  std::string tailPath, layerPathToScan;
+  std::string file;
+  std::string inspireDatasetCSW;
+  std::string datasetPath;
+  std::string layerName;
   std::string configOption;
 
   while (true) {
@@ -182,7 +182,7 @@ int processCMDArgs(int argc, char **argv, char **) {
         return SCAN_EXITCODE_DATASETNOEXIST;
       }
       logBufferCheckMode();
-      status = request.updatedb(&tailPath, &layerPathToScan, scanFlags, layerName);
+      status = request.updatedb(tailPath, layerPathToScan, scanFlags, layerName);
       if (status != 0) {
         CDBError("Error occured in updating the database");
         return SCAN_EXITCODE_SCANERROR;
@@ -224,15 +224,15 @@ int processCMDArgs(int argc, char **argv, char **) {
     setWarningFunction(serverWarningFunction);
     setDebugFunction(serverDebugFunction);
 
-    CT::string fileInfo = CGetFileInfo::getLayersForFile(file.c_str());
+    std::string fileInfo = CGetFileInfo::getLayersForFile(file.c_str());
     if (inspireDatasetCSW.empty() == false) {
-      inspireDatasetCSW.encodeXMLSelf();
-      CT::string inspireDatasetCSWXML;
-      inspireDatasetCSWXML.print("<!--header-->\n\n  <WMS>\n    <Inspire>\n      <DatasetCSW>%s</DatasetCSW>\n    </Inspire>\n  </WMS>", inspireDatasetCSW.c_str());
-      fileInfo.replaceSelf("<!--header-->", inspireDatasetCSWXML.c_str());
+      inspireDatasetCSW = CT::encodeXml(inspireDatasetCSW);
+      std::string inspireDatasetCSWXML =
+          CT::printf("<!--header-->\n\n  <WMS>\n    <Inspire>\n      <DatasetCSW>%s</DatasetCSW>\n    </Inspire>\n  </WMS>", inspireDatasetCSW.c_str());
+      CT::replaceSelf(fileInfo, "<!--header-->", inspireDatasetCSWXML);
     }
     if (datasetPath.empty() == false) {
-      fileInfo.replaceSelf("[DATASETPATH]", datasetPath.c_str());
+      CT::replaceSelf(fileInfo, "[DATASETPATH]", datasetPath);
     }
     printf("%s\n", fileInfo.c_str());
     status = 0;

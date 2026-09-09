@@ -52,7 +52,7 @@ public:
    * @param fileToTile
    * @return int
    */
-  static int createTilesForFile(CDataSource *dataSource, int scanFlags, CT::string fileToTile);
+  static int createTilesForFile(CDataSource *dataSource, int scanFlags, std::string fileToTile);
 };
 
 #endif

@@ -51,8 +51,8 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   // Make references destRegularGrid and irregularGridVar
   for (size_t d = 0; d < nrDataObjects; d++) {
     destRegularGrid[d] = dataObjects[d]->cdfVariable;
-    CT::string orgName = destRegularGrid[d]->name.c_str();
-    orgName.concat("_backup");
+    std::string orgName = destRegularGrid[d]->name.c_str();
+    orgName += "_backup";
     irregularGridVar[d] = cdfObject->getVariableNE(orgName.c_str());
     if (irregularGridVar[d] == NULL) {
       CDBError("Unable to find orignal variable with name %s", orgName.c_str());

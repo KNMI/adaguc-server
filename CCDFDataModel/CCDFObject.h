@@ -70,7 +70,7 @@ public:
 
   std::vector<CDF::Dimension *> dimensions;
   std::vector<CDF::Variable *> variables;
-  CT::string name;
+  std::string name;
   int getVariableIndexThrows(const char *name);
   CDF::Variable *getVariableThrows(std::string name);
   int getVariableIndexNE(const char *name);
@@ -91,7 +91,7 @@ public:
 
   int applyNCMLFile(const char *ncmlFileName);
   int aggregateDim(CDFObject *sourceCDFObject, const char *dimName);
-  CT::string currentFile;
+  std::string currentFile;
   int open(const char *fileName);
   int close();
   void clear();

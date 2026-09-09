@@ -32,7 +32,7 @@
 
 class CDFReader {
 public:
-  CT::string fileName;
+  std::string fileName;
   CDFReader() { cdfObject = NULL; }
   virtual ~CDFReader() {}
   CDFObject *cdfObject;

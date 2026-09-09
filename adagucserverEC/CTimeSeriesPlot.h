@@ -34,8 +34,8 @@ public:
 
   GetFeatureInfoResult::Element **elements;
   size_t length;
-  CT::string name;
-  CT::string units;
+  std::string name;
+  std::string units;
 
   double minValue, maxValue, *values;
 
@@ -116,7 +116,7 @@ public:
 
     std::vector<PlotObject *> plotObjects;
 
-    std::vector<CT::string> features[nrOfLayers];
+    std::vector<std::string> features[nrOfLayers];
     std::vector<int> numDims[nrOfLayers];
     // Find number of features per layer
     for (size_t layerNr = 0; layerNr < nrOfLayers; layerNr++) {
@@ -151,7 +151,7 @@ public:
         size_t nrOfElementSteps = nrOfElements / (nrOfFeatures);
 
         size_t numDimStepsPerTime = 1;
-        CT::string dimname = "";
+        std::string dimname = "";
         for (size_t j = 1; j < ds->requiredDims.size(); j++) {
           numDimStepsPerTime *= ds->requiredDims[j]->allValues.size();
         }
@@ -186,7 +186,7 @@ public:
               plotObject->elements[elStep] = element;
 
               /*
-              CT::string dims = "";
+              std::string dims = "";
               for(size_t d=1;d<element->cdfDims.dimensions.size();d++){
                 dims.printconcat("%s ",element->cdfDims.dimensions[d]->value.c_str());
               }
@@ -277,8 +277,8 @@ public:
       CDBDebug("%f %f", plotObject->minValue, plotObject->maxValue);
     }
 
-    CT::string startDateString = ctime->dateToISOString(ctime->getDate(startTimeValue));
-    CT::string stopDateString = ctime->dateToISOString(ctime->getDate(stopTimeValue));
+    std::string startDateString = ctime->dateToISOString(ctime->getDate(startTimeValue));
+    std::string stopDateString = ctime->dateToISOString(ctime->getDate(stopTimeValue));
     startDateString.setChar(19, 'Z');
     startDateString.setSize(20);
     stopDateString.setChar(19, 'Z');
@@ -416,12 +416,12 @@ public:
     }
 
     delete ctime;
-    CT::string title;
+    std::string title;
     // GetFeatureInfoResult::Element * e=getFeatureInfoResultList[0]->elements[0];
     // title.print("%s - %s (%s)",e->var_name.c_str(),e->feature_name.c_str(),e->units.c_str());
     // plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),22,fontLocation,10,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
     for (size_t j = 0; j < plotObjects.size(); j++) {
-      CT::string title = plotObjects[j]->name.c_str();
+      std::string title = plotObjects[j]->name.c_str();
       plotCanvas.drawText(int(plotWidth / 2 - float(title.length()) * 2.5), 15 + j * 10, fontLocation, 8, 0, title.c_str(), CColor(0, 0, 0, 255), CColor(255, 255, 255, 0));
     }
 

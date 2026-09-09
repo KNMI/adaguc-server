@@ -156,7 +156,7 @@ void CConvertGeoJSON::clearFeatureStore() {
 /**
  * Delete one set of features from the featureStore
  */
-void CConvertGeoJSON::clearFeatureStore(CT::string name) {
+void CConvertGeoJSON::clearFeatureStore(std::string name) {
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
     if (fileName == name.c_str()) {
@@ -197,7 +197,7 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
 #endif
 
   jsonVar->readData(CDF_CHAR);
-  CT::string inputjsondata = (char *)jsonVar->data;
+  std::string inputjsondata = (char *)jsonVar->data;
   json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 
 #ifdef MEASURETIME
@@ -219,7 +219,7 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
 
   addPropertyVariables(cdfObject, features);
 
-  CT::string dumpString = CDF::dump(cdfObject);
+  std::string dumpString = CDF::dump(cdfObject);
 
   std::string geojsonkey = jsonVar->getAttributeNE("ADAGUC_BASENAME")->toString().c_str();
   featureStore[geojsonkey] = features;
@@ -380,7 +380,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
 
 void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool) {
   if (json.type == json_object) {
-    CT::string type;
+    std::string type;
     if (json["type"].type != json_null) {
 #ifdef CCONVERTGEOJSON_DEBUG
       CDBDebug("type found");
@@ -389,46 +389,46 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
 #ifdef CCONVERTGEOJSON_DEBUG
       CDBDebug("type: %s\n", type.c_str());
 #endif
-      CT::string timeVal;
+      std::string timeVal;
       double dTimeVal = -9999;
       int iTimeVal = -9999;
-      CT::string timeUnits;
+      std::string timeUnits;
 
-      if (type.equals("FeatureCollection")) {
+      if (type == "FeatureCollection") {
         json_value dimensions = json["dimensions"];
         if (dimensions.type == json_object) {
           for (unsigned int dimCnt = 0; dimCnt < dimensions.u.object.length; dimCnt++) {
             json_object_entry dimObject = dimensions.u.object.values[dimCnt];
-            CT::string dimName(dimObject.name);
+            std::string dimName(dimObject.name);
             json_value dim = *dimObject.value;
             // CDBDebug("[%d] dim[%s] %d %d", dimCnt, dimName.c_str(), dim.type, dim.type==json_string);
-            if (dimName.equals("time")) {
+            if (dimName == "time") {
               // CDBDebug("time found !!!!");
 
               if (dim.type == json_object) {
                 for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
                   json_object_entry fldObject = dim.u.object.values[fldCnt];
-                  CT::string fldName(fldObject.name);
+                  std::string fldName(fldObject.name);
                   json_value fldValue = *fldObject.value;
                   if (fldValue.type == json_string) {
-                    CT::string value(fldValue.u.string.ptr);
+                    std::string value(fldValue.u.string.ptr);
                     // CDBDebug("[ ] dim[%s]: %s=%s", dimName.c_str(), fldName.c_str(), value.c_str());
                     //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
                     //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
-                    if (fldName.equals("units")) {
+                    if (fldName == "units") {
                       timeUnits = value.c_str();
-                    } else if (fldName.equals("value")) {
+                    } else if (fldName == "value") {
                       timeVal = value.c_str();
                     }
                   }
                   if (fldValue.type == json_double) {
                     // CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
-                    if (fldName.equals("value")) {
+                    if (fldName == "value") {
                       dTimeVal = fldValue.u.dbl;
                     }
                   }
                   if (fldValue.type == json_integer) {
-                    if (fldName.equals("value")) {
+                    if (fldName == "value") {
                       iTimeVal = fldValue.u.integer;
                     }
                   }
@@ -472,29 +472,29 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               ((double *)timeVar->data)[0] = timeOffset;
             } else {
               // CDBDebug("other dim: %s", dimName.c_str());
-              CT::string dimUnits;
-              CT::string dimVal;
+              std::string dimUnits;
+              std::string dimVal;
               double dDimVal = 0.0;
 
               if (dim.type == json_object) {
                 for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
                   json_object_entry fldObject = dim.u.object.values[fldCnt];
-                  CT::string fldName(fldObject.name);
+                  std::string fldName(fldObject.name);
                   json_value fldValue = *fldObject.value;
                   if (fldValue.type == json_string) {
-                    CT::string value(fldValue.u.string.ptr);
+                    std::string value(fldValue.u.string.ptr);
                     // CDBDebug("[ ] dim[%s]: %s=%s", dimName.c_str(), fldName.c_str(), value.c_str());
                     //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
                     //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
-                    if (fldName.equals("units")) {
+                    if (fldName == "units") {
                       dimUnits = value.c_str();
-                    } else if (fldName.equals("value")) {
+                    } else if (fldName == "value") {
                       dimVal = value.c_str();
                     }
                   }
                   if (fldValue.type == json_double) {
                     // CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
-                    if (fldName.equals("value")) {
+                    if (fldName == "value") {
                       dDimVal = fldValue.u.dbl;
                     }
                   }
@@ -563,7 +563,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
   double minLat = 90., maxLat = -90., minLon = 180, maxLon = -180;
   bool BBOXFound = false;
   if (json.type == json_object) {
-    CT::string type;
+    std::string type;
     if (json["type"].type != json_null) {
 #ifdef CCONVERTGEOJSON_DEBUG
       CDBDebug("type found");
@@ -572,7 +572,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
 #ifdef CCONVERTGEOJSON_DEBUG
       CDBDebug("type: %s\n", type.c_str());
 #endif
-      if (type.equals("FeatureCollection")) {
+      if (type == "FeatureCollection") {
         json_value bbox_v = json["bbox"];
         if (bbox_v.type == json_array) {
           bbox.llX = (double)(*bbox_v.u.array.values[0]);
@@ -589,13 +589,13 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
 #endif
         for (unsigned int cnt = 0; cnt < features.u.array.length; cnt++) {
           json_value feature = *features.u.array.values[cnt];
-          CT::string featureId;
+          std::string featureId;
           json_value id = feature["id"];
           if (id.type == json_string) {
             //                  CDBDebug("Id=%s", id.u.string.ptr);
             featureId = id.u.string.ptr;
           } else if (id.type == json_integer) {
-            featureId.print("%1d", id.u.integer);
+            featureId = CT::printf("%1ld", id.u.integer);
           }
           //                CDBDebug("found featureId as attribute %s", featureId.c_str());
           Feature *feat = new Feature();
@@ -605,7 +605,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
           if (props.type == json_object) {
             for (unsigned int propCnt = 0; propCnt < props.u.object.length; propCnt++) {
               json_object_entry propObject = props.u.object.values[propCnt];
-              CT::string propName(propObject.name);
+              std::string propName(propObject.name);
               json_value prop = *propObject.value;
               if (prop.type == json_string) {
                 //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
@@ -622,13 +622,13 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
           }
           if (featureId.length() == 0) {
             std::map<std::string, FeatureProperty *>::iterator it;
-            CT::string id_s;
+            std::string id_s;
             std::map<std::string, FeatureProperty *> *featurePropertyMap = feat->getFp();
             it = featurePropertyMap->find("id");
             if (it != featurePropertyMap->end()) {
               id_s = it->second->toString().c_str();
               //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
-              if (!id_s.equals("NONE")) {
+              if (id_s != "NONE") {
                 featureId = id_s;
               }
             } else {
@@ -636,7 +636,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
               if (it != featurePropertyMap->end()) {
                 id_s = it->second->toString().c_str();
                 //                       CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
-                if (!id_s.equals("NONE")) {
+                if (id_s != "NONE") {
                   featureId = id_s;
                 }
               } else {
@@ -644,12 +644,12 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                 if (it != featurePropertyMap->end()) {
                   id_s = it->second->toString().c_str();
                   //                         CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
-                  if (!id_s.equals("NONE")) {
+                  if (id_s != "NONE") {
                     featureId = id_s;
                   }
                 } else {
                   //                        CDBDebug("Fallback to id %d", cnt);
-                  featureId.print("%04d", cnt);
+                  featureId = CT::printf("%04d", cnt);
                 }
               }
               //                    CDBDebug("found featureId in properties %s", featureId.c_str());
@@ -888,7 +888,7 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
   CDBDebug("Adding propertyVariables");
 #endif
   std::vector<Feature *> pointFeatures = getPointFeatures(features);
-  std::map<CT::string, CDF::Variable *> newVars;
+  std::map<std::string, CDF::Variable *> newVars;
 
   std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
@@ -896,7 +896,7 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
     // std::vector<GeoPoint> *pts = feature->getPoints();
     std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
     for (auto iter = featurePropertyMap->begin(); iter != featurePropertyMap->end(); ++iter) {
-      CT::string name = iter->first.c_str();
+      std::string name = iter->first.c_str();
       if (newVars.find(name.c_str()) == newVars.end() && cdfObject->getVariableNE(name.c_str()) == NULL) {
 #ifdef CCONVERTGEOJSON_DEBUG
         CDBDebug("Creating var %s", name.c_str());
@@ -972,7 +972,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("Rereading JSON");
 #endif
-    CT::string inputjsondata = (char *)jsonVar->data;
+    std::string inputjsondata = (char *)jsonVar->data;
     json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 
     BBOX dfBBOX;
@@ -1297,7 +1297,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int, CDataSour
 
     std::map<std::string, FeatureProperty *> *fp = feature->getFp();
 
-    CT::string pointValue, pointName, pointDescription;
+    std::string pointValue, pointName, pointDescription;
     bool isString = false;
     std::map<std::string, FeatureProperty *>::iterator ftit = fp->find(pointGridVariable->name.c_str());
     if (ftit != fp->end()) {
@@ -1325,7 +1325,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int, CDataSour
         dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
         dlat = int((tprojectedY - offsetY) / cellSizeY);
       }
-      float f = isString ? NAN : pointValue.toFloat();
+      float f = isString ? NAN : atof(pointValue.c_str());
       dataObject.points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
 
       if (pointGridVariable->getType() == CDF_FLOAT) {

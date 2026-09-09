@@ -56,7 +56,7 @@
 
 class CGDALDataWriter : public CBaseDataWriterInterface {
 private:
-  CT::string driverName;
+  std::string driverName;
   struct GdalDrawFunctionState {
     size_t width;
     size_t height;
@@ -80,16 +80,16 @@ private:
 
   int currentBandNr;
   int NrOfBands;
-  CT::string mimeType;
-  CT::string customOptions;
-  CT::string *InputProducts;
-  CT::string TimeUnit;
+  std::string mimeType;
+  std::string customOptions;
+  std::string *InputProducts;
+  std::string TimeUnit;
   double dfNoData;
 
   CDataSource *_dataSource;
 
-  CT::string generateGetCoverageFileName();
-  CT::string getDimensionValue(int d, CCDFDims *dims);
+  std::string generateGetCoverageFileName();
+  std::string getDimensionValue(int d, CCDFDims *dims);
 
 public:
   CGDALDataWriter() { InputProducts = NULL; }

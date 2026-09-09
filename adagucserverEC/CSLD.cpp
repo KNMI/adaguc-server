@@ -12,9 +12,9 @@ void CSLD::setServerParams(CServerParams *serverParams) {
 }
 
 // Start processing the SLD url
-int CSLD::processSLDUrl(CT::string sldUrl) {
+int CSLD::processSLDUrl(std::string sldUrl) {
   // Check if url extension is .xml
-  if (!sldUrl.startsWith("http") || !sldUrl.endsWith(".xml")) {
+  if (!CT::startsWith(sldUrl, "http") || !CT::endsWith(sldUrl, ".xml")) {
     CDBError("SLD parameter value needs to be a url pointed to a .xml file");
     return 1;
   }
@@ -26,7 +26,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
   }
 
   // Get SLD file from URL
-  CT::string sldFromUrl;
+  std::string sldFromUrl;
   try {
     sldFromUrl = CHTTPTools::getString(sldUrl.c_str(), MAX_FILE_SIZE_ALLOWED);
   } catch (int error) {
@@ -35,7 +35,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
   }
 
   // Check if the retrieved file contains SLD standard
-  if (!sldFromUrl.startsWith("<?xml") || !sldFromUrl.endsWith("StyledLayerDescriptor>")) {
+  if (!CT::startsWith(sldFromUrl, "<?xml") || !CT::endsWith(sldFromUrl, "StyledLayerDescriptor>")) {
     CDBError("Invalid SLD, not matching standard");
     return 1;
   }
@@ -53,14 +53,14 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 
       // LayerName
       auto &namedLayerElement = namedLayers.at(i);
-      CT::string sldLayerName = namedLayerElement.getThrows("Name")->value;
+      std::string sldLayerName = namedLayerElement.getThrows("Name")->value;
 
       for (size_t j = 0; j < this->serverConfig->Layer.size(); j++) {
 
         CServerConfig::XMLE_Layer *layer = this->serverConfig->Layer[j];
 
         // Generate unique layer name for layer in Server Config
-        CT::string layerUniqueName = makeUniqueLayerName(this->serverConfig->Layer[j]);
+        std::string layerUniqueName = makeUniqueLayerName(this->serverConfig->Layer[j]);
 
 #ifdef CSLD_DEBUG
         CDBDebug("Checking layer [%s]", layerUniqueName.c_str());
@@ -69,7 +69,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 
         int status = 0;
 
-        if (layerUniqueName.equals(sldLayerName)) {
+        if (layerUniqueName == sldLayerName) {
 #ifdef CSLD_DEBUG
           CDBDebug("Found layer [%s], adding style.", layerUniqueName.c_str());
 #endif
@@ -80,8 +80,8 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
             layer->Styles.push_back(layerStyles);
           }
 
-          CT::string uniqueStyleName = STYLE_NAME_TEMPLATE;
-          uniqueStyleName.printconcat("%i", i);
+          std::string uniqueStyleName = STYLE_NAME_TEMPLATE;
+          CT::printfconcat(uniqueStyleName, "%zu", i);
 
           // Initialize styling variables, to make sure they are empty and new
           CServerConfig::XMLE_Style *myOwnStyle = new CServerConfig::XMLE_Style();
@@ -93,8 +93,8 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
           layer->Styles[0]->elementValue = uniqueStyleName.c_str();
           myOwnStyle->attr.name = uniqueStyleName.c_str();
 
-          CT::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
-          uniqueLegendName.printconcat("%i", i);
+          std::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
+          CT::printfconcat(uniqueLegendName, "%zu", i);
           myOwnLegend->attr.name = uniqueLegendName.c_str();
           myOwnLegend->attr.type = "interval";
 
@@ -138,7 +138,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
       }
     }
   } catch (int e) {
-    CT::string message = CXMLParser::getErrorMessage(e);
+    std::string message = CXMLParser::getErrorMessage(e);
     CDBError("%s\n", message.c_str());
     return 1;
   }
@@ -200,7 +200,7 @@ int CSLD::validateAndParseSLDElements(CXMLParserElement &element, CServerConfig:
       return 1;
     }
   } catch (int e) {
-    CT::string message = CXMLParser::getErrorMessage(e);
+    std::string message = CXMLParser::getErrorMessage(e);
     CDBError("%s\n", message.c_str());
     return 1;
   }
@@ -260,7 +260,7 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
     shadeInterval->attr.min = colorMapEntry.getAttrValue("quantity");
 
     // Set the max min value
-    CT::string max;
+    std::string max;
 
     // Set Max attribute, Current element is < the amount of entries
     if (i + 1 < colorMapEntries.size()) {
@@ -278,8 +278,8 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
     }
 
     // Make sure hex code is uppercase
-    CT::string hexColor = colorMapEntry.getAttrValue("color");
-    hexColor.toUpperCaseSelf();
+    std::string hexColor = colorMapEntry.getAttrValue("color");
+    hexColor = CT::toUpperCase(hexColor);
 
     shadeInterval->attr.fillcolor = hexColor;
     myOwnStyle->ShadeInterval.push_back(shadeInterval);
@@ -296,8 +296,8 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
   return 1;
 }
 
-bool CSLD::parameterIsSld(CT::string param) {
-  if (param.equals(SLD_PARAMETER_NAME)) {
+bool CSLD::parameterIsSld(std::string param) {
+  if (param == SLD_PARAMETER_NAME) {
     return true;
   }
   return false;

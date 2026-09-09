@@ -13,7 +13,7 @@
 #define CNetCDFDataWriter_AVG_RGB 1
 class CNetCDFDataWriter : public CBaseDataWriterInterface {
 private:
-  CT::string JSONdata;
+  std::string JSONdata;
 
   class Settings {
   public:
@@ -65,7 +65,7 @@ private:
   }
   CDataSource *baseDataSource;
   CDFObject *destCDFObject;
-  CT::string tempFileName;
+  std::string tempFileName;
   CServerParams *srvParam;
   CDF::Dimension *projectionDimX, *projectionDimY; // Shorthand pointers to cdfdatamodel (do never delete!)
   CDF::Variable *projectionVarX, *projectionVarY;  // Shorthand pointers to cdfdatamodel (do never delete!)

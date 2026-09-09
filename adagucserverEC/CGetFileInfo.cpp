@@ -1,17 +1,17 @@
 #include "CGetFileInfo.h"
 #include "CDFObjectStore.h"
 
-CT::string CGetFileInfo::getLayersForFile(const char *filename) {
+std::string CGetFileInfo::getLayersForFile(const char *filename) {
   CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL, filename);
 
-  CT::string fileInfo = "";
+  std::string fileInfo = "";
 
   try {
     if (cdfObject == NULL) {
       CDBError("Unable to open file %s", filename);
       throw(__LINE__);
     }
-    std::vector<CT::string> variableList = CDFObjectStore::getListOfVisualizableVariables(cdfObject);
+    std::vector<std::string> variableList = CDFObjectStore::getListOfVisualizableVariables(cdfObject);
 
     fileInfo += "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
     fileInfo += "<Configuration>\n";
@@ -24,11 +24,11 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
 
       CDF::Variable *var = cdfObject->getVariableThrows(variableList[j].c_str());
 
-      CT::string name = variableList[j].c_str();
+      std::string name = variableList[j].c_str();
 
-      CT::string title = variableList[j].c_str();
+      std::string title = variableList[j].c_str();
 
-      // CT::string filePath = makeCleanPath(filename);
+      // std::string filePath = makeCleanPath(filename);
       // filePath.setSize(filePath.lastIndexOf("/")+1);
 
       try {
@@ -36,7 +36,7 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
       } catch (int e) {
       }
 
-      CT::string abstract = title;
+      std::string abstract = title;
 
       try {
         abstract = var->getAttributeThrows("abstract")->toString();
@@ -47,7 +47,7 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
         }
       }
 
-      CT::string standardName = "";
+      std::string standardName = "";
       try {
         standardName = var->getAttributeThrows("standard_name")->toString();
       } catch (int e) {
@@ -61,12 +61,12 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
       }*/
 
       fileInfo += "  <Layer type=\"database\">\n";
-      fileInfo.printconcat("    <FilePath filter=\".*\\.nc$\">%s</FilePath>\n", "[DATASETPATH]");
-      fileInfo.printconcat("    <Name>%s</Name>\n", name.encodeXML().c_str());
-      fileInfo.printconcat("    <Title>%s</Title>\n", title.encodeXML().c_str());
-      fileInfo.printconcat("    <Variable>%s</Variable>\n", variableList[j].encodeXML().c_str());
-      // fileInfo.printconcat("    <MetadataURL>[METADATAURL]</MetadataURL>\n");
-      fileInfo.printconcat("    <Abstract>%s</Abstract>\n", abstract.encodeXML().c_str());
+      CT::printfconcat(fileInfo, "    <FilePath filter=\".*\\.nc$\">%s</FilePath>\n", "[DATASETPATH]");
+      CT::printfconcat(fileInfo, "    <Name>%s</Name>\n", CT::encodeXml(name).c_str());
+      CT::printfconcat(fileInfo, "    <Title>%s</Title>\n", CT::encodeXml(title).c_str());
+      CT::printfconcat(fileInfo, "    <Variable>%s</Variable>\n", CT::encodeXml(variableList[j]).c_str());
+      // CT::printfconcat(fileInfo, "    <MetadataURL>[METADATAURL]</MetadataURL>\n");
+      CT::printfconcat(fileInfo, "    <Abstract>%s</Abstract>\n", CT::encodeXml(abstract).c_str());
       fileInfo += "  </Layer>\n";
       fileInfo += "\n";
     }

@@ -6,8 +6,8 @@
 
 class CDFTypeToOpenDAPType {
 public:
-  static CT::string getvar(const int type) {
-    CT::string rtype = "unknown";
+  static std::string getvar(const int type) {
+    std::string rtype = "unknown";
     if (type == CDF_NONE) rtype = "CDF_NONE";
     if (type == CDF_BYTE) rtype = "Byte";
     if (type == CDF_UBYTE) rtype = "Byte";
@@ -21,8 +21,8 @@ public:
     if (type == CDF_STRING) rtype = "String";
     return rtype;
   }
-  static CT::string getatt(const int type) {
-    CT::string rtype = "unknown";
+  static std::string getatt(const int type) {
+    std::string rtype = "unknown";
     if (type == CDF_NONE) rtype = "CDF_NONE";
     if (type == CDF_BYTE) rtype = "Byte";
     if (type == CDF_UBYTE) rtype = "Byte";
@@ -51,8 +51,8 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
 #ifdef COPENDAPHANDLER_DEBUG
       CDBDebug("getDimSize found : %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
 #endif
-      CT::string tableName;
-      CT::string dim = dataSource->cfgLayer->Dimension[d]->attr.name;
+      std::string tableName;
+      std::string dim = dataSource->cfgLayer->Dimension[d]->attr.name;
 
       try {
         tableName =
@@ -99,72 +99,72 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
   return -1;
 }
 
-CT::string COpenDAPHandler::VarInfoToString(std::vector<VarInfo> selectedVariables) {
-  CT::string r;
+std::string COpenDAPHandler::VarInfoToString(std::vector<VarInfo> selectedVariables) {
+  std::string r;
   for (size_t j = 0; j < selectedVariables.size(); j++) {
-    r.printconcat("Variable Name: %s\n", selectedVariables[j].name.c_str());
+    CT::printfconcat(r, "Variable Name: %s\n", selectedVariables[j].name.c_str());
     for (size_t i = 0; i < selectedVariables[j].dimInfo.size(); i++) {
-      r.printconcat("  Dim name %s :[%d %d %d]\n", selectedVariables[j].dimInfo[i].name.c_str(), selectedVariables[j].dimInfo[i].start, selectedVariables[j].dimInfo[i].count,
+      CT::printfconcat(r, "  Dim name %s :[%zu %zu %td]\n", selectedVariables[j].dimInfo[i].name.c_str(), selectedVariables[j].dimInfo[i].start, selectedVariables[j].dimInfo[i].count,
                     selectedVariables[j].dimInfo[i].stride);
     }
   }
   return r;
 }
 
-CT::string COpenDAPHandler::createDDSHeader(CT::string layerName, CDFObject *cdfObject, std::vector<VarInfo> selectedVariables) {
+std::string COpenDAPHandler::createDDSHeader(std::string layerName, CDFObject *cdfObject, std::vector<VarInfo> selectedVariables) {
   /* Print DODS and DDS header */
-  CT::string output = "";
+  std::string output = "";
   if (jsonWriter)
-    output.concat("{\n  \"dataset\": {\n");
+    output += "{\n  \"dataset\": {\n";
   else
-    output.concat("Dataset {\n");
+    output += "Dataset {\n";
 
   for (size_t i = 0; i < selectedVariables.size(); i++) {
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
       CDF::Variable *v = cdfObject->variables[j];
       CDFType type = (CDFType)v->getType();
 
-      if (selectedVariables[i].name.equals(v->name)) {
+      if (selectedVariables[i].name == v->name) {
         if (jsonWriter) {
           if (j > 0) {
-            output.concat(",\n");
+            output += ",\n";
           }
-          output.printconcat("    \"%s\": {\n", v->name.c_str());
-          output.printconcat("      \"type\": \"%s\",\n", CDFTypeToOpenDAPType::getvar(type).c_str());
-          output.printconcat("      \"dimensions\": [\n");
+          CT::printfconcat(output, "    \"%s\": {\n", v->name.c_str());
+          CT::printfconcat(output, "      \"type\": \"%s\",\n", CDFTypeToOpenDAPType::getvar(type).c_str());
+          CT::printfconcat(output, "      \"dimensions\": [\n");
           for (size_t j = 0; j < v->dimensionlinks.size(); j++) {
             int size = -1;
             if (selectedVariables[i].dimInfo.size() == v->dimensionlinks.size()) {
               size = selectedVariables[i].dimInfo[j].count;
             }
-            if (j > 0) output.concat(",\n");
-            output.printconcat("        {\"%s\": %d }", v->dimensionlinks[j]->name.c_str(), size);
+            if (j > 0) output += ",\n";
+            CT::printfconcat(output, "        {\"%s\": %d }", v->dimensionlinks[j]->name.c_str(), size);
           }
-          output.concat("\n      ]\n");
-          output.concat("    }");
+          output += "\n      ]\n";
+          output += "    }";
 
         } else {
-          output.printconcat("    %s ", CDFTypeToOpenDAPType::getvar(type).c_str());
-          output.concat(v->name);
+          CT::printfconcat(output, "    %s ", CDFTypeToOpenDAPType::getvar(type).c_str());
+          output += v->name;
           for (size_t j = 0; j < v->dimensionlinks.size(); j++) {
             int size = -1;
             if (selectedVariables[i].dimInfo.size() == v->dimensionlinks.size()) {
               size = selectedVariables[i].dimInfo[j].count;
             }
-            output.printconcat("[%s = %d]", v->dimensionlinks[j]->name.c_str(), size);
+            CT::printfconcat(output, "[%s = %d]", v->dimensionlinks[j]->name.c_str(), size);
           }
           if (v->dimensionlinks.size() == 0) {
-            output.printconcat("[%d]", 1);
+            CT::printfconcat(output, "[%d]", 1);
           }
-          output.concat(";\n");
+          output += ";\n";
         }
       }
     }
   }
   if (jsonWriter)
-    output.printconcat("\n  }");
+    CT::printfconcat(output, "\n  }");
   else
-    output.printconcat("} %s;\n", layerName.c_str());
+    CT::printfconcat(output, "} %s;\n", layerName.c_str());
   return output;
 }
 
@@ -298,7 +298,7 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v, CDFType type) {
           for (size_t d = 0; d < v->dimensionlinks[0]->getSize(); d++) {
             size_t stringLength = v->dimensionlinks[1]->getSize();
             if (d > 0) fprintf(opendapoutstream, ", ");
-            fprintf(opendapoutstream, "\"%s\"", (CT::string((const char *)v->data + d * stringLength, stringLength)).c_str());
+            fprintf(opendapoutstream, "\"%s\"", (std::string((const char *)v->data + d * stringLength, stringLength)).c_str());
           }
         } else {
           for (size_t d = 0; d < varSize; d++) {
@@ -406,56 +406,56 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
   jsonWriter = false;
 
-  httpHeaderContentType = getenv("CONTENT_TYPE");
-  if (httpHeaderContentType.equals("application/json")) {
+  httpHeaderContentType = CT::fromCharPointer(getenv("CONTENT_TYPE"));
+  if (httpHeaderContentType == "application/json") {
     jsonWriter = true;
   }
 
   CDBDebug("CONTENT_TYPE %s", httpHeaderContentType.c_str());
 
-  CT::string query;
+  std::string query;
   if (_query != NULL) {
     query = _query;
-    if (query.equals("null")) {
+    if (query == "null") {
       query = "";
     }
   }
   CDBDebug("OpenDAP Received [%s] [%s]", path, query.c_str());
-  CT::string defaultPath = "opendap";
+  std::string defaultPath = "opendap";
   if (srvParam->cfg->OpenDAP[0]->attr.path.empty() == false) {
     defaultPath = srvParam->cfg->OpenDAP[0]->attr.path;
   }
 
-  CT::string dapName = path + defaultPath.length() + 1;
-  CT::string layerName = "";
-  CT::string pathQuery = "";
+  std::string dapName = path + defaultPath.length() + 1;
+  std::string layerName = "";
+  std::string pathQuery = "";
   bool isDDSRequest = false;
   bool isDASRequest = false;
   bool isDODRequest = false;
-  dapName.decodeURLSelf();
+  dapName = CT::decodeURL(dapName);
 
-  int i = dapName.lastIndexOf(".dds");
+  int i = CT::lastIndexOf(dapName, ".dds");
   if (i != -1) {
-    layerName = dapName.substring(0, i);
-    pathQuery = dapName.substring(i + 4, -1);
+    layerName = CT::substring(dapName, 0, i);
+    pathQuery = CT::substring(dapName, i + 4, -1);
     isDDSRequest = true;
   } else {
-    int i = dapName.lastIndexOf(".das");
+    int i = CT::lastIndexOf(dapName, ".das");
     if (i != -1) {
-      layerName = dapName.substring(0, i);
-      pathQuery = dapName.substring(i + 4, -1);
+      layerName = CT::substring(dapName, 0, i);
+      pathQuery = CT::substring(dapName, i + 4, -1);
       isDASRequest = true;
     } else {
-      int i = dapName.lastIndexOf(".dods");
+      int i = CT::lastIndexOf(dapName, ".dods");
       if (i != -1) {
-        layerName = dapName.substring(0, i);
-        pathQuery = dapName.substring(i + 5, -1);
+        layerName = CT::substring(dapName, 0, i);
+        pathQuery = CT::substring(dapName, i + 5, -1);
         isDODRequest = true;
       } else {
-        int i = dapName.lastIndexOf(".dds");
+        int i = CT::lastIndexOf(dapName, ".dds");
         if (i != -1) {
-          layerName = dapName.substring(0, i);
-          pathQuery = dapName.substring(i + 5, -1);
+          layerName = CT::substring(dapName, 0, i);
+          pathQuery = CT::substring(dapName, i + 5, -1);
           isDDSRequest = true;
         }
       }
@@ -495,16 +495,16 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
   CDBDebug("layerName: %s", layerName.c_str());
 #endif
   // Check if a dataset/dataURL was given
-  CT::string dataURL = "";
-  if (layerName.endsWith(".nc") || layerName.endsWith(".geojson") || layerName.endsWith(".hdf5") || layerName.endsWith(".h5")) {
+  std::string dataURL = "";
+  if (CT::endsWith(layerName, ".nc") || CT::endsWith(layerName, ".geojson") || CT::endsWith(layerName, ".hdf5") || CT::endsWith(layerName, ".h5")) {
     /* If the layerName ends with .nc extension, it is likely not a Layer but a filename */
     dataURL = layerName;
     layerName = "";
   } else {
-    int lastSlash = layerName.lastIndexOf("/");
+    int lastSlash = CT::lastIndexOf(layerName, "/");
     if (lastSlash != -1) {
-      dataURL = layerName.substring(0, lastSlash);
-      layerName = layerName.substring(lastSlash + 1, -1);
+      dataURL = CT::substring(layerName, 0, lastSlash);
+      layerName = CT::substring(layerName, lastSlash + 1, -1);
     }
   }
 #ifdef COPENDAPHANDLER_DEBUG
@@ -565,15 +565,15 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
   for (size_t layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
     if (srvParam->cfg->Layer[layerNo]->attr.type == "database") {
-      CT::string intLayerName = makeUniqueLayerName(srvParam->cfg->Layer[layerNo]);
+      std::string intLayerName = makeUniqueLayerName(srvParam->cfg->Layer[layerNo]);
 
       if (layerName.length() == 0) {
         layerName = intLayerName;
       }
-      intLayerName.replaceSelf("/", "_");
+      CT::replaceSelf(intLayerName, "/", "_");
       // CDBDebug("%s",intLayerName.c_str());
 
-      if (intLayerName.equals(layerName)) {
+      if (intLayerName == layerName) {
         if (dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[layerNo], 0) != 0) {
           CDBError("Error setCFGLayer");
           delete dataSource;
@@ -682,15 +682,15 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       // Parsing dim queries per variable (e.g. precip[0][0:3] == x,y)
       //       CDBDebug("query = %s", query.c_str());
       if (!query.empty()) {
-        std::vector<CT::string> items = query.split(",");
+        std::vector<std::string> items = CT::split(query, ",");
         for (size_t j = 0; j < items.size(); j++) {
 #ifdef COPENDAPHANDLER_DEBUG
           CDBDebug("Selected variable = \"%s\"", items[j].c_str());
 #endif
 
           // Split on every [ token, gives sequences precip, 0] and 0:3]
-          std::vector<CT::string> varsettings = items[j].split("[");
-          varsettings[0].decodeURLSelf();
+          std::vector<std::string> varsettings = CT::split(items[j], "[");
+          varsettings[0] = CT::decodeURL(varsettings[0]);
 
 // Push the variable
 #ifdef COPENDAPHANDLER_DEBUG
@@ -705,33 +705,33 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
             CDBDebug("Getting start/count/stride from request");
 #endif
             for (size_t d = 1; d < varsettings.size(); d++) {
-              varsettings[d].replaceSelf("]", ""); // gives sequences precip, 0 and 0:3
+              CT::replaceSelf(varsettings[d], "]", ""); // gives sequences precip, 0 and 0:3
 
               // Now split on :
-              std::vector<CT::string> startCountStrideItems = varsettings[d].split(":");
+              std::vector<std::string> startCountStrideItems = CT::split(varsettings[d], ":");
               size_t start = 0;
               size_t count = 1;
               size_t stride = 1;
               if (startCountStrideItems.size() == 1) {
-                start = startCountStrideItems[0].toInt();
+                start = atoi(startCountStrideItems[0].c_str());
               }
               if (startCountStrideItems.size() == 2) {
-                start = startCountStrideItems[0].toInt();
-                count = startCountStrideItems[1].toInt() - start;
+                start = atoi(startCountStrideItems[0].c_str());
+                count = atoi(startCountStrideItems[1].c_str()) - start;
                 count++;
                 if (count < 1) count = 1;
               }
               if (startCountStrideItems.size() == 3) { // TODO CHECK if [start:count:stride] is correct.
-                start = startCountStrideItems[0].toInt();
-                count = startCountStrideItems[1].toInt() - start;
+                start = atoi(startCountStrideItems[0].c_str());
+                count = atoi(startCountStrideItems[1].c_str()) - start;
                 count++;
                 if (count < 1) count = 1;
-                stride = startCountStrideItems[2].toInt();
+                stride = atoi(startCountStrideItems[2].c_str());
               }
 #ifdef COPENDAPHANDLER_DEBUG
               CDBDebug("DIMINFO: %d,%s  %d:%d", start, varsettings[d].c_str(), d, j);
 #endif
-              CT::string dimname = cdfObject->getVariableThrows(selectedVariables.back().name)->dimensionlinks[d - 1]->name;
+              std::string dimname = cdfObject->getVariableThrows(selectedVariables.back().name)->dimensionlinks[d - 1]->name;
 #ifdef COPENDAPHANDLER_DEBUG
               CDBDebug("Push dimInfo %s", dimname.c_str());
 #endif
@@ -750,7 +750,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #ifdef COPENDAPHANDLER_DEBUG
           CDBDebug("Push varinfo %s", cdfObject->variables[j]->name.c_str());
 #endif
-          // if(cdfObject->variables[j]->name.equals(layerName)){
+          // if(cdfObject->variables[j]->name == layerName){
           selectedVariables.push_back(VarInfo(cdfObject->variables[j]->name.c_str()));
           //}
         }
@@ -761,7 +761,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #endif
       for (size_t i = 0; i < selectedVariables.size(); i++) {
         if (selectedVariables[i].dimInfo.size() == 0) {
-          CT::string varname = selectedVariables[i].name;
+          std::string varname = selectedVariables[i].name;
 
           try {
             CDF::Variable *v = cdfObject->getVariableThrows(varname);
@@ -790,7 +790,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       }
 
       //       for (std::vector<VarInfo>::iterator it = selectedVariables.begin() ; it != selectedVariables.end(); ++it){
-      //         if(it->name.equals("crs")==true
+      //         if(it->name == "crs"==true
       //
       //         ){
       //           selectedVariables.erase(it);
@@ -799,16 +799,16 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       //       }
 
 #ifdef COPENDAPHANDLER_DEBUG
-      CT::string r = VarInfoToString(selectedVariables);
+      std::string r = VarInfoToString(selectedVariables);
 
       CDBDebug("selectedVariables:[\n%s", r.c_str());
       CDBDebug("]");
 #endif
 
-      CT::string output = createDDSHeader(layerName, cdfObject, selectedVariables);
+      std::string output = createDDSHeader(layerName, cdfObject, selectedVariables);
       if (jsonWriter) {
         if (!isDODRequest) {
-          output.concat("\n}\n");
+          output += "\n}\n";
         }
         fprintf(opendapoutstream, "%s", output.c_str());
 
@@ -830,7 +830,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
             CDF::Variable *v = cdfObject->variables[j];
             CDFType type = (CDFType)v->getType();
 
-            if (selectedVariables[i].name.equals(v->name)) {
+            if (selectedVariables[i].name == v->name) {
               if (jsonWriter && varHasBeenWritten) {
                 fprintf(opendapoutstream, ",\n");
               }
@@ -897,7 +897,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                       }
                       foundData = true;
 
-                      CT::string dimStandardName = "";
+                      std::string dimStandardName = "";
                       try {
                         dimStandardName = v->getAttributeThrows("standard_name")->toString();
                         ;
@@ -905,7 +905,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                         dimStandardName = v->name;
                         ;
                       }
-                      CT::string dimUnits = "";
+                      std::string dimUnits = "";
                       try {
                         dimUnits = v->getAttributeThrows("units")->toString();
                         ;
@@ -917,9 +917,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                       if (v->isDimension) {
                         if (type == CDF_DOUBLE) {
                           if (v->dimensionlinks.size() == 1) {
-                            if (v->name.equals(v->dimensionlinks[0]->name)) {
+                            if (v->name == v->dimensionlinks[0]->name) {
 
-                              if (dimStandardName.equals("time")) {
+                              if (dimStandardName == "time") {
                                 if (dimUnits.length() > 2) {
                                   readFromDB = true;
                                   time = CTime::GetCTimeInstance(v);
@@ -955,7 +955,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                       for (auto &record: store->records) {
 
                         if (readFromDB) {
-                          CT::string dimValue = record.values.at(1);
+                          std::string dimValue = record.values.at(1);
 
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Dimension value from DB = [%s] units = [%s] standard_name = [%s]", dimValue.c_str(), dimUnits.c_str(), dimStandardName.c_str());
@@ -966,7 +966,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                         }
 
                         if (readFromDB == false) {
-                          CT::string fileName = record.values.at(0);
+                          std::string fileName = record.values.at(0);
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Found file %s", fileName.c_str());
 #endif
@@ -1073,70 +1073,70 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
     if (isDASRequest) {
       CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams, dataSource->getFileName().c_str());
-      CT::string output = "";
+      std::string output = "";
       if (jsonWriter)
-        output.concat("{\n  \"attributes\": {\n");
+        output += "{\n  \"attributes\": {\n";
       else
-        output.concat("Attributes {\n");
+        output += "Attributes {\n";
       for (size_t i = 0; i < cdfObject->variables.size(); i++) {
         CDF::Variable *v = cdfObject->variables[i];
-        // if(v->name.equals("custom")==false)
+        // if(v->name == "custom"==false)
         {
-          if (jsonWriter && i > 0) output.printconcat(",\n");
+          if (jsonWriter && i > 0) CT::printfconcat(output, ",\n");
           if (jsonWriter)
-            output.printconcat("    \"%s\": {\n", v->name.c_str());
+            CT::printfconcat(output, "    \"%s\": {\n", v->name.c_str());
           else
-            output.printconcat("    %s {\n", v->name.c_str());
+            CT::printfconcat(output, "    %s {\n", v->name.c_str());
 
           for (size_t j = 0; j < v->attributes.size(); j++) {
             // if(v->attributes[j]->name.charAt(0)!='_'&&v->attributes[j]->type!=CDF_DOUBLE)
             {
               if (jsonWriter) {
                 if (j > 0) {
-                  output.printconcat(",\n");
+                  CT::printfconcat(output, ",\n");
                 }
               }
-              CT::string attrName = v->attributes[j]->name;
-              attrName.replaceSelf(" ", "_");
-              attrName.replaceSelf("\"", "_");
-              attrName.replaceSelf("[", "_");
-              attrName.replaceSelf("]", "_");
+              std::string attrName = v->attributes[j]->name;
+              CT::replaceSelf(attrName, " ", "_");
+              CT::replaceSelf(attrName, "\"", "_");
+              CT::replaceSelf(attrName, "[", "_");
+              CT::replaceSelf(attrName, "]", "_");
               if (jsonWriter) {
-                output.printconcat("      \"%s\": ", attrName.c_str());
+                CT::printfconcat(output, "      \"%s\": ", attrName.c_str());
               } else {
-                output.printconcat("        %s %s ", CDFTypeToOpenDAPType::getatt(v->attributes[j]->type).c_str(), attrName.c_str());
+                CT::printfconcat(output, "        %s %s ", CDFTypeToOpenDAPType::getatt(v->attributes[j]->type).c_str(), attrName.c_str());
               }
               if (v->attributes[j]->type == CDF_CHAR) {
-                output.concat("\"");
-                CT::string s = v->attributes[j]->toString();
+                output += "\"";
+                std::string s = v->attributes[j]->toString();
 
                 // s.encodeURLSelf();
                 //               s.replaceSelf(":","");
                 //               s.replaceSelf("[","");
-                s.replaceSelf("\"", "\\\"");
+                CT::replaceSelf(s, "\"", "\\\"");
 
-                output.concat(s);
-                if (v->attributes[j]->type == CDF_CHAR) output.concat("\"");
+                output += s;
+                if (v->attributes[j]->type == CDF_CHAR) output += "\"";
               } else {
-                CT::string s = v->attributes[j]->toString();
-                s.replaceSelf(" ", ",");
-                output.concat(s);
+                std::string s = v->attributes[j]->toString();
+                CT::replaceSelf(s, " ", ",");
+                output += s;
               }
               if (!jsonWriter) {
-                output.printconcat(";\n"); // TODO
+                CT::printfconcat(output, ";\n"); // TODO
               }
             }
           }
           if (jsonWriter)
-            output.concat("\n    }");
+            output += "\n    }";
           else
-            output.concat("    }\n");
+            output += "    }\n";
         }
       }
       if (jsonWriter)
-        output.printconcat("\n  }\n}");
+        CT::printfconcat(output, "\n  }\n}");
       else
-        output.printconcat("}");
+        CT::printfconcat(output, "}");
       fprintf(opendapoutstream, "%s\n", output.c_str());
     }
 

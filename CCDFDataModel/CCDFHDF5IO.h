@@ -44,7 +44,7 @@
 
 class CDFHDF5Reader : public CDFReader {
 private:
-  CT::string fileName;
+  std::string fileName;
   bool fileIsOpen;
   CDFType typeConversion(hid_t type);
 

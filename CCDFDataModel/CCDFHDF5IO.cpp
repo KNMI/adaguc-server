@@ -42,8 +42,8 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
 #endif
   }
   newstart[0] = 0;
-  CT::string varName;
-  varName.print("image%d%simage_data", (int)start[0] + 1, CCDFHDF5IO_GROUPSEPARATOR);
+  std::string varName;
+  varName = CT::printf("image%d%simage_data", (int)start[0] + 1, CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *var = ((CDFObject *)thisVar->getParentCDFObject())->getVariableThrows(varName.c_str());
 
   CDBDebug("Start reading %s", var->name.c_str());
@@ -322,7 +322,7 @@ void CDFHDF5Reader::list(hid_t groupID, char *groupName) {
 }
 
 int CDFHDF5Reader::open(const char *fileName) {
-  CT::string cpy = (fileName);
+  std::string cpy = (fileName);
   this->fileName = cpy.c_str();
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("Opening HDF5 file %s", this->fileName.c_str());
@@ -393,8 +393,8 @@ hid_t CDFHDF5Reader::openH5GroupByName(char *varNameOut, size_t maxVarNameLen, c
   }
   hid_t HDF5_group = H5F_file;
   hid_t newGroupID;
-  CT::string varName(variableGroupName);
-  auto paths = varName.split(CCDFHDF5IO_GROUPSEPARATOR);
+  std::string varName(variableGroupName);
+  auto paths = CT::split(varName, CCDFHDF5IO_GROUPSEPARATOR);
   if (paths.size() == 0) {
     return -1;
   }
@@ -602,9 +602,9 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
   bool dimsDone = false;
   for (size_t j = 0; j < cdfObject->variables.size(); j++) {
     cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP", "true");
-    CT::string projectionString = "";
+    std::string projectionString = "";
     try {
-      if (cdfObject->variables[j]->getAttributeThrows("CLASS")->toString().toLowerCase().equals("image")) {
+      if (CT::toLowerCase(cdfObject->variables[j]->getAttributeThrows("CLASS")->toString()) == "image") {
         cdfObject->variables[j]->removeAttribute("ADAGUC_SKIP");
         CDBDebug("Variable %s is an IMAGE", cdfObject->variables[j]->name.c_str());
         if (dimsDone == false) {
@@ -614,7 +614,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
           float fXGEO_LOW_RIGHT[1];
           float fYGEO_LOW_RIGHT[1];
 
-          CT::string timeString = "";
+          std::string timeString = "";
 
           CDF::Attribute *NOMINAL_PRODUCT_TIME = cdfObject->getAttributeNE("NOMINAL_PRODUCT_TIME");
           if (NOMINAL_PRODUCT_TIME != NULL) {
@@ -737,6 +737,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
             projection->addAttribute(proj4_params);
             proj4_params->setName("proj4_params");
           }
+          CDBDebug("Setting proj4_params to [%s]", projectionString.c_str());
           proj4_params->setString(projectionString.c_str());
 
           // Set time dimension
@@ -768,7 +769,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
           try {
             offset = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
           } catch (int e) {
-            CT::string message = CTime::getErrorMessage(e);
+            std::string message = CTime::getErrorMessage(e);
             CDBError("CTime Exception %s", message.c_str());
             delete ctime;
             return 1;
@@ -838,14 +839,14 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
   bool dimsDone = false;
   for (size_t j = 0; j < cdfObject->variables.size(); j++) {
     cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP", "true");
-    CT::string projectionString = "";
+    std::string projectionString = "";
     try {
-      if (cdfObject->variables[j]->getAttributeThrows("CLASS")->toString().toLowerCase().equals("data")) {
+      if (CT::toLowerCase(cdfObject->variables[j]->getAttributeThrows("CLASS")->toString()) == "data") {
         cdfObject->variables[j]->removeAttribute("ADAGUC_SKIP");
         // CDBDebug("Variable %s is an IMAGE",cdfObject->variables[j]->name.c_str());
         if (dimsDone == false) {
 
-          CT::string timeString = "";
+          std::string timeString = "";
 
           CDF::Attribute *SENSING_START_TIME = cdfObject->getAttributeNE("SENSING_START_TIME");
           if (SENSING_START_TIME != NULL) {
@@ -982,7 +983,7 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
           try {
             offset = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
           } catch (int e) {
-            CT::string message = CTime::getErrorMessage(e);
+            std::string message = CTime::getErrorMessage(e);
             CDBError("CTime Exception %s", message.c_str());
             delete ctime;
             return 1;
@@ -1172,8 +1173,8 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   }
 
   // Fill in dim ranges
-  CT::string variableName;
-  variableName.print("image1%simage_data", CCDFHDF5IO_GROUPSEPARATOR);
+  std::string variableName;
+  variableName = CT::printf("image1%simage_data", CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
   // if(var==NULL){CDBError("variable %s not found",variableName.c_str());return 1;}
   geo = cdfObject->getVariableNE("geographic");
@@ -1182,7 +1183,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     return 0;
   }
   // if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
-  variableName.print("geographic%smap_projection", CCDFHDF5IO_GROUPSEPARATOR);
+  variableName = CT::printf("geographic%smap_projection", CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *proj = cdfObject->getVariableNE(variableName.c_str());
   if (proj == NULL) {
     CDBError("variable geographic.map_projection not found");
@@ -1241,7 +1242,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   product->addAttribute(new CDF::Attribute("validity_stop", endTime.c_str()));
 
   /* Try to get additional values*/
-  variableName.print("image1%ssatellite", CCDFHDF5IO_GROUPSEPARATOR);
+  variableName = CT::printf("image1%ssatellite", CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *image1_satellite = cdfObject->getVariableNE(variableName.c_str());
   if (image1_satellite != NULL) {
     CDF::Attribute *image_acquisition_time = image1_satellite->getAttributeNE("image_acquisition_time");
@@ -1283,9 +1284,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
   try {
 
-    CT::string productCornerString = (char *)geo->getAttributeThrows("geo_product_corners")->toString().c_str();
+    std::string productCornerString = (char *)geo->getAttributeThrows("geo_product_corners")->toString().c_str();
 
-    std::vector<CT::string> coords = productCornerString.trim().split(" ");
+    std::vector<std::string> coords = CT::split(CT::trim(productCornerString), " ");
 
     if (coords.size() > 6) {
       iso_dataset->addAttribute(new CDF::Attribute("min-x", coords[0].c_str()));
@@ -1396,11 +1397,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   }
 
   // Most KNMI files have wrong projection definition, replace nsper by geos,
-  CT::string projectionString;
-  projectionString.copy((char *)proj4attr->data, proj4attr->length);
-  projectionString.replaceSelf("nsper", "geos");
-
-  proj4_params->setData(CDF_CHAR, projectionString.c_str(), projectionString.length());
+  std::string projectionString = proj4attr->toString();
+  CT::replaceSelf(projectionString, "nsper", "geos");
+  proj4_params->setString(projectionString.c_str());
 
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("Set time dimension");
@@ -1439,7 +1438,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     try {
       offset = ctime.dateToOffset(ctime.stringToDate(endTime.c_str()));
     } catch (int e) {
-      CT::string message = CTime::getErrorMessage(e);
+      std::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
 
       return 1;
@@ -1448,7 +1447,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     try {
       offset = ctime.dateToOffset(ctime.stringToDate(startTime.c_str()));
     } catch (int e) {
-      CT::string message = CTime::getErrorMessage(e);
+      std::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
 
       return 1;
@@ -1522,13 +1521,13 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   }
 
   // Loop through all images and set grid_mapping name
-  CT::string varName;
+  std::string varName;
   size_t variableCounter = 1;
 
   // This is the image looping section
   {
     do {
-      varName.print("image%d%simage_data", variableCounter, CCDFHDF5IO_GROUPSEPARATOR);
+      varName = CT::printf("image%zu%simage_data", variableCounter, CCDFHDF5IO_GROUPSEPARATOR);
       var = cdfObject->getVariableNE(varName.c_str());
       if (var != NULL) {
         if (isForecastData == false) var->removeAttribute("ADAGUC_SKIP");
@@ -1540,7 +1539,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         var->dimensionlinks.insert(var->dimensionlinks.begin(), 1, timeDim);
 
         // Set units
-        varName.print("image%d", variableCounter);
+        varName = CT::printf("image%zu", variableCounter);
         CDF::Variable *imageN = cdfObject->getVariableNE(varName.c_str());
         if (imageN != NULL) {
           CDF::Attribute *image_geo_parameter = imageN->getAttributeNE("image_geo_parameter");
@@ -1553,10 +1552,10 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         // Get nodatavalue:
         // Get calibration group: First check if one is defined for specified image number, if not, use from image 1.
 
-        varName.print("image%d%scalibration", variableCounter, CCDFHDF5IO_GROUPSEPARATOR);
+        varName = CT::printf("image%zu%scalibration", variableCounter, CCDFHDF5IO_GROUPSEPARATOR);
         CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
         if (calibration == NULL) {
-          varName.print("image%d%scalibration", 1, CCDFHDF5IO_GROUPSEPARATOR);
+          varName = CT::printf("image%d%scalibration", 1, CCDFHDF5IO_GROUPSEPARATOR);
           calibration = cdfObject->getVariableNE(varName.c_str());
         }
 
@@ -1621,15 +1620,15 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
           // Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
           CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas");
           if (calibration_formulas != NULL) {
-            CT::string formula = calibration_formulas->toString();
+            std::string formula = calibration_formulas->toString();
             // CDBDebug("Formula: %s",formula.c_str());
-            int rightPartFormulaPos = formula.indexOf("=");
-            int multiplicationSignPos = formula.indexOf("*");
-            int additionSignPos = formula.indexOf("+");
+            int rightPartFormulaPos = CT::indexOf(formula, "=");
+            int multiplicationSignPos = CT::indexOf(formula, "*");
+            int additionSignPos = CT::indexOf(formula, "+");
             if (rightPartFormulaPos != -1 && multiplicationSignPos != -1 && additionSignPos != -1) {
 
-              float multiplicationFactor = formula.substring(rightPartFormulaPos + 1, multiplicationSignPos).trim().toFloat();
-              float additionFactor = formula.substring(additionSignPos + 1, formula.length()).trim().toFloat();
+              float multiplicationFactor = atof(CT::trim(CT::substring(formula, rightPartFormulaPos + 1, multiplicationSignPos)).c_str());
+              float additionFactor = atof(CT::trim(CT::substring(formula, additionSignPos + 1, formula.length())).c_str());
               // CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
               //                  CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
               CDF::Attribute *add_offset = new CDF::Attribute();
@@ -1648,7 +1647,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         // Try to detect image_datetime_valid for forecast data
         CDF::Attribute *image_datetime_valid = imageN->getAttributeNE("image_datetime_valid");
         if (image_datetime_valid != NULL) {
-          CT::string datetime_valid = image_datetime_valid->toString();
+          std::string datetime_valid = image_datetime_valid->toString();
 
           auto valid_time_iso_str = knmiH5TimeToISOString(datetime_valid.c_str());
           if (valid_time_iso_str.empty()) {
@@ -1672,7 +1671,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
               ((double *)time->data)[variableCounter - 1] = offset;
             }
           } catch (int e) {
-            CT::string message = CTime::getErrorMessage(e);
+            std::string message = CTime::getErrorMessage(e);
             CDBError("CTime Exception %s", message.c_str());
             return 1;
           }

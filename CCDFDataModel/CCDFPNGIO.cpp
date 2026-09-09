@@ -78,7 +78,7 @@ int CDFPNGReader::open(const char *fileName) {
   cdfObject->addAttribute(new CDF::Attribute("Conventions", "CF-1.6"));
   cdfObject->addAttribute(new CDF::Attribute("history", "Metadata adjusted by ADAGUC from PNG to NetCDF-CF"));
 
-  CT::string fileBaseName;
+  std::string fileBaseName;
   const char *last = rindex(fileName, '/');
   if ((last != NULL) && (*last)) {
     fileBaseName = (last + 1);
@@ -101,21 +101,19 @@ int CDFPNGReader::open(const char *fileName) {
     for (size_t l = 0; l < lines.size(); l++) {
       CDBDebug("Info file line %s", lines[l].c_str());
       if (CT::startsWith(lines[l], "proj4_params=")) {
-        CT::string proj4Params = lines[l];
-        proj4Params.substringSelf(13, -1);
+        std::string proj4Params = CT::substring(lines[l], 13, -1);
         CDBDebug("proj4params=%s", proj4Params.c_str());
         CRS->setAttributeText("proj4", proj4Params.c_str());
       }
       if (CT::startsWith(lines[l], "bbox=")) {
-        CT::string bbox = lines[l];
-        bbox.substringSelf(5, -1);
-        std::vector<CT::string> bboxItems = bbox.split(",");
+        std::string bbox = CT::substring(lines[l], 5, -1);
+        std::vector<std::string> bboxItems = CT::split(bbox, ",");
         if (bboxItems.size() == 4) {
           double d[4];
-          d[0] = bboxItems[0].trim().toDouble();
-          d[1] = bboxItems[1].trim().toDouble();
-          d[2] = bboxItems[2].trim().toDouble();
-          d[3] = bboxItems[3].trim().toDouble();
+          d[0] = CT::toDouble(bboxItems[0]);
+          d[1] = CT::toDouble(bboxItems[1]);
+          d[2] = CT::toDouble(bboxItems[2]);
+          d[3] = CT::toDouble(bboxItems[3]);
           CRS->setAttribute("bbox", CDF_DOUBLE, d, 4);
         }
       }
@@ -211,7 +209,7 @@ int CDFPNGReader::open(const char *fileName) {
 
     /* Temporarily checking invalid metadata */
     if (bbox[0] < -5570000) {
-      if (CRS->getAttributeThrows("proj4")->toString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
+      if (CRS->getAttributeThrows("proj4")->toString() == "+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0") {
         for (size_t j = 0; j < 4; j++) {
           bbox[j] /= 1000;
         }
@@ -253,10 +251,10 @@ int CDFPNGReader::open(const char *fileName) {
   PNGData->setAttributeText("standard_name", "rgba");
 
   if (isSlippyMapFormat == true) {
-    auto parts = this->fileName.split("/");
+    auto parts = CT::split(this->fileName, "/");
 
     if (parts.size() > 3) {
-      int zoom = parts[parts.size() - 3].toInt();
+      int zoom = atoi(parts[parts.size() - 3].c_str());
       int level = 17 - zoom;
       cdfObject->setAttribute("adaguctilelevel", CDF_INT, &level, 1);
     }
@@ -277,12 +275,12 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 
   double tilex1 = 0, tilex2 = 0, tiley1 = 0, tiley2 = 0;
   if (isSlippyMapFormat) {
-    auto parts = this->fileName.split("/");
+    auto parts = CT::split(this->fileName, "/");
 
     if (parts.size() > 3) {
-      int zoom = parts[parts.size() - 3].toInt();
-      int tile_y = parts[parts.size() - 1].split(".")[0].toInt();
-      int tile_x = parts[parts.size() - 2].toInt();
+      int zoom = atoi(parts[parts.size() - 3].c_str());
+      int tile_y = atoi(CT::split(parts[parts.size() - 1], ".")[0].c_str());
+      int tile_x = atoi(parts[parts.size() - 2].c_str());
       auto bbox = getBounds(tile_x, tile_y, zoom);
 #ifdef CCDFPNGIO_DEBUG
       CDBDebug("%d %d %d", tile_x, tile_y, zoom);
@@ -312,7 +310,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     }
   }
 
-  if (var->name.equals("x")) {
+  if (var->name == "x") {
 
     CDF::Variable *xVar = var;
     CDF::Dimension *xDim = ((CDFObject *)var->getParentCDFObject())->getDimensionThrows(var->name.c_str());
@@ -333,7 +331,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     }
   }
 
-  if (var->name.equals("y")) {
+  if (var->name == "y") {
 
     CDF::Variable *yVar = var;
     CDF::Dimension *yDim = ((CDFObject *)var->getParentCDFObject())->getDimensionThrows(var->name.c_str());
@@ -352,7 +350,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
       }
     }
   }
-  if (var->name.equals("pngdata")) {
+  if (var->name == "pngdata") {
     if (var->data != NULL) {
       CDBDebug("Warning: reusing pngdata variable");
     } else {
@@ -392,7 +390,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
   }
   var->allocateData(requestedSize);
 
-  if (var->name.equals("x") || var->name.equals("y")) {
+  if (var->name == "x" || var->name == "y") {
     CDF::Variable *dummyVar = new CDF::Variable();
     dummyVar->name = var->name;
     dummyVar->setType(type);
@@ -408,7 +406,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
     delete dummyVar;
   }
 
-  if (var->name.equals("pngdata")) {
+  if (var->name == "pngdata") {
     if (pngRaster != NULL && pngRaster->data) {
       CDBDebug("Info: reusing pngdata with start/count");
     } else {

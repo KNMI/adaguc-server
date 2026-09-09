@@ -53,9 +53,9 @@ int testCTimeInit(CDF::Variable *testVar, const char *testDate) {
     CDBError("[FAILED] testTime->getDate(6600000000)");
     return 1;
   }
-  CT::string dateString = testTime->dateToString(date);
+  std::string dateString = testTime->dateToString(date);
   CDBDebug("dateString = [%s]", dateString.c_str());
-  if (dateString.equals(testDate)) {
+  if (dateString == testDate) {
     CDBDebug("[OK] dateToString");
   } else {
     CDBError("[FAILED] dateToString expected [%s]: [%s]", testDate, dateString.c_str());
@@ -132,7 +132,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("P3Y4M5DT6H7M13S");
-    if (!CTime::dateToPeriod(date).equals("P3Y4M5DT6H7M13S")) {
+    if (CTime::dateToPeriod(date) != "P3Y4M5DT6H7M13S") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P3Y4M5DT6H7M13S\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -145,7 +145,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("P1234Y");
-    if (!CTime::dateToPeriod(date).equals("P1234Y")) {
+    if (CTime::dateToPeriod(date) != "P1234Y") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P1234Y\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -158,7 +158,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("P15M");
-    if (!CTime::dateToPeriod(date).equals("P15M")) {
+    if (CTime::dateToPeriod(date) != "P15M") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P15M\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -171,7 +171,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("P7D");
-    if (!CTime::dateToPeriod(date).equals("P7D")) {
+    if (CTime::dateToPeriod(date) != "P7D") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P7D\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -184,7 +184,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("PT12H");
-    if (!CTime::dateToPeriod(date).equals("PT12H")) {
+    if (CTime::dateToPeriod(date) != "PT12H") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT12H\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -197,7 +197,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("PT1M");
-    if (!CTime::dateToPeriod(date).equals("PT1M")) {
+    if (CTime::dateToPeriod(date) != "PT1M") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT1M\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -210,7 +210,7 @@ int testCTimeEpochTimeConversion() {
 
   try {
     CTime::Date date = CTime::periodToDate("PT30S");
-    if (!CTime::dateToPeriod(date).equals("PT30S")) {
+    if (CTime::dateToPeriod(date) != "PT30S") {
       CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT30S\") is %s", CTime::dateToPeriod(date).c_str());
       failed = true;
     } else {
@@ -221,7 +221,7 @@ int testCTimeEpochTimeConversion() {
     failed = true;
   }
 
-  CT::string f[] = {// 0                                                                                 //
+  std::string f[] = {// 0                                                                                 //
                     "2019-09-22T13:23:18Z", "PT1H", "2019-09-22T12:23:18Z",
                     // 1                                                                                 //
                     "2019-09-22T13:23:18Z", "PT60M", "2019-09-22T12:23:18Z",
@@ -231,14 +231,14 @@ int testCTimeEpochTimeConversion() {
                     "2019-09-22T13:23:18Z", "P19Y08M21DT13H23M18S", "2000-01-01T00:00:00Z"};
 
   for (int j = 0; j < 4; j++) {
-    CT::string in = f[j * 3 + 0];
-    CT::string op = f[j * 3 + 1];
-    CT::string out = f[j * 3 + 2];
+    std::string in = f[j * 3 + 0];
+    std::string op = f[j * 3 + 1];
+    std::string out = f[j * 3 + 2];
     try {
       CTime ctime;
       ctime.init("seconds since 1970-01-01", "none");
       CTime::Date date = ctime.ISOStringToDate(in.c_str());
-      if (!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())).equals(out.c_str())) {
+      if (ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())) != out) {
         CDBError("[FAILED]!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, \"%s\")) returns %s and not %s", op.c_str(),
                  ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())).c_str(), out.c_str());
         failed = true;
@@ -258,7 +258,7 @@ int testCTimeEpochTimeConversion() {
 
 int testHDF5Reader() {
   CDBDebug("testHDF5Reader");
-  CT::string testFile = "./testdata/variable_string.h5";
+  std::string testFile = "./testdata/variable_string.h5";
   CDFReader *cdfReader = findReaderByFileName(testFile.c_str());
   CDFObject *cdfObject = new CDFObject();
   cdfObject->attachCDFReader(cdfReader);
@@ -266,12 +266,12 @@ int testHDF5Reader() {
     CDBError("[FAILED] testHDF5Reader was unable to open file %s", testFile.c_str());
     return 1;
   }
-  CT::string dumpString = CDF::dump(cdfObject);
+  std::string dumpString = CDF::dump(cdfObject);
 
   // throw (dumpString.c_str());
-  CT::string expectedString = cdfObject->getVariableThrows("overview")->getAttributeThrows("product_datetime_start")->toString();
+  std::string expectedString = cdfObject->getVariableThrows("overview")->getAttributeThrows("product_datetime_start")->toString();
 
-  if (expectedString.equals("22-NOV-2021;08:00:00.000") == false) {
+  if (expectedString != "22-NOV-2021;08:00:00.000") {
     CDBDebug("[FAILED] testHDF5Reader: expectedString 22-NOV-2021;08:00:00.000 is different then ");
     return 1;
   } else {

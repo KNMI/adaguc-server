@@ -181,7 +181,7 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
 
   if (hasXYDimensions && !hasXYVariables && hasLatLonVariables) {
     if (latVar->dimensionlinks.size() == 2 && lonVar->dimensionlinks.size() == 2) {
-      if (latVar->dimensionlinks[0]->name.equals("y") && lonVar->dimensionlinks[0]->name.equals("y") && latVar->dimensionlinks[1]->name.equals("x") && lonVar->dimensionlinks[1]->name.equals("x")) {
+      if (latVar->dimensionlinks[0]->name == "y" && lonVar->dimensionlinks[0]->name == "y" && latVar->dimensionlinks[1]->name == "x" && lonVar->dimensionlinks[1]->name == "x") {
         cdfObject->setAttributeText("ConvertLatLonGridActive", "TRUE");
         return true;
       }

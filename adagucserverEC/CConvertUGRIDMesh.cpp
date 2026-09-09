@@ -219,12 +219,12 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->name.equals("mesh")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->name == "mesh") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
       // CDBDebug("%s",var->name.c_str());
       var->setAttributeText("ADAGUC_SKIP", "true");
@@ -247,7 +247,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
 
     new2DVar->setType(meshVar->getType());
     new2DVar->name = meshVar->name.c_str();
-    meshVar->name.concat("_backup");
+    meshVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < meshVar->attributes.size(); j++) {
@@ -295,8 +295,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *meshVar;
-  CT::string origMeshName = new2DVar->name.c_str();
-  origMeshName.concat("_backup");
+  std::string origMeshName = new2DVar->name.c_str();
+  origMeshName += "_backup";
   meshVar = cdfObject->getVariableNE(origMeshName.c_str());
   if (meshVar == NULL) {
     CDBError("Unable to find orignal mesh variable with name %s", origMeshName.c_str());

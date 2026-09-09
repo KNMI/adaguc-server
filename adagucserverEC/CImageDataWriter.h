@@ -73,7 +73,7 @@ public:
   static ProjCacheInfo GetProjInfo(std::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY);
 
 private:
-  CT::string eProfileJson;
+  std::string eProfileJson;
 
 public:
   std::vector<GetFeatureInfoResult> getFeatureInfoResultList;
