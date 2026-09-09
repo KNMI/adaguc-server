@@ -23,7 +23,11 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
   // Draw min, dot-aligned
   float numericMinVal = s.attr.min;
 
-  std::string tempText = CT::printf("%.*f", maxDecimalWidth(minColumn), numericMinVal);
+  int decimalWidthForMinColumn = maxDecimalWidth(minColumn);
+
+  int decimalWidthForMaxColumn = maxDecimalWidth(maxColumn);
+
+  std::string tempText = CT::printf("%.*f", decimalWidthForMinColumn, numericMinVal);
   const char *dotPos = strchr(tempText.c_str(), '.');
   int leftCharsMin = dotPos ? (dotPos - tempText.c_str()) : tempText.length(); // chars before dot
 
@@ -42,7 +46,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
   }
 
   // Draw central dash
-  int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
+  int dashX = colRightMin + (decimalWidthForMinColumn + 4) * numberWidth; // Leave gap between min column and this dash
   legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
 
   // Draw max column (to the right of the dash)
@@ -52,7 +56,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
 
   // Draw max, dot-aligned
   float numericMaxVal = s.attr.max;
-  tempText = CT::printf("%.*f", maxDecimalWidth(minColumn), numericMaxVal);
+  tempText = CT::printf("%.*f", decimalWidthForMaxColumn, numericMaxVal);
 
   const char *dotPosMax = strchr(tempText.c_str(), '.');
   int leftCharsMax = dotPosMax ? (dotPosMax - tempText.c_str()) : tempText.length(); // chars before dot
@@ -63,7 +67,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
     textXMax -= minusWidth - numberWidth;
   }
   // Apply overall left offset plus some spacing
-  textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
+  textXMax += ((int)cbW + pLeft) * scaling + (decimalWidthForMaxColumn + 1) * numberWidth; // Think of the 15 number
 
   legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), 248);
 }
@@ -121,7 +125,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   std::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */
-  if (styleConfiguration != nullptr && styleConfiguration->legend.attr.textformatting.empty()) {
+  if (styleConfiguration != nullptr && !styleConfiguration->legend.attr.textformatting.empty()) {
     textformatting = styleConfiguration->legend.attr.textformatting;
   }
 
@@ -267,18 +271,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       if (drawIntervals == 0) return 0;
 
       float blockHeight = std::max(1.0f, cbH / float(drawIntervals));
-
-      int maxTextWidth = 0;
-      // For right-alignment of labels
-      for (size_t j = 0; j < drawIntervals; j++) {
-        size_t realj = minInterval + j;
-        const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
-        if (!std::isnan(s.attr.min) && !std::isnan(s.attr.max)) {
-          if ((int)std::abs(s.attr.min) % 5 != 0) continue;
-          int tw = legendImage->getTextWidth(CT::printf("%g", s.attr.min), fontLocation, fontSize, angle);
-          if (tw > maxTextWidth) maxTextWidth = tw;
-        }
-      }
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
