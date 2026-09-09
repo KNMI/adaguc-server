@@ -37,7 +37,6 @@ std::string CXMLParser::getErrorMessage(int CXMLParserException) {
   std::string message = "Unknown error";
   if (CXMLParserException == CXMLPARSER_ATTR_NOT_FOUND) message = "CXMLPARSER_ATTR_NOT_FOUND";
   if (CXMLParserException == CXMLPARSER_ELEMENT_NOT_FOUND) message = "CXMLPARSER_ELEMENT_NOT_FOUND";
-  if (CXMLParserException == CXMLPARSER_ATTRIBUTE_OUT_OF_BOUNDS) message = "CXMLPARSER_ATTRIBUTE_OUT_OF_BOUNDS";
   if (CXMLParserException == CXMLPARSER_ELEMENT_OUT_OF_BOUNDS) message = "CXMLPARSER_ELEMENT_OUT_OF_BOUNDS";
   if (CXMLParserException == CXMLPARSER_INVALID_XML) message = "CXMLPARSER_INVALID_XML";
 
@@ -102,54 +101,6 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node, int depth) {
   }
 }
 
-/**
- * Converts XMLElements and attributes to a string recursively
- * @param el The XMLElement to convert
- * @param depth the current recursive depth
- */
-std::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
-  std::string data = "";
-  bool hasValue = false;
-  if (CT::trim(CT::replace(el.value, "\n", "")).length() > 0) {
-    hasValue = true;
-  }
-
-  for (int i = 0; i < depth; i++) data += "  ";
-  data += "<" + el.name;
-  for (size_t j = 0; j < el.xmlAttributes.size(); j++) {
-    data += " " + el.xmlAttributes.at(j).name + "=\"" + CT::encodeXml(el.xmlAttributes.at(j).value) + "\"";
-  }
-  if (!hasValue) {
-    data += ">\n";
-  } else {
-    data += ">";
-  }
-
-  for (size_t j = 0; j < el.xmlElements.size(); j++) {
-    data += toXML(el.xmlElements[j], depth + 1);
-  }
-
-  if (hasValue) {
-    data += el.value;
-    data += "</" + el.name + ">\n";
-  } else {
-    for (int i = 0; i < depth; i++) {
-      data += "  ";
-    };
-    data += "</" + el.name + ">\n";
-  }
-  return data;
-}
-
-/**
- * toString converts the current XMLElement to string
- */
-std::string CXMLParser::XMLElement::toString() {
-  std::string data = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-  data += toXML((*this), 0);
-  return data;
-}
-
 std::string CXMLParser::XMLElement::toJSON(const XMLElement &el, int depth, int mode) const {
   std::string data;
   std::vector<std::string> done;
@@ -212,11 +163,6 @@ std::string CXMLParser::XMLElement::toJSON(const XMLElement &el, int depth, int 
 std::string CXMLParser::XMLElement::toJSON(int mode) const { return "[{" + toJSON((*this), 0, mode) + "}]\n"; }
 
 /**
- * toString converts the current XMLElement to string
- */
-std::string CXMLParser::XMLElement::toStringNoHeader() { return toXML((*this), 0); }
-
-/**
  * getAttrValue Returns the value of the attribute with the specified name
  * Throws CXMLPARSER_ATTR_NOT_FOUND if attribute was not found.
  * @param name the name of the attribute to search for
@@ -231,15 +177,7 @@ std::string CXMLParser::XMLElement::getAttrValue(const std::string &name) {
 }
 
 /**
- * getFirst returns the first XMLElement
- */
-CXMLParser::XMLElement *CXMLParser::XMLElement::getFirst() {
-  if (xmlElements.size() == 0) throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
-  return &xmlElements[0];
-}
-
-/**
- * getFirst returns the last XMLElement
+ * getLast returns the last XMLElement
  */
 CXMLParser::XMLElement *CXMLParser::XMLElement::getLast() {
   if (xmlElements.size() == 0) throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;

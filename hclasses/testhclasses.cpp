@@ -52,11 +52,6 @@ TEST(string, fromCharPointer) {
   CHECK(a.empty());
 }
 
-// TEST(CDirReader, test_makeCleanPath) {
-//   CDirReader::test_makeCleanPath();
-//   CDirReader::test_compareLists();
-// }
-
 TEST(string, split) {
   std::vector<std::string> splittedRefs = CT::split("abc,def,,ghi", ",");
   CHECK(splittedRefs.size() == 4);

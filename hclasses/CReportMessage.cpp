@@ -19,5 +19,3 @@ std::string CReportMessage::getSeverity() const { return severity_names[severity
 std::string CReportMessage::getCategory() const { return category_names[category]; }
 
 std::string CReportMessage::getDocumentationLink() const { return documentationLink; }
-
-const std::string CReportMessage::to_string() const { return message; }

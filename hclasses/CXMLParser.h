@@ -33,49 +33,10 @@
 
 #define CXMLPARSER_ATTR_NOT_FOUND 1
 #define CXMLPARSER_ELEMENT_NOT_FOUND 2
-#define CXMLPARSER_ATTRIBUTE_OUT_OF_BOUNDS 3
 #define CXMLPARSER_ELEMENT_OUT_OF_BOUNDS 4
 #define CXMLPARSER_INVALID_XML 6
 
 #define CXMLPARSER_JSONMODE_STANDARD 0
-#define CXMLPARSER_JSONMODE_CLASSIC 1
-
-/*Example Usage:
-
-#include "CXMLParser.h"
-
-int main(){
-
-  std::string xmlData=
-  "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-  "<playlist name=\"mylist\" xml:lang=\"en\">\n"
-  "  <song>\n"
-  "    <title>Little Fluffy Clouds</title>\n"
-  "    <artist>the Orb</artist>\n"
-  "  </song>\n"
-  "  <song>\n"
-  "    <title name=\"mylist\" xml:lang=\"en\">Goodbye mother Earth</title>\n"
-  "    <artist A=\"B\">Underworld</artist>\n"
-  "  </song>\n"
-  "  <test>ok</test>\n"
-  "</playlist>\n";
-
-  CXMLParserElement element;
-
-  try{
-    element.parse(xmlData);
-    printf("xml:\n%s\n",element.getFirst()->toString().c_str());
-    printf("%s\n",element.get("playlist")->getList("song").get(1)->toString().c_str());
-  }catch(int e){
-    std::string message=CXMLParser::getErrorMessage(e);
-    printf("%s\n",message.c_str());
-  }
-
-  return 0;
-}
-
-
-*/
 
 /**
  * CXMLParser parses a XML file or XML data to a nested list of objects of type XMLElement.
@@ -103,7 +64,6 @@ public:
    */
   class XMLElement {
   public:
-    void copy(XMLElement const &f);
     XMLElement();
     XMLElement(const std::string &name) { this->name = name; }
     XMLElement(const std::string &name, const std::string &value) {
@@ -141,13 +101,6 @@ public:
 
   private:
     /**
-     * Converts XMLElements and attributes to a string recursively
-     * @param el The XMLElement to convert
-     * @param depth the current recursive depth
-     */
-    std::string toXML(XMLElement el, int depth);
-
-    /**
      * Converts XMLElements and attributes to a jsonstring recursively
      * @param el The XMLElement to convert
      * @param depth the current recursive depth
@@ -156,19 +109,9 @@ public:
 
   public:
     /**
-     * toString converts the current XMLElement to string
-     */
-    std::string toString();
-
-    /**
      * toJSON converts the current XMLElement to json
      */
     std::string toJSON(int mode) const;
-
-    /**
-     * toString converts the current XMLElement to string
-     */
-    std::string toStringNoHeader();
 
     /**
      * getAttrValue Returns the value of the attribute with the specified name
@@ -178,12 +121,7 @@ public:
     std::string getAttrValue(const std::string &name);
 
     /**
-     * getFirst returns the first XMLElement
-     */
-    XMLElement *getFirst();
-
-    /**
-     * getFirst returns the last XMLElement
+     * getLast returns the last XMLElement
      */
     XMLElement *getLast();
 
@@ -203,14 +141,6 @@ public:
      * @param name The name of the elements to return
      */
     XMLElement *getThrows(const std::string &name);
-
-    /**
-     * set Name and Value of XML element
-     */
-    void setNameValue(const std::string &name, const std::string &value) {
-      this->name = name;
-      this->value = value;
-    }
 
     /**
      * Set the name of the XML element
@@ -259,7 +189,6 @@ public:
   };
 };
 
-#define CXMLParserElements CXMLParser::XMLElement::XMLElements
 #define CXMLParserElement CXMLParser::XMLElement
 #define CXMLParserAttribute CXMLParser::XMLAttribute
 
