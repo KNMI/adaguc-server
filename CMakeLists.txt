@@ -14,18 +14,21 @@ endif()
 
 MESSAGE(STATUS "Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 MESSAGE(STATUS "*Note ==============> build type: ${CMAKE_BUILD_TYPE}")
+# -Wno-restrict: GCC's -Wrestrict emits false positives on plain `std::string member = "literal";`
+# assignments once several such assignments to different objects get inlined together at -O3
+# (seen with GCC 12/13, e.g. reported byte offsets/sizes are nonsensical). Not a real bug in our code.
 IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -Werror")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off -Wall -Wextra -pedantic -Werror")
-  set(CMAKE_CXX_FLAGS_PROFILE "-O3 -Wall -Wextra -pedantic -Werror -ffp-contract=off -g -fno-omit-frame-pointer")
-  set(CMAKE_CXX_FLAGS_SANITIZE "-g -Wall -Wextra -pedantic -Werror -ffp-contract=off -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -Werror -Wno-restrict")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off -Wall -Wextra -pedantic -Werror -Wno-restrict")
+  set(CMAKE_CXX_FLAGS_PROFILE "-O3 -Wall -Wextra -pedantic -Werror -Wno-restrict -ffp-contract=off -g -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS_SANITIZE "-g -Wall -Wextra -pedantic -Werror -Wno-restrict -ffp-contract=off -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
   # To look for memory leaks on Mac, set up the ENV to run the correct query, and run (with root privilige?):
   # leaks --quiet -atExit -- adagucserver
 ELSE()
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -Werror -g3")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -Wall -Wextra -pedantic -Werror")
-  set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -pedantic -Werror -g3 -p -fno-omit-frame-pointer")
-  set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -pedantic -Werror -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -Werror -Wno-restrict -g3")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -Wall -Wextra -pedantic -Werror -Wno-restrict")
+  set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -pedantic -Werror -Wno-restrict -g3 -p -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -pedantic -Werror -Wno-restrict -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
 ENDIF()
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
