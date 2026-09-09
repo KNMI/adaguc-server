@@ -180,7 +180,7 @@ class TestWMSGetLegendGraphic:
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_WMSGetLegendGraphic_TestShowInLegend(self):
-        """This demonstrates how many shadeintervals can be filtered for the legendgraphic by using the showInLegend property"""
+        """This demonstrates how many shadeintervals can be filtered for the legendgraphic by using the showinlegend property"""
 
         env = make_adaguc_env("test.uwcw_ha43_dini_5p5km_10x8", self.testresultspath, self.expectedoutputsspath)
         update_db(env)

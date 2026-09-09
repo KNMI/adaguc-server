@@ -28,6 +28,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 #include "CCreateScaleBar.h"
 #include "CLegendRenderers/CCreateLegend.h"
 
@@ -922,8 +923,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
             std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues);
             for (size_t i = 0; i < ranges.size(); i++) {
               auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
-              shadeInterval.attr.min = CT::printf("%d", ranges[i].min);
-              shadeInterval.attr.max = CT::printf("%d", ranges[i].max);
+              shadeInterval.attr.min = ranges[i].min;
+              shadeInterval.attr.max = ranges[i].max;
               shadeInterval.attr.fillcolor = featureInterval->attr.fillcolor;
               shadeInterval.attr.bgcolor = featureInterval->attr.bgcolor;
               shadeInterval.attr.label = featureInterval->attr.label;
@@ -1023,8 +1024,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
         for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
           const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
-          if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
-            CT::printfconcat(bilinearSettings, "shading=min(%s)$max(%s)$", shadeInterval.attr.min.c_str(), shadeInterval.attr.max.c_str());
+          if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
+            CT::printfconcat(bilinearSettings, "shading=min(%g)$max(%g)$", shadeInterval.attr.min, shadeInterval.attr.max);
             if (shadeInterval.attr.fillcolor.empty() == false) {
               CT::printfconcat(bilinearSettings, "$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
             }
@@ -2099,8 +2100,8 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
       const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
-      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+      if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
+        if ((val >= shadeInterval.attr.min) && (val < shadeInterval.attr.max)) {
           return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }

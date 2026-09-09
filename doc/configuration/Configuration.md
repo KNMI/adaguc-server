@@ -82,7 +82,7 @@ Configuration
     -   [ValueRange](ValueRange.md) (min,max) - Values between min and max are visible, outside this range is transparent
     -   [RenderMethod](RenderMethod.md) `<value>` - Optional - The way to render the image, e.g. generic, nearest, bilinear, hillshaded or rgba. Defaults to generic.
     -   [ContourLine](ContourLine.md) (width,linecolor,textcolor,textformatting,interval,classes) - Draw contourlines in the images, if the appropriate [RenderMethod](RenderMethod.md) is selected.
-    -   [ShadeInterval](ShadeInterval.md) (min,max,label,bgcolor, fillcolor,showInLegend) - Draw the image using shading.
+    -   [ShadeInterval](ShadeInterval.md) (min,max,label,bgcolor, fillcolor,showinlegend) - Draw the image using shading.
     -   [FeatureInterval](FeatureInterval.md) (match, matchid, label, bgcolor, fillcolor) - Draw GeoJSON features and select features based on regular expressions.
     -   [SymbolInterval](SymbolInterval.md) (min, max, binary_and, file, offset_x, offset_y) - Draw symbols according to point value
     -   SmoothingFilter `<value>` - Optional, defaults to 1. The filter to smooth the image when using contour lines and shading.

@@ -1,7 +1,7 @@
 #include "numericutils.h"
 #include <cmath>
 
-int fieldWidth(std::vector<std::string> column) {
+int fieldWidth(const std::vector<std::string> &column) {
   int intWidth = maxIntWidth(column);
   int decWidth = maxDecimalWidth(column);
   int signWidth = hasNeg(column);
@@ -13,11 +13,11 @@ int fieldWidth(std::vector<std::string> column) {
   }
 }
 
-int maxIntWidth(std::vector<std::string> column) {
+int maxIntWidth(const std::vector<std::string> &column) {
   // Note: Consider if there are negative numbers
   int width = 0;
 
-  for (const std::string &item : column) {
+  for (const std::string &item: column) {
     int intVal = atoi(item.c_str());
     int numberOfDigits = intVal ? static_cast<int>(log10(abs(intVal))) + 1 : 1;
     if (numberOfDigits > width) {
@@ -27,10 +27,10 @@ int maxIntWidth(std::vector<std::string> column) {
   return width;
 }
 
-int hasNeg(std::vector<std::string> column) {
+int hasNeg(const std::vector<std::string> &column) {
   int isNeg = 0;
 
-  for (const std::string &item : column) {
+  for (const std::string &item: column) {
     if (atoi(item.c_str()) < 0) {
       isNeg = 1;
     }
@@ -38,10 +38,10 @@ int hasNeg(std::vector<std::string> column) {
   return isNeg;
 }
 
-int maxDecimalWidth(std::vector<std::string> column) {
+int maxDecimalWidth(const std::vector<std::string> &column) {
   int maxDecimals = 0;
 
-  for (auto &item : column) {
+  for (std::string item: column) {
     int dotIndex = CT::indexOf(item, ".");
     if (dotIndex < 0) {
       continue; // dot not found
@@ -56,7 +56,7 @@ int maxDecimalWidth(std::vector<std::string> column) {
   return maxDecimals;
 }
 
-int fieldWidthAsPixels(std::vector<std::string> column, int dashWidth, int, int numericGlyphWidth) {
+int fieldWidthAsPixels(const std::vector<std::string> &column, int dashWidth, int, int numericGlyphWidth) {
   int intWidth = maxIntWidth(column);
   int decWidth = maxDecimalWidth(column);
   int hasDash = hasNeg(column);
@@ -68,18 +68,18 @@ int fieldWidthAsPixels(std::vector<std::string> column, int dashWidth, int, int 
   }
 }
 
-std::vector<std::string> extractColumn(size_t drawIntervals, int minInterval, const std::vector<CServerConfig::XMLE_ShadeInterval>& shadeIntervals, bool isMin) {
+std::vector<std::string> extractColumn(size_t drawIntervals, int minInterval, const std::vector<CServerConfig::XMLE_ShadeInterval> &shadeIntervals, bool isMin) {
   // We calculate the min column
   // Convert the min into an array of std::string
   std::vector<std::string> column;
   for (size_t j = 0; j < drawIntervals; j++) {
     size_t realj = minInterval + j;
-    const CServerConfig::XMLE_ShadeInterval& s = (shadeIntervals)[realj];
-    if (!s.attr.min.empty() && !s.attr.max.empty()) {
+    const CServerConfig::XMLE_ShadeInterval &s = (shadeIntervals)[realj];
+    if (!std::isnan(s.attr.min) && !std::isnan(s.attr.max)) {
       if (isMin) {
-        column.push_back(s.attr.min.c_str());
+        column.push_back(CT::printf("%g", s.attr.min));
       } else {
-        column.push_back(s.attr.max.c_str());
+        column.push_back(CT::printf("%g", s.attr.max));
       }
     }
   }

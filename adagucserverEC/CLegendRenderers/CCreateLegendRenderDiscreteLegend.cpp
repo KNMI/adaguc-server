@@ -3,6 +3,7 @@
 #include "CImageDataWriter.h"
 #include "numericutils.h"
 #include <cstring>
+#include <cmath>
 
 #define MIN_SHADE_CLASS_BLOCK_SIZE 3
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
@@ -17,16 +18,16 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
 
   // Right edge of the min column
   int colRightMin = ((int)cbW + pLeft) * scaling + maxIntWidth(minColumn) * numberWidth;
-  // int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
-  int columnCenterMin = colRightMin - numberWidth; // - maxDecimalWidth(minColumn) * numberWidth;
+  int columnCenterMin = colRightMin - numberWidth;
 
   // Draw min, dot-aligned
-  float numericMinVal = atof(s.attr.min.c_str());
+  float numericMinVal = s.attr.min;
 
-  // Calculate number of decimals for min column
-  std::string floatFormatMin = CT::printf("%%.%df", maxDecimalWidth(minColumn));
+  int decimalWidthForMinColumn = maxDecimalWidth(minColumn);
 
-  std::string tempText = CT::printf(floatFormatMin.c_str(), numericMinVal);
+  int decimalWidthForMaxColumn = maxDecimalWidth(maxColumn);
+
+  std::string tempText = CT::printf("%.*f", decimalWidthForMinColumn, numericMinVal);
   const char *dotPos = strchr(tempText.c_str(), '.');
   int leftCharsMin = dotPos ? (dotPos - tempText.c_str()) : tempText.length(); // chars before dot
 
@@ -45,7 +46,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
   }
 
   // Draw central dash
-  int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
+  int dashX = colRightMin + (decimalWidthForMinColumn + 4) * numberWidth; // Leave gap between min column and this dash
   legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
 
   // Draw max column (to the right of the dash)
@@ -54,9 +55,8 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
   int columnCenterMax = colRightMax + numberWidth;
 
   // Draw max, dot-aligned
-  float numericMaxVal = atof(s.attr.max.c_str());
-  std::string floatFormatMax = CT::printf("%%.%df", maxDecimalWidth(maxColumn));
-  tempText = CT::printf(floatFormatMax.c_str(), numericMaxVal);
+  float numericMaxVal = s.attr.max;
+  tempText = CT::printf("%.*f", decimalWidthForMaxColumn, numericMaxVal);
 
   const char *dotPosMax = strchr(tempText.c_str(), '.');
   int leftCharsMax = dotPosMax ? (dotPosMax - tempText.c_str()) : tempText.length(); // chars before dot
@@ -67,7 +67,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
     textXMax -= minusWidth - numberWidth;
   }
   // Apply overall left offset plus some spacing
-  textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
+  textXMax += ((int)cbW + pLeft) * scaling + (decimalWidthForMaxColumn + 1) * numberWidth; // Think of the 15 number
 
   legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), 248);
 }
@@ -89,9 +89,9 @@ std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxVal
   int maxInterval = shadeIntervals.size();
   for (size_t j = 0; j < shadeIntervals.size(); j++) {
     const auto &s = shadeIntervals[j];
-    if (!s.attr.min.empty() && !s.attr.max.empty()) {
-      float intervalMinf = atof(s.attr.min.c_str());
-      float intervalMaxf = atof(s.attr.max.c_str());
+    if (!std::isnan(s.attr.min) && !std::isnan(s.attr.max)) {
+      float intervalMinf = s.attr.min;
+      float intervalMaxf = s.attr.max;
       if (intervalMaxf >= maxValue && intervalMinf <= maxValue) {
         maxInterval = j + 1;
       }
@@ -125,7 +125,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   std::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */
-  if (styleConfiguration != nullptr && styleConfiguration->legend.attr.textformatting.empty()) {
+  if (styleConfiguration != nullptr && !styleConfiguration->legend.attr.textformatting.empty()) {
     textformatting = styleConfiguration->legend.attr.textformatting;
   }
 
@@ -210,7 +210,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   bool definedLegendOnShadeClasses = false;
   bool definedLegendForFeatures = false;
   std::vector<CServerConfig::XMLE_ShadeInterval> shadeIntervalsFilteredForLegendGraphic = styleConfiguration->shadeIntervals;
-  std::erase_if(shadeIntervalsFilteredForLegendGraphic, [](const CServerConfig::XMLE_ShadeInterval &shadeInterval) { return !shadeInterval.attr.showInLegend; });
+  std::erase_if(shadeIntervalsFilteredForLegendGraphic, [](const CServerConfig::XMLE_ShadeInterval &shadeInterval) { return !shadeInterval.attr.showinlegend; });
 
   if (shadeIntervalsFilteredForLegendGraphic.size() > 0) {
     definedLegendOnShadeClasses = true;
@@ -272,22 +272,10 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
       float blockHeight = std::max(1.0f, cbH / float(drawIntervals));
 
-      int maxTextWidth = 0;
-      // For right-alignment of labels
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
-        if (!s.attr.min.empty() && !s.attr.max.empty()) {
-          if ((int)std::abs(atof(s.attr.min.c_str())) % 5 != 0) continue;
-          int tw = legendImage->getTextWidth(s.attr.min.c_str(), fontLocation, fontSize, angle);
-          if (tw > maxTextWidth) maxTextWidth = tw;
-        }
-      }
-
-      for (size_t j = 0; j < drawIntervals; j++) {
-        size_t realj = minInterval + j;
-        const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
-        if (s.attr.min.empty() || s.attr.max.empty()) continue;
+        if (std::isnan(s.attr.min) || std::isnan(s.attr.max)) continue;
 
         int cY1 = (int)std::lround(cbH - (j * blockHeight));
         int cY2 = (int)std::lround(cbH - ((j + 1) * blockHeight));
@@ -301,13 +289,13 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
         if (yBottom <= yTop) continue;
 
-        CColor color = s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, atof(s.attr.min.c_str()))) : CColor(s.attr.fillcolor.c_str());
+        CColor color = s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min)) : CColor(s.attr.fillcolor.c_str());
 
         // This rectangle is borderless, and the resulting classes have no vertical blank space between them
         legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
 
         // We print every label that's multiple of 5. Revisit later if something else needed.
-        if ((int)std::abs(atof(s.attr.min.c_str())) % 5 != 0) continue;
+        if ((int)std::abs(s.attr.min) % 5 != 0) continue;
 
         int textY = yBottom + pTop - ((fontSize * scaling) / 4) + 3;
         if (textY >= pTop) {
@@ -324,7 +312,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         const auto &s = (shadeIntervalsFilteredForLegendGraphic)[realj];
-        if (s.attr.min.empty() || s.attr.max.empty()) {
+        if (std::isnan(s.attr.min) || std::isnan(s.attr.max)) {
           continue;
         }
 
@@ -334,7 +322,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         if (s.attr.fillcolor.empty() == false) {
           color = CColor(s.attr.fillcolor.c_str());
         } else {
-          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, atof(s.attr.min.c_str())));
+          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min));
         }
         legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 

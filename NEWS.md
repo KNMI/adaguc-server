@@ -1,6 +1,6 @@
 **Version X.X.X**
 
-- Support showInLegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
+- Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
 
 
 **Version 8.2.0**

@@ -60,4 +60,3 @@ target_link_libraries(adagucserver adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(h5ncdump adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(aggregate_time adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(geojsondump adagucserverEC hclasses CCDFDataModel)
-

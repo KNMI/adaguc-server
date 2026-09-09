@@ -705,8 +705,8 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
     for (const auto &shadeInterval: styleConfiguration->shadeIntervals) {
-      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+      if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
+        if ((val >= shadeInterval.attr.min) && (val < shadeInterval.attr.max)) {
           return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }
