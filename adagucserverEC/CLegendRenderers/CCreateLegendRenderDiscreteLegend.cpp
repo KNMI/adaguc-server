@@ -206,7 +206,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   bool definedLegendOnShadeClasses = false;
   bool definedLegendForFeatures = false;
   std::vector<CServerConfig::XMLE_ShadeInterval> shadeIntervalsFilteredForLegendGraphic = styleConfiguration->shadeIntervals;
-  std::erase_if(shadeIntervalsFilteredForLegendGraphic, [](const CServerConfig::XMLE_ShadeInterval &shadeInterval) { return !shadeInterval.attr.showInLegend; });
+  std::erase_if(shadeIntervalsFilteredForLegendGraphic, [](const CServerConfig::XMLE_ShadeInterval &shadeInterval) { return !shadeInterval.attr.showinlegend; });
 
   if (shadeIntervalsFilteredForLegendGraphic.size() > 0) {
     definedLegendOnShadeClasses = true;

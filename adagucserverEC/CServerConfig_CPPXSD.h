@@ -403,7 +403,7 @@ struct CServerConfig : CXMLObjectInterface {
     struct Cattr {
       double min = std::nan(""), max = std::nan("");
       std::string label, fillcolor, bgcolor;
-      bool showInLegend = true;
+      bool showinlegend = true;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("min" == attrCfg.name) {
@@ -421,9 +421,9 @@ struct CServerConfig : CXMLObjectInterface {
       } else if ("bgcolor" == attrCfg.name) {
         attr.bgcolor = attrCfg.value;
         return true;
-      } else if ("showInLegend" == attrCfg.name) {
+      } else if ("showinlegend" == attrCfg.name) {
         if (attrCfg.value == "false") {
-          attr.showInLegend = false;
+          attr.showinlegend = false;
         }
         return true;
       }
