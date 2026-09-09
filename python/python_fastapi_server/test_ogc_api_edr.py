@@ -150,16 +150,20 @@ def test_hrefs(client: TestClient):
     resp = client.get("/edr/collections")
     collection = next((c for c in resp.json()["collections"] if c["id"] == "adaguc.tests.arcus_uwcw.hagl_member"))
 
+    # collect all urls
     urls = [links["href"] for links in collection["links"]]
     urls += [query["link"]["href"] for query in collection["data_queries"].values()]
+
+    # make unique, and remove base urls.
     urls = sorted(set(urls))
+    urls = [url.replace(str(client.base_url), "") for url in urls]
 
     assert urls == [
-        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member",
-        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/cube",
-        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances",
-        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/locations",
-        "http://testserver/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/position",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/cube",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/locations",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/position",
     ]
 
     for url in urls:
