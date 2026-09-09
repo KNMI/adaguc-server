@@ -13,7 +13,7 @@ private:
   static int renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool rotate, bool estimateMinMax);
   static double nextTick(double prev);
   static double classCount(double min, double max);
-  static char *formatTickLabel(std::string textformatting, char *szTemp, size_t szTempLength, double tick, double min, double max, int tickRound);
+  static std::string formatTickLabel(const std::string &textformatting, double tick, double min, double max, int tickRound);
 
 public:
   static int createLegend(CDataSource *dataSource, CDrawImage *legendImage);
