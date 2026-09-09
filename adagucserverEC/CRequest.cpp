@@ -90,7 +90,7 @@ int CRequest::process_wcs_getcoverage_request() {
 #endif
 }
 
-int CRequest::generateOGCGetCapabilities(std::string *XMLdocument) {
+int CRequest::generateOGCGetCapabilities(std::string &XMLdocument) {
   CXMLGen XMLGen;
   return XMLGen.OGCGetCapabilities(srvParam, XMLdocument);
 }
@@ -113,7 +113,7 @@ int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
   return 0;
 }
 
-int CRequest::generateOGCDescribeCoverage(std::string *XMLdocument) {
+int CRequest::generateOGCDescribeCoverage(std::string &XMLdocument) {
   CXMLGen XMLGen;
   for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
     CDBDebug("WCS_DESCRIBECOVERAGE %s", srvParam->requestedLayerNames[j].c_str());
@@ -128,7 +128,7 @@ int CRequest::process_wms_getcap_request() {
 
   std::string XMLdocument;
 
-  int status = generateOGCGetCapabilities(&XMLdocument);
+  int status = generateOGCGetCapabilities(XMLdocument);
 
   if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
 
@@ -696,7 +696,7 @@ int CRequest::process_all_layers() {
   if (srvParam->serviceType == SERVICE_WCS) {
     if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
       std::string XMLDocument;
-      status = generateOGCDescribeCoverage(&XMLDocument);
+      status = generateOGCDescribeCoverage(XMLDocument);
       if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
       const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
       if (pszADAGUCWriteToFile != NULL) {

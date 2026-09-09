@@ -47,17 +47,17 @@
 
 class CXMLGen {
 private:
-  int getWMS_1_0_0_Capabilities(std::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWMS_1_1_1_Capabilities(std::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWMS_1_3_0_Capabilities(std::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWCS_1_0_0_Capabilities(std::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWCS_1_0_0_DescribeCoverage(std::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
+  int getWMS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWCS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
   CServerParams *srvParam;
   std::string serviceInfo;
 
 public:
-  int OGCGetCapabilities(CServerParams *srvParam, std::string *XMLDocument);
-  int WCSDescribeCoverage(CServerParams *srvParam, std::string *XMLDocument);
+  int OGCGetCapabilities(CServerParams *srvParam, std::string &XMLDocument);
+  int WCSDescribeCoverage(CServerParams *srvParam, std::string &XMLDocument);
 };
 
 #endif
