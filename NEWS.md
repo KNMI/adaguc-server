@@ -1,6 +1,7 @@
 **Version 8.3.0**
 
 - Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
+- Removed CT::string class, and cleaned up codebase.
 
 
 **Version 8.2.0**
