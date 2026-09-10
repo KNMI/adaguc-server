@@ -304,10 +304,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     }
   }
   // Get units
-  std::string units;
-  if (dObjgetUnits(*dataSource->getDataObject(0)).length() > 0) {
-    units += (dObjgetUnits(*dataSource->getDataObject(0)).c_str());
-  }
+  std::string units = dObjgetUnits(*dataSource->getDataObject(0));
   if (units.length() == 0) {
     units = "-";
   }
