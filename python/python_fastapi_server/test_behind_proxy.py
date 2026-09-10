@@ -9,6 +9,15 @@ from xml.etree import ElementTree
 from fastapi.testclient import TestClient
 from fastapi import Response
 import main
+import pytest
+from unittest.mock import patch
+
+
+@pytest.fixture(autouse=True)
+def isolate_environment():
+    """This fixture restores the original env vars after each test"""
+    with patch.dict(os.environ):
+        yield
 
 
 def get_testclient(environment=None):

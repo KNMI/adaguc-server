@@ -1,6 +1,7 @@
 **Version 8.3.0**
 
 - Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
+- Fix EDR hrefs by adding a missing slash. The Metoffice EDR tool can be used again: https://github.com/KNMI/adaguc-server/pull/757
 
 
 **Version 8.2.0**
