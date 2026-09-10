@@ -26,6 +26,7 @@
 #include "CCDFHDF5IO.h"
 
 #include <cmath>
+#include <cstring>
 #include <netcdf.h>
 #include "CDFCopyData.h"
 

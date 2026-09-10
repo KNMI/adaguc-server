@@ -1,5 +1,6 @@
 #include "CDFCopyData.h"
 #include <cstddef>
+#include <cstring>
 
 template <typename T> int _copy(T *destdata, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {
   size_t dsto = destinationOffset;

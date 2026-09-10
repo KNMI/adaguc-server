@@ -25,11 +25,8 @@
 
 #ifndef CXMLPARSER_H
 #define CXMLPARSER_H
-#include <iostream>
+#include <string>
 #include <vector>
-#include <cstdio>
-
-#include "CTString.h"
 
 #define CXMLPARSER_ATTR_NOT_FOUND 1
 #define CXMLPARSER_ELEMENT_NOT_FOUND 2

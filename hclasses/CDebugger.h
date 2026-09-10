@@ -35,9 +35,6 @@
 
 #define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
-#include <cstdio>
-#include <iostream>
-#include <vector>
 #include "printfCheckMacro.h"
 // Used to silence -Wunused-parameter warnings
 template <class T> void ignoreParameter(const T &) {}

@@ -24,14 +24,15 @@
  ******************************************************************************/
 
 #include "CDebugger.h"
-#include <iostream>
+#include "CTString.h"
+#include <cstdarg>
+#include <cstdio>
 #include <unistd.h>
 
 unsigned int logMessageNumber = 0;
 
 unsigned long logProcessIdentifier = getpid();
 
-#include "CTString.h"
 /*
  * If these prototypes are changed, also change the extern
  * declarations in CReporter.cpp that are referring to the

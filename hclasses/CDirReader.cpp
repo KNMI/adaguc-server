@@ -22,21 +22,17 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#include <iostream>
-#include <vector>
-#include <map>
-#include <cstdio>
-#include <cstring>
-#include <regex.h>
-#include <cstddef>
-#include <sys/types.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <algorithm> /* For std::sort */
-#include <regex>
 #include "CDirReader.h"
 #include "CTString.h"
 #include "CDebugger.h"
+
+#include <algorithm> /* For std::sort */
+#include <dirent.h>
+#include <map>
+#include <regex>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <vector>
 
 CDirReader::CDirReader() {}
 
@@ -60,7 +56,7 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
-        struct stat path_stat{};
+        struct stat path_stat {};
         int ret = stat(fullName.c_str(), &path_stat);
         if (ret == 0 && S_ISREG(path_stat.st_mode)) {
           d_type = DT_REG;
@@ -112,7 +108,6 @@ int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) 
 }
 
 int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter) {
-  // CDBDebug("Doing recursive directory scan for [%s]", directory);
   try {
     return _ReadDir(directory, ext_filter, 1);
   } catch (int a) {

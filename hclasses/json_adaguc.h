@@ -1,7 +1,6 @@
 #ifndef JSON_ADAGUC_H
 #define JSON_ADAGUC_H
 
-#include "CTString.h"
 #include "json.hpp"
 #include "CReportMessage.h"
 

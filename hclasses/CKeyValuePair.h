@@ -25,10 +25,8 @@
 
 #ifndef CKEYVALUEPAIR_H
 #define CKEYVALUEPAIR_H
-#include <iostream>
+#include <string>
 #include <vector>
-#include <cstdio>
-#include "CTString.h"
 struct CKeyValuePair {
   std::string key;
   std::string value;

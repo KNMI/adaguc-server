@@ -25,11 +25,7 @@
 
 #ifndef CSTOPWATCH_H
 #define CSTOPWATCH_H
-#include <cstdlib>
-#include <ctime>
 #include "CDebugger.h"
-#include <cstdio>
-#include <cstdarg>
 
 void StopWatch_Start();
 void _StopWatch_Stop(const char *a, ...);

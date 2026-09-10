@@ -24,8 +24,13 @@
  ******************************************************************************/
 
 #include "CStopWatch.h"
-#include "CTString.h"
+
+#include <cstdarg>
+#include <cstdio>
+#include <ctime>
+#include <string>
 #include <sys/time.h>
+#include <vector>
 /* Stopwatch functions for timing */
 
 extern unsigned int logMessageNumber;

@@ -25,6 +25,7 @@
 
 #include "CCDFGeoJSONIO.h"
 #include <CReadFile.h>
+#include <cstring>
 static const bool CCDFGEOJSONIO_DEBUG = false;
 
 CDFGeoJSONReader::CDFGeoJSONReader() : CDFReader() {

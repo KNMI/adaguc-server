@@ -27,6 +27,7 @@
 #define CREPORTER_H
 #include <list>
 #include <string>
+#include "CDebugger.h"
 #include "CReportMessage.h"
 
 /* Set this to false if you don't want report messages in the log file also. */

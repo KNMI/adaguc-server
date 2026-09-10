@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <cmath>
 #include <algorithm>
+#include <cstring>
 
 std::map<std::string, CTime *> CTime::CTimeInstances;
 

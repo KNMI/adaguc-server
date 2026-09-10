@@ -27,6 +27,7 @@
 #include <libxml/tree.h>
 
 #include "CXMLParser.h"
+#include "CTString.h"
 #include <algorithm>
 /**
  * Static function which converts an exception into a readable message

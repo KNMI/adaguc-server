@@ -33,6 +33,7 @@
 #include "CCDFCSVReader.h"
 #include "CTime.h"
 #include <CReadFile.h>
+#include <cstring>
 
 static const bool CCDFCSVREADER_DEBUG = false;
 

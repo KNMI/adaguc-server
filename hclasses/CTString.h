@@ -25,14 +25,7 @@
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
-#include <cstdio>
-#include <cstdarg>
-#include <cstring>
-#include <iostream>
-#include <typeinfo>
-#include <exception>
-#include <cstdlib>
-#include <regex.h>
+#include <string>
 #include <vector>
 #include "printfCheckMacro.h"
 

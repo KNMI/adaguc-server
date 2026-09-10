@@ -25,6 +25,7 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <cstring>
 
 #include "CCDFObject.h"
 #include "CCDFReader.h"

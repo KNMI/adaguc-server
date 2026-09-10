@@ -1,8 +1,14 @@
 #include "CTString.h"
 
-#include "CDebugger.h"
-#include <regex>
+#include <algorithm>
+#include <cctype>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <random>
+#include <regex>
+#include <regex.h>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 
 /* These need to be initialized once, this is a costly function */

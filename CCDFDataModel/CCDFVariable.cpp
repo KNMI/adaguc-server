@@ -28,6 +28,7 @@
 #include "CCDFReader.h"
 #include "CTime.h"
 #include "cdfVariableCache.h"
+#include <cstring>
 #include "traceTimings/traceTimings.h"
 #include "CDFCopyData.h"
 

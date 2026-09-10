@@ -29,6 +29,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+#include <regex.h>
 #include "CCreateScaleBar.h"
 #include "CLegendRenderers/CCreateLegend.h"
 

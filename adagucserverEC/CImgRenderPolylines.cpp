@@ -28,6 +28,7 @@
 #include "CConvertGeoJSON.h"
 #include <string>
 #include <algorithm>
+#include <regex.h>
 #include "CRectangleText.h"
 #include "utils/GeometryUtils.h"
 

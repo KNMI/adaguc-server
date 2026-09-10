@@ -26,6 +26,7 @@
 #include "CCDFNetCDFIO.h"
 #include "CStopWatch.h"
 #include "CDFCopyData.h"
+#include <cstring>
 
 // #define MEASURETIME
 
