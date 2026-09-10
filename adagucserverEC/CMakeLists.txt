@@ -24,6 +24,7 @@ add_library(
     CCairoPlotter.cpp
     CCairoPlotter.h
     CColor.h
+    CColor.cpp
     CConvertADAGUCPoint.cpp
     CConvertADAGUCPoint.h
     CConvertADAGUCVector.cpp

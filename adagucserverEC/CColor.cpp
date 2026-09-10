@@ -1,0 +1,82 @@
+/******************************************************************************
+ *
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
+ *
+ ******************************************************************************
+ *
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************************/
+
+#include "CColor.h"
+#include "CTString.h"
+
+#define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT > 96 ? DIGIT - 87 : DIGIT > 64 ? DIGIT - 55 : DIGIT - 48) // Converts "9" to 9, "A" to 10 and "a" to 10
+
+CColor::CColor() {
+  r = 0;
+  g = 0;
+  b = 0;
+  a = 255;
+}
+CColor::CColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+  this->r = r;
+  this->g = g;
+  this->b = b;
+  this->a = a;
+}
+CColor::CColor(const char *color) { parse(color); }
+
+CColor &CColor::operator=(const char *color) {
+  this->parse(color);
+  return *this;
+}
+
+CColor::CColor(const std::string &color) { parse(color); }
+
+CColor &CColor::operator=(const std::string &color) {
+  this->parse(color);
+  return *this;
+}
+
+std::string CColor::c_str() {
+  return CT::printf("#%s%s%s%s", CT::getHex(this->r).c_str(), CT::getHex(this->g).c_str(), CT::getHex(this->b).c_str(), CT::getHex(this->a).c_str());
+}
+void CColor::parse(const std::string &color) {
+  /**
+   * color can have format #RRGGBB or #RRGGBBAA
+   */
+  size_t l = color.length();
+
+  if (l == 7 && color.at(0) == '#') {
+    r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+    g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+    b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+    a = 255;
+  } else if (l == 9 && color.at(0) == '#') {
+    r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+    g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+    b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+    a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
+  } else {
+    r = 0;
+    g = 0;
+    b = 0;
+    a = 255;
+  }
+}
