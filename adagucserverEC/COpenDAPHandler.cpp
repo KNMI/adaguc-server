@@ -185,10 +185,6 @@ void COpenDAPHandler::writeInt(int &v) {
   unsigned char c3 = ((unsigned char)(v >> 16));
   unsigned char c4 = ((unsigned char)(v >> 24));
   ;
-  //   c1 = 48;
-  //   c2=49 ;
-  //   c3 = 50;
-  //   c4 = 51;
   fwrite(&c4, 1, 1, opendapoutstream);
   fwrite(&c3, 1, 1, opendapoutstream);
   fwrite(&c2, 1, 1, opendapoutstream);
@@ -235,7 +231,6 @@ int COpenDAPHandler::putVariableDataSize(CDF::Variable *v) {
   return 0;
 }
 
-// int tdata = 48;
 int COpenDAPHandler::putVariableData(CDF::Variable *v, CDFType type) {
   int written = 0;
   size_t typeSize = CDF::getTypeSize(type);
@@ -332,7 +327,6 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v, CDFType type) {
     }
     return 0;
   }
-  // CDBDebug("name:%s typeSize:%d varSize:%d",v->name.c_str(),typeSize,varSize);
   if (type == CDF_BYTE || type == CDF_UBYTE || type == CDF_CHAR || type == CDF_INT || type == CDF_UINT || type == CDF_FLOAT || type == CDF_DOUBLE) {
     unsigned char *data = (unsigned char *)v->data;
     for (size_t d = 0; d < varSize; d++) {
@@ -371,7 +365,6 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v, CDFType type) {
       }
       writeInt(l);
       for (int e = 0; e < l; e++) {
-        // CDBDebug("%s",data[d][e]);
         putc(data[d][e], opendapoutstream);
         written++;
         bytesWritten++;
@@ -470,7 +463,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
   opendapoutstream = stdout;
 
   if (isDODRequest) {
-    //     printf("%s%c%c","Connection: close ", 13,10);
     if (jsonWriter) {
       printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
     } else {
@@ -478,7 +470,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       printf("%s%c%c\n", "Content-Type: application/octet-stream", 13, 10);
     }
   } else {
-    //     printf("%s%c%c","Connection: close ", 13,10);
 
     if (jsonWriter) {
       printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
@@ -571,7 +562,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
         layerName = intLayerName;
       }
       CT::replaceSelf(intLayerName, "/", "_");
-      // CDBDebug("%s",intLayerName.c_str());
 
       if (intLayerName == layerName) {
         if (dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[layerNo], 0) != 0) {
@@ -622,7 +612,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
         delete dataSource;
         return 1;
       }
-      //       CDBDebug("No file selected for datasource");
       dataSource->addStep(fileList[0]);
       dataSource->getCDFDims()->push_back({.name = "time", .value = "0", .index = 0});
     }
@@ -680,7 +669,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
       std::vector<VarInfo> selectedVariables;
       // Parsing dim queries per variable (e.g. precip[0][0:3] == x,y)
-      //       CDBDebug("query = %s", query.c_str());
       if (!query.empty()) {
         std::vector<std::string> items = CT::split(query, ",");
         for (size_t j = 0; j < items.size(); j++) {
@@ -750,7 +738,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
           if (COPENDAPHANDLER_DEBUG) {
             CDBDebug("Push varinfo %s", cdfObject->variables[j]->name.c_str());
           }
-          // if(cdfObject->variables[j]->name == layerName){
           selectedVariables.push_back(VarInfo(cdfObject->variables[j]->name.c_str()));
           //}
         }
@@ -789,12 +776,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
         }
       }
 
-      //       for (std::vector<VarInfo>::iterator it = selectedVariables.begin() ; it != selectedVariables.end(); ++it){
-      //         if(it->name == "crs"==true
       //
       //         ){
-      //           selectedVariables.erase(it);
-      //           it--;
       //         }
       //       }
 
@@ -846,7 +829,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
               bool hasAggregateDimension = false;
               // Check wether we need to iterate or not
 
-              // CDBDebug("Comparing [%s] ~ [%s]",dataSource->requiredDims.size(),selectedVariables[i].dimInfo[l].name.c_str());
               for (size_t k = 0; k < dataSource->requiredDims.size(); k++) {
                 for (size_t l = 0; l < selectedVariables[i].dimInfo.size(); l++) {
                   if (dataSource->requiredDims[k].netCDFDimName == selectedVariables[i].dimInfo[l].name.c_str()) {
@@ -934,9 +916,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                               } else {
                                 CDBDebug("%s name is not time ", v->name.c_str());
                               }
-                              //                               CDBDebug("%s",store->records[storeIndex].get(0)->c_str());
-                              //                               CDBDebug("%s",store->records[storeIndex].get(1)->c_str());//value
-                              //                               CDBDebug("%s",store->records[storeIndex].get(2)->c_str());
                             } else {
                               CDBDebug("%s name not equal", v->name.c_str());
                             }
@@ -959,7 +938,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
                           if (COPENDAPHANDLER_DEBUG) {
                             CDBDebug("Dimension value from DB = [%s] units = [%s] standard_name = [%s]", dimValue.c_str(), dimUnits.c_str(), dimStandardName.c_str());
-                            // CDBDebug("Convert value %f",value);
                           }
                           double value = time->dateToOffset(time->freeDateStringToDate(dimValue.c_str()));
                           writeDouble(value);
@@ -1079,7 +1057,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
         output += "Attributes {\n";
       for (size_t i = 0; i < cdfObject->variables.size(); i++) {
         CDF::Variable *v = cdfObject->variables[i];
-        // if(v->name == "custom"==false)
         {
           if (jsonWriter && i > 0) CT::printfconcat(output, ",\n");
           if (jsonWriter)
@@ -1088,7 +1065,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
             CT::printfconcat(output, "    %s {\n", v->name.c_str());
 
           for (size_t j = 0; j < v->attributes.size(); j++) {
-            // if(v->attributes[j]->name.charAt(0)!='_'&&v->attributes[j]->type!=CDF_DOUBLE)
             {
               if (jsonWriter) {
                 if (j > 0) {
@@ -1109,9 +1085,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                 output += "\"";
                 std::string s = v->attributes[j]->toString();
 
-                // s.encodeURLSelf();
-                //               s.replaceSelf(":","");
-                //               s.replaceSelf("[","");
                 CT::replaceSelf(s, "\"", "\\\"");
 
                 output += s;
@@ -1139,7 +1112,6 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       fprintf(opendapoutstream, "%s\n", output.c_str());
     }
 
-    //    reader.close();
   } catch (int e) {
     CDBError("Exception with code %d found", e);
     return 1;

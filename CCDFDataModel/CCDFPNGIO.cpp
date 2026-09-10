@@ -356,7 +356,6 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     } else {
       if (pngRaster != NULL && pngRaster->data) {
         // Verbose logging:
-        // CDBDebug("Info: reusing pngRaster object with data.");
       } else {
         if (pngRaster != NULL) {
           CDBDebug("Info: reusing pngRaster object.");
@@ -417,7 +416,6 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
       CDBError("Unable to open PNG check logs");
       return 1;
     }
-    // CDBDebug("READ: %d\t%d\t%d\t%d\t%d\t%d", start[0], start[1], count[0], count[1],rasterWidth, rasterHeight);
     for (size_t y = 0; y < count[0]; y++) {
       for (size_t x = 0; x < count[1]; x++) {
         size_t sourceX = x + start[1];

@@ -158,7 +158,6 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
       CDBDebug("legendtype statusflag");
     }
     int dH = 30;
-    // cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
     float cbW = 20; // legendWidth/8;
     float cbH = legendHeight - 13 - 13 - 30;
 

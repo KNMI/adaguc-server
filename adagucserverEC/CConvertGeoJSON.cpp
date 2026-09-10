@@ -258,9 +258,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   CDF::Variable *varY = cdfObject->getVariableNE("y");
 
   CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
-  // CDBDebug("timeDim: %d", timeDim);
   CDF::Dimension *elevationDim = cdfObject->getDimensionNE("elevation");
-  // CDBDebug("elevationDim: %d", elevationDim);
 
   if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
 
@@ -334,7 +332,6 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   } catch (int e) {
   }
   if (!found) {
-    // CDBDebug("Creating dim %s %d", "features", nrFeatures);
     dimFeatures = new CDF::Dimension();
     dimFeatures->name = "features";
     dimFeatures->setSize(nrFeatures);
@@ -401,9 +398,7 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
             json_object_entry dimObject = dimensions.u.object.values[dimCnt];
             std::string dimName(dimObject.name);
             json_value dim = *dimObject.value;
-            // CDBDebug("[%d] dim[%s] %d %d", dimCnt, dimName.c_str(), dim.type, dim.type==json_string);
             if (dimName == "time") {
-              // CDBDebug("time found !!!!");
 
               if (dim.type == json_object) {
                 for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
@@ -412,9 +407,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                   json_value fldValue = *fldObject.value;
                   if (fldValue.type == json_string) {
                     std::string value(fldValue.u.string.ptr);
-                    // CDBDebug("[ ] dim[%s]: %s=%s", dimName.c_str(), fldName.c_str(), value.c_str());
-                    //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
-                    //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
                     if (fldName == "units") {
                       timeUnits = value.c_str();
                     } else if (fldName == "value") {
@@ -422,7 +414,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                     }
                   }
                   if (fldValue.type == json_double) {
-                    // CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
                     if (fldName == "value") {
                       dTimeVal = fldValue.u.dbl;
                     }
@@ -435,7 +426,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                 }
               }
 
-              // CDBDebug("time: %s %s %f %d", timeVal.c_str(), timeUnits.c_str(), dTimeVal, iTimeVal);
               CDF::Variable timeVarHelper;
               timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
               CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
@@ -454,7 +444,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                 timeOffset = 0.0;
                 CDBDebug("CConvertGeoJSON::getDimensions: WARNING: timeOffset set to 0.0");
               }
-              // CDBDebug("timeOffset=%f", timeOffset);
               CDF::Dimension *timeDim = new CDF::Dimension();
               timeDim->name = "time";
               timeDim->setSize(1);
@@ -471,7 +460,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               timeVar->allocateData(timeDim->length);
               ((double *)timeVar->data)[0] = timeOffset;
             } else {
-              // CDBDebug("other dim: %s", dimName.c_str());
               std::string dimUnits;
               std::string dimVal;
               double dDimVal = 0.0;
@@ -483,9 +471,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                   json_value fldValue = *fldObject.value;
                   if (fldValue.type == json_string) {
                     std::string value(fldValue.u.string.ptr);
-                    // CDBDebug("[ ] dim[%s]: %s=%s", dimName.c_str(), fldName.c_str(), value.c_str());
-                    //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
-                    //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
                     if (fldName == "units") {
                       dimUnits = value.c_str();
                     } else if (fldName == "value") {
@@ -493,7 +478,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                     }
                   }
                   if (fldValue.type == json_double) {
-                    // CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
                     if (fldName == "value") {
                       dDimVal = fldValue.u.dbl;
                     }
@@ -512,7 +496,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               dimVar->setAttributeText("units", dimUnits.c_str());
               dimVar->setAttributeText("standard_name", dimName.c_str());
               dimVar->dimensionlinks.push_back(dim);
-              // CDBDebug("Pushed_back %s dim", dim->name.c_str());
               cdfObject->addVariable(dimVar);
               dimVar->setType(CDF_DOUBLE);
               dimVar->allocateData(dim->length);
@@ -592,30 +575,23 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
           std::string featureId;
           json_value id = feature["id"];
           if (id.type == json_string) {
-            //                  CDBDebug("Id=%s", id.u.string.ptr);
             featureId = id.u.string.ptr;
           } else if (id.type == json_integer) {
             featureId = CT::printf("%1ld", id.u.integer);
           }
-          //                CDBDebug("found featureId as attribute %s", featureId.c_str());
           Feature *feat = new Feature();
 
           json_value props = feature["properties"];
-          //                CDBDebug("props.type=%d", props.type);
           if (props.type == json_object) {
             for (unsigned int propCnt = 0; propCnt < props.u.object.length; propCnt++) {
               json_object_entry propObject = props.u.object.values[propCnt];
               std::string propName(propObject.name);
               json_value prop = *propObject.value;
               if (prop.type == json_string) {
-                //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
-                //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
                 feat->addProp(propName, prop.u.string.ptr);
               } else if (prop.type == json_integer) {
-                // CDBDebug("[%d] prop[%s]I =%ld", cnt, propName.c_str(), prop.u.integer);
                 feat->addPropInt64(propName, (int64_t)prop.u.integer);
               } else if (prop.type == json_double) {
-                // CDBDebug("[%d] prop[%s]D =%f", cnt, propName.c_str(), prop.u.dbl);
                 feat->addProp(propName, prop.u.dbl);
               }
             }
@@ -627,7 +603,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
             it = featurePropertyMap->find("id");
             if (it != featurePropertyMap->end()) {
               id_s = it->second->toString().c_str();
-              //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
               if (id_s != "NONE") {
                 featureId = id_s;
               }
@@ -635,7 +610,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
               it = featurePropertyMap->find("NUTS_ID");
               if (it != featurePropertyMap->end()) {
                 id_s = it->second->toString().c_str();
-                //                       CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
                 if (id_s != "NONE") {
                   featureId = id_s;
                 }
@@ -643,16 +617,13 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                 it = featurePropertyMap->find("name");
                 if (it != featurePropertyMap->end()) {
                   id_s = it->second->toString().c_str();
-                  //                         CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
                   if (id_s != "NONE") {
                     featureId = id_s;
                   }
                 } else {
-                  //                        CDBDebug("Fallback to id %d", cnt);
                   featureId = CT::printf("%04d", cnt);
                 }
               }
-              //                    CDBDebug("found featureId in properties %s", featureId.c_str());
             }
           }
           feat->setId(featureId);
@@ -661,11 +632,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
           if (geom.type == json_object) {
             json_value geomType = geom["type"];
             if (geomType.type == json_string) {
-              //                    CDBDebug("geomType: %s", geomType.u.string.ptr);
               if (strcmp(geomType.u.string.ptr, "Polygon") == 0) {
                 json_value coords = geom["coordinates"];
                 if (coords.type == json_array) {
-                  //                        CDBDebug("  array of %d coords",coords.u.array.length);
                   for (unsigned int j = 0; j < coords.u.array.length; j++) {
                     if (j == 0) {
                       feat->newPolygon();
@@ -673,7 +642,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                       feat->newHole();
                     }
                     json_value polygon = *coords.u.array.values[j];
-                    //                          CDBDebug("polygon: %d", polygon.u.array.length);
                     for (unsigned int i = 0; i < polygon.u.array.length; i++) {
                       json_value pt = *polygon.u.array.values[i];
                       if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
@@ -693,11 +661,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                       if (lat > maxLat) maxLat = lat;
                       if (lon < minLon) minLon = lon;
                       if (lon > maxLon) maxLon = lon;
-                      //                            CDBDebug("    %f,%f", (double)lo, (double)la);
                     }
                   }
                 } else {
-                  //                        CDBDebug("  coords type of %d", coords.type);
                 }
               } else if (strcmp(geomType.u.string.ptr, "LineString") == 0) {
                 json_value coords = geom["coordinates"];
@@ -717,7 +683,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                     if (lat > maxLat) maxLat = lat;
                     if (lon < minLon) minLon = lon;
                     if (lon > maxLon) maxLon = lon;
-                    //                          CDBDebug("    %f,%f", (double)lo, (double)la);
                   }
 
                 } else {
@@ -726,7 +691,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
               } else if (strcmp(geomType.u.string.ptr, "MultiLineString") == 0) {
                 json_value multicoords = geom["coordinates"];
                 if (multicoords.type == json_array) {
-                  //                            CDBDebug("  array of %d coords",coords.u.array.length);
                   for (unsigned int j = 0; j < multicoords.u.array.length; j++) {
                     json_value coords = *multicoords.u.array.values[j];
                     if (coords.type == json_array) {
@@ -745,7 +709,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                         if (lat > maxLat) maxLat = lat;
                         if (lon < minLon) minLon = lon;
                         if (lon > maxLon) maxLon = lon;
-                        //                          CDBDebug("    %f,%f", (double)lo, (double)la);
                       }
                     }
                   }
@@ -755,11 +718,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
               } else if (strcmp(geomType.u.string.ptr, "MultiPolygon") == 0) {
                 json_value multicoords = geom["coordinates"];
                 if (multicoords.type == json_array) {
-                  //                        CDBDebug("  array of %d coords",multicoords.u.array.length);
                   for (unsigned int i = 0; i < multicoords.u.array.length; i++) {
                     json_value coords = *multicoords.u.array.values[i];
                     if (coords.type == json_array) {
-                      //                            CDBDebug("  array of %d coords",coords.u.array.length);
                       for (unsigned int j = 0; j < coords.u.array.length; j++) {
                         if (j == 0) {
                           feat->newPolygon();
@@ -767,7 +728,6 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                           feat->newHole();
                         }
                         json_value polygon = *coords.u.array.values[j];
-                        //                              CDBDebug("polygon: %d", polygon.u.array.length);
                         for (unsigned int k = 0; k < polygon.u.array.length; k++) {
                           json_value pt = *polygon.u.array.values[k];
                           if (pt.u.array.values == nullptr || pt.u.array.length < 2) {
@@ -786,11 +746,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                           if (lat > maxLat) maxLat = lat;
                           if (lon < minLon) minLon = lon;
                           if (lon > maxLon) maxLon = lon;
-                          //                              CDBDebug("    %f,%f", (double)lo, (double)la);
                         }
                       }
                     } else {
-                      //                            CDBDebug("  coords type of %d", coords.type);
                     }
                   }
                 }
@@ -806,26 +764,14 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
               }
             }
           }
-          // CDBDebug("FEAT %s", feat->toString().c_str());
           featureMap.push_back(feat);
         }
       }
     }
   }
 
-  //         CDBDebug("<><><><><><><>Cleaning up for all properties fields<><><><><><>");
-  //         int itctr=0;
-  //         for (std::vector<Feature*>::iterator it = featureMap.begin(); it != featureMap.end(); ++it) {
-  // //          CDBDebug("FT[%d] has %d items", itctr, (*it)->getFp().size());
-  //           for (std::map<std::string, FeatureProperty*>::iterator ftit=(*it)->getFp().begin(); ftit!=(*it)->getFp().end(); ++ftit) {
-  // //            CDBDebug("FT: %d %s %s", itctr, ftit->first.c_str(), ftit->second->toString().c_str());
-  //             delete ftit->second;
   //           }
-  //           (*it)->getFp().clear();
-  //           delete *it;
-  //           itctr++;
   //         }
-  //         featureMap.clear();
   // If no BBOX was found in file, generate it from found geo coordinates
   if (!BBOXFound) {
     bbox.llX = minLon;
@@ -843,7 +789,6 @@ std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
   std::vector<CDF::Dimension *> dims;
 
   for (CDF::Dimension *dim: cdfObject->dimensions) {
-    // CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
     CDataReader::DimensionType dtyp = CDataReader::dtype_normal;
     switch (dtyp) {
     case CDataReader::dtype_reference_time:
@@ -893,7 +838,6 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
   std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
   for (Feature *feature: pointFeatures) {
-    // std::vector<GeoPoint> *pts = feature->getPoints();
     std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
     for (auto iter = featurePropertyMap->begin(); iter != featurePropertyMap->end(); ++iter) {
       std::string name = iter->first.c_str();
@@ -955,7 +899,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     return 1;
   }
 
-  // CDBDebug("convertGEOJSONData %s", (mode == CNETCDFREADER_MODE_OPEN_ALL) ? "ALL" : "NOT ALL");
   int result = 0;
 
   // Check whether this is really an geojson file
@@ -1009,7 +952,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 
   if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC || (dataSource->dWidth == 1 && dataSource->dHeight == 1)) {
     if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dObjgetVariableName(*dataSource->getDataObject(0)) == "features")) {
-      // CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false or variable name is features");
       dataSource->srvParams->geoParams.bbox.toArray(dataSource->dfBBOX);
       return 0;
     }
@@ -1024,7 +966,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     if (CCONVERTGEOJSON_DEBUG) {
       CDBDebug("convertGeoJSONData OPEN ALL");
     }
-    // CDBDebug("convertGeoJSONData OPEN ALL (*)");
 
     for (size_t d = 0; d < nrDataObjects; d++) {
       auto &dataObject = dataSource->dataObjects[d];
@@ -1070,7 +1011,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       CImageWarper imageWarper;
       if (dataSource->srvParams->geoParams.crs.length() > 0) {
         projectionRequired = true;
-        //            for(size_t d=0;d<nrDataObjects;d++){
         polygonIndexVar->setAttributeText("grid_mapping", "customgridprojection");
         //            }
         if (cdfObject->getVariableNE("customgridprojection") == NULL) {
@@ -1103,7 +1043,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       if (fillValue == NULL) {
         polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObject.dfNodataValue);
         fillValue = polygonIndexVar->getAttributeNE("_FillValue");
-        // CDBDebug("Setting fill value to %f", dataObject.dfNodataValue);
       }
 
       dataObject.hasNodataValue = true;
@@ -1138,7 +1077,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef MEASURETIME
       StopWatch_Stop("Feature drawing starts");
 #endif
-      // CDBDebug("nrFeatures: %d", features.size());
 
       unsigned short int featureIndex = 0;
       float min = NAN;
@@ -1264,7 +1202,6 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
         }
         holeArray[h].projectedHoleXY[j * 2] = dlon;
         holeArray[h].projectedHoleXY[j * 2 + 1] = dlat;
-        // std::vector<GeoPoint> points = feature->getPoints();
 
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);

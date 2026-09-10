@@ -26,10 +26,6 @@
 #include "CServerError.h"
 #include "CDrawImage.h"
 
-// #define ERRORMSGS_SIZE 30000
-
-// static char errormsgs[ERRORMSGS_SIZE];
-
 static std::vector<std::string> errormsgs;
 
 static int error_raised = 0;

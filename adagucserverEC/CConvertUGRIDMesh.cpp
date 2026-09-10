@@ -52,7 +52,6 @@ void line(float *imagedata, int w, int h, float x1, float y1, float x2, float y2
   if (xyIsSwapped == 0) {
 
     for (int x = int(x1); x < x2; x++) {
-      //         plot(x,int(y),1);
       if (y >= 0 && y < h && x >= 0 && x < w) imagedata[int(x) + int(y) * w] = value;
       y += gradient;
     }
@@ -229,7 +228,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
       if (var->name == "mesh") {
         varsToConvert.push_back(std::string(var->name.c_str()));
       }
-      // CDBDebug("%s",var->name.c_str());
       var->setAttributeText("ADAGUC_SKIP", "true");
     }
   }
@@ -279,7 +277,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
  */
 int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   //   #ifdef CCONVERTUGRIDMESH_DEBUG
-  //   CDBDebug("convertUGRIDMeshData");
   //   #endif
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really an ugrid file
@@ -317,7 +314,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   }
 
   // Read original data first
-  //   meshVar->readData(CDF_FLOAT,true);
   meshLon->readData(CDF_FLOAT, true);
   meshLat->readData(CDF_FLOAT, true);
 
@@ -401,22 +397,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     size_t numMeshPoints = meshLon->getSize();
 
     CImageWarper imageWarper;
-    //     bool projectionRequired=false;
-    //     if(dataSource->srvParams->geoParams.CRS.length()>0){
-    //       projectionRequired=true;
-    //       new2DVar->setAttributeText("grid_mapping","customgridprojection");
-    //       if(cdfObject->getVariableNE("customgridprojection")==NULL){
-    //         CDF::Variable *projectionVar = new CDF::Variable();
-    //         projectionVar->name= ("customgridprojection");
-    //         cdfObject->addVariable(projectionVar);
-    //         dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
-    //         imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
-    //         if(dataSource->nativeProj4.length()==0){
-    //           dataSource->nativeProj4=LATLONPROJECTION;
-    //           dataSource->nativeEPSG="EPSG:4326";
-    //           projectionRequired=false;
     //         }
-    //         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
     //       }
     //     }
     //
@@ -428,7 +409,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
       CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
     }
 
-    // if(projectionRequired){
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to init projection");
@@ -436,7 +416,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     }
     // }
     bool projectionRequired = imageWarper.isProjectionRequired();
-    //     int polyCorners = 5;
     float *projectedX = new float[numMeshPoints]; //={10,100,40,110,20,10};
     float *projectedY = new float[numMeshPoints]; //={10,20,40,100,110,10};
 
@@ -505,7 +484,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
       }
       polyX[numPoints] = polyX[0];
       polyY[numPoints++] = polyY[0];
-      // drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
       drawlines(sdata, dataSource->dWidth, dataSource->dHeight, numPoints, polyX, polyY, 0);
       numPoints = 0;
     }

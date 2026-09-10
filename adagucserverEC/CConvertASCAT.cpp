@@ -546,7 +546,6 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
                 if (nrDataObjects == 2) {
                   if (dlons[0] >= 0 && dlons[0] < dataSource->dWidth && dlats[0] > 0 && dlats[0] < dataSource->dHeight) {
                     if (tileIsTooLarge == false) {
-                      //  if(d==1)vals[0]=0;
                       if (d == 0) {
                         // Wind direction in ascat has an oceanographic convention, for meteorological symbols it should be shifted 180 degrees.
                         rotation += 180;

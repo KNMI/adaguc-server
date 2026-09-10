@@ -79,7 +79,6 @@ void adjustCDFModel(CDataSource *dataSource) {
 
 void addDataObject(CDataSource *dataSource) {
   if (dataSource->getNumDataObjects() == 6) {
-    // CDBDebug("DataSource has already 6 dataObjects. Skipping further.");
     return;
   }
 

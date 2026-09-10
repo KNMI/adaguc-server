@@ -108,14 +108,12 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 56.432904, 0.001);
 
   f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
-  // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
   f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -164,14 +162,12 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 1.45, 0.001);
 
   f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
-  // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
 
   f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);

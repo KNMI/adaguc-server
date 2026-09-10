@@ -149,7 +149,6 @@ int CTime::init(CDF::Variable *timeVariable) {
   if (calendarAttr != NULL) {
     if (calendarAttr->data != NULL) {
       calendar = calendarAttr->toString();
-      // CDBDebug("Found calendar %s",calendar.c_str());
     }
   }
 
@@ -313,15 +312,11 @@ int CTime::init(std::string units, std::string calendar) {
     // Calculate date since offset for units
     timeUnits.dateSinceOffset = 0;
 
-    //       timeUnits.dateSinceOffset = dateToOffset(
     if (timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
       if (mode == CTIME_MODE_360day) {
         timeUnits.dateSinceOffset += timeUnits.date.year * 360;
         timeUnits.dateSinceOffset += CTIME_CALENDARTYPE_360day_MonthsCumul[(timeUnits.date.month - 1)];
         timeUnits.dateSinceOffset += (timeUnits.date.day - 1);
-        //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.hour)/24.);  TODO
-        //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.minute)/(24*60.)); TODO
-        //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.second)/(24*60*60.));   TODO
       }
       if (mode == CTIME_MODE_365day) {
         timeUnits.dateSinceOffset += timeUnits.date.year * 365;
@@ -331,19 +326,11 @@ int CTime::init(std::string units, std::string calendar) {
         timeUnits.dateSinceOffset += (((double)timeUnits.date.minute) / (24 * 60.));
         timeUnits.dateSinceOffset += (((double)timeUnits.date.second) / (24 * 60 * 60.));
 
-        //         CDBDebug("timeUnits.date.month = %f",float(timeUnits.date.month));
         //
         //
         //
-        //         CDBDebug("Y = %f",float(timeUnits.date.year*365));
-        //         CDBDebug("m = %f",float(CTIME_CALENDARTYPE_365day_MonthsCumul[(timeUnits.date.month-1)]));
-        //         CDBDebug("D = %f",float(timeUnits.date.day));
-        //         CDBDebug("H = %f",(((double)timeUnits.date.hour)/24.));
-        //         CDBDebug("M = %f",(((double)timeUnits.date.minute)/(24*60.)));
-        //         CDBDebug("S = %f",(((double)timeUnits.date.second)/(24*60*60.)));
         //
         //
-        //         CDBDebug("dateSinceOffset = %f",timeUnits.dateSinceOffset);
       }
 
     } else {
@@ -355,12 +342,6 @@ int CTime::init(std::string units, std::string calendar) {
       CDBWarning("timeUnits.dateSinceOffset == 0, probably the unit parsing has failed!");
     }
 
-    //       CDBDebug("timeUnits.date.year   = %d",timeUnits.date.year);
-    //       CDBDebug("timeUnits.date.month  = %d",timeUnits.date.month);
-    //       CDBDebug("timeUnits.date.day    = %d",timeUnits.date.day);
-    //       CDBDebug("timeUnits.date.hour   = %d",timeUnits.date.hour);
-    //       CDBDebug("timeUnits.date.minute = %d",timeUnits.date.minute);
-    //       CDBDebug("timeUnits.date.second = %f",timeUnits.date.second);
     /*
     for(int d=1;d<366;d++){
       CDBDebug("day %d = %d",d,getMonthByDayInYear(d,CTIME_CALENDARTYPE_365day_MonthsCumul));
@@ -489,9 +470,6 @@ CTime::Date CTime::getDate(double offset) {
   if (mode == CTIME_MODE_365day) {
     if (timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
       double newOffset = timeUnits.dateSinceOffset + offset;
-      //       CDBDebug("timeUnits.dateSinceOffset = %f",timeUnits.dateSinceOffset);
-      //       CDBDebug("newOffset = %f",newOffset);
-      //       CDBDebug("offset = %f",offset);
       date.year = int(newOffset / 365);
       newOffset -= (date.year * 365);
 
@@ -504,21 +482,16 @@ CTime::Date CTime::getDate(double offset) {
 
       date.day = newOffset;
 
-      //       CDBDebug("YMD: %f %f %f",float(date.year),float(date.month),float(date.day));
-
       newOffset -= date.day;
       ;
       if (newOffset > 0) {
-        // CDBDebug("newOffset>0");
         date.hour = int(newOffset * 24) % 24;
         newOffset -= float(date.hour) / 24;
         date.minute = int(newOffset * 24 * 60) % 60;
         newOffset -= float(date.minute) / (60 * 24);
         date.second = int(newOffset * 24 * 60 * 60) % 60;
         newOffset -= float(date.second) / (60 * 60 * 24);
-        //         CDBDebug("newOffset>0: %f %f %f",float(date.hour),float(date.minute),float(date.second));
         //
-        //         CDBDebug("Remaining offset: %f (should be zero)",newOffset);
       } else {
         date.hour = 0;
         date.minute = 0;
@@ -566,7 +539,6 @@ CTime::Date CTime::getDate(double offset) {
     float s = 0;
     int status = utCalendar(date.offset, &dataunits, &date.year, &date.month, &date.day, &date.hour, &date.minute, &s);
     if (status != 0) {
-      //       CDBError("dataunits: %d", dataunits);
       CDBError("OffsetToAdaguc: Internal error: utCalendar, status = [%d]", status);
       throw CTIME_CONVERSION_ERROR;
     }
@@ -699,9 +671,6 @@ std::string CTime::dateToString(Date date) {
   int second = date.second;
 
   int minute = date.minute;
-  //   if(date.second>=60.){
-  //     second-=60;minute+=1;
-  //   }
   s = CT::printf("%04d%02d%02dT%02d%02d%02d", date.year, date.month, date.day, date.hour, minute, second);
   return s;
 }
@@ -709,11 +678,6 @@ std::string CTime::dateToString(Date date) {
 std::string CTime::dateToISOString(Date date) {
   std::string s;
   float second = date.second;
-  // int minute = date.minute;
-  //   if(date.second>=60.){
-  //     second-=60;minute+=1;
-  //   }
-  // s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,minute,second);
 
   int seconds = int(second);
   int milliseconds = int((second - seconds) * 1000);
@@ -831,8 +795,6 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
       throw e;
     }
   }
-
-  // CDBError("Format for date string \"%s\" not recognised",szTime);
 
   throw CTIME_CONVERSION_ERROR;
   return CTime::Date();
@@ -981,7 +943,6 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, std::string period, std::
 
 std::string CTime::quantizeTimeToISO8601(std::string value, std::string period, std::string method) {
   std::string newDateString = value;
-  // CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
   try {
     CTime time;
     time.init("seconds since 0000-01-01T00:00:00Z", "");
@@ -991,9 +952,7 @@ std::string CTime::quantizeTimeToISO8601(std::string value, std::string period, 
   } catch (int e) {
     CDBError("Exception in quantizetime with message %s", CTime::getErrorMessage(e).c_str());
   }
-  // CDBDebug("New date is %s", newDateString.c_str());
   return newDateString;
-  // return "2016-01-13T09:50:00Z";
 }
 
 time_t CTime::getEpochTimeFromDateString(std::string dateString) {

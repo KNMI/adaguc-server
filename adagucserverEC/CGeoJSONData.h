@@ -100,10 +100,6 @@ public:
   std::string toString(std::string fmt);
 };
 
-// class FeatureProperties {
-//   std::map<std::string, FeatureProperty> props;
-// };
-
 class Feature {
   std::string id;
   std::vector<Polygon> polygons;

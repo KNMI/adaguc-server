@@ -113,7 +113,6 @@ public:
   void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
-  // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
   void drawVector(int x, int y, double direction, double strength, int color);
   void drawVector(int x, int y, double direction, double strength, int color, float linewidth);
   void drawVector(int x, int y, double direction, double strength, CColor color, float linewidth);
@@ -153,7 +152,6 @@ public:
   void getHexColorForColorIndex(std::string &hexValue, int colorIndex);
   void setText(const char *text, int x, int y, int color);
   void setText(const char *text, int x, int y, CColor color);
-  // void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
   void setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor);
   void setDisc(int x, int y, int discRadius, int fillCol, int lineCol);
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);

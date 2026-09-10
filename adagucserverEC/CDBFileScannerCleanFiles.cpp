@@ -107,11 +107,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
   std::string currentTime = CTime::currentDateTime();
   CTime::Date date = ctime->freeDateStringToDate(currentTime.c_str());
 
-  // CDBDebug("currentDate\t\t\t%s", ctime->dateToISOString(date).c_str());
-
   std::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod));
-
-  // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
   CDBStore::Store *store = dbAdapter->getBetween("0001-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
   if (store != NULL && store->records.size() > 0) {

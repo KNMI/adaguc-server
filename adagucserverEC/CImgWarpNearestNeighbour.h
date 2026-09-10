@@ -71,18 +71,8 @@ private:
     DrawMultipleTileSettings *dmf = (DrawMultipleTileSettings *)arg;
     for (int j = dmf->startTile; j < dmf->endTile && j < dmf->numberOfTiles; j++) {
       DrawTileSettings *ct = &dmf->ct[j];
-      if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
-        // CDBDebug("Drawing tile %d",j);
-      }
       if (ct->id >= 0) {
-        if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
-          // CDBDebug("Drawing tile id %d",ct->id);
-        }
-        // int status =
         ct->drawTile->drawTile(ct->x_corners, ct->y_corners, ct->tile_offset_x, ct->tile_offset_y);
-        /*if(status!=0){
-          CDBError("Unable to draw tile at line %d",status);
-        }*/
       }
     }
     return arg;

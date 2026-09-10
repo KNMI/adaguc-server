@@ -10,7 +10,6 @@ const char *CDPPGoes16Metadata::getId() {
   return "goes16metadata";
 }
 int CDPPGoes16Metadata::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
-  // CDBDebug("isApplicable");
   if (proc->attr.algorithm == ("goes16metadata") && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }

@@ -239,7 +239,6 @@ int CDFCSVReader::open(const char *fileName) {
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->setAttributeText("units", "seconds since 1970-1-1");
-    //    if (timeString.length() > 5){
     CDBDebug("timeString = [%s]", timeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(timeVar);
     if (ctime == nullptr) {
@@ -249,7 +248,6 @@ int CDFCSVReader::open(const char *fileName) {
 
     ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
     //    } else {
-    //      ((double*)timeVar->data)[0] = 0;
     //    }
   }
 
@@ -275,7 +273,6 @@ int CDFCSVReader::open(const char *fileName) {
     referenceTimeVar->setAttributeText("standard_name", "forecast_reference_time");
     referenceTimeVar->setAttributeText("long_name", "forecast_reference_time");
     referenceTimeVar->setAttributeText("units", "seconds since 1970-1-1");
-    //    if (timeString.length() > 5){
     CDBDebug("referenceTimeString = [%s]", referenceTimeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(referenceTimeVar);
     if (ctime == nullptr) {
@@ -285,7 +282,6 @@ int CDFCSVReader::open(const char *fileName) {
 
     ((double *)referenceTimeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(referenceTimeString.c_str()));
     //    } else {
-    //      ((double*)timeVar->data)[0] = 0;
     //    }
   }
 

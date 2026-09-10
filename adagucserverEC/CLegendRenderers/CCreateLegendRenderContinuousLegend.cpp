@@ -4,7 +4,6 @@
 #include <algorithm>
 
 double CCreateLegend::nextTick(double prev) {
-  // scale will be between pow(10,floor(prevLog)) and pow(10,ceil(prevLog))
   double prevLog = log10(prev);
   // number 15
   // log (15) = 1.17
@@ -169,8 +168,6 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   if (increment <= 0) increment = (std::max(max, min) - std::min(max, min)) / 3;
 
   if (styleConfiguration->legendLog != 0) {
-    // vertical axis going from log(min) to log(max)
-    // log(intermediate values)
     // Fixed number of intermediate classes: 2,5,10
     // assume log 10
     // 1. Collect all tick values and their formatted labels

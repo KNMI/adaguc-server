@@ -210,7 +210,6 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   this->minValue = 0.0f;
   this->maxValue = 0.0f;
   this->minMaxSet = false;
-  // this->renderMethod = RM_UNDEFINED;
   if (dataSource->cfg->Style.size() == 0) {
     CDBError("Server configuration has no styles at all.");
     return 1;
@@ -338,7 +337,6 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 
 void CStyleConfiguration::stretchLegend(double min, double max) {
   if (this->legendLog != 0.0f) {
-    // CDBDebug("LOG = %f",log);
     min = log10(min) / log10(this->legendLog);
     max = log10(max) / log10(this->legendLog);
   }

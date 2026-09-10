@@ -1529,7 +1529,6 @@ struct CServerConfig : CXMLObjectInterface {
       XMLE_DELOBJ(GridFont);
       XMLE_DELOBJ(WMSFormat);
       XMLE_DELOBJ(WMSExceptions);
-      // XMLE_DELOBJ(Keywords);
 
       XMLE_DELOBJ(Inspire);
     }

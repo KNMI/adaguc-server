@@ -57,7 +57,6 @@ int CPGSQLDB::close2() {
 int CPGSQLDB::connect(const char *pszOptions) {
   LastErrorMsg = "";
   if (dConnected == 1) return 0;
-  // CDBDebug("[DB CONNECT]");
   traceTimingsSpanStart(TraceTimingType::DBCONNECT);
   connection = PQconnectdb(pszOptions);
   traceTimingsSpanEnd(TraceTimingType::DBCONNECT);

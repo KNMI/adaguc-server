@@ -101,8 +101,6 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
     StopWatch_Stop("MIN/MAX Calculated");
   }
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
-  // double dfBBOX[]={-180,-90,180,90};
-  // CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
 
   // Default size of adaguc 2dField is 2x2
   int width = 2;
@@ -224,7 +222,6 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
           new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
         }*/
 
-    // new2DVar->dimensionlinks.push_back(dimT);
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
 
@@ -250,17 +247,6 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
     new2DVar->setType(CDF_FLOAT);
   }
 
-  //     CDF::Variable *new2DVar = new CDF::Variable();
-  //     cdfObject->addVariable(new2DVar);
-  //     new2DVar->dimensionlinks.push_back(dimY);
-  //     new2DVar->dimensionlinks.push_back(dimX);
-  //     new2DVar->setType(CDF_FLOAT);
-  //     new2DVar->name="testno2";
-  //     std::string data = CDF::dump(cdfObject);
-
-  // CDBDebug("%s",data.c_str());
-  // writeLogFile4(data.c_str());
-
   return 0;
 }
 
@@ -284,7 +270,6 @@ void CConvertTROPOMIline2(float *imagedata, int w, int h, float x1, float y1, fl
   if (xyIsSwapped == 0) {
 
     for (int x = int(x1); x < x2; x++) {
-      //         plot(x,int(y),1);
       if (y >= 0 && y < h && x >= 0 && x < w) imagedata[int(x) + int(y) * w] = value;
       y += gradient;
     }
@@ -423,8 +408,6 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
 
         dataSource->statistics = new Statistics();
         dataSource->statistics->calculate(pointVar[0]->getSize(), (float *)pointVar[0]->data, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue, dataSource->getDataObject(0)->hasNodataValue);
-        //         dataSource->statistics->max=max;
-        //         dataSource->statistics->min=min;
       }
     }
 
@@ -433,7 +416,6 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
       size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
       new2DVar[d]->setSize(fieldSize);
       new2DVar[d]->allocateData(fieldSize);
-      // CDF::fill((new2DVar[d]->data),new2DVar[d]->getType(),NAN,fieldSize);
 
       // Fill in nodata
       if (dataSource->getDataObject(d)->hasNodataValue) {
@@ -494,17 +476,12 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
     int swathLonWidth = pointLon->dimensionlinks[pointLon->dimensionlinks.size() - 2]->getSize();
     int swathLonHeight = pointLon->dimensionlinks[pointLon->dimensionlinks.size() - 3]->getSize();
 
-    //     for(size_t j=0;j<pointLon->dimensionlinks.size();j++){
-    //       CDBDebug("%d %s %d",j,pointLon->dimensionlinks[j]->name.c_str(),pointLon->dimensionlinks[j]->getSize());
     //     }
     //
-    //     CDBDebug("swathLonWidth: %d",swathLonWidth);
-    //     CDBDebug("swathLonHeight: %d",swathLonHeight);
 
     float fillValueLat = fill;
     float fillValueLon = fill;
     int mode = 0;
-    // for( mode=0;mode<2;mode++)
     {
       for (int y = 0; y < swathLonHeight; y++) {
         for (int x = 0; x < swathLonWidth; x++) {
@@ -520,8 +497,6 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
           lats[1] = (float)latData[pSwath * 4 + 1];
           lats[2] = (float)latData[pSwath * 4 + 3];
           lats[3] = (float)latData[pSwath * 4 + 2];
-
-          // CDBDebug("%d %d = %f %f  %f",x,y, lons[0],lats[0],val);
 
           vals[0] = val;
           vals[1] = val;
@@ -583,13 +558,7 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
                 fillQuadGouraud(sdata, vals, dataSource->dWidth, dataSource->dHeight, dlons, dlats);
               }
               val = 1;
-              //             if(mode==1){
-              //             drawCircle(sdata,1,dataSource->dWidth,dataSource->dHeight,dlons[0],dlats[0],8);
-              //             drawCircle(sdata,2,dataSource->dWidth,dataSource->dHeight,dlons[1],dlats[1],8);
-              //             drawCircle(sdata,3,dataSource->dWidth,dataSource->dHeight,dlons[2],dlats[2],8);
-              //             drawCircle(sdata,4,dataSource->dWidth,dataSource->dHeight,dlons[3],dlats[3],8);
               //
-              //             CConvertTROPOMIDrawlines(sdata,dataSource->dWidth,dataSource->dHeight,4,dlons,dlats,val);
               //             }
             }
           }

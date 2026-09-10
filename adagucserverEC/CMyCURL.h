@@ -108,12 +108,8 @@ public:
     if (length == 0) {
       return 2;
     }
-    // buffer = new char[chunk.size];
-    // memcpy(buffer,chunk.memory,chunk.size);
 
     buffer = chunk.memory;
-    // if(chunk.memory)
-    //      free(chunk.memory);
 
     /* we're done with libcurl, so clean it up */
     curl_global_cleanup();

@@ -251,7 +251,6 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 }
 
 int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> &fileList, int scanFlags) {
-  //  CDBDebug("DBLoopFiles");
   bool verbose = dataSource->srvParams->verbose;
   std::string query;
   CDFObject *cdfObject = NULL;
@@ -260,8 +259,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   try {
     // Loop dimensions and files
-    // CDBDebug("Checking files that are already in the database...");
-    // char ISOTime[ISO8601TIME_LEN+1];
     std::string isoString;
 
     // Setup variables like tableNames and timedims for each dimension
@@ -273,8 +270,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     std::vector<std::string> tableNames(numDims);
 
     std::string queryString;
-    // std::string VALUES;
-    // CADAGUC_time *ADTime  = NULL;
     CTime *adagucTime = nullptr;
 
     // Sort the fileList alphabetically, which normally corresponds to time order
@@ -327,9 +322,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
         CDBDebug("Found table name %s", tableNames[d].c_str());
       }
       //       //Create temporary tableName
-      //       tableNames_temp[d]= (&(tableNames[d]));
-      //       if(removeNonExistingFiles==1){
-      //         tableNames_temp[d].concat("_temp");
       //       }
       //
       skipDim[d] = isTableAlreadyScanned(tableNames[d]);
@@ -577,8 +569,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                     }
                   }
                   // #ifdef CDBFILESCANNER_DEBUG
-                  //                    CDBDebug("Reading dimension %s of length
-                  //                    %d",dimVar->name.c_str(),dimDim->getSize());
                   // #endif
                   if (status != 0) {
                     CREPORT_ERROR_NODOC(std::string("Unable to read variable data for ") + dimVar->name.c_str(), CReportMessage::Categories::GENERAL);
@@ -605,12 +595,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                 if (requiresProjectionInfo) {
                   CDataReader reader;
-                  // reader.enableReporting(false); //Functional tests fail if set to false
                   dataSource->addStep((fileList)[j]);
                   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
-                  //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
-                  //                      CDBDebug("---> BBOX: [%f %f %f
-                  //                      %f]",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
                   /* crs = dataSource->nativeProj4.c_str();
                    minx = dataSource->dfBBOX[0];
                    miny = dataSource->dfBBOX[1];
@@ -633,7 +619,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                   if (adagucTileLevelAttr != NULL) {
                     geoOptions.level = atoi(adagucTileLevelAttr->toString().c_str());
-                    // CDBDebug( "Found adaguctilelevel %d in NetCDF header",geoOptions.level);
                   }
                 }
                 if (dimVar->name == ("none")) {
@@ -693,7 +678,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                             }
                           } else {
 
-                            // ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make
                             // PrintISOTime return a 0 if succeeded
 
                             try {
@@ -759,15 +743,11 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 }
               }
 
-              // delete cdfObject;cdfObject=NULL;
-              // cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             } catch (int linenr) {
               CDBError("Exception in DBLoopFiles at line %d", linenr);
               CDBError(" *** SKIPPING FILE %s ***", (fileList)[j].c_str());
               // Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
-              // delete cdfObject;cdfObject=NULL;
 
-              // TODO CHECK cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }
           }
         }
@@ -815,12 +795,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 #endif
     CDBError("Exception in DBLoopFiles at line %d", linenr);
 
-    // TODO CHECK    cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
     return 1;
   }
 
-  // delete cdfObject;cdfObject=NULL;
-  // cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
   return 0;
 }
 
@@ -994,7 +971,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, std::string _tailPath, std
   }
 
 // Close DB
-// CDBDebug("COMMIT");
 #ifdef USEQUERYTRANSACTIONS
   if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
@@ -1034,7 +1010,6 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, std::
     throw(__LINE__);
   }
   std::string filePath = path;
-  //  CDBDebug("filePath = %s",filePath.c_str());
 
   if (tailPath != NULL) {
     if (tailPath[0] == '/') {
@@ -1056,7 +1031,6 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, std::
   if (checkIfPathIsFile(filePath)) {
     std::vector<std::string> fileList;
     fileList.push_back(filePath);
-    //    CDBDebug("%s is a file",filePath.c_str());
     return fileList;
   } else {
     // Read directory

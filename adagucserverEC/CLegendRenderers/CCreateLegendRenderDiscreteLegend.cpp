@@ -129,12 +129,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     textformatting = styleConfiguration->legend.attr.textformatting;
   }
 
-  // CDBDebug("styleTitle = [%s]", styleConfiguration->styleTitle.c_str());
-  // CDBDebug("ShadeInterval = [%s]", styleConfiguration->styleConfig->ShadeInterval[0]->value.c_str());
-  // CDBDebug("textformatting = [%s]", textformatting.c_str());
-
-  // int dH=0;
-  // cbW = 90.0/3.0;
   // We always need to have the min/max of the data
   // Always to show only the occuring data values in the legend,
   // and in some cases to stretch the colors over min max
@@ -153,9 +147,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     minValue = (float)dataSource->statistics->min;
     maxValue = (float)dataSource->statistics->max;
   }
-  // }
-
-  // CDBDebug("Using %f and %f for legend values", minValue, maxValue);
 
   // Calculate the number of classes
   float legendInterval = styleConfiguration->shadeInterval;
@@ -469,6 +460,5 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   // Get units
   std::string units = dObjgetUnits(*dataSource->getDataObject(0));
   if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);
-  // legendImage->crop(4,4);
   return 0;
 }

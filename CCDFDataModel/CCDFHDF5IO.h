@@ -80,7 +80,6 @@ public:
     // Get error strack
     error_stack = H5Eget_current_stack();
     /* Save old error handler */
-    // H5Eget_auto2(error_stack, &old_func, &old_client_data);
     /* Turn off error handling */
     H5Eset_auto2(error_stack, NULL, NULL);
     H5Eset_auto2(H5E_DEFAULT, NULL, NULL);

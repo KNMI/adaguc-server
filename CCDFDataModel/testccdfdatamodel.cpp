@@ -268,7 +268,6 @@ int testHDF5Reader() {
   }
   std::string dumpString = CDF::dump(cdfObject);
 
-  // throw (dumpString.c_str());
   std::string expectedString = cdfObject->getVariableThrows("overview")->getAttributeThrows("product_datetime_start")->toString();
 
   if (expectedString != "22-NOV-2021;08:00:00.000") {

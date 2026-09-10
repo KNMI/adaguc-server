@@ -40,7 +40,6 @@ std::string floatToString(int numdigits, float number);
 std::string floatToString(float min, float max, float number);
 
 class CImageWarper {
-  //  CNetCDFReader reader;
 private:
   double dfMaxExtent[4];
   int dMaxExtentDefined;

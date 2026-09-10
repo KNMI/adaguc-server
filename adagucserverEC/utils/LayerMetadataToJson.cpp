@@ -121,7 +121,6 @@ json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &lay
   }
 
   for (const auto &[layerName, metadataBlobs]: layerBlobsByLayer) {
-    // CDBDebug("Checking %s = %s", layerNameInRequest.c_str(), layerName.c_str());
     if (layerNameInRequest.empty() || layerNameInRequest == layerName) {
 
       try {
@@ -139,8 +138,6 @@ json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &lay
         } else {
           layer["dims"] = a.parse(getBlob(metadataBlobs, "dimensionlist"));
         }
-        // layer["styles"] = a.parse(getBlob(metadataBlobs, "stylelist"));
-        // layer["projected_extents"] = a.parse(getBlob(metadataBlobs, "projected_extents"));
 
         datasetJSON[layerName] = layer;
 
@@ -162,7 +159,6 @@ ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &resu
     return ServiceExceptionType::UnprocessableEntity;
   }
   traceTimingsSpanStart(TraceTimingType::GETMETADATAJSONPARSE);
-  // CDBDebug("Found %lu records in database", layerMetaDataStore->records.size());
   DatasetMetadataIndex metadataByDataset = buildDatasetMetadataIndex(layerMetaDataStore);
 
   // The following example demonstrates how the getmetadata call can be used with DIM_REFERENCE_TIME.

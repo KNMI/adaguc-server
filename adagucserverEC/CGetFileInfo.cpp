@@ -20,16 +20,12 @@ std::string CGetFileInfo::getLayersForFile(const char *filename) {
     fileInfo += "\n";
 
     for (size_t j = 0; j < variableList.size(); j++) {
-      // printf("%s\n",variableList[j].c_str());
 
       CDF::Variable *var = cdfObject->getVariableThrows(variableList[j].c_str());
 
       std::string name = variableList[j];
 
       std::string title = variableList[j];
-
-      // std::string filePath = makeCleanPath(filename);
-      // filePath.setSize(filePath.lastIndexOf("/")+1);
 
       try {
         title = var->getAttributeThrows("long_name")->toString();
@@ -65,7 +61,6 @@ std::string CGetFileInfo::getLayersForFile(const char *filename) {
       CT::printfconcat(fileInfo, "    <Name>%s</Name>\n", CT::encodeXml(name).c_str());
       CT::printfconcat(fileInfo, "    <Title>%s</Title>\n", CT::encodeXml(title).c_str());
       CT::printfconcat(fileInfo, "    <Variable>%s</Variable>\n", CT::encodeXml(variableList[j]).c_str());
-      // CT::printfconcat(fileInfo, "    <MetadataURL>[METADATAURL]</MetadataURL>\n");
       CT::printfconcat(fileInfo, "    <Abstract>%s</Abstract>\n", CT::encodeXml(abstract).c_str());
       fileInfo += "  </Layer>\n";
       fileInfo += "\n";

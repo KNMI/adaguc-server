@@ -195,7 +195,6 @@ int CDataReader::getCRS(CDataSource *dataSource) {
   }
 
   // If undefined, set standard lat lon projection
-  // CREPORT_WARN_NODOC(std::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
   copyLatLonCRS(dataSource);
   return 0;
 }
@@ -231,7 +230,6 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 }
 
 void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
-  // CREPORT_INFO_NODOC(std::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4 = ("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
   dataSource->nativeEPSG = ("EPSG:4326");
 }
@@ -671,7 +669,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
       if (CT::indexOf(dataSource->varX->name, "x") == -1 && CT::indexOf(dataSource->varX->name, "X") == -1) {
         size_t j = 0;
         for (j = 0; j < dataSource->varX->getSize(); j++) {
-          // CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
           double xvalue = ((double *)dataSource->varX->data)[j];
 
           if (xvalue >= 180.0 && xvalue < 400) break;
@@ -831,7 +828,6 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
     dataSource->dfBBOX[1] = orgX + (y + 2) * dataSource->dfCellSizeY;
     dataSource->dfBBOX[2] = orgX + (x + 0) * dataSource->dfCellSizeX;
     dataSource->dfBBOX[3] = orgY + (y + 0) * dataSource->dfCellSizeY;
-    // CDBDebug("%d %d %f %f %f %f %f %f ", x, y, dataSource->dfCellSizeX, dataSource->dfCellSizeY, dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
   }
 
   dataSource->origBBOXLeft = dataSource->dfBBOX[0];
@@ -976,7 +972,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (dataSource->dNetCDFNumDims > 2) {
     for (int j = 0; j < dataSource->dNetCDFNumDims - 2; j++) {
       start[j] = dataSource->getDimensionIndex(dataSource->getDataObject(0)->cdfVariable->dimensionlinks[j]->name.c_str()); // dOGCDimValues[0];// time dim
-      // CDBDebug("%s==%d",dataSourceVar->dimensionlinks[j]->name.c_str(),start[j]);
     }
   }
 
@@ -1026,7 +1021,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_FLOAT);
 
       if (scale_factor->getType() == CDF_FLOAT) {
-        // dataSource->getDataObject(varNr)->dataType=CDF_FLOAT;
         dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_FLOAT);
       }
       if (scale_factor->getType() == CDF_DOUBLE) {
@@ -1076,7 +1070,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-    // double dfNoData = 0;
     if (verbose) {
       StopWatch_Stop("Reading _FillValue");
     }
@@ -1123,7 +1116,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
         // Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
         if (dataSource->useLonTransformation != -1) {
-          // int splitPX=dataSource->useLonTransformation;
           if (Proc::swapPixelsAtLocation(dataSource, dataSource->getDataObject(varNr)->cdfVariable, 1) != 0) {
             return 1;
           }
@@ -1282,7 +1274,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           // packed data to be unpacked to DOUBLE:
           double *_data = (double *)dataSource->getDataObject(varNr)->cdfVariable->data;
           for (size_t j = 0; j < dataSource->getDataObject(varNr)->cdfVariable->getSize(); j++) {
-            // if(j%10000==0){CDBError("%d = %f",j,_data[j]);}
             _data[j] = _data[j] * dfscale_factor + dfadd_offset;
           }
 
@@ -1322,7 +1313,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     }
   }
 
-  // pthread_mutex_unlock(&CDataReader_open_lock);
   if (verbose) {
     CDBDebug("/Finished datareader now has %lu dataobjects", dataSource->getNumDataObjects());
   }
@@ -1402,14 +1392,10 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   }
 
   if (standardName.length() == 0) {
-    // CDBDebug("Warning no standard name given for dimension %s, using variable name instead.", variable->name.c_str());
     standardName = variable->name;
     ;
   }
 
-  // CDBDebug("Standardname of dimension [%s] is [%s]",variable->name.c_str(), standardName.c_str());
-
-  // CDBDebug("%d %d",standardName.equals("time"),standardName.length());
   if (standardName == "time") return dtype_time;
   if (standardName == "forecast_reference_time") return dtype_reference_time;
   if (standardName == "member") return dtype_member;
@@ -1436,7 +1422,6 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
     return dtype_elevation;
   } catch (int e) {
   }
-  // CDBDebug("Dimension %s with standard_name [%s] is a normal dimension", variable->name.c_str(), standardName.c_str());
 
   return dtype_normal;
 }

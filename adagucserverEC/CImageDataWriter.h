@@ -87,10 +87,7 @@ private:
 
   enum ImageDataWriterStatus { uninitialized, initialized, finished };
   ImageDataWriterStatus writerStatus;
-  // float shadeInterval,contourIntervalL,contourIntervalH;
 
-  // int smoothingFilter;
-  // RenderMethodEnum renderMethod;
 public:
   static double convertValue(CDFType type, void *data, size_t p);
   static int getColorIndexForValue(CDataSource *dataSource, float value);

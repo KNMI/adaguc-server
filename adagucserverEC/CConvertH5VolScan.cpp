@@ -178,8 +178,6 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
   double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
   double offsetX = dfBBOX[0];
   double offsetY = dfBBOX[1];
-  // delete[] dfBBOX;
-  // dfBBOX = NULL;
 
   // Add geo variables, only if they are not there already
   CDF::Dimension *dimX = cdfObject->getDimensionNE("adaguccoordinatex");
@@ -291,8 +289,6 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
       ((unsigned int *)varScan->data)[i] = sorted_scans[i];
     }
   }
-  // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
-  // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   int cnt = -1;
   for (std::string param: scan_params) {
     cnt++;
@@ -309,7 +305,6 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     var->setAttributeText("units", units[cnt].c_str());
     float fillValue = FLT_MAX;
     var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
-    // var->setCustomReader(memoryReader);
 
     var->dimensionlinks.push_back(dimT);
     var->dimensionlinks.push_back(dimElevation);

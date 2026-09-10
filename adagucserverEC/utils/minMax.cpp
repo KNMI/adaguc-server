@@ -60,7 +60,6 @@ void Statistics::setMinMax(MinMax minMax) {
 
 int Statistics::calculate(CDataSource *dataSource) {
   // Get Min and Max
-  // CDBDebug("calculate stat ");
   DataObject *dataObject = dataSource->getFirstAvailableDataObject();
   if (dataObject->cdfVariable->data != NULL) {
     size_t size = dataObject->cdfVariable->getSize(); // dataSource->dWidth*dataSource->dHeight;

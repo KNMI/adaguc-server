@@ -231,7 +231,6 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
         /* Compose the timestring based on date and time from the HDF5 ODIM file */
         std::string timeString;
         timeString = CT::printf("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
-        // CDBDebug("timeString %s", timeString.c_str());
 
         /* Add the time dimension and timevariable */
         auto *timeDim = new CDF::Dimension("time", 1);
@@ -251,7 +250,6 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
         }
 
         ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
-        // CDBDebug("Time offset = %f", ((double *)timeVar->data)[0]);
       }
 
       CDF::Dimension *dimX = dataVar->dimensionlinks[1];
@@ -270,11 +268,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
         throw(__LINE__);
       };
 
-      // CDBDebug("Metadata xScale %f, Metadata yScale: %f", xScale, yScale);
       double offsetX = cornerX[0]; //-double(dimX->length) / 2;
       xScale = (((cornerX[1] - cornerX[0]) + (cornerX[3] - cornerX[2])) / 2) / double(dimX->length);
 
-      // CDBDebug("Calculated xScale %f, Calculated yScale: %f", xScale, yScale);
       auto *varXdata = (double *)varX->data;
       for (size_t j = 0; j < dimX->length; j += 1) {
         double x = double(j) * xScale;

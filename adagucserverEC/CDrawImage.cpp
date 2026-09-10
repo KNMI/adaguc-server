@@ -33,7 +33,6 @@ float convertValueToClass(float val, float interval) {
 }
 
 CDrawImage::CDrawImage() {
-  // CDBDebug("[CONS] CDrawImage");
   dImageCreated = 0;
   dPaletteCreated = 0;
   currentLegend = NULL;
@@ -60,7 +59,6 @@ CDrawImage::CDrawImage() {
 }
 
 void CDrawImage::destroyImage() {
-  // CDBDebug("[destroy] CDrawImage");
 
   dImageCreated = 0;
 
@@ -84,7 +82,6 @@ void CDrawImage::destroyImage() {
 }
 
 CDrawImage::~CDrawImage() {
-  //   CDBDebug("[DESC] CDrawImage %dx%d", Geo.dWidth, Geo.dHeight);
   destroyImage();
   std::map<std::string, CCairoPlotter *>::iterator myCCairoPlotterIter = myCCairoPlotterMap.begin();
   while (myCCairoPlotterIter != myCCairoPlotterMap.end()) {
@@ -95,7 +92,6 @@ CDrawImage::~CDrawImage() {
 }
 
 int CDrawImage::createImage(const char *fn) {
-  // CDBDebug("CreateImage from file");
   _bEnableTrueColor = true;
   _bEnableTransparency = true;
 
@@ -107,14 +103,12 @@ int CDrawImage::createImage(const char *fn) {
 }
 
 int CDrawImage::createImage(int _dW, int _dH) {
-  // CDBDebug("CreateImage from WH");
   geoParams.width = _dW;
   geoParams.height = _dH;
   return createImage(geoParams);
 }
 
 int CDrawImage::createImage(GeoParameters &_Geo) {
-  // CDBDebug("CreateImage from GeoParams");
 #ifdef MEASURETIME
   StopWatch_Stop("start createImage of size");
 #endif
@@ -197,7 +191,6 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, CCo
 
   bool startatxy = true;
 
-  // strength=strength/2;
   dx1 = cos(direction) * (strength);
   dy1 = sin(direction) * (strength);
 
@@ -473,7 +466,6 @@ int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, flo
       text.assign((const char *)(title.c_str() + offset), length);
       ftTitle->getTextSize(widthOfText, heightOfText, 0.0, text.c_str());
       length--;
-      // if(!needsLineBreak)if(w>width-10)needsLineBreak = true;
     } while (widthOfText > width && length >= 0);
     length++;
     if (length + offset < (int)title.length()) {
@@ -613,7 +605,6 @@ void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float 
 
 int CDrawImage::create685Palette() {
   currentLegend = NULL;
-  // CDBDebug("Create 685Palette");
   const char *paletteName685 = "685Palette";
 
   for (size_t j = 0; j < legends.size(); j++) {
@@ -647,7 +638,6 @@ int CDrawImage::create685Palette() {
   addColor(241, 32, 32, 32);
   addColor(242, 64, 64, 64);
   addColor(243, 96, 96, 96);
-  // addColor(244,64  ,64  ,192);
   addColor(244, 64, 64, 255);
   addColor(245, 128, 128, 255);
   addColor(246, 64, 64, 192);
@@ -671,7 +661,6 @@ int CDrawImage::_createStandard() {
   addColor(241, 32, 32, 32);
   addColor(242, 64, 64, 64);
   addColor(243, 96, 96, 96);
-  // addColor(244,64  ,64  ,192);
   addColor(244, 64, 64, 255);
   addColor(245, 128, 128, 255);
   addColor(246, 64, 64, 192);
@@ -699,7 +688,6 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
       }
     }
   }
-  // CDBDebug("Create legend %s",legend->attr.name.c_str());
   if (currentLegend == NULL) {
     currentLegend = new CLegend();
     currentLegend->id = legends.size();
@@ -811,7 +799,6 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
       unsigned char prev_red = 0, prev_green = 0, prev_blue = 0, prev_alpha = 0;
       int prev_offset = 0;
       for (size_t j = 0; j < stops.size(); j++) {
-        // CDBDebug("%s",stops.get(j)->toString().c_str());
         int offset = (int)(std::stof(stops.at(j).getAttrValue("offset")) * 2.4);
         std::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
         color.resize(color.length() - 1);
@@ -824,7 +811,6 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
         unsigned char green = atoi(colors[1].c_str());
         unsigned char blue = atoi(colors[2].c_str());
         unsigned char alpha = (char)(std::stof(stops.at(j).getAttrValue("stop-opacity")) * 255);
-        // CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
         if (offset > 255)
           offset = 255;
         else if (offset < 0)
@@ -839,7 +825,6 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
           prev_offset = offset;
         } else {
           float dif = offset - prev_offset;
-          // CDBDebug("dif %f",dif);
           if (dif < 0.5f) dif = 1;
           rc[0] = float(prev_red - red) / dif;
           rc[1] = float(prev_green - green) / dif;
@@ -1024,7 +1009,6 @@ int CDrawImage::createImage(CDrawImage *image, int width, int height) {
   if (width < 0) {
     width = 0;
   }
-// CDBDebug("CreateImage from image");
 #ifdef MEASURETIME
   CDBDebug("createImage(CDrawImage *image,int width,int height)");
 #endif
@@ -1094,7 +1078,6 @@ int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, CDra
  * @param int paddingH the padding to keep in pixels in height. Set to -1 if no crop in height is desired
  */
 void CDrawImage::crop(int paddingW, int paddingH) {
-  // return;
   int x, y, w, h;
   getCanvasSize(x, y, w, h);
 
@@ -1148,7 +1131,6 @@ void CDrawImage::rotate() {
   createImage(&temp, h, w);
   drawrotated(0, 0, 0, 0, &temp);
   temp.destroyImage();
-  //  return 0;
 }
 
 unsigned char *CDrawImage::getCanvasMemory() const { return cairo->getByteBuffer(); }

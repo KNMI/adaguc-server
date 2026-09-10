@@ -49,7 +49,6 @@ void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y
   if (xyIsSwapped == 0) {
 
     for (int x = int(x1); x < x2; x++) {
-      //         plot(x,int(y),1);
       if (y >= 0 && y < h && x >= 0 && x < w) imagedata[int(x) + int(y) * w] = value;
       y += gradient;
     }
@@ -159,7 +158,6 @@ void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
 double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats) {
 
   size_t numCells = lons->dimensionlinks[0]->getSize();
-  // int numVerts = lons->dimensionlinks[1]->getSize();
 
   lons->readData(CDF_FLOAT, true);
   lats->readData(CDF_FLOAT, true);
@@ -222,8 +220,6 @@ double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Varia
 int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *srvParams) {
   // Check whether this is really a hexagon file
   try {
-    // cdfObject->getDimension("col");
-    // cdfObject->getDimension("row");
     cdfObject->getDimensionThrows("nvert_i");
     cdfObject->getDimensionThrows("cell_i");
     cdfObject->getVariableThrows("lon_i");
@@ -238,7 +234,6 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     }
 
   } catch (int e) {
-    // CDBDebug("NOT HEXAGON DATA");
     return 1;
   }
 
@@ -411,8 +406,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really a hexagon file
   try {
-    // cdfObject->getDimension("col");
-    // cdfObject->getDimension("row");
     cdfObject->getDimensionThrows("nvert_i");
     cdfObject->getDimensionThrows("cell_i");
     cdfObject->getVariableThrows("lon_i");
@@ -447,7 +440,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   origSwathName += "_backup";
   hexagonVar = cdfObject->getVariableNE(origSwathName.c_str());
   if (hexagonVar == NULL) {
-    // CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
     return 1;
   }
 
@@ -520,7 +512,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         max = v;
       }
 
-      //      CDBDebug("Swathvar %f %f %f",v,min,max);
     }
   }
 
@@ -659,14 +650,12 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (CT::indexOf(styleConfiguration->styleCompositionName, "bilinear") >= 0) {
 
-      // drawBilinear=true;
     }
     /*
      * Bilinear rendering is based on gouraud shading using the center of each quads by using lat and lon variables, while nearest neighbour rendering is based on lat_bnds and lat_bnds variables,
      * drawing the corners of the quads..
      */
 
-    // drawBilinear=true;
     // Bilinear rendering
     // TODO
     if (drawBilinear) {
@@ -681,9 +670,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         CDBError("lat or lon variables not found");
         return 1;
       }
-
-      //       int numCells = cdfObject->getDimension("row")->getSize();
-      //       int numVerts = cdfObject->getDimension("col")->getSize();
 
       int numCells = lons->dimensionlinks[0]->getSize();
       int numVerts = lons->dimensionlinks[1]->getSize();
@@ -709,7 +695,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       for (int y = 0; y < numCells - 1; y++) {
         for (int x = 0; x < numVerts - 1; x++) {
           size_t pSwath = x + y * numVerts;
-          // CDBDebug("%d %d %d",x,y,pSwath);
           double lons[4], lats[4];
           float vals[4];
           lons[0] = (float)lonData[pSwath];
@@ -791,8 +776,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       }
       int numTiles = numCells;
 
-      // int numTiles =     cdfObject->getDimension("col")->getSize()*cdfObject->getDimension("row")->getSize();
-
       if (CCONVERTHEXAGON_DEBUG) {
         CDBDebug("There are %d tiles", numTiles);
       }
@@ -865,14 +848,10 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
           }
         }
         if (tileHasNoData == false) {
-          // CDBDebug(" (%f,%f) (%f,%f) (%f,%f) (%f,%f)",lons[0],lats[0],lons[1],lats[1],lons[2],lats[2],lons[3],lats[3]);
 
           float *flons = new float[numVerts];
           float *flats = new float[numVerts];
           for (int j = 0; j < numVerts; j++) {
-            //             if(tileIsOverDateBorder){
-            //               lons[j]-=360;
-            //               while(lons[j]<-300)lons[j]+=360;
             //             }
             double dflon = lons[j];
             double dflat = lats[j];
@@ -885,14 +864,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
             flats[j] = float((dflat - offsetY) / cellSizeY);
           }
           if (tileHasNoData == false) {
-
-            // CDBDebug(" (%d,%d) (%d,%d) (%d,%d) (%d,%d)",dlons[0],dlats[0],dlons[1],dlats[1],dlons[2],dlats[2],dlons[3],dlats[3]);
-
-            // fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
-
-            // drawpoly2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
             drawNGon(sdata, dataSource->dWidth, dataSource->dHeight, numVerts, flons, flats, val);
-            // drawlines2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
           }
           delete[] flons;
           delete[] flats;

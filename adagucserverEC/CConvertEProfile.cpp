@@ -84,7 +84,6 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   if (!isADAGUCProfileFormat(cdfObject) && !isDeprecatedADAGUCEProfileFormat(cdfObject)) {
     return 1;
   }
-  //   CDBDebug("Using CConvertEProfile.h");
 
   cdfObject->setAttributeText("ADAGUC_PROFILE", "true");
 
@@ -123,8 +122,6 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
     StopWatch_Stop("MIN/MAX Calculated");
   }
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
-  // double dfBBOX[]={-180,-90,180,90};
-  // CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
 
   // Default size of adaguc 2dField is 2x2
   int width = 2;
@@ -208,15 +205,10 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   // The startdate of the file will be used in time_file
 
   //   #ifdef CCONVERTEPROFILE_DEBUG
-  //     StopWatch_Stop("Creating CTIME");
   //   #endif
-  //   CTime obsTime;
   //
   //   #ifdef CCONVERTEPROFILE_DEBUG
-  //     StopWatch_Stop("Initializing CTIME");
   //   #endif
-  //   if(obsTime.init(timev)!=0){
-  //     return 1;
   //   }
   CTime *obsTime = CTime::GetCTimeInstance(timev);
 
@@ -240,7 +232,6 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   if (CCONVERTEPROFILE_DEBUG) {
     StopWatch_Stop("Inserted dates");
   }
-  // CDBDebug("Set time Size = %d",datesToAdd.size());
 
   CDF::Dimension *dimT = new CDF::Dimension();
   dimT->name = "time";
@@ -312,15 +303,10 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
     // Assign X,Y,T dims
     if (pointVar->dimensionlinks.size() >= 2) {
       new2DVar->dimensionlinks.push_back(dimT); // pointVar->dimensionlinks[0]);//time
-      // new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[1]);//range
     }
 
-    // new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[0]);
-    // if(dimT!=NULL)new2DVar->dimensionlinks.push_back(dimT);
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
-
-    // new2DVar->setType(pointVar->getType());
 
     new2DVar->setType(CDF_FLOAT);
 
@@ -353,7 +339,6 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
     }
     new2DVar->setAttributeText("ADAGUC_PROFILE", "true");
 
-    // if(new2DVar->getType()!=CDF_STRING){
     if (new2DVar->getAttributeNE("_FillValue") == NULL) {
       float f = -9999999;
       new2DVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
@@ -440,7 +425,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   /*First read LAT and LON*/
 
   /*Find which index is the station dim*/
-  //   int stationDimIndexInCoord = 0;
   int numStations = 1;
 
   if (CCONVERTEPROFILE_DEBUG) {
@@ -469,9 +453,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     StopWatch_Stop("Lat and lon read");
   }
 
-  //   std::string data = CDF::dump(cdfObject0);
   //
-  //   CDBDebug("%s",data.c_str());
   //
 
   for (size_t d = 0; d < nrDataObjects; d++) {
@@ -504,8 +486,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
       }
       pointVar[d]->freeData();
 
-      //       for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-      //         CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
       //       }
 
       pointVar[d]->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
@@ -549,7 +529,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         pointVar[d]->readData(CDF_STRING, start.data(), count.data(), stride.data(), false);
       }
     }
-    // pointVar[d]->readData(CDF_FLOAT,true);
   }
 
   if (CCONVERTEPROFILE_DEBUG) {
@@ -719,12 +698,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     }
 
     // Read dates for obs
-    //     bool hasTimeValuePerObs = false;
 
-    //     double *obsTimeData = NULL;
     CDF::Variable *timeVarPerObs = cdfObject0->getVariableNE("time");
     if (timeVarPerObs != NULL) {
-      // if(timeVarPerObs->isDimension == true){
       if (timeVarPerObs->dimensionlinks[0]->getSize(), pointVar[0]->dimensionlinks[0]->getSize()) {
         CDF::Attribute *timeStringAttr = timeVarPerObs->getAttributeNE("units");
         if (timeStringAttr != NULL) {
@@ -732,9 +708,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             CTime *obsTime = CTime::GetCTimeInstance(timeVarPerObs);
             if (obsTime != NULL) {
 
-              //                 hasTimeValuePerObs = true;
               timeVarPerObs->readData(CDF_DOUBLE, start.data(), count.data(), stride.data(), true);
-              //                 obsTimeData = (double*)timeVarPerObs->data;
             }
           }
         }
@@ -749,7 +723,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     for (int stationNr = 0; stationNr < numStations; stationNr++) {
       int pPoint = stationNr + 0; // dateDimIndex;//*numStations;
       int pGeo = stationNr;
-      //       //CDBDebug("stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
 
       double lon = (double)lonData[pGeo];
       double lat = (double)latData[pGeo];
@@ -769,7 +742,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
            */
           if (pointVar[d]->currentType == CDF_STRING) {
             float v = NAN;
-            // CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
             dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
             lastPoint = &(dataObjects[d]->points.back());
             const char *key = pointVar[d]->name.c_str();
@@ -788,7 +760,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
           if (pointVar[d]->currentType == CDF_CHAR) {
             float v = NAN;
-            // CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
             dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
             lastPoint = &(dataObjects[d]->points.back());
             const char *key = pointVar[d]->name.c_str();
@@ -808,8 +779,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             float val = ((float *)pointVar[d]->data)[pPoint];
 
             if (val != fill) {
-
-              // CDBDebug("P %d %d %f",dlon,dlat,val);
 
               dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val));
               lastPoint = &(dataObjects[d]->points.back());

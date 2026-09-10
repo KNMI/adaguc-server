@@ -38,7 +38,6 @@ void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
           }
         }
       }
-      // CDBDebug("%s", CDF::dump(cdfObject).c_str());
     }
   } catch (int e) {
   }

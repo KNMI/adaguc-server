@@ -38,7 +38,6 @@
 
 class CDFGeoJSONReader : public CDFReader {
 private:
-  // CCDFWarper warper;
   static CDFType typeConversion(nc_type type);
 
   int status = 0, root_id = 0;
@@ -51,8 +50,6 @@ private:
 public:
   CDFGeoJSONReader();
   ~CDFGeoJSONReader();
-
-  // void enableLonWarp(bool enableLonWarp);
 
   int open(const char *fileName);
 

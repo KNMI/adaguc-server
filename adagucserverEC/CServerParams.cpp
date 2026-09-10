@@ -175,7 +175,6 @@ std::string CServerParams::getOnlineResource() {
     // No Online resource is given.
     const char *pszADAGUCOnlineResource = getenv("ADAGUC_ONLINERESOURCE");
     if (pszADAGUCOnlineResource == NULL) {
-      // CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }
@@ -412,7 +411,6 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
   } else {
-    // cfg=NULL;
     CDBError("Invalid XML file %s", pszConfigFile.c_str());
     return 1;
   }

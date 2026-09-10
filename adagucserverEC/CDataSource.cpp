@@ -264,7 +264,6 @@ std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::
       return getLegendNames(style->Legend);
     }
   }
-  //  CDBError("No legendlist for layer %s",this->layerName.c_str());
   return {};
 }
 
@@ -493,7 +492,6 @@ CStyleConfiguration *CDataSource::getStyle() {
   }
   std::string styleName = "default";
 
-  // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   std::vector<std::string> layerstyles = CT::split(srvParams->Styles, ",");
   int layerIndex = datasourceIndex;
   if (layerstyles.size() != 0) {
@@ -697,7 +695,6 @@ DataObject *CDataSource::getDataObject(int j) {
   }
 
   DataObject *d = &dataObjects.at(j);
-  // CDBDebug("getDataObject %d %d",currentAnimationStep,j);
   return d;
 }
 

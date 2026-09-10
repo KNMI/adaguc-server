@@ -477,7 +477,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
   int x_div = 1;
   int y_div = 1;
   if (warper->isProjectionRequired() == false) {
-    // CDBDebug("No reprojection required");
     tile_height = drawImage->geoParams.height;
     tile_width = drawImage->geoParams.width;
     // When we are drawing just one tile, threading is not needed
@@ -510,7 +509,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
         double checkBBOX[4];
         for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 
-        // CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
         bool hasError = false;
         if (warper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
         if (warper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
@@ -523,7 +521,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
         }
 
         // checkBBOX
-        // CDBDebug("New BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
       }
     }
   }
@@ -595,7 +592,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
       // Make sure that all blocks are processed
       if (j == numThreads - 1) dmf[j].endTile = numberOfTiles;
 
-      // CDBDebug("%d - start %d stop %d",j,dmf[j].startTile,dmf[j].endTile);
       DrawMultipleTileSettings *t_dmf = &dmf[j];
       errcode = pthread_create(&threads[j], NULL, drawTiles, t_dmf);
       if (errcode) {
@@ -723,7 +719,6 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
               val = (T)(-legendOffset);
           }
           int pcolorind = (int)(val * legendScale + legendOffset);
-          // val+=legendOffset;
           if (pcolorind >= 239)
             pcolorind = 239;
           else if (pcolorind <= 0)

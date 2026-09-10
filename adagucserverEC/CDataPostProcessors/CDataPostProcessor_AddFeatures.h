@@ -10,7 +10,6 @@
  */
 class CDPPAddFeatures : public CDPPInterface {
 private:
-  //     float addFeature(float speed);
 public:
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);

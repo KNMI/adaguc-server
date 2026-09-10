@@ -282,7 +282,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       }
       // Draw polygon labels here, so they end up on top
       for (CRectangleText rect: rects) {
-        // drawImage->setDisc(rect.llx, rect.lly, 2, rect.color, rect.color); // dot
         drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
     }

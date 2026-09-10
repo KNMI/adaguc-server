@@ -66,7 +66,6 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // return 0;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("Applying msgcppvisiblemask");
@@ -162,12 +161,10 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
 
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // return 0;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying msgcpp HIWC mask");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    // CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(),&dataSource->getDataObject(0)->cdfVariable->data,l);
 
     short *hiwc = (short *)dataSource->getDataObject(0)->cdfVariable->data;
     float *cph = (float *)dataSource->getDataObject(1)->cdfVariable->data;
@@ -189,7 +186,6 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     }
   }
 
-  // dataSource->eraseDataObject(1);
   return 0;
 }
 
@@ -353,7 +349,6 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     }
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // return 0;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("Applying datamask");

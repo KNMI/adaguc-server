@@ -536,7 +536,6 @@ int CGDALDataWriter::end() {
   /* Output the file to stdout */
 
   if (mimeType.length() < 2) mimeType = ("Content-Type:text/plain");
-  //  printf("%s\n",tmpFileName.c_str());
   int returnCode = 0;
   FILE *fp = fopen(tmpFileName.c_str(), "r");
   if (fp == NULL) {
@@ -547,7 +546,6 @@ int CGDALDataWriter::end() {
     fseek(fp, 0L, SEEK_END);
     size_t endPos = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
-    // CDBDebug("File opened: size = %d",endPos);
     CDBDebug("Now start streaming %lu bytes to the client with mimetype %s", endPos, mimeType.c_str());
     printf("Content-Disposition: attachment; filename=%s\r\n", generateGetCoverageFileName().c_str());
     printf("Content-Description: File Transfer\r\n");
@@ -578,7 +576,6 @@ int CGDALDataWriter::end() {
     delete[] InputProducts;
   }
   InputProducts = NULL;
-  //   if(Times!=NULL)delete[] Times;Times=NULL;
   return returnCode;
 }
 
@@ -622,7 +619,6 @@ std::string CGDALDataWriter::generateGetCoverageFileName() {
   return humanReadableString;
 }
 std::string generateUniqueGetCoverageFileName(CGDALDataWriter *gdalDataWriter) {
-  //  "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
   auto s = gdalDataWriter->srvParam;
   auto d = gdalDataWriter->_dataSource;
   auto variableName = dObjgetVariableName(*d->getDataObject(0));

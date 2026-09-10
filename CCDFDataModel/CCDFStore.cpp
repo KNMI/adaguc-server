@@ -8,7 +8,6 @@ static const bool CCDFSTORE_DEBUG = false;
 std::map<std::string, CDFReader *> CDFStore::cdfReaders = {};
 
 CDFReader *CDFStore::getCDFReader(std::string fileName) {
-  // CDBDebug("CDFReader");
   CDFReader *cdfReader = NULL;
 
   std::map<std::string, CDFReader *>::iterator it = cdfReaders.find(fileName);

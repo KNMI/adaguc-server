@@ -32,8 +32,6 @@ static const bool CCONVERTCURVILINEAR_DEBUG = false;
 int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParams *, bool &hasLatLonBounds) {
   // Check whether this is really a curvilinear file
   try {
-    // cdfObject->getDimension("col");
-    // cdfObject->getDimension("row");
     cdfObject->getDimensionThrows("time");
 
     cdfObject->getVariableThrows("lon");
@@ -133,7 +131,6 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
   if (checkIfIsCurvilinear(cdfObject, srvParams, hasLatLonBounds) != 0) return 1;
   if (cdfObject->getAttributeNE("ADAGUC_HEADER_DONE") != NULL) return 0;
   CDBDebug("Using CConvertCurvilinear.h");
-  // bool hasTimeData = false;
 
   // Is there a time variable
   /* CDF::Variable *origT = cdfObject->getVariableNE("time");
@@ -171,17 +168,10 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
            }catch(int e){}
            double *tdata=((double *)origT->data);
            size_t tlength = origT->getSize();
- //           double firstTimeValue = tdata[0];
- //           size_t tsize = origT->getSize();
- //           if(hastfill==true){
- //             for(size_t j=0;j<tsize;j++){
- //               if(tdata[j]!=tfill){
- //                 firstTimeValue = tdata[j];
  //               }
  //             }
  //           }
  //           #ifdef CCONVERTCURVILINEAR_DEBUG
- //           CDBDebug("firstTimeValue  = %f",firstTimeValue );
  //           #endif
            //Set the time data
            varT->setData(CDF_DOUBLE,tdata,tlength);
@@ -204,14 +194,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
   double *dfBBOX = getBBOXFromLatLonFields(swathMiddleLon, swathMiddleLat);
 
   // BBOX should be converted to projection of dataSource
-  //   std::string proj4String = "+proj=utm +zone=31 +ellps=WGS84 +datum=WGS84 +units=m +no_defs ";
-  //    if(dataSource->nativeProj4.length()>0){
-  //      CImageWarper imageWarper;
-  //      imageWarper.initreproj(proj4String.c_str(),NULL,NULL);
   //
-  //     if(status !=0 ){
-  //       CDBError("Unable to init projection");
-  //       return 1;
   //     }
   //   }
   //
@@ -339,7 +322,6 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     cdfObject->addVariable(new2DVar);
 
     // Assign X,Y,T dims
-    // if(hasTimeData){
     /*CDF::Variable *newTimeVar=cdfObject->getVariableNE("time");
     if(newTimeVar!=NULL){
       new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
@@ -387,11 +369,6 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
  */
 int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mode) {
 
-  //   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
-  //   if(cdfObject->getVariableNE("lat_vertices")!=NULL&&cdfObject->getVariableNE("lon_vertices")!=NULL&&cdfObject->getDimensionNE("vertices")!=NULL){
-  //     try{cdfObject->getDimension("vertices")->name="bounds";}catch(int e){}
-  //     try{cdfObject->getVariable("lat_vertices")->name="lat_bnds";}catch(int e){}
-  //     try{cdfObject->getVariable("lon_vertices")->name="lon_bnds";}catch(int e){}
   //   }
   bool hasLatLonBounds = false;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
@@ -624,7 +601,6 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
      * drawing the corners of the quads..
      */
 
-    // drawBilinear=true;
     // Bilinear rendering
     if (drawBilinear) {
 
@@ -638,9 +614,6 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
         CDBError("lat or lon variables not found");
         return 1;
       }
-
-      //       int numRows = cdfObject->getDimension("row")->getSize();
-      //       int numCols = cdfObject->getDimension("col")->getSize();
 
       int numRows = swathMiddleLon->dimensionlinks[0]->getSize();
       int numCols = swathMiddleLon->dimensionlinks[1]->getSize();
@@ -666,7 +639,6 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
         for (int y = 0; y < numRows - 1; y++) {
           for (int x = 0; x < numCols - 1; x++) {
             size_t pSwath = x + y * numCols;
-            // CDBDebug("%d %d %d",x,y,pSwath);
             double lons[4], lats[4];
             float vals[4];
             lons[0] = (float)lonData[pSwath];
@@ -731,9 +703,6 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
               int dlons[4], dlats[4];
               bool projectionIsOk = true;
               for (int j = 0; j < 4; j++) {
-                //               if(tileIsOverDateBorder){
-                //                 lons[j]-=360;
-                //                 if(lons[j]<-280)lons[j]+=360;
                 //               }
                 //
                 if (projectionRequired) {
@@ -771,8 +740,6 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
         CDBDebug("NumRows %d, NumCols %d", numRows, numCols);
       }
       int numTiles = numRows * numCols;
-
-      // int numTiles =     cdfObject->getDimension("col")->getSize()*cdfObject->getDimension("row")->getSize();
 
       if (CCONVERTCURVILINEAR_DEBUG) {
         CDBDebug("There are %d tiles", numTiles);

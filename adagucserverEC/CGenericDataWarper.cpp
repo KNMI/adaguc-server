@@ -117,7 +117,6 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
     CDBDebug("Unable to do pj_transform");
   }
 
-  // CDBDebug("destGeoParams.bbox.bottom %f %f", destGeoParams.bbox.bottom, destGeoParams.bbox.top);
   for (int y = 0; y < dataHeight + 1; y++) {
     for (int x = 0; x < dataWidth + 1; x++) {
       size_t p = x + y * (dataWidth + 1);

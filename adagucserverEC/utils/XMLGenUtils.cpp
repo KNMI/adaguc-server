@@ -137,7 +137,6 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
       if (standardNameAttr != nullptr) {
         layerMetadataVariable.standard_name = standardNameAttr->toString();
-        // CDBDebug("standard_name for %s: %s", d.cdfVariable->name.c_str(), standardNameAttr->toString().c_str());
       }
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
@@ -151,13 +150,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
   }
 
-  // CDBDebug("getProjectionInformationForLayer");
   if (getProjectionInformationForLayer(metadataLayer) != 0) {
     metadataLayer->hasError = 1;
     return 1;
   }
 
-  // CDBDebug("getStylesForLayer");
   if (getStylesForLayer(metadataLayer) != 0) {
     metadataLayer->hasError = 1;
     return 1;
@@ -223,14 +220,12 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   LayerMetadataDim layerMetadataRefTimeDim = lmDimRefTimeIt[0];
 
   std::string isoDurationString = CT::substring(layerCfgTimeDim->attr.defaultV, hasIsoDuration + 1, -1);
-  // CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
   try {
     CTime *time = CTime::GetCTimeEpochInstance();
     CTime::Date refTimeDate = time->freeDateStringToDate(layerMetadataRefTimeDim.defaultValue.c_str());
     CTime::Date refTimeWithAddedPeriod = time->addPeriodToDate(refTimeDate, isoDurationString);
     // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
     lmDimTimeIt->defaultValue = time->dateToISOString(refTimeWithAddedPeriod);
-    // CDBDebug("New defaultvalue for time is [%s]", lmDimTimeIt->defaultValue.c_str());
     return 0; // OK!
   } catch (int e) {
     CDBWarning("Unable to parse given duration in default value of time dimension [%d]", e);
@@ -335,8 +330,6 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
 LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap) {
   auto srvParam = dataSource->srvParams;
 
-  // CDBDebug("%s %s", cfgLayerDim->attr.name.c_str(), CT::join(valuesFromDimMap).c_str());
-
   LayerMetadataDim dim;
   dim.hidden = false;
   dim.type = "dimtype_none";
@@ -383,7 +376,6 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   dim.cdfName = (cfgLayerDim->attr.name);
   dim.units = (dimUnits);
   dim.hasMultipleValues = false;
-  // cfgLayerDim->attr.defaultV.c_str()
   const char *pszDefaultV = cfgLayerDim->attr.defaultV.c_str();
   std::string defaultV;
   if (pszDefaultV != NULL) defaultV = pszDefaultV;

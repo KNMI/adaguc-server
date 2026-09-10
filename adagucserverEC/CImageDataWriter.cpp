@@ -90,11 +90,9 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(std::string key, C
     double x2 = dataSource->dfBBOX[2];
     if (y2 < y1) {
       if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-        // projInvertedFirst = true;
         double checkBBOX[4];
         for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 
-        // CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
         bool hasError = false;
         if (imageWarper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
         if (imageWarper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
@@ -296,7 +294,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
       drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-        // CDBDebug("drawImage.create685Palette();");
         writerStatus = initialized;
         drawImage.createImage(40, 20);
         drawImage.create685Palette();
@@ -335,8 +332,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
         std::string fontSize = srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
         drawImage.setTTFFontSize(std::stod(fontSize));
       }
-      // CDBError("Font %s",srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
-      // return 1;
 
     } else {
       CDBError("In <Font>, attribute \"location\" missing");
@@ -346,20 +341,17 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
   // Set background opacity, if applicable
   if (srvParam->wmsExtensions.opacity < 100) {
-    // CDBDebug("srvParam->wmsExtensions.opacity %d",srvParam->wmsExtensions.opacity);
     drawImage.setBackGroundAlpha((unsigned char)(float(srvParam->wmsExtensions.opacity) * 2.55));
   }
 
   writerStatus = initialized;
 
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
-    //  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
     status = drawImage.createImage(srvParam->geoParams);
 
     if (status != 0) return 1;
   }
   if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-    // drawImage.setTrueColor(false);
 
     int w = LEGEND_WIDTH;
     int h = LEGEND_HEIGHT;
@@ -375,7 +367,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     if (status != 0) return 1;
   }
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO || srvParam->requestType == REQUEST_WMS_GETHISTOGRAM) {
-    // status = drawImage.createImage(2,2);
     drawImage.geoParams = srvParam->geoParams;
 
     if (CIMAGEDATAWRITER_DEBUG) {
@@ -519,7 +510,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
       }
     }
-    // CDBDebug("gfi_openall: %d %d",dataSource->cfgLayer->FilePath.size(),openAll);
 
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       openAll = true;
@@ -540,7 +530,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         return status;
       }
     } else {
-      // return 1;
       CDBDebug("Num time steps for dataSource %d", dataSource->getNumTimeSteps());
 
       std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
@@ -562,16 +551,13 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
 
         CDataReader reader;
-        // if(!headerIsAvailable)
         {
           if (openAll) {
-            // CDBDebug("OPEN ALL");
             if (CIMAGEDATAWRITER_DEBUG) {
               CDBDebug("OPEN ALL");
             }
             status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
           } else {
-            // CDBDebug("OPEN HEADER");
             if (CIMAGEDATAWRITER_DEBUG) {
               CDBDebug("OPEN Header %d", headerIsAvailable);
             }
@@ -684,7 +670,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             element.value = "nodata";
             element.cdfDims = *dataSource->getCDFDims();
 
-            bool hasData = false;
             if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight) {
               size_t ptr = 0;
               if (openAll) {
@@ -713,7 +698,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   }
                 }
                 dimensionKeyValueMap[dimkey.c_str()] = true;
-                hasData = true;
 
                 if (dataSource->getDataObject(o)->features.empty() == false) {
                   int closestIndex = pixel;
@@ -740,7 +724,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                       warper.closereproj();
 
                       if (pixelDistance > 30) {
-                        hasData = false;
                         element.value = "nodata";
                         return 0;
                       };
@@ -770,13 +753,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
                 element.value = "nodata";
               }
-            } else {
-
-              if (hasData == false && dimensionKeyValueMap.find(dimkey.c_str())->second == true) {
-                //  getFeatureInfoResult.elements.pop_back();
-              }
             }
-            // CDBDebug("Elemeent %s", getFeatureInfoResult.elements.back().value.c_str());
             getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30);
           }
         }
@@ -1195,7 +1172,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
 
   traceTimingsSpanEnd(TraceTimingType::WARPIMAGERENDER);
-  // imageWarper.closereproj();
   reader.close();
 
   return 0;
@@ -1254,7 +1230,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         return status;
       }
     }
-    // if(j==dataSources.size()-1)
     {
       if (status == 0) {
 
@@ -1269,7 +1244,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             // Determine ImageText based on configured netcdf attribute
             const char *attrToSearch = dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
             if (attrToSearch != NULL) {
-              // CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try {
                 CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeThrows(attrToSearch);
                 if (attr->length > 0) {
@@ -1285,7 +1259,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (imageText.length() > 0) {
             size_t len = imageText.length();
             double scaling = dataSource->getScaling();
-            // CDBDebug("Watermark: %s",imageText.c_str());
             float fontSize = 10;
             if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
               fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
@@ -1318,7 +1291,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       bool useProjection = true;
 
       if (srvParam->geoParams.crs == ("EPSG:4326")) {
-        // CDBDebug("Not using projection");
         useProjection = false;
       }
       CImageWarper imageWarper;
@@ -1884,7 +1856,6 @@ int CImageDataWriter::end() {
       rootElement.setName("root");
 
       for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-        // CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
         GetFeatureInfoResult *g = &(getFeatureInfoResultList[j]);
 
         // Find out number of different features in getFeatureInfoResultList[j]
@@ -1913,7 +1884,6 @@ int CImageDataWriter::end() {
 
         int nrDims = e->cdfDims.size();
         std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
-        // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;
         for (int j = 0; j < nrDims; j++) {
@@ -2001,7 +1971,6 @@ int CImageDataWriter::end() {
 #endif
 
   // Static image
-  // CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
 
   std::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
@@ -2049,7 +2018,6 @@ int CImageDataWriter::end() {
     CDBDebug("Creating 32 bit webp quality = %d", webPQuality);
     status = drawImage.printImageWebP32(webPQuality);
   } else {
-    // CDBDebug("LegendGraphic PNG");
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   }

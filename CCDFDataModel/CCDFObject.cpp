@@ -54,9 +54,7 @@ void CDFObject::clear() {
 }
 
 int CDFObject::open(const char *fileName) {
-  // CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
   if (currentFile == fileName) {
-    // CDBDebug("OK: Current file is already open");
     return 0;
   }
   CDFReader *r = (CDFReader *)reader;
@@ -77,7 +75,6 @@ int CDFObject::close() {
     CDBError("No reader attached");
     return 1;
   }
-  // CDBDebug("Closing reader");
   CDFReader *r = (CDFReader *)reader;
   return r->close();
   reader = NULL;
@@ -531,9 +528,7 @@ int CDFObject::aggregateDim(CDFObject *sourceCDFObject, const char *dimName) {
   CDF::Variable *srcVar;
   CDF::Variable *destVar;
   for (size_t v = 0; v < sourceCDFObject->variables.size(); v++) {
-    // try{srcVar=sourceCDFObject->getVariable("ctt");}catch(int e){CDBError("Variable not found.");throw(__LINE__);}
     srcVar = sourceCDFObject->variables[v];
-    // if(getVariableNE(srcVar->name.c_str())!=NULL)
     {
       try {
         try {

@@ -72,7 +72,6 @@ private:
   FT_Face face;
   unsigned char r, g, b;
   float a;
-  //   void _plot(int x, int y, float alpha);
   void _swap(float &x, float &y);
   void _swap(int &x, int &y);
   static const cairo_format_t FORMAT = CAIRO_FORMAT_ARGB32;

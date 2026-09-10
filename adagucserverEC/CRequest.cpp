@@ -422,7 +422,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           std::string timeValue;
           std::string netcdfTimeDimName;
           for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-            // CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j].name.c_str(), dataSource->requiredDims[j].value.c_str());
             if (dataSource->requiredDims[j].name == "time") {
               timeValue = dataSource->requiredDims[j].value;
               netcdfTimeDimName = dataSource->requiredDims[j].netCDFDimName;
@@ -430,7 +429,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             }
           }
           if (timeValue.empty()) {
-            // CDBDebug("Time value is not available, getting max reference_time");
             maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), tableName.c_str());
           } else {
             // TIME is set! Get
@@ -532,13 +530,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
   for (auto requiredDim: dataSource->requiredDims) {
-    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str(), requiredDim.hasFixedValue);
     if (!requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }
   }
 
-  // CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
   if (allNonFixedDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
@@ -569,7 +565,6 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
       int maxQueryResultLimit = getMaxQueryLimit(*dataSource);
 
-      // CDBDebug("maxQueryResultLimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
@@ -595,7 +590,6 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     }
 
     for (auto &record: store->records) {
-      // CDBDebug("Addstep");
       dataSource->addStep(record.values.at(0));
       if (CREQUEST_DEBUG) {
         CDBDebug("Step: [%s]", record.values.at(0).c_str());
@@ -866,7 +860,6 @@ int CRequest::process_querystring() {
   int dFound_CRS = 0;
   int dFound_RESPONSE_CRS = 0;
 
-  // int dFound_Debug=0;
   int dFound_Request = 0;
   int dFound_Service = 0;
   int dFound_Format = 0;
@@ -883,7 +876,6 @@ int CRequest::process_querystring() {
   int dFound_JSONP = 0;
 
   int dFound_autoResourceLocation = 0;
-  // int dFound_OpenDAPVariable=0;
 
   const char *pszQueryString = getenv("QUERY_STRING");
 
@@ -898,7 +890,6 @@ int CRequest::process_querystring() {
       }
       const char *SCRIPT_NAME = getenv("SCRIPT_NAME");
       const char *REQUEST_URI = getenv("REQUEST_URI");
-      // CDBDebug("SCRIPT_NAME [%s], REQUEST_URI [%s]",SCRIPT_NAME,REQUEST_URI);
       if (SCRIPT_NAME != NULL && REQUEST_URI != NULL) {
         size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
         size_t REQUEST_URI_length = strlen(REQUEST_URI);
@@ -928,7 +919,6 @@ int CRequest::process_querystring() {
   }
 
   queryString = CT::decodeURL(queryString);
-  // CDBDebug("QueryString: \"%s\"", queryString.c_str());
   auto parameters = CT::split(queryString, "&");
 
   if (CREQUEST_DEBUG) {
@@ -1069,7 +1059,6 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase == "SRS") {
         if (uriValue.length() > 2) {
           srvParam->geoParams.crs = (uriValue);
-          // srvParam->geoParams.CRS.decodeURLSelf();
           dFound_SRS = 1;
         }
       }
@@ -1239,7 +1228,6 @@ int CRequest::process_querystring() {
         if (uriValue == "ON") {
           printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
           printf("Debug mode:ON\nDebug messages:<br>\r\n\n");
-          // dFound_Debug=1;
         }
       }
 
@@ -1492,7 +1480,6 @@ int CRequest::process_querystring() {
 
   // WMS Service
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
-    // CDBDebug("Entering WMS service");
     if (srvParam->requestType == REQUEST_WMS_GETREFERENCETIMES) {
       int status = process_wms_getreferencetimes_request();
       if (status != 0) {
@@ -1522,8 +1509,6 @@ int CRequest::process_querystring() {
         }
 
         // Set format
-        // CDBDebug("FORMAT: %s",srvParam->Format.c_str());
-        // srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
         std::string outputFormat = srvParam->Format;
         outputFormat = CT::toLowerCase(outputFormat);
         if (CT::indexOf(outputFormat, "webp") > 0) {
@@ -1563,8 +1548,7 @@ int CRequest::process_querystring() {
       // Check if styles is defined for WMS 1.1.1
       if (dFound_Styles == 0 && srvParam->requestType == REQUEST_WMS_GETMAP) {
         if (srvParam->OGCVersion == WMS_VERSION_1_1_1) {
-          // CDBError("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this! Disabled this
-          // check for the moment.
+          // TODO Google Earth does not provide this! Disabled this check for the moment.
         }
       }
 
@@ -1595,8 +1579,6 @@ int CRequest::process_querystring() {
          * TODO enable strict WMS. If bbox is not given, ADAGUC calculates the best fit bbox itself, handy for preview
          * images!!!
          */
-        //        CDBError("ADAGUC Server: Parameter BBOX missing");
-        //        dErrorOccured=1;
       }
 
       if (dFound_Width == 0 && dFound_Height == 0) {
@@ -2001,7 +1983,6 @@ int CRequest::updatedb(std::string tailPath, std::string layerPathToScan, int sc
   return errorHasOccured > 0;
 }
 
-// pthread_mutex_t CImageDataWriter_addData_lock;
 void *CImageDataWriter_addData(void *arg) {
   CImageDataWriter_addData_args *imgdwArg = (CImageDataWriter_addData_args *)arg;
   imgdwArg->status = imgdwArg->imageDataWriter->addData(imgdwArg->dataSources);
@@ -2072,7 +2053,6 @@ int CRequest::determineTypesForDataSources() {
 
         CDBDebug("Addstep");
         dataSources[j]->addStep(fileList[0]);
-        // dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }
 
@@ -2080,7 +2060,6 @@ int CRequest::determineTypesForDataSources() {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       CDBDebug("Addstep");
       dataSources[j]->addStep("");
-      // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
@@ -2127,7 +2106,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
 
         /* Configure the Dimensions object if not set. */
         if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
-          // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
           if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
             CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
           }
@@ -2154,7 +2132,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
           add = false;
         }
 
-        // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
         if (add) {
           if (replaceAllDataSource) {
             for (size_t j = 0; j < dataSources.size(); j++) {
@@ -2201,7 +2178,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
     int dataSourceToUse = 0;
     for (size_t d = 0; d < dataSources.size() && imageDataWriterIsInitialized == false; d++) {
       if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule) {
-        // CDBDebug("INIT");
         status = imageDataWriter.init(srvParam, dataSources[d], dataSources[d]->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
         imageDataWriterIsInitialized = true;
@@ -2228,7 +2204,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         } else {
           useThreading = true;
         }
-        // measurePerformance = true;
       }
     }
     if (measurePerformance) {
@@ -2354,7 +2329,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
     double scaling = dataSources[dataSourceToUse]->getScaling();
     int textY = (int)(scaling * 6);
-    // int prevTextY=0;
     if (srvParam->mapTitle.length() > 0) {
       if (srvParam->cfg->WMS[0]->TitleFont.size() > 0) {
         float fontSize = atof(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
@@ -2363,17 +2337,14 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         textY += int(fontSize);
         textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapTitle.c_str(),
                                                         CColor(0, 0, 0, 255), textBGColor);
-        // textY+=12;
       }
     }
     if (srvParam->mapSubTitle.length() > 0) {
       if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
         float fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
         fontSize = fontSize * scaling;
-        // textY+=int(fontSize)/5;
         textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapSubTitle.c_str(),
                                                         CColor(0, 0, 0, 255), textBGColor);
-        // textY+=8;
       }
     }
 
@@ -2400,7 +2371,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       /* List of specified legends */
       std::vector<std::string> legendLayerList = CT::split(srvParam->showLegendInImage, ",");
 
-      //          int numberOfLegendsDrawn = 0;
       int legendOffsetX = 0;
       for (size_t d = 0; d < dataSources.size(); d++) {
         if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule) {
@@ -2435,13 +2405,9 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
             status = imageDataWriter.createLegend(dataSources[d], &legendImage);
             if (status != 0) throw(__LINE__);
-            // legendImage.rectangle(0,0,10000,10000,240);
             int posX = imageDataWriter.drawImage.geoParams.width - (legendImage.geoParams.width + padding) - legendOffsetX;
-            // int posY=imageDataWriter.drawImage.Geo.dHeight-(legendImage.Geo.dHeight+padding);
-            // int posX=padding*scaling;//imageDataWriter.drawImage.Geo.dWidth-(scaleBarImage.Geo->dWidth+padding);
             int posY = imageDataWriter.drawImage.geoParams.height - (legendImage.geoParams.height + padding * scaling);
             imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
-            //                numberOfLegendsDrawn++;
             legendOffsetX += legendImage.geoParams.width + padding;
           }
         }
@@ -2456,22 +2422,16 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       CDrawImage scaleBarImage;
 
       imageDataWriter.drawImage.enableTransparency(true);
-      // scaleBarImage.setBGColor(1,0,0);
 
       scaleBarImage.createImage(&imageDataWriter.drawImage, 200 * scaling, 30 * scaling);
 
-      // scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
       status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->geoParams, &scaleBarImage, scaling);
       if (status != 0) throw(__LINE__);
       int posX = padding * scaling; // imageDataWriter.drawImage.Geo.dWidth-(scaleBarImage.Geo->dWidth+padding);
       int posY = imageDataWriter.drawImage.geoParams.height - (scaleBarImage.geoParams.height + padding * scaling);
-      // posY-=50;
-      // imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
       imageDataWriter.drawImage.draw(posX, posY, 0, 0, &scaleBarImage);
     }
 
-    if (srvParam->showNorthArrow) {
-    }
     status = imageDataWriter.end();
     if (status != 0) throw(__LINE__);
     fclose(stdout);

@@ -152,10 +152,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
     // Loop through the groups
     int currentGroupDepth = 0;
     for (size_t groupIndex = 0; groupIndex < groupKeys.size(); groupIndex++) {
-      // CDBError("group %s",groupKeys[groupIndex].c_str());
       int groupDepth = 0;
 
-      // if(groupKeys[groupIndex].size()>0)
       {
         std::string key = groupKeys[groupIndex];
         auto subGroups = CT::split(key, "/");
@@ -166,30 +164,21 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
           auto prevSubGroups = CT::split(prevKey, "/");
 
           for (size_t j = subGroups.size(); j < prevSubGroups.size(); j++) {
-            // CDBError("<");
             currentGroupDepth--;
             XMLDoc += "</Layer>\n";
           }
 
-          // CDBError("subGroups.size() %d",subGroups.size());
-          // CDBError("prevSubGroups.size() %d",prevSubGroups.size());
           int removeGroups = 0;
           for (size_t j = 0; j < subGroups.size() && j < prevSubGroups.size(); j++) {
-            // CDBError("CC %d",j);
             if (subGroups[j] != prevSubGroups[j] || removeGroups == 1) {
               removeGroups = 1;
-              // CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
-              // CDBError("<");
               XMLDoc += "</Layer>\n";
               currentGroupDepth--;
-              // break;
             }
           }
-          // CDBDebug("!!! %d",currentGroupDepth);
           for (size_t j = currentGroupDepth; j < subGroups.size(); j++) {
             XMLDoc += "<Layer>\n";
             XMLDoc += "<Title>";
-            // CDBError("> %s",subGroups[j].c_str());
             XMLDoc += subGroups[j].c_str();
             XMLDoc += "</Title>\n";
           }
@@ -198,19 +187,16 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
           for (size_t j = 0; j < subGroups.size(); j++) {
             XMLDoc += "<Layer>\n";
             XMLDoc += "<Title>";
-            // CDBError("> %s grpupindex %d",subGroups[j].c_str(),groupIndex);
             XMLDoc += subGroups[j].c_str();
             XMLDoc += "</Title>\n";
           }
         }
         currentGroupDepth = groupDepth;
-        // CDBDebug("currentGroupDepth = %d",currentGroupDepth);
       }
 
       for (size_t lnr = 0; lnr < metadataLayerList.size(); lnr++) {
         MetadataLayer *layer = metadataLayerList[lnr];
         if (layer->layerMetadata.wmsgroup == groupKeys[groupIndex]) {
-          // CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if (layer->hasError != 0) {
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }
@@ -282,7 +268,6 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
       }
     }
 
-    // CDBDebug("** %d",currentGroupDepth);
     for (int j = 0; j < currentGroupDepth; j++) {
       XMLDoc += "</Layer>\n";
     }
@@ -297,7 +282,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   XMLDoc = (WMS_1_3_0_GetCapabilities_Header);
   CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
-  // CT::replaceSelf(XMLDoc, "[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEONLINERESOURCE]", onlineResource.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
 
@@ -358,7 +342,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
       CT::printfconcat(XMLDoc, "<inspire_vs:ExtendedCapabilities %s>\n", inspirexsi.c_str());
       XMLDoc += "  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n";
       CT::printfconcat(XMLDoc, "    <inspire_common:URL>%s</inspire_common:URL>\n", viewServiceCSWURL.c_str());
-      // XMLDoc += "    <inspire_common:MediaType>application/vnd.ogc.csw.GetRecordByIdResponse_xml</inspire_common:MediaType>\n";
       XMLDoc += "    <inspire_common:MediaType>application/vnd.iso.19139+xml</inspire_common:MediaType>\n";
 
       XMLDoc += "  </inspire_common:MetadataUrl>\n";
@@ -516,10 +499,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
       if (CXMLGEN_DEBUG) {
         CDBDebug("group %s", groupKeys[groupIndex].c_str());
       }
-      // CDBError("group %s",groupKeys[groupIndex].c_str());
       int groupDepth = 0;
 
-      // if(groupKeys[groupIndex].size()>0)
       {
         std::string key = groupKeys[groupIndex];
         auto subGroups = CT::split(key, "/");
@@ -530,30 +511,21 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
           auto prevSubGroups = CT::split(prevKey, "/");
 
           for (size_t j = subGroups.size(); j < prevSubGroups.size(); j++) {
-            // CDBError("<");
             currentGroupDepth--;
             XMLDoc += "</Layer>\n";
           }
 
-          // CDBError("subGroups.size() %d",subGroups.size());
-          // CDBError("prevSubGroups.size() %d",prevSubGroups.size());
           int removeGroups = 0;
           for (size_t j = 0; j < subGroups.size() && j < prevSubGroups.size(); j++) {
-            // CDBError("CC %d",j);
             if (subGroups[j] != prevSubGroups[j] || removeGroups == 1) {
               removeGroups = 1;
-              // CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
-              // CDBError("<");
               XMLDoc += "</Layer>\n";
               currentGroupDepth--;
-              // break;
             }
           }
-          // CDBDebug("!!! %d",currentGroupDepth);
           for (size_t j = currentGroupDepth; j < subGroups.size(); j++) {
             XMLDoc += "<Layer>\n";
             XMLDoc += "<Title>";
-            // CDBError("> %s",subGroups[j].c_str());
             XMLDoc += subGroups[j].c_str();
             XMLDoc += "</Title>\n";
           }
@@ -562,13 +534,11 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
           for (size_t j = 0; j < subGroups.size(); j++) {
             XMLDoc += "<Layer>\n";
             XMLDoc += "<Title>";
-            // CDBError("> %s grpupindex %d",subGroups[j].c_str(),groupIndex);
             XMLDoc += subGroups[j].c_str();
             XMLDoc += "</Title>\n";
           }
         }
         currentGroupDepth = groupDepth;
-        // CDBDebug("currentGroupDepth = %d",currentGroupDepth);
       }
 
       for (size_t lnr = 0; lnr < metadataLayerList.size(); lnr++) {
@@ -607,7 +577,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
               XMLDoc += "</KeywordList>\n";
             }
 #endif
-            // XMLDoc += "<Keyword>"; XMLDoc += layer->abstract;XMLDoc += "</Keyword>\n";
 
             /*if(layer->layerMetadata.cfgLayer->MetadataURL.size()>0){
                 XMLDoc += "  <KeywordList><Keyword>precipitation_amount</Keyword></KeywordList>\n";
@@ -638,11 +607,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
               XMLDoc += "     <Format>application/gml+xml; version=3.2</Format>\n";
               CT::printfconcat(XMLDoc, "     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>", layerMetaDataURL.c_str());
               XMLDoc += "  </MetadataURL>\n";
-            } else if (inspireMetadataIsAvailable) {
-              //               XMLDoc += "  <MetadataURL type=\"ISO19115:2005\">\n";
-              //               XMLDoc += "     <Format>application/gml+xml; version=3.2</Format>\n";
-              //               CT::printfconcat(XMLDoc, "     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetCSWURL.c_str());
-              //               XMLDoc += "  </MetadataURL>\n";
             }
 
             // Dims
@@ -675,7 +639,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
                 }
               }
               CT::printfconcat(XMLDoc, " <AuthorityURL name=\"%s\"><OnlineResource xlink:href=\"%s\" /></AuthorityURL>\n", authorityName.c_str(), authorityOnlineResource.c_str());
-              // CT::printfconcat(XMLDoc, " <Identifier authority=\"%s\">%s</Identifier>\n",identifierAuthority.c_str(),identifierId.c_str());
               CT::printfconcat(XMLDoc, " <Identifier authority=\"%s\">%s</Identifier>\n", identifierAuthority.c_str(), layer->layerMetadata.name.c_str());
             }
             // Styles
@@ -705,7 +668,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
       }
     }
 
-    // CDBDebug("** %d",currentGroupDepth);
     for (int j = 0; j < currentGroupDepth; j++) {
       XMLDoc += "</Layer>\n";
     }
@@ -874,7 +836,6 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
             int timeDimIndex = -1;
             int d = 0;
             for (auto dim: layer->layerMetadata.dimList) {
-              // if(dim.hasMultipleValues==0){
               if (dim.units == "ISO8601") {
                 timeDimIndex = d;
               }
@@ -882,7 +843,6 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
             }
 
             if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
-              // XMLDoc->print("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n");
               std::string layerTitle = layer->layerMetadata.title;
               layerTitle = CT::encodeXml(layerTitle);
               CT::printfconcat(XMLDoc,
@@ -917,7 +877,6 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
               for (auto proj: layer->layerMetadata.projectionList) {
 
                 std::string encodedProjString(proj.name.c_str());
-                // encodedProjString.encodeURLSelf();
 
                 CT::printfconcat(XMLDoc,
                                  "        <gml:Envelope srsName=\"%s\">\n"

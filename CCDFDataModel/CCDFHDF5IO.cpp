@@ -79,7 +79,6 @@ CDFHDF5Reader::~CDFHDF5Reader() {
 #endif
   close();
   /* Restore previous error handler */
-  // H5Eset_auto2(error_stack, old_func, old_client_data);
 }
 
 CDFType CDFHDF5Reader::typeConversion(hid_t type) {
@@ -103,7 +102,6 @@ CDFType CDFHDF5Reader::typeConversion(hid_t type) {
     CDBWarning("Warning: HDF5 type H5T_NATIVE_ULLONG is not supported");
   }
 
-  // CDBWarning("Warning: unknown HDF5 type (%d)",type);
   return CDF_NONE;
 }
 
@@ -146,7 +144,6 @@ CDF::Dimension *CDFHDF5Reader::makeDimension(const std::string &name, size_t len
   CDF::Dimension *dim = NULL;
   for (size_t j = 0; j < cdfObject->dimensions.size(); j++) {
     if (cdfObject->dimensions[j]->length == len) {
-      // dim_1 == dim_1
       if (name[4] == cdfObject->dimensions[j]->name.c_str()[4]) {
         dim = cdfObject->dimensions[j];
         return dim;
@@ -184,7 +181,6 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
 
   H5G_info_t group_info;
   H5Gget_info(groupID, &group_info);
-  // printf("%d\n",(int)group_info.nlinks);
   char name[256];
 
   for (int j = 0; j < (int)group_info.nlinks; j++) {
@@ -199,7 +195,6 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
     if (type == H5I_GROUP) {
 
       hid_t newGroupID = H5Gopen2(groupID, name, H5P_DEFAULT);
-      // CDBDebug("Opened group %s with id %d from %d",name,newGroupID,groupID);
 
       if (newGroupID > 0) {
         std::string temp = groupName.empty() ? std::string(name) : CT::printf("%s%s%s", groupName.c_str(), CCDFHDF5IO_GROUPSEPARATOR, name);
@@ -216,10 +211,8 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
         readAttributes(var->attributes, newGroupID);
         cdfObject->variables.push_back(var);
         list(newGroupID, temp);
-        // CDBDebug("Closing %d",newGroupID);
         H5Gclose(newGroupID);
       }
-      // readAttributes(cdfObject->attributes,newGroupID);
     }
 
     if (type == H5I_DATASET) {
@@ -239,8 +232,6 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
 
             int cdfType = typeConversion(datasetNativeType);
             if (cdfType != CDF_NONE) {
-              // CDBError("Unknown type for dataset %s",varName);
-              // return;
               //}
 #ifdef CCDFHDF5IO_DEBUG
               CDBDebug("DataType is %s", CDF::getCDFDataTypeName(cdfType).c_str());
@@ -292,15 +283,12 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
                 dim = makeDimension(dimname, dims_out[d]);
                 var->dimensionlinks.push_back(dim);
               }
-              // printf("\n");
 
               H5Sclose(HDF5_dataspace);
               H5Tclose(datasetNativeType);
             } else {
-              // CDBWarning("Unknown type for dataset %s",varName);
             }
           }
-          // H5Tclose(datasetType);
         }
 
         H5Dclose(datasetID);
@@ -327,7 +315,6 @@ int CDFHDF5Reader::open(const char *fileName) {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("Opening group \"%s\"", CCDFHDF5IO_GROUPSEPARATOR);
 #endif
-  // hid_t HDF5_group = H5Gopen(H5F_file,"."); API V1.6
   hid_t HDF5_group = H5Gopen2(H5F_file, ".", H5P_DEFAULT);
   if (HDF5_group < 0) {
     CDBError("could not open HDF5 group");
@@ -376,8 +363,6 @@ int CDFHDF5Reader::close() {
 
 hid_t CDFHDF5Reader::openH5GroupByName(std::string &varNameOut, const std::string &variableGroupName) {
   if (fileIsOpen == false) {
-    //        CDBError("openH5GroupByName: File is not open");
-    //      CDBDebug("Trying to open [%s]",fileName.c_str());
     if (open(fileName.c_str()) != 0) return -1;
   }
   hid_t HDF5_group = H5F_file;
@@ -389,7 +374,6 @@ hid_t CDFHDF5Reader::openH5GroupByName(std::string &varNameOut, const std::strin
   for (size_t j = 0; j < paths.size() - 1; j++) {
 
     newGroupID = H5Gopen2(HDF5_group, paths[j].c_str(), H5P_DEFAULT);
-    // CDBDebug("Opened group %s with id %d from %d",paths[j].c_str(),newGroupID,HDF5_group);
     if (newGroupID < 0) {
       CDBError("group %s for variable %s not found", paths[j].c_str(), variableGroupName.c_str());
       return -1;
@@ -404,7 +388,6 @@ hid_t CDFHDF5Reader::openH5GroupByName(std::string &varNameOut, const std::strin
 }
 void CDFHDF5Reader::closeH5GroupByName(const char *variableGroupName) {
   ignoreParameter(variableGroupName);
-  // CDBDebug("Warning %s variableGroupName not used", variableGroupName);
   while (opengroups.size() > 0) {
 #ifdef CCDFHDF5IO_DEBUG
     CDBDebug("closing with id %d", opengroups.back());
@@ -495,9 +478,7 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
 int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
   // All ready in memory
   int status = 0;
-  //      CDBDebug(" ***** %s size=%d",var->name.c_str(),var->size());
   if (var->data != NULL) {
-    // CDBWarning("Not reading any data because it is already in memory");
     return 0;
   }
 
@@ -525,7 +506,6 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
         mem_count[d] = dims_out[d];
         totalVariableSize *= mem_count[d];
         ;
-        // CDBDebug("dim size fpr %s = %d",varName,mem_count[d]);
       }
 
       var->setSize(totalVariableSize);
@@ -535,7 +515,6 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
       hid_t HDF5_memspace = H5Screate_simple(2, mem_count.data(), NULL);
       H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
       H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
-      // hid_t datasetType=H5Dget_type(datasetID);
       hid_t datasetType = cdfTypeToHDFType(type);
       // datasetType
       H5Dread(datasetID, datasetType, HDF5_memspace, HDF5_dataspace, H5P_DEFAULT, var->data);
@@ -551,7 +530,6 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
           }
       }*/
 
-      // H5Tclose(datasetType);
       H5Sclose(HDF5_memspace);
       H5Sclose(HDF5_dataspace);
       H5Dclose(datasetID);
@@ -823,7 +801,6 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
     try {
       if (CT::toLowerCase(cdfObject->variables[j]->getAttributeThrows("CLASS")->toString()) == "data") {
         cdfObject->variables[j]->removeAttribute("ADAGUC_SKIP");
-        // CDBDebug("Variable %s is an IMAGE",cdfObject->variables[j]->name.c_str());
         if (dimsDone == false) {
 
           std::string timeString = "";
@@ -852,12 +829,6 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
           float fYGEO_LOW_RIGHT;
           fYGEO_LOW_RIGHT = 3469500;
 
-          //           CDBDebug("SENSING_START_TIME = %s",timeString.c_str());
-          //           CDBDebug("PROJECTION = %s",projectionString.c_str());
-          //           CDBDebug("XGEO_UP_LEFT = %f",fXGEO_UP_LEFT);
-          //           CDBDebug("YGEO_UP_LEFT = %f",fYGEO_UP_LEFT);
-          //           CDBDebug("XGEO_LOW_RIGHT = %f",fXGEO_LOW_RIGHT);
-          //           CDBDebug("YGEO_LOW_RIGHT = %f",fYGEO_LOW_RIGHT);
           //
           CDF::Dimension *dimX = cdfObject->variables[j]->dimensionlinks[1];
           CDF::Dimension *dimY = cdfObject->variables[j]->dimensionlinks[0];
@@ -1074,7 +1045,6 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
       attr->type = typeConversion(HDF5_attr_memtype);
       attr->length = stSize;
       if (attr->length == 0) attr->length = 1; // TODO
-      // printf("%s %d\n",attName,stSize);
       if (CDF::allocateData(attr->type, &attr->data, attr->length + 1) != 0) {
         CDBError("Unable to allocateData for attribute %s", attr->name.c_str());
         throw(__LINE__);
@@ -1156,13 +1126,11 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   std::string variableName;
   variableName = CT::printf("image1%simage_data", CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
-  // if(var==NULL){CDBError("variable %s not found",variableName.c_str());return 1;}
   geo = cdfObject->getVariableNE("geographic");
   if (geo == NULL) {
     CDBError("variable geographic not found");
     return 0;
   }
-  // if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
   variableName = CT::printf("geographic%smap_projection", CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *proj = cdfObject->getVariableNE(variableName.c_str());
   if (proj == NULL) {
@@ -1544,8 +1512,6 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
           if (calibration_out_of_image != NULL) {
             double dfNodata = 0;
             calibration_out_of_image->getData(&dfNodata, 1);
-            //          CDBDebug("Found calibration_out_of_image attribute value=%f, status = %d",dfNodata,status);
-            // if(dfNodata!=0)
             {
               CDF::Attribute *noDataAttr = new CDF::Attribute();
               noDataAttr->setName("_FillValue");
@@ -1599,7 +1565,6 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
           CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas");
           if (calibration_formulas != NULL) {
             std::string formula = calibration_formulas->toString();
-            // CDBDebug("Formula: %s",formula.c_str());
             int rightPartFormulaPos = CT::indexOf(formula, "=");
             int multiplicationSignPos = CT::indexOf(formula, "*");
             int additionSignPos = CT::indexOf(formula, "+");
@@ -1607,8 +1572,6 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
               float multiplicationFactor = CT::toDouble(CT::substring(formula, rightPartFormulaPos + 1, multiplicationSignPos));
               float additionFactor = CT::toDouble(CT::substring(formula, additionSignPos + 1, formula.length()));
-              // CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
-              //                  CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
               CDF::Attribute *add_offset = new CDF::Attribute();
               add_offset->setName("add_offset");
               add_offset->setData(CDF_FLOAT, &additionFactor, 1);

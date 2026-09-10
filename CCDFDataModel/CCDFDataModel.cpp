@@ -42,8 +42,6 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
       memcpy(data, attr->data, attr->length);
       data[attr->length] = '\0';
       CT::printfconcat(dumpString, " \"%s\"", data);
-      // if(attr->type==CDF_UBYTE)CT::printfconcat(dumpString, " \"%s\"",data);
-      // if(attr->type==CDF_BYTE)CT::printfconcat(dumpString, " \"%s\"",data);
       delete[] data;
     }
 

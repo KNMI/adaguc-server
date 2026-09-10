@@ -148,7 +148,6 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
       longitude->setAttributeText("ADAGUC_SKIP", "TRUE");
 
-      // longitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
       cdfObject->addVariable(longitude);
       longitude->allocateData(lon1DDim->length * lat1DDim->length);
 
@@ -159,7 +158,6 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       latitude->dimensionlinks.push_back(lon1DDim);
       latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
       latitude->setAttributeText("ADAGUC_SKIP", "TRUE");
-      // latitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
       cdfObject->addVariable(latitude);
       latitude->allocateData(lon1DDim->length * lat1DDim->length);

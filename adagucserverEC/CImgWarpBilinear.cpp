@@ -62,7 +62,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   int dPixelExtent[4];
   bool tryToOptimizeExtent = false;
 
-  //  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
   if (tryToOptimizeExtent) {
     // Reproject the boundingbox from the destination bbox:
     drawImage->geoParams.bbox.toArray(dfPixelExtent);
@@ -71,7 +70,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
         CDBDebug("dfPixelExtent: %d %f", j, dfPixelExtent[j]);
       }
     }
-    // warper->findExtent(sourceImage,dfPixelExtent);
     warper->reprojBBOX(dfPixelExtent);
 
     // Convert the bbox to source image pixel extent
@@ -224,8 +222,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       dpDestX[p] = (int)destX; // 2-200;
       dpDestY[p] = (int)destY; // 2+200;
 
-      // CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
-      //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
       for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {
         void *data = sourceImage->getDataObject(varNr)->cdfVariable->data;
         float *fpValues = valObj[varNr].fpValues;
@@ -237,7 +233,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
         if (y1 >= sourceImage->dHeight) {
           y1 -= sourceImage->dHeight;
         }
-        // if(x1>=0&&x1<sourceImage->dWidth&&y>=0&&y<sourceImage->dHeight){
         size_t sp = x1 + y1 * sourceImage->dWidth;
 
         switch (sourceImage->getDataObject(varNr)->cdfVariable->getType()) {
@@ -357,7 +352,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
             if (abs(avgDX - xP[2]) > 0) {
               if (abs(avgDX - xP[2]) < abs(xP[2] - xP[0]) / 4) {
                 doDraw = false;
-                // CDBDebug("%d %d (%d %d %d %d) ",avgDX-xP[2],xP[2]-xP[0],avgDX,xP[0],xP[1],xP[2]);
               }
             }
           }
@@ -499,8 +493,6 @@ unsigned short CImgWarpBilinear::checkIfContourRequired(float *val) {
     if (contourDefinitions[j].definedIntervals.size() > 0) {
       for (size_t i = 0; i < contourDefinitions[j].definedIntervals.size(); i++) {
         float c = contourDefinitions[j].definedIntervals[i];
-        //(val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-        //(val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c)
         if ((val[0] >= c && val[1] < c) || (val[0] > c && val[1] <= c) || (val[0] < c && val[1] >= c) || (val[0] <= c && val[1] > c) || (val[0] > c && val[2] <= c) || (val[0] >= c && val[2] < c) ||
             (val[0] <= c && val[2] > c) || (val[0] < c && val[2] >= c)
 
@@ -538,10 +530,8 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   for (int y1 = -smw; y1 < smw + 1; y1++) {
     for (int x1 = -smw; x1 < smw + 1; x1++) {
       float d = sqrt(x1 * x1 + y1 * y1);
-      // d=d*8;
 
       d = 1 / (d + 1);
-      // d=1;
       distanceWindow[dWinP++] = d;
       distanceAmmount += d;
     }
@@ -585,8 +575,6 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
 }
 
 int CImgWarpBilinear::set(const char *pszSettings) {
-  // fprintf(stderr, "CImgWarpBilinear.set(%s)\n", pszSettings);
-  //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
 
   if (pszSettings == NULL) return 0;
   contourDefinitions.clear();
@@ -871,8 +859,6 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
         }
       }
     }
-    // if (!foundLine){
-    //   drawImage->rectangle(lineX-5, lineY-5, lineX+5,lineY+5, 240);
     // }
     lineX = nextLineX;
     lineY = nextLineY;
@@ -894,7 +880,6 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
     }
   }
 
-  // textLocations->clear();
   /* Now draw this line */
   drawImage->moveTo(lineSegmentsX[0], lineSegmentsY[0]);
 
@@ -962,16 +947,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   double scaling = dataSource->getContourScaling();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
 
-  // float ival = interval;
-  //   float ivalLine = interval;
-  // float idval=int(ival+0.5);
-  //  if(idval<1)idval=1;
   // TODO
-
-  // char szTemp[8192];
-  // szTemp[0]='\0';
-  // float currentTextValue = 0;
-  // int contourDefinitionIndex = -1;
 
   int dImageWidth = drawImage->geoParams.width + 1;
   int dImageHeight = drawImage->geoParams.height + 1;
@@ -1032,7 +1008,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
         }
       }
       if (foundOne != -1) {
-        // CDBDebug("SHADEDEF %d uses def %d\t(%f\t%f)",shadeDefinitionsExpanded.size(),foundOne,previ,i);
         shadeDefinitionsExpanded.push_back(
             ShadeDefinition(previ, i, shadeDefinitions[foundOne].fillColor, shadeDefinitions[foundOne].foundColor, shadeDefinitions[foundOne].bgColor, shadeDefinitions[foundOne].hasBGColor));
       }
@@ -1130,8 +1105,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
 
       // Check if all pixels have values...
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
-        //           for(int i=0;i<4;i++){
-        //             if(val[i]<minValue)val[i]=minValue;else if(val[i]>maxValue)val[i]=maxValue;
         //           }
         // Draw contourlines
         if (drawLine || drawText) {
@@ -1153,12 +1126,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
               // Check for continuous lines
               if (contourDefinitions[j].continuousInterval != 0.0) {
                 float contourinterval = contourDefinitions[j].continuousInterval;
-                // float allowedDifference = contourinterval / 100000;
-                /*float a,b;
-                a = (val[0]<val[1]?val[0]:val[1]);b = (val[2]<val[3]?val[2]:val[3]);
-                //float min=a<b?a:b;
-                a = (val[0]>val[1]?val[0]:val[1]);b = (val[2]>val[3]?val[2]:val[3]);
-                //float max=a>b?a:b;*/
                 float min, max;
                 min = val[0];
                 max = val[0];

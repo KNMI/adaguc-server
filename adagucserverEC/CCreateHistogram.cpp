@@ -19,8 +19,6 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
     printf("\n%s(", dataSource->srvParams->JSONP.c_str());
   }
 
-  // puts("{\"a\": 1}");
-
   if (dataSource->srvParams->JSONP.length() != 0) {
     printf(");");
   }
@@ -31,8 +29,6 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
 
 int CCreateHistogram::init(CServerParams *, CDataSource *dataSource, int) {
   baseDataSource = dataSource;
-
-  //  int numTimeSteps = dataSource->getNumTimeSteps();
 
   JSONdata = "";
 
@@ -150,10 +146,8 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     for (size_t j = 0; j < gridSize; j++) {
       float val = ((float *)warpedData)[j];
       if (val != (float)dfNoData) {
-        // CDBDebug("%f",val);
         int binIndex = int((val - min) / binSize);
         if (binIndex < 0 || binIndex >= MAX_NUM_BINS) {
-          // CDBError("Histogram errors!");
         } else {
           bins[binIndex]++;
         }
@@ -162,12 +156,8 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
 
     int numBins = floor((max - min) / binSize);
 
-    //       CT::printfconcat(JSONdata, "\"dims\":{");
-    //       for(size_t d=0;d<dataSources[i]->requiredDims.size();d++){
-    //         CT::printfconcat(JSONdata, "\"%s\":\"%s\"",dataSources[i]->requiredDims[d].name.c_str(),dataSources[i]->requiredDims[d].value.c_str());
     //       }
     //
-    //       JSONdata += "},";
     //
 
     CT::printfconcat(JSONdata, "\"%s\":{", dataSource->layerName.c_str());

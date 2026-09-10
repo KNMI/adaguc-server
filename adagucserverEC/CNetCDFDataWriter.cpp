@@ -76,7 +76,6 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
   // The destination CDF object structure will be based on the baseDataSource. After that, more variables will be added.
   if (baseDataSource == nullptr) {
-    // CDBDebug("Initializing baseDataSource based on \n%s", CDF::dump(dataSource->getDataObject(0)->cdfObject).c_str());
     baseDataSource = dataSource;
     destCDFObject = new CDFObject();
 
@@ -279,7 +278,6 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       std::string dimName = "null";
 
       dimName = baseDataSource->requiredDims[d].netCDFDimName;
-      // CDBDebug("Processing dimension [%s]", dimName.c_str());
       if (dimName == "none") {
         break;
       }
@@ -363,7 +361,6 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
           }
           ((char **)destinationVar->data)[j] = strdup(dimValue.c_str());
         }
-        // CDBDebug("dimValue.c_str() = %s",dimValue.c_str());
         if (destinationVar->getType() != CDF_STRING) {
           if (isTimeDim) {
             CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
@@ -496,7 +493,6 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     }
 
     if (CNetCDFDataWriter_DEBUG) {
-      // CDBDebug("Name = %s, type = %d",sourceVar->name.c_str(),sourceVar->getType());
       CDBDebug("Allocating %lu elements for variable %s", varSize / (projectionDimX->getSize() * projectionDimY->getSize()), destVar->name.c_str());
     }
 
@@ -522,16 +518,11 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       CDBDebug("Setting attributes");
     }
     for (size_t i = 0; i < sourceVar->attributes.size(); i++) {
-      // CDBDebug("For %s: Copying attribute %s with length %d",destVar->name.c_str(),sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->length);
       if (sourceVar->attributes[i]->name != "scale_factor" && sourceVar->attributes[i]->name != "add_offset" && sourceVar->attributes[i]->name != "_FillValue") {
         destVar->setAttribute(sourceVar->attributes[i]->name.c_str(), sourceVar->attributes[i]->getType(), sourceVar->attributes[i]->data, sourceVar->attributes[i]->length);
       }
     }
 
-    // destVar->removeAttribute("calendar");
-    // destCDFObject->setAttribute("_FillValue",destVar->getType(),&dfNoData,1);
-
-    // destCDFObject->removeAttribute("grid_mapping");
     destVar->setAttributeText("grid_mapping", "crs");
   }
 
@@ -563,8 +554,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("Reading file %s", dataSource->getFileName().c_str());
     }
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
-
-    // CDBDebug("Initializing warper for file %s",dataSource->getFileName());
 
     CImageWarper warper;
     dataSource->srvParams = this->srvParam;
@@ -611,7 +600,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       gdwFindPixelExtent(PXExtentBasedOnSource, sourceGeo, this->srvParam->geoParams, &warper);
 
       if (PXExtentBasedOnSource[0] == PXExtentBasedOnSource[2] || PXExtentBasedOnSource[1] == PXExtentBasedOnSource[3]) {
-        // CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
         return 1;
       }
 
@@ -662,7 +650,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       if (CNetCDFDataWriter_DEBUG) {
         CDBDebug("Setting nrof dimensions %lu", dims->size());
       }
-      // CDBDebug("getCurrentTimeStep %d",dataSource->getCurrentTimeStep());
       if (dims->size() == 0) {
         CDBDebug("Note: This datasource [%lu] has no dimensions", i);
       }
@@ -671,8 +658,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
        * This step figures out the required dimindex for each dimension based on timestep.
        */
       std::vector<int> dimIndices(dims->size() + 1);
-
-      // CDBDebug("baseDataSource->requiredDims.size(); = %d",baseDataSource->requiredDims.size());
 
       if (verbose) {
         CDBDebug("Looping dims [%lu]", dataSource->requiredDims.size());
@@ -703,7 +688,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
 
         CDF::Variable *var = destCDFObject->getVariableThrows(dimName.c_str());
-        // CDBDebug("trying to search in var with size %d",var->getSize());
         if (var->getType() == CDF_STRING) {
           for (size_t j = 0; j < var->getSize(); j++) {
             if (dimValue == ((char **)var->data)[j]) {
@@ -715,16 +699,13 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
         if (var->getType() != CDF_STRING) {
           if (isTimeDim) {
-            // CDBDebug("isTimeDim");
             CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
             if (ctime == nullptr) {
               CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
               return 1;
             }
 
-            // CDBDebug("Trying to convert string %s",dimValue.c_str());
             double offset = ctime->dateToOffset(ctime->freeDateStringToDate(dimValue.c_str()));
-            // CDBDebug("offset = %f",offset);
             for (size_t j = 0; j < var->getSize(); j++) {
               if (((double *)var->data)[j] == offset) {
                 indexTofind = j;
@@ -853,7 +834,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-      //      CDBDebug("Setting pointers");
       size_t elementOffset = dataStepIndex * settings.width * settings.height;
       if (verbose) {
         CDBDebug("elementOffset = %lu", elementOffset);
@@ -1001,7 +981,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               }
               char *str = strdup(paramItemIt->second.c_str());
               ((char **)featureVar->data)[featureIndex] = str;
-              // CDBDebug("Clicked %s %s",paramItemIt->first.c_str(),paramItemIt->second.c_str());
             }
           }
           ((int *)featureIndexVar->data)[featureIndex] = featureIndex;
@@ -1048,7 +1027,6 @@ int CNetCDFDataWriter::end() {
   if (pszADAGUCWriteToFile != NULL) {
     CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
     netCDFWriter->setNetCDFMode(4);
-    // netCDFWriter->setDeflateShuffle(1,2,0);
     CDBDebug("Write to ADAGUC_WRITETOFILE %s", pszADAGUCWriteToFile);
     int status = netCDFWriter->write(pszADAGUCWriteToFile);
     if (status != 0) {
@@ -1097,7 +1075,6 @@ int CNetCDFDataWriter::end() {
     fseek(fp, 0L, SEEK_END);
     size_t endPos = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
-    // CDBDebug("File opened: size = %d",endPos);
 
     CDBDebug("Now start streaming %lu bytes to the client", endPos);
     printf("Content-Disposition: attachment; filename=%s\r\n", humanReadableString.c_str());

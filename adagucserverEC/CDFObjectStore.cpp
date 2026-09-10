@@ -53,10 +53,8 @@ bool EXTRACT_HDF_NC_VERBOSE = false;
  */
 CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fileName) {
   // Do we have a datareader defined in the configuration file?
-  // if(cdfReader !=NULL){delete cdfReader;cdfReader = NULL;}
   CDFReader *cdfReader = NULL;
 
-  // CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->DataReader.size() > 0) {
       if (dataSource->cfgLayer->DataReader[0]->elementValue == ("HDF5")) {
@@ -287,7 +285,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     }
   }
 
-  // CDBDebug("opened");
   if (status != 0) {
     // TODO in case of basic/digest authentication, username and password is currently also listed....
     CDBError("Unable to open file '%s'", fileLocationToOpen);
@@ -296,7 +293,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     return NULL;
   }
 
-  // CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   // Push everything into the store
   if (cached) {
     fileNames.push_back(uniqueIDForFile);

@@ -144,14 +144,12 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
             nextLineX = tx;
             nextLineY = ty;
             foundLine = true;
-            // break;
           }
           distance[p] = 0; //~lineMask; /* Indicate found, set to false */
         }
       }
     }
     if (!foundLine) {
-      // drawImage->rectangle(lineX - 5, lineY - 5, lineX + 5, lineY + 5, 240);
       if (lineSegments[0].distance(lineSegments.back()) < 8) {
         lineSegments.push_back({.x = lineSegments[0].x, .y = lineSegments[0].y});
       }
@@ -169,7 +167,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  // textLocations.clear();
   /* Now draw this line */
   drawImage->moveTo(lineSegments[0].x, lineSegments[0].y);
 
@@ -317,7 +314,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   DISTANCEFIELDTYPE lineMask = 1;
 
-  // CDBDebug("B %d", styleConfiguration->contourLines.size());
   for (auto &contourLine: contourlineList) {
 
     /* Everywhere */
@@ -325,7 +321,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
       for (int x = 0; x < dImageWidth; x++) {
         size_t p = x + y * dImageWidth;
         if (distance[p] & lineMask) {
-          // drawImage->setPixel(x, y, defaultLineColor);
           traverseLine(drawImage, distance, sourceGrid, x, y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
         }
       }

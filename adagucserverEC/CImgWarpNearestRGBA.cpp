@@ -155,10 +155,7 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
               if (dstpixel_x >= 0 && dstpixel_y >= 0 && dstpixel_x < imageWidth && dstpixel_y < imageHeight) {
                 imgpointer = srcpixel_x + (height - 1 - srcpixel_y) * width;
                 uint v = data[imgpointer];
-                // if(v!=2147483649){;//uint(-2147483647)){
-                //                   if(v!=4294967295)
                 {
-                  // v=v*10;
                   unsigned char r = ((unsigned char)v);
                   unsigned char g = ((unsigned char)(v >> 8));
                   unsigned char b = ((unsigned char)(v >> 16));
@@ -222,11 +219,7 @@ void *CImgWarpNearestRGBA::drawTiles(void *arg) {
       if (CIMGWARPNEARESTRGBA_DEBUG) {
         CDBDebug("Drawing tile id %d", ct->id);
       }
-      // int status =
       ct->drawTile->drawTile(ct->x_corners, ct->y_corners, ct->tile_offset_x, ct->tile_offset_y, ct->debug);
-      /*if(status!=0){
-        CDBError("Unable to draw tile at line %d",status);
-      }*/
     }
   }
   return arg;
@@ -263,8 +256,6 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, GeoParamete
   psy[2] = dfTiledBBOX[3];
   psy[3] = dfTiledBBOX[1];
   if (warper->isProjectionRequired()) {
-    //     std::string destinationCRS;
-    //     warper->decodeCRS(&destinationCRS,&GeoDest.CRS);
     if (proj_trans_generic(warper->projSourceToDest, PJ_INV, psx, sizeof(double), 4, psy, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
       // TODO: No error handling in original code
     }
@@ -296,7 +287,6 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   int x_div = 1;
   int y_div = 1;
   if (warper->isProjectionRequired() == false) {
-    // CDBDebug("No reprojection required");
     tile_height = drawImage->geoParams.height;
     tile_width = drawImage->geoParams.width;
     // When we are drawing just one tile, threading is not needed
@@ -321,11 +311,8 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
     drawTileClass = new CDrawTileObjBGRA(); // Do not keep the calculated results for CDF_CHAR
 
   } else {
-    // drawTileClass = new CDrawTileObjBGRAByteCache();  //keep the calculated results
     drawTileClass = new CDrawTileObjBGRA(); // Do not keep the calculated results for CDF_CHAR
   }
-  // drawTileClass = new CDrawTileObjBGRAByteCache();           //Do not keep the calculated results for CDF_CHAR
-  // drawTileClass = new CDrawTileObjBGRA();  //keep the calculated results
   drawTileClass->init(dataSource, drawImage, (int)tile_width, (int)tile_height);
 
   if (CIMGWARPNEARESTRGBA_DEBUG) {
@@ -399,7 +386,6 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
       // Make sure that all blocks are processed
       if (j == numThreads - 1) dmf[j].endTile = numberOfTiles;
 
-      // CDBDebug("%d - start %d stop %d",j,dmf[j].startTile,dmf[j].endTile);
       DrawMultipleTileSettings *t_dmf = &dmf[j];
       errcode = pthread_create(&threads[j], NULL, drawTiles, t_dmf);
       if (errcode) {

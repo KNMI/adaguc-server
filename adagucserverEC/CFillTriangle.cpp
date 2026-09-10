@@ -207,7 +207,6 @@ void __fillTriangleGouraud2(float *data, float *values, int W, int H, int *xP, i
           float rc1 = xDiff[shortSide1] / yDiff[shortSide1];
           float x1 = xP[shortSide1] + (rc1 * y);
           float x2 = xP[shortSide1] + (rc2 * y);
-          // printf("%f\n",scaleSSP);
           if (x1 > x2) {
             cx1 = values[shortSide1] * scaleSSP + valLS * scaleSSN;
             cx2 = values[shortSide1] * scaleSSP + values[shortSide2] * scaleSSN;
@@ -322,10 +321,6 @@ void fillQuadGouraud(float *data, float *values, int W, int H, int *xP, int *yP)
    diag1Y=(yP[2]-yP[0]);
    diag2Y=(yP[3]-yP[1]);
 
-   if((diag1X == 0 && diag1Y == 0) || (diag2X == 0 && diag2Y == 0)){
-     //data[xP[0]+yP[0]*W]=values[0];
-    // return;
-   }
    {
      float diag1=sqrt(diag1X*diag1X+diag1Y*diag1Y);
      float diag2=sqrt(diag2X*diag2X+diag2Y*diag2Y);
@@ -344,11 +339,6 @@ void fillQuadGouraud(float *data, float *values, int W, int H, int *xP, int *yP)
     for (size_t j = 0; j < l; j++) data[j] = a;
     return;
   }
-
-  //   if(minX<0)return;
-  //   if(minY<0)return;
-  //   if(maxX>W)return;
-  //   if(maxY>W)return;
 
   float cornerV[3];
   int cornerX[3];

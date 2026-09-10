@@ -11,7 +11,6 @@ const char *CDPPWFP::getId() { return "WFP"; }
 int CDPPWFP::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm == ("WFP")) {
     if (dataSource->getNumDataObjects() == 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-      // if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3 && dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
       CDBError("2 variables are needed for WFP, found %lu", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
@@ -97,9 +96,6 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
-
-    // float *windDirection = (float *)dataSource->getDataObject(2)->cdfVariable->data;
-    // float *windSpeed = (float *)dataSource->getDataObject(3)->cdfVariable->data;
 
     CDataSource *tempDataSource = getDataSource(dataSource, proc->attr.name);
     CRequest::setDimValuesForDataSource(tempDataSource, dataSource->srvParams);

@@ -391,17 +391,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     }
     dataSource->hasFieldData = false;
     // // Allocate 2D field
-    // for (size_t d = 0; d < nrDataObjects; d++) {
-    //   if (pointVar[d] != NULL) {
-    //     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
-    //     new2DVar[d]->setSize(fieldSize);
-    //     new2DVar[d]->allocateData(fieldSize);
 
     //     // Fill in nodata
-    //     auto *dataObject = dataSource->getDataObject(d);
-    //     float *fieldData = (float *)dataObject->cdfVariable->data;
-    //     float fillValue = dataObject->hasNodataValue ? (float)dataObject->dfNodataValue : NAN;
-    //     std::fill_n(fieldData, fieldSize, fillValue);
     //   }
     // }
 

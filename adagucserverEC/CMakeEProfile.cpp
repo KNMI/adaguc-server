@@ -81,10 +81,7 @@ public:
 
       delete filemapiterator->second;
     }
-    //     for(size_t j=0;j<results.size();j++){
-    //       delete results[j];
     //     }
-    //     results.clear();
   }
 
   void set(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {
@@ -110,10 +107,6 @@ public:
     }
 
     dimInfo->dimValuesMap[dimIndex] = dimValue.c_str();
-
-    if (CMakeEProfile_DEBUG) {
-      //    CDBDebug("Adding %s %d %s",dimName,dimIndex,dimValue.c_str());
-    }
   }
 
   void addDimSet(DimInfo *dimInfo, int start, std::vector<std::string> valueList) {
@@ -143,12 +136,10 @@ public:
       return;
     } else {
       if (CMakeEProfile_DEBUG) {
-        //      CDBDebug("B %d %s",depth,p.c_str());
         CDBDebug("Add request with following:");
       }
       Request *request = new Request();
       for (int j = 0; j < depth; j++) {
-        // CDBDebug("  %d %s %d %d",j,dimensions[j]->name.c_str(),dimensions[j]->start,dimensions[j]->values.size());
         request->dimensions[j] = dimensions[j];
       }
       request->numDims = depth;
@@ -171,8 +162,6 @@ public:
         int startDimIndex = 0;
         std::vector<std::string> dimValues;
         for (auto dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
-          // const char *filename=(filemapiterator->first).c_str();
-          // const char *dimname=(diminfomapiterator->first).c_str();
           dimindex = dimvalindexmapiterator->first;
           const char *dimvalue = dimvalindexmapiterator->second.c_str();
 
@@ -200,9 +189,6 @@ public:
           }
 
           if (currentDimIndex != -1) {
-            if (CMakeEProfile_DEBUG) {
-              //              CDBDebug("Add %d / %s",dimindex,dimvalue);
-            }
             dimValues.push_back(dimvalue);
           }
         }
@@ -260,11 +246,7 @@ public:
         if (CMakeEProfile_DEBUG) {
           CDBDebug("filemapiterator");
         }
-        //         std::string ckey;ckey.print("%d%d%s",dX,dY,dataSource->nativeProj4.c_str());
-        //         CImageDataWriter::ProjCacheInfo projCacheInfo = CImageDataWriter::GetProjInfo(ckey,drawImage,dataSource,imageWarper, dataSource->srvParams,dX,dY);
-        //         CDBDebug("projCacheInfo.isOutsideBBOX == %d",projCacheInfo.isOutsideBBOX);
 
-        // if(projCacheInfo.isOutsideBBOX == false)
         {
 
           CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, (filemapiterator->first).c_str());
@@ -327,7 +309,6 @@ public:
                   dfscale_factor = CT::toDouble(scaleStr);
                   double *_data = (double *)variable->data;
                   for (size_t j = 0; j < variable->getSize(); j++) {
-                    // if(j%10000==0){CDBError("%d = %f",j,_data[j]);}
                     _data[j] = _data[j] * dfscale_factor + dfadd_offset;
                   }
                   // Convert the nodata type
@@ -346,10 +327,6 @@ public:
               drawEprofile(drawImage, variable, start.data(), count.data(), request, dataSource, eProfileJson);
 
               //               try{
-              //                 expandData(dataObject,variable,start,count,0,request,0);
-              //               }catch(int e){
-              //                 CDBError("Error in expandData at line %d",e);
-              //                 throw(__LINE__);
               //               }
             }
           }
@@ -388,12 +365,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
   /**
    * DataPostProc: Here our datapostprocessor comes into action!
    */
-  //   for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
-  //     CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
   //     //Algorithm ax+b:
-  //     if(proc->attr.algorithm ==("ax+b")){
-  //       uniqueRequest.readDataAsCDFDouble = true;
-  //       break;
   //     }
   //   }
 
@@ -406,7 +378,6 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
 
   for (int step = 0; step < numberOfSteps; step++) {
     dataSource->setTimeStep(step);
-    // CDBDebug("Found file %d %s",step,dataSource->getFileName());
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       COGCDims &ogcDim = dataSource->requiredDims[dimnr];
       uniqueRequest.set(dataSource->getFileName().c_str(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
@@ -478,8 +449,6 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
 int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource,
                                          std::string &eProfileJson) {
 
-  // CTime adagucTime;
-  // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
   CTime *adagucTime = CTime::GetCTimeInstance(((CDFObject *)variable->getParentCDFObject())->getVariableNE("time_obs"));
   if (adagucTime == nullptr) {
     CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
@@ -731,7 +700,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
     if (x2 >= 0 && x1 < imageWidth && x1 < x2) {
 
-      // CDBDebug("x1 = %d fileTime = %f",x1,fileTime);
       for (size_t range = 0; range < count[1] - 1; range++) {
 
         int y1 = imageHeight - int(((((float *)varRange->data)[range + 1] - startGraphRange) / graphHeight) * imageHeight);
@@ -758,7 +726,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
             }
 
             int pcolorind = (int)(val * legendScale + legendOffset);
-            // val+=legendOffset;
             if (pcolorind >= 239)
               pcolorind = 239;
             else if (pcolorind <= 0)
@@ -792,6 +759,5 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
   }
 
-  // drawImage->line(0,0,100,100,248);
   return 0;
 }

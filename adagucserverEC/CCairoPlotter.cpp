@@ -81,7 +81,6 @@ void CCairoPlotter::_cairoPlotterInit(int width, int height, float fontSize, std
   initializationFailed = false;
 
   initFont();
-  // CDBDebug("constructor");
 }
 
 void CCairoPlotter::pixel_overwrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -136,7 +135,6 @@ void CCairoPlotter::pixel_blend(int x, int y, unsigned char r, unsigned char g, 
       float newGreen = (destGreen * destAlpha + origGreen * A1) / A2;
       float newRed = (destRed * destAlpha + origRed * A1) / A2;
       float newAlpha = origAlpha + destAlpha * (1 - origAlpha);
-      // newAlpha = 1;
 
       unsigned char aa = newAlpha * 255.;
       ARGBByteBuffer[p] = newBlue * 255;
@@ -230,12 +228,7 @@ int CCairoPlotter::renderFont(FT_Bitmap *bitmap, int left, int top) {
 
       if (bitmap->buffer[p] != 0) {
         float alpha = bitmap->buffer[p];
-        // alpha/=256;
 
-        // r=255;g=255;b=255;
-        // plot( x+left,  y+top, alpha);
-        // r=0;g=0;b=0;
-        //           _plot( x+left,  y+top, alpha);
         pixel_blend(x + left, y + top, r, g, b, alpha);
       }
     }
@@ -243,7 +236,6 @@ int CCairoPlotter::renderFont(FT_Bitmap *bitmap, int left, int top) {
   return 0;
 }
 int CCairoPlotter::initializeFreeType() {
-  // CDBDebug("initializeFreeType(%d)\n", library == NULL);
   if (library != NULL) {
     CDBError("Freetype is already intialized");
     return 1;
@@ -363,7 +355,6 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   while (*p) {
     uint32_t codepoint;
     p = decode_utf8_char(p, end, &codepoint);
-    // CDBDebug("* Decoded char U+%04X from: %.*s", codepoint, (int)(p - prev), prev);
 
     FT_Set_Transform(face, &matrix, &pen);
     int glyphIndex = FT_Get_Char_Index(face, codepoint);
@@ -386,7 +377,6 @@ int CCairoPlotter::getTextSize(int &w, int &h, float angle, const char *text) { 
 int CCairoPlotter::drawAnchoredText(int x, int y, float angle, const char *text, int anchor) {
   int w = 0, h = 0;
   getTextSize(w, h, angle, text);
-  //    CDBDebug("[w,h]=>[%d,%d] %s at [%d,%d] %d,%d\n", w, h, text, x, y, anchor, anchor % 4);
   switch (anchor % 4) {
   case 0:
     _drawFreeTypeText(x, y, w, h, angle, text, true);
@@ -407,7 +397,6 @@ int CCairoPlotter::drawAnchoredText(int x, int y, float angle, const char *text,
 int CCairoPlotter::drawCenteredText(int x, int y, float angle, const char *text) {
   int w = 0, h = 0;
   getTextSize(w, h, angle, text);
-  //    CDBDebug("[w,h]=>[%d,%d] at [%d,%d] (%d)\n", w, h, x, y, isAlphaUsed);
   return _drawFreeTypeText(x - w / 2, y + h / 2, w, h, angle, text, true);
 }
 
@@ -451,8 +440,6 @@ int CCairoPlotter::drawFilledText(int x, int y, float angle, const char *text) {
       return 1;
     }
     /* now, draw to our target surface (convert position) */
-
-    // setFillColor(255,255,255,100);
 
     setColor(255, 255, 255, 0);
     filledRectangle(pen.x / 64, my_target_height - (pen.y) / 64 + 5, (pen.x + face->glyph->advance.x) / 64, my_target_height - (pen.y) / 64 - int(fontSize) - 4);
@@ -585,8 +572,6 @@ void CCairoPlotter::line(float x1, float y1, float x2, float y2, float width) {
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_stroke(cr);
 }
-//  /*cairo_status_t writeToPng(const char* fileName) {
-//    return cairo_surface_write_to_png(surface, fileName);
 //  }*/
 
 void CCairoPlotter::circle(int x, int y, int r) {
@@ -600,8 +585,6 @@ void CCairoPlotter::circle(int x, int y, int r) {
 
 void CCairoPlotter::filledcircle(int x, int y, int r) {
   cairo_save(cr);
-  // cairo_set_line_width(cr, 1.0);
-  // cairo_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
   cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
   cairo_arc(cr, x, y, r, 0, 2 * M_PI);
   cairo_fill(cr);
@@ -801,7 +784,6 @@ void CCairoPlotter::writeToPng32Stream(FILE *fp, unsigned char alpha) {
 void CCairoPlotter::setToSurface(cairo_surface_t *png) {
   cairo_set_source_surface(this->cr, png, 0, 0);
   cairo_paint(this->cr);
-  //   cairo_surface_destroy(surface);
 }
 
 #ifdef ADAGUC_USE_WEBP

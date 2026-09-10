@@ -55,14 +55,12 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
 
   size_t typeSize = getTypeSize(type);
   if (typeSize == 0) {
-    // CDBError("In CDF::allocateData: Unknown type");
     return 1;
   }
 
   *p = malloc(length * typeSize);
 
   if (*p == NULL) {
-    // CDBError("In CDF::allocateData: Unable to allocate %d elements",length);
     return 1;
   }
 

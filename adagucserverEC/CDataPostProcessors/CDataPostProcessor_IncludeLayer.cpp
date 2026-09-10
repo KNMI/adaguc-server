@@ -20,7 +20,6 @@ CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
     std::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
-    // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
     if (additionalLayerName == layerName) {
       additionalLayerNo = j;
       break;
@@ -53,8 +52,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
 
-    // CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
-
     /* First check if this was already added */
 
     for (const auto &dataObject: dataSource->dataObjects) {
@@ -79,7 +76,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       return 1;
     }
 
-    // CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
     dataSourceToInclude->enablePostProcessors = false;
     reader.enableObjectCache = true;
@@ -146,7 +142,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    // CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying include_layer");
 
     // Load the other datasource.
     CDataSource *dataSourceToInclude = getDataSource(proc, dataSource);
@@ -167,11 +162,9 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
     }
 
-    // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     dataSourceToInclude->enablePostProcessors = false;
     reader.enableObjectCache = true;
-    //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName().c_str(), proc->attr.name.c_str());
@@ -233,7 +226,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     }
 
     reader.close();
-    // CDBDebug("CLOSING TEMPORAL FULL READER");
     delete dataSourceToInclude;
   }
   return 0;

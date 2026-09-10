@@ -45,7 +45,6 @@ float CDPPBeaufort::getBeaufort(float speed) {
   } else {
     bft = 12;
   }
-  //  CDBDebug("bft(%f)=%d", speed, bft);
   return bft;
 }
 int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {

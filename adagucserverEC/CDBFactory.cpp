@@ -38,7 +38,6 @@ CDBAdapterPostgreSQL *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration
       CDBError("Sqlite is not supported anymore.");
       exit(1);
     } else {
-      // CDBDebug("Using postgresql");
       staticCDBAdapter = new CDBAdapterPostgreSQL();
     }
 
@@ -48,7 +47,6 @@ CDBAdapterPostgreSQL *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration
 }
 
 void CDBFactory::clear() {
-  // CDBDebug("CLEAR");
   delete staticCDBAdapter;
   staticCDBAdapter = NULL;
 }

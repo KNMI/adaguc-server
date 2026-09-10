@@ -91,7 +91,6 @@ void CProj4ToCF::initMSGPerspective(CDF::Variable *projectionVariable, std::vect
   /*add("a","semi_minor_axis",CDF_FLOAT,"6378.1370",CProj4ToCF::convertToM);
    * add("b","semi_major_axis",CDF_FLOAT,"6356.7523",CProj4ToCF::convertToM);*/
 
-  // add("bestaatniet","earth_radius",CDF_FLOAT,"6371229");
   /*add("a","semi_minor_axis",CDF_FLOAT,"6378.1370",CProj4ToCF::convertToM);
    * add("b","semi_major_axis",CDF_FLOAT,"6356.7523",CProj4ToCF::convertToM);*/
 
@@ -301,7 +300,6 @@ void CProj4ToCF::initLatitudeLongitude(CDF::Variable *projectionVariable, std::v
 }
 
 void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
-  // CDBDebug("initMercator "); TODO
   projectionVariable->removeAttributes();
   float v = 0;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name", "mercator"));
@@ -1049,9 +1047,7 @@ std::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CREPORT_INFO_NODOC(std::string("Unsupported projection: ") + grid_mapping_name, CReportMessage::Categories::GENERAL);
       return "";
     }
-    // CREPORT_INFO_NODOC(std::string("Determined the projection string using the CF conventions: ") + proj4String, CReportMessage::Categories::GENERAL);
   } catch (int e) {
-    // CDBError("%s\n",CDF::lastErrorMessage.c_str());
     try {
       CREPORT_INFO_NODOC(std::string("Unsupported projection: ") + projectionVariable->getAttributeThrows("grid_mapping_name")->toString(), CReportMessage::Categories::GENERAL);
     } catch (int e) {

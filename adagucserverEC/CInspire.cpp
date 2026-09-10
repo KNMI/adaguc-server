@@ -26,7 +26,6 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   CXMLParserElement *MD_DataIdentification = NULL;
   try {
     MD_DataIdentification = element.getThrows("GetRecordByIdResponse")->getThrows("MD_Metadata")->getThrows("identificationInfo")->getThrows("MD_DataIdentification");
-    // MD_DataIdentification = element.get("GetRecordByIdResponse")->getThrows("MD_Metadata")->getThrows("identificationInfo")->getThrows("SV_ServiceIdentification");
   } catch (int e) {
     throw CINSPIRE_XMLELEMENTNOTFOUND;
   }

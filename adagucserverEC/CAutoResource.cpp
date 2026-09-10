@@ -122,10 +122,8 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, std::string serverTit
     CT::replaceSelf(serverTitle, "&", "&amp;");
     if (srvParam->cfg->WMS.size() > 0) {
       if (srvParam->cfg->WMS[0]->Title.size() > 0) {
-        // std::string title="ADAGUC AUTO WMS ";
         std::string title = "";
         title += serverTitle;
-        // title.replaceSelf(" ","_");
         srvParam->cfg->WMS[0]->Title[0]->elementValue = title;
       }
       if (srvParam->cfg->WMS[0]->RootLayer.size() > 0) {
@@ -202,7 +200,6 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
       } else {
         cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(NULL, srvParam, srvParam->internalAutoResourceLocation.c_str());
       }
-      // int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if (cdfObject != NULL) {
         for (size_t j = 0; j < cdfObject->variables.size(); j++) {
           if (cdfObject->variables[j]->dimensionlinks.size() >= 2 || plain == true) {
@@ -223,7 +220,6 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
                   if (srvParam->autoResourceVariable.length() > 0) srvParam->autoResourceVariable += ",";
                   srvParam->autoResourceVariable += cdfObject->variables[j]->name;
                 }
-                // CDBDebug("%s",cdfObject->variables[j]->name.c_str());
               }
             }
           }
@@ -239,18 +235,15 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
 // Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
 // Open the opendap resource
-// CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
 #ifdef MEASURETIME
     StopWatch_Stop("Opening data file [%s]", srvParam->internalAutoResourceLocation.c_str());
 #endif
-    // CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
     CDFObject *cdfObject = NULL;
     if (plain == false) {
       cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, srvParam->internalAutoResourceLocation.c_str());
     } else {
       cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(NULL, srvParam, srvParam->internalAutoResourceLocation.c_str());
     }
-    // int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
     if (cdfObject == NULL) {
       CDBError("Unable to open resource %s", srvParam->autoResourceLocation.c_str());
       return 1;
@@ -380,7 +373,6 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Detect  <...>_speed and <...>_dir for ASCAT data
     std::string searchVar;
     for (size_t v = 0; v < detectStrings.size(); v++) {
-      // CDBDebug("detectStrings %s",detectStrings[v].c_str());
       searchVar = CT::printf("%s_speed", detectStrings[v].c_str());
       CDF::Variable *varSpeed = cdfObject->getVariableNE(searchVar);
       searchVar = CT::printf("%s_dir", detectStrings[v].c_str());
@@ -436,12 +428,10 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     stringToAdd += "source=";
     std::string autoResourceLocation = CT::encodeURL(srvParam->autoResourceLocation); // urlencode only the filename
     stringToAdd += autoResourceLocation;
-    // stringToAdd += "&variable=" + srvParam->autoResourceVariable;
 
     stringToAdd += "&amp;";
     onlineResource += stringToAdd;
     srvParam->setOnlineResource(onlineResource);
-    // CDBDebug("OGC REQUEST RESOURCE %s",srvParam->internalAutoResourceLocation.c_str());//,srvParam->autoResourceLocation.c_str(),);
 
 #ifdef MEASURETIME
     StopWatch_Stop("Auto opendap configured");
@@ -478,7 +468,6 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         // TODO This must be accomplished with standard name / global attribute mappings
         if (featureType->toString() == "timeSeries" || featureType->toString() == "point") {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-          // CREPORT_INFO_NODOC(variableNames[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->elementValue = ("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }

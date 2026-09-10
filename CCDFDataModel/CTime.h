@@ -99,7 +99,6 @@ public:
 private:
   class TimeUnit {
   public:
-    // int calendarType;
     int unitType;
     Date date;
     double dateSinceOffset;

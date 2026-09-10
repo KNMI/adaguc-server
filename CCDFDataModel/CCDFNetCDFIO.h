@@ -37,7 +37,6 @@
 
 class CDFNetCDFReader : public CDFReader {
 private:
-  // CCDFWarper warper;
   static CDFType _typeConversionVar(nc_type type, bool isUnsigned);
   static CDFType _typeConversionAtt(nc_type type);
 
