@@ -85,7 +85,7 @@ private:
   int mode;
 
 public:
-  int getMode() { return mode; }
+  int getMode();
   /**
    * Class which holds date parameters like year, month, day, hour, minute, second and offset
    */
@@ -142,7 +142,7 @@ public:
    * @return the date object
    */
   Date getDate(double offset);
-  Date offsetToDate(double offset) { return getDate(offset); };
+  Date offsetToDate(double offset);
 
   /**
    * Turns date object into double value

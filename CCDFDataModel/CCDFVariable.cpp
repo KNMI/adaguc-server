@@ -35,6 +35,16 @@
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader *CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
 
+int CDF::Variable::CustomMemoryReader::readData(CDF::Variable *thisVar, size_t *, size_t *count, ptrdiff_t *stride) {
+  int size = 1;
+  for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
+    size *= int((float(count[j]) / float(stride[j])) + 0.5);
+  }
+  thisVar->setSize(size);
+  CDF::allocateData(thisVar->getType(), &thisVar->data, size);
+  return 0;
+}
+
 static const bool CCDFDATAMODEL_DEBUG = false;
 int CDF::Variable::readData(CDFType type) { return readData(type, NULL, NULL, NULL); }
 

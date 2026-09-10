@@ -23,26 +23,39 @@
  *
  ******************************************************************************/
 
-#ifndef CCDFREADER_H
-#define CCDFREADER_H
+#include "CCDFDimension.h"
 
-#include "CCDFDataModel.h"
-#include "CCDFVariable.h"
-#include "CCDFObject.h"
+CDF::Dimension::Dimension() {
+  isIterative = false;
+  length = 0;
+  id = -1;
+}
 
-class CDFReader {
-public:
-  std::string fileName;
-  CDFReader();
-  virtual ~CDFReader();
-  CDFObject *cdfObject;
-  virtual int open(const char *fileName) = 0;
-  virtual int close() = 0;
+CDF::Dimension::Dimension(const char *_name, size_t _length) {
+  isIterative = false;
+  length = _length;
+  name = (_name);
+  id = -1;
+}
 
-  // These two function may only be used by the variable class itself (TODO create friend class, protected?).
-  virtual int _readVariableData(CDF::Variable *var, CDFType type) = 0;
-  // Allocates and reads the variable data
-  virtual int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) = 0;
-};
+CDF::Dimension::Dimension(const std::string &_name, size_t _length) {
+  isIterative = false;
+  length = _length;
+  name = (_name);
+  id = -1;
+}
 
-#endif
+size_t CDF::Dimension::getSize() { return length; }
+void CDF::Dimension::setSize(size_t _length) { length = _length; }
+void CDF::Dimension::setName(const std::string &value) { name = value; }
+std::string CDF::Dimension::getName() { return name; }
+
+// Returns a new copy of this dimension
+CDF::Dimension *CDF::Dimension::clone() {
+  Dimension *newDim = new Dimension();
+  newDim->name = name;
+  newDim->length = length;
+  newDim->isIterative = isIterative;
+  newDim->id = id;
+  return newDim;
+}

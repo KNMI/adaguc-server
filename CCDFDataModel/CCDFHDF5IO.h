@@ -36,7 +36,6 @@
 #include "CTime.h"
 #include "CProj4ToCF.h"
 #include <proj.h>
-// #define CCDFHDF5IO_DEBUG
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."
 
@@ -50,9 +49,9 @@ private:
 
   hid_t cdfTypeToHDFType(CDFType type);
 
-  int readDimensions() { return 0; }
-  int readAttributes(std::vector<CDF::Attribute *> &, int, int) { return 0; }
-  int readVariables() { return 0; }
+  int readDimensions();
+  int readAttributes(std::vector<CDF::Attribute *> &, int, int);
+  int readVariables();
   hid_t H5F_file;
   herr_t status;
   std::vector<hid_t> opengroups;
@@ -72,23 +71,7 @@ public:
     int readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride);
   };
 
-  CDFHDF5Reader() : CDFReader() {
-#ifdef CCDFHDF5IO_DEBUG
-    CDBDebug("CCDFHDF5IO init");
-#endif
-    H5F_file = -1;
-    // Get error strack
-    error_stack = H5Eget_current_stack();
-    /* Save old error handler */
-    /* Turn off error handling */
-    H5Eset_auto2(error_stack, NULL, NULL);
-    H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
-    b_EnableKNMIHDF5toCFConversion = false;
-    b_EnableODIMHDF5toCFConversion = false;
-    b_KNMIHDF5UseEndTime = false;
-    forecastReader = NULL;
-    fileIsOpen = false;
-  }
+  CDFHDF5Reader();
   ~CDFHDF5Reader();
 
   int readAttributes(std::vector<CDF::Attribute *> &attributes, hid_t HDF5_group);
@@ -104,8 +87,6 @@ public:
   int convertNWCSAFtoCF();
 
   int convertLSASAFtoCF();
-
-  int convertKNMIH5VolScan();
 
   int convertKNMIHDF5toCF();
 

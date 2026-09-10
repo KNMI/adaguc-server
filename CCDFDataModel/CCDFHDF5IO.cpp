@@ -30,17 +30,19 @@
 #include <netcdf.h>
 #include "CDFCopyData.h"
 
+static const bool CCDFHDF5IO_DEBUG = false;
+
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("READ data for %s called", thisVar->name.c_str());
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("READ data for %s called", thisVar->name.c_str());
+  }
 
   std::vector<size_t> newstart(thisVar->dimensionlinks.size());
   for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
     newstart[j] = start[j];
-#ifdef CCDFHDF5IO_DEBUG
-    CDBDebug("%s %d %d %d %d", thisVar->dimensionlinks[j]->name.c_str(), j, start[j], count[j], stride[j]);
-#endif
+    if (CCDFHDF5IO_DEBUG) {
+      CDBDebug("%s %zu %zu %zu %td", thisVar->dimensionlinks[j]->name.c_str(), j, start[j], count[j], stride[j]);
+    }
   }
   newstart[0] = 0;
   std::string varName;
@@ -73,10 +75,32 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   return 0;
 }
 
+CDFHDF5Reader::CDFHDF5Reader() : CDFReader() {
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("CCDFHDF5IO init");
+  }
+  H5F_file = -1;
+  // Get error strack
+  error_stack = H5Eget_current_stack();
+  /* Save old error handler */
+  /* Turn off error handling */
+  H5Eset_auto2(error_stack, NULL, NULL);
+  H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+  b_EnableKNMIHDF5toCFConversion = false;
+  b_EnableODIMHDF5toCFConversion = false;
+  b_KNMIHDF5UseEndTime = false;
+  forecastReader = NULL;
+  fileIsOpen = false;
+}
+
+int CDFHDF5Reader::readDimensions() { return 0; }
+int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &, int, int) { return 0; }
+int CDFHDF5Reader::readVariables() { return 0; }
+
 CDFHDF5Reader::~CDFHDF5Reader() {
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("CCDFHDF5IO close");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("CCDFHDF5IO close");
+  }
   close();
   /* Restore previous error handler */
 }
@@ -175,9 +199,9 @@ CDF::Dimension *CDFHDF5Reader::makeDimension(const std::string &name, size_t len
 }
 
 void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("list '%s'", groupName.c_str());
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("list '%s'", groupName.c_str());
+  }
 
   H5G_info_t group_info;
   H5Gget_info(groupID, &group_info);
@@ -185,9 +209,9 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
 
   for (int j = 0; j < (int)group_info.nlinks; j++) {
     H5Lget_name_by_idx(groupID, ".", H5_INDEX_NAME, H5_ITER_INC, j, name, 255, H5P_DEFAULT);
-#ifdef CCDFHDF5IO_DEBUG
-    CDBDebug("Getting group '%s'", name);
-#endif
+    if (CCDFHDF5IO_DEBUG) {
+      CDBDebug("Getting group '%s'", name);
+    }
 
     hid_t objectID = H5Oopen(groupID, name, H5P_DEFAULT);
     H5I_type_t type = H5Iget_type(objectID);
@@ -216,13 +240,13 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
     }
 
     if (type == H5I_DATASET) {
-#ifdef CCDFHDF5IO_DEBUG
-      CDBDebug("H5I_DATASET: %d,%s", groupID, name);
-#endif
+      if (CCDFHDF5IO_DEBUG) {
+        CDBDebug("H5I_DATASET: %ld,%s", groupID, name);
+      }
       hid_t datasetID = H5Dopen2(groupID, name, H5P_DEFAULT);
-#ifdef CCDFHDF5IO_DEBUG
-      CDBDebug("Opened dataset %s with id %d from %d", name, datasetID, groupID);
-#endif
+      if (CCDFHDF5IO_DEBUG) {
+        CDBDebug("Opened dataset %s with id %ld from %ld", name, datasetID, groupID);
+      }
       if (datasetID > 0) {
         hid_t datasetType = H5Dget_type(datasetID);
         if (datasetType > 0) {
@@ -233,9 +257,9 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
             int cdfType = typeConversion(datasetNativeType);
             if (cdfType != CDF_NONE) {
               //}
-#ifdef CCDFHDF5IO_DEBUG
-              CDBDebug("DataType is %s", CDF::getCDFDataTypeName(cdfType).c_str());
-#endif
+              if (CCDFHDF5IO_DEBUG) {
+                CDBDebug("DataType is %s", CDF::getCDFDataTypeName(cdfType).c_str());
+              }
 
               hid_t HDF5_dataspace = H5Dget_space(datasetID); /* dataspace handle */
               int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
@@ -255,31 +279,31 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
               var->isDimension = false;
               var->setName(varName);
 
-#ifdef CCDFHDF5IO_DEBUG
-              CDBDebug("Adding %s", varName.c_str());
-#endif
+              if (CCDFHDF5IO_DEBUG) {
+                CDBDebug("Adding %s", varName.c_str());
+              }
               var->id = cdfObject->variables.size();
               var->setCDFReaderPointer(this);
               var->setParentCDFObject(cdfObject);
               readAttributes(var->attributes, datasetID);
-#ifdef CCDFHDF5IO_DEBUG
-              CDBDebug("%s%s%s", groupName.c_str(), CCDFHDF5IO_GROUPSEPARATOR, name);
-#endif
+              if (CCDFHDF5IO_DEBUG) {
+                CDBDebug("%s%s%s", groupName.c_str(), CCDFHDF5IO_GROUPSEPARATOR, name);
+              }
               CDF::Dimension *dim;
 
               for (int d = 0; d < ndims; d++) {
-#ifdef CCDFHDF5IO_DEBUG
-                CDBDebug("Dim size %d=%d\t", d, (size_t)dims_out[d]);
-#endif
+                if (CCDFHDF5IO_DEBUG) {
+                  CDBDebug("Dim size %d=%zu\t", d, (size_t)dims_out[d]);
+                }
                 // Make fake dimensions
                 std::string dimname = CT::printf("dim_%d", d);
                 if (ndims == 2) {
                   if (d == 0) dimname[4] = 'y';
                   if (d == 1) dimname[4] = 'x';
                 }
-#ifdef CCDFHDF5IO_DEBUG
-                CDBDebug("Making dimension %s", dimname.c_str());
-#endif
+                if (CCDFHDF5IO_DEBUG) {
+                  CDBDebug("Making dimension %s", dimname.c_str());
+                }
                 dim = makeDimension(dimname, dims_out[d]);
                 var->dimensionlinks.push_back(dim);
               }
@@ -301,9 +325,9 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
 int CDFHDF5Reader::open(const char *fileName) {
   std::string cpy = (fileName);
   this->fileName = cpy.c_str();
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Opening HDF5 file %s", this->fileName.c_str());
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Opening HDF5 file %s", this->fileName.c_str());
+  }
   H5F_file = H5Fopen(this->fileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
   if (H5F_file < 0) {
@@ -312,9 +336,9 @@ int CDFHDF5Reader::open(const char *fileName) {
   }
 
   // Read global attributes
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Opening group \"%s\"", CCDFHDF5IO_GROUPSEPARATOR);
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Opening group \"%s\"", CCDFHDF5IO_GROUPSEPARATOR);
+  }
   hid_t HDF5_group = H5Gopen2(H5F_file, ".", H5P_DEFAULT);
   if (HDF5_group < 0) {
     CDBError("could not open HDF5 group");
@@ -322,21 +346,21 @@ int CDFHDF5Reader::open(const char *fileName) {
 
     return 1;
   }
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("readAttributes");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("readAttributes");
+  }
   readAttributes(cdfObject->attributes, HDF5_group); // TODO
   H5Gclose(HDF5_group);
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("list");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("list");
+  }
   list(H5F_file, "");
 
   if (b_EnableKNMIHDF5toCFConversion) {
-#ifdef CCDFHDF5IO_DEBUG
-    CDBDebug("convertKNMIHDF5toCF()");
-#endif
+    if (CCDFHDF5IO_DEBUG) {
+      CDBDebug("convertKNMIHDF5toCF()");
+    }
     int status = convertKNMIHDF5toCF();
     if (status == 1) return 1;
     status = convertNWCSAFtoCF();
@@ -389,9 +413,9 @@ hid_t CDFHDF5Reader::openH5GroupByName(std::string &varNameOut, const std::strin
 void CDFHDF5Reader::closeH5GroupByName(const char *variableGroupName) {
   ignoreParameter(variableGroupName);
   while (opengroups.size() > 0) {
-#ifdef CCDFHDF5IO_DEBUG
-    CDBDebug("closing with id %d", opengroups.back());
-#endif
+    if (CCDFHDF5IO_DEBUG) {
+      CDBDebug("closing with id %ld", opengroups.back());
+    }
     opengroups.pop_back();
   }
 }
@@ -406,20 +430,20 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
     if (open(fileName.c_str()) != 0) return -1;
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Reading %s --> %s with type %s", var->name.c_str(), var->orgName.c_str(), CDF::getCDFDataTypeName(type).c_str());
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Reading %s --> %s with type %s", var->name.c_str(), var->orgName.c_str(), CDF::getCDFDataTypeName(type).c_str());
+  }
   std::string varName;
   hid_t HDF5_group = openH5GroupByName(varName, var->orgName);
   if (HDF5_group > 0) {
-#ifdef CCDFHDF5IO_DEBUG
-    CDBDebug("Group  %s Openend, got variable %s", var->orgName.c_str(), varName.c_str());
-#endif
+    if (CCDFHDF5IO_DEBUG) {
+      CDBDebug("Group  %s Openend, got variable %s", var->orgName.c_str(), varName.c_str());
+    }
     hid_t datasetID = H5Dopen2(HDF5_group, varName.c_str(), H5P_DEFAULT);
     if (datasetID > 0) {
-#ifdef CCDFHDF5IO_DEBUG
-      CDBDebug("Dataset Openend");
-#endif
+      if (CCDFHDF5IO_DEBUG) {
+        CDBDebug("Dataset Openend");
+      }
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
 
@@ -439,16 +463,16 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
         mem_count[d] = count[d + dimDiff];
         data_start[d] = start[d + dimDiff]; // mem_start[d];
         data_count[d] = mem_count[d];
-#ifdef CCDFHDF5IO_DEBUG
-        CDBDebug("%d %d, %d", d, data_start[d], data_count[d]);
-#endif
+        if (CCDFHDF5IO_DEBUG) {
+          CDBDebug("%d %llu, %llu", d, data_start[d], data_count[d]);
+        }
         totalVariableSize *= mem_count[d];
         ;
       }
 
-#ifdef CCDFHDF5IO_DEBUG
-      CDBDebug("totalVariableSize= %d", totalVariableSize);
-#endif
+      if (CCDFHDF5IO_DEBUG) {
+        CDBDebug("totalVariableSize= %d", totalVariableSize);
+      }
       var->setSize(totalVariableSize);
       if (CDF::allocateData(type, &var->data, var->getSize())) {
         throw(__LINE__);
@@ -482,9 +506,9 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
     return 0;
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Reading %s == %s with type %s", var->name.c_str(), var->orgName.c_str(), CDF::getCDFDataTypeName(type).c_str());
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Reading %s == %s with type %s", var->name.c_str(), var->orgName.c_str(), CDF::getCDFDataTypeName(type).c_str());
+  }
 
   std::string varName;
   hid_t HDF5_group = openH5GroupByName(varName, var->orgName);
@@ -649,9 +673,9 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
           dimX->setName("x");
           dimY->setName("y");
 
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("Creating virtual dimensions x and y");
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("Creating virtual dimensions x and y");
+          }
 
           double cellSizeX = (fXGEO_LOW_RIGHT[0] - fXGEO_UP_LEFT[0]) / float(dimX->length);
           double cellSizeY = (fYGEO_LOW_RIGHT[0] - fYGEO_UP_LEFT[0]) / float(dimY->length);
@@ -681,14 +705,14 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
             projection->nativeType = CDF_CHAR;
             projection->isDimension = false;
           }
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("CProj4ToCF");
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("CProj4ToCF");
+          }
           CProj4ToCF proj4ToCF;
           proj4ToCF.convertProjToCF(projection, projectionString.c_str());
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("/CProj4ToCF");
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("/CProj4ToCF");
+          }
           CDF::Attribute *proj4_params = projection->getAttributeNE("proj4_params");
           if (proj4_params == NULL) {
             proj4_params = new CDF::Attribute();
@@ -856,9 +880,9 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
           dimX->setName("x");
           dimY->setName("y");
 
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("Creating virtual dimensions x and y");
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("Creating virtual dimensions x and y");
+          }
 
           double cellSizeX = (fXGEO_LOW_RIGHT - fXGEO_UP_LEFT) / float(dimX->length);
           double cellSizeY = (fYGEO_LOW_RIGHT - fYGEO_UP_LEFT) / float(dimY->length);
@@ -888,14 +912,14 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
             projection->nativeType = CDF_CHAR;
             projection->isDimension = false;
           }
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("CProj4ToCF");
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("CProj4ToCF");
+          }
           CProj4ToCF proj4ToCF;
           proj4ToCF.convertProjToCF(projection, projectionString.c_str());
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("/CProj4ToCF");
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("/CProj4ToCF");
+          }
           CDF::Attribute *proj4_params = projection->getAttributeNE("proj4_params");
           if (proj4_params == NULL) {
             proj4_params = new CDF::Attribute();
@@ -1163,9 +1187,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     return 1;
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Detecting time parameters");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Detecting time parameters");
+  }
   auto startTime = knmiH5TimeToISOString(product_datetime_start->toString());
   auto endTime = knmiH5TimeToISOString(product_datetime_end->toString());
 
@@ -1208,9 +1232,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     }
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Detecting boundingbox from iso_dataset");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Detecting boundingbox from iso_dataset");
+  }
 
   /*Fill in bounding box in isodataset*/
   /*
@@ -1242,16 +1266,16 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
       iso_dataset->addAttribute(new CDF::Attribute("max-x", coords[4].c_str()));
       iso_dataset->addAttribute(new CDF::Attribute("max-y", coords[5].c_str()));
     } else {
-#ifdef CCDFHDF5IO_DEBUG
-      CDBDebug("geo_product_corners is invalid");
-#endif
+      if (CCDFHDF5IO_DEBUG) {
+        CDBDebug("geo_product_corners is invalid");
+      }
     }
   } catch (int e) {
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Setting global values");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Setting global values");
+  }
 
   /* Fill in global values */
   cdfObject->addAttribute(new CDF::Attribute("Conventions", "CF-1.6"));
@@ -1291,9 +1315,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   dimX->setName("x");
   dimY->setName("y");
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Creating virtual dimensions x and y");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Creating virtual dimensions x and y");
+  }
 
   double cellSizeX, cellSizeY, offsetX, offsetY;
   cellsizeXattr->getData(&cellSizeX, 1);
@@ -1311,9 +1335,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     ((double *)varY->data)[j] = y;
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Detecting projection");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Detecting projection");
+  }
 
   CDF::Variable *projection = NULL;
   projection = cdfObject->getVariableNE("projection");
@@ -1329,14 +1353,14 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     projection->isDimension = false;
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("CProj4ToCF");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("CProj4ToCF");
+  }
   CProj4ToCF proj4ToCF;
   proj4ToCF.convertProjToCF(projection, proj4attr->toString().c_str());
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("/CProj4ToCF");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("/CProj4ToCF");
+  }
   CDF::Attribute *proj4_params = projection->getAttributeNE("proj4_params");
   if (proj4_params == NULL) {
     proj4_params = new CDF::Attribute();
@@ -1349,9 +1373,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   CT::replaceSelf(projectionString, "nsper", "geos");
   proj4_params->setString(projectionString.c_str());
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Set time dimension");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Set time dimension");
+  }
   // Set time dimension
   CDF::Variable *time = new CDF::Variable();
   CDF::Dimension *timeDim = new CDF::Dimension();
@@ -1371,9 +1395,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
   time->dimensionlinks.push_back(timeDim);
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("CTime");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("CTime");
+  }
   // Set adaguc time
   CTime ctime;
   if (ctime.init(time_units->toString(), "") != 0) {
@@ -1443,13 +1467,13 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     ((double *)time->data)[j] = offset; // This will be filled correctly in at the image looping section
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Time size = %d", time->getSize());
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Time size = %zu", time->getSize());
+  }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("Set grid_mapping for all variables");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("Set grid_mapping for all variables");
+  }
 
   for (size_t j = 0; j < cdfObject->variables.size(); j++) {
     cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP", "true");
@@ -1515,9 +1539,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
             {
               CDF::Attribute *noDataAttr = new CDF::Attribute();
               noDataAttr->setName("_FillValue");
-#ifdef CCDFHDF5IO_DEBUG
-              CDBDebug("%s: Setting type %s", var->name.c_str(), CDF::getCDFDataTypeName(var->currentType).c_str());
-#endif
+              if (CCDFHDF5IO_DEBUG) {
+                CDBDebug("%s: Setting type %s", var->name.c_str(), CDF::getCDFDataTypeName(var->currentType).c_str());
+              }
 
               switch (var->currentType) {
               case CDF_CHAR: {
@@ -1596,16 +1620,16 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
             return 1;
           }
 
-#ifdef CCDFHDF5IO_DEBUG
-          CDBDebug("image%d:image_datetime_valid = [%s] is [%s]", variableCounter, datetime_valid.c_str(), valid_time_iso);
-#endif
+          if (CCDFHDF5IO_DEBUG) {
+            CDBDebug("image%zu:image_datetime_valid = [%s] is [%s]", variableCounter, datetime_valid.c_str(), valid_time_iso_str.c_str());
+          }
 
           double offset;
           try {
             offset = ctime.dateToOffset(ctime.stringToDate(valid_time_iso_str));
-#ifdef CCDFHDF5IO_DEBUG
-            CDBDebug("Setting time offset %f for image %d", offset, variableCounter);
-#endif
+            if (CCDFHDF5IO_DEBUG) {
+              CDBDebug("Setting time offset %f for image %zu", offset, variableCounter);
+            }
             if (variableCounter - 1 >= time->getSize()) {
               CDBWarning("More images found than specified in overview:number_image_groups, number_image_groups is set to %lu", time->getSize());
             } else {
@@ -1622,9 +1646,9 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     } while (var != NULL);
   }
 
-#ifdef CCDFHDF5IO_DEBUG
-  CDBDebug("convertKNMIHDF5toCF finished");
-#endif
+  if (CCDFHDF5IO_DEBUG) {
+    CDBDebug("convertKNMIHDF5toCF finished");
+  }
 
   return 0;
 }

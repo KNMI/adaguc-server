@@ -96,7 +96,7 @@ public:
   int close();
   void clear();
   int attachCDFReader(void *reader);
-  void *getCDFReader() { return reader; }
+  void *getCDFReader();
 
   /**
    * Returns or creates a 1 dimnensional coordinate variable of given length and size. Both the dimension and the variable are available after this. When all arguments are similar to the settings

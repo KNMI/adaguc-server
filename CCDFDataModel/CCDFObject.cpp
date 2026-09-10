@@ -40,6 +40,7 @@ int CDFObject::attachCDFReader(void *reader) {
   this->reader = r;
   return 0;
 }
+void *CDFObject::getCDFReader() { return reader; }
 void CDFObject::clear() {
   for (auto &dimension: dimensions) {
     delete dimension;

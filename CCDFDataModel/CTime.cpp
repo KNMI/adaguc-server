@@ -104,6 +104,8 @@ CTime::CTime() {
 }
 CTime::~CTime() { reset(); }
 
+int CTime::getMode() { return mode; }
+
 std::string CTime::getErrorMessage(int CTimeParserException) {
   std::string message = "Unknown error";
   if (CTimeParserException == CTIME_CONVERSION_ERROR) message = "CTIME_CONVERSION_ERROR";
@@ -546,6 +548,8 @@ CTime::Date CTime::getDate(double offset) {
   }
   return date;
 }
+
+CTime::Date CTime::offsetToDate(double offset) { return getDate(offset); }
 
 double CTime::dateToOffset(Date date) {
   if (mode == CTIME_MODE_360day && timeUnits.unitType == CTIME_UNITTYPE_DAYS) {

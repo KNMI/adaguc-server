@@ -48,15 +48,7 @@ namespace CDF {
     class CustomMemoryReader : public CDF::Variable::CustomReader {
     public:
       ~CustomMemoryReader() {}
-      int readData(CDF::Variable *thisVar, size_t *, size_t *count, ptrdiff_t *stride) override {
-        int size = 1;
-        for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
-          size *= int((float(count[j]) / float(stride[j])) + 0.5);
-        }
-        thisVar->setSize(size);
-        CDF::allocateData(thisVar->getType(), &thisVar->data, size);
-        return 0;
-      }
+      int readData(CDF::Variable *thisVar, size_t *, size_t *count, ptrdiff_t *stride) override;
     };
     static CustomMemoryReader *CustomMemoryReaderInstance;
 
