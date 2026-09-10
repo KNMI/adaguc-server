@@ -3,7 +3,7 @@
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

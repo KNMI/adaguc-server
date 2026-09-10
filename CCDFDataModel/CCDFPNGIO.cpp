@@ -3,7 +3,7 @@
  * Project:  Generic common data format
  * Purpose:  Packages PNG into a NetCDF file
  * Author:   Maarten Plieger (KNMI)
- * Date:     2017-08-08
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

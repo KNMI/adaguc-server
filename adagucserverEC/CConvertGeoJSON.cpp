@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  Transforms GeoJSON into a Grid.
  * Author:   Ernst de Vreede (KNMI)
- * Date:     2016-08
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

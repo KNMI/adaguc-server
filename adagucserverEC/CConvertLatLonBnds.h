@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2016-08-05
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

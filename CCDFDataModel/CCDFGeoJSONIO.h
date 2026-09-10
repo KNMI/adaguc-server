@@ -3,7 +3,7 @@
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
  * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
- * Date:     2016-03-05
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

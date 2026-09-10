@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  GeoJSON helper files.
  * Author:   Ernst de Vreede (KNMI)
- * Date:     2016-08
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

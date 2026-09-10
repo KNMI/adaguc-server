@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Ernst de Vreede vreedede "at" knmi.nl
- * Date:     2013-06-01
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

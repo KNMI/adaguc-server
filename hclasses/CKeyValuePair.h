@@ -3,7 +3,7 @@
  * Project:  Helper classes
  * Purpose:  Generic functions
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2021-09-17
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

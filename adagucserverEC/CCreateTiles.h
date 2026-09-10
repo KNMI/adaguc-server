@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  Class with static functions to create tiles for files in the db.
  * Author:   Maarten Plieger, maarten.plieger "at" knmi.nl
- * Date:     2021-12-23
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

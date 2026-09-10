@@ -3,7 +3,7 @@
  * Project:  Generic common data format
  * Purpose:  Packages GeoJSON into a NetCDF file
  * Author:   Ernst de Vreede (KNMI)
- * Date:     2013-06-01
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Geo Spatial Team gstf@knmi.nl
- * Date:     2022-01-12
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
