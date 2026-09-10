@@ -118,8 +118,6 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
 
   int status = readData(scaleType, _start, _count, _stride);
 
-  //   }
-
   if (status != 0) return status;
   // Apply scale and offset
   if (reallyApplyScaleOffset) {
@@ -422,14 +420,10 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
 
   if (srcDimVar->data == NULL) {
     srcDimVar->readData(currentType);
-  } /*else{
-     sourceType = srcDimVar->getType();
-   }*/
+  }
   if (CCDFDATAMODEL_DEBUG) {
     CDBDebug("=== Found %zu steps in source ===", srcDimVar->getSize());
   }
-
-  //   }
 
   if (iterativeVar->data == NULL) {
     if (CCDFDATAMODEL_DEBUG) {
@@ -508,7 +502,6 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
         break;
       }
     }
-    //     }
 
     // Check wether we already have this cdfobject dimension combo in our list
     int foundCDFObject = -1;
@@ -580,13 +573,10 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
         iterativeDim->setSize(currentDimSize + 1);
         iterativeVar->setSize(currentDimSize + 1);
 
-        //         }
         if (CCDFDATAMODEL_DEBUG) {
           CDBDebug("New iterativeDim size %zu", iterativeDim->getSize());
         }
-      } /*else{
-         CDBError("For dimension %s, time value %f is already defined, skipping!",dimName,srcDimValue);
-       }*/
+      }
     }
   }
 }

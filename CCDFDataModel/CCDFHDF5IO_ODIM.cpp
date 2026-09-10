@@ -27,7 +27,7 @@
 #include "CCDFHDF5IO.h"
 #include "ProjCache.h"
 
-// #define CCDFHDF5IO_DEBUG_H
+static const bool CCDFHDF5IO_DEBUG_H = false;
 
 double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initialValue) {
   CDF::Attribute *attr = var->getAttributeNE(attrName);
@@ -64,17 +64,17 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t d
   CDF::Attribute *attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
 
   if (attr == nullptr) {
-#ifdef CCDFHDF5IO_DEBUG_H
-    CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
-#endif
+    if (CCDFHDF5IO_DEBUG_H) {
+      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+    }
     /* Second try "dataset%d.what" */
     nestedVarName = CT::printf("dataset%zu.%s", datasetCounter, varName);
     nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
     attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
     if (attr == nullptr) {
-#ifdef CCDFHDF5IO_DEBUG_H
-      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
-#endif
+      if (CCDFHDF5IO_DEBUG_H) {
+        CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+      }
       /* Finally try "what" */
       nestedVarName = CT::printf("%s", varName);
       nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
@@ -82,13 +82,13 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t d
     }
   }
 
-#ifdef CCDFHDF5IO_DEBUG_H
-  if (attr == nullptr) {
-    CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
-  } else {
-    CDBDebug("Found %s / %s", nestedVarName.c_str(), attrName);
+  if (CCDFHDF5IO_DEBUG_H) {
+    if (attr == nullptr) {
+      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+    } else {
+      CDBDebug("Found %s / %s", nestedVarName.c_str(), attrName);
+    }
   }
-#endif
   return attr;
 }
 

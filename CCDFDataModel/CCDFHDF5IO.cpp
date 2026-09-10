@@ -256,7 +256,6 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
 
             int cdfType = typeConversion(datasetNativeType);
             if (cdfType != CDF_NONE) {
-              //}
               if (CCDFHDF5IO_DEBUG) {
                 CDBDebug("DataType is %s", CDF::getCDFDataTypeName(cdfType).c_str());
               }

@@ -60,7 +60,6 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
 
   png_structp png_ptr = nullptr;
   png_infop info_ptr = nullptr;
-  //   int number_of_passes;
   png_bytep *row_pointers = nullptr;
 
   unsigned char header[8]; // 8 is the maximum size that can be checked

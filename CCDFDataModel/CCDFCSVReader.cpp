@@ -247,8 +247,6 @@ int CDFCSVReader::open(const char *fileName) {
     }
 
     ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
-    //    } else {
-    //    }
   }
 
   /* Define reference_time dimension and variable */
@@ -281,8 +279,6 @@ int CDFCSVReader::open(const char *fileName) {
     }
 
     ((double *)referenceTimeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(referenceTimeString.c_str()));
-    //    } else {
-    //    }
   }
 
   /* Just in case open is done twice, clear the var indices vector */

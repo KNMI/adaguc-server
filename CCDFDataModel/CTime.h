@@ -52,8 +52,6 @@
 
 #define CTIME_EPOCH_UNITS "seconds since 1970-01-01 0:0:0"
 
-// #define CTIME_CALENDARTYPE_365day  1
-
 #include "CDebugger.h"
 class CTime {
 private:
