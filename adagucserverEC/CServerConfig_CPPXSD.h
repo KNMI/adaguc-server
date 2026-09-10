@@ -29,6 +29,7 @@
 #include "CDirReader.h"
 #include "CColor.h"
 #include <cfloat>
+#include <cmath>
 
 // Struct for keeping settings for a datapostprocessor. Can be assigned to new structs by assigment operator. Also used in CDataPostProcessor.cpp
 struct XMLE_DataPostProcAttributes {
@@ -400,14 +401,16 @@ struct CServerConfig : CXMLObjectInterface {
 
   struct XMLE_ShadeInterval : CXMLObjectInterface {
     struct Cattr {
-      std::string min, max, label, fillcolor, bgcolor;
+      double min = std::nan(""), max = std::nan("");
+      std::string label, fillcolor, bgcolor;
+      bool showinlegend = true;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("min" == attrCfg.name) {
-        attr.min = attrCfg.value;
+        attr.min = parseDouble(attrCfg);
         return true;
       } else if ("max" == attrCfg.name) {
-        attr.max = attrCfg.value;
+        attr.max = parseDouble(attrCfg);
         return true;
       } else if ("label" == attrCfg.name) {
         attr.label = attrCfg.value;
@@ -417,6 +420,11 @@ struct CServerConfig : CXMLObjectInterface {
         return true;
       } else if ("bgcolor" == attrCfg.name) {
         attr.bgcolor = attrCfg.value;
+        return true;
+      } else if ("showinlegend" == attrCfg.name) {
+        if (attrCfg.value == "false") {
+          attr.showinlegend = false;
+        }
         return true;
       }
       return false;

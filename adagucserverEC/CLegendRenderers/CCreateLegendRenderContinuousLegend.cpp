@@ -25,11 +25,11 @@ double CCreateLegend::nextTick(double prev) {
   return 10 * conversion;
 }
 
-char *CCreateLegend::formatTickLabel(CT::string textformatting, char *szTemp, size_t szTempLength, double tick, double min, double max, int tickRound) {
+std::string CCreateLegend::formatTickLabel(const std::string &textformatting, double tick, double min, double max, int tickRound) {
+  char szTemp[256];
   if (textformatting.empty() == false) {
-    CT::string textFormat;
-    textFormat.print("%s", textformatting.c_str());
-    snprintf(szTemp, szTempLength, textFormat.c_str(), tick);
+    std::string textFormat = CT::printf("%s", textformatting.c_str());
+    snprintf(szTemp, 255, textFormat.c_str(), tick);
   } else {
     if (tickRound == 0) {
       floatToString(szTemp, 255, min, max, tick);
@@ -37,7 +37,7 @@ char *CCreateLegend::formatTickLabel(CT::string textformatting, char *szTemp, si
       floatToString(szTemp, 255, tickRound, tick);
     }
   }
-  return szTemp;
+  return std::string(szTemp);
 }
 
 int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool) {
@@ -50,7 +50,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   float fontSize;
   std::string fontLocation;
   std::tie(fontSize, fontLocation) = dataSource->srvParams->getLegendFont();
-  CT::string textformatting;
+  std::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */
   if (styleConfiguration != nullptr && !styleConfiguration->legend.attr.textformatting.empty()) {
@@ -179,22 +179,18 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     // Fixed number of intermediate classes: 2,5,10
     // assume log 10
     // 1. Collect all tick values and their formatted labels
-    std::vector<CT::string> logLabels;
+    std::vector<std::string> logLabels;
     std::vector<double> tickValues;
 
     double tick = min;
     while (tick < max) {
-      char temp[256];
-      formatTickLabel(textformatting, temp, sizeof(temp), tick, min, max, tickRound);
-      logLabels.push_back(CT::string(temp));
+      logLabels.push_back(formatTickLabel(textformatting, tick, min, max, tickRound));
       tickValues.push_back(tick);
       tick = nextTick(tick);
     }
 
     // Include max explicitly
-    char temp[256];
-    formatTickLabel(textformatting, temp, sizeof(temp), max, min, max, tickRound);
-    logLabels.push_back(CT::string(temp));
+    logLabels.push_back(formatTickLabel(textformatting, max, min, max, tickRound));
     tickValues.push_back(max);
 
     // Calculate widths
@@ -217,7 +213,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, labelY, lineWidth, 248);
 
       if (!fontLocation.empty()) {
-        const CT::string &label = logLabels[i];
+        const std::string &label = logLabels[i];
         char tempText[256];
         snprintf(tempText, sizeof(tempText), "%s", label.c_str());
 
@@ -242,7 +238,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       loopMin = -min;
       loopMax = -max;
     }
-    std::vector<CT::string> allLabels;
+    std::vector<std::string> allLabels;
     char tempText[1024];
     int steps = int(round((loopMax - loopMin) / increment));
 
@@ -261,8 +257,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       double v = isInverted ? -j : j;
 
       if (!textformatting.empty()) {
-        CT::string textFormat;
-        textFormat.print("%s", textformatting.c_str());
+        std::string textFormat = CT::printf("%s", textformatting.c_str());
         snprintf(tempText, sizeof(tempText), textFormat.c_str(), v);
       } else {
         if (tickRound == 0) {
@@ -272,7 +267,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         }
       }
 
-      allLabels.push_back(CT::string(tempText));
+      allLabels.push_back(std::string(tempText));
     }
 
     // Calculate widths
@@ -293,7 +288,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
       legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
 
-      CT::string label = allLabels[labelIndex++];
+      std::string label = allLabels[labelIndex++];
       snprintf(tempText, sizeof(tempText), "%s", label.c_str());
 
       const char *dotPos = strchr(tempText, '.');
@@ -309,10 +304,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     }
   }
   // Get units
-  CT::string units;
-  if (dObjgetUnits(*dataSource->getDataObject(0)).length() > 0) {
-    units.concat(dObjgetUnits(*dataSource->getDataObject(0)).c_str());
-  }
+  std::string units = dObjgetUnits(*dataSource->getDataObject(0));
   if (units.length() == 0) {
     units = "-";
   }

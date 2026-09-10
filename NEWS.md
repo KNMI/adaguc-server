@@ -1,3 +1,8 @@
+**Version 8.3.0**
+
+- Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
+
+
 **Version 8.2.0**
 
 * 652 feature request showing speed vectors on top of polygons based on geojson files by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
