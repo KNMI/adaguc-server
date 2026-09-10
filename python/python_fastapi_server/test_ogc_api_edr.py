@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
@@ -156,7 +157,7 @@ def test_hrefs(client: TestClient):
 
     # make unique, and remove base urls.
     urls = sorted(set(urls))
-    urls = [url.replace(str(client.base_url), "") for url in urls]
+    urls = [urlsplit(url).path for url in urls]
 
     assert urls == [
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member",
