@@ -33,7 +33,7 @@
 #define CDFNetCDFGroupSeparator "/"
 
 static const bool CCDFNETCDFIO_DEBUG = false;
-// #define CCDFNETCDFIO_DEBUG_OPEN
+static const bool CCDFNETCDFIO_DEBUG_OPEN = false;
 static const bool CCDFNETCDFWRITER_DEBUG = false;
 
 CDFNetCDFReader::CDFNetCDFReader() : CDFReader() {
@@ -59,9 +59,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 #endif
 
   if (root_id == -1) {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-    CDBDebug("NC_OPEN re-opening %s for %s", fileName.c_str(), var->name.c_str());
-#endif
+    if (CCDFNETCDFIO_DEBUG_OPEN) {
+      CDBDebug("NC_OPEN re-opening %s for %s", fileName.c_str(), var->name.c_str());
+    }
 
     status = nc_open(fileName.c_str(), NC_NOWRITE, &root_id);
     if (status != NC_NOERR) {
@@ -75,11 +75,11 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-    CDBDebug("root_id %d", root_id);
-    var->id = -1;
-    CDBDebug("VARNAME %s id: %d", var->name.c_str(), var->id);
-#endif
+    if (CCDFNETCDFIO_DEBUG_OPEN) {
+      CDBDebug("root_id %d", root_id);
+      var->id = -1;
+      CDBDebug("VARNAME %s id: %d", var->name.c_str(), var->id);
+    }
 
     /*Check if var id is still OK*/
     char name[NC_MAX_NAME + 1];
@@ -185,26 +185,26 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     } else {
       if (useStartCount == true) {
         if (useStriding) {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-          CDBDebug("READ NSCS: [%s]", var->name.c_str());
-#endif
+          if (CCDFNETCDFIO_DEBUG_OPEN) {
+            CDBDebug("READ NSCS: [%s]", var->name.c_str());
+          }
           status = nc_get_vars_string(varGroupId, var->id, start, count, stride, (char **)var->data);
           if (status != NC_NOERR) {
             CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_vars (typeconversion): ", status);
           }
         } else {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-          CDBDebug("READ NSC: [%s]", var->name.c_str());
-#endif
+          if (CCDFNETCDFIO_DEBUG_OPEN) {
+            CDBDebug("READ NSC: [%s]", var->name.c_str());
+          }
           status = nc_get_vara_string(varGroupId, var->id, start, count, (char **)var->data);
           if (status != NC_NOERR) {
             CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_vara (typeconversion): ", status);
           }
         }
       } else {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-        CDBDebug("READ N: [%s]", var->name.c_str());
-#endif
+        if (CCDFNETCDFIO_DEBUG_OPEN) {
+          CDBDebug("READ N: [%s]", var->name.c_str());
+        }
         status = nc_get_var_string(varGroupId, var->id, (char **)var->data);
         if (status != NC_NOERR) {
           CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_var_string (typeconversion): ", status);
@@ -239,26 +239,26 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 
     if (useStartCount == true) {
       if (useStriding) {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-        CDBDebug("READ SCS: [%s]", var->name.c_str());
-#endif
+        if (CCDFNETCDFIO_DEBUG_OPEN) {
+          CDBDebug("READ SCS: [%s]", var->name.c_str());
+        }
         status = nc_get_vars(varGroupId, var->id, start, count, stride, voidData);
         if (status != NC_NOERR) {
           CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_vars (typeconversion): ", status);
         }
       } else {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-        CDBDebug("READ SC: [%s]", var->name.c_str());
-#endif
+        if (CCDFNETCDFIO_DEBUG_OPEN) {
+          CDBDebug("READ SC: [%s]", var->name.c_str());
+        }
         status = nc_get_vara(varGroupId, var->id, start, count, voidData);
         if (status != NC_NOERR) {
           CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_vara (typeconversion): ", status);
         }
       }
     } else {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-      CDBDebug("READ: [%s]", var->name.c_str());
-#endif
+      if (CCDFNETCDFIO_DEBUG_OPEN) {
+        CDBDebug("READ: [%s]", var->name.c_str());
+      }
 
       status = nc_get_var(varGroupId, var->id, voidData);
       if (status != NC_NOERR) {
@@ -289,36 +289,36 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   if (type == var->nativeType) {
     if (useStartCount) {
       if (useStriding) {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-        std::string dims = "";
-        for (size_t j = 0; j < var->dimensionlinks.size(); j++) {
-          if (j > 0) dims += ",";
-          CT::printfconcat(dims, "%s[%d:%d:%d]", var->dimensionlinks[j]->name.c_str(), start[j], count[j], start[j]);
+        if (CCDFNETCDFIO_DEBUG_OPEN) {
+          std::string dims = "";
+          for (size_t j = 0; j < var->dimensionlinks.size(); j++) {
+            if (j > 0) dims += ",";
+            CT::printfconcat(dims, "%s[%zu:%zu:%zu]", var->dimensionlinks[j]->name.c_str(), start[j], count[j], start[j]);
+          }
+          CDBDebug("READ NSCS: [%s](%s)", var->name.c_str(), dims.c_str());
         }
-        CDBDebug("READ NSCS: [%s](%s)", var->name.c_str(), dims.c_str());
-#endif
         status = nc_get_vars(varGroupId, var->id, start, count, stride, var->data);
         if (status != NC_NOERR) {
           CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_vars (native): ", status);
         }
       } else {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-        std::string dims = "";
-        for (size_t j = 0; j < var->dimensionlinks.size(); j++) {
-          if (j > 0) dims += ",";
-          CT::printfconcat(dims, "%s[%d:%d]", var->dimensionlinks[j]->name.c_str(), start[j], count[j]);
+        if (CCDFNETCDFIO_DEBUG_OPEN) {
+          std::string dims = "";
+          for (size_t j = 0; j < var->dimensionlinks.size(); j++) {
+            if (j > 0) dims += ",";
+            CT::printfconcat(dims, "%s[%zu:%zu]", var->dimensionlinks[j]->name.c_str(), start[j], count[j]);
+          }
+          CDBDebug("READ NSC: [%s](%s)", var->name.c_str(), dims.c_str());
         }
-        CDBDebug("READ NSC: [%s](%s)", var->name.c_str(), dims.c_str());
-#endif
         status = nc_get_vara(varGroupId, var->id, start, count, var->data);
         if (status != NC_NOERR) {
           CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_vara (native): ", status);
         }
       }
     } else {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-      CDBDebug("READ N: [%s]", var->name.c_str());
-#endif
+      if (CCDFNETCDFIO_DEBUG_OPEN) {
+        CDBDebug("READ N: [%s]", var->name.c_str());
+      }
       status = nc_get_var(varGroupId, var->id, var->data);
       if (status != NC_NOERR) {
         CDBError("[%s]: %s %d", nc_strerror(status), "nc_get_var (native): ", status);
@@ -717,9 +717,9 @@ int CDFNetCDFReader::open(const char *fileName) {
     return 1;
   }
 
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-  CDBDebug("NC_OPEN opening %s", fileName);
-#endif
+  if (CCDFNETCDFIO_DEBUG_OPEN) {
+    CDBDebug("NC_OPEN opening %s", fileName);
+  }
 
   status = nc_open(fileName, NC_NOWRITE, &root_id);
   if (status != NC_NOERR) {
