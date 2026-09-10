@@ -30,6 +30,8 @@
 #include <netcdf.h>
 #include "CDFCopyData.h"
 
+#define CCDFHDF5IO_GROUPSEPARATOR "."
+
 static const bool CCDFHDF5IO_DEBUG = false;
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {

@@ -33,24 +33,8 @@
 #include <sys/types.h>
 #include <cstdlib>
 #include <map>
-#define CTIME_CONVERSION_ERROR 1
-
-#define CTIME_MODE_UTCALENDAR 0
-#define CTIME_MODE_YYYYMM 1
-#define CTIME_MODE_YYYYMMDD_NUMBER 2
-#define CTIME_MODE_365day 3
-#define CTIME_MODE_360day 4
-
-#define CTIME_UNITTYPE_SECONDS 1
-#define CTIME_UNITTYPE_MINUTES 2
-#define CTIME_UNITTYPE_HOURS 3
-#define CTIME_UNITTYPE_DAYS 4
-#define CTIME_UNITTYPE_MONTHS 5
-#define CTIME_UNITTYPE_YEARS 6
 
 #define CTIME_GETINSTANCE_ERROR_MESSAGE "Unable to obtain ctime instance from variable"
-
-#define CTIME_EPOCH_UNITS "seconds since 1970-01-01 0:0:0"
 
 #include "CDebugger.h"
 class CTime {
