@@ -2,7 +2,7 @@
  *
  * Project:  Proj4ToCF
  * Purpose:  Functions to convert proj4 strings to CF projection descriptions and vice versa
- * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
  * Date:     2026-09-10
  *
  ******************************************************************************
