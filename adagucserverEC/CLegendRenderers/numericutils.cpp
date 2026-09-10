@@ -41,7 +41,7 @@ int hasNeg(const std::vector<std::string> &column) {
 int maxDecimalWidth(const std::vector<std::string> &column) {
   int maxDecimals = 0;
 
-  for (std::string item: column) {
+  for (const std::string &item: column) {
     int dotIndex = CT::indexOf(item, ".");
     if (dotIndex < 0) {
       continue; // dot not found
