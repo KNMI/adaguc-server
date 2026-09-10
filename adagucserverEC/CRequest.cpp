@@ -29,6 +29,9 @@ static const bool CREQUEST_DEBUG = false;
 
 #include "Types/ProjectionStore.h"
 #include "CRequest.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
+#include "CServerConfig_CPPXSD.h"
 #include "COpenDAPHandler.h"
 #include "CDBFactory.h"
 #include "CAutoResource.h"
@@ -51,6 +54,16 @@ static const bool CREQUEST_DEBUG = false;
 #include <traceTimings/traceTimings.h>
 #include "utils/serverutils.h"
 #include "CCreateHistogram.h"
+#include "CAutoConfigure.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CDrawImage.h"
+#include "CImageDataWriter.h"
+#include "CImageWarper.h"
+#include "CStopWatch.h"
+#include "CTime.h"
+#include "CXMLParser.h"
+#include "CCDFStore.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif

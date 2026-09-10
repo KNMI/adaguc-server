@@ -31,8 +31,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "CTString.h"
-#include "CDebugger.h"
 
 extern int numXMLAttributesNotRecognized;
 

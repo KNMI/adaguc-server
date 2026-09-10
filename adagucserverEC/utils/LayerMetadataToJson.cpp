@@ -8,6 +8,8 @@
 #include "XMLGenUtils.h"
 #include <unordered_set>
 #include <traceTimings/traceTimings.h>
+#include "CTString.h"
+#include "CRequest.h"
 
 // metadataKey -> blob, for a single dataset/layer combination.
 using LayerMetadataBlobs = std::map<std::string, std::string>;

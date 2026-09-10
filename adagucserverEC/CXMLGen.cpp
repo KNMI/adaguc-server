@@ -28,6 +28,17 @@
 #include <sstream>
 #include <string>
 #include "CXMLGen.h"
+#include "CServerParams.h"
+#include "CInspire.h"
+#include "CImageDataWriter.h"
+#include "CServerError.h"
+#include "CDataReader.h"
+#include "CImageWarper.h"
+#include "CDrawImage.h"
+#include "CDataSource.h"
+#include "CRequest.h"
+#include "CDebugger.h"
+#include "CStyleConfiguration.h"
 #include "CDBFactory.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "timeutils.h"
@@ -36,6 +47,8 @@
 #include "utils/XMLGenUtils.h"
 #include "utils/CXMLTemplates.h"
 #include "utils/LayerUtils.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 static const bool CXMLGEN_DEBUG = false;
 

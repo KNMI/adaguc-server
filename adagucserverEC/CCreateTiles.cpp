@@ -1,10 +1,19 @@
 #include "CCreateTiles.h"
+#include "CDebugger.h"
 #include "CDBAdapterPostgreSQL.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
 #include "CRequest.h"
 #include "CNetCDFDataWriter.h"
 #include <cdfVariableCache.h>
+#include "CAutoConfigure.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CTime.h"
+#include "CXMLParser.h"
 
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {

@@ -2,7 +2,6 @@
 #define GETVECTORSTYLE_H
 
 #include "CTString.h"
-#include "CColor.h"
 #include <CServerConfig_CPPXSD.h>
 
 struct VectorStyle {

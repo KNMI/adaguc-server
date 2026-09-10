@@ -4,7 +4,9 @@
 #define GDW_DRAWFUNCTION_UTILS_H
 
 #include "CGenericDataWarper.h"
+#include "CCDFTypes.h"
 #include "CColor.h"
+#include "CDataSource.h"
 #include "CDrawImage.h"
 
 enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };

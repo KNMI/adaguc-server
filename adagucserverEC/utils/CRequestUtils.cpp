@@ -8,6 +8,9 @@
 #include <array>
 #include <CDBFactory.h>
 #include <handleTileRequest.h>
+#include "CDebugger.h"
+#include "CTString.h"
+#include "CServerError.h"
 
 std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSources) {
   double dfBBOX[4] = {-180, -90, 180, 90};

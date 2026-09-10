@@ -24,7 +24,14 @@
  ******************************************************************************/
 
 #include "CDrawImage.h"
+#include "CDebugger.h"
+#include "CColor.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "Types/GeoParameters.h"
+#include "CServerError.h"
 #include "CXMLParser.h"
+#include "CCairoPlotter.h"
 
 float convertValueToClass(float val, float interval) {
   float f = int(val / interval);

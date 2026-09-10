@@ -25,6 +25,8 @@
 
 #include "CServerError.h"
 #include "CDrawImage.h"
+#include "Types/GeoParameters.h"
+#include "Definitions.h"
 
 static std::vector<std::string> errormsgs;
 

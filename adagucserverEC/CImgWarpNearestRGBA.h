@@ -28,6 +28,9 @@
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "Types/GeoParameters.h"
 
 /**
  *  This tile just runs over the datasource field, and calculates the destination pixel color over and over again when it is requested twice.

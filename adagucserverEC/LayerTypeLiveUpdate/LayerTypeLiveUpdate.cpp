@@ -1,7 +1,17 @@
 #include "LayerTypeLiveUpdate.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 #include "CServerParams.h"
 #include "CDataPostProcessors/CDataPostProcessor.h"
 #include <utils/LayerUtils.h>
+#include "CCDFObject.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CDebugger.h"
+#include "CImageDataWriter.h"
+#include "CTString.h"
+#include "CTime.h"
+#include "CImageWarper.h"
 
 bool verbose = false;
 int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) {

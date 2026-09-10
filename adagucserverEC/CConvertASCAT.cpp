@@ -26,6 +26,9 @@
 #include "CConvertASCAT.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 static const bool CCONVERTASCAT_DEBUG = false;
 

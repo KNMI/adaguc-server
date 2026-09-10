@@ -7,6 +7,13 @@
 #include "f8vector.h"
 #include "ProjCache.h"
 #include "CDrawFunction.h"
+#include "CCDFHDF5IO.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CProj4ToCF.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose

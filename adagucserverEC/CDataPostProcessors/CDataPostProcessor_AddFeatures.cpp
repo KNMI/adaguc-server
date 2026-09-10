@@ -1,6 +1,9 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataReader.h"
 #include <algorithm>
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPAddFeatures     */
@@ -126,4 +129,9 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     }
   }
   return 0;
+}
+
+int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

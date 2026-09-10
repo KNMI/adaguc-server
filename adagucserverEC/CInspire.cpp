@@ -1,5 +1,33 @@
 #include "CInspire.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "CHTTPTools.h"
+#include "CDebugger.h"
+#include <string>
+#include <vector>
 #ifdef ENABLE_INSPIRE
+
+std::string CInspire::InspireMetadataFromCSW::toString() {
+  std::string a = CT::printf("title:           \"%s\"\n"
+                              "identifier:      \"%s\"\n"
+                              "abstract:        \"%s\"\n"
+                              "pointOfContact:  \"%s\"\n"
+                              "voiceTelephone:  \"%s\"\n"
+                              "organisationName:\"%s\"\n"
+                              "email:           \"%s\"\n",
+                              title.c_str(), identifier.c_str(), abstract.c_str(), pointOfContact.c_str(), voiceTelephone.c_str(), organisationName.c_str(), email.c_str());
+  for (size_t j = 0; j < keywords.size(); j++) {
+    CT::printfconcat(a, "keyword %zu:       \"%s\"\n", j, keywords[j].c_str());
+  }
+  return a;
+}
+
+std::string CInspire::getErrorMessage(int a) {
+  if (a == CINSPIRE_HTTPGETERROR) return "INSPIRE HTTP GET FAILED";
+  if (a == CINSPIRE_XMLPARSEERROR) return "INSPIRE XML INVALID";
+  if (a == CINSPIRE_XMLELEMENTNOTFOUND) return "INSPIRE XML ELEMENT NOT FOUND";
+  return "CINSPIRE_UKNOWN";
+}
 
 CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char *cswService) {
   std::string xmlData;

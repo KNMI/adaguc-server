@@ -24,12 +24,17 @@
  ******************************************************************************/
 
 #include "CDataSource.h"
+#include "CCDFObject.h"
+#include "COGCDims.h"
+#include "Types/GeoParameters.h"
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
 #include "utils/lintDataset.h"
 #include "utils.h"
 #include "CStyleConfiguration.h"
+#include "CAutoConfigure.h"
+#include "CTString.h"
 
 bool debugDataSource = false;
 bool configWarningNameMappingSet = false;

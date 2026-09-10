@@ -1,13 +1,11 @@
 #ifndef CCreateHistogram_H
 #define CCreateHistogram_H
 
-#include "Definitions.h"
-#include "CStopWatch.h"
 #include "CGenericDataWarper.h"
+#include "CIBaseDataWriterInterface.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CIBaseDataWriterInterface.h"
-#include "CDebugger.h"
+#include "CServerParams.h"
 
 class CCreateHistogram : public CBaseDataWriterInterface {
 private:

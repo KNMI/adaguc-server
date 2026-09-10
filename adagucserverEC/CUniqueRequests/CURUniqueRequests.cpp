@@ -3,6 +3,15 @@
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
+#include "CDFObjectStore.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "CDPPInterface.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
 
 bool enableLogUnique = false;
 

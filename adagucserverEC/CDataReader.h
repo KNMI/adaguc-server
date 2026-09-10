@@ -26,22 +26,14 @@
 #ifndef CDataReader_H
 #define CDataReader_H
 #include <cmath>
-#include "CDebugger.h"
+#include <string>
 #include "CDataSource.h"
-#include "CServerError.h"
-#include "CDirReader.h"
 
 // #include "CADAGUC_time.h"
-#include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
 
-#include "CProj4ToCF.h"
-#include "CStopWatch.h"
 #include <sys/stat.h>
 
-#include "CDFObjectStore.h"
 
-#include "CAutoConfigure.h"
 class CDataReader {
 private:
   bool _enableReporting = false;

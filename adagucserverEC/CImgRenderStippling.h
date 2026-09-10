@@ -29,6 +29,8 @@
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 #define CImgRenderStipplingModeDefault 0
 #define CImgRenderStipplingModeThreshold 1

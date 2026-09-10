@@ -1,6 +1,20 @@
 #include "CCreateHistogram.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
 #include "CGenericDataWarper.h"
 #include "CImageDataWriter.h"
+#include "CCDFObject.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CServerError.h"
 
 #define MAX_NUM_BINS 50
 

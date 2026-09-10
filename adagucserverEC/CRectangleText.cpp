@@ -23,6 +23,21 @@
  *
  ******************************************************************************/
 #include "CRectangleText.h"
+#include "CDebugger.h"
+#include "Definitions.h"
+
+void CRectangleText::init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
+  this->llx = llx;
+  this->lly = lly;
+  this->urx = urx;
+  this->ury = ury;
+  this->angle = angle;
+  this->padding = padding;
+  this->text = std::string(text);
+  this->fontFile = std::string(fontFile);
+  this->fontSize = fontSize;
+  this->color = color;
+}
 
 bool CRectangleText::overlaps(CRectangleText &r2) {
   if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;

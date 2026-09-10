@@ -23,6 +23,12 @@
  *
  ******************************************************************************/
 #include "CDBAdapterPostgreSQL.h"
+#include "CImageDataWriter.h"
+#include "CServerParams.h"
+#include "CDataSource.h"
+#include "CDFObjectStore.h"
+#include "CCDFStore.h"
+#include "CDBStore.h"
 
 #include <set>
 #include <map>
@@ -30,6 +36,14 @@
 #include "CServerError.h"
 #include "Types/GeoParameters.h"
 #include "utils/CRequestUtils.h"
+#include "CCDFReader.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CStopWatch.h"
+#include "CTime.h"
+#include "CXMLParser.h"
+#include "CDBFileScanner.h"
 
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 static const bool debug = false;

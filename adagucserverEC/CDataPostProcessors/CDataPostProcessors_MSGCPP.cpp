@@ -1,4 +1,7 @@
 #include "CDataPostProcessors_MSGCPP.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*CDPPMSGCPPVisibleMask */
@@ -420,4 +423,19 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     }
   }
   return 0;
+}
+
+int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
+}
+
+int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
+}
+
+int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

@@ -27,7 +27,6 @@
 #define COGCDIMS_H
 #include <cstdio>
 #include "CTString.h"
-#include "CDebugger.h"
 
 struct OGCURIDims {
   std::string name;

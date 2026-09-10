@@ -1,3 +1,6 @@
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 /******************************************************************************
  *
  * Project:  ADAGUC Server
@@ -25,8 +28,6 @@
 
 #ifndef CCONVERTHEXAGON_H
 #define CCONVERTHEXAGON_H
-#include "CDataSource.h"
-#include "CImageWarper.h"
 class CConvertHexagon {
 private:
   static double *getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats);

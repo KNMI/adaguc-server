@@ -24,6 +24,7 @@
  ******************************************************************************/
 #include <cstdio>
 #include <cstring>
+#include "CTString.h"
 
 #define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT > 96 ? DIGIT - 87 : DIGIT > 64 ? DIGIT - 55 : DIGIT - 48) // Converts "9" to 9, "A" to 10 and "a" to 10
 

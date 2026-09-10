@@ -26,7 +26,13 @@
 #include <tuple>
 #include <vector>
 #include "CConvertH5VolScanUtils.h"
+#include "CDataSource.h"
+#include "CImageWarper.h"
+#include "COGCDims.h"
 #include "CCDFHDF5IO.h"
+#include <string>
+#include "CCDFObject.h"
+#include "CTString.h"
 
 const std::string scan_params_odim[] = {"CCORH", "CCORV", "CPAH", "CPAV", "KDP", "PHIDP", "RHOHV", "SQIH", "VRADH", "VRADV", "WRADH", "WRADV", "DBZH", "DBZV", "TH", "TV", "ZDR", "Height"};
 const std::string units_odim[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "dBZ", "dBZ", "dB", "km"};

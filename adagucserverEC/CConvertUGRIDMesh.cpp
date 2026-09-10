@@ -26,6 +26,9 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 static const bool CCONVERTADAGUCPOINT_DEBUG = false;
 static const bool CCONVERTUGRIDMESH_DEBUG = false;

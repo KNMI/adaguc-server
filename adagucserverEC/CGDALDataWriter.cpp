@@ -24,8 +24,23 @@
  ******************************************************************************/
 
 #include "Definitions.h"
+#include <set>
+#include "CCDFObject.h"
+#include "CGenericDataWarper.h"
+#include "CTime.h"
+#include "CCDFNetCDFIO.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
+#include "CServerParams.h"
+#include "CDataSource.h"
+#include "CDataReader.h"
+#include "gdalwarper.h"
+#include "CDebugger.h"
+#include "CTString.h"
+#include "CServerError.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CIBaseDataWriterInterface.h"
 
 static const bool CGDALDATAWRITER_DEBUG = false;
 

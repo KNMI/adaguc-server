@@ -25,11 +25,12 @@
 
 #ifndef CCONVERTGEOJSON_H
 #define CCONVERTGEOJSON_H
-#include "CDataSource.h"
 #include "CGeoJSONData.h"
 #include "CImageWarper.h"
 #include "json.h"
-#include "CDebugger.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 
 class CConvertGeoJSON {
 public:

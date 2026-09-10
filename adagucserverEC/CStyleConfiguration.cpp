@@ -1,5 +1,8 @@
 #include "CStyleConfiguration.h"
+#include "CXMLParser.h"
+#include "CDebugger.h"
 #include "CDataSource.h"
+#include "CTString.h"
 
 static const bool CDATASOURCE_DEBUG = false;
 

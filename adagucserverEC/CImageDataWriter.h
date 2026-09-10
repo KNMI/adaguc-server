@@ -28,21 +28,11 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "Definitions.h"
-#include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
-#include "CImgWarpNearestNeighbour.h"
-#include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
-#include "CImgWarpBoolean.h"
-#include "CImgRenderers/CImgRenderPoints.h"
-#include "CImgRenderStippling.h"
-#include "CImgRenderPolylines.h"
-#include "CStyleConfiguration.h"
-#include "CMyCURL.h"
-#include "CXMLParser.h"
-#include "CDebugger.h"
 #include "Types/GetFeatureInfoResult.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CXMLParser.h"
 
 class CImageDataWriter : public CBaseDataWriterInterface {
 public:
@@ -61,10 +51,7 @@ public:
   public:
     int min;
     int max;
-    IndexRange(int min, int max) {
-      this->min = min;
-      this->max = max;
-    }
+    IndexRange(int min, int max);
     IndexRange();
   };
 

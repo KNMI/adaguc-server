@@ -25,13 +25,42 @@
 
 #include "Types/ProjectionStore.h"
 #include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "Types/CPointTypes.h"
 #include "ProjCache.h"
 #include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CProj4ToCF.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/GeoParameters.h"
 
 static const bool CIMAGEWARPER_DEBUG = false;
+
+CImageWarper::CImageWarper() {
+  prj = NULL;
+  projSourceToDest = nullptr;
+  projSourceToLatlon = nullptr;
+  projLatlonToDest = nullptr;
+  initialized = false;
+}
+CImageWarper::~CImageWarper() {
+  if (initialized == true) {
+    closereproj();
+    prj = NULL;
+    projSourceToDest = nullptr;
+    projSourceToLatlon = nullptr;
+    projLatlonToDest = nullptr;
+    initialized = false;
+  }
+}
 
 std::string floatToString(int numdigits, float number) {
   // Interpret numdigits as "number of decimals"

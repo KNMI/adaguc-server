@@ -24,10 +24,8 @@
  ******************************************************************************/
 #ifndef CRectangleText_H
 #define CRectangleText_H
-#include "CDebugger.h"
 #include "CTString.h"
 
-#include "Definitions.h"
 #include "CColor.h"
 
 class CRectangleText {
@@ -45,18 +43,7 @@ public:
 
   CRectangleText() {}
 
-  void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
-    this->llx = llx;
-    this->lly = lly;
-    this->urx = urx;
-    this->ury = ury;
-    this->angle = angle;
-    this->padding = padding;
-    this->text = std::string(text);
-    this->fontFile = std::string(fontFile);
-    this->fontSize = fontSize;
-    this->color = color;
-  }
+  void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color);
   bool overlaps(CRectangleText &r1);
 };
 #endif

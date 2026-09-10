@@ -1,4 +1,10 @@
 #include "CCreateScaleBar.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "Types/GeoParameters.h"
 int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, GeoParameters &geoParams, float scaling) {
 
   CCreateScaleBar::Props p = CCreateScaleBar::getScaleBarProperties(geoParams, scaling);

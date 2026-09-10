@@ -26,6 +26,13 @@
 #include "CConvertTROPOMI.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "CTString.h"
+#include "CTime.h"
+#include <netcdf.h>
 
 static const bool CCONVERTTROPOMI_DEBUG = false;
 static const bool CCONVERTCURVILINEAR_DEBUG = false;

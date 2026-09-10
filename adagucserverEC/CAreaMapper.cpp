@@ -30,7 +30,12 @@
  */
 
 #include "CAreaMapper.h"
+#include "CDebugger.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CDrawFunction.h"
+#include "CTString.h"
 
 void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {
   this->dataSource = dataSource;

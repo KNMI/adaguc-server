@@ -26,11 +26,9 @@
 #ifndef CAREAMAPPER
 #define CAREAMAPPER
 
-#include "CDebugger.h"
+#include <cstdio>
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CDrawFunction.h"
-#include <cstdio>
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 class CAreaMapper {

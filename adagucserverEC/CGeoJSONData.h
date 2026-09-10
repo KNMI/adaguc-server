@@ -3,7 +3,6 @@
 #include <vector>
 #include <map>
 #include "CTString.h"
-#include "CDebugger.h"
 
 class GeoPoint {
   float lon;
@@ -65,35 +64,20 @@ private:
   double dblVal;
 
 public:
-  FeatureProperty(int64_t i) {
-    type = typeInt;
-    intVal = i;
-    dblVal = i;
-    pstr = "EMPTY i";
-  }
-  FeatureProperty(std::string s) {
-    type = typeStr;
-    pstr = std::string(s);
-    intVal = -1;
-    dblVal = -2;
-  }
+  FeatureProperty(int64_t i);
+  FeatureProperty(std::string s);
 
-  FeatureProperty(double d) {
-    type = typeDouble;
-    dblVal = d;
-    intVal = -21;
-    pstr = "EMPTY d";
-  }
+  FeatureProperty(double d);
 
-  FeatureProperty() { type = typeNone; }
+  FeatureProperty();
 
-  FeaturePropertyType getType() { return type; }
+  FeaturePropertyType getType();
 
-  double getDblVal() { return dblVal; }
+  double getDblVal();
 
-  int getIntVal() { return intVal; }
+  int getIntVal();
 
-  std::string getStringVal() { return pstr; }
+  std::string getStringVal();
 
   std::string toString();
   std::string toString(const char *fmt);

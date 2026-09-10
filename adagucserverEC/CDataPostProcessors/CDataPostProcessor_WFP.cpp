@@ -1,7 +1,19 @@
 #include "CDataPostProcessor_WFP.h"
+#include "CDataPostProcessor.h"
 #include "CRequest.h"
 #include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CCDFReader.h"
+#include "CCDFNetCDFIO.h"
 
 /************************/
 /*      CDPPWFP  */
@@ -228,3 +240,8 @@ void CDPPWFP::drawFunction(int x, int y, float, GDWState &warperState, PostProcD
     ((float *)drawFunctionState.WindSpeedWindparksOnImproved)[x + y * drawFunctionState.width] = windSpeed - windSpeedDifferenceMinKTS;
   }
 };
+
+int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
+}

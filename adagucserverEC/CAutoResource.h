@@ -26,7 +26,6 @@
 #ifndef CAUTORESOURCE_H
 #define CAUTORESOURCE_H
 #include "CServerParams.h"
-#include "CDebugger.h"
 #include "CCDFDataModel.h"
 /**
  * Configures new layers in the configuration automatically based on srvParam->autoResourceLocation and srvParam->datasetLocation.

@@ -26,6 +26,8 @@
 #include "CConvertLatLonBnds.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CTString.h"
 
 bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
   CDF::Attribute *attr = cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER");

@@ -24,10 +24,23 @@
  ******************************************************************************/
 
 #include "CImgWarpHillShaded.h"
+#include "CGenericDataWarper.h"
+#include "utils.h"
 #include "CImageDataWriter.h"
 #include "f8vector.h"
 #include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 /**
  * Lightsource
  */

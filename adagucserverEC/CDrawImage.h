@@ -28,22 +28,16 @@
 
 #include <map>
 #include <iostream>
-#include "CDebugger.h"
 #include "CTString.h"
-#include "CColor.h"
-#include "Definitions.h"
-#include "CStopWatch.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
-#include "Types/GeoParameters.h"
-#include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <cmath>
 #include "CCairoPlotter.h"
-#include "CColor.h"
 #include "CRectangleText.h"
+#include "Types/GeoParameters.h"
 
 float convertValueToClass(float val, float interval);
 

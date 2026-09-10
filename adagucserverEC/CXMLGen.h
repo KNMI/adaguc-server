@@ -25,21 +25,10 @@
 
 #ifndef CXMLGen_H
 #define CXMLGen_H
-#include "CServerParams.h"
 #include <cstdio>
 #include <cstring>
 
-#include "CInspire.h"
 
-#include "CImageDataWriter.h"
-#include "CServerError.h"
-#include "CDataReader.h"
-#include "CImageWarper.h"
-#include "CDrawImage.h"
-#include "CDataSource.h"
-#include "CRequest.h"
-#include "CDebugger.h"
-#include "CStyleConfiguration.h"
 #include "./Types/LayerMetadataType.h"
 
 #define CXMLGEN_FATAL_ERROR_OCCURED 1

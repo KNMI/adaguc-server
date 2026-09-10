@@ -27,8 +27,8 @@
 #define CImgWarpHillShaded_H
 #include <cstdlib>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
-#include "utils.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
 public:

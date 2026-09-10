@@ -27,9 +27,8 @@
 #define CCONVERTH5VOLSCANUTILS_H
 #include <tuple>
 #include <vector>
-#include "CDataSource.h"
-#include "CImageWarper.h"
-#include "COGCDims.h"
+#include <string>
+#include "CCDFObject.h"
 
 int checkIfIsH5VolScan(CDFObject *cdfObject);
 std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObject, int scan);

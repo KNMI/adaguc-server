@@ -1,10 +1,44 @@
 #include "COpenDAPHandler.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CIBaseDataWriterInterface.h"
+#include "CImgWarpNearestNeighbour.h"
+#include "CImgWarpNearestRGBA.h"
+#include "CImgWarpBilinear.h"
+#include "CImgWarpBoolean.h"
+#include "CStyleConfiguration.h"
+#include "CXMLParser.h"
+#include "CTime.h"
+#include "CDebugger.h"
 #include "CRequest.h"
 #include "CDBFactory.h"
 #include "CAutoResource.h"
 #include "utils/LayerUtils.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CServerParams.h"
+#include "CTString.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CAutoConfigure.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CServerError.h"
 
 static const bool COPENDAPHANDLER_DEBUG = false;
+
+COpenDAPHandler::VarInfo::Dim::Dim(const char *name, size_t start, size_t count, ptrdiff_t stride) {
+  this->name = name;
+  this->start = start;
+  this->count = count;
+  this->stride = stride;
+}
 
 class CDFTypeToOpenDAPType {
 public:

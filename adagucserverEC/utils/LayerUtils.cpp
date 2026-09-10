@@ -1,4 +1,5 @@
 #include "LayerUtils.h"
+#include "CTString.h"
 
 std::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *optionalLayerName) {
 

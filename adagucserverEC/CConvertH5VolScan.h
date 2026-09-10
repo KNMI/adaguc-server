@@ -1,3 +1,6 @@
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 /******************************************************************************
  *
  * Project:  ADAGUC Server
@@ -25,10 +28,6 @@
 
 #ifndef CCONVERTH5VOLSCAN_H
 #define CCONVERTH5VOLSCAN_H
-#include "CConvertH5VolScanUtils.h"
-#include "CDataSource.h"
-#include "CImageWarper.h"
-#include "COGCDims.h"
 
 class CConvertH5VolScan {
 public:

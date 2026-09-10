@@ -29,6 +29,15 @@
 #include "getPointStyle.h"
 #include "getVectorStyle.h"
 #include <CDataPostProcessors/CDataPostProcessor_UnitsUtils.h>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CStyleConfiguration.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 struct ThinningInfo {
   bool doThinning = false;

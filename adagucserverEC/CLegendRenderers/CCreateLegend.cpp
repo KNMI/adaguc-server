@@ -1,4 +1,11 @@
 #include "CCreateLegend.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CDebugger.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 static const bool CIMAGEDATAWRITER_DEBUG = false;
 

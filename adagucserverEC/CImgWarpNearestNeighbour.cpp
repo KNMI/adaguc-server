@@ -26,8 +26,24 @@
 // http://datagenetics.com/blog/august32013/index.html
 
 #include "CImgWarpNearestNeighbour.h"
+#include "CGenericDataWarper.h"
+#include "CDrawFunction.h"
+#include "utils/projectionUtils.h"
 #include <limits>
 #include "CFillTriangle.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CStyleConfiguration.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values) {
 

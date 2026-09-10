@@ -1,13 +1,11 @@
 #ifndef CNetCDFDataWriter_H
 #define CNetCDFDataWriter_H
 
-#include "Definitions.h"
 #include "CGenericDataWarper.h"
-#include "CStopWatch.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CIBaseDataWriterInterface.h"
-#include "CDebugger.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 
 #define CNetCDFDataWriter_NEAREST 0
 #define CNetCDFDataWriter_AVG_RGB 1

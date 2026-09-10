@@ -2,6 +2,8 @@
 #include "drawContour.h"
 #include <CDrawImage.h>
 #include <set>
+#include "CDebugger.h"
+#include "CTString.h"
 
 static const bool CImgWarpBilinear_DEBUG = false;
 

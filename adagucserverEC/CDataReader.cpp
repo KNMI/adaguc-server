@@ -24,6 +24,16 @@
  ******************************************************************************/
 
 #include "CDataReader.h"
+#include "CDebugger.h"
+#include "CDataSource.h"
+#include "CServerError.h"
+#include "CDirReader.h"
+#include "CCDFDataModel.h"
+#include "CCDFNetCDFIO.h"
+#include "CProj4ToCF.h"
+#include "CStopWatch.h"
+#include "CDFObjectStore.h"
+#include "CAutoConfigure.h"
 #include <cmath>
 #include <float.h>
 #include "CConvertASCAT.h"
@@ -45,6 +55,10 @@
 #include "CDBFileScanner.h"
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include <string>
+#include "CCDFObject.h"
+#include "CTString.h"
+#include "utils/projectionUtils.h"
 
 // #define MEASURETIME
 bool verboseLogging = false;

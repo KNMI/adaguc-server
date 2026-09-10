@@ -1,8 +1,11 @@
 #include "CAutoResource.h"
+#include "CDebugger.h"
 #include "CTString.h"
 #include "CServerError.h"
 #include "CDFObjectStore.h"
 #include "CReporter.h"
+#include "CServerParams.h"
+#include <sys/stat.h>
 
 int CAutoResource::configure(CServerParams *srvParam, bool plain) {
   int status;

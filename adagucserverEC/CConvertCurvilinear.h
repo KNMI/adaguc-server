@@ -1,3 +1,6 @@
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 /******************************************************************************
  *
  * Project:  ADAGUC Server
@@ -25,8 +28,6 @@
 
 #ifndef CCONVERTCURVILINEAR_H
 #define CCONVERTCURVILINEAR_H
-#include "CDataSource.h"
-#include "CImageWarper.h"
 class CConvertCurvilinear {
 private:
   static double *getBBOXFromLatLonFields(CDF::Variable *swathMiddleLon, CDF::Variable *swathMiddleLat);

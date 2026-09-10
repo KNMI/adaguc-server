@@ -1,4 +1,6 @@
 #include "CDataPostProcessor_ClipMinMax.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPClipMinMax  */
@@ -71,4 +73,9 @@ int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource 
     }
   }
   return 0;
+}
+
+int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

@@ -1,3 +1,5 @@
+#include "CDataSource.h"
+#include "CServerParams.h"
 /******************************************************************************
  *
  * Project:  ADAGUC Server
@@ -25,10 +27,6 @@
 
 #ifndef CBaseDataWriterInterface_H
 #define CBaseDataWriterInterface_H
-#include "CServerParams.h"
-#include "CDataSource.h"
-#include "CImageWarper.h"
-#include "CTString.h"
 
 class CBaseDataWriterInterface {
 public:

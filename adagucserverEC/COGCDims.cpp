@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "COGCDims.h"
+#include "CDebugger.h"
 #include <algorithm>
 
 int findCDFDimIdx(CCDFDims &dimensions, const std::string &name) {

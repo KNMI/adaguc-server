@@ -12,6 +12,7 @@
 #include <dlfcn.h>
 
 #include <ctime>
+#include "CTString.h"
 
 /************************/
 /*      CDPPSolarTerminator  */

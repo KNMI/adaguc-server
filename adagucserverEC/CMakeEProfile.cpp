@@ -1,14 +1,29 @@
 #include <vector>
 #include <algorithm>
 #include "CMakeEProfile.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CXMLParser.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURTypes.h"
+#include "CDFObjectStore.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CTime.h"
 
 static const bool CMakeEProfile_DEBUG = false;
 
 #define CMakeEProfile_MAX_DIMS 255
 
 #define DEFAULT_VALIDITY_LENGTH_OF_OBSERVATION_IN_SECONDS 12.0f
+
+CMakeEProfile::DayPass::DayPass(int x, double offset) {
+  this->x = x;
+  this->offset = offset;
+}
 
 std::string encodeJSON(std::string input) {
   std::string str = input;

@@ -1,7 +1,6 @@
 #ifndef SERVERUTILS_H
 #define SERVERUTILS_H
 
-#include "CTString.h"
 #include "CServerConfig_CPPXSD.h"
 #include <set>
 

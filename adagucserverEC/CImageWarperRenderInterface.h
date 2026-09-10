@@ -26,9 +26,9 @@
 #ifndef CImageWarperRenderInterface_H
 #define CImageWarperRenderInterface_H
 
-#include "CDrawImage.h"
-#include "CDataSource.h"
 #include "CImageWarper.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 class CImageWarperRenderInterface {
 public:
   virtual ~CImageWarperRenderInterface(){};

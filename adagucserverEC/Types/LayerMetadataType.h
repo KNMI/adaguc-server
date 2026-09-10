@@ -2,7 +2,6 @@
 #ifndef LAYER_METADATA_TYPE_H
 #define LAYER_METADATA_TYPE_H
 
-#include "CTString.h"
 #include <CDataSource.h>
 
 struct LayerMetadataDim {
@@ -17,12 +16,7 @@ struct LayerMetadataDim {
 };
 
 struct LayerMetadataProjection {
-  LayerMetadataProjection(const std::string &name, const double bbox[]) {
-    this->name = name;
-    for (size_t j = 0; j < 4; j++) {
-      this->dfBBOX[j] = bbox[j];
-    }
-  }
+  LayerMetadataProjection(const std::string &name, const double bbox[]);
   std::string name;
   double dfBBOX[4];
 };

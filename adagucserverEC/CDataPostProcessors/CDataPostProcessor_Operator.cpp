@@ -1,4 +1,7 @@
 #include "CDataPostProcessor_Operator.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPOperator  */
@@ -166,4 +169,9 @@ float CDPPOperator::getElement(void *data, CDFType dataType, size_t index) {
     break;
   }
   return 0;
+}
+
+int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

@@ -1,6 +1,3 @@
-#include "CDebugger.h"
-#include "CTString.h"
-#include "CServerConfig_CPPXSD.h"
 #include "CServerParams.h"
 #include "../hclasses/CXMLParser.h"
 

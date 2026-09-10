@@ -1,5 +1,14 @@
 #include "getFeatureInfoVirtualForSolarTerminator.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageDataWriter.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CTime.h"
+#include "CXMLParser.h"
+#include "CDPPInterface.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
 
 static const bool CIMAGEDATAWRITER_DEBUG = false;
 

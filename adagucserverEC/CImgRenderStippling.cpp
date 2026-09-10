@@ -25,6 +25,16 @@
 
 #include "CImgRenderStippling.h"
 #include "CGenericDataWarper.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CStyleConfiguration.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 int CImgRenderStippling::set(const char *) { return 0; }
 
 void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {

@@ -26,10 +26,7 @@
 #ifndef CRequest_H
 #define CRequest_H
 
-#include "CDataSource.h"
 #include "CImageDataWriter.h"
-#include "CServerParams.h"
-#include "CServerConfig_CPPXSD.h"
 
 class CRequest {
 private:

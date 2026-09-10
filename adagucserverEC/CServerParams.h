@@ -27,9 +27,6 @@
 #define CServerParams_H
 #include <climits>
 #include <cstdlib>
-#include "CDebugger.h"
-#include "CTString.h"
-#include "CDirReader.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
@@ -47,13 +44,7 @@
  */
 class CWMSExtensions {
 public:
-  CWMSExtensions() {
-    opacity = 100;
-    colorScaleRangeSet = false;
-    numColorBands = -1;
-    numColorBandsSet = false;
-    logScale = false;
-  }
+  CWMSExtensions();
   double opacity; // 0 = fully transparent, 100 = fully opaque (default). Only applies to image formats that support partial pixel transparency (e.g. PNG). This parameter is redundant if the client
                   // application can set image opacity (e.g. Google Earth).
   double colorScaleRangeMin;

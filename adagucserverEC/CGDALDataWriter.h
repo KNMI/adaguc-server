@@ -23,35 +23,24 @@
  *
  ******************************************************************************/
 
-#include "Definitions.h"
 #ifdef ADAGUC_USE_GDAL
 #ifndef CGDALDataWriter_H
 #define CGDALDataWriter_H
-#include "CServerParams.h"
-#include "CDataSource.h"
-#include "CDataReader.h"
-#include "gdalwarper.h"
 #include <gdal.h>
 #include <gdal_pam.h>
 #include <gdal_priv.h>
 #include <gdal_frmts.h>
 #include <cpl_string.h>
+#include "CIBaseDataWriterInterface.h"
 #include <ogr_srs_api.h>
 #include <cpl_conv.h>
 #include <ogr_spatialref.h>
 #include <ctype.h>
-#include "CDebugger.h"
-#include "CTString.h"
-#include "CServerError.h"
-#include "CDrawImage.h"
 
-#include "CImageWarper.h"
 
 #include "CXMLGen.h"
 
-#include "CDataReader.h"
 
-#include "CIBaseDataWriterInterface.h"
 #define MAX_STR_LEN 8191
 
 class CGDALDataWriter : public CBaseDataWriterInterface {

@@ -26,10 +26,14 @@
 #include <tuple>
 #include <vector>
 #include "CConvertH5VolScan.h"
+#include "CDataSource.h"
 #include "CConvertH5VolScanUtils.h"
 #include "CImageWarper.h"
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
+#include "CCDFObject.h"
+#include "CServerParams.h"
+#include "CTString.h"
 
 static const bool CCONVERTH5VOLSCAN_DEBUG = false;
 

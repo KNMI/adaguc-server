@@ -27,6 +27,11 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include <set>
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "CTString.h"
+#include "CTime.h"
 
 static const bool CCONVERTEPROFILE_DEBUG = false;
 

@@ -1,6 +1,7 @@
 #include "CDebugger.h"
 #include "CUniqueRequests/requestUtils.h"
 #include "CUniqueRequests/CURUniqueRequests.h"
+#include "CXMLParser.h"
 
 bool sortDimensionKeysRecursive(CURResult &result1, CURResult &result2, int depth) {
   if (depth >= result1.numDims) return false;

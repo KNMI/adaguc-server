@@ -1,5 +1,4 @@
 #include "CTString.h"
-#include "CDebugger.h"
 
 #ifndef CGETFILEINFO_H
 #define CGETFILEINFO_H

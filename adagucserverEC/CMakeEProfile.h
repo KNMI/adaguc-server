@@ -5,22 +5,15 @@
 #include <map>
 #include <set>
 
-#include "Definitions.h"
-#include "CStopWatch.h"
-#include "CXMLParser.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CImageDataWriter.h"
-#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
 
 class CMakeEProfile {
 public:
   class DayPass {
   public:
-    DayPass(int x, double offset) {
-      this->x = x;
-      this->offset = offset;
-    };
+    DayPass(int x, double offset);
     double offset;
     int x;
   };

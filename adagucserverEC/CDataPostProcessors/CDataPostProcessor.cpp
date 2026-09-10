@@ -1,4 +1,5 @@
 #include "CDataPostProcessor.h"
+#include "CDataSource.h"
 #include "CRequest.h"
 #include "CDataPostProcessor_IncludeLayer.h"
 #include "CDataPostProcessor_Beaufort.h"
@@ -18,6 +19,10 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataPostProcessor_SolarTerminator.h"
 #include "CDataPostProcessor_ConvertUnits.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 static CDPPExecutor *cdppExecutorInstance = nullptr;
 

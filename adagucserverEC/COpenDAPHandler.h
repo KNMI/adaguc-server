@@ -1,18 +1,10 @@
+#include <string>
+#include <vector>
+#include "CDataSource.h"
+#include "CServerParams.h"
 #ifndef COpenDAPHandler_H
 #define COpenDAPHandler_H
 
-#include "Definitions.h"
-#include "CStopWatch.h"
-#include "CIBaseDataWriterInterface.h"
-#include "CImgWarpNearestNeighbour.h"
-#include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
-#include "CImgWarpBoolean.h"
-#include "CStyleConfiguration.h"
-#include "CMyCURL.h"
-#include "CXMLParser.h"
-#include "CTime.h"
-#include "CDebugger.h"
 
 class COpenDAPHandler {
 private:
@@ -23,12 +15,7 @@ private:
   public:
     class Dim {
     public:
-      Dim(const char *name, size_t start, size_t count, ptrdiff_t stride) {
-        this->name = name;
-        this->start = start;
-        this->count = count;
-        this->stride = stride;
-      }
+      Dim(const char *name, size_t start, size_t count, ptrdiff_t stride);
       std::string name;
       size_t start;
       size_t count;

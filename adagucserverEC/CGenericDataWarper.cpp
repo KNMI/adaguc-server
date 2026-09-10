@@ -24,9 +24,33 @@
  ******************************************************************************/
 
 #include "CGenericDataWarper.h"
+#include "Types/GeoParameters.h"
+#include "CDebugger.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "utils/projectionUtils.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+
+void ProjectionGrid::initSize(size_t dataSize) {
+  px = new double[dataSize];
+  py = new double[dataSize];
+  skip = new bool[dataSize];
+}
+ProjectionGrid::~ProjectionGrid() {
+  CDBDebug("Destructed ProjectionGrid");
+  delete[] px;
+  delete[] py;
+  delete[] skip;
+}
+
+GenericDataWarper::~GenericDataWarper() {
+  delete projectionGrid;
+  projectionGrid = nullptr;
+}
 
 // Reproj back and forth boundingbox in GeoParameters to make valid proj coordinates which always have the same range.
 f8box reprojBBox(GeoParameters &input, CImageWarper *warper) {

@@ -28,10 +28,12 @@
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
 #include "CAreaMapper.h"
-#include "CDrawFunction.h"
-#include "utils/projectionUtils.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/GeoParameters.h"
 
 static const bool CIMGWARPNEARESTNEIGHBOUR_DEBUG = false;
 

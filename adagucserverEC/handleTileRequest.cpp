@@ -4,6 +4,8 @@
 #include "handleTileRequest.h"
 #include "Types/LayerMetadataType.h"
 #include "utils/LayerMetadataStore.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 #define DEFAULT_MAX_TILES_IN_IMAGE 16
 #define DEFAULT_REQUEST_LIMIT 1000

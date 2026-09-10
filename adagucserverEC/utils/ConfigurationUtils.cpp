@@ -6,6 +6,11 @@
 #include <ranges>
 #include <vector>
 #include <iostream>
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvParam) {
   std::vector<std::string> datasetList;

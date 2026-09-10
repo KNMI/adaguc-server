@@ -24,6 +24,14 @@
  ******************************************************************************/
 
 #include "CCairoPlotter.h"
+#include "Definitions.h"
+#include "CDebugger.h"
+#include "COctTreeColorQuantizer.h"
+#include <string>
+#include <vector>
+#include "CTString.h"
+#include "CColor.h"
+#include "Types/GeoParameters.h"
 #ifdef ADAGUC_USE_CAIRO
 // #define MEASURETIME
 

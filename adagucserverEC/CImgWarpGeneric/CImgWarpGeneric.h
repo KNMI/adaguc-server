@@ -28,8 +28,8 @@
 #include <cstdlib>
 
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
-#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 

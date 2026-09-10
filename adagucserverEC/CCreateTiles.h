@@ -26,7 +26,6 @@
 #ifndef CCREATETILES_H
 #define CCREATETILES_H
 
-#include "CDebugger.h"
 #include "CDataSource.h"
 
 /**

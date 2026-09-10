@@ -26,14 +26,8 @@
 #ifndef CDFObjectStore_H
 #define CDFObjectStore_H
 
-#include "CDebugger.h"
-#include "CStopWatch.h"
 #include "CDataSource.h"
-#include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
-#include "CCDFHDF5IO.h"
-#include "CCDFGeoJSONIO.h"
-#include "CCDFPNGIO.h"
+#include "CCDFReader.h"
 
 // Datasource can share multiple cdfObjects
 // A cdfObject is allways opened using a dataSource path/filter combo

@@ -26,16 +26,12 @@
 #define CDBADAPTERPOSTGRESQL_H
 
 #include <cstdlib>
-#include "CImageDataWriter.h"
-#include "CServerParams.h"
-#include "CDataSource.h"
-#include "CDFObjectStore.h"
-#include "CCDFStore.h"
-#include "CDBStore.h"
-#include "CDebugger.h"
 
-#include "Types/GeoParameters.h"
 #include "CPGSQLDB.h"
+#include <map>
+#include "CDataSource.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/GeoParameters.h"
 
 #define TABLETYPE_TIMESTAMP 1
 #define TABLETYPE_INT 2

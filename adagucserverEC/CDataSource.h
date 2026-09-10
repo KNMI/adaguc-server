@@ -27,11 +27,8 @@
 #define CDATASOURCE_H
 
 #include <cstddef>
-#include "CCDFObject.h"
 #include "CStyleConfiguration.h"
 #include "Types/CPointTypes.h"
-#include "COGCDims.h"
-#include "Types/GeoParameters.h"
 #include "CServerParams.h"
 #include "utils/minMax.h"
 #include "utils/KeyValuePair.h"

@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "Definitions.h"
+
 #ifdef ADAGUC_USE_CAIRO
 /*
  * CCairoPlotter2.h
@@ -35,7 +36,6 @@
 #ifndef CCAIROPLOTTER_H_
 #define CCAIROPLOTTER_H_
 #include <cairo.h>
-#include "CDebugger.h"
 #include "CTString.h"
 #include <ft2build.h>
 #include <freetype/freetype.h>
@@ -48,7 +48,6 @@
 #include <cstdint>
 #include "CColor.h"
 
-#include "COctTreeColorQuantizer.h"
 #include "Types/GeoParameters.h"
 
 #define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0

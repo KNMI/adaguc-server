@@ -27,7 +27,6 @@
 #define CDATAPOSTPROCESSOR_H
 
 #include <cstdint>
-#include "CDataSource.h"
 #include "CDPPInterface.h"
 
 #define ADAGUCPOSTPROC_ATTR_PREFIX "ADAGUCPOSTPROC"

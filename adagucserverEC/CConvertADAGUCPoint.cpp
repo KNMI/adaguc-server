@@ -28,10 +28,14 @@
 #include <algorithm>
 
 #include "CImageWarper.h"
+#include "CCDFObject.h"
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
 #include "CStyleConfiguration.h"
 #include "CTString.h"
 #include "utils/minMax.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "CTime.h"
 
 static bool measureTime = false;
 

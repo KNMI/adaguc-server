@@ -27,6 +27,7 @@
 #define CDBFACTORY_H
 
 #include "CDBAdapterPostgreSQL.h"
+#include "CServerConfig_CPPXSD.h"
 
 class CDBFactory {
 private:

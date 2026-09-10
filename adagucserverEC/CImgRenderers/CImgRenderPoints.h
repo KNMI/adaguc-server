@@ -26,6 +26,9 @@
 #ifndef CIMGRENDERPOINTS_H
 #define CIMGRENDERPOINTS_H
 #include "CImageWarperRenderInterface.h"
+#include "CColor.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 class CImgRenderPoints : public CImageWarperRenderInterface {
 public:

@@ -1,3 +1,4 @@
+#include "CTime.h"
 
 void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
   try {

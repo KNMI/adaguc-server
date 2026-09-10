@@ -2,6 +2,8 @@
 
 #include "CDebugger.h"
 #include "CSLD.h"
+#include "CTString.h"
+#include "CServerConfig_CPPXSD.h"
 #include "../hclasses/CXMLParser.h"
 #include "../hclasses/CHTTPTools.h"
 #include "utils/LayerUtils.h"

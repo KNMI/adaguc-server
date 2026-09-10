@@ -9,6 +9,11 @@
 #include <sstream>
 #include "CRequestUtils.h"
 #include <timeutils.h>
+#include "CAutoConfigure.h"
+#include "CCDFObject.h"
+#include "CDBFileScanner.h"
+#include "CDrawImage.h"
+#include "CTString.h"
 
 static const bool CXMLGEN_DEBUG = false;
 

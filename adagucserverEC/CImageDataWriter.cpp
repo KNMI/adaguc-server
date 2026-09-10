@@ -34,6 +34,18 @@
 #include "CLegendRenderers/CCreateLegend.h"
 
 #include "CImageDataWriter.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CImgWarpNearestNeighbour.h"
+#include "CImgWarpNearestRGBA.h"
+#include "CImgWarpBilinear.h"
+#include "CImgWarpBoolean.h"
+#include "CImgRenderers/CImgRenderPoints.h"
+#include "CImgRenderStippling.h"
+#include "CImgRenderPolylines.h"
+#include "CStyleConfiguration.h"
+#include "CXMLParser.h"
+#include "CDebugger.h"
 #include "CMakeJSONTimeSeries.h"
 #include "CMakeEProfile.h"
 #include "CReporter.h"
@@ -44,6 +56,15 @@
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/GeoParameters.h"
+#include "utils/projectionUtils.h"
+#include "CServerError.h"
 
 static const bool CIMAGEDATAWRITER_DEBUG = false;
 
@@ -777,6 +798,11 @@ void CImageDataWriter::setDate(const std::string &date) {
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
   max = 0;
+}
+
+CImageDataWriter::IndexRange::IndexRange(int min, int max) {
+  this->min = min;
+  this->max = max;
 }
 
 std::vector<CImageDataWriter::IndexRange> getIndexRangesForRegex(const std::string &match, const std::vector<std::string> &attributeValues) {

@@ -29,8 +29,6 @@
 #include <cstdlib>
 #include <cstring>
 #include "libpq-fe.h" /* libpq header file */
-#include "CTString.h"
-#include "CDebugger.h"
 #include "CDBStore.h"
 #define CPGSQLDB_MAX_STR_LEN 8191
 

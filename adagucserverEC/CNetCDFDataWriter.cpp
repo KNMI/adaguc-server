@@ -1,8 +1,23 @@
 #include "CNetCDFDataWriter.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
 #include "CGenericDataWarper.h"
 
 #include "CRequest.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
+#include "CCDFObject.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CCDFNetCDFIO.h"
+#include "CTime.h"
 
 static const bool CNetCDFDataWriter_DEBUG = false;
 

@@ -24,10 +24,24 @@
  ******************************************************************************/
 
 #include "CImgWarpGeneric.h"
+#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 #include <CImageOperators/drawContour.h>
 #include <CImageOperators/smoothRasterField.h>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CDrawFunction.h"
 
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);

@@ -1,4 +1,5 @@
 #include "numericutils.h"
+#include "CTString.h"
 #include <cmath>
 
 int fieldWidth(const std::vector<std::string> &column) {

@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CGeoJSONData.h"
+#include "CDebugger.h"
 #include <iostream>
 
 #include <cstdio>
@@ -177,6 +178,36 @@ std::string Feature::toString() {
   }
   return s;
 }
+
+FeatureProperty::FeatureProperty(int64_t i) {
+  type = typeInt;
+  intVal = i;
+  dblVal = i;
+  pstr = "EMPTY i";
+}
+FeatureProperty::FeatureProperty(std::string s) {
+  type = typeStr;
+  pstr = std::string(s);
+  intVal = -1;
+  dblVal = -2;
+}
+
+FeatureProperty::FeatureProperty(double d) {
+  type = typeDouble;
+  dblVal = d;
+  intVal = -21;
+  pstr = "EMPTY d";
+}
+
+FeatureProperty::FeatureProperty() { type = typeNone; }
+
+FeaturePropertyType FeatureProperty::getType() { return type; }
+
+double FeatureProperty::getDblVal() { return dblVal; }
+
+int FeatureProperty::getIntVal() { return intVal; }
+
+std::string FeatureProperty::getStringVal() { return pstr; }
 
 Feature::~Feature() {
   for (std::map<std::string, FeatureProperty *>::iterator it = fp.begin(); it != fp.end(); ++it) {

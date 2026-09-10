@@ -27,12 +27,23 @@
 #include <random>
 #include "CReadFile.h"
 #include "CServerParams.h"
+#include "CDebugger.h"
+#include "CTString.h"
+#include "CDirReader.h"
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include <algorithm>
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
+
+CWMSExtensions::CWMSExtensions() {
+  opacity = 100;
+  colorScaleRangeSet = false;
+  numColorBands = -1;
+  numColorBandsSet = false;
+  logScale = false;
+}
 
 char debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
 

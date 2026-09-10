@@ -6,6 +6,22 @@
 #include "CNetCDFDataWriter.h"
 #include <set>
 #include "CRequest.h"
+#include <map>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CAutoConfigure.h"
+#include "CTime.h"
+#include "CServerError.h"
 std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 
 void CDBFileScanner::_removeFileFromTables(std::string fileNamestr, CDataSource *dataSource) {

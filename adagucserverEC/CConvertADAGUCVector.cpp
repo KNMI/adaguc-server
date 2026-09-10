@@ -26,6 +26,10 @@
 #include "CConvertADAGUCVector.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
+#include "CTime.h"
 
 static const bool CCONVERTADAGUCVECTOR_DEBUG = false;
 

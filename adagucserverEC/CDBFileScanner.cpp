@@ -24,6 +24,11 @@
  ******************************************************************************/
 
 #include "CDBFileScanner.h"
+#include "CStopWatch.h"
+#include "CDataReader.h"
+#include "CDFObjectStore.h"
+#include "CServerError.h"
+#include "CDirReader.h"
 #include "CDBFactory.h"
 #include "CDebugger.h"
 #include "CReporter.h"
@@ -33,6 +38,17 @@
 #include <set>
 #include "utils/LayerMetadataStore.h"
 #include "utils/ConfigurationUtils.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFReader.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "CAutoConfigure.h"
+#include "CTime.h"
+#include <netcdf.h>
 
 std::vector<std::string> tableNamesDone;
 static const bool CDBFILESCANNER_DEBUG = false;
@@ -41,6 +57,14 @@ static const bool CDBFILESCANNER_DEBUG = false;
 #define CDBFILESCANNER_TILECREATIONFAILED -100
 
 std::vector<std::string> CDBFileScanner::filesToDeleteFromDB;
+
+void CDBFileScanner::handleDirHasNewFile(std::string) {}
+
+void CDBFileScanner::handleFileFromDBIsMissing(std::string a) {
+  CDBDebug("DirReader is missing %s", a.c_str());
+  filesToDeleteFromDB.push_back(a);
+}
+
 bool CDBFileScanner::isTableAlreadyScanned(const std::string &tableName) {
   for (size_t t = 0; t < tableNamesDone.size(); t++) {
     if (tableNamesDone[t] == tableName) {

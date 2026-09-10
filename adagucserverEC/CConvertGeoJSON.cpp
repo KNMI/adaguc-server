@@ -29,8 +29,17 @@
 // http://cariska.mona.uwi.edu/geoserver/wfs?typename=geonode%3ACatchment&outputFormat=json&version=1.0.0&request=GetFeature&service=WFS&srsName=EPSG:4326
 
 #include "CConvertGeoJSON.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
+#include "CCDFObject.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CTime.h"
+#include "CCDFDataModel.h"
 static const bool CCONVERTGEOJSON_DEBUG = false;
 #define CCONVERTGEOJSONCOORDS_NODATA -32000
 #define CCONVERTGEOJSON_FILL 65535u

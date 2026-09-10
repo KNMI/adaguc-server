@@ -24,6 +24,13 @@
  ******************************************************************************/
 
 #include "CDFObjectStore.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "CCDFDataModel.h"
+#include "CCDFNetCDFIO.h"
+#include "CCDFHDF5IO.h"
+#include "CCDFGeoJSONIO.h"
+#include "CCDFPNGIO.h"
 
 #include <algorithm>
 #include "CConvertASCAT.h"
@@ -41,6 +48,9 @@
 #include "CConvertLatLonBnds.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
+#include "CCDFReader.h"
+#include "CDataSource.h"
+#include "CTString.h"
 static const bool CDFOBJECTSTORE_DEBUG = false;
 #define MAX_OPEN_FILES 500
 

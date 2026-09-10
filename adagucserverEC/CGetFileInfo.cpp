@@ -1,5 +1,8 @@
 #include "CGetFileInfo.h"
+#include "CDebugger.h"
 #include "CDFObjectStore.h"
+#include "CCDFObject.h"
+#include "CCDFReader.h"
 
 std::string CGetFileInfo::getLayersForFile(const char *filename) {
   CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL, filename);

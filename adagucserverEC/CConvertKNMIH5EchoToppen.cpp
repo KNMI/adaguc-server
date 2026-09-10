@@ -27,6 +27,10 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include "CConvertADAGUCPoint.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
+#include "CCDFDataModel.h"
 
 static const bool CConvertKNMIH5EchoToppen_DEBUG = true;
 

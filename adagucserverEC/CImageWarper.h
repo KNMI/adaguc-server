@@ -25,14 +25,15 @@
 
 #ifndef CImageWarper_H
 #define CImageWarper_H
-#include "CServerParams.h"
 #include "CDataReader.h"
-#include "CDrawImage.h"
 #include <proj.h>
 #include <cmath>
-#include "CDebugger.h"
-#include "CStopWatch.h"
+#include <string>
+#include <vector>
+#include "CDataSource.h"
+#include "CServerConfig_CPPXSD.h"
 #include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 std::string floatToString(float number);
@@ -55,23 +56,8 @@ private:
 
 public:
   bool requireReprojection;
-  CImageWarper() {
-    prj = NULL;
-    projSourceToDest = nullptr;
-    projSourceToLatlon = nullptr;
-    projLatlonToDest = nullptr;
-    initialized = false;
-  }
-  ~CImageWarper() {
-    if (initialized == true) {
-      closereproj();
-      prj = NULL;
-      projSourceToDest = nullptr;
-      projSourceToLatlon = nullptr;
-      projLatlonToDest = nullptr;
-      initialized = false;
-    }
-  }
+  CImageWarper();
+  ~CImageWarper();
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   std::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);

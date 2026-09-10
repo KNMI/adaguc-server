@@ -1,8 +1,16 @@
 #include <vector>
 #include <algorithm>
 #include "CMakeJSONTimeSeries.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CXMLParser.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURUniqueRequests.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
 
 static const bool CMakeJSONTimeSeries_DEBUG = false;
 

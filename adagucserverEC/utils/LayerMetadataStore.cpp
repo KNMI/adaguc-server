@@ -4,6 +4,10 @@
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CStopWatch.h"
+#include "CTString.h"
 
 static const bool measureTime = false;
 

@@ -1,9 +1,11 @@
 
 #include "minMax.h"
+#include "CDataSource.h"
 #include <cstddef>
 #include <CCDFObject.h>
 #include "CCDFVariable.h"
 #include "CStopWatch.h"
+#include "CTString.h"
 
 MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
   MinMax minMax;
@@ -51,6 +53,26 @@ MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numEle
     throw __LINE__ + 100;
   }
   return minMax;
+}
+
+Statistics::Statistics() {
+  min = 0;
+  max = 0;
+  avg = 0;
+  stddev = 0;
+  numSamples = 0;
+}
+
+void Statistics::calculate(size_t size, void *data, CDFType type, double dfNodataValue, bool hasNodataValue) {
+  if (type == CDF_CHAR) calculate<char>(size, (char *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_BYTE) calculate<char>(size, (char *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_UBYTE) calculate<unsigned char>(size, (unsigned char *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_SHORT) calculate<short>(size, (short *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_USHORT) calculate<unsigned short>(size, (unsigned short *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_INT) calculate<int>(size, (int *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_UINT) calculate<unsigned int>(size, (unsigned int *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_FLOAT) calculate<float>(size, (float *)data, type, dfNodataValue, hasNodataValue);
+  if (type == CDF_DOUBLE) calculate<double>(size, (double *)data, type, dfNodataValue, hasNodataValue);
 }
 
 void Statistics::setMinMax(MinMax minMax) {

@@ -26,21 +26,10 @@
 #ifndef CAUTOCONFIGURE_H
 #define CAUTOCONFIGURE_H
 #include <cmath>
-#include "CDebugger.h"
 #include "CDataSource.h"
-#include "CServerError.h"
-#include "CDirReader.h"
 
 // #include "CADAGUC_time.h"
-#include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
-#include "CCDFHDF5IO.h"
-#include "CProj4ToCF.h"
-#include "CStopWatch.h"
 #include <sys/stat.h>
-#include "CDBFileScanner.h"
-#include "CDFObjectStore.h"
-#include "CDataPostProcessors/CDataPostProcessor.h"
 
 class CAutoConfigure {
 private:

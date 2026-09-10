@@ -24,8 +24,13 @@
  ******************************************************************************/
 
 #include "CConvertHexagon.h"
+#include "CDataSource.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CServerParams.h"
+#include "CTString.h"
+#include <netcdf.h>
 
 static const bool CCONVERTHEXAGON_DEBUG = false;
 

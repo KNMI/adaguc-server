@@ -27,6 +27,8 @@
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CXMLSerializerInterface.h"
+#include "CTString.h"
+#include "CDebugger.h"
 int numXMLAttributesNotRecognized = 0;
 
 int parseInt(const attribute &attrCfg) { return atoi(attrCfg.value.c_str()); }

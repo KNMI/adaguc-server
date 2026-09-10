@@ -26,7 +26,9 @@
 #ifndef CIMGRENDERPOLYLINES_H
 #define CIMGRENDERPOLYLINES_H
 #include "CImageWarperRenderInterface.h"
-#include "Types/CPointTypes.h"
+#include <string>
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 class CImgRenderPolylines : public CImageWarperRenderInterface {
 private:

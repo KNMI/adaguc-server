@@ -26,6 +26,9 @@
 #include "CConvertLatLonGrid.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 static const bool CConvertLatLonGrid_DEBUG = false;
 

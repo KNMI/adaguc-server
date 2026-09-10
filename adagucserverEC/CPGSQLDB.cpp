@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include "CPGSQLDB.h"
+#include "CTString.h"
+#include "CDebugger.h"
 #include "traceTimings/traceTimings.h"
 // #define CPGSQLDB_DEBUG_H
 

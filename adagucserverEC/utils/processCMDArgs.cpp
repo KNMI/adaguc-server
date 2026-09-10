@@ -14,6 +14,12 @@
 #include "CGetFileInfo.h"
 #include "UpdateLayerMetadata.h"
 #include "lintDataset.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CProj4ToCF.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
 
 static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
                                        {"config", required_argument, 0, 0},
