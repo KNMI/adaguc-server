@@ -34,7 +34,6 @@
 #include "CTime.h"
 #include "CProj4ToCF.h"
 #include "CReadPNG.h"
-// #define CCDFPNGIO_DEBUG
 
 class CDFPNGReader : public CDFReader {
 private:

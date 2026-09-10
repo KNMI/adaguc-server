@@ -27,6 +27,9 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
+static const bool CCONVERTADAGUCPOINT_DEBUG = false;
+static const bool CCONVERTUGRIDMESH_DEBUG = false;
+
 #define CCONVERTUGRIDMESH_NODATA -32000
 
 void line(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
@@ -235,9 +238,9 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *meshVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Converting %s", meshVar->name.c_str());
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("Converting %s", meshVar->name.c_str());
+    }
 
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
@@ -338,19 +341,19 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   if (fillValue != NULL) {
     dataObjects[0]->hasNodataValue = true;
     fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
-#ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
-#endif
+    if (CCONVERTADAGUCPOINT_DEBUG) {
+      CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
+    }
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("convertUGRIDMeshData OPEN ALL");
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("convertUGRIDMeshData OPEN ALL");
+    }
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Drawing %s", new2DVar->name.c_str());
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("Drawing %s", new2DVar->name.c_str());
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -418,12 +421,12 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     //     }
     //
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
     // if(projectionRequired){
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);

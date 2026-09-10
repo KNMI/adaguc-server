@@ -34,20 +34,20 @@
 #include "CTime.h"
 #include <CReadFile.h>
 
-// #define CCDFCSVREADER_DEBUG
+static const bool CCDFCSVREADER_DEBUG = false;
 
 CDFCSVReader::CDFCSVReader() : CDFReader() {
-#ifdef CCDFCSVREADER_DEBUG
-  CDBDebug("New CDFCSVReader");
-#endif
+  if (CCDFCSVREADER_DEBUG) {
+    CDBDebug("New CDFCSVReader");
+  }
 }
 
 CDFCSVReader::~CDFCSVReader() { close(); }
 
 int CDFCSVReader::open(const char *fileName) {
-#ifdef CCDFCSVREADER_DEBUG
-  CDBDebug("CDFCSVReader::open %s", fileName);
-#endif
+  if (CCDFCSVREADER_DEBUG) {
+    CDBDebug("CDFCSVReader::open %s", fileName);
+  }
   if (cdfObject == NULL) {
     CDBError("No CDFObject defined, use CDFObject::attachCDFReader(CDFNetCDFReader*). Please note that this function should be called by CDFObject open routines.");
     return 1;
@@ -89,9 +89,9 @@ int CDFCSVReader::open(const char *fileName) {
       this->csvLines = CT::split(csvData, "\r");
     }
   }
-#ifdef CCDFCSVREADER_DEBUG
-  CDBDebug("Found %d lines", this->csvLines.size());
-#endif
+  if (CCDFCSVREADER_DEBUG) {
+    CDBDebug("Found %zu lines", this->csvLines.size());
+  }
 
   if (this->csvLines.size() < 2) {
     CDBError("No CSV data found, less than 2 lines detected");
@@ -208,7 +208,7 @@ int CDFCSVReader::open(const char *fileName) {
 
   CDF::Variable *stationVar = new CDF::Variable();
   cdfObject->addVariable(stationVar);
-  stationVar->setName(stationDim->getName().c_str());
+  stationVar->setName(stationDim->getName());
   stationVar->currentType = CDF_STRING;
   stationVar->nativeType = CDF_STRING;
   stationVar->setType(CDF_STRING);
@@ -228,7 +228,7 @@ int CDFCSVReader::open(const char *fileName) {
 
     CDF::Variable *timeVar = new CDF::Variable();
     cdfObject->addVariable(timeVar);
-    timeVar->setName(timeDim->getName().c_str());
+    timeVar->setName(timeDim->getName());
     timeVar->currentType = CDF_DOUBLE;
     timeVar->nativeType = CDF_DOUBLE;
     timeVar->setType(CDF_DOUBLE);
@@ -264,7 +264,7 @@ int CDFCSVReader::open(const char *fileName) {
 
     CDF::Variable *referenceTimeVar = new CDF::Variable();
     cdfObject->addVariable(referenceTimeVar);
-    referenceTimeVar->setName(referenceTimeDim->getName().c_str());
+    referenceTimeVar->setName(referenceTimeDim->getName());
     referenceTimeVar->currentType = CDF_DOUBLE;
     referenceTimeVar->nativeType = CDF_DOUBLE;
     referenceTimeVar->setType(CDF_DOUBLE);
@@ -293,9 +293,9 @@ int CDFCSVReader::open(const char *fileName) {
 
   /* Determine data vars */
   for (size_t c = 0; c < header.size() && c < firstLine.size(); c++) {
-#ifdef CCDFCSVREADER_DEBUG
-    CDBDebug("col %d is [%s] with value %s", c, header[c].c_str(), firstLine[c].c_str());
-#endif
+    if (CCDFCSVREADER_DEBUG) {
+      CDBDebug("col %zu is [%s] with value %s", c, header[c].c_str(), firstLine[c].c_str());
+    }
     std::string col = firstLine[c];
     CDFType dataType = CDF_FLOAT;
     if (CT::isInt(col)) {
@@ -309,7 +309,7 @@ int CDFCSVReader::open(const char *fileName) {
     CDF::Variable *dataVar = new CDF::Variable();
     cdfObject->addVariable(dataVar);
     dataVar->setCDFReaderPointer((void *)this);
-    dataVar->setName(header[c].c_str());
+    dataVar->setName(header[c]);
     dataVar->currentType = dataType;
     dataVar->nativeType = dataType;
     dataVar->setType(dataType);

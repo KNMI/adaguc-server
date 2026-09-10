@@ -31,7 +31,7 @@
 #include "CConvertGeoJSON.h"
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
-// #define CCONVERTGEOJSON_DEBUG
+static const bool CCONVERTGEOJSON_DEBUG = false;
 #define CCONVERTGEOJSONCOORDS_NODATA -32000
 #define CCONVERTGEOJSON_FILL 65535u
 
@@ -191,10 +191,10 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
     return 1;
   }
 
-#ifdef CCONVERTGEOJSON_DEBUG
-  CDBDebug("convertGeoJSONHeader");
-  CDBDebug("Using CConvertGeoJSON.cpp");
-#endif
+  if (CCONVERTGEOJSON_DEBUG) {
+    CDBDebug("convertGeoJSONHeader");
+    CDBDebug("Using CConvertGeoJSON.cpp");
+  }
 
   jsonVar->readData(CDF_CHAR);
   std::string inputjsondata = (char *)jsonVar->data;
@@ -233,9 +233,9 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   StopWatch_Stop("BBOX Calculated");
 #endif
 
-#ifdef CCONVERTGEOJSON_DEBUG
-  CDBDebug("CConvertGeoJSON::convertGeoJSONHeader() done");
-#endif
+  if (CCONVERTGEOJSON_DEBUG) {
+    CDBDebug("CConvertGeoJSON::convertGeoJSONHeader() done");
+  }
   return 0;
 }
 
@@ -265,9 +265,9 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
 
     // If not available, create new dimensions and variables (X,Y,T)
-#ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("CellsizeX: %f", cellSizeX);
-#endif
+    if (CCONVERTGEOJSON_DEBUG) {
+      CDBDebug("CellsizeX: %f", cellSizeX);
+    }
     // For x
     dimX = new CDF::Dimension();
     dimX->name = "x";
@@ -382,13 +382,13 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
   if (json.type == json_object) {
     std::string type;
     if (json["type"].type != json_null) {
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("type found");
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("type found");
+      }
       type = json["type"].u.string.ptr;
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("type: %s\n", type.c_str());
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("type: %s\n", type.c_str());
+      }
       std::string timeVal;
       double dTimeVal = -9999;
       int iTimeVal = -9999;
@@ -565,13 +565,13 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
   if (json.type == json_object) {
     std::string type;
     if (json["type"].type != json_null) {
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("type found");
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("type found");
+      }
       type = json["type"].u.string.ptr;
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("type: %s\n", type.c_str());
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("type: %s\n", type.c_str());
+      }
       if (type == "FeatureCollection") {
         json_value bbox_v = json["bbox"];
         if (bbox_v.type == json_array) {
@@ -584,9 +584,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
       }
       json_value features = json["features"];
       if (features.type == json_array) {
-#ifdef CCONVERTGEOJSON_DEBUG
-        CDBDebug("features found");
-#endif
+        if (CCONVERTGEOJSON_DEBUG) {
+          CDBDebug("features found");
+        }
         for (unsigned int cnt = 0; cnt < features.u.array.length; cnt++) {
           json_value feature = *features.u.array.values[cnt];
           std::string featureId;
@@ -833,9 +833,9 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
     bbox.urX = maxLon;
     bbox.urY = maxLat;
   }
-#ifdef CCONVERTGEOJSON_DEBUG
-  CDBDebug("BBOX: %f,%f,%f,%f", bbox.llX, bbox.llY, bbox.urX, bbox.urY);
-#endif
+  if (CCONVERTGEOJSON_DEBUG) {
+    CDBDebug("BBOX: %f,%f,%f,%f", bbox.llX, bbox.llY, bbox.urX, bbox.urY);
+  }
   return;
 }
 
@@ -884,9 +884,9 @@ size_t getDimensionSize(CDFObject *cdfObject) {
 }
 
 int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features) {
-#ifdef CCONVERTGEOJSON_DEBUG
-  CDBDebug("Adding propertyVariables");
-#endif
+  if (CCONVERTGEOJSON_DEBUG) {
+    CDBDebug("Adding propertyVariables");
+  }
   std::vector<Feature *> pointFeatures = getPointFeatures(features);
   std::map<std::string, CDF::Variable *> newVars;
 
@@ -898,9 +898,9 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
     for (auto iter = featurePropertyMap->begin(); iter != featurePropertyMap->end(); ++iter) {
       std::string name = iter->first.c_str();
       if (newVars.find(name.c_str()) == newVars.end() && cdfObject->getVariableNE(name.c_str()) == NULL) {
-#ifdef CCONVERTGEOJSON_DEBUG
-        CDBDebug("Creating var %s", name.c_str());
-#endif
+        if (CCONVERTGEOJSON_DEBUG) {
+          CDBDebug("Creating var %s", name.c_str());
+        }
         CDF::Variable *newVar = new CDF::Variable();
         newVar->name = (name.c_str());
         switch (iter->second->getType()) {
@@ -922,9 +922,9 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
         }
         // Set the original datatype as attribute in the variable, point reader will find this.
         newVar->setAttribute("ADAGUC_ORGPOINT_TYPE", CDF_INT, &newVar->currentType, 1);
-#ifdef CCONVERTGEOJSON_DEBUG
-        CDBDebug("Created var %s of type %s", name.c_str(), CDF::getCDFDataTypeName(newVar->getType()).c_str());
-#endif
+        if (CCONVERTGEOJSON_DEBUG) {
+          CDBDebug("Created var %s of type %s", name.c_str(), CDF::getCDFDataTypeName(newVar->getType()).c_str());
+        }
         newVar->isDimension = false;
         for (auto it = std::begin(varDims); it != std::end(varDims); ++it) {
           newVar->dimensionlinks.push_back(*it);
@@ -932,16 +932,16 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
         newVar->setAttributeText("standard_name", name);
         newVar->setAttributeText("grid_mapping", "projection");
         cdfObject->addVariable(newVar);
-#ifdef CCONVERTGEOJSON_DEBUG
-        CDBDebug("adding variable %s", name.c_str());
-#endif
+        if (CCONVERTGEOJSON_DEBUG) {
+          CDBDebug("adding variable %s", name.c_str());
+        }
         newVars[name] = newVar;
       }
     }
   }
-#ifdef CCONVERTGEOJSON_DEBUG
-  CDBDebug("/Adding propertyVariables");
-#endif
+  if (CCONVERTGEOJSON_DEBUG) {
+    CDBDebug("/Adding propertyVariables");
+  }
   return 0;
 }
 
@@ -969,17 +969,17 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   std::vector<Feature *> features = featureStore[geojsonkey];
 
   if (features.size() == 0) {
-#ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("Rereading JSON");
-#endif
+    if (CCONVERTGEOJSON_DEBUG) {
+      CDBDebug("Rereading JSON");
+    }
     std::string inputjsondata = (char *)jsonVar->data;
     json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 
     BBOX dfBBOX;
     getBBOX(cdfObject, dfBBOX, *json, features);
-#ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("addCDFInfo again");
-#endif
+    if (CCONVERTGEOJSON_DEBUG) {
+      CDBDebug("addCDFInfo again");
+    }
     addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
   }
 
@@ -992,13 +992,13 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 
   // Set statistics
   if (dataSource->stretchMinMax) {
-#ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("dataSource->stretchMinMax");
-#endif
+    if (CCONVERTGEOJSON_DEBUG) {
+      CDBDebug("dataSource->stretchMinMax");
+    }
     if (dataSource->statistics == NULL) {
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("Setting statistics: min/max : %d %d", 0, int(features.size() - 1));
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("Setting statistics: min/max : %d %d", 0, int(features.size() - 1));
+      }
       dataSource->statistics = new Statistics();
       dataSource->statistics->max = (features.size() - 1);
       dataSource->statistics->min = (0);
@@ -1014,16 +1014,16 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       return 0;
     }
   }
-#ifdef CCONVERTGEOJSON_DEBUG
-  if (nrDataObjects > 0) {
-    CDBDebug("Working on %s", dataSource->getDataObject(0)->variableName.c_str());
+  if (CCONVERTGEOJSON_DEBUG) {
+    if (nrDataObjects > 0) {
+      CDBDebug("Working on %s", dataSource->getDataObject(0)->variableName.c_str());
+    }
   }
-#endif
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("convertGeoJSONData OPEN ALL");
-#endif
+    if (CCONVERTGEOJSON_DEBUG) {
+      CDBDebug("convertGeoJSONData OPEN ALL");
+    }
     // CDBDebug("convertGeoJSONData OPEN ALL (*)");
 
     for (size_t d = 0; d < nrDataObjects; d++) {
@@ -1088,9 +1088,9 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         }
       }
 
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("Drawing %s", polygonIndexVar->name.c_str());
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("Drawing %s", polygonIndexVar->name.c_str());
+      }
 
       // Allocate data for the 2D field
       size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
@@ -1116,12 +1116,12 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       StopWatch_Stop("GeoJSON DATA");
 #endif
 
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-               dataSource->srvParams->geoParams.bbox.top);
-      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+        CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+                 dataSource->srvParams->geoParams.bbox.top);
+        CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+      }
 
       if (projectionRequired) {
         int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
@@ -1167,9 +1167,9 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef MEASURETIME
       StopWatch_Stop("Feature drawing done");
 #endif
-#ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("/convertGEOJSONData");
-#endif
+      if (CCONVERTGEOJSON_DEBUG) {
+        CDBDebug("/convertGEOJSONData");
+      }
     }
   }
   return result;

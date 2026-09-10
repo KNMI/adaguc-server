@@ -104,9 +104,9 @@ std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxVal
 }
 
 int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("legendtype discrete");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("legendtype discrete");
+  }
   double scaling = dataSource->getScaling();
   float cbW = 20; // legendWidth/8;
   float legendHeight = legendImage->geoParams.height;
@@ -164,25 +164,25 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     numClasses = int((maxValue - minValue) / legendInterval);
   }
 
-/*
- *   // and reduce the number of classes when required...
- *   if(!dataSource->stretchMinMax){
- *     while(numClasses>15){
- *       legendInterval*=2;//(maxValue-minValue);
- *       numClasses=int((maxValue-minValue)/legendInterval);
-}
-}*/
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("LayerName = %s", dataSource->layerName.c_str());
-  CDBDebug("minValue=%f maxValue=%f", minValue, maxValue);
-  CDBDebug("scale=%f offset=%f", styleConfiguration->legendScale, styleConfiguration->legendOffset);
-#endif
+  /*
+   *   // and reduce the number of classes when required...
+   *   if(!dataSource->stretchMinMax){
+   *     while(numClasses>15){
+   *       legendInterval*=2;//(maxValue-minValue);
+   *       numClasses=int((maxValue-minValue)/legendInterval);
+  }
+  }*/
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("LayerName = %s", dataSource->layerName.c_str());
+    CDBDebug("minValue=%f maxValue=%f", minValue, maxValue);
+    CDBDebug("scale=%f offset=%f", styleConfiguration->legendScale, styleConfiguration->legendOffset);
+  }
   float iMin = convertValueToClass(minValue, legendInterval);
   float iMax = convertValueToClass(maxValue, legendInterval) + legendInterval;
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("iMin=%f iMax=%f", iMin, iMax);
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("iMin=%f iMax=%f", iMin, iMax);
+  }
 
   // In case of auto scale and autooffset we will stretch the colors over the min/max values
   // Calculate new scale and offset for the new min/max:
@@ -224,9 +224,9 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     discreteLegendOnInterval = true;
   }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("legendtype settext");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("legendtype settext");
+  }
   /**
    * Defined blocks based on defined interval
    */
@@ -462,10 +462,10 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
   }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
+  if (CIMAGEDATAWRITER_DEBUG) {
 
-  CDBDebug("set units");
-#endif
+    CDBDebug("set units");
+  }
   // Get units
   std::string units = dObjgetUnits(*dataSource->getDataObject(0));
   if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);

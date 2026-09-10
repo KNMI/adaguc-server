@@ -121,7 +121,7 @@ std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, 
   // Parse all timestamps into tm structs
   std::vector<CTime::Date> parsedTimes;
   for (const auto &timestamp: timestamps) {
-    parsedTimes.push_back(ctime->ISOStringToDate(timestamp.c_str()));
+    parsedTimes.push_back(ctime->ISOStringToDate(timestamp));
   }
 
   // Calculate intervals between consecutive timestamps

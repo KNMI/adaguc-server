@@ -94,9 +94,9 @@ public:
 
   int readAttributes(std::vector<CDF::Attribute *> &attributes, hid_t HDF5_group);
 
-  CDF::Dimension *makeDimension(const char *name, size_t len);
+  CDF::Dimension *makeDimension(const std::string &name, size_t len);
 
-  void list(hid_t groupID, char *groupName);
+  void list(hid_t groupID, const std::string &groupName);
 
   void enableKNMIHDF5toCFConversion();
 
@@ -116,7 +116,7 @@ public:
   int close();
 
   void closeH5GroupByName(const char *variableGroupName);
-  hid_t openH5GroupByName(char *varNameOut, size_t maxVarNameLen, const char *variableGroupName);
+  hid_t openH5GroupByName(std::string &varNameOut, const std::string &variableGroupName);
   int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *);
   int _readVariableData(CDF::Variable *var, CDFType type);
 

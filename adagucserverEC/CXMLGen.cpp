@@ -37,6 +37,8 @@
 #include "utils/CXMLTemplates.h"
 #include "utils/LayerUtils.h"
 
+static const bool CXMLGEN_DEBUG = false;
+
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, std::string &XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
 const MetadataLayer *getFirstLayerWithoutError(const std::vector<MetadataLayer *> &metadataLayerList) {
@@ -511,9 +513,9 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
     // Loop through the groups
     int currentGroupDepth = 0;
     for (size_t groupIndex = 0; groupIndex < groupKeys.size(); groupIndex++) {
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("group %s", groupKeys[groupIndex].c_str());
-#endif
+      if (CXMLGEN_DEBUG) {
+        CDBDebug("group %s", groupKeys[groupIndex].c_str());
+      }
       // CDBError("group %s",groupKeys[groupIndex].c_str());
       int groupDepth = 0;
 
@@ -785,9 +787,9 @@ void generateWCSRangeSet(std::string &XMLDoc, MetadataLayer *layer) {
     return;
   }
   XMLDoc += "    <rangeSet>\n"
-             "      <RangeSet>\n"
-             "        <name>dimensions</name>\n"
-             "        <label>dimensions</label>\n";
+            "      <RangeSet>\n"
+            "        <name>dimensions</name>\n"
+            "        <label>dimensions</label>\n";
   // Dims
   for (size_t d = 0; d < layer->layerMetadata.dimList.size(); d++) {
     LayerMetadataDim *dim = &layer->layerMetadata.dimList[d];
@@ -839,24 +841,24 @@ void generateWCSRangeSet(std::string &XMLDoc, MetadataLayer *layer) {
       CT::printfconcat(XMLDoc, "            </values>\n");
     }
     CT::printfconcat(XMLDoc, "          </AxisDescription>\n"
-                              "        </axisDescription>\n");
+                             "        </axisDescription>\n");
   }
 
   XMLDoc += "      </RangeSet>\n"
-             "    </rangeSet>\n";
+            "    </rangeSet>\n";
 }
 
 int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList) {
 
   XMLDoc = ("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n"
-             "<CoverageDescription\n"
-             "   version=\"1.0.0\" \n"
-             "   updateSequence=\"0\" \n"
-             "   xmlns=\"http://www.opengis.net/wcs\" \n"
-             "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
-             "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
-             "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-             "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd\">\n");
+            "<CoverageDescription\n"
+            "   version=\"1.0.0\" \n"
+            "   updateSequence=\"0\" \n"
+            "   xmlns=\"http://www.opengis.net/wcs\" \n"
+            "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
+            "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
+            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd\">\n");
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
     for (size_t layerIndex = 0; layerIndex < srvParam->requestedLayerNames.size(); layerIndex++) {
@@ -910,8 +912,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
                 }
               }
               XMLDoc += "  </lonLatEnvelope>\n"
-                         "  <domainSet>\n"
-                         "    <spatialDomain>\n";
+                        "  <domainSet>\n"
+                        "    <spatialDomain>\n";
               for (auto proj: layer->layerMetadata.projectionList) {
 
                 std::string encodedProjString(proj.name.c_str());
@@ -989,17 +991,17 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
               CT::printfconcat(XMLDoc, "      <nativeCRSs>%s</nativeCRSs>\n    </supportedCRSs>\n", prettyCRS.c_str());
 
               XMLDoc += "    <supportedFormats nativeFormat=\"NetCDF4\">\n"
-                         "      <formats>GeoTIFF</formats>\n"
-                         "      <formats>AAIGRID</formats>\n";
+                        "      <formats>GeoTIFF</formats>\n"
+                        "      <formats>AAIGRID</formats>\n";
 
               for (size_t p = 0; p < srvParam->cfg->WCS[0]->WCSFormat.size(); p++) {
                 CT::printfconcat(XMLDoc, "      <formats>%s</formats>\n", srvParam->cfg->WCS[0]->WCSFormat[p]->attr.name.c_str());
               }
               XMLDoc += "    </supportedFormats>\n";
               CT::printfconcat(XMLDoc, "    <supportedInterpolations default=\"nearest neighbor\">\n"
-                                        "      <interpolationMethod>nearest neighbor</interpolationMethod>\n"
-                                        //     "      <interpolationMethod>bilinear</interpolationMethod>\n"
-                                        "    </supportedInterpolations>\n");
+                                       "      <interpolationMethod>nearest neighbor</interpolationMethod>\n"
+                                       //     "      <interpolationMethod>bilinear</interpolationMethod>\n"
+                                       "    </supportedInterpolations>\n");
               CT::printfconcat(XMLDoc, "</CoverageOffering>\n");
             }
           }

@@ -30,7 +30,6 @@
 #include "utils/lintDataset.h"
 #include "utils.h"
 #include "CStyleConfiguration.h"
-// #define CDATASOURCE_DEBUG
 
 bool debugDataSource = false;
 bool configWarningNameMappingSet = false;

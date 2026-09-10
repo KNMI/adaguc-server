@@ -60,7 +60,6 @@ private:
   std::string currentUnit;
   std::string currentCalendar;
   std::string scanUnits;
-  void safestrcpy(char *s1, const char *s2, size_t size_s1);
   static int CTIME_CALENDARTYPE_360day_Months[];
   static int CTIME_CALENDARTYPE_360day_MonthsCumul[];
   static int CTIME_CALENDARTYPE_365day_Months[];
@@ -160,7 +159,7 @@ public:
    * @param szTime the time string to convert
    * @return The Date
    */
-  Date stringToDate(const char *szTime);
+  Date stringToDate(const std::string &szTime);
 
   /**
    * Converts YYYY-mm-ddThh:mm:ss string to Date
@@ -168,7 +167,7 @@ public:
    * @param szTime the time string to convert
    * @return The Date
    */
-  Date ISOStringToDate(const char *szTime);
+  Date ISOStringToDate(const std::string &szTime);
 
   /**
    * Converts YYYYmmddThhmmss string to Date

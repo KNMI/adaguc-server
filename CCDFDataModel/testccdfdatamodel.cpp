@@ -237,7 +237,7 @@ int testCTimeEpochTimeConversion() {
     try {
       CTime ctime;
       ctime.init("seconds since 1970-01-01", "none");
-      CTime::Date date = ctime.ISOStringToDate(in.c_str());
+      CTime::Date date = ctime.ISOStringToDate(in);
       if (ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())) != out) {
         CDBError("[FAILED]!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, \"%s\")) returns %s and not %s", op.c_str(),
                  ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())).c_str(), out.c_str());

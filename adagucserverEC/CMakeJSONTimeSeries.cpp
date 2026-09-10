@@ -4,7 +4,7 @@
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURUniqueRequests.h"
 
-// #define CMakeJSONTimeSeries_DEBUG
+static const bool CMakeJSONTimeSeries_DEBUG = false;
 
 int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
   CURUniqueRequests uniqueRequest;
@@ -18,17 +18,16 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
   int numberOfDims = dataSource->requiredDims.size();
   int numberOfSteps = dataSource->getNumTimeSteps();
 
-#ifdef CMakeJSONTimeSeries_DEBUG
-  CDBDebug("1): ***** Find all individual files *****");
+  if (CMakeJSONTimeSeries_DEBUG) {
+    CDBDebug("1): ***** Find all individual files *****");
 
-  CDBDebug("NumberOfDims = %d", numberOfDims);
-  CDBDebug("NumberOfSteps = %d", numberOfSteps);
-  for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-    CDBDebug("Dim %d:) ds: %s nc: %s", dimnr, ogcDim->name.c_str(), ogcDim.netCDFDimName.c_str());
+    CDBDebug("NumberOfDims = %d", numberOfDims);
+    CDBDebug("NumberOfSteps = %d", numberOfSteps);
+    for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
+      COGCDims &ogcDim = dataSource->requiredDims[dimnr];
+      CDBDebug("Dim %d:) ds: %s nc: %s", dimnr, ogcDim.name.c_str(), ogcDim.netCDFDimName.c_str());
+    }
   }
-
-#endif
   std::map<std::string, CURFileInfo> fileInfoMap;
 
   /* Find all individual files. uniqueRequest will group all files to single objects, and collect all the needed entries for those files*/

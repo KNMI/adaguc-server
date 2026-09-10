@@ -35,10 +35,6 @@
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
-//  #define CCDFNETCDFIO_DEBUG
-// #define CCDFNETCDFIO_DEBUG_OPEN
-// #define CCDFNETCDFWRITER_DEBUG
-
 class CDFNetCDFReader : public CDFReader {
 private:
   // CCDFWarper warper;

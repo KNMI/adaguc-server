@@ -3,6 +3,8 @@
 #include <CDrawImage.h>
 #include <set>
 
+static const bool CImgWarpBilinear_DEBUG = false;
+
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
 
@@ -331,13 +333,13 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
     lineMask = lineMask + lineMask;
   }
 
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Deleting distance[]");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Deleting distance[]");
+  }
 
   delete[] distance;
 
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Finished drawing lines and text");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Finished drawing lines and text");
+  }
 }

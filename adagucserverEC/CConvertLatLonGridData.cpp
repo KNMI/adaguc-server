@@ -26,6 +26,9 @@
 #include "CConvertLatLonGrid.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+
+static const bool CConvertLatLonGrid_DEBUG = false;
+
 /**
  * This function draws the virtual 2D variable into a new 2D field
  */
@@ -40,10 +43,10 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
-#ifdef CConvertLatLonGrid_DEBUG
+  if (CConvertLatLonGrid_DEBUG) {
 
-  CDBDebug("convertLatLonGridData %s", dataObjects[0]->cdfVariable->name.c_str());
-#endif
+    CDBDebug("convertLatLonGridData %s", dataObjects[0]->cdfVariable->name.c_str());
+  }
   std::vector<CDF::Variable *> destRegularGrid(nrDataObjects, nullptr);
   std::vector<CDF::Variable *> irregularGridVar(nrDataObjects, nullptr);
 
@@ -71,9 +74,9 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     if (fillValue != NULL) {
       dataObjects[d]->hasNodataValue = true;
       fillValue->getData(&dataObjects[d]->dfNodataValue, 1);
-#ifdef CConvertLatLonGrid_DEBUG
-      CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
-#endif
+      if (CConvertLatLonGrid_DEBUG) {
+        CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
+      }
       float f = dataObjects[d]->dfNodataValue;
       destRegularGrid[d]->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &f, 1);
     } else
@@ -93,19 +96,19 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
   // Detect minimum and maximum values
   MinMax minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, fill, irregularGridVar[0]->getSize());
 
-#ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("Calculated min/max : %f %f", minMax.min, minMax.max);
-#endif
+  if (CConvertLatLonGrid_DEBUG) {
+    CDBDebug("Calculated min/max : %f %f", minMax.min, minMax.max);
+  }
 
   // Set statistics
   if (dataSource->stretchMinMax) {
-#ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("dataSource->stretchMinMax");
-#endif
+    if (CConvertLatLonGrid_DEBUG) {
+      CDBDebug("dataSource->stretchMinMax");
+    }
     if (dataSource->statistics == NULL) {
-#ifdef CConvertLatLonGrid_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
-#endif
+      if (CConvertLatLonGrid_DEBUG) {
+        CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
+      }
       dataSource->statistics = new Statistics();
       dataSource->statistics->setMinMax(minMax);
     }
@@ -127,17 +130,17 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
   double offsetX = dataSource->srvParams->geoParams.bbox.left;
   double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
-#ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-           dataSource->srvParams->geoParams.bbox.top);
-  CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-  CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+  if (CConvertLatLonGrid_DEBUG) {
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
+    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
+  }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("Drawing %s", destRegularGrid[0]->name.c_str());
-#endif
+    if (CConvertLatLonGrid_DEBUG) {
+      CDBDebug("Drawing %s", destRegularGrid[0]->name.c_str());
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -180,9 +183,9 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
     int numY = longitudeGrid->dimensionlinks[0]->getSize();
     int numX = longitudeGrid->dimensionlinks[1]->getSize();
-#ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("numRows %d numCells %d", numY, numX);
-#endif
+    if (CConvertLatLonGrid_DEBUG) {
+      CDBDebug("numRows %d numCells %d", numY, numX);
+    }
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
@@ -219,15 +222,15 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
       drawBilinear = true;
     }
 
-#ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("Start projecting numRows %d numCells %d", numY, numX);
-#endif
+    if (CConvertLatLonGrid_DEBUG) {
+      CDBDebug("Start projecting numRows %d numCells %d", numY, numX);
+    }
     size_t num = numY * numX;
 
     proj_trans_generic(imageWarper.projLatlonToDest, PJ_FWD, lonData, sizeof(double), num, latData, sizeof(double), num, nullptr, 0, 0, nullptr, 0, 0);
-#ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("Done projecting numRows %d numCells %d, now start drawing", numY, numX);
-#endif
+    if (CConvertLatLonGrid_DEBUG) {
+      CDBDebug("Done projecting numRows %d numCells %d, now start drawing", numY, numX);
+    }
 
     for (int indexY = 0; indexY < numY - 1; indexY++) {
       for (int indexX = 0; indexX < numX - 1; indexX++) {
@@ -281,8 +284,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     }
     imageWarper.closereproj();
   }
-#ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("/convertLatLonGridData");
-#endif
+  if (CConvertLatLonGrid_DEBUG) {
+    CDBDebug("/convertLatLonGridData");
+  }
   return 0;
 }

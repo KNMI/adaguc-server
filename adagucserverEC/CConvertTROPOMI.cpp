@@ -27,7 +27,8 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CCONVERTTROPOMI_DEBUG
+static const bool CCONVERTTROPOMI_DEBUG = false;
+static const bool CCONVERTCURVILINEAR_DEBUG = false;
 
 void writeLogFile4(const char *msg) {
   char *logfile = getenv("ADAGUC_LOGFILE");
@@ -39,10 +40,9 @@ void writeLogFile4(const char *msg) {
       if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
         time_t myTime = time(NULL);
         tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
-                 myUsableTime->tm_sec);
-        fputs(szTemp, pFile);
+        std::string szTemp = CT::printf("%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
+                                        myUsableTime->tm_sec);
+        fputs(szTemp.c_str(), pFile);
       }
       fclose(pFile);
     } // else CDBError("Unable to write logfile %s",logfile);
@@ -84,9 +84,9 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   pointLon->readData(CDF_FLOAT, true);
   pointLat->readData(CDF_FLOAT, true);
 
-#ifdef CCONVERTTROPOMI_DEBUG
-  StopWatch_Stop("DATA READ");
-#endif
+  if (CCONVERTTROPOMI_DEBUG) {
+    StopWatch_Stop("DATA READ");
+  }
   MinMax lonMinMax;
   MinMax latMinMax;
   lonMinMax.min = -180; // Initialize to whole world
@@ -97,9 +97,9 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
     lonMinMax = getMinMax(pointLon);
     latMinMax = getMinMax(pointLat);
   }
-#ifdef CCONVERTTROPOMI_DEBUG
-  StopWatch_Stop("MIN/MAX Calculated");
-#endif
+  if (CCONVERTTROPOMI_DEBUG) {
+    StopWatch_Stop("MIN/MAX Calculated");
+  }
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
   // double dfBBOX[]={-180,-90,180,90};
   // CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
@@ -210,9 +210,9 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
-#ifdef CCONVERTTROPOMI_DEBUG
-    CDBDebug("Converting %s", swathVar->name.c_str());
-#endif
+    if (CCONVERTTROPOMI_DEBUG) {
+      CDBDebug("Converting %s", swathVar->name.c_str());
+    }
 
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
@@ -373,9 +373,9 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
       ((double *)varY->data)[j] = y;
     }
 
-#ifdef CCONVERTTROPOMI_DEBUG
-    StopWatch_Stop("Dimensions set");
-#endif
+    if (CCONVERTTROPOMI_DEBUG) {
+      StopWatch_Stop("Dimensions set");
+    }
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
@@ -400,9 +400,9 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
 
       dataSource->getDataObject(0)->hasNodataValue = true;
       fillValue->getData(&dataSource->getDataObject(0)->dfNodataValue, 1);
-#ifdef CCONVERTCURVILINEAR_DEBUG
-      CDBDebug("_FillValue = %f", dataSource->getDataObject(0)->dfNodataValue);
-#endif
+      if (CCONVERTCURVILINEAR_DEBUG) {
+        CDBDebug("_FillValue = %f", dataSource->getDataObject(0)->dfNodataValue);
+      }
       CDF::Attribute *fillValue2d = pointVar[0]->getAttributeNE("_FillValue");
       if (fillValue2d == NULL) {
         fillValue2d = new CDF::Attribute();
@@ -469,12 +469,12 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
       }
     }
 
-#ifdef CCONVERTTROPOMI_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTTROPOMI_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
     if (projectionRequired) {
       int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
@@ -597,8 +597,8 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
       }
     }
   }
-#ifdef CCONVERTTROPOMI_DEBUG
-  CDBDebug("/convertTROPOMIData");
-#endif
+  if (CCONVERTTROPOMI_DEBUG) {
+    CDBDebug("/convertTROPOMIData");
+  }
   return 0;
 }

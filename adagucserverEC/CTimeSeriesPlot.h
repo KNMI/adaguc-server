@@ -23,6 +23,8 @@
  *
  ******************************************************************************/
 
+static const bool CIMAGEDATAWRITER_DEBUG = false;
+
 class PlotObject {
 public:
   PlotObject() {
@@ -71,9 +73,9 @@ public:
       return 1;
     }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("GetFeatureInfo Format image/png");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("GetFeatureInfo Format image/png");
+    }
     float width = srvParam->geoParams.dWidth, height = srvParam->geoParams.dHeight;
     if (srvParam->figWidth > 1) width = srvParam->figWidth;
     if (srvParam->figHeight > 1) height = srvParam->figHeight;
@@ -215,13 +217,13 @@ public:
       double minDate;
       double maxDate;
       try {
-        minDate = ctime->ISOStringToDate(plotObject->elements[0]->time.c_str()).offset;
+        minDate = ctime->ISOStringToDate(plotObject->elements[0]->time).offset;
       } catch (int e) {
         CDBError("Time startTimeValue error %s", plotObject->elements[0]->time.c_str());
       }
 
       try {
-        maxDate = ctime->ISOStringToDate(plotObject->elements[plotObject->length - 1]->time.c_str()).offset;
+        maxDate = ctime->ISOStringToDate(plotObject->elements[plotObject->length - 1]->time).offset;
       } catch (int e) {
         CDBError("Time stopTimeValue error %s", plotObject->elements[plotObject->length - 1]->time.c_str());
       }
@@ -365,8 +367,8 @@ public:
       }
       double timeWidth = (stopTimeValue - startTimeValue);
       for (size_t i = 0; i < plotObject->length - 1; i++) {
-        CTime::Date timePos1 = ctime->ISOStringToDate(plotObject->elements[i]->time.c_str());
-        CTime::Date timePos2 = ctime->ISOStringToDate(plotObject->elements[i + 1]->time.c_str());
+        CTime::Date timePos1 = ctime->ISOStringToDate(plotObject->elements[i]->time);
+        CTime::Date timePos2 = ctime->ISOStringToDate(plotObject->elements[i + 1]->time);
         double x1 = ((timePos1.offset - startTimeValue) / timeWidth) * plotWidth;
         double x2 = ((timePos2.offset - startTimeValue) / timeWidth) * plotWidth;
 

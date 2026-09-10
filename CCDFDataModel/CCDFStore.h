@@ -35,7 +35,6 @@
 #include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CDebugger.h"
-// #define CCDFSTORE_DEBUG
 typedef std::map<std::string, CDFReader *> CDFStore_CDFReadersMap;
 typedef std::map<std::string, CDFReader *>::iterator CDFStore_CDFReadersIterator;
 

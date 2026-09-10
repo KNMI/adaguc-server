@@ -117,7 +117,7 @@ namespace CDF {
     void setType(CDFType type);
     bool isString();
     bool isString(bool isString);
-    void setName(const char *value);
+    void setName(const std::string &value);
     void setSize(size_t size);
     size_t getSize();
     Attribute *getAttributeThrows(const std::string &name) const;

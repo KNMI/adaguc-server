@@ -119,7 +119,7 @@ public:
   int getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
   int getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams);
 
-  void setDate(const char *date);
+  void setDate(const std::string &date);
 
   // Virtual functions
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);

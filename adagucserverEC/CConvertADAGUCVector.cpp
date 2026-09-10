@@ -27,6 +27,8 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
+static const bool CCONVERTADAGUCVECTOR_DEBUG = false;
+
 /**
  * Checks if the format of this file corresponds to the ADAGUC Vector format.
  */
@@ -71,8 +73,8 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "lat_bnds" && var->name != "lon_bnds" &&
-          var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties") {
+      if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "lat_bnds" && var->name != "lon_bnds" && var->name != "custom" &&
+          var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties") {
         varsToConvert.push_back(var->name);
       }
       if (var->name == "projection") {
@@ -85,9 +87,9 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("Converting %s", swathVar->name.c_str());
-#endif
+    if (CCONVERTADAGUCVECTOR_DEBUG) {
+      CDBDebug("Converting %s", swathVar->name.c_str());
+    }
 
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
@@ -126,9 +128,9 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int mode) {
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-  CDBDebug("convertADAGUCVectorData");
-#endif
+  if (CCONVERTADAGUCVECTOR_DEBUG) {
+    CDBDebug("convertADAGUCVectorData");
+  }
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
 
   if (!isADAGUCVectorFormat(cdfObject)) {
@@ -171,9 +173,9 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   if (fillValue != NULL) {
     dataObjects[0]->hasNodataValue = true;
     fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
-#endif
+    if (CCONVERTADAGUCVECTOR_DEBUG) {
+      CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
+    }
     float f = dataObjects[0]->dfNodataValue;
     new2DVar->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &f, 1);
   } else {
@@ -197,19 +199,19 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
     }
   }
 
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-  CDBDebug("Calculated min/max : %f %f", min, max);
-#endif
+  if (CCONVERTADAGUCVECTOR_DEBUG) {
+    CDBDebug("Calculated min/max : %f %f", min, max);
+  }
 
   // Set statistics
   if (dataSource->stretchMinMax) {
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("dataSource->stretchMinMax");
-#endif
+    if (CCONVERTADAGUCVECTOR_DEBUG) {
+      CDBDebug("dataSource->stretchMinMax");
+    }
     if (dataSource->statistics == NULL) {
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", min, max);
-#endif
+      if (CCONVERTADAGUCVECTOR_DEBUG) {
+        CDBDebug("Setting statistics: min/max : %f %f", min, max);
+      }
       dataSource->statistics = new Statistics();
       dataSource->statistics->max = max;
       dataSource->statistics->min = min;
@@ -234,9 +236,9 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("Drawing %s", new2DVar->name.c_str());
-#endif
+    if (CCONVERTADAGUCVECTOR_DEBUG) {
+      CDBDebug("Drawing %s", new2DVar->name.c_str());
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -288,9 +290,9 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
 
     int numTimes = swathVar->dimensionlinks[0]->getSize();
 
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("numTimes %d ", numTimes);
-#endif
+    if (CCONVERTADAGUCVECTOR_DEBUG) {
+      CDBDebug("numTimes %d ", numTimes);
+    }
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
@@ -312,12 +314,12 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
       }
     }
 
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTADAGUCVECTOR_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
     if (projectionRequired) {
       int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
@@ -474,9 +476,9 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
 
     imageWarper.closereproj();
   }
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-  CDBDebug("/convertADAGUCVectorData");
-#endif
+  if (CCONVERTADAGUCVECTOR_DEBUG) {
+    CDBDebug("/convertADAGUCVectorData");
+  }
   return 0;
 }
 
@@ -508,16 +510,16 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
 
     // Detect time from the netcdf data and copy the same units from the original time variable
     try {
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-      CDBDebug("Start reading time dim");
-#endif
+      if (CCONVERTADAGUCVECTOR_DEBUG) {
+        CDBDebug("Start reading time dim");
+      }
       varT->setAttributeText("units", origT->getAttributeThrows("units")->toString().c_str());
       if (origT->readData(CDF_DOUBLE) != 0) {
         CDBError("Unable to read time variable");
       } else {
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-        CDBDebug("Done reading time dim");
-#endif
+        if (CCONVERTADAGUCVECTOR_DEBUG) {
+          CDBDebug("Done reading time dim");
+        }
 
         // Loop through the time variable and detect the earliest time
         double tfill = 0;
@@ -537,9 +539,9 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
             }
           }
         }
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
-        CDBDebug("firstTimeValue  = %f", firstTimeValue);
-#endif
+        if (CCONVERTADAGUCVECTOR_DEBUG) {
+          CDBDebug("firstTimeValue  = %f", firstTimeValue);
+        }
         // Set the time data
         varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
       }

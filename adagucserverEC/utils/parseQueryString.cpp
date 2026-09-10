@@ -5,6 +5,8 @@
 #include <CServerError.h>
 #include <CAutoResource.h>
 
+static const bool CREQUEST_DEBUG = false;
+
 int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
   const char *pszQueryString = getenv("QUERY_STRING");
   if (pszQueryString != nullptr) {
@@ -38,9 +40,9 @@ int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
       // Check if parameter name is a SLD parameter AND have file name
       CSLD csld;
       if (csld.parameterIsSld(values[0])) {
-#ifdef CREQUEST_DEBUG
-        CDBDebug("Found SLD parameter in query");
-#endif
+        if (CREQUEST_DEBUG) {
+          CDBDebug("Found SLD parameter in query");
+        }
 
         // Set server params
         csld.setServerParams(&srvParam);

@@ -39,7 +39,6 @@
 
 #include "CTString.h"
 
-// #define CCDFDATAMODEL_DEBUG
 //  CDF: Common Data Format
 
 /* Types supported by CDF */
@@ -98,12 +97,6 @@ namespace CDF {
 
   int fill(void *destdata, CDFType destType, double value, size_t size);
 
-  /*Puts the CDF name of the type in the string array with name (CDF_FLOAT, CDF_INT, etc...)*/
-  void getCDFDataTypeName(char *name, const size_t maxlen, const int type);
-
-  /*Puts the C name of the type in the string array with name (float, int, etc...)*/
-  void getCDataTypeName(char *name, const size_t maxlen, const int type);
-
   /**
    * Static function which converts an exception into a readable message
    * @param int The value of catched exception
@@ -117,6 +110,13 @@ namespace CDF {
    * @return string with the name
    */
   std::string getCDFDataTypeName(const int type);
+
+  /**
+   * returns the native C type name as string (float, int, etc...)
+   * @param type The CDF type
+   * @return string with the name
+   */
+  std::string getCDataTypeName(const int type);
 
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);

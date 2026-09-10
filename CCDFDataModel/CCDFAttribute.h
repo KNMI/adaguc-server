@@ -39,7 +39,7 @@ namespace CDF {
     Attribute(Attribute *att);
     Attribute(const char *attrName, const char *attrString);
     Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength);
-    void setName(const char *value);
+    void setName(const std::string &value);
     CDFType type;
     std::string name;
     size_t length;

@@ -23,8 +23,9 @@
  *
  ******************************************************************************/
 
-// #define CIMGWARPNEARESTRGBA_DEBUG
 #include "CImgWarpNearestRGBA.h"
+
+static const bool CIMGWARPNEARESTRGBA_DEBUG = false;
 
 #define CIMGWARPNEARESTRGBA_USEDRAWIMAGE
 
@@ -74,9 +75,9 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
 #endif
   int imageWidth = drawImage->geoParams.width;
   int imageHeight = drawImage->geoParams.height;
-#ifdef CIMGWARPNEARESTRGBA_DEBUG
-  CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
-#endif
+  if (CIMGWARPNEARESTRGBA_DEBUG) {
+    CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
+  }
   double sample_sy, sample_sx;
   double line_dx1, line_dy1, line_dx2, line_dy2;
   double rcx_1, rcy_1, rcx_2, rcy_2, rcx_3, rcy_3;
@@ -124,9 +125,9 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
    * [D: CImgWarpNearestNeighbour.h, 257 in CDrawTileObjBGRA]               2012-07-25T09:53:06Z myDrawRawTile 14.914276, -22.719116, 109.091492, 46.821022
    *
    */
-#ifdef CIMGWARPNEARESTRGBA_DEBUG
-  CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
-#endif
+  if (CIMGWARPNEARESTRGBA_DEBUG) {
+    CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
+  }
   line_dx1 = x_corners[3];
   line_dx2 = x_corners[2];
   line_dy1 = y_corners[3];
@@ -214,13 +215,13 @@ void *CImgWarpNearestRGBA::drawTiles(void *arg) {
   DrawMultipleTileSettings *dmf = (DrawMultipleTileSettings *)arg;
   for (int j = dmf->startTile; j < dmf->endTile && j < dmf->numberOfTiles; j++) {
     DrawTileSettings *ct = &dmf->ct[j];
-#ifdef CIMGWARPNEARESTRGBA_DEBUG
-    CDBDebug("Drawing tile %d", j);
-#endif
+    if (CIMGWARPNEARESTRGBA_DEBUG) {
+      CDBDebug("Drawing tile %d", j);
+    }
     if (ct->id >= 0) {
-#ifdef CIMGWARPNEARESTRGBA_DEBUG
-      CDBDebug("Drawing tile id %d", ct->id);
-#endif
+      if (CIMGWARPNEARESTRGBA_DEBUG) {
+        CDBDebug("Drawing tile id %d", ct->id);
+      }
       // int status =
       ct->drawTile->drawTile(ct->x_corners, ct->y_corners, ct->tile_offset_x, ct->tile_offset_y, ct->debug);
       /*if(status!=0){
@@ -327,11 +328,11 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   // drawTileClass = new CDrawTileObjBGRA();  //keep the calculated results
   drawTileClass->init(dataSource, drawImage, (int)tile_width, (int)tile_height);
 
-#ifdef CIMGWARPNEARESTRGBA_DEBUG
-  CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
-  CDBDebug("datasource:  %f %f %f %f", dataSource->bbox.left, dataSource->bbox.bottom, dataSource->bbox.right, dataSource->bbox.top);
-  CDBDebug("destination: %f %f %f %f", internalGeo.bbox.left, internalGeo.bbox.bottom, internalGeo.bbox.right, internalGeo.bbox.top);
-#endif
+  if (CIMGWARPNEARESTRGBA_DEBUG) {
+    CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
+    CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
+    CDBDebug("destination: %f %f %f %f", internalGeo.bbox.left, internalGeo.bbox.bottom, internalGeo.bbox.right, internalGeo.bbox.top);
+  }
   int numberOfTiles = x_div * y_div;
   DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
   bool debug = false;

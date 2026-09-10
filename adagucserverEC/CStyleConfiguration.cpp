@@ -1,6 +1,8 @@
 #include "CStyleConfiguration.h"
 #include "CDataSource.h"
 
+static const bool CDATASOURCE_DEBUG = false;
+
 RenderMethod getRenderMethodFromString(std::string renderMethodString) {
   RenderMethod renderMethod = RM_UNDEFINED;
   if (CT::indexOf(renderMethodString, "nearest") != -1) renderMethod |= RM_NEAREST;
@@ -313,9 +315,9 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 
   // When min and max are given, calculate the scale and offset according to min and max.
   if (this->minMaxSet) {
-#ifdef CDATASOURCE_DEBUG
-    CDBDebug("Found min and max in layer configuration");
-#endif
+    if (CDATASOURCE_DEBUG) {
+      CDBDebug("Found min and max in layer configuration");
+    }
 
     stretchLegend(this->minValue, this->maxValue);
     dataSource->stretchMinMax = false;

@@ -25,12 +25,12 @@
 
 #include "CCDFGeoJSONIO.h"
 #include <CReadFile.h>
-// #define CCDFGEOJSONIO_DEBUG
+static const bool CCDFGEOJSONIO_DEBUG = false;
 
 CDFGeoJSONReader::CDFGeoJSONReader() : CDFReader() {
-#ifdef CCDFGEOJSONIO_DEBUG
-  CDBDebug("New CDFGeoJSONReader");
-#endif
+  if (CCDFGEOJSONIO_DEBUG) {
+    CDBDebug("New CDFGeoJSONReader");
+  }
 }
 
 CDFGeoJSONReader::~CDFGeoJSONReader() { close(); }

@@ -351,9 +351,9 @@ int CImgWarpNearestNeighbour::reproj(CImageWarper *warper, CDataSource *, GeoPar
 }
 
 void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-  CDBDebug("Render");
-#endif
+  if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+    CDBDebug("Render");
+  }
 
   bool fieldsAreIdentical = true;
   if ((float)dataSource->dfBBOX[0] != (float)drawImage->geoParams.bbox.left) {
@@ -376,9 +376,9 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
   }
 
   if (fieldsAreIdentical) {
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-    CDBDebug("fieldsAreIdentical: using _plot");
-#endif
+    if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+      CDBDebug("fieldsAreIdentical: using _plot");
+    }
     CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
     switch (dataType) {
     case CDF_CHAR:
@@ -530,13 +530,13 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
 
   drawTileClass->init(dataSource, drawImage, tile_width, tile_height);
 
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-  CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
-  CDBDebug("tile_width, tile_height:  %d %d", tile_width, tile_height);
-  CDBDebug("internalWidth, internalHeight:  %d %d", internalWidth, internalHeight);
-  CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  CDBDebug("destination: %f %f %f %f", internalGeo.dfBBOX[0], internalGeo.dfBBOX[1], internalGeo.dfBBOX[2], internalGeo.dfBBOX[3]);
-#endif
+  if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+    CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
+    CDBDebug("tile_width, tile_height:  %d %d", tile_width, tile_height);
+    CDBDebug("internalWidth, internalHeight:  %d %d", internalWidth, internalHeight);
+    CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
+    CDBDebug("destination: %f %f %f %f", internalGeo.bbox.get(0), internalGeo.bbox.get(1), internalGeo.bbox.get(2), internalGeo.bbox.get(3));
+  }
 
   int numberOfTiles = x_div * y_div;
   DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];

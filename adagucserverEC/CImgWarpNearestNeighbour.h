@@ -25,7 +25,6 @@
 
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
-// #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
@@ -33,6 +32,8 @@
 #include "CAreaMapper.h"
 #include "CDrawFunction.h"
 #include "utils/projectionUtils.h"
+
+static const bool CIMGWARPNEARESTNEIGHBOUR_DEBUG = false;
 
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
@@ -70,13 +71,13 @@ private:
     DrawMultipleTileSettings *dmf = (DrawMultipleTileSettings *)arg;
     for (int j = dmf->startTile; j < dmf->endTile && j < dmf->numberOfTiles; j++) {
       DrawTileSettings *ct = &dmf->ct[j];
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-// CDBDebug("Drawing tile %d",j);
-#endif
+      if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+        // CDBDebug("Drawing tile %d",j);
+      }
       if (ct->id >= 0) {
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-// CDBDebug("Drawing tile id %d",ct->id);
-#endif
+        if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+          // CDBDebug("Drawing tile id %d",ct->id);
+        }
         // int status =
         ct->drawTile->drawTile(ct->x_corners, ct->y_corners, ct->tile_offset_x, ct->tile_offset_y);
         /*if(status!=0){

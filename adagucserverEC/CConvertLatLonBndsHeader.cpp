@@ -27,7 +27,8 @@
 #include "CImageWarper.h"
 #include "CConvertLatLonBnds.h"
 
-// #define CConvertLatLonBnds_DEBUG
+static const bool CConvertLatLonBnds_DEBUG = false;
+static const bool CConvertLatLonGrid_DEBUG = false;
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
@@ -35,9 +36,9 @@
 int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerParams *) {
   // Check whether this is really an LatLonBnds file
   if (!isThisLatLonBndsData(cdfObject)) return 1;
-#ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("Using CConvertLatLonBnds.h");
-#endif
+  if (CConvertLatLonGrid_DEBUG) {
+    CDBDebug("Using CConvertLatLonBnds.h");
+  }
 
   // Standard bounding box of adaguc data is worldwide
   CDF::Variable *pointLon;
@@ -54,9 +55,9 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
   pointLon->readData(CDF_DOUBLE, true);
   pointLat->readData(CDF_DOUBLE, true);
 
-#ifdef CConvertLatLonBnds_DEBUG
-  StopWatch_Stop("DATA READ");
-#endif
+  if (CConvertLatLonBnds_DEBUG) {
+    StopWatch_Stop("DATA READ");
+  }
   MinMax lonMinMax;
   MinMax latMinMax;
   lonMinMax.min = -180; // Initialize to whole world
@@ -67,10 +68,10 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     lonMinMax = getMinMax(pointLon);
     latMinMax = getMinMax(pointLat);
   }
-#ifdef CConvertLatLonBnds_DEBUG
-  StopWatch_Stop("MIN/MAX Calculated");
-  CDBDebug("%f,%f %f,%f", latMinMax.min, lonMinMax.min, latMinMax.max, lonMinMax.max);
-#endif
+  if (CConvertLatLonBnds_DEBUG) {
+    StopWatch_Stop("MIN/MAX Calculated");
+    CDBDebug("%f,%f %f,%f", latMinMax.min, lonMinMax.min, latMinMax.max, lonMinMax.max);
+  }
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
 
   // Default size of adaguc 2dField is 2x2
@@ -131,8 +132,8 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->dimensionlinks.size() >= 2 && var->name != "acquisition_time" && var->name != "time" && var->name != "lon" && var->name != "lat" &&
-          var->name != "longitude" && var->name != "latitude" && var->name != "lon_bnds" && var->name != "lat_bnds") {
+      if (var->dimensionlinks.size() >= 2 && var->name != "acquisition_time" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "longitude" &&
+          var->name != "latitude" && var->name != "lon_bnds" && var->name != "lat_bnds") {
         varsToConvert.push_back(std::string(var->name.c_str()));
       }
     }
@@ -142,9 +143,9 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *irregularGridVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
     if (irregularGridVar->dimensionlinks.size() >= 2) {
-#ifdef CConvertLatLonGrid_DEBUG
-      CDBDebug("Converting %s", irregularGridVar->name.c_str());
-#endif
+      if (CConvertLatLonGrid_DEBUG) {
+        CDBDebug("Converting %s", irregularGridVar->name.c_str());
+      }
 
       CDF::Variable *destRegularGrid = new CDF::Variable();
       cdfObject->addVariable(destRegularGrid);

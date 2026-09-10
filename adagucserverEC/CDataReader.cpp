@@ -46,7 +46,6 @@
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 
-// #define CDATAREADER_DEBUG
 // #define MEASURETIME
 bool verboseLogging = false;
 

@@ -54,7 +54,7 @@ namespace CDF {
     int id;
     size_t getSize() { return length; }
     void setSize(size_t _length) { length = _length; }
-    void setName(const char *value) { name = (value); }
+    void setName(const std::string &value) { name = value; }
     std::string getName() { return name; }
     // Returns a new copy of this dimension
     Dimension *clone() {

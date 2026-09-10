@@ -35,9 +35,9 @@
 #include "Types/CPointTypes.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-void floatToString(char *string, size_t maxlen, float number);
-void floatToString(char *string, size_t maxlen, int numdigits, float number);
-void floatToString(char *string, size_t maxlen, float min, float max, float number);
+std::string floatToString(float number);
+std::string floatToString(int numdigits, float number);
+std::string floatToString(float min, float max, float number);
 
 class CImageWarper {
   //  CNetCDFReader reader;

@@ -95,11 +95,6 @@ int CTime::CTIME_CALENDARTYPE_360day_MonthsCumul[] = {0, 30, 60, 90, 120, 150, 1
 int CTime::CTIME_CALENDARTYPE_365day_Months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 int CTime::CTIME_CALENDARTYPE_365day_MonthsCumul[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
 
-void CTime::safestrcpy(char *s1, const char *s2, size_t size_s1) {
-  strncpy(s1, s2, size_s1);
-  s1[size_s1] = '\0';
-}
-
 CTime::CTime() {
   isInitialized = false;
   currentUnit = "";
@@ -630,42 +625,32 @@ double CTime::dateToOffset(Date date) {
   throw CTIME_CONVERSION_ERROR;
 }
 
-CTime::Date CTime::stringToDate(const char *szTime) {
-  size_t timeLength = strlen(szTime);
+CTime::Date CTime::stringToDate(const std::string &szTime) {
+  size_t timeLength = szTime.length();
   if (timeLength < 15) {
-    CDBError("stringToDate internal error: invalid time format: [%s]", szTime);
+    CDBError("stringToDate internal error: invalid time format: [%s]", szTime.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   Date date;
-  char szTemp[64];
-  safestrcpy(szTemp, szTime, 4);
-  date.year = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 4, 2);
-  date.month = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 6, 2);
-  date.day = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 9, 2);
-  date.hour = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 11, 2);
-  date.minute = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 13, 2);
-  date.second = (float)atoi(szTemp);
+  date.year = atoi(szTime.substr(0, 4).c_str());
+  date.month = atoi(szTime.substr(4, 2).c_str());
+  date.day = atoi(szTime.substr(6, 2).c_str());
+  date.hour = atoi(szTime.substr(9, 2).c_str());
+  date.minute = atoi(szTime.substr(11, 2).c_str());
+  date.second = (float)atoi(szTime.substr(13, 2).c_str());
   if (timeLength > 18) {
-    safestrcpy(szTemp, szTime + 16, 3);
-    date.second += ((float)atoi(szTemp)) / 1000;
+    date.second += ((float)atoi(szTime.substr(16, 3).c_str())) / 1000;
   }
-  //  CDBDebug("szTime %s %s %f",szTime,szTemp,date.second);
   try {
     date.offset = dateToOffset(date);
   } catch (int e) {
-    CDBError("Exception in stringToDate with input %s", szTime);
+    CDBError("Exception in stringToDate with input %s", szTime.c_str());
     throw e;
   }
   Date checkDate = getDate(date.offset);
   std::string checkStr = dateToString(checkDate);
-  std::string strTime = szTime;
-  if (checkStr != strTime.substr(0, 15)) {
-    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime, checkStr.c_str());
+  if (checkStr != szTime.substr(0, 15)) {
+    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime.c_str(), checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   if (checkDate.offset != date.offset) {
@@ -675,42 +660,30 @@ CTime::Date CTime::stringToDate(const char *szTime) {
   return date;
 }
 
-CTime::Date CTime::ISOStringToDate(const char *szTime) {
-  if (strlen(szTime) < 19) {
-
-    CDBError("ISOStringToDate internal error: intime is too short: '%s'", szTime);
+CTime::Date CTime::ISOStringToDate(const std::string &szTime) {
+  if (szTime.length() < 19) {
+    CDBError("ISOStringToDate internal error: intime is too short: '%s'", szTime.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   Date date;
-  char szTemp[64];
-  safestrcpy(szTemp, szTime, 4);
-  date.year = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 5, 2);
-  date.month = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 8, 2);
-  date.day = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 11, 2);
-  date.hour = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 14, 2);
-  date.minute = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 17, 2);
-  szTemp[19] = 'Z';
-  szTemp[20] = '0';
-  date.second = (float)atoi(szTemp);
+  date.year = atoi(szTime.substr(0, 4).c_str());
+  date.month = atoi(szTime.substr(5, 2).c_str());
+  date.day = atoi(szTime.substr(8, 2).c_str());
+  date.hour = atoi(szTime.substr(11, 2).c_str());
+  date.minute = atoi(szTime.substr(14, 2).c_str());
+  date.second = (float)atoi(szTime.substr(17, 2).c_str());
   try {
     date.offset = dateToOffset(date);
   } catch (int e) {
-    CDBError("ISOStringToDate: input '%s'", szTime);
+    CDBError("ISOStringToDate: input '%s'", szTime.c_str());
     throw e;
   }
-  // CDBDebug("date.offset %f",date.offset);
   Date checkDate = getDate(date.offset);
   std::string checkStr = dateToISOString(checkDate);
-  // CDBDebug("checkStr %s",checkStr.c_str());
   checkStr[19] = 'Z';
   checkStr.resize(20);
   if (checkStr != szTime) {
-    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime, checkStr.c_str());
+    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime.c_str(), checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   if (checkDate.offset != date.offset) {
@@ -765,7 +738,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
       date.append(szTime + 8, 6);
       date += "Z";
       CDBDebug("Fixing time to [%s]", date.c_str());
-      return stringToDate(date.c_str());
+      return stringToDate(date);
     }
   }
 
@@ -776,7 +749,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
     date += "T";
     date.append(szTime + 8, 4);
     date += "00Z";
-    return stringToDate(date.c_str());
+    return stringToDate(date);
   }
 
   if (len < 14) {
@@ -801,7 +774,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
     date.append(szTime + 17, 2);
     date += "Z";
     try {
-      return ISOStringToDate(date.c_str());
+      return ISOStringToDate(date);
     } catch (int e) {
       CDBError("freeDateStringToDate exception on '%s'", szTime);
       throw e;
@@ -820,7 +793,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
 
     date.append(szTime + 15, 2);
     date += "Z";
-    return stringToDate(date.c_str());
+    return stringToDate(date);
   }
 
   // 20100101T000000
@@ -831,7 +804,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
     date += "T";
     date.append(szTime + 9, 6);
     date += "Z";
-    return stringToDate(date.c_str());
+    return stringToDate(date);
   }
 
   // 2008-05-13T12:10Z
@@ -851,7 +824,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
     date.append("00", 2);
     date += "Z";
     try {
-      return ISOStringToDate(date.c_str());
+      return ISOStringToDate(date);
     } catch (int e) {
       CDBError("freeDateStringToDate exception");
       throw e;
@@ -872,10 +845,7 @@ std::string CTime::currentDateTime() {
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", gmtime(&curTime.tv_sec));
 
-  char currentTime[100] = "";
-  snprintf(currentTime, 99, "%s.%03dZ", buffer, milli);
-
-  return currentTime;
+  return CT::printf("%s.%03dZ", buffer, milli);
 }
 
 double CTime::quantizeTimeToISO8601(double offsetOrig, std::string period, std::string method) {

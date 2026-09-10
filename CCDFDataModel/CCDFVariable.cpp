@@ -34,7 +34,7 @@
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader *CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
 
-// #define CCDFDATAMODEL_DEBUG
+static const bool CCDFDATAMODEL_DEBUG = false;
 int CDF::Variable::readData(CDFType type) { return readData(type, NULL, NULL, NULL); }
 
 int CDF::Variable::readData(bool applyScaleOffset) { return readData(-1, applyScaleOffset); }
@@ -49,21 +49,21 @@ int CDF::Variable::readData(CDFType readType, bool applyScaleOffset) { return re
 int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, ptrdiff_t *_stride, bool applyScaleOffset) {
   int readDataType = readType == -1 ? nativeType : readType;
   if (data != NULL && currentType != readDataType) {
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("CDF::Variable::readData freeing data");
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("CDF::Variable::readData freeing data");
+    }
     freeData();
   }
   if (data != NULL) {
-// TODO Check start,stop, stride settings first!!!
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("Data is already defined");
-#endif
+    // TODO Check start,stop, stride settings first!!!
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("Data is already defined");
+    }
     return 0;
   }
-#ifdef CCDFDATAMODEL_DEBUG
-  CDBDebug("applyScaleOffset = %d", applyScaleOffset);
-#endif
+  if (CCDFDATAMODEL_DEBUG) {
+    CDBDebug("applyScaleOffset = %d", applyScaleOffset);
+  }
   if (applyScaleOffset == false) {
     return readData(currentType, _start, _count, _stride);
   }
@@ -155,27 +155,27 @@ int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdif
 
 int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
 
-#ifdef CCDFDATAMODEL_DEBUG
-  CDBDebug("reading variable %s", name.c_str());
-  if (_start == NULL) {
-    CDBDebug("_start not defined for reading variable %s", name.c_str());
-  } else {
-    CDBDebug("_start = %d", _start[0]);
+  if (CCDFDATAMODEL_DEBUG) {
+    CDBDebug("reading variable %s", name.c_str());
+    if (_start == NULL) {
+      CDBDebug("_start not defined for reading variable %s", name.c_str());
+    } else {
+      CDBDebug("_start = %zu", _start[0]);
+    }
   }
-#endif
 
   if (data != NULL && type != this->currentType) {
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("Freeing orignal variable %s", name.c_str());
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("Freeing orignal variable %s", name.c_str());
+    }
     freeData();
   }
 
   // TODO needs to cope correctly with cdfReader.
   if (data != NULL) {
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("Data is already defined");
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("Data is already defined");
+    }
     return 0;
   }
 
@@ -224,11 +224,11 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
     // Now make the iterative dim of length zero
     size_t iterDimStart = start[iterativeDimIndex];
     // size_t iterDimCount=count[iterativeDimIndex];
-#ifdef CCDFDATAMODEL_DEBUG
-    for (size_t i = 0; i < dimensionlinks.size(); i++) {
-      CDBDebug("%d\t%d", start[i], count[i]);
+    if (CCDFDATAMODEL_DEBUG) {
+      for (size_t i = 0; i < dimensionlinks.size(); i++) {
+        CDBDebug("%zu\t%zu", start[i], count[i]);
+      }
     }
-#endif
 
     size_t dataReadOffset = 0;
     // for(size_t j=iterDimStart;j<iterDimCount+iterDimStart;j++)
@@ -277,15 +277,15 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
           Variable *tVar = tCDFObject->getVariableThrows(name.c_str());
           if (tVar->readData(type, start, count, stride) != 0) throw(__LINE__);
           // Put the read data chunk in our destination variable
-#ifdef CCDFDATAMODEL_DEBUG
-          CDBDebug("Copying %d elements to variable %s", tVar->getSize(), name.c_str());
-#endif
+          if (CCDFDATAMODEL_DEBUG) {
+            CDBDebug("Copying %zu elements to variable %s", tVar->getSize(), name.c_str());
+          }
           CDFCopyData(data, type, tVar->data, type, dataReadOffset, 0, tVar->getSize());
           dataReadOffset += tVar->getSize();
           // Free the read data
-#ifdef CCDFDATAMODEL_DEBUG
-          CDBDebug("Free tVar %s", tVar->name.c_str());
-#endif
+          if (CCDFDATAMODEL_DEBUG) {
+            CDBDebug("Free tVar %s", tVar->name.c_str());
+          }
           tVar->freeData();
           tCDFObject->close();
         }
@@ -294,9 +294,9 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
           status = customReader->readData(this, _start, count, stride);
         }
 
-#ifdef CCDFDATAMODEL_DEBUG
-        CDBDebug("Variable->data==NULL: %d", data == NULL);
-#endif
+        if (CCDFDATAMODEL_DEBUG) {
+          CDBDebug("Variable->data==NULL: %d", data == NULL);
+        }
       } catch (int e) {
 
         CDBError("Exception at line %d", e);
@@ -314,9 +314,9 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
   }
 
   if (needsDimIteration == false) {
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("needsDimIteration=false");
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("needsDimIteration=false");
+    }
     // TODO NEEDS BETTER CHECKS
     if (cdfReaderPointer == NULL) {
       if (_hasCustomReader) {
@@ -352,16 +352,16 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
     // CDBDebug("OK");
     if (useStartCountStride == true) {
       // CDBDebug("OK");
-#ifdef CCDFDATAMODEL_DEBUG
-      CDBDebug("_readVariableData start count stride");
-#endif
+      if (CCDFDATAMODEL_DEBUG) {
+        CDBDebug("_readVariableData start count stride");
+      }
       status = cdfReader->_readVariableData(this, type, _start, _count, _stride);
       // CDBDebug("OK");
     } else {
       // CDBDebug("OK");
-#ifdef CCDFDATAMODEL_DEBUG
-      CDBDebug("_readVariableDat");
-#endif
+      if (CCDFDATAMODEL_DEBUG) {
+        CDBDebug("_readVariableDat");
+      }
       status = cdfReader->_readVariableData(this, type);
     }
     // CDBDebug("OK");
@@ -370,18 +370,18 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
       return 1;
     }
   }
-#ifdef CCDFDATAMODEL_DEBUG
-  CDBDebug("Data for %s read %d", name.c_str(), data != NULL);
-#endif
+  if (CCDFDATAMODEL_DEBUG) {
+    CDBDebug("Data for %s read %d", name.c_str(), data != NULL);
+  }
 
   return 0;
 }
 
 void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimName) {
 
-#ifdef CCDFDATAMODEL_DEBUG
-  CDBDebug("[setCDFObjectDim for %s %s]", sourceVar->name.c_str(), dimName);
-#endif
+  if (CCDFDATAMODEL_DEBUG) {
+    CDBDebug("[setCDFObjectDim for %s %s]", sourceVar->name.c_str(), dimName);
+  }
   // if(sourceVar->isDimension)return;
   CDFObject *sourceCDFObject = (CDFObject *)sourceVar->getParentCDFObject();
   std::vector<Dimension *> &srcDims = sourceVar->dimensionlinks;
@@ -435,18 +435,18 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   } /*else{
      sourceType = srcDimVar->getType();
    }*/
-#ifdef CCDFDATAMODEL_DEBUG
-  CDBDebug("=== Found %d steps in source ===", srcDimVar->getSize());
-#endif
+  if (CCDFDATAMODEL_DEBUG) {
+    CDBDebug("=== Found %zu steps in source ===", srcDimVar->getSize());
+  }
 
   //   if(sourceType != currentType){
   //     CDBError("%s == %s",CDF::getCDFDataTypeName(currentType).c_str(),CDF::getCDFDataTypeName(currentType).c_str());
   //   }
 
   if (iterativeVar->data == NULL) {
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("READING FIRST ONE ONCE! Type = %s", CDF::getCDFDataTypeName(currentType).c_str());
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("READING FIRST ONE ONCE! Type = %s", CDF::getCDFDataTypeName(currentType).c_str());
+    }
     if (iterativeVar->readData(currentType) != 0) {
       throw(0);
     }
@@ -484,10 +484,10 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
       }
     }
 
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("srcDimValue = %s", srcDimValue.c_str());
-    CDBDebug("Itereating %d/%d = %s", indimsize, srcDimVar->getSize(), srcDimValue.c_str());
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("srcDimValue = %s", srcDimValue.c_str());
+      CDBDebug("Itereating %zu/%zu = %s", indimsize, srcDimVar->getSize(), srcDimValue.c_str());
+    }
 
     int foundDimValue = -1;
     size_t dimSize = iterativeDim->getSize();
@@ -513,13 +513,13 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
           dstDimValue = CT::printf("%f", iterativeVar->getDataAt<double>(j));
         }
       }
-#ifdef CCDFDATAMODEL_DEBUG
-      // CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
-#endif
+      if (CCDFDATAMODEL_DEBUG) {
+        // CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
+      }
       if (dstDimValue == srcDimValue) {
-#ifdef CCDFDATAMODEL_DEBUG
-        CDBDebug("Found %s == %s", dstDimValue.c_str(), srcDimValue.c_str());
-#endif
+        if (CCDFDATAMODEL_DEBUG) {
+          CDBDebug("Found %s == %s", dstDimValue.c_str(), srcDimValue.c_str());
+        }
         foundDimValue = j;
         break;
       }
@@ -538,13 +538,13 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
       }
     }
     if (foundCDFObject != -1) {
-#ifdef CCDFDATAMODEL_DEBUG
-      CDBDebug("Found existing cdfObject %d", foundCDFObject);
-#endif
+      if (CCDFDATAMODEL_DEBUG) {
+        CDBDebug("Found existing cdfObject %d", foundCDFObject);
+      }
     } else {
-#ifdef CCDFDATAMODEL_DEBUG
-      CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %d", name.c_str(), cdfObjectList.size());
-#endif
+      if (CCDFDATAMODEL_DEBUG) {
+        CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %zu", name.c_str(), cdfObjectList.size());
+      }
       CDFObjectClass *c = new CDFObjectClass();
       c->dimValue = srcDimValue;
       c->dimIndex = indimsize;
@@ -554,9 +554,9 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
 
     if (sourceVar->name == dimName) {
       if (foundDimValue == -1) {
-#ifdef CCDFDATAMODEL_DEBUG
-        CDBDebug("ADding value %s", srcDimValue.c_str());
-#endif
+        if (CCDFDATAMODEL_DEBUG) {
+          CDBDebug("ADding value %s", srcDimValue.c_str());
+        }
 
         // Extend the concerning dimension
         size_t currentDimSize = iterativeDim->getSize();
@@ -580,7 +580,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
         double destValue = 0;
         try {
           if (isTimeDim) {
-            destValue = ccdftimedst->dateToOffset(ccdftimedst->stringToDate(srcDimValue.c_str()));
+            destValue = ccdftimedst->dateToOffset(ccdftimedst->stringToDate(srcDimValue));
           } else {
             destValue = CT::toDouble(srcDimValue);
           }
@@ -609,9 +609,9 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
         //         for(size_t j=0;j<dimSize;j++){
         //           CDBDebug("%d == %f",j,(iterativeVar->getDataAt<double>(j)));
         //         }
-#ifdef CCDFDATAMODEL_DEBUG
-        CDBDebug("New iterativeDim size %d", iterativeDim->getSize());
-#endif
+        if (CCDFDATAMODEL_DEBUG) {
+          CDBDebug("New iterativeDim size %zu", iterativeDim->getSize());
+        }
       } /*else{
          CDBError("For dimension %s, time value %f is already defined, skipping!",dimName,srcDimValue);
        }*/
@@ -656,9 +656,9 @@ CDFObject *CDF::Variable::getParentCDFObject() const {
 
 void *CDF::Variable::getCDFObjectClassPointer(size_t *start, size_t *count) {
   if (cdfObjectList.size() == 0) {
-#ifdef CCDFDATAMODEL_DEBUG
-    CDBDebug("returning getParentCDFObject because cdfObjectList");
-#endif
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBDebug("returning getParentCDFObject because cdfObjectList");
+    }
     return getParentCDFObject();
   }
   if (start == NULL || count == NULL) {
@@ -676,9 +676,9 @@ void *CDF::Variable::getCDFObjectClassPointer(size_t *start, size_t *count) {
     CDBError("Count %lu instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
     throw(CDF_E_ERROR);
   }
-#ifdef CCDFDATAMODEL_DEBUG
-  CDBDebug("Aggregating %d == %d", cdfObjectList[iterativeDimIndex]->dimIndex, iterativeDimIndex);
-#endif
+  if (CCDFDATAMODEL_DEBUG) {
+    CDBDebug("Aggregating %d == %zu", cdfObjectList[iterativeDimIndex]->dimIndex, iterativeDimIndex);
+  }
   if (iterativeDimIndex >= cdfObjectList.size()) {
     CDBError("Wrong index %lu, list size is %lu", iterativeDimIndex, cdfObjectList.size());
   }
@@ -771,7 +771,7 @@ CDF::Variable::Variable(const std::string &name, CDFType type, const std::vector
   parentCDFObject = NULL;
   _hasCustomReader = false;
   _isString = false;
-  setName(name.c_str());
+  setName(name);
   setType(type);
   this->dimensionlinks = dimensionlinks;
   isDimension = isCoordinateVariable;
@@ -852,10 +852,10 @@ bool CDF::Variable::isString(bool isString) {
   return _isString;
 }
 
-void CDF::Variable::setName(const char *value) {
-  name = (value);
+void CDF::Variable::setName(const std::string &value) {
+  name = value;
   // TODO Implement this correctly in readvariabledata....
-  if (orgName.length() == 0) orgName = (value);
+  if (orgName.length() == 0) orgName = value;
 }
 
 void CDF::Variable::setSize(size_t size) { currentSize = size; }

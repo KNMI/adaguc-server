@@ -6,6 +6,8 @@
 #include "../hclasses/CHTTPTools.h"
 #include "utils/LayerUtils.h"
 
+static const bool CSLD_DEBUG = true;
+
 void CSLD::setServerParams(CServerParams *serverParams) {
   this->serverParams = serverParams;
   this->serverConfig = serverParams->cfg;
@@ -62,17 +64,17 @@ int CSLD::processSLDUrl(std::string sldUrl) {
         // Generate unique layer name for layer in Server Config
         std::string layerUniqueName = makeUniqueLayerName(this->serverConfig->Layer[j]);
 
-#ifdef CSLD_DEBUG
-        CDBDebug("Checking layer [%s]", layerUniqueName.c_str());
-        CDBDebug("Layername from SLD [%s]", sldLayerName.c_str());
-#endif
+        if (CSLD_DEBUG) {
+          CDBDebug("Checking layer [%s]", layerUniqueName.c_str());
+          CDBDebug("Layername from SLD [%s]", sldLayerName.c_str());
+        }
 
         int status = 0;
 
         if (layerUniqueName == sldLayerName) {
-#ifdef CSLD_DEBUG
-          CDBDebug("Found layer [%s], adding style.", layerUniqueName.c_str());
-#endif
+          if (CSLD_DEBUG) {
+            CDBDebug("Found layer [%s], adding style.", layerUniqueName.c_str());
+          }
 
           /* Add SLD style name to Styles element of Layer */
           if (layer->Styles.size() == 0) {
@@ -125,9 +127,9 @@ int CSLD::processSLDUrl(std::string sldUrl) {
          * status from validating the SLD is 0
          */
         if (i == (namedLayers.size() - 1) && j == (this->serverConfig->Layer.size() - 1) && status == 0) {
-#ifdef CSLD_DEBUG
-          CDBDebug("Looping NamedLayers in SLD and Layers in server configuration are completed with 0 errors");
-#endif
+          if (CSLD_DEBUG) {
+            CDBDebug("Looping NamedLayers in SLD and Layers in server configuration are completed with 0 errors");
+          }
           return 0;
         } else {
           if (status != 0) {
@@ -285,9 +287,9 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
     myOwnStyle->ShadeInterval.push_back(shadeInterval);
 
     if (i == (colorMapEntries.size() - 1)) {
-#ifdef CSLD_DEBUG
-      CDBDebug("Building ColorMap complete");
-#endif
+      if (CSLD_DEBUG) {
+        CDBDebug("Building ColorMap complete");
+      }
       return 0;
     }
   }

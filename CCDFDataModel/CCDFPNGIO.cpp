@@ -32,10 +32,10 @@
 #include <cstdarg>
 #include <CReadFile.h>
 
-// #define CCDFPNGIO_DEBUG
-
 #include <cmath>
 #include "../adagucserverEC/Types/GeoParameters.h"
+
+static const bool CCDFPNGIO_DEBUG = false;
 
 f8point tileXYZtoMerc(int tile_x, int tile_y, int zoom) {
   double tileSize = 256;
@@ -65,9 +65,9 @@ int CDFPNGReader::open(const char *fileName) {
     CDBError("No CDFObject defined, use CDFObject::attachCDFReader(CDFNetCDFReader*). Please note that this function should be called by CDFObject open routines.");
     return 1;
   }
-#ifdef CCDFPNGIO_DEBUG
-  CDBDebug("open [%s]", fileName);
-#endif
+  if (CCDFPNGIO_DEBUG) {
+    CDBDebug("open [%s]", fileName);
+  }
   this->fileName = fileName;
 
   if (pngRaster != NULL) {
@@ -143,9 +143,9 @@ int CDFPNGReader::open(const char *fileName) {
     /* Put in headers from PNG */
     double bbox[] = {0, 0, 0, 0};
     for (size_t j = 0; j < pngRaster->headers.size(); j++) {
-#ifdef CCDFPNGIO_DEBUG
-      CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].key.c_str(), pngRaster->headers[j].value.c_str());
-#endif
+      if (CCDFPNGIO_DEBUG) {
+        CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].key.c_str(), pngRaster->headers[j].value.c_str());
+      }
       /* Proj4 params */
       if (pngRaster->headers[j].key == "proj4_params") {
         CRS->setAttributeText("proj4", pngRaster->headers[j].value.c_str());
@@ -223,9 +223,9 @@ int CDFPNGReader::open(const char *fileName) {
   CDF::Dimension *yDim = cdfObject->addDimension(new CDF::Dimension("y", rasterHeight));
   CDF::Variable *yVar = cdfObject->addVariable(new CDF::Variable(yDim->getName().c_str(), CDF_DOUBLE, &yDim, 1, true));
 
-#ifdef CCDFPNGIO_DEBUG
-  CDBDebug("Defining PNG variable");
-#endif
+  if (CCDFPNGIO_DEBUG) {
+    CDBDebug("Defining PNG variable");
+  }
   CDF::Dimension *timeDimension = cdfObject->getDimensionNE("time");
 
   if (!timeDimension) {
@@ -262,9 +262,9 @@ int CDFPNGReader::open(const char *fileName) {
     CRS->setAttributeText("proj4", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs");
   }
 
-#ifdef CCDFPNGIO_DEBUG
-  CDBDebug("Done");
-#endif
+  if (CCDFPNGIO_DEBUG) {
+    CDBDebug("Done");
+  }
 
   return 0;
 }
@@ -282,9 +282,9 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
       int tile_y = atoi(CT::split(parts[parts.size() - 1], ".")[0].c_str());
       int tile_x = atoi(parts[parts.size() - 2].c_str());
       auto bbox = getBounds(tile_x, tile_y, zoom);
-#ifdef CCDFPNGIO_DEBUG
-      CDBDebug("%d %d %d", tile_x, tile_y, zoom);
-#endif
+      if (CCDFPNGIO_DEBUG) {
+        CDBDebug("%d %d %d", tile_x, tile_y, zoom);
+      }
       tilex1 = (bbox.left);
       tiley1 = (bbox.bottom);
       tilex2 = (bbox.right);
@@ -379,9 +379,9 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 }
 
 int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *) {
-#ifdef CCDFPNGIO_DEBUG
-  CDBDebug("_readVariableData %s %d", var->name.c_str(), type);
-#endif
+  if (CCDFPNGIO_DEBUG) {
+    CDBDebug("_readVariableData %s %d", var->name.c_str(), type);
+  }
 
   size_t requestedSize = 1;
 

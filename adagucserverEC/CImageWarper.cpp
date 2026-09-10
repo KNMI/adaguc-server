@@ -31,7 +31,9 @@
 #include <vector>
 #include <cmath>
 
-void floatToString(char *string, size_t maxlen, int numdigits, float number) {
+static const bool CIMAGEWARPER_DEBUG = false;
+
+std::string floatToString(int numdigits, float number) {
   // Interpret numdigits as "number of decimals"
   int decimals = numdigits;
 
@@ -46,13 +48,10 @@ void floatToString(char *string, size_t maxlen, int numdigits, float number) {
   // Corner case to avoid "-0.000" and similar
   if (fabsf(rounded) < 1e-12f) rounded = 0.0f;
 
-  // Format with fixed decimals (for the whole series)
-  char format[16];
-  snprintf(format, sizeof(format), "%%.%df", decimals);
-  snprintf(string, maxlen, format, rounded);
+  return CT::printf("%.*f", decimals, rounded);
 }
 
-void floatToString(char *string, size_t maxlen, float number) {
+std::string floatToString(float number) {
   int numdigits = 0;
 
   if (number == 0.0f)
@@ -62,10 +61,10 @@ void floatToString(char *string, size_t maxlen, float number) {
     if (tempp < 0.00000001 && tempp > -0.00000001) tempp += 0.00000001;
     numdigits = int(log10(fabs(tempp))) + 1;
   }
-  floatToString(string, maxlen, numdigits, number);
+  return floatToString(numdigits, number);
 }
 
-void floatToString(char *string, size_t maxlen, float min, float max, float number) {
+std::string floatToString(float min, float max, float number) {
   float range = fabsf(max - min);
 
   // Estimate precision from range magnitude only
@@ -75,7 +74,7 @@ void floatToString(char *string, size_t maxlen, float min, float max, float numb
   // Clamp
   if (decimals > 6) decimals = 6;
 
-  floatToString(string, maxlen, decimals, number);
+  return floatToString(decimals, number);
 }
 
 int CImageWarper::closereproj() {
@@ -403,10 +402,10 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   std::tie(found, bbox) = getBBOXProjection(key);
 
   if (found) {
-#ifdef CIMAGEWARPER_DEBUG
-    CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
-             key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);
-#endif
+    if (CIMAGEWARPER_DEBUG) {
+      CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.get(0), key.extent.get(1),
+               key.extent.get(2), key.extent.get(3), bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));
+    }
 
     bbox.toArray(dfBBOX);
     return 0;
@@ -518,11 +517,11 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
     dfBBOX[1] -= 1;
     dfBBOX[3] += 1;
   }
-#ifdef CIMAGEWARPER_DEBUG
+  if (CIMAGEWARPER_DEBUG) {
 
-  CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1], key.extent.bbox[2],
-           key.extent.bbox[3], dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
-#endif
+    CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.get(0), key.extent.get(1), key.extent.get(2),
+             key.extent.get(3), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+  }
   addBBOXProjection(key, makef8box(dfBBOX));
   return 0;
 };

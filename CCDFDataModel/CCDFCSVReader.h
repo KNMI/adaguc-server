@@ -36,9 +36,6 @@
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
-// #define CCDFCSVREADER_DEBUG
-// #define CCDFCSVREADER_DEBUG_OPEN
-
 class CDFCSVReader : public CDFReader {
 private:
   std::vector<CDF::Variable *> variableIndexer;

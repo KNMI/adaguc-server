@@ -41,7 +41,7 @@
 #include "CConvertLatLonBnds.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
-// #define CDFOBJECTSTORE_DEBUG
+static const bool CDFOBJECTSTORE_DEBUG = false;
 #define MAX_OPEN_FILES 500
 
 CDFObjectStore *_cdfObjectStore = nullptr;
@@ -60,9 +60,9 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->DataReader.size() > 0) {
       if (dataSource->cfgLayer->DataReader[0]->elementValue == ("HDF5")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating HDF5 reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating HDF5 reader");
+        }
         cdfReader = new CDFHDF5Reader();
         CDFHDF5Reader *hdf5Reader = (CDFHDF5Reader *)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
@@ -72,19 +72,19 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
           }
         }
       } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("GEOJSON")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating GEOJSON reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating GEOJSON reader");
+        }
         cdfReader = new CDFGeoJSONReader();
       } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("PNG")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating PNG reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating PNG reader");
+        }
         cdfReader = new CDFPNGReader();
       } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("CSV")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating CSV reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating CSV reader");
+        }
         cdfReader = new CDFCSVReader();
       }
     } else {
@@ -93,9 +93,9 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
   }
   // Defaults to the netcdf reader
   if (cdfReader == NULL) {
-#ifdef CDFOBJECTSTORE_DEBUG
-    CDBDebug("Creating NetCDF reader");
-#endif
+    if (CDFOBJECTSTORE_DEBUG) {
+      CDBDebug("Creating NetCDF reader");
+    }
     cdfReader = new CDFNetCDFReader();
   }
   return cdfReader;
@@ -195,9 +195,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   if (cached) {
     for (size_t j = 0; j < fileNames.size(); j++) {
       if (fileNames[j] == uniqueIDForFile) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
+        }
         return cdfObjects[j];
       }
     }
@@ -205,14 +205,14 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   if (cdfObjects.size() > MAX_OPEN_FILES) {
     deleteCDFObject(fileNames[0]);
   }
-#ifdef CDFOBJECTSTORE_DEBUG
-  CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
-#endif
+  if (CDFOBJECTSTORE_DEBUG) {
+    CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
+  }
 
-// Open the object.
-#ifdef CDFOBJECTSTORE_DEBUG
-  CDBDebug("Opening %s", fileName);
-#endif
+  // Open the object.
+  if (CDFOBJECTSTORE_DEBUG) {
+    CDBDebug("Opening %s", fileName);
+  }
 
   // Open header
 
@@ -266,9 +266,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
         for (auto *cfgVar: dataSource->cfgLayer->Variable) {
-#ifdef CDFOBJECTSTORE_DEBUG
-          CDBDebug("Checking variable %s", cfgVar->value.c_str());
-#endif
+          if (CDFOBJECTSTORE_DEBUG) {
+            CDBDebug("Checking variable %s", cfgVar->elementValue.c_str());
+          }
           // Rename variable, if requested
           if (!cfgVar->attr.orgname.empty()) {
             CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
@@ -427,9 +427,9 @@ std::vector<std::string> CDFObjectStore::getListOfVisualizableVariables(CDFObjec
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
       if (cdfObject->variables[j]->dimensionlinks.size() >= 2) {
         if (cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP") == NULL) {
-          if (cdfObject->variables[j]->name != "lon" && cdfObject->variables[j]->name != "lat" && cdfObject->variables[j]->name != "lon_bounds" &&
-              cdfObject->variables[j]->name != "lat_bounds" && cdfObject->variables[j]->name != "time_bounds" && cdfObject->variables[j]->name != "lon_bnds" &&
-              cdfObject->variables[j]->name != "lat_bnds" && cdfObject->variables[j]->name != "time_bnds" && cdfObject->variables[j]->name != "time") {
+          if (cdfObject->variables[j]->name != "lon" && cdfObject->variables[j]->name != "lat" && cdfObject->variables[j]->name != "lon_bounds" && cdfObject->variables[j]->name != "lat_bounds" &&
+              cdfObject->variables[j]->name != "time_bounds" && cdfObject->variables[j]->name != "lon_bnds" && cdfObject->variables[j]->name != "lat_bnds" &&
+              cdfObject->variables[j]->name != "time_bnds" && cdfObject->variables[j]->name != "time") {
             variableList.push_back(cdfObject->variables[j]->name.c_str());
           }
         }

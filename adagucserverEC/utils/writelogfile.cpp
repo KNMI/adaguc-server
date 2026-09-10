@@ -43,14 +43,13 @@ void writeLogFile(const char *msg) {
     fputs(msg, pLogDebugFile);
     // If message line contains data like [D:008:pid250461: adagucserverEC/CCairoPlotter.cpp:878], also append the time.
     if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
-      char szTemp[128];
       struct timeval tv;
       gettimeofday(&tv, NULL);
       time_t curtime = tv.tv_sec;
       tm *myUsableTime = localtime(&curtime);
-      snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
-               myUsableTime->tm_sec, int(tv.tv_usec / 1000));
-      fputs(szTemp, pLogDebugFile);
+      std::string szTemp = CT::printf("%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour,
+                                       myUsableTime->tm_min, myUsableTime->tm_sec, int(tv.tv_usec / 1000));
+      fputs(szTemp.c_str(), pLogDebugFile);
     }
   }
 }

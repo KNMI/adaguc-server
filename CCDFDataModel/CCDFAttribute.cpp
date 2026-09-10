@@ -27,7 +27,7 @@
 #include "CCDFAttribute.h"
 #include "CDFCopyData.h"
 
-void CDF::Attribute::setName(const char *value) { name = (value); }
+void CDF::Attribute::setName(const std::string &value) { name = value; }
 
 CDF::Attribute::Attribute() {
   data = NULL;

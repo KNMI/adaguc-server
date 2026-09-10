@@ -10,6 +10,8 @@
 #include "CRequestUtils.h"
 #include <timeutils.h>
 
+static const bool CXMLGEN_DEBUG = false;
+
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->readFromDb = readFromDB;
   if (!metadataLayer->srvParams->useMetadataTable()) {
@@ -500,9 +502,9 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
 }
 
 int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
-#ifdef CXMLGEN_DEBUG
-  CDBDebug("getProjectionInformationForLayer");
-#endif
+  if (CXMLGEN_DEBUG) {
+    CDBDebug("getProjectionInformationForLayer");
+  }
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (metadataLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
@@ -541,12 +543,12 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     StopWatch_Stop("finished initreproj");
 #endif
 
-#ifdef CXMLGEN_DEBUG
-    if (status != 0) {
-      warper.closereproj();
-      CDBDebug("Unable to initialize projection ");
+    if (CXMLGEN_DEBUG) {
+      if (status != 0) {
+        warper.closereproj();
+        CDBDebug("Unable to initialize projection ");
+      }
     }
-#endif
 
 #ifdef MEASURETIME
     StopWatch_Stop("start findExtent");
@@ -591,9 +593,9 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   if (metadataLayer->hasError == false) {
     if (metadataLayer->dataSource->cfgLayer->Styles.size() == 0) {
       if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeGraticule && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
-#ifdef CXMLGEN_DEBUG
-        CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
-#endif
+        if (CXMLGEN_DEBUG) {
+          CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
+        }
         int status = CAutoConfigure::autoConfigureStyles(metadataLayer->dataSource);
         if (status != 0) {
           metadataLayer->hasError = 1;
@@ -620,9 +622,9 @@ bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataPro
 bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.serviceName.c_str(), p2.serviceName.c_str()) < 0; }
 
 int getTitleForLayer(MetadataLayer *metadataLayer) {
-#ifdef CXMLGEN_DEBUG
-  CDBDebug("getTitleForLayer");
-#endif
+  if (CXMLGEN_DEBUG) {
+    CDBDebug("getTitleForLayer");
+  }
   // Is this a cascaded WMS server?
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
@@ -665,9 +667,9 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
 }
 
 int getFileNameForLayer(MetadataLayer *metadataLayer) {
-#ifdef CXMLGEN_DEBUG
-  CDBDebug("getFileNameForLayer");
-#endif
+  if (CXMLGEN_DEBUG) {
+    CDBDebug("getFileNameForLayer");
+  }
   if (!metadataLayer->fileName.empty()) {
     return 0;
   }
@@ -690,9 +692,9 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 
     // Check if any dimension is given:
     if (dataBaseDimension == false || (metadataLayer->layer->Dimension.size() == 0) || (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.name == ("none"))) {
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("Layer %s has no dimensions", metadataLayer->dataSource->layerName.c_str());
-#endif
+      if (CXMLGEN_DEBUG) {
+        CDBDebug("Layer %s has no dimensions", metadataLayer->dataSource->layerName.c_str());
+      }
       // If not, just return the filename as configured in the layer
       std::vector<std::string> fileList;
       try {
@@ -734,9 +736,9 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     }
     if (databaseError == false) {
       if (values->records.size() > 0) {
-#ifdef CXMLGEN_DEBUG
-        CDBDebug("Query  succeeded: Filename = %s", values->records[0].get(0).c_str());
-#endif
+        if (CXMLGEN_DEBUG) {
+          CDBDebug("Query  succeeded: Filename = %s", values->records[0].get(0).c_str());
+        }
         metadataLayer->fileName = values->records[0].get(0);
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
@@ -747,9 +749,9 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
       delete values;
     }
 
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("/Database");
-#endif
+    if (CXMLGEN_DEBUG) {
+      CDBDebug("/Database");
+    }
     if (databaseError) {
       return 1;
     }

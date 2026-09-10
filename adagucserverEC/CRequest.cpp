@@ -24,7 +24,7 @@
  *
  ******************************************************************************/
 
-// #define CREQUEST_DEBUG
+static const bool CREQUEST_DEBUG = false;
 // #define MEASURETIME
 
 #include "Types/ProjectionStore.h"
@@ -122,9 +122,9 @@ int CRequest::generateOGCDescribeCoverage(std::string &XMLdocument) {
 }
 
 int CRequest::process_wms_getcap_request() {
-#ifdef CREQUEST_DEBUG
-  CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
+  }
 
   std::string XMLdocument;
 
@@ -156,14 +156,14 @@ int CRequest::process_wcs_getcap_request() {
 int CRequest::process_wcs_describecov_request() { return process_all_layers(); }
 
 int CRequest::process_wms_getmap_request() {
-#ifdef CREQUEST_DEBUG
-  std::string message = "WMS GETMAP ";
-  for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
-    if (j > 0) message += ",";
-    CT::printfconcat(message, "(%zu) %s", j, srvParam->requestedLayerNames[j].c_str());
+  if (CREQUEST_DEBUG) {
+    std::string message = "WMS GETMAP ";
+    for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
+      if (j > 0) message += ",";
+      CT::printfconcat(message, "(%zu) %s", j, srvParam->requestedLayerNames[j].c_str());
+    }
+    CDBDebug("%s", message.c_str());
   }
-  CDBDebug("%s", message.c_str());
-#endif
   return process_all_layers();
 }
 
@@ -180,9 +180,9 @@ int CRequest::process_wms_gethistogram_request() {
 }
 
 int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-#ifdef CREQUEST_DEBUG
-  CDBDebug("setDimValuesForDataSource");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("setDimValuesForDataSource");
+  }
   int status = fillDimValuesForDataSource(dataSource, srvParam);
   if (status != 0) return status;
 
@@ -191,9 +191,9 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
-#ifdef CREQUEST_DEBUG
-  StopWatch_Stop("### [fillDimValuesForDataSource]");
-#endif
+  if (CREQUEST_DEBUG) {
+    StopWatch_Stop("### [fillDimValuesForDataSource]");
+  }
   int status = 0;
   try {
     /*
@@ -212,9 +212,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
      * Get the number of required dims from the given dims
      * Check if all dimensions are given
      */
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Get DIMS from query string");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Get DIMS from query string");
+    }
     for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k].name = CT::toLowerCase(srvParam->requestDims[k].name);
 
     bool hasReferenceTimeDimension = false;
@@ -226,9 +226,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
       std::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
       dimName = CT::toLowerCase(dimName);
-#ifdef CREQUEST_DEBUG
-      CDBDebug("dimName \"%s\"", dimName.c_str());
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("dimName \"%s\"", dimName.c_str());
+      }
       // Check if this dim is not already added
       bool alreadyAdded = false;
 
@@ -244,15 +244,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
 
-#ifdef CREQUEST_DEBUG
-      CDBDebug("alreadyAdded = %d", alreadyAdded);
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("alreadyAdded = %d", alreadyAdded);
+      }
       if (alreadyAdded == false) {
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
           if (srvParam->requestDims[k].name == dimName.c_str()) {
-#ifdef CREQUEST_DEBUG
-            CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k].name.c_str(), dimName.c_str());
-#endif
+            if (CREQUEST_DEBUG) {
+              CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k].name.c_str(), dimName.c_str());
+            }
 
             // This dimension has been specified in the request, so the dimension has been found:
 
@@ -273,9 +273,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
                 /* Try to make sense of other timestrings as well */
                 if (CT::indexOf(ogcDim.value, "/") == -1 && CT::indexOf(ogcDim.value, ",") == -1) {
-#ifdef CREQUEST_DEBUG
-                  CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
-#endif
+                  if (CREQUEST_DEBUG) {
+                    CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
+                  }
 
                   try {
                     CTime *ctime = CTime::GetCTimeEpochInstance();
@@ -290,9 +290,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     CDBDebug("Unable to convert '%s' to epoch", ogcDim.value.c_str());
                     return 1;
                   }
-#ifdef CREQUEST_DEBUG
-                  CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
-#endif
+                  if (CREQUEST_DEBUG) {
+                    CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
+                  }
                 }
               }
               // If we have a dimension value quantizer adjust the value accordingly
@@ -363,9 +363,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
     }
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Get DIMS from query string ready");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Get DIMS from query string ready");
+    }
 
     /* Fill in the undefined dims */
 
@@ -462,9 +462,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       }
     }
 
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Fix found time values:");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Fix found time values:");
+    }
     // Fix found time values which are retrieved from the database
     for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
       if (dataSource->requiredDims[i].name == "time" || dataSource->requiredDims[i].name.ends_with("reference_time")) {
@@ -522,14 +522,14 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     dataSource->requiredDims.push_back(makeEmptyOGCDim());
   }
 
-#ifdef CREQUEST_DEBUG
-  for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    auto requiredDim = dataSource->requiredDims[j];
-    CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.netCDFDimName.c_str());
-    CDBDebug("%s: %s === %s", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str());
+  if (CREQUEST_DEBUG) {
+    for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
+      auto requiredDim = dataSource->requiredDims[j];
+      CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.netCDFDimName.c_str());
+      CDBDebug("%s: %s === %s", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str());
+    }
+    CDBDebug("### [</fillDimValuesForDataSource>]");
   }
-  CDBDebug("### [</fillDimValuesForDataSource>]");
-#endif
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
   for (auto requiredDim: dataSource->requiredDims) {
     // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str(), requiredDim.hasFixedValue);
@@ -597,18 +597,18 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     for (auto &record: store->records) {
       // CDBDebug("Addstep");
       dataSource->addStep(record.values.at(0));
-#ifdef CREQUEST_DEBUG
-      CDBDebug("Step: [%s]", record.values.at(0).c_str());
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Step: [%s]", record.values.at(0).c_str());
+      }
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
         const auto &value = record.values.at(1 + i * 2);
         size_t idx = size_t(atoi(record.values.at(2 + i * 2).c_str()));
         dataSource->getCDFDims()->push_back({.name = dataSource->requiredDims[i].netCDFDimName, .value = value, .index = idx});
-#ifdef CREQUEST_DEBUG
-        CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
-        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record.values.at(2 + i * 2).c_str()), value.c_str());
-#endif
+        if (CREQUEST_DEBUG) {
+          CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
+          CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record.values.at(2 + i * 2).c_str()), value.c_str());
+        }
         auto it = std::find_if(dataSource->requiredDims[i].uniqueValues.begin(), dataSource->requiredDims[i].uniqueValues.end(), [&value](std::string &a) { return a == value; });
         // Check if not already there. TODO: Would be nice to turn into a set.
         if (it == dataSource->requiredDims[i].uniqueValues.end()) {
@@ -622,10 +622,10 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     CDBError("Exception %d in queryDimValuesForDataSource", i);
     throw i;
   }
-#ifdef CREQUEST_DEBUG
-  CDBDebug("Datasource has %d steps", dataSource->getNumTimeSteps());
-  StopWatch_Stop("[/setDimValuesForDataSource]");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Datasource has %d steps", dataSource->getNumTimeSteps());
+    StopWatch_Stop("[/setDimValuesForDataSource]");
+  }
   return 0;
 }
 
@@ -931,9 +931,9 @@ int CRequest::process_querystring() {
   // CDBDebug("QueryString: \"%s\"", queryString.c_str());
   auto parameters = CT::split(queryString, "&");
 
-#ifdef CREQUEST_DEBUG
-  CDBDebug("Parsing query string parameters");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Parsing query string parameters");
+  }
   for (size_t j = 0; j < parameters.size(); j++) {
     std::string uriKeyUpperCase;
     std::string uriValue;
@@ -1315,14 +1315,14 @@ int CRequest::process_querystring() {
       srvParam->geoParams.width = int(((srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left) / srvParam->dfResX));
       srvParam->geoParams.height = int(((srvParam->geoParams.bbox.bottom - srvParam->geoParams.bbox.top) / srvParam->dfResY));
       srvParam->geoParams.height = abs(srvParam->geoParams.height);
-#ifdef CREQUEST_DEBUG
-      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.width, srvParam->geoParams.height);
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.width, srvParam->geoParams.height);
+      }
     }
   }
-#ifdef CREQUEST_DEBUG
-  CDBDebug("Finished parsing query string parameters");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Finished parsing query string parameters");
+  }
 #ifdef MEASURETIME
   StopWatch_Stop("query string processed");
 #endif
@@ -1348,9 +1348,9 @@ int CRequest::process_querystring() {
   }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Getting parameters for WMS service");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Getting parameters for WMS service");
+    }
 
     // Default is 1.3.0
 
@@ -2342,9 +2342,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         }
         if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1 && dataSources[dataSourceToUse]->queryBBOX == false) {
           // Print the animation data into the image
-          char szTemp[1024];
-          snprintf(szTemp, 1023, "%s UTC", dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time", k).c_str());
-          imageDataWriter.setDate(szTemp);
+          imageDataWriter.setDate(CT::printf("%s UTC", dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time", k).c_str()));
         }
       }
     }

@@ -252,7 +252,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     }
     double offset;
     try {
-      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime.c_str()));
+      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
     } catch (int e) {
       std::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
