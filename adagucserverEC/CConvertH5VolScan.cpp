@@ -31,6 +31,8 @@
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 
+static const bool CCONVERTH5VOLSCAN_DEBUG = false;
+
 bool sortFunction(std::string one, std::string other) {
   if (CT::endsWith(one, "l")) {
     one = CT::substring(one, 0, CT::lastIndexOf(one, "l"));
@@ -166,9 +168,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     height = srvParams->geoParams.height;
   }
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-  CDBDebug("Width = %d, Height = %d", width, height);
-#endif
+  if (CCONVERTH5VOLSCAN_DEBUG) {
+    CDBDebug("Width = %d, Height = %d", width, height);
+  }
   if (width < 2 || height < 2) {
     CDBError("width and height are too small");
     return 1;
@@ -217,9 +219,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     cdfObject->addVariable(varY);
     varY->allocateData(dimY->length);
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
+    }
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->getSize(); j++) {
@@ -336,10 +338,10 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     double offsetX = dataSource->srvParams->geoParams.bbox.left;
     double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
-    CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
+      CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -359,9 +361,9 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     varX->allocateData(dimX->length);
     varY->allocateData(dimY->length);
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables");
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Data allocated for 'x' and 'y' variables");
+    }
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -401,12 +403,12 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
       }
     }
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
     int scan_index = dataSource->getDimensionIndex("scan_elevation");
     CDF::Variable *scanNumberVar = cdfObject->getVariableThrows("scan_number");

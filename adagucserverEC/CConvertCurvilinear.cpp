@@ -168,11 +168,6 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
            }catch(int e){}
            double *tdata=((double *)origT->data);
            size_t tlength = origT->getSize();
- //               }
- //             }
- //           }
- //           #ifdef CCONVERTCURVILINEAR_DEBUG
- //           #endif
            //Set the time data
            varT->setData(CDF_DOUBLE,tdata,tlength);
          }

@@ -568,8 +568,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                       status = dimVar->readData(CDF_STRING);
                     }
                   }
-                  // #ifdef CDBFILESCANNER_DEBUG
-                  // #endif
                   if (status != 0) {
                     CREPORT_ERROR_NODOC(std::string("Unable to read variable data for ") + dimVar->name.c_str(), CReportMessage::Categories::GENERAL);
                     throw(__LINE__);

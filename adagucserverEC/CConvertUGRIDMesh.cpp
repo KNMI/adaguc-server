@@ -276,8 +276,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
-  //   #ifdef CCONVERTUGRIDMESH_DEBUG
-  //   #endif
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really an ugrid file
   try {

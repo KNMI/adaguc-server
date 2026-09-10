@@ -27,7 +27,8 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include "CConvertADAGUCPoint.h"
-#define CConvertKNMIH5EchoToppen_DEBUG
+
+static const bool CConvertKNMIH5EchoToppen_DEBUG = true;
 
 #define CConvertKNMIH5EchoToppen_FillValue -1
 #define CConvertKNMIH5EchoToppen_EchoToppenVar "echotops"
@@ -167,9 +168,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     return 1;
   }
 
-#ifdef CConvertKNMIH5EchoToppen_DEBUG
-  CDBDebug("ConvertKNMIH5EchoToppenData");
-#endif
+  if (CConvertKNMIH5EchoToppen_DEBUG) {
+    CDBDebug("ConvertKNMIH5EchoToppenData");
+  }
   /* Only handled if the datareader also wants to read the actual data */
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 

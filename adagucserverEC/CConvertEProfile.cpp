@@ -432,22 +432,8 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     CDBDebug("numDims %zu ", numDims);
   }
 
-  /*
-    if(pointLon->dimensionlinks.size()>=2){
-      #ifdef CCONVERTEPROFILE_DEBUG
-      CDBDebug("Dimension dependant locations");
-      #endif
-      pointLon->freeData();
-      pointLat->freeData();
-      pointLon->readData(CDF_FLOAT,start,count,stride,true);
-      pointLat->readData(CDF_FLOAT,start,count,stride,true);
-    }else{
-      #ifdef CCONVERTEPROFILE_DEBUG
-      CDBDebug("NON Dimension dependant location");
-      #endif*/
   pointLon->readData(CDF_FLOAT, true);
   pointLat->readData(CDF_FLOAT, true);
-  //   }
 
   if (CCONVERTEPROFILE_DEBUG) {
     StopWatch_Stop("Lat and lon read");
