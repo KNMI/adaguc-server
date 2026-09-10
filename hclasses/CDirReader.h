@@ -32,7 +32,6 @@
 
 #define CDIRREADER_INCLUDE_FILES 1
 #define CDIRREADER_INCLUDE_DIRECTORIES 2
-#define CDIRREADER_INCLUDE_ALL 3
 
 static std::map<std::string, std::string> lookupTableFileModificationDateMap;
 class CDirReader {

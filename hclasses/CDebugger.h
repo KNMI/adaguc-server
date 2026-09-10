@@ -76,8 +76,4 @@ void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
   _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printDebugLine
 
-#define CDBEnterFunction(name)                                                                                                                                                                         \
-  const char *functionName = name;                                                                                                                                                                     \
-  _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
-
 #endif

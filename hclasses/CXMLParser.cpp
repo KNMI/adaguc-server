@@ -46,6 +46,13 @@ std::string CXMLParser::getErrorMessage(int CXMLParserException) {
 
 CXMLParser::XMLElement::XMLElement() {}
 
+CXMLParser::XMLElement::XMLElement(const std::string &name) { this->name = name; }
+
+CXMLParser::XMLElement::XMLElement(const std::string &name, const std::string &value) {
+  this->name = name;
+  this->value = value;
+}
+
 /**
  * Constructor which parses libXmlNode
  * @param xmlNode The libXML node to parse
@@ -273,6 +280,36 @@ int CXMLParser::XMLElement::parseFile(const std::string &filename) {
   xmlCleanupParser();
   return 0;
 }
+
+/**
+ * Set the name of the XML element
+ */
+void CXMLParser::XMLElement::setName(const std::string &name) { this->name = name; }
+
+/**
+ * Set the value of the xml element
+ */
+void CXMLParser::XMLElement::setValue(const std::string &value) { this->value = value; }
+
+/**
+ * Add XMLElement
+ */
+CXMLParser::XMLElement &CXMLParser::XMLElement::add(const XMLElement &el) {
+  xmlElements.push_back(el);
+  return xmlElements.back();
+}
+
+CXMLParser::XMLElement &CXMLParser::XMLElement::add(const std::string &name) {
+  xmlElements.push_back(XMLElement(name));
+  return xmlElements.back();
+}
+
+void CXMLParser::XMLElement::add(std::string name, std::string value) { xmlElements.push_back(XMLElement(name.c_str(), value.c_str())); }
+
+/**
+ * Add xmlAttibute
+ */
+void CXMLParser::XMLElement::add(const XMLAttribute &at) { xmlAttributes.push_back(at); }
 
 std::string xmlListToJSON(const std::vector<CXMLParser::XMLElement> &list, int mode) {
   std::string json = "[";
