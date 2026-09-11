@@ -1,7 +1,19 @@
 #include <ranges>
 #include "CDataPostProcessor_IncludeLayer.h"
+#include "CDataPostProcessor.h"
 #include "CRequest.h"
 #include <utils/LayerUtils.h>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CServerError.h"
 /************************/
 /*CDPPIncludeLayer */
 /************************/
@@ -16,12 +28,11 @@ int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CData
 
 CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
   CDataSource *dataSourceToInclude = new CDataSource();
-  CT::string additionalLayerName = proc->attr.name.c_str();
+  std::string additionalLayerName = proc->attr.name.c_str();
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    CT::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
-    // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
-    if (additionalLayerName.equals(layerName)) {
+    std::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
+    if (additionalLayerName == layerName) {
       additionalLayerNo = j;
       break;
     }
@@ -31,7 +42,7 @@ CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *
 }
 
 int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, CDataSource *dataSourceToInclude) {
-  CT::string additionalLayerName = proc->attr.name.c_str();
+  std::string additionalLayerName = proc->attr.name.c_str();
   bool dataIsFound = false;
   try {
     if (CRequest::setDimValuesForDataSource(dataSourceToInclude, dataSource->srvParams) == 0) {
@@ -52,8 +63,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-
-    // CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
 
     /* First check if this was already added */
 
@@ -79,7 +88,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       return 1;
     }
 
-    // CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
     dataSourceToInclude->enablePostProcessors = false;
     reader.enableObjectCache = true;
@@ -91,7 +99,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     }
 
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
-      if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
+      if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name == dataSourceToInclude->getDataObject(0)->cdfVariable->name) {
         CDBDebug("Probably already done");
         reader.close();
         delete dataSourceToInclude;
@@ -117,8 +125,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       newDataObject.variableName = dataObjectToInClude.cdfVariable->name.c_str();
       newDataObject.dataObjectName = proc->attr.name;
       newDataObject.cdfVariable = new CDF::Variable();
-      CT::string text;
-      text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", dataObjectToInClude.cdfVariable->name.c_str(), this->getId());
+      std::string text = CT::printf("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", dataObjectToInClude.cdfVariable->name.c_str(), this->getId());
       newDataObject.cdfObject = baseCDFObject; //(CDFObject*)varToClone->getParentCDFObject();
       baseCDFObject->addVariable(newDataObject.cdfVariable);
       newDataObject.cdfVariable->setName(dataObjectToInClude.cdfVariable->name.c_str());
@@ -147,7 +154,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    // CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying include_layer");
 
     // Load the other datasource.
     CDataSource *dataSourceToInclude = getDataSource(proc, dataSource);
@@ -168,11 +174,9 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
     }
 
-    // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     dataSourceToInclude->enablePostProcessors = false;
     reader.enableObjectCache = true;
-    //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName().c_str(), proc->attr.name.c_str());
@@ -234,8 +238,12 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     }
 
     reader.close();
-    // CDBDebug("CLOSING TEMPORAL FULL READER");
     delete dataSourceToInclude;
   }
   return 0;
+}
+
+int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED ");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

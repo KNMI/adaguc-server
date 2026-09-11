@@ -1,5 +1,7 @@
 #include "CDPPGoes16Metadata.h"
 #include "CTime.h"
+#include "CCDFObject.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPFixGOES16     */
@@ -10,7 +12,6 @@ const char *CDPPGoes16Metadata::getId() {
   return "goes16metadata";
 }
 int CDPPGoes16Metadata::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
-  // CDBDebug("isApplicable");
   if (proc->attr.algorithm == ("goes16metadata") && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -64,4 +65,9 @@ int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     }
   }
   return 0;
+}
+
+int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

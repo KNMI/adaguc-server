@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ int main(int argCount, char **argVars) {
       CDBError("Unable to read file %s", inputfile);
       throw(__LINE__);
     }
-    CT::string dumpString = CDF::dump(cdfObject);
+    std::string dumpString = CDF::dump(cdfObject);
     printf("%s\n", dumpString.c_str());
     delete hdf5Reader;
     hdf5Reader = NULL;

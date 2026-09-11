@@ -3,11 +3,11 @@
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
  * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
- * Date:     2016-03-05
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,8 @@
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
-// #define CCDFGEOJSONIO_DEBUG
-// #define CCDFGEOJSONIO_DEBUG_OPEN
-
 class CDFGeoJSONReader : public CDFReader {
 private:
-  // CCDFWarper warper;
   static CDFType typeConversion(nc_type type);
 
   int status = 0, root_id = 0;
@@ -54,8 +50,6 @@ private:
 public:
   CDFGeoJSONReader();
   ~CDFGeoJSONReader();
-
-  // void enableLonWarp(bool enableLonWarp);
 
   int open(const char *fileName);
 

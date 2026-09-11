@@ -1,4 +1,7 @@
 #include "CDataPostProcessors_MSGCPP.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*CDPPMSGCPPVisibleMask */
@@ -25,7 +28,7 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
 
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals("mask")) return 0;
+    if (dataSource->getDataObject(0)->cdfVariable->name == "mask") return 0;
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp VISIBLE mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
@@ -66,7 +69,6 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // return 0;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("Applying msgcppvisiblemask");
@@ -77,14 +79,14 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     float fa = 72, fb = 75;
     if (proc->attr.b.empty() == false) {
-      CT::string b;
+      std::string b;
       b = (proc->attr.b.c_str());
-      fb = b.toDouble();
+      fb = CT::toDouble(b);
     }
     if (proc->attr.a.empty() == false) {
-      CT::string a;
+      std::string a;
       a = (proc->attr.a.c_str());
-      fa = a.toDouble();
+      fa = CT::toDouble(a);
     }
     for (size_t j = 0; j < l; j++) {
       if ((satz[j] < fa && sunz[j] < fa) || (satz[j] > fb))
@@ -121,7 +123,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals("hiwc")) return 0;
+    if (dataSource->getDataObject(0)->cdfVariable->name == "hiwc") return 0;
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp HIWC mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
@@ -162,12 +164,10 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
 
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // return 0;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying msgcpp HIWC mask");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    // CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(),&dataSource->getDataObject(0)->cdfVariable->data,l);
 
     short *hiwc = (short *)dataSource->getDataObject(0)->cdfVariable->data;
     float *cph = (float *)dataSource->getDataObject(1)->cdfVariable->data;
@@ -189,7 +189,6 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     }
   }
 
-  // dataSource->eraseDataObject(1);
   return 0;
 }
 
@@ -314,7 +313,7 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
 
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals("masked")) return 0;
+    if (dataSource->getDataObject(0)->cdfVariable->name == "masked") return 0;
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying datamask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
@@ -324,8 +323,8 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     newDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     newDataObject.cdfObject->addVariable(newDataObject.cdfVariable);
     newDataObject.cdfVariable->setName("masked");
-    CT::string text;
-    text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", "masked", this->getId());
+    std::string text;
+    text = CT::printf("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", "masked", this->getId());
     newDataObject.cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
     newDataObject.cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
     newDataObject.cdfVariable->setType(dataSource->getDataObject(1)->cdfVariable->getType());
@@ -353,7 +352,6 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     }
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // return 0;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("Applying datamask");
@@ -361,19 +359,19 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     double fa = 0, fb = 1; // More or equal to a and less than b
     double fc = 0;
     if (proc->attr.a.empty() == false) {
-      CT::string a;
+      std::string a;
       a = (proc->attr.a.c_str());
-      fa = a.toDouble();
+      fa = CT::toDouble(a);
     }
     if (proc->attr.b.empty() == false) {
-      CT::string b;
+      std::string b;
       b = (proc->attr.b.c_str());
-      fb = b.toDouble();
+      fb = CT::toDouble(b);
     }
     if (proc->attr.c.empty() == false) {
-      CT::string c;
+      std::string c;
       c = (proc->attr.c.c_str());
-      fc = c.toDouble();
+      fc = CT::toDouble(c);
     }
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
 
@@ -425,4 +423,19 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     }
   }
   return 0;
+}
+
+int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
+}
+
+int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
+}
+
+int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

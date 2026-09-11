@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@
 #ifndef CAUTORESOURCE_H
 #define CAUTORESOURCE_H
 #include "CServerParams.h"
-#include "CDebugger.h"
 #include "CCDFDataModel.h"
 /**
  * Configures new layers in the configuration automatically based on srvParam->autoResourceLocation and srvParam->datasetLocation.
@@ -41,7 +40,7 @@ private:
    * @param group
    * @param location
    */
-  static void addXMLLayerToConfig(CServerParams *const srvParam, CDFObject *cdfObject, std::vector<CT::string> *variableNames, const char *group, const char *location);
+  static void addXMLLayerToConfig(CServerParams *const srvParam, CDFObject *cdfObject, const std::vector<std::string> &variableNames, const std::string &group, const std::string &location);
 
   /**
    * configures Source, based on  srvParam->autoResourceLocation parameter.
@@ -56,7 +55,7 @@ private:
    * @param srvParam
    * @param setServerTitle
    */
-  static int setServerTitle(CServerParams *srvParams, CT::string serverTitle);
+  static int setServerTitle(CServerParams *srvParams, std::string serverTitle);
 
 public:
   /**

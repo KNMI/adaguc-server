@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,21 +28,11 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "Definitions.h"
-#include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
-#include "CImgWarpNearestNeighbour.h"
-#include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
-#include "CImgWarpBoolean.h"
-#include "CImgRenderers/CImgRenderPoints.h"
-#include "CImgRenderStippling.h"
-#include "CImgRenderPolylines.h"
-#include "CStyleConfiguration.h"
-#include "CMyCURL.h"
-#include "CXMLParser.h"
-#include "CDebugger.h"
 #include "Types/GetFeatureInfoResult.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CXMLParser.h"
 
 class CImageDataWriter : public CBaseDataWriterInterface {
 public:
@@ -61,10 +51,7 @@ public:
   public:
     int min;
     int max;
-    IndexRange(int min, int max) {
-      this->min = min;
-      this->max = max;
-    }
+    IndexRange(int min, int max);
     IndexRange();
   };
 
@@ -73,7 +60,7 @@ public:
   static ProjCacheInfo GetProjInfo(std::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY);
 
 private:
-  CT::string eProfileJson;
+  std::string eProfileJson;
 
 public:
   std::vector<GetFeatureInfoResult> getFeatureInfoResultList;
@@ -87,10 +74,7 @@ private:
 
   enum ImageDataWriterStatus { uninitialized, initialized, finished };
   ImageDataWriterStatus writerStatus;
-  // float shadeInterval,contourIntervalL,contourIntervalH;
 
-  // int smoothingFilter;
-  // RenderMethodEnum renderMethod;
 public:
   static double convertValue(CDFType type, void *data, size_t p);
   static int getColorIndexForValue(CDataSource *dataSource, float value);
@@ -119,7 +103,7 @@ public:
   int getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
   int getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams);
 
-  void setDate(const char *date);
+  void setDate(const std::string &date);
 
   // Virtual functions
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);

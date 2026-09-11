@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 #define CImgRenderStipplingModeDefault 0
 #define CImgRenderStipplingModeThreshold 1
@@ -41,7 +43,7 @@
 class CImgRenderStippling : public CImageWarperRenderInterface {
 private:
   int xDistance, yDistance, discSize, mode;
-  CT::string color;
+  std::string color;
   CStyleConfiguration *styleConfiguration;
   CDataSource *dataSource;
   CDrawImage *drawImage;

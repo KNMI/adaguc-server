@@ -2,12 +2,12 @@
  *
  * Project:  Proj4ToCF
  * Purpose:  Functions to convert proj4 strings to CF projection descriptions and vice versa
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class CProj4ToCF {
 private:
   static float convertToM(float fValue);
 
-  CT::string getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList);
+  std::string getProj4Value(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList);
 
   float getProj4ValueF(const std::string &proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float)));
 

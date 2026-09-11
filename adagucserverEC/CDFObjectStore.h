@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,8 @@
 #ifndef CDFObjectStore_H
 #define CDFObjectStore_H
 
-#include "CDebugger.h"
-#include "CStopWatch.h"
 #include "CDataSource.h"
-#include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
-#include "CCDFHDF5IO.h"
-#include "CCDFGeoJSONIO.h"
-#include "CCDFPNGIO.h"
+#include "CCDFReader.h"
 
 // Datasource can share multiple cdfObjects
 // A cdfObject is allways opened using a dataSource path/filter combo
@@ -77,7 +71,7 @@ public:
 
   CDFObject *getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached = true);
   CDFObject *getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached = true);
-  static std::vector<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
+  static std::vector<std::string> getListOfVisualizableVariables(CDFObject *cdfObject);
 
   /**
    * Returns how many objects are openend in this store

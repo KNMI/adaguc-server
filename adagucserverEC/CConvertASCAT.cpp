@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@
 #include "CConvertASCAT.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
+
+static const bool CCONVERTASCAT_DEBUG = false;
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
@@ -100,9 +105,9 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
               }
             }
           }
-#ifdef CCONVERTASCAT_DEBUG
-          CDBDebug("firstTimeValue  = %f", firstTimeValue);
-#endif
+          if (CCONVERTASCAT_DEBUG) {
+            CDBDebug("firstTimeValue  = %f", firstTimeValue);
+          }
           // Set the time data
           varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
         }
@@ -168,12 +173,12 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("longitude") && !var->name.equals("latitude")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->name != "time2D" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "longitude" && var->name != "latitude") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
     }
   }
@@ -182,9 +187,9 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
     if (swathVar->dimensionlinks.size() >= 2) {
-#ifdef CCONVERTASCAT_DEBUG
-      CDBDebug("Converting %s", swathVar->name.c_str());
-#endif
+      if (CCONVERTASCAT_DEBUG) {
+        CDBDebug("Converting %s", swathVar->name.c_str());
+      }
 
       CDF::Variable *new2DVar = new CDF::Variable();
       cdfObject->addVariable(new2DVar);
@@ -201,7 +206,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
 
       new2DVar->setType(swathVar->getType());
       new2DVar->name = swathVar->name.c_str();
-      swathVar->name.concat("_backup");
+      swathVar->name += "_backup";
 
       // Copy variable attributes
       for (size_t j = 0; j < swathVar->attributes.size(); j++) {
@@ -253,17 +258,17 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
-#ifdef CCONVERTASCAT_DEBUG
+  if (CCONVERTASCAT_DEBUG) {
 
-  CDBDebug("convertASCATData %s", dataObjects[0]->cdfVariable->name.c_str());
-#endif
+    CDBDebug("convertASCATData %s", dataObjects[0]->cdfVariable->name.c_str());
+  }
   std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
   std::vector<CDF::Variable *> swathVar(nrDataObjects, nullptr);
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
-    CT::string origSwathName = new2DVar[d]->name.c_str();
-    origSwathName.concat("_backup");
+    std::string origSwathName = new2DVar[d]->name.c_str();
+    origSwathName += "_backup";
     swathVar[d] = cdfObject->getVariableNE(origSwathName.c_str());
     if (swathVar[d] == NULL) {
       CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());
@@ -293,9 +298,9 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     if (fillValue != NULL) {
       dataObjects[d]->hasNodataValue = true;
       fillValue->getData(&dataObjects[d]->dfNodataValue, 1);
-#ifdef CCONVERTASCAT_DEBUG
-      CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
-#endif
+      if (CCONVERTASCAT_DEBUG) {
+        CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
+      }
       float f = dataObjects[d]->dfNodataValue;
       new2DVar[d]->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &f, 1);
     } else
@@ -320,19 +325,19 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
       if (v > max) max = v;
     }
   }
-#ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("Calculated min/max : %f %f", min, max);
-#endif
+  if (CCONVERTASCAT_DEBUG) {
+    CDBDebug("Calculated min/max : %f %f", min, max);
+  }
 
   // Set statistics
   if (dataSource->stretchMinMax) {
-#ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("dataSource->stretchMinMax");
-#endif
+    if (CCONVERTASCAT_DEBUG) {
+      CDBDebug("dataSource->stretchMinMax");
+    }
     if (dataSource->statistics == NULL) {
-#ifdef CCONVERTASCAT_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", min, max);
-#endif
+      if (CCONVERTASCAT_DEBUG) {
+        CDBDebug("Setting statistics: min/max : %f %f", min, max);
+      }
       dataSource->statistics = new Statistics();
       dataSource->statistics->max = max;
       dataSource->statistics->min = min;
@@ -355,17 +360,17 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   double offsetX = dataSource->srvParams->geoParams.bbox.left;
   double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
-#ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-           dataSource->srvParams->geoParams.bbox.top);
-  CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-  CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+  if (CCONVERTASCAT_DEBUG) {
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
+    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
+  }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("Drawing %s", new2DVar[0]->name.c_str());
-#endif
+    if (CCONVERTASCAT_DEBUG) {
+      CDBDebug("Drawing %s", new2DVar[0]->name.c_str());
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -411,9 +416,9 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
 
     int numRows = swathVar[0]->dimensionlinks[0]->getSize();
     int numCells = swathVar[0]->dimensionlinks[1]->getSize();
-#ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("numRows %d numCells %d", numRows, numCells);
-#endif
+    if (CCONVERTASCAT_DEBUG) {
+      CDBDebug("numRows %d numCells %d", numRows, numCells);
+    }
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
@@ -427,7 +432,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
         projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
@@ -544,7 +549,6 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
                 if (nrDataObjects == 2) {
                   if (dlons[0] >= 0 && dlons[0] < dataSource->dWidth && dlats[0] > 0 && dlats[0] < dataSource->dHeight) {
                     if (tileIsTooLarge == false) {
-                      //  if(d==1)vals[0]=0;
                       if (d == 0) {
                         // Wind direction in ascat has an oceanographic convention, for meteorological symbols it should be shifted 180 degrees.
                         rotation += 180;
@@ -569,8 +573,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     }
     imageWarper.closereproj();
   }
-#ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("/convertASCATData");
-#endif
+  if (CCONVERTASCAT_DEBUG) {
+    CDBDebug("/convertASCATData");
+  }
   return 0;
 }

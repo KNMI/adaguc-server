@@ -1,18 +1,32 @@
 #include "CAutoConfigure.h"
+#include "CDebugger.h"
+#include "CServerError.h"
+#include "CDirReader.h"
+#include "CCDFDataModel.h"
+#include "CCDFNetCDFIO.h"
+#include "CCDFHDF5IO.h"
+#include "CProj4ToCF.h"
+#include "CStopWatch.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CDataSource.h"
 #include "CDBFactory.h"
 #include "CDataReader.h"
 #include "CReporter.h"
 #include "CRequest.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CXMLParser.h"
 
-// #define CAUTOCONFIGURE_DEBUG
+static const bool CAUTOCONFIGURE_DEBUG = false;
 
 int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
-#ifdef CAUTOCONFIGURE_DEBUG
-  CDBDebug("[autoConfigureDimensions]");
-#endif
+  if (CAUTOCONFIGURE_DEBUG) {
+    CDBDebug("[autoConfigureDimensions]");
+  }
 
   if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
@@ -22,9 +36,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
    * Dimension configuration is added to the internal XML configuration structure.
    */
   if (dataSource->cfgLayer->Dimension.size() > 0) {
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("[OK] Dimensions are already configured.");
-#endif
+    if (CAUTOCONFIGURE_DEBUG) {
+      CDBDebug("[OK] Dimensions are already configured.");
+    }
 
     return 0;
   }
@@ -47,10 +61,10 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
    * This table stores only layerid, netcdf dimname, adaguc dimname and units
    * Actual dimension values are not storen in this table
    */
-  CT::string query;
-  CT::string autoconfigureDimensionsTable = "autoconfigure_dimensions";
+  std::string query;
+  std::string autoconfigureDimensionsTable = "autoconfigure_dimensions";
 
-  CT::string layerTableId;
+  std::string layerTableId;
   try {
     auto dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
     if (dbAdapter == nullptr) {
@@ -64,7 +78,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 1;
   }
 
-  CT::string layerIdentifier = dataSource->getLayerName();
+  std::string layerIdentifier = dataSource->getLayerName();
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str());
   if (store != NULL) {
     try {
@@ -76,9 +90,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         xmleDim->attr.name = (record.get("ncname"));
         xmleDim->attr.units = (record.get("units"));
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
-#ifdef CAUTOCONFIGURE_DEBUG
-        CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
-#endif
+        if (CAUTOCONFIGURE_DEBUG) {
+          CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->elementValue.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
+        }
       }
       size_t storeSize = store->records.size();
       delete store;
@@ -92,9 +106,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     }
   }
 
-#ifdef CAUTOCONFIGURE_DEBUG
-  CDBDebug("[BUSY] AutoConfigureDimensions information not in table %s", autoconfigureDimensionsTable.c_str());
-#endif
+  if (CAUTOCONFIGURE_DEBUG) {
+    CDBDebug("[BUSY] AutoConfigureDimensions information not in table %s", autoconfigureDimensionsTable.c_str());
+  }
 
   /* Dimension information is not available in the database. We need to load it from a file.*/
   int status = justLoadAFileHeader(dataSource);
@@ -136,9 +150,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
           xmleDim->attr.name = ("none");
           xmleDim->attr.units = ("none");
           dataSource->cfgLayer->Dimension.push_back(xmleDim);
-#ifdef CAUTOCONFIGURE_DEBUG
-          CDBDebug("Creating an empty table, because variable [%s] has only x and y dims", variable->name.c_str());
-#endif
+          if (CAUTOCONFIGURE_DEBUG) {
+            CDBDebug("Creating an empty table, because variable [%s] has only x and y dims", variable->name.c_str());
+          }
           CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), "none", "none", "none");
           dataSource->dimsAreAutoConfigured = true;
           return 0;
@@ -160,11 +174,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
               }
             }
 
-            CT::string units = "";
+            std::string units = "";
 
-            CT::string netcdfdimname = dim->name;
+            std::string netcdfdimname = dim->name;
 
-            CT::string OGCDimName;
+            std::string OGCDimName;
 
             try {
               units = dimVar->getAttributeThrows("units")->toString();
@@ -172,7 +186,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             }
 
             /* By default use the netcdf dimname */
-            OGCDimName = (&netcdfdimname);
+            OGCDimName = netcdfdimname;
 
             /* Try to specify the OGC name based on dimtype */
             CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(0)->cdfObject, dimVar);
@@ -181,9 +195,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             if (dtype == CDataReader::dtype_member) OGCDimName = "member";
             if (dtype == CDataReader::dtype_elevation) OGCDimName = "elevation";
 
-#ifdef CAUTOCONFIGURE_DEBUG
-            CDBDebug("Datasource %s: Dim %s; units %s; netcdfdimname %s", dataSource->layerName.c_str(), dim->name.c_str(), units.c_str(), netcdfdimname.c_str());
-#endif
+            if (CAUTOCONFIGURE_DEBUG) {
+              CDBDebug("Datasource %s: Dim %s; units %s; netcdfdimname %s", dataSource->layerName.c_str(), dim->name.c_str(), units.c_str(), netcdfdimname.c_str());
+            }
             CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
             dataSource->cfgLayer->Dimension.push_back(xmleDim);
             xmleDim->elementValue = (OGCDimName);
@@ -197,9 +211,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             /* Store the data in the db for quick access. */
             CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                 ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), xmleDim->attr.name.c_str(), OGCDimName.c_str(), xmleDim->attr.units.c_str());
-#ifdef CAUTOCONFIGURE_DEBUG
-            CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
-#endif
+            if (CAUTOCONFIGURE_DEBUG) {
+              CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->elementValue.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
+            }
 
           } else {
             CDBDebug("variable->dimensionlinks[d]");
@@ -210,9 +224,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
         for (size_t j = 0; j < cdfObject->variables.size(); j++) {
           try {
-            if (cdfObject->variables[j]->getAttributeThrows("standard_name")->toString().equals("forecast_reference_time") == true) {
+            if (cdfObject->variables[j]->getAttributeThrows("standard_name")->toString() == "forecast_reference_time") {
               CDBDebug("Found forecast_reference_time variable with name [%s]", cdfObject->variables[j]->name.c_str());
-              CT::string units = "";
+              std::string units = "";
               try {
                 cdfObject->variables[j]->getAttributeThrows("units")->toString();
               } catch (int e) {
@@ -238,9 +252,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                     ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), xmleDim->attr.name.c_str(), "reference_time", xmleDim->attr.units.c_str());
-#ifdef CAUTOCONFIGURE_DEBUG
-                CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
-#endif
+                if (CAUTOCONFIGURE_DEBUG) {
+                  CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->elementValue.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
+                }
               }
             }
           } catch (int e) {
@@ -253,9 +267,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
     return 1;
   }
-#ifdef CAUTOCONFIGURE_DEBUG
-  CDBDebug("/[DONE] Done AutoConfigureDimensions");
-#endif
+  if (CAUTOCONFIGURE_DEBUG) {
+    CDBDebug("/[DONE] Done AutoConfigureDimensions");
+  }
   dataSource->dimsAreAutoConfigured = true;
   return 0;
 }
@@ -263,15 +277,15 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 
   if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("Cascaded layers cannot have styles at the moment");
-#endif
+    if (CAUTOCONFIGURE_DEBUG) {
+      CDBDebug("Cascaded layers cannot have styles at the moment");
+    }
     return 0;
   }
 
-#ifdef CAUTOCONFIGURE_DEBUG
-  CDBDebug("[AutoConfigureStyles]");
-#endif
+  if (CAUTOCONFIGURE_DEBUG) {
+    CDBDebug("[AutoConfigureStyles]");
+  }
   if (dataSource == NULL) {
     CDBDebug("datasource == NULL");
     return 1;
@@ -308,58 +322,56 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   std::string searchVariableName = CT::toLowerCase(dObjgetVariableName(*dataSource->getDataObject(0)));
   std::string dataSourceUnits = CT::toLowerCase(dObjgetUnits(*dataSource->getDataObject(0)));
 
-#ifdef CAUTOCONFIGURE_DEBUG
-  CDBDebug("Retrieving auto styles by using fileinfo \"%s\"", searchStandardName.c_str());
-#endif
+  if (CAUTOCONFIGURE_DEBUG) {
+    CDBDebug("Retrieving auto styles by using fileinfo \"%s\"", searchStandardName.c_str());
+  }
   /* We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles */
 
-  std::vector<CT::string> styleList;
+  std::vector<std::string> styleList;
 
   for (size_t j = 0; j < dataSource->cfg->Style.size(); j++) {
     const char *styleName = dataSource->cfg->Style[j]->attr.name.c_str();
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("Searching Style \"%s\"", styleName);
-#endif
+    if (CAUTOCONFIGURE_DEBUG) {
+      CDBDebug("Searching Style \"%s\"", styleName);
+    }
     if (styleName != NULL) {
       for (size_t i = 0; i < dataSource->cfg->Style[j]->StandardNames.size(); i++) {
 
-        CT::string standard_name = "*";
-        CT::string variable_name = "*";
-        CT::string units;
+        std::string standard_name = "*";
+        std::string variable_name = "*";
+        std::string units;
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.empty() == false) {
-          standard_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name);
-          standard_name.toLowerCaseSelf();
+          standard_name = CT::toLowerCase(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name);
         }
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.empty() == false) {
-          variable_name = (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name);
-          variable_name.toLowerCaseSelf();
+          variable_name = CT::toLowerCase(dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name);
         }
 
         if (dataSource->cfg->Style[j]->StandardNames[i]->attr.units.empty() == false) {
 
           units = (dataSource->cfg->Style[j]->StandardNames[i]->attr.units);
         }
-        units.toLowerCaseSelf();
+        units = CT::toLowerCase(units);
 
-#ifdef CAUTOCONFIGURE_DEBUG
-        CDBDebug("Searching StandardNames \"%s\"", standard_name.c_str());
-#endif
+        if (CAUTOCONFIGURE_DEBUG) {
+          CDBDebug("Searching StandardNames \"%s\"", standard_name.c_str());
+        }
         if (standard_name.length() > 0) {
-          std::vector<CT::string> standardNameList;
+          std::vector<std::string> standardNameList;
 
-          if (standard_name.charAt(0) == '^') {
+          if (standard_name[0] == '^') {
             standardNameList.push_back(standard_name);
           } else {
-            standardNameList = standard_name.split(",");
+            standardNameList = CT::split(standard_name, ",");
           }
 
           for (size_t n = 0; n < standardNameList.size(); n++) {
             bool variableNameMatch = false;
-            if (searchVariableName == variable_name.c_str() || variable_name.equals("*")) {
+            if (searchVariableName == variable_name || variable_name == "*") {
               variableNameMatch = true;
-            } else if (variable_name.charAt(0) == '^') {
+            } else if (variable_name[0] == '^') {
               if (CT::testRegEx(searchVariableName, variable_name.c_str())) {
                 variableNameMatch = true;
               }
@@ -368,7 +380,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
             bool standardNameMatch = false;
             if (searchStandardName == (standardNameList[n].c_str()) || standardNameList[n] == "*") {
               standardNameMatch = true;
-            } else if (standardNameList[n].charAt(0) == '^') {
+            } else if (standardNameList[n][0] == '^') {
               /* Regex */
               if (CT::testRegEx(searchStandardName, standardNameList[n].c_str())) {
                 standardNameMatch = true;
@@ -384,7 +396,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
                   unitsMatch = true;
                 else {
                   /* Test for regexp */
-                  if (units.charAt(0) == '^') {
+                  if (units[0] == '^') {
                     CDBDebug("Found regex %s", units.c_str());
                     if (CT::testRegEx(dataSourceUnits, units.c_str())) {
                       unitsMatch = true;
@@ -393,9 +405,9 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
                 }
               }
               if (unitsMatch) {
-#ifdef CAUTOCONFIGURE_DEBUG
-                CDBDebug("*** Match: \"%s\"== \"%s\"", searchStandardName.c_str(), standardNameList[n].c_str());
-#endif
+                if (CAUTOCONFIGURE_DEBUG) {
+                  CDBDebug("*** Match: \"%s\"== \"%s\"", searchStandardName.c_str(), standardNameList[n].c_str());
+                }
                 styleList.push_back(dataSource->cfg->Style[j]->attr.name);
               }
             }
@@ -405,25 +417,25 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     }
   }
 
-  CT::string styles = "";
+  std::string styles = "";
 
   for (size_t j = 0; j < styleList.size(); j++) {
-    if (styles.length() != 0) styles.concat(",");
-    styles.concat(styleList[j]);
+    if (styles.length() != 0) styles += ",";
+    styles += styleList[j];
   }
 
   if (styles.length() == 0) styles = "auto,autogeneric,autobilinear,autobilinear_deprecated";
 
   xmleStyle->elementValue = (styles);
-#ifdef CAUTOCONFIGURE_DEBUG
-  CDBDebug("/[DONE] [AutoConfigureStyles]");
-#endif
+  if (CAUTOCONFIGURE_DEBUG) {
+    CDBDebug("/[DONE] [AutoConfigureStyles]");
+  }
   return 0;
 }
 
 int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::string &fileName) {
 
-  CT::string foundFileName = dataSource->getFileName();
+  std::string foundFileName = dataSource->getFileName();
   if (foundFileName.empty()) {
     /* Use the file specified as header file */
     foundFileName = dataSource->headerFilename;
@@ -431,7 +443,6 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
   if (foundFileName.empty()) {
 
     /* Try to get a file from DB */
-    // CDBDebug("Looking up first file");
 
     /* ADAGUC-Server database queries don't work if there are no dimensions */
     bool removeRequiredDims = false;
@@ -451,8 +462,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
     if (store != NULL && store->records.size() > 0) {
-      CT::string fileNamestr = store->records[0].get(0);
-      // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
+      std::string fileNamestr = store->records[0].get(0);
       foundFileName = fileNamestr;
     }
     delete store;
@@ -486,9 +496,9 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
     return 1;
   }
   if (dataSource->getDataObject(0)->cdfVariable != NULL) {
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("already loaded: dataSource->getDataObject(0)->cdfVariable!=NULL");
-#endif
+    if (CAUTOCONFIGURE_DEBUG) {
+      CDBDebug("already loaded: dataSource->getDataObject(0)->cdfVariable!=NULL");
+    }
     return 0;
   }
 
@@ -500,7 +510,6 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
   }
   /* Open a file */
   try {
-    // CDBDebug("Loading header [%s]", foundFileName.c_str());
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, foundFileName.c_str());
     if (cdfObject == NULL) {
       CDBError("Unable to getCDFObjectHeader for %s ", foundFileName.c_str());

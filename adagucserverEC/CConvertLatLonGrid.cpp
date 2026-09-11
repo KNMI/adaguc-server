@@ -2,8 +2,8 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2024-01-26
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
@@ -26,6 +26,9 @@
 #include "CConvertLatLonGrid.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 static const char *const lonNamesToCheck[] = {"lon", "longitude"};
 static const char *const latNamesToCheck[] = {"lat", "latitude"};
@@ -148,7 +151,6 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
       longitude->setAttributeText("ADAGUC_SKIP", "TRUE");
 
-      // longitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
       cdfObject->addVariable(longitude);
       longitude->allocateData(lon1DDim->length * lat1DDim->length);
 
@@ -159,7 +161,6 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       latitude->dimensionlinks.push_back(lon1DDim);
       latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
       latitude->setAttributeText("ADAGUC_SKIP", "TRUE");
-      // latitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
       cdfObject->addVariable(latitude);
       latitude->allocateData(lon1DDim->length * lat1DDim->length);
@@ -181,7 +182,7 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
 
   if (hasXYDimensions && !hasXYVariables && hasLatLonVariables) {
     if (latVar->dimensionlinks.size() == 2 && lonVar->dimensionlinks.size() == 2) {
-      if (latVar->dimensionlinks[0]->name.equals("y") && lonVar->dimensionlinks[0]->name.equals("y") && latVar->dimensionlinks[1]->name.equals("x") && lonVar->dimensionlinks[1]->name.equals("x")) {
+      if (latVar->dimensionlinks[0]->name == "y" && lonVar->dimensionlinks[0]->name == "y" && latVar->dimensionlinks[1]->name == "x" && lonVar->dimensionlinks[1]->name == "x") {
         cdfObject->setAttributeText("ConvertLatLonGridActive", "TRUE");
         return true;
       }

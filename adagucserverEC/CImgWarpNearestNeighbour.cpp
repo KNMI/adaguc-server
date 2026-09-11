@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,24 @@
 // http://datagenetics.com/blog/august32013/index.html
 
 #include "CImgWarpNearestNeighbour.h"
+#include "CGenericDataWarper.h"
+#include "CDrawFunction.h"
+#include "utils/projectionUtils.h"
 #include <limits>
 #include "CFillTriangle.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CStyleConfiguration.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values) {
 
@@ -351,9 +367,9 @@ int CImgWarpNearestNeighbour::reproj(CImageWarper *warper, CDataSource *, GeoPar
 }
 
 void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-  CDBDebug("Render");
-#endif
+  if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+    CDBDebug("Render");
+  }
 
   bool fieldsAreIdentical = true;
   if ((float)dataSource->dfBBOX[0] != (float)drawImage->geoParams.bbox.left) {
@@ -376,9 +392,9 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
   }
 
   if (fieldsAreIdentical) {
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-    CDBDebug("fieldsAreIdentical: using _plot");
-#endif
+    if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+      CDBDebug("fieldsAreIdentical: using _plot");
+    }
     CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
     switch (dataType) {
     case CDF_CHAR:
@@ -416,11 +432,11 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
   int renderSettings = 0; // auto
   for (auto renderSetting: styleConfiguration->renderSettings) {
     if (!renderSetting->attr.settings.empty()) {
-      CT::string renderSettingsAttr = renderSetting->attr.settings;
-      if (renderSettingsAttr.equals("fast")) {
+      std::string renderSettingsAttr = renderSetting->attr.settings;
+      if (renderSettingsAttr == "fast") {
         renderSettings = 1; // fast
       }
-      if (renderSettingsAttr.equals("precise")) {
+      if (renderSettingsAttr == "precise") {
         renderSettings = 2; // precise
       }
     }
@@ -477,7 +493,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
   int x_div = 1;
   int y_div = 1;
   if (warper->isProjectionRequired() == false) {
-    // CDBDebug("No reprojection required");
     tile_height = drawImage->geoParams.height;
     tile_width = drawImage->geoParams.width;
     // When we are drawing just one tile, threading is not needed
@@ -510,7 +525,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
         double checkBBOX[4];
         for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 
-        // CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
         bool hasError = false;
         if (warper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
         if (warper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
@@ -523,20 +537,19 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
         }
 
         // checkBBOX
-        // CDBDebug("New BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
       }
     }
   }
 
   drawTileClass->init(dataSource, drawImage, tile_width, tile_height);
 
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-  CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
-  CDBDebug("tile_width, tile_height:  %d %d", tile_width, tile_height);
-  CDBDebug("internalWidth, internalHeight:  %d %d", internalWidth, internalHeight);
-  CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  CDBDebug("destination: %f %f %f %f", internalGeo.dfBBOX[0], internalGeo.dfBBOX[1], internalGeo.dfBBOX[2], internalGeo.dfBBOX[3]);
-#endif
+  if (CIMGWARPNEARESTNEIGHBOUR_DEBUG) {
+    CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
+    CDBDebug("tile_width, tile_height:  %d %d", tile_width, tile_height);
+    CDBDebug("internalWidth, internalHeight:  %d %d", internalWidth, internalHeight);
+    CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
+    CDBDebug("destination: %f %f %f %f", internalGeo.bbox.get(0), internalGeo.bbox.get(1), internalGeo.bbox.get(2), internalGeo.bbox.get(3));
+  }
 
   int numberOfTiles = x_div * y_div;
   DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
@@ -595,7 +608,6 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
       // Make sure that all blocks are processed
       if (j == numThreads - 1) dmf[j].endTile = numberOfTiles;
 
-      // CDBDebug("%d - start %d stop %d",j,dmf[j].startTile,dmf[j].endTile);
       DrawMultipleTileSettings *t_dmf = &dmf[j];
       errcode = pthread_create(&threads[j], NULL, drawTiles, t_dmf);
       if (errcode) {
@@ -723,7 +735,6 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
               val = (T)(-legendOffset);
           }
           int pcolorind = (int)(val * legendScale + legendOffset);
-          // val+=legendOffset;
           if (pcolorind >= 239)
             pcolorind = 239;
           else if (pcolorind <= 0)

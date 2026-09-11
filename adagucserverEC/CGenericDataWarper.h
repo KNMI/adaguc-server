@@ -6,9 +6,8 @@
 #include <cstdlib>
 #include <proj.h>
 #include <cfloat>
-#include "Types/GeoParameters.h"
 #include "CImageWarper.h"
-#include "CDebugger.h"
+#include "Types/GeoParameters.h"
 
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
@@ -41,17 +40,8 @@ public:
   double *px = nullptr;
   double *py = nullptr;
   bool *skip = nullptr;
-  void initSize(size_t dataSize) {
-    px = new double[dataSize];
-    py = new double[dataSize];
-    skip = new bool[dataSize];
-  }
-  ~ProjectionGrid() {
-    CDBDebug("Destructed ProjectionGrid");
-    delete[] px;
-    delete[] py;
-    delete[] skip;
-  }
+  void initSize(size_t dataSize);
+  ~ProjectionGrid();
 };
 
 class GenericDataWarper {
@@ -60,10 +50,7 @@ private:
 
 public:
   GenericDataWarper() = default;
-  ~GenericDataWarper() {
-    delete projectionGrid;
-    projectionGrid = nullptr;
-  };
+  ~GenericDataWarper();
   bool useHalfCellOffset = false;
   template <typename T>
   int render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);

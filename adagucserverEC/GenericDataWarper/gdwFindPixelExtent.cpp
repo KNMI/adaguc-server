@@ -2,6 +2,15 @@
 #include <limits>
 #include <Types/GeoParameters.h>
 #include <CImageWarper.h>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+
+static const bool GenericDataWarper_DEBUG = false;
+
 int gdwFindPixelExtent(int *PXExtentBasedOnSource, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams, CImageWarper *warper) {
   int sourceDataWidth = sourceGeoParams.width;
   int sourceDataHeight = sourceGeoParams.height;
@@ -117,10 +126,9 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, GeoParameters &sourceGeoParam
     }
   }
 
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
-
-#endif
+  if (GenericDataWarper_DEBUG) {
+    CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
+  }
   if (PXExtentBasedOnSource[1] > PXExtentBasedOnSource[3]) {
     std::swap(PXExtentBasedOnSource[1], PXExtentBasedOnSource[3]);
   }
@@ -130,9 +138,9 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, GeoParameters &sourceGeoParam
   PXExtentBasedOnSource[2] += 1;
   PXExtentBasedOnSource[3] += 1;
 
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
-#endif
+  if (GenericDataWarper_DEBUG) {
+    CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
+  }
 
   if (PXExtentBasedOnSource[0] < 0) {
     PXExtentBasedOnSource[0] = 0;

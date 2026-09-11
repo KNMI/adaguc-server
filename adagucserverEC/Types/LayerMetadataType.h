@@ -2,7 +2,6 @@
 #ifndef LAYER_METADATA_TYPE_H
 #define LAYER_METADATA_TYPE_H
 
-#include "CTString.h"
 #include <CDataSource.h>
 
 struct LayerMetadataDim {
@@ -17,27 +16,22 @@ struct LayerMetadataDim {
 };
 
 struct LayerMetadataProjection {
-  LayerMetadataProjection(const CT::string &name, const double bbox[]) {
-    this->name = name;
-    for (size_t j = 0; j < 4; j++) {
-      this->dfBBOX[j] = bbox[j];
-    }
-  }
-  CT::string name;
+  LayerMetadataProjection(const std::string &name, const double bbox[]);
+  std::string name;
   double dfBBOX[4];
 };
 
 struct LayerMetadataStyle {
-  CT::string name;
-  CT::string title;
-  CT::string abstract;
+  std::string name;
+  std::string title;
+  std::string abstract;
 };
 
 struct LayerMetadataVariable {
-  CT::string variableName;
-  CT::string units;
-  CT::string label;
-  CT::string standard_name;
+  std::string variableName;
+  std::string units;
+  std::string label;
+  std::string standard_name;
 };
 
 struct LayerMetadata {
@@ -50,7 +44,7 @@ struct LayerMetadata {
   int isQueryable = 0;
   bool hidden = false;
   bool enable_edr = true;
-  CT::string name, title, wmsgroup, abstract, nativeEPSG, projstring, collection;
+  std::string name, title, wmsgroup, abstract, nativeEPSG, projstring, collection;
   std::vector<LayerMetadataProjection> projectionList;
   std::vector<LayerMetadataDim> dimList;
   std::vector<LayerMetadataStyle> styleList;
@@ -63,7 +57,7 @@ struct MetadataLayer {
   CServerConfig::XMLE_Layer *layer = nullptr;
   CDataSource *dataSource = nullptr;
   CServerParams *srvParams = nullptr;
-  CT::string fileName;
+  std::string fileName;
   bool readFromDb = false;
   int hasError = 0;
   LayerMetadata layerMetadata;

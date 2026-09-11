@@ -9,6 +9,13 @@
 #include <sstream>
 #include "CRequestUtils.h"
 #include <timeutils.h>
+#include "CAutoConfigure.h"
+#include "CCDFObject.h"
+#include "CDBFileScanner.h"
+#include "CDrawImage.h"
+#include "CTString.h"
+
+static const bool CXMLGEN_DEBUG = false;
 
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->readFromDb = readFromDB;
@@ -30,13 +37,13 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Make the group
-  CT::string layerGroup = "";
+  std::string layerGroup = "";
   if (metadataLayer->layer->Group.size() > 0) {
     if (metadataLayer->layer->Group[0]->attr.value.empty() == false) {
       layerGroup = (metadataLayer->layer->Group[0]->attr.value);
     }
   }
-  metadataLayer->layerMetadata.wmsgroup = (&layerGroup);
+  metadataLayer->layerMetadata.wmsgroup = layerGroup;
 
   // Check if this layer is querable
   int datasetRestriction = checkDataRestriction();
@@ -45,13 +52,13 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Get collection for layer from Group def
-  CT::string collection = "";
+  std::string collection = "";
   if (metadataLayer->layer->Group.size() > 0) {
     if (metadataLayer->layer->Group[0]->attr.collection.empty() == false) {
       collection = (metadataLayer->layer->Group[0]->attr.collection);
     }
   }
-  metadataLayer->layerMetadata.collection = (&collection);
+  metadataLayer->layerMetadata.collection = collection;
 
   // Get Abstract
   if (metadataLayer->dataSource->cfgLayer->Abstract.size() > 0) {
@@ -64,7 +71,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Determine if edr is enabled for this layer
-  CT::string layer_enable_edr = metadataLayer->layer->attr.enable_edr;
+  std::string layer_enable_edr = metadataLayer->layer->attr.enable_edr;
   if (layer_enable_edr == ("false")) {
     metadataLayer->layerMetadata.enable_edr = false;
   } else if (layer_enable_edr == ("true")) {
@@ -130,12 +137,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       }
       CDF::Attribute *standardNameAttr = d.cdfVariable->getAttributeNE("standard_name");
 
-      CT::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(d).c_str();
+      std::string label = longName != nullptr ? longName->toString() : dObjgetVariableName(d).c_str();
       LayerMetadataVariable layerMetadataVariable = {.variableName = d.cdfVariable->name, .units = dObjgetUnits(d), .label = label, .standard_name = d.cdfVariable->name};
 
       if (standardNameAttr != nullptr) {
         layerMetadataVariable.standard_name = standardNameAttr->toString();
-        // CDBDebug("standard_name for %s: %s", d.cdfVariable->name.c_str(), standardNameAttr->toString().c_str());
       }
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
@@ -149,13 +155,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
   }
 
-  // CDBDebug("getProjectionInformationForLayer");
   if (getProjectionInformationForLayer(metadataLayer) != 0) {
     metadataLayer->hasError = 1;
     return 1;
   }
 
-  // CDBDebug("getStylesForLayer");
   if (getStylesForLayer(metadataLayer) != 0) {
     metadataLayer->hasError = 1;
     return 1;
@@ -220,15 +224,13 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   LayerMetadataDim layerMetadataTimeDim = lmDimTimeIt[0];
   LayerMetadataDim layerMetadataRefTimeDim = lmDimRefTimeIt[0];
 
-  CT::string isoDurationString = CT::substring(layerCfgTimeDim->attr.defaultV, hasIsoDuration + 1, -1);
-  // CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
+  std::string isoDurationString = CT::substring(layerCfgTimeDim->attr.defaultV, hasIsoDuration + 1, -1);
   try {
     CTime *time = CTime::GetCTimeEpochInstance();
     CTime::Date refTimeDate = time->freeDateStringToDate(layerMetadataRefTimeDim.defaultValue.c_str());
     CTime::Date refTimeWithAddedPeriod = time->addPeriodToDate(refTimeDate, isoDurationString);
     // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
     lmDimTimeIt->defaultValue = time->dateToISOString(refTimeWithAddedPeriod);
-    // CDBDebug("New defaultvalue for time is [%s]", lmDimTimeIt->defaultValue.c_str());
     return 0; // OK!
   } catch (int e) {
     CDBWarning("Unable to parse given duration in default value of time dimension [%d]", e);
@@ -251,9 +253,9 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
 
     // Get the tablename
-    std::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
-                                                                        cfgLayerDim->attr.name.c_str(), dataSource);
+    std::string tableName =
+        CDBFactory::getDBAdapter(srvParam->cfg)
+            ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
                             : CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str());
@@ -333,8 +335,6 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
 LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap) {
   auto srvParam = dataSource->srvParams;
 
-  // CDBDebug("%s %s", cfgLayerDim->attr.name.c_str(), CT::join(valuesFromDimMap).c_str());
-
   LayerMetadataDim dim;
   dim.hidden = false;
   dim.type = "dimtype_none";
@@ -351,9 +351,9 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
     // Query the values from the DB if they are not set in the map
     // This is an interval defined as start/stop/resolution
     // Retrieve the minimum dimension value
-    CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                               ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter,
-                                                                       cfgLayerDim->attr.name.c_str(), dataSource);
+    std::string tableName =
+        CDBFactory::getDBAdapter(srvParam->cfg)
+            ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
 
@@ -372,7 +372,7 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
     maxTimeStamp = dimValueInMapIt->second[dimValueInMapIt->second.size() - 1];
   }
 
-  CT::string dimUnits("ISO8601");
+  std::string dimUnits("ISO8601");
 
   if (cfgLayerDim->attr.units.empty() == false) {
     dimUnits = (cfgLayerDim->attr.units);
@@ -381,9 +381,8 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   dim.cdfName = (cfgLayerDim->attr.name);
   dim.units = (dimUnits);
   dim.hasMultipleValues = false;
-  // cfgLayerDim->attr.defaultV.c_str()
   const char *pszDefaultV = cfgLayerDim->attr.defaultV.c_str();
-  CT::string defaultV;
+  std::string defaultV;
   if (pszDefaultV != NULL) defaultV = pszDefaultV;
   if (defaultV.length() == 0 || defaultV == ("max")) {
     dim.defaultValue = maxTimeStamp;
@@ -443,9 +442,9 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
     return timeStampList;
   }
   // Get the tablename
-  CT::string tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                             ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgDim->attr.name.c_str(),
-                                                                     dataSource);
+  std::string tableName =
+      CDBFactory::getDBAdapter(srvParam->cfg)
+          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, cfgDim->attr.name.c_str(), dataSource);
 
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
@@ -500,9 +499,9 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
 }
 
 int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
-#ifdef CXMLGEN_DEBUG
-  CDBDebug("getProjectionInformationForLayer");
-#endif
+  if (CXMLGEN_DEBUG) {
+    CDBDebug("getProjectionInformationForLayer");
+  }
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (metadataLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
@@ -541,17 +540,16 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     StopWatch_Stop("finished initreproj");
 #endif
 
-#ifdef CXMLGEN_DEBUG
-    if (status != 0) {
-      warper.closereproj();
-      CDBDebug("Unable to initialize projection ");
+    if (CXMLGEN_DEBUG) {
+      if (status != 0) {
+        warper.closereproj();
+        CDBDebug("Unable to initialize projection ");
+      }
     }
-#endif
 
 #ifdef MEASURETIME
     StopWatch_Stop("start findExtent");
 #endif
-
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
     metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs, bboxToFind));
@@ -592,9 +590,9 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   if (metadataLayer->hasError == false) {
     if (metadataLayer->dataSource->cfgLayer->Styles.size() == 0) {
       if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeGraticule && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
-#ifdef CXMLGEN_DEBUG
-        CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
-#endif
+        if (CXMLGEN_DEBUG) {
+          CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
+        }
         int status = CAutoConfigure::autoConfigureStyles(metadataLayer->dataSource);
         if (status != 0) {
           metadataLayer->hasError = 1;
@@ -621,9 +619,9 @@ bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataPro
 bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.serviceName.c_str(), p2.serviceName.c_str()) < 0; }
 
 int getTitleForLayer(MetadataLayer *metadataLayer) {
-#ifdef CXMLGEN_DEBUG
-  CDBDebug("getTitleForLayer");
-#endif
+  if (CXMLGEN_DEBUG) {
+    CDBDebug("getTitleForLayer");
+  }
   // Is this a cascaded WMS server?
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
@@ -649,13 +647,13 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
     if (longName != nullptr) {
       metadataLayer->layerMetadata.title = (longName->toString());
       // Concat variable name prefixed with longname
-      metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
+      CT::printfconcat(metadataLayer->layerMetadata.title, " (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
     } else {
       CDF::Attribute *standardName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name");
       if (standardName != nullptr) {
         metadataLayer->layerMetadata.title = (standardName->toString());
         // Concat variable name prefixed with standardname
-        metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
+        CT::printfconcat(metadataLayer->layerMetadata.title, " (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
       } else {
         // Only variable name
         metadataLayer->layerMetadata.title = (metadataLayer->dataSource->getDataObject(0)->cdfVariable->name);
@@ -666,9 +664,9 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
 }
 
 int getFileNameForLayer(MetadataLayer *metadataLayer) {
-#ifdef CXMLGEN_DEBUG
-  CDBDebug("getFileNameForLayer");
-#endif
+  if (CXMLGEN_DEBUG) {
+    CDBDebug("getFileNameForLayer");
+  }
   if (!metadataLayer->fileName.empty()) {
     return 0;
   }
@@ -691,9 +689,9 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
 
     // Check if any dimension is given:
     if (dataBaseDimension == false || (metadataLayer->layer->Dimension.size() == 0) || (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.name == ("none"))) {
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("Layer %s has no dimensions", metadataLayer->dataSource->layerName.c_str());
-#endif
+      if (CXMLGEN_DEBUG) {
+        CDBDebug("Layer %s has no dimensions", metadataLayer->dataSource->layerName.c_str());
+      }
       // If not, just return the filename as configured in the layer
       std::vector<std::string> fileList;
       try {
@@ -714,12 +712,12 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     }
 
     // Find the first occuring filename.
-    CT::string tableName;
-    CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name);
+    std::string tableName;
+    std::string dimName(metadataLayer->layer->Dimension[0]->attr.name);
     try {
-      tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue, metadataLayer->layer->FilePath[0]->attr.filter, dimName.c_str(),
-                                                              metadataLayer->dataSource);
+      tableName =
+          CDBFactory::getDBAdapter(srvParam->cfg)
+              ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->elementValue, metadataLayer->layer->FilePath[0]->attr.filter, dimName.c_str(), metadataLayer->dataSource);
     } catch (int e) {
       CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->elementValue.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
@@ -735,9 +733,9 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     }
     if (databaseError == false) {
       if (values->records.size() > 0) {
-#ifdef CXMLGEN_DEBUG
-        CDBDebug("Query  succeeded: Filename = %s", values->records[0].get(0).c_str());
-#endif
+        if (CXMLGEN_DEBUG) {
+          CDBDebug("Query  succeeded: Filename = %s", values->records[0].get(0).c_str());
+        }
         metadataLayer->fileName = values->records[0].get(0);
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
@@ -748,9 +746,9 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
       delete values;
     }
 
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("/Database");
-#endif
+    if (CXMLGEN_DEBUG) {
+      CDBDebug("/Database");
+    }
     if (databaseError) {
       return 1;
     }
@@ -769,7 +767,7 @@ double parseNumeric(std::string const &str, bool &isNumeric) {
 }
 
 // Sort values that can either be numeric of a string
-bool multiTypeSort(const CT::string &a, const CT::string &b) {
+bool multiTypeSort(const std::string &a, const std::string &b) {
   // Try to convert strings to numbers
   float aNum, bNum;
   bool isANum, isBNum;

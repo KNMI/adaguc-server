@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,33 @@
  ******************************************************************************/
 
 #include "CGenericDataWarper.h"
+#include "Types/GeoParameters.h"
+#include "CDebugger.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "utils/projectionUtils.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+
+void ProjectionGrid::initSize(size_t dataSize) {
+  px = new double[dataSize];
+  py = new double[dataSize];
+  skip = new bool[dataSize];
+}
+ProjectionGrid::~ProjectionGrid() {
+  CDBDebug("Destructed ProjectionGrid");
+  delete[] px;
+  delete[] py;
+  delete[] skip;
+}
+
+GenericDataWarper::~GenericDataWarper() {
+  delete projectionGrid;
+  projectionGrid = nullptr;
+}
 
 // Reproj back and forth boundingbox in GeoParameters to make valid proj coordinates which always have the same range.
 f8box reprojBBox(GeoParameters &input, CImageWarper *warper) {
@@ -117,7 +141,6 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
     CDBDebug("Unable to do pj_transform");
   }
 
-  // CDBDebug("destGeoParams.bbox.bottom %f %f", destGeoParams.bbox.bottom, destGeoParams.bbox.top);
   for (int y = 0; y < dataHeight + 1; y++) {
     for (int x = 0; x < dataWidth + 1; x++) {
       size_t p = x + y * (dataWidth + 1);

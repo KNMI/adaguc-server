@@ -17,8 +17,8 @@ public:
     cdfObject = NULL;
     cdfReader = NULL;
     cdfObject = new CDFObject();
-    CT::string f = filename;
-    if (f.endsWith(".h5")) {
+    std::string f = filename;
+    if (CT::endsWith(f, ".h5")) {
       cdfReader = new CDFHDF5Reader();
       ((CDFHDF5Reader *)cdfReader)->enableKNMIHDF5toCFConversion();
     } else {
@@ -36,8 +36,8 @@ public:
   bool keep;
   CDFObject *cdfObject;
   CDFReader *cdfReader;
-  CT::string fullName;
-  CT::string baseName;
+  std::string fullName;
+  std::string baseName;
   double timeValue;
   static bool sortFunction(NCFileObject *i, NCFileObject *j) { return (i->timeValue < j->timeValue); }
 };
@@ -46,7 +46,7 @@ void progress(const char *message, float percentage) { printf("{\"message\":%s,\
 
 void progresswrite(const char *message, float percentage) { progress(message, percentage / 2. + 50); }
 
-void applyChangesToCDFObject(CDFObject *cdfObject, std::vector<CT::string> variablesToDo) {
+void applyChangesToCDFObject(CDFObject *cdfObject, std::vector<std::string> variablesToDo) {
   for (size_t j = 0; j < variablesToDo.size(); j++) {
     CDF::Variable *varWithoutTime = cdfObject->getVariableNE(variablesToDo[j].c_str());
     if (varWithoutTime != NULL) {
@@ -71,11 +71,11 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  CT::string inputDir = argv[1];
-  CT::string outputFile = argv[2];
+  std::string inputDir = argv[1];
+  std::string outputFile = argv[2];
 
   CDirReader dirReader;
-  CT::string dirFilter = "^.*.*\\.nc";
+  std::string dirFilter = "^.*.*\\.nc";
 
   dirReader.listDirRecursive(inputDir.c_str(), dirFilter.c_str());
   if (dirReader.fileList.size() == 0) {
@@ -87,10 +87,10 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  std::vector<CT::string> variablesToAddTimeTo;
+  std::vector<std::string> variablesToAddTimeTo;
   if (argc == 4) {
-    CT::string variableList = argv[3];
-    variablesToAddTimeTo = variableList.split(",");
+    std::string variableList = argv[3];
+    variablesToAddTimeTo = CT::split(variableList, ",");
   }
 
   /* Create a vector which holds information for all the inputfiles. */
@@ -99,7 +99,7 @@ int main(int argc, const char *argv[]) {
   /* Loop through all files and gather information */
   try {
     for (size_t j = 0; j < dirReader.fileList.size(); j++) {
-      auto basename = CT::string(CT::basename(dirReader.fileList[j].c_str()));
+      auto basename = std::string(CT::basename(dirReader.fileList[j].c_str()));
       NCFileObject *fileObject = new NCFileObject(basename.c_str());
       fileObjects.push_back(fileObject);
       fileObject->fullName = dirReader.fileList[j].c_str();
@@ -120,7 +120,7 @@ int main(int argc, const char *argv[]) {
 
       timeVar->readData(CDF_DOUBLE);
       double value = ((double *)(timeVar->data))[0];
-      CT::string units;
+      std::string units;
       try {
         units = timeVar->getAttributeThrows("units")->toString().c_str();
       } catch (int e) {
@@ -135,8 +135,7 @@ int main(int argc, const char *argv[]) {
 
       fileObject->timeValue = epochCTime.dateToOffset(date);
 
-      CT::string message;
-      message.print("\"Checking file (%d/%d) %s, has start date %s\"", j, dirReader.fileList.size(), fileObject->baseName.c_str(), epochCTime.dateToISOString(date).c_str());
+      std::string message = CT::printf("\"Checking file (%zu/%zu) %s, has start date %s\"", j, dirReader.fileList.size(), fileObject->baseName.c_str(), epochCTime.dateToISOString(date).c_str());
       progress(message.c_str(), (float(j) / float(dirReader.fileList.size())) * 50);
 
       fileObject->keep = true;
@@ -152,11 +151,11 @@ int main(int argc, const char *argv[]) {
   /* Sort the dates according the timeValue */
   std::sort(fileObjects.begin(), fileObjects.end(), NCFileObject::sortFunction);
 
-  CT::string netcdfFile = fileObjects[0]->fullName.c_str();
-  CT::string netcdfFileBase = fileObjects[0]->baseName.c_str();
+  std::string netcdfFile = fileObjects[0]->fullName.c_str();
+  std::string netcdfFileBase = fileObjects[0]->baseName.c_str();
   CDFObject *destCDFObject = new CDFObject();
   CDFReader *cdfReader;
-  if (netcdfFile.endsWith(".h5")) {
+  if (CT::endsWith(netcdfFile, ".h5")) {
     cdfReader = new CDFHDF5Reader();
     ((CDFHDF5Reader *)cdfReader)->enableKNMIHDF5toCFConversion();
   } else {

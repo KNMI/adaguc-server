@@ -3,7 +3,7 @@
  * Project:  Generic common data format
  * Purpose:  Packages CSV into a ADAGUC Common Data Model
  * Author:   Maarten Plieger (KNMI)
- * Date:     2018-11-12
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
@@ -33,41 +33,42 @@
 #include "CCDFCSVReader.h"
 #include "CTime.h"
 #include <CReadFile.h>
+#include <cstring>
 
-// #define CCDFCSVREADER_DEBUG
+static const bool CCDFCSVREADER_DEBUG = false;
 
 CDFCSVReader::CDFCSVReader() : CDFReader() {
-#ifdef CCDFCSVREADER_DEBUG
-  CDBDebug("New CDFCSVReader");
-#endif
+  if (CCDFCSVREADER_DEBUG) {
+    CDBDebug("New CDFCSVReader");
+  }
 }
 
 CDFCSVReader::~CDFCSVReader() { close(); }
 
 int CDFCSVReader::open(const char *fileName) {
-#ifdef CCDFCSVREADER_DEBUG
-  CDBDebug("CDFCSVReader::open %s", fileName);
-#endif
+  if (CCDFCSVREADER_DEBUG) {
+    CDBDebug("CDFCSVReader::open %s", fileName);
+  }
   if (cdfObject == NULL) {
     CDBError("No CDFObject defined, use CDFObject::attachCDFReader(CDFNetCDFReader*). Please note that this function should be called by CDFObject open routines.");
     return 1;
   }
-  if (this->csvLines.size() > 0 && this->fileName.equals(fileName)) {
+  if (this->csvLines.size() > 0 && this->fileName == fileName) {
     CDBDebug("Already opened");
     return 0;
   }
   this->fileName = fileName;
 
-  CT::string fileBaseName = CT::basename(fileName);
+  std::string fileBaseName = CT::basename(fileName);
 
   /* Is this really csv */
-  if (fileBaseName.endsWith(".csv") == false) {
+  if (!CT::endsWith(fileBaseName, ".csv")) {
     CDBError("Filename does not end with \".csv\"");
     return 1;
   }
 
   /*This is opendap, there the CSV has already been converted to CDM by an IOServiceProvider.*/
-  if (this->fileName.indexOf("http") == 0) {
+  if (CT::startsWith(this->fileName, "http")) {
     CDBDebug("This is opendap, no conversion needed.");
     return 0;
   }
@@ -82,16 +83,16 @@ int CDFCSVReader::open(const char *fileName) {
   this->csvData = readFile(fileName);
 
   /* Detect variables from header */
-  this->csvLines = csvData.split("\r\n");
+  this->csvLines = CT::split(csvData, "\r\n");
   if (this->csvLines.size() < 2) {
-    this->csvLines = csvData.split("\n");
+    this->csvLines = CT::split(csvData, "\n");
     if (this->csvLines.size() < 2) {
-      this->csvLines = csvData.split("\r");
+      this->csvLines = CT::split(csvData, "\r");
     }
   }
-#ifdef CCDFCSVREADER_DEBUG
-  CDBDebug("Found %d lines", this->csvLines.size());
-#endif
+  if (CCDFCSVREADER_DEBUG) {
+    CDBDebug("Found %zu lines", this->csvLines.size());
+  }
 
   if (this->csvLines.size() < 2) {
     CDBError("No CSV data found, less than 2 lines detected");
@@ -110,11 +111,11 @@ int CDFCSVReader::open(const char *fileName) {
 
   size_t numLines = this->csvLines.size() - (1 + this->headerStartsAtLine); /* Minus header */
 
-  std::vector<CT::string> header = CT::string(this->csvLines[this->headerStartsAtLine + 0].c_str()).split(",");
+  std::vector<std::string> header = CT::split(this->csvLines[this->headerStartsAtLine + 0], ",");
   for (size_t c = 0; c < header.size(); c++) {
-    header[c].replaceSelf("\r", "");
+    CT::replaceSelf(header[c], "\r", "");
   }
-  std::vector<CT::string> firstLine = this->csvLines[this->headerStartsAtLine + 1].split(",");
+  std::vector<std::string> firstLine = CT::split(this->csvLines[this->headerStartsAtLine + 1], ",");
 
   if (header.size() < 3) {
     CDBError("No CSV data found, less than 3 columns detected");
@@ -126,29 +127,29 @@ int CDFCSVReader::open(const char *fileName) {
   int foundLon = -1;
   int foundId = -1;
   for (size_t c = 0; c < header.size(); c++) {
-    CT::string name = header[c];
-    name = name.toLowerCase();
-    if (foundLat == -1 && name.equals("lat")) {
+    std::string name = header[c];
+    name = CT::toLowerCase(name);
+    if (foundLat == -1 && name == "lat") {
       foundLat = c;
-    } else if (foundLat == -1 && name.equals("y")) {
+    } else if (foundLat == -1 && name == "y") {
       foundLat = c;
-    } else if (foundLat == -1 && name.indexOf("latitude") != -1) {
+    } else if (foundLat == -1 && CT::indexOf(name, "latitude") != -1) {
       foundLat = c;
-    } else if (foundLat == -1 && name.indexOf("lat") != -1) {
+    } else if (foundLat == -1 && CT::indexOf(name, "lat") != -1) {
       foundLat = c;
     }
 
-    if (foundLon == -1 && name.equals("lon")) {
+    if (foundLon == -1 && name == "lon") {
       foundLon = c;
-    } else if (foundLon == -1 && name.equals("x")) {
+    } else if (foundLon == -1 && name == "x") {
       foundLon = c;
-    } else if (foundLon == -1 && name.indexOf("longitude") != -1) {
+    } else if (foundLon == -1 && CT::indexOf(name, "longitude") != -1) {
       foundLon = c;
-    } else if (foundLon == -1 && name.indexOf("lon") != -1) {
+    } else if (foundLon == -1 && CT::indexOf(name, "lon") != -1) {
       foundLon = c;
     }
 
-    if (foundId == -1 && name.equals("id")) {
+    if (foundId == -1 && name == "id") {
       foundId = c;
     }
   }
@@ -165,17 +166,17 @@ int CDFCSVReader::open(const char *fileName) {
   }
 
   /* Search for time dim */
-  CT::string timeString;
+  std::string timeString;
   for (size_t j = 0; j < this->headerStartsAtLine; j++) {
-    CT::string metadataLine = this->csvLines[j].c_str();
-    int timeStart = metadataLine.indexOf("time=");
-    if ((timeStart != -1) && (metadataLine.indexOf("reference_time=") < 0)) {
-      CT::string timeMetadataString = metadataLine.substring(timeStart, -1);
-      int timeEnd = timeMetadataString.indexOf("&");
-      if (timeEnd == -1) timeEnd = timeMetadataString.indexOf(";");
+    std::string metadataLine = this->csvLines[j];
+    int timeStart = CT::indexOf(metadataLine, "time=");
+    if ((timeStart != -1) && (CT::indexOf(metadataLine, "reference_time=") < 0)) {
+      std::string timeMetadataString = CT::substring(metadataLine, timeStart, -1);
+      int timeEnd = CT::indexOf(timeMetadataString, "&");
+      if (timeEnd == -1) timeEnd = CT::indexOf(timeMetadataString, ";");
       if (timeEnd == -1) timeEnd = timeMetadataString.length();
-      timeMetadataString.setSize(timeEnd);
-      std::vector<CT::string> kvp = timeMetadataString.split("=");
+      timeMetadataString.resize(timeEnd);
+      std::vector<std::string> kvp = CT::split(timeMetadataString, "=");
       if (kvp.size() == 2 && kvp[1].length() > 5) {
         timeString = kvp[1].c_str();
       }
@@ -183,17 +184,17 @@ int CDFCSVReader::open(const char *fileName) {
   }
 
   /* Search for reference_time dim */
-  CT::string referenceTimeString;
+  std::string referenceTimeString;
   for (size_t j = 0; j < this->headerStartsAtLine; j++) {
-    CT::string metadataLine = this->csvLines[j].c_str();
-    int referenceTimeStart = metadataLine.indexOf("reference_time=");
+    std::string metadataLine = this->csvLines[j];
+    int referenceTimeStart = CT::indexOf(metadataLine, "reference_time=");
     if (referenceTimeStart != -1) {
-      CT::string referenceTimeMetadataString = metadataLine.substring(referenceTimeStart, -1);
-      int referenceTimeEnd = referenceTimeMetadataString.indexOf("&");
-      if (referenceTimeEnd == -1) referenceTimeEnd = referenceTimeMetadataString.indexOf(";");
+      std::string referenceTimeMetadataString = CT::substring(metadataLine, referenceTimeStart, -1);
+      int referenceTimeEnd = CT::indexOf(referenceTimeMetadataString, "&");
+      if (referenceTimeEnd == -1) referenceTimeEnd = CT::indexOf(referenceTimeMetadataString, ";");
       if (referenceTimeEnd == -1) referenceTimeEnd = referenceTimeMetadataString.length();
-      referenceTimeMetadataString.setSize(referenceTimeEnd);
-      std::vector<CT::string> kvp = referenceTimeMetadataString.split("=");
+      referenceTimeMetadataString.resize(referenceTimeEnd);
+      std::vector<std::string> kvp = CT::split(referenceTimeMetadataString, "=");
       if (kvp.size() == 2 && kvp[1].length() > 5) {
         referenceTimeString = kvp[1].c_str();
       }
@@ -208,7 +209,7 @@ int CDFCSVReader::open(const char *fileName) {
 
   CDF::Variable *stationVar = new CDF::Variable();
   cdfObject->addVariable(stationVar);
-  stationVar->setName(stationDim->getName().c_str());
+  stationVar->setName(stationDim->getName());
   stationVar->currentType = CDF_STRING;
   stationVar->nativeType = CDF_STRING;
   stationVar->setType(CDF_STRING);
@@ -228,7 +229,7 @@ int CDFCSVReader::open(const char *fileName) {
 
     CDF::Variable *timeVar = new CDF::Variable();
     cdfObject->addVariable(timeVar);
-    timeVar->setName(timeDim->getName().c_str());
+    timeVar->setName(timeDim->getName());
     timeVar->currentType = CDF_DOUBLE;
     timeVar->nativeType = CDF_DOUBLE;
     timeVar->setType(CDF_DOUBLE);
@@ -238,7 +239,6 @@ int CDFCSVReader::open(const char *fileName) {
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->setAttributeText("units", "seconds since 1970-1-1");
-    //    if (timeString.length() > 5){
     CDBDebug("timeString = [%s]", timeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(timeVar);
     if (ctime == nullptr) {
@@ -247,9 +247,6 @@ int CDFCSVReader::open(const char *fileName) {
     }
 
     ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
-    //    } else {
-    //      ((double*)timeVar->data)[0] = 0;
-    //    }
   }
 
   /* Define reference_time dimension and variable */
@@ -264,7 +261,7 @@ int CDFCSVReader::open(const char *fileName) {
 
     CDF::Variable *referenceTimeVar = new CDF::Variable();
     cdfObject->addVariable(referenceTimeVar);
-    referenceTimeVar->setName(referenceTimeDim->getName().c_str());
+    referenceTimeVar->setName(referenceTimeDim->getName());
     referenceTimeVar->currentType = CDF_DOUBLE;
     referenceTimeVar->nativeType = CDF_DOUBLE;
     referenceTimeVar->setType(CDF_DOUBLE);
@@ -274,7 +271,6 @@ int CDFCSVReader::open(const char *fileName) {
     referenceTimeVar->setAttributeText("standard_name", "forecast_reference_time");
     referenceTimeVar->setAttributeText("long_name", "forecast_reference_time");
     referenceTimeVar->setAttributeText("units", "seconds since 1970-1-1");
-    //    if (timeString.length() > 5){
     CDBDebug("referenceTimeString = [%s]", referenceTimeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(referenceTimeVar);
     if (ctime == nullptr) {
@@ -283,9 +279,6 @@ int CDFCSVReader::open(const char *fileName) {
     }
 
     ((double *)referenceTimeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(referenceTimeString.c_str()));
-    //    } else {
-    //      ((double*)timeVar->data)[0] = 0;
-    //    }
   }
 
   /* Just in case open is done twice, clear the var indices vector */
@@ -293,14 +286,14 @@ int CDFCSVReader::open(const char *fileName) {
 
   /* Determine data vars */
   for (size_t c = 0; c < header.size() && c < firstLine.size(); c++) {
-#ifdef CCDFCSVREADER_DEBUG
-    CDBDebug("col %d is [%s] with value %s", c, header[c].c_str(), firstLine[c].c_str());
-#endif
-    CT::string col = firstLine[c].c_str();
+    if (CCDFCSVREADER_DEBUG) {
+      CDBDebug("col %zu is [%s] with value %s", c, header[c].c_str(), firstLine[c].c_str());
+    }
+    std::string col = firstLine[c];
     CDFType dataType = CDF_FLOAT;
-    if (col.isInt()) {
+    if (CT::isInt(col)) {
       dataType = CDF_INT;
-    } else if (col.isFloat()) {
+    } else if (CT::isFloat(col)) {
       dataType = CDF_FLOAT;
     } else {
       dataType = CDF_STRING;
@@ -309,7 +302,7 @@ int CDFCSVReader::open(const char *fileName) {
     CDF::Variable *dataVar = new CDF::Variable();
     cdfObject->addVariable(dataVar);
     dataVar->setCDFReaderPointer((void *)this);
-    dataVar->setName(header[c].c_str());
+    dataVar->setName(header[c]);
     dataVar->currentType = dataType;
     dataVar->nativeType = dataType;
     dataVar->setType(dataType);
@@ -353,7 +346,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
       CDBWarning("Found empty CSV line at line %lu", j);
       continue;
     }
-    std::vector<CT::string> csvColumns = this->csvLines[j].split(",");
+    std::vector<std::string> csvColumns = CT::split(this->csvLines[j], ",");
 
     if (csvColumns.size() != this->variableIndexer.size()) {
       CDBWarning("CSV Columns at line %lu have unexpected size of %lu, expected %lu", j, csvColumns.size(), this->variableIndexer.size());
@@ -362,7 +355,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
     bool foundVar = false;
     for (size_t c = 0; c < csvColumns.size(); c++) {
       CDF::Variable *var = this->variableIndexer[c];
-      if (var->name.equals(varToRead->name)) {
+      if (var->name == varToRead->name) {
         foundVar = true;
         if (var->currentType == CDF_STRING) {
           const char *stringToAdd = csvColumns[c].c_str();
@@ -376,13 +369,13 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
           snprintf(stringDataArray[varPointer], length + 1, "%s", stringToAdd);
         }
         if (var->currentType == CDF_INT) {
-          ((int *)var->data)[varPointer] = CT::string(csvColumns[c].c_str()).toInt();
+          ((int *)var->data)[varPointer] = atoi(csvColumns[c].c_str());
         }
         if (var->currentType == CDF_FLOAT) {
-          ((float *)var->data)[varPointer] = CT::string(csvColumns[c].c_str()).toFloat();
+          ((float *)var->data)[varPointer] = atof(csvColumns[c].c_str());
         }
         if (var->currentType == CDF_DOUBLE) {
-          ((double *)var->data)[varPointer] = CT::string(csvColumns[c].c_str()).toDouble();
+          ((double *)var->data)[varPointer] = atof(csvColumns[c].c_str());
         }
         break;
       }

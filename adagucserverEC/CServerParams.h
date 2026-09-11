@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@
 #define CServerParams_H
 #include <climits>
 #include <cstdlib>
-#include "CDebugger.h"
-#include "CTString.h"
-#include "CDirReader.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
@@ -47,13 +44,7 @@
  */
 class CWMSExtensions {
 public:
-  CWMSExtensions() {
-    opacity = 100;
-    colorScaleRangeSet = false;
-    numColorBands = -1;
-    numColorBandsSet = false;
-    logScale = false;
-  }
+  CWMSExtensions();
   double opacity; // 0 = fully transparent, 100 = fully opaque (default). Only applies to image formats that support partial pixel transparency (e.g. PNG). This parameter is redundant if the client
                   // application can set image opacity (e.g. Google Earth).
   double colorScaleRangeMin;

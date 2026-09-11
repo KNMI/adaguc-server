@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2022-11-16
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,28 @@
 #include "CCDFHDF5IO.h"
 #include "ProjCache.h"
 
-// #define CCDFHDF5IO_DEBUG_H
+static const bool CCDFHDF5IO_DEBUG_H = false;
 
 double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initialValue) {
   CDF::Attribute *attr = var->getAttributeNE(attrName);
   if (attr != nullptr) {
-    return attr->toString().toDouble();
+    return CT::toDouble(attr->toString());
   }
   return initialValue;
 }
 
 CDF::Variable *CDFHDF5Reader::getWhatVar(CDFObject *cdfObject, size_t datasetCounter, int dataCounter) {
-  CT::string whatVarName;
+  std::string whatVarName;
   /* First try "dataset%d.data%d.what" */
-  whatVarName.print("dataset%d.data%d.what", datasetCounter, dataCounter);
+  whatVarName = CT::printf("dataset%zu.data%d.what", datasetCounter, dataCounter);
   CDF::Variable *whatVar = cdfObject->getVariableNE(whatVarName.c_str());
   if (whatVar == nullptr) {
     /* Second try "dataset%d.what" */
-    whatVarName.print("dataset%d.what", datasetCounter);
+    whatVarName = CT::printf("dataset%zu.what", datasetCounter);
     whatVar = cdfObject->getVariableNE(whatVarName.c_str());
     if (whatVar == nullptr) {
       /* Finally try "what" */
-      whatVarName.print("what");
+      whatVarName = CT::printf("what");
       whatVar = cdfObject->getVariableNE(whatVarName.c_str());
     }
   }
@@ -56,39 +56,39 @@ CDF::Variable *CDFHDF5Reader::getWhatVar(CDFObject *cdfObject, size_t datasetCou
 }
 
 CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t datasetCounter, int dataCounter, const char *varName, const char *attrName) {
-  CT::string nestedVarName;
+  std::string nestedVarName;
 
   /* First try "dataset%d.data%d.what" */
-  nestedVarName.print("dataset%d.data%d.%s", datasetCounter, dataCounter, varName);
+  nestedVarName = CT::printf("dataset%zu.data%d.%s", datasetCounter, dataCounter, varName);
   CDF::Variable *nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
   CDF::Attribute *attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
 
   if (attr == nullptr) {
-#ifdef CCDFHDF5IO_DEBUG_H
-    CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
-#endif
+    if (CCDFHDF5IO_DEBUG_H) {
+      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+    }
     /* Second try "dataset%d.what" */
-    nestedVarName.print("dataset%d.%s", datasetCounter, varName);
+    nestedVarName = CT::printf("dataset%zu.%s", datasetCounter, varName);
     nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
     attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
     if (attr == nullptr) {
-#ifdef CCDFHDF5IO_DEBUG_H
-      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
-#endif
+      if (CCDFHDF5IO_DEBUG_H) {
+        CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+      }
       /* Finally try "what" */
-      nestedVarName.print("%s", varName);
+      nestedVarName = CT::printf("%s", varName);
       nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
       attr = (nestedVar != nullptr) ? nestedVar->getAttributeNE(attrName) : nullptr;
     }
   }
 
-#ifdef CCDFHDF5IO_DEBUG_H
-  if (attr == nullptr) {
-    CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
-  } else {
-    CDBDebug("Found %s / %s", nestedVarName.c_str(), attrName);
+  if (CCDFHDF5IO_DEBUG_H) {
+    if (attr == nullptr) {
+      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+    } else {
+      CDBDebug("Found %s / %s", nestedVarName.c_str(), attrName);
+    }
   }
-#endif
   return attr;
 }
 
@@ -98,8 +98,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (conventionsAttr == nullptr) {
     return 2;
   }
-  CT::string conventionsString = conventionsAttr->toString();
-  if (conventionsString.startsWith("ODIM_H5") == 0) {
+  std::string conventionsString = conventionsAttr->toString();
+  if (!CT::startsWith(conventionsString, "ODIM_H5")) {
     return 2;
   }
   CDF::Variable *whatVar = cdfObject->getVariableNE("what");
@@ -110,8 +110,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (whatObjectAttr == nullptr) {
     return 2;
   }
-  CT::string whatObjectString = whatObjectAttr->toString();
-  if (not whatObjectString.equals("COMP") && not whatObjectString.equals("IMAGE")) {
+  std::string whatObjectString = whatObjectAttr->toString();
+  if (whatObjectString != "COMP" && whatObjectString != "IMAGE") {
     CDBDebug("Is not a 2D dataset, skipping parsing as 2D dataset");
     return 2;
   }
@@ -124,9 +124,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   const size_t MAX_ODIM_DATASETS = 100;
   for (size_t datasetCounter = 1; datasetCounter < MAX_ODIM_DATASETS; datasetCounter += 1) {
     int dataCounter = 1;
-    CT::string datasetId = "dataset";
-    datasetId.printconcat("%d", datasetCounter);
-    CT::string datasetIdDataId = datasetId + ".data1.data";
+    std::string datasetId = "dataset";
+    datasetId += std::to_string(datasetCounter);
+    std::string datasetIdDataId = datasetId + ".data1.data";
 
     /* Check for the data variable */
     CDF::Variable *dataVar = cdfObject->getVariableNE(datasetIdDataId.c_str());
@@ -199,7 +199,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     CDF::Attribute *quantityAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "quantity");
     if (quantityAttr != nullptr) {
       /* Try to find the units based on the quantity, otherwise forward the quantity. */
-      auto result = quantityToUnits.find(quantityAttr->toString().toUpperCase().c_str());
+      auto result = quantityToUnits.find(CT::toUpperCase(quantityAttr->toString()));
       if (result == quantityToUnits.end()) {
         dataVar->setAttributeText("units", quantityAttr->toString().c_str());
       } else {
@@ -229,9 +229,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       if (startTimeAttr == nullptr) startTimeAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "time");
       if (startDateAttr != nullptr && startTimeAttr != nullptr) {
         /* Compose the timestring based on date and time from the HDF5 ODIM file */
-        CT::string timeString;
-        timeString.print("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
-        // CDBDebug("timeString %s", timeString.c_str());
+        std::string timeString;
+        timeString = CT::printf("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
 
         /* Add the time dimension and timevariable */
         auto *timeDim = new CDF::Dimension("time", 1);
@@ -251,7 +250,6 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
         }
 
         ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
-        // CDBDebug("Time offset = %f", ((double *)timeVar->data)[0]);
       }
 
       CDF::Dimension *dimX = dataVar->dimensionlinks[1];
@@ -270,11 +268,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
         throw(__LINE__);
       };
 
-      // CDBDebug("Metadata xScale %f, Metadata yScale: %f", xScale, yScale);
       double offsetX = cornerX[0]; //-double(dimX->length) / 2;
       xScale = (((cornerX[1] - cornerX[0]) + (cornerX[3] - cornerX[2])) / 2) / double(dimX->length);
 
-      // CDBDebug("Calculated xScale %f, Calculated yScale: %f", xScale, yScale);
       auto *varXdata = (double *)varX->data;
       for (size_t j = 0; j < dimX->length; j += 1) {
         double x = double(j) * xScale;

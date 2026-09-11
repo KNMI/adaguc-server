@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,16 @@
 
 #include <map>
 #include <iostream>
-#include "CDebugger.h"
 #include "CTString.h"
-#include "CColor.h"
-#include "Definitions.h"
-#include "CStopWatch.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
-#include "Types/GeoParameters.h"
-#include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <cmath>
 #include "CCairoPlotter.h"
-#include "CColor.h"
 #include "CRectangleText.h"
+#include "Types/GeoParameters.h"
 
 float convertValueToClass(float val, float interval);
 
@@ -55,7 +49,7 @@ public:
   int id;
   unsigned char CDIred[256], CDIgreen[256], CDIblue[256];
   short CDIalpha[256]; // Currently alpha of 0 and 255 is supported, but nothin in between.
-  CT::string legendName;
+  std::string legendName;
 };
 
 static CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
@@ -75,7 +69,7 @@ private:
   CCairoPlotter *cairo;
   std::string TTFFontLocation;
   float TTFFontSize;
-  std::map<CT::string, CCairoPlotter *> myCCairoPlotterMap;
+  std::map<std::string, CCairoPlotter *> myCCairoPlotterMap;
   CCairoPlotter *getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b);
 
 public:
@@ -113,7 +107,6 @@ public:
   void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
-  // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
   void drawVector(int x, int y, double direction, double strength, int color);
   void drawVector(int x, int y, double direction, double strength, int color, float linewidth);
   void drawVector(int x, int y, double direction, double strength, CColor color, float linewidth);
@@ -150,10 +143,9 @@ public:
   int getWidth();
   int getHeight();
 
-  void getHexColorForColorIndex(CT::string *hexValue, int colorIndex);
+  void getHexColorForColorIndex(std::string &hexValue, int colorIndex);
   void setText(const char *text, int x, int y, int color);
   void setText(const char *text, int x, int y, CColor color);
-  // void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
   void setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor);
   void setDisc(int x, int y, int discRadius, int fillCol, int lineCol);
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
@@ -210,7 +202,7 @@ public:
   /**
    * Get renderer width of the given text
    */
-  int getTextWidth(CT::string text, const std::string &fontPath, float size, int angle);
+  int getTextWidth(std::string text, const std::string &fontPath, float size, int angle);
 };
 
 #endif

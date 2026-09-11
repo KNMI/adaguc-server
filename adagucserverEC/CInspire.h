@@ -7,10 +7,8 @@
 
 #ifdef ENABLE_INSPIRE
 #include <cstdio>
-#include "CTString.h"
-#include "CXMLParser.h"
-#include "CHTTPTools.h"
-#include "CDebugger.h"
+#include <string>
+#include <vector>
 #define CINSPIRE_HTTPGETERROR 1
 #define CINSPIRE_XMLPARSEERROR 2
 #define CINSPIRE_XMLELEMENTNOTFOUND 3
@@ -24,32 +22,13 @@ public:
    */
   class InspireMetadataFromCSW {
   public:
-    CT::string title, identifier, abstract, pointOfContact, voiceTelephone, organisationName, email;
-    std::vector<CT::string> keywords;
+    std::string title, identifier, abstract, pointOfContact, voiceTelephone, organisationName, email;
+    std::vector<std::string> keywords;
 
-    CT::string toString() {
-      CT::string a;
-      a.print("title:           \"%s\"\n"
-              "identifier:      \"%s\"\n"
-              "abstract:        \"%s\"\n"
-              "pointOfContact:  \"%s\"\n"
-              "voiceTelephone:  \"%s\"\n"
-              "organisationName:\"%s\"\n"
-              "email:           \"%s\"\n",
-              title.c_str(), identifier.c_str(), abstract.c_str(), pointOfContact.c_str(), voiceTelephone.c_str(), organisationName.c_str(), email.c_str());
-      for (size_t j = 0; j < keywords.size(); j++) {
-        a.printconcat("keyword %d:       \"%s\"\n", j, keywords[j].c_str());
-      }
-      return a;
-    }
+    std::string toString();
   };
 
-  CT::string static getErrorMessage(int a) {
-    if (a == CINSPIRE_HTTPGETERROR) return "INSPIRE HTTP GET FAILED";
-    if (a == CINSPIRE_XMLPARSEERROR) return "INSPIRE XML INVALID";
-    if (a == CINSPIRE_XMLELEMENTNOTFOUND) return "INSPIRE XML ELEMENT NOT FOUND";
-    return "CINSPIRE_UKNOWN";
-  }
+  std::string static getErrorMessage(int a);
 
   /** Read from given CSW service and fill in INSPIRE metadata structure
    * @param cswService The CSW service to read

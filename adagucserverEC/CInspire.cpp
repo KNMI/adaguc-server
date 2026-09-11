@@ -1,8 +1,36 @@
 #include "CInspire.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "CHTTPTools.h"
+#include "CDebugger.h"
+#include <string>
+#include <vector>
 #ifdef ENABLE_INSPIRE
 
+std::string CInspire::InspireMetadataFromCSW::toString() {
+  std::string a = CT::printf("title:           \"%s\"\n"
+                              "identifier:      \"%s\"\n"
+                              "abstract:        \"%s\"\n"
+                              "pointOfContact:  \"%s\"\n"
+                              "voiceTelephone:  \"%s\"\n"
+                              "organisationName:\"%s\"\n"
+                              "email:           \"%s\"\n",
+                              title.c_str(), identifier.c_str(), abstract.c_str(), pointOfContact.c_str(), voiceTelephone.c_str(), organisationName.c_str(), email.c_str());
+  for (size_t j = 0; j < keywords.size(); j++) {
+    CT::printfconcat(a, "keyword %zu:       \"%s\"\n", j, keywords[j].c_str());
+  }
+  return a;
+}
+
+std::string CInspire::getErrorMessage(int a) {
+  if (a == CINSPIRE_HTTPGETERROR) return "INSPIRE HTTP GET FAILED";
+  if (a == CINSPIRE_XMLPARSEERROR) return "INSPIRE XML INVALID";
+  if (a == CINSPIRE_XMLELEMENTNOTFOUND) return "INSPIRE XML ELEMENT NOT FOUND";
+  return "CINSPIRE_UKNOWN";
+}
+
 CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char *cswService) {
-  CT::string xmlData;
+  std::string xmlData;
 
   try {
     xmlData = CHTTPTools::getString(cswService);
@@ -17,7 +45,7 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   try {
     element.parseData(xmlData);
   } catch (int e) {
-    CT::string message = CXMLParser::getErrorMessage(e);
+    std::string message = CXMLParser::getErrorMessage(e);
     CDBError("Inspire CSW parsing failed: %s ", message.c_str());
     throw CINSPIRE_XMLPARSEERROR;
 
@@ -26,7 +54,6 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   CXMLParserElement *MD_DataIdentification = NULL;
   try {
     MD_DataIdentification = element.getThrows("GetRecordByIdResponse")->getThrows("MD_Metadata")->getThrows("identificationInfo")->getThrows("MD_DataIdentification");
-    // MD_DataIdentification = element.get("GetRecordByIdResponse")->getThrows("MD_Metadata")->getThrows("identificationInfo")->getThrows("SV_ServiceIdentification");
   } catch (int e) {
     throw CINSPIRE_XMLELEMENTNOTFOUND;
   }

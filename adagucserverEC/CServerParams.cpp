@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,23 @@
 #include <random>
 #include "CReadFile.h"
 #include "CServerParams.h"
+#include "CDebugger.h"
+#include "CTString.h"
+#include "CDirReader.h"
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include <algorithm>
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
+
+CWMSExtensions::CWMSExtensions() {
+  opacity = 100;
+  colorScaleRangeSet = false;
+  numColorBands = -1;
+  numColorBandsSet = false;
+  logScale = false;
+}
 
 char debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
 
@@ -175,19 +186,18 @@ std::string CServerParams::getOnlineResource() {
     // No Online resource is given.
     const char *pszADAGUCOnlineResource = getenv("ADAGUC_ONLINERESOURCE");
     if (pszADAGUCOnlineResource == NULL) {
-      // CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }
-    CT::string onlineResource = pszADAGUCOnlineResource;
+    std::string onlineResource = pszADAGUCOnlineResource;
     _onlineResource = onlineResource;
     return onlineResource;
   }
 
-  CT::string onlineResource = cfg->OnlineResource[0]->attr.value.c_str();
+  std::string onlineResource = cfg->OnlineResource[0]->attr.value.c_str();
 
   // A full path is given in the configuration
-  if (onlineResource.indexOf("http") == 0) {
+  if (CT::indexOf(onlineResource, "http") == 0) {
     _onlineResource = onlineResource;
     return onlineResource;
   }
@@ -199,16 +209,16 @@ std::string CServerParams::getOnlineResource() {
     _onlineResource = "";
     return "";
   }
-  CT::string httpHost = "http://";
-  httpHost.concat(pszHTTPHost);
-  httpHost.concat(&onlineResource);
+  std::string httpHost = "http://";
+  httpHost += pszHTTPHost;
+  httpHost += onlineResource;
   _onlineResource = httpHost;
   return httpHost;
 }
 
 bool CServerParams::checkBBOXXYOrder(const char *projName) {
   if (OGCVersion == WMS_VERSION_1_3_0) {
-    CT::string projNameString;
+    std::string projNameString;
     if (projName == NULL) {
       projNameString = geoParams.crs.c_str();
     } else {
@@ -251,8 +261,8 @@ int checkDataRestriction() {
   const char *data = getenv("ADAGUC_DATARESTRICTION");
   if (data != NULL) {
     dr = ALLOW_NONE;
-    CT::string temp(data);
-    temp.toUpperCaseSelf();
+    std::string temp(data);
+    temp = CT::toUpperCase(temp);
     if (temp == ("TRUE")) {
       dr = ALLOW_NONE;
     }
@@ -260,9 +270,9 @@ int checkDataRestriction() {
       dr = ALLOW_WCS | ALLOW_GFI | ALLOW_METADATA;
     }
     // Decompose into stringlist and check each item
-    std::vector<CT::string> items = temp.split("|");
+    std::vector<std::string> items = CT::split(temp, "|");
     for (size_t j = 0; j < items.size(); j++) {
-      items[j].replaceSelf("\"", "");
+      CT::replaceSelf(items[j], "\"", "");
       if (items[j] == ("ALLOW_GFI")) dr |= ALLOW_GFI;
       if (items[j] == ("ALLOW_WCS")) dr |= ALLOW_WCS;
       if (items[j] == ("ALLOW_METADATA")) dr |= ALLOW_METADATA;
@@ -330,7 +340,7 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
     /* Substitute ADAGUC_PATH */
     const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
     if (pszADAGUC_PATH != NULL) {
-      CT::string adagucPath = makeCleanPath(pszADAGUC_PATH);
+      std::string adagucPath = makeCleanPath(pszADAGUC_PATH);
       adagucPath = adagucPath + "/";
       CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath.c_str());
     }
@@ -412,7 +422,6 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
   } else {
-    // cfg=NULL;
     CDBError("Invalid XML file %s", pszConfigFile.c_str());
     return 1;
   }
@@ -421,18 +430,18 @@ int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vecto
 std::string CServerParams::getResponseHeaders(int mode) {
   auto tracingHeaders = traceTimingsGetHeader();
   if (cfg != nullptr && cfg->Settings.size() > 0) {
-    CT::string cacheString = "\r\nCache-Control:max-age=";
+    std::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
         if (atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()) != 0) {
-          cacheString.printconcat("%d", atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()));
+          cacheString += std::to_string(atoi(cfg->Settings[0]->attr.cache_age_volatileresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }
     } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
       if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
         if (atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()) != 0) {
-          cacheString.printconcat("%d", atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()));
+          cacheString += std::to_string(atoi(cfg->Settings[0]->attr.cache_age_cacheableresources.c_str()));
           return cacheString + tracingHeaders;
         }
       }

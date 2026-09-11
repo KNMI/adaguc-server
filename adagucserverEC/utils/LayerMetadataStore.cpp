@@ -4,6 +4,10 @@
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CStopWatch.h"
+#include "CTString.h"
 
 static const bool measureTime = false;
 
@@ -115,7 +119,6 @@ std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, std::string met
   std::string layerName = metadataLayer->dataSource->getLayerName();
   std::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
   if (datasetName.empty()) {
-    // CDBDebug("Not a dataset");
     return "";
   }
   CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName.c_str());
@@ -272,7 +275,6 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
     CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
-    // CDBError("loadLayerProjectionAndExtentListFromMetadataDb %d", e);
     return e;
   }
   return 0;
@@ -330,7 +332,6 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
     CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
-    // CDBError("loadLayerStyleListFromMetadataDb %d", e);
     return e;
   }
   return 0;

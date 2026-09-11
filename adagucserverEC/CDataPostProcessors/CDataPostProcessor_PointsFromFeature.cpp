@@ -4,6 +4,9 @@
 #include <CConvertGeoJSON.h>
 #include <sstream>
 #include <utils/GeometryUtils.h>
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPointsFromFeature     */

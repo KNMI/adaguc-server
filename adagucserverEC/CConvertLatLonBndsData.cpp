@@ -2,8 +2,8 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2024-01-26
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
@@ -26,8 +26,13 @@
 #include "CConvertLatLonBnds.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDebugger.h"
+#include "CTString.h"
+#include <netcdf.h>
 
-// #define CConvertLatLonBnds_DEBUG
+static const bool CConvertLatLonBnds_DEBUG = false;
 /**
  * This function draws the virtual 2D variable into a new 2D field
  */
@@ -41,9 +46,9 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
-#ifdef CConvertLatLonBnds_DEBUG
-  CDBDebug("convertLatLonBndsData %s", dataObjects[0]->cdfVariable->name.c_str());
-#endif
+  if (CConvertLatLonBnds_DEBUG) {
+    CDBDebug("convertLatLonBndsData %s", dataObjects[0]->cdfVariable->name.c_str());
+  }
 
   std::vector<CDF::Variable *> destRegularGrid(nrDataObjects, nullptr);
   std::vector<CDF::Variable *> irregularGridVar(nrDataObjects, nullptr);
@@ -51,8 +56,8 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   // Make references destRegularGrid and irregularGridVar
   for (size_t d = 0; d < nrDataObjects; d++) {
     destRegularGrid[d] = dataObjects[d]->cdfVariable;
-    CT::string orgName = destRegularGrid[d]->name.c_str();
-    orgName.concat("_backup");
+    std::string orgName = destRegularGrid[d]->name.c_str();
+    orgName += "_backup";
     irregularGridVar[d] = cdfObject->getVariableNE(orgName.c_str());
     if (irregularGridVar[d] == NULL) {
       CDBError("Unable to find orignal variable with name %s", orgName.c_str());
@@ -93,19 +98,19 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   // Detect minimum and maximum values
   MinMax minMax;
   minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, (double)fltFill, irregularGridVar[0]->getSize());
-#ifdef CConvertLatLonBnds_DEBUG
-  CDBDebug("minMax %f %f", minMax.min, minMax.max);
-#endif
+  if (CConvertLatLonBnds_DEBUG) {
+    CDBDebug("minMax %f %f", minMax.min, minMax.max);
+  }
 
   // Set statistics
   if (dataSource->stretchMinMax) {
-#ifdef CConvertLatLonBnds_DEBUG
-    CDBDebug("dataSource->stretchMinMax");
-#endif
+    if (CConvertLatLonBnds_DEBUG) {
+      CDBDebug("dataSource->stretchMinMax");
+    }
     if (dataSource->statistics == NULL) {
-#ifdef CConvertLatLonBnds_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
-#endif
+      if (CConvertLatLonBnds_DEBUG) {
+        CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
+      }
       dataSource->statistics = new Statistics();
       dataSource->statistics->setMinMax(minMax);
     }
@@ -127,17 +132,17 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   double offsetX = dataSource->srvParams->geoParams.bbox.left;
   double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
-#ifdef CConvertLatLonBnds_DEBUG
-  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-           dataSource->srvParams->geoParams.bbox.top);
-  CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-  CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+  if (CConvertLatLonBnds_DEBUG) {
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
+    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
+  }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CConvertLatLonBnds_DEBUG
-    CDBDebug("Drawing %s", destRegularGrid[0]->name.c_str());
-#endif
+    if (CConvertLatLonBnds_DEBUG) {
+      CDBDebug("Drawing %s", destRegularGrid[0]->name.c_str());
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -181,9 +186,9 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     double *latData = (double *)latitudeBnds->data;
 
     int numY = latitudeBnds->dimensionlinks[0]->getSize();
-#ifdef CConvertLatLonBnds_DEBUG
-    CDBDebug("numRows %d numCells %d", numY, numX);
-#endif
+    if (CConvertLatLonBnds_DEBUG) {
+      CDBDebug("numRows %d", numY);
+    }
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
@@ -197,7 +202,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
         projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
@@ -219,15 +224,15 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     if (gridpoint != NULL) {
       nr_points = gridpoint->getSize();
     }
-#ifdef CConvertLatLonBnds_DEBUG
-    CDBDebug("Start projecting numRows %d numCells %d", numY, numX);
-#endif
+    if (CConvertLatLonBnds_DEBUG) {
+      CDBDebug("Start projecting numRows %d", numY);
+    }
     size_t num = numY * 4;
 
     proj_trans_generic(imageWarper.projLatlonToDest, PJ_FWD, lonData, sizeof(double), num, latData, sizeof(double), num, nullptr, 0, 0, nullptr, 0, 0);
-#ifdef CConvertLatLonBnds_DEBUG
-    CDBDebug("Done projecting numRows %d numCells %d, now start drawing", numY, numX);
-#endif
+    if (CConvertLatLonBnds_DEBUG) {
+      CDBDebug("Done projecting numRows %d, now start drawing", numY);
+    }
 
     for (size_t gridPointer = 0; gridPointer < nr_points; gridPointer++) {
       double lons[4], lats[4];
@@ -269,8 +274,8 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     }
     imageWarper.closereproj();
   }
-#ifdef CConvertLatLonBnds_DEBUG
-  CDBDebug("/convertLatLonBndsData");
-#endif
+  if (CConvertLatLonBnds_DEBUG) {
+    CDBDebug("/convertLatLonBndsData");
+  }
   return 0;
 }

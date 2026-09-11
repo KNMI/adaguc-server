@@ -2,6 +2,8 @@
 #include "CDataPostProcessor_PointsFromGrid.h"
 #include <CImageWarper.h>
 #include <utils/GeometryUtils.h>
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPointsFromGrid     */

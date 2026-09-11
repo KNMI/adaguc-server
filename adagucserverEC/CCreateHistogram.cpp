@@ -1,6 +1,20 @@
 #include "CCreateHistogram.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
 #include "CGenericDataWarper.h"
 #include "CImageDataWriter.h"
+#include "CCDFObject.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CServerError.h"
 
 #define MAX_NUM_BINS 50
 
@@ -9,7 +23,7 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
   CDBDebug("createHistogram");
   CDBDebug("Building JSON");
 
-  CT::string resultJSON;
+  std::string resultJSON;
   if (dataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
     printf("%s%s%c%c\n", "Content-Type: application/json", dataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
@@ -18,8 +32,6 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
     printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("\n%s(", dataSource->srvParams->JSONP.c_str());
   }
-
-  // puts("{\"a\": 1}");
 
   if (dataSource->srvParams->JSONP.length() != 0) {
     printf(");");
@@ -32,8 +44,6 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
 int CCreateHistogram::init(CServerParams *, CDataSource *dataSource, int) {
   baseDataSource = dataSource;
 
-  //  int numTimeSteps = dataSource->getNumTimeSteps();
-
   JSONdata = "";
 
   return 0;
@@ -45,7 +55,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
   for (size_t i = 0; i < dataSources.size(); i++) {
 
     CDataSource *dataSource = dataSources[i];
-    JSONdata.concat("{");
+    JSONdata += "{";
     CDataReader reader;
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
 
@@ -150,10 +160,8 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     for (size_t j = 0; j < gridSize; j++) {
       float val = ((float *)warpedData)[j];
       if (val != (float)dfNoData) {
-        // CDBDebug("%f",val);
         int binIndex = int((val - min) / binSize);
         if (binIndex < 0 || binIndex >= MAX_NUM_BINS) {
-          // CDBError("Histogram errors!");
         } else {
           bins[binIndex]++;
         }
@@ -162,65 +170,61 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
 
     int numBins = floor((max - min) / binSize);
 
-    //       JSONdata.printconcat("\"dims\":{");
-    //       for(size_t d=0;d<dataSources[i]->requiredDims.size();d++){
-    //         JSONdata.printconcat("\"%s\":\"%s\"",dataSources[i]->requiredDims[d].name.c_str(),dataSources[i]->requiredDims[d].value.c_str());
     //       }
     //
-    //       JSONdata.concat("},");
     //
 
-    JSONdata.printconcat("\"%s\":{", dataSource->layerName.c_str());
+    CT::printfconcat(JSONdata, "\"%s\":{", dataSource->layerName.c_str());
 
     // Print info
-    JSONdata.printconcat("\"numdatasources\":%d,", dataSources.size());
-    JSONdata.printconcat("\"numdataobjects\":%d,", dataSource->getNumDataObjects());
+    CT::printfconcat(JSONdata, "\"numdatasources\":%zu,", dataSources.size());
+    CT::printfconcat(JSONdata, "\"numdataobjects\":%zu,", dataSource->getNumDataObjects());
     // Units
-    JSONdata.printconcat("\"units\":\"%s\",", dObjgetUnits(*dataSource->getDataObject(0)).c_str());
+    CT::printfconcat(JSONdata, "\"units\":\"%s\",", dObjgetUnits(*dataSource->getDataObject(0)).c_str());
 
     // Name
-    JSONdata.printconcat("\"layername\":\"%s\",", dataSource->layerName.c_str());
+    CT::printfconcat(JSONdata, "\"layername\":\"%s\",", dataSource->layerName.c_str());
 
     // Min/Max
-    JSONdata.printconcat("\"min\":%f,", dataSource->statistics->min);
-    JSONdata.printconcat("\"max\":%f,", dataSource->statistics->max);
+    CT::printfconcat(JSONdata, "\"min\":%f,", dataSource->statistics->min);
+    CT::printfconcat(JSONdata, "\"max\":%f,", dataSource->statistics->max);
 
-    JSONdata.printconcat("\"average\":%f,", dataSource->statistics->avg);
-    JSONdata.printconcat("\"stddev\":%f,", dataSource->statistics->stddev);
+    CT::printfconcat(JSONdata, "\"average\":%f,", dataSource->statistics->avg);
+    CT::printfconcat(JSONdata, "\"stddev\":%f,", dataSource->statistics->stddev);
 
     // FieldMin/Fieldmax
-    JSONdata.printconcat("\"fieldmin\":%f,", fieldMin);
-    JSONdata.printconcat("\"fieldmax\":%f,", fieldMax);
+    CT::printfconcat(JSONdata, "\"fieldmin\":%f,", fieldMin);
+    CT::printfconcat(JSONdata, "\"fieldmax\":%f,", fieldMax);
 
     // Print interval
-    JSONdata.printconcat("\"interval\":[");
+    CT::printfconcat(JSONdata, "\"interval\":[");
     for (int j = 0; j < numBins; j++) {
       if (j > 0) {
-        JSONdata.concat(",");
+        JSONdata += ",";
       }
-      JSONdata.printconcat("%f", j * binSize + min);
+      CT::printfconcat(JSONdata, "%f", j * binSize + min);
     }
-    JSONdata.concat("],");
+    JSONdata += "],";
     // Print quantity
-    JSONdata.printconcat("\"quantity\":[");
+    CT::printfconcat(JSONdata, "\"quantity\":[");
     for (int j = 0; j < numBins; j++) {
       if (j > 0) {
-        JSONdata.concat(",");
+        JSONdata += ",";
       }
-      JSONdata.printconcat("%d", bins[j]);
+      CT::printfconcat(JSONdata, "%d", bins[j]);
     }
-    JSONdata.concat("],");
+    JSONdata += "],";
     // Print width
-    JSONdata.printconcat("\"width\":[");
+    CT::printfconcat(JSONdata, "\"width\":[");
     for (int j = 0; j < numBins; j++) {
       if (j > 0) {
-        JSONdata.concat(",");
+        JSONdata += ",";
       }
-      JSONdata.printconcat("%f", binSize);
+      CT::printfconcat(JSONdata, "%f", binSize);
     }
-    JSONdata.concat("]");
-    JSONdata.concat("}"); // layer
-    JSONdata.concat("}");
+    JSONdata += "]";
+    JSONdata += "}"; // layer
+    JSONdata += "}";
   }
 
   return 0;
@@ -230,7 +234,7 @@ int CCreateHistogram::end() {
   CDBDebug("createHistogram");
   CDBDebug("Building JSON");
 
-  CT::string resultJSON;
+  std::string resultJSON;
   if (baseDataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
     printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);

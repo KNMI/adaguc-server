@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  Convert HDF5 volume scan data to CDM
  * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
- * Date:     2022-08-15
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,25 @@
 #include <tuple>
 #include <vector>
 #include "CConvertH5VolScan.h"
+#include "CDataSource.h"
 #include "CConvertH5VolScanUtils.h"
 #include "CImageWarper.h"
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
+#include "CCDFObject.h"
+#include "CServerParams.h"
+#include "CTString.h"
 
-bool sortFunction(CT::string one, CT::string other) {
-  if (one.endsWith("l")) {
-    one = one.substring(0, one.lastIndexOf("l"));
-    if (one.equals(other)) return true;
+static const bool CCONVERTH5VOLSCAN_DEBUG = false;
+
+bool sortFunction(std::string one, std::string other) {
+  if (CT::endsWith(one, "l")) {
+    one = CT::substring(one, 0, CT::lastIndexOf(one, "l"));
+    if (one == other) return true;
   }
-  if (other.endsWith("l")) {
-    other = other.substring(0, other.lastIndexOf("l"));
-    if (one.equals(other)) return false;
+  if (CT::endsWith(other, "l")) {
+    other = CT::substring(other, 0, CT::lastIndexOf(other, "l"));
+    if (one == other) return false;
   }
   return (std::atof(one.c_str()) < std::atof(other.c_str()));
 }
@@ -51,9 +57,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
   int nrscans = 0;
   std::vector<int> scan_ranges;
   std::vector<int> scans;
-  std::vector<CT::string> elevation_names;
-  std::vector<CT::string> scan_params = getScanParams(cdfObject);
-  std::vector<CT::string> units = getUnits(cdfObject);
+  std::vector<std::string> elevation_names;
+  std::vector<std::string> scan_params = getScanParams(cdfObject);
+  std::vector<std::string> units = getUnits(cdfObject);
 
   int max_range = 0;
   /* Assume no more than 99 scans */
@@ -70,21 +76,21 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     int scanElevationInt = lround(scan_elevation * 10.0);
     /* Skip 90 degree scan */
     if (scanElevationInt == 900) continue;
-    CT::string elevation_name;
+    std::string elevation_name;
     if (scanElevationInt % 10 == 0) {
-      elevation_name.print("%d", scanElevationInt / 10);
+      elevation_name = CT::printf("%d", scanElevationInt / 10);
     } else {
-      elevation_name.print("%d.%d", scanElevationInt / 10, scanElevationInt % 10);
+      elevation_name = CT::printf("%d.%d", scanElevationInt / 10, scanElevationInt % 10);
     }
     /* Dutch radars contain 3 0.3 degree scans. 1st is long range, second is short range, third is long range again. */
     /* Keep the first 2 and skip the last. */
     bool longRangePresent = false;
     int scanElevationIndex = -1;
     for (int i = 0; i < nrscans; i++) {
-      if (elevation_names[i].equals(elevation_name)) {
+      if (elevation_names[i] == elevation_name) {
         scanElevationIndex = i;
       }
-      if (elevation_names[i].equals(elevation_name + "l")) {
+      if (elevation_names[i] == elevation_name + "l") {
         longRangePresent = true;
       }
     }
@@ -105,13 +111,13 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     nrscans++;
   }
   /* Sort by elevation_name */
-  std::vector<CT::string> elevation_names_original(elevation_names);
+  std::vector<std::string> elevation_names_original(elevation_names);
   std::sort(elevation_names.begin(), elevation_names.end(), sortFunction);
   std::vector<int> sorted_scans;
   for (int i = 0; i < nrscans; i++) {
     int sort_index = -1;
     for (int j = 0; j < nrscans; j++) {
-      if (elevation_names[i].equals(elevation_names_original[j])) {
+      if (elevation_names[i] == elevation_names_original[j]) {
         sort_index = j;
       }
     }
@@ -121,26 +127,26 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
 
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
-    auto terms = var->name.split(".");
+    auto terms = CT::split(var->name, ".");
     if (terms.size() > 1) {
-      if (terms[0].startsWith("scan") && terms[1].startsWith("scan_") && terms[1].endsWith("_data")) {
+      if (CT::startsWith(terms[0], "scan") && CT::startsWith(terms[1], "scan_") && CT::endsWith(terms[1], "_data")) {
         var->setAttributeText("ADAGUC_SKIP", "TRUE");
       }
     }
-    if (var->name.startsWith("visualisation")) {
+    if (CT::startsWith(var->name, "visualisation")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
     /* Allow hybrid format used in IRC */
-    if (var->name.startsWith("dataset")) {
+    if (CT::startsWith(var->name, "dataset")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
-    if (var->name.startsWith("how")) {
+    if (CT::startsWith(var->name, "how")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
-    if (var->name.startsWith("what")) {
+    if (CT::startsWith(var->name, "what")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
-    if (var->name.startsWith("where")) {
+    if (CT::startsWith(var->name, "where")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
   }
@@ -166,9 +172,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     height = srvParams->geoParams.height;
   }
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-  CDBDebug("Width = %d, Height = %d", width, height);
-#endif
+  if (CCONVERTH5VOLSCAN_DEBUG) {
+    CDBDebug("Width = %d, Height = %d", width, height);
+  }
   if (width < 2 || height < 2) {
     CDBError("width and height are too small");
     return 1;
@@ -178,8 +184,6 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
   double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
   double offsetX = dfBBOX[0];
   double offsetY = dfBBOX[1];
-  // delete[] dfBBOX;
-  // dfBBOX = NULL;
 
   // Add geo variables, only if they are not there already
   CDF::Dimension *dimX = cdfObject->getDimensionNE("adaguccoordinatex");
@@ -219,9 +223,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     cdfObject->addVariable(varY);
     varY->allocateData(dimY->length);
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
+    }
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->getSize(); j++) {
@@ -242,8 +246,8 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->isDimension = true;
-    CT::string time_units = "minutes since 2000-01-01 00:00:00";
-    CT::string szStartTime = getRadarStartTime(cdfObject);
+    std::string time_units = "minutes since 2000-01-01 00:00:00";
+    std::string szStartTime = getRadarStartTime(cdfObject);
     // Set adaguc time
     CTime ctime;
     if (ctime.init(time_units, "") != 0) {
@@ -252,9 +256,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     }
     double offset;
     try {
-      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime.c_str()));
+      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
     } catch (int e) {
-      CT::string message = CTime::getErrorMessage(e);
+      std::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
       return 1;
     }
@@ -291,10 +295,8 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
       ((unsigned int *)varScan->data)[i] = sorted_scans[i];
     }
   }
-  // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
-  // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   int cnt = -1;
-  for (CT::string param: scan_params) {
+  for (std::string param: scan_params) {
     cnt++;
     if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
@@ -309,7 +311,6 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     var->setAttributeText("units", units[cnt].c_str());
     float fillValue = FLT_MAX;
     var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
-    // var->setCustomReader(memoryReader);
 
     var->dimensionlinks.push_back(dimT);
     var->dimensionlinks.push_back(dimElevation);
@@ -326,8 +327,8 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     CDF::Variable *new2DVar = dataSource->getDataObject(0)->cdfVariable;
 
-    bool doZdr = (new2DVar->name.equals("ZDR"));
-    bool doHeight = (new2DVar->name.equals("Height"));
+    bool doZdr = (new2DVar->name == "ZDR");
+    bool doHeight = (new2DVar->name == "Height");
 
     // Make the width and height of the new 2D adaguc field the same as the viewing window
     dataSource->dWidth = dataSource->srvParams->geoParams.width;
@@ -341,10 +342,10 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     double offsetX = dataSource->srvParams->geoParams.bbox.left;
     double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
-    CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
+      CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -364,9 +365,9 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     varX->allocateData(dimX->length);
     varY->allocateData(dimY->length);
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables");
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Data allocated for 'x' and 'y' variables");
+    }
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -392,7 +393,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
         projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
@@ -406,19 +407,19 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
       }
     }
 
-#ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTH5VOLSCAN_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
     int scan_index = dataSource->getDimensionIndex("scan_elevation");
     CDF::Variable *scanNumberVar = cdfObject->getVariableThrows("scan_number");
     int scan = scanNumberVar->getDataAt<int>(scan_index);
 
     if (doZdr) {
-      CDF::Variable *dataZdr = getDataVarForParam(cdfObject, scan, CT::string("ZDR"));
+      CDF::Variable *dataZdr = getDataVarForParam(cdfObject, scan, std::string("ZDR"));
       if (dataZdr != nullptr) {
         doZdr = false;
       }
@@ -445,20 +446,20 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     double gain = 1.0, offset = 0.0;
     double gainDBZV = 0, offsetDBZV = 0;
     double undetect = 0, nodata = 0;
-    CT::string scanDataVarName;
+    std::string scanDataVarName;
     CDF::Variable *scanDataVar = nullptr;
     CDF::Variable *scanDataVarDBZV = nullptr;
 
     if (!doHeight) {
-      CT::string componentCalibrationStringName;
+      std::string componentCalibrationStringName;
       if (doZdr) {
-        std::tie(gainDBZV, offsetDBZV, undetect, nodata) = getCalibrationParameters(cdfObject, scan, CT::string("DBZV"));
-        scanDataVarDBZV = getDataVarForParam(cdfObject, scan, CT::string("DBZV"));
+        std::tie(gainDBZV, offsetDBZV, undetect, nodata) = getCalibrationParameters(cdfObject, scan, std::string("DBZV"));
+        scanDataVarDBZV = getDataVarForParam(cdfObject, scan, std::string("DBZV"));
         scanDataVarDBZV->readData(CDF_DOUBLE);
 
         /* Assume nodata and undetect are the same between DBZV and DBZH */
-        std::tie(gain, offset, undetect, nodata) = getCalibrationParameters(cdfObject, scan, CT::string("DBZH"));
-        scanDataVar = getDataVarForParam(cdfObject, scan, CT::string("DBZH"));
+        std::tie(gain, offset, undetect, nodata) = getCalibrationParameters(cdfObject, scan, std::string("DBZH"));
+        scanDataVar = getDataVarForParam(cdfObject, scan, std::string("DBZH"));
         scanDataVar->readData(CDF_DOUBLE);
       } else {
         std::tie(gain, offset, undetect, nodata) = getCalibrationParameters(cdfObject, scan, new2DVar->name);
@@ -484,8 +485,8 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     }
 
     /*Setting geographical projection parameters of input Cartesian grid.*/
-    CT::string scanProj4;
-    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
+    std::string scanProj4;
+    scanProj4 = CT::printf("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
 

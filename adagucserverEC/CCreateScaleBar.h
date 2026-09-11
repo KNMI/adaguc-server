@@ -1,11 +1,8 @@
 #ifndef CCreateScaleBar_H
 #define CCreateScaleBar_H
 
-#include "Definitions.h"
-#include "CStopWatch.h"
-#include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CDebugger.h"
+#include "Types/GeoParameters.h"
 
 class CCreateScaleBar {
 

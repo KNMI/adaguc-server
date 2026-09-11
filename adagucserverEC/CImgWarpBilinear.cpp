@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,18 +24,137 @@
  ******************************************************************************/
 
 #include "CImgWarpBilinear.h"
+#include "CFillTriangle.h"
+#include "Types/CPointTypes.h"
 #include "CImageDataWriter.h"
 
 #include <set>
 
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include <map>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CStyleConfiguration.h"
+#include "CXMLParser.h"
+#include "Types/GeoParameters.h"
+#include "CStopWatch.h"
+
+static const bool CImgWarpBilinear_DEBUG = false;
+
+ShadeDefinition::ShadeDefinition(float min, float max, CColor fillColor, bool foundColor, CColor bgColor, bool hasBGColor) {
+  this->min = min;
+  this->max = max;
+  this->fillColor = fillColor;
+  this->foundColor = foundColor;
+  this->bgColor = bgColor;
+  this->hasBGColor = hasBGColor;
+}
+
+ContourDefinition::ContourDefinition() {
+  lineWidth = 1;
+  linecolor.r = 0;
+  linecolor.g = 0;
+  linecolor.b = 0;
+  linecolor.a = 255;
+  textcolor.r = 0;
+  textcolor.g = 0;
+  textcolor.b = 0;
+  textcolor.a = 0;
+  textstrokecolor.r = 0;
+  textstrokecolor.g = 0;
+  textstrokecolor.b = 0;
+  textstrokecolor.a = 0;
+  continuousInterval = 0;
+  textFormat = "%f";
+  fontSize = 0;        // Zero means take default.
+  textStrokeWidth = 0; // Zero means take default.
+}
+
+ContourDefinition::ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, const char *_definedIntervals, const char *_textFormat, float fontSize,
+                                      float textStrokeWidth, std::string dashing) {
+  this->lineWidth = lineWidth;
+  this->linecolor = linecolor;
+  this->textcolor = textcolor;
+  this->textstrokecolor = textstrokecolor;
+  this->fontSize = fontSize;
+  this->textStrokeWidth = textStrokeWidth;
+  this->dashing = dashing;
+  this->continuousInterval = 0;
+
+  if (_definedIntervals != NULL) {
+    std::string defIntervalString = _definedIntervals;
+    auto defIntervalList = CT::split(defIntervalString, ",");
+    for (size_t j = 0; j < defIntervalList.size(); j++) {
+      definedIntervals.push_back(atof(defIntervalList[j].c_str()));
+    }
+  }
+
+  if (_textFormat != NULL) {
+    if (strlen(_textFormat) > 1) {
+      this->textFormat = _textFormat;
+      return;
+    }
+  }
+}
+
+ContourDefinition::ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, float continuousInterval, const char *_textFormat, float fontSize,
+                                      float textStrokeWidth, std::string dashing) {
+
+  this->lineWidth = lineWidth;
+  this->linecolor = linecolor;
+  this->textcolor = textcolor;
+  this->textstrokecolor = textstrokecolor;
+  this->fontSize = fontSize;
+  this->textStrokeWidth = textStrokeWidth;
+  this->continuousInterval = continuousInterval;
+  this->dashing = dashing;
+
+  if (_textFormat != NULL) {
+    this->textFormat = _textFormat;
+    return;
+  }
+
+  float fracPart = continuousInterval - int(continuousInterval);
+  int textRounding = -int(log10(fracPart) - 0.9999999f);
+  if (textRounding <= 0) textFormat = "%2.0f";
+  if (textRounding == 1) textFormat = "%2.1f";
+  if (textRounding == 2) textFormat = "%2.2f";
+  if (textRounding == 3) textFormat = "%2.3f";
+  if (textRounding == 4) textFormat = "%2.4f";
+  if (textRounding == 5) textFormat = "%2.5f";
+  if (textRounding >= 6) textFormat = "%f";
+}
+
+Point::Point(int x, int y) {
+  this->x = x;
+  this->y = y;
+}
+
+CImgWarpBilinear::CImgWarpBilinear() {
+  drawMap = false;
+  enableContour = false;
+  enableVector = false;
+  enableBarb = false;
+  enableShade = false;
+  smoothingFilter = 1;
+  drawGridVectors = false;
+}
+CImgWarpBilinear::~CImgWarpBilinear() {
+  for (size_t j = 0; j < minimaPoints.size(); j++) delete minimaPoints[j];
+  for (size_t j = 0; j < maximaPoints.size(); j++) delete maximaPoints[j];
+}
 
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = sourceImage->getStyle();
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Render");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Render");
+  }
   int dImageWidth = drawImage->geoParams.width + 1;
   int dImageHeight = drawImage->geoParams.height + 1;
 
@@ -60,16 +179,14 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   int dPixelExtent[4];
   bool tryToOptimizeExtent = false;
 
-  //  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
   if (tryToOptimizeExtent) {
     // Reproject the boundingbox from the destination bbox:
     drawImage->geoParams.bbox.toArray(dfPixelExtent);
-#ifdef CImgWarpBilinear_DEBUG
-    for (int j = 0; j < 4; j++) {
-      CDBDebug("dfPixelExtent: %d %f", j, dfPixelExtent[j]);
+    if (CImgWarpBilinear_DEBUG) {
+      for (int j = 0; j < 4; j++) {
+        CDBDebug("dfPixelExtent: %d %f", j, dfPixelExtent[j]);
+      }
     }
-#endif
-    // warper->findExtent(sourceImage,dfPixelExtent);
     warper->reprojBBOX(dfPixelExtent);
 
     // Convert the bbox to source image pixel extent
@@ -130,12 +247,12 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   int dPixelDestH = dPixelExtent[3] - dPixelExtent[1];
   size_t numDestPixels = (dPixelDestW + 1) * (dPixelDestH + 1);
 
-// TODO increase field resolution in order to create better contour plots.
+  // TODO increase field resolution in order to create better contour plots.
 
-// Allocate memory
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Allocate, numDestPixels %d x %d", dPixelDestW, dPixelDestH);
-#endif
+  // Allocate memory
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Allocate, numDestPixels %d x %d", dPixelDestW, dPixelDestH);
+  }
   int *dpDestX = new int[numDestPixels]; // refactor to numGridPoints
   int *dpDestY = new int[numDestPixels];
 
@@ -160,50 +277,48 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   };
   ValueClass *valObj = new ValueClass[sourceImage->getNumDataObjects()];
   for (size_t dNr = 0; dNr < sourceImage->getNumDataObjects(); dNr++) {
-#ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Allocating valObj[%ld].fpValues: numDestPixels %d x %d", dNr, dPixelDestW, dPixelDestH);
-    CDBDebug("Allocating valObj[%ld].valueData: imageSize %d x %d", dNr, dImageWidth, dImageHeight);
-#endif
+    if (CImgWarpBilinear_DEBUG) {
+      CDBDebug("Allocating valObj[%ld].fpValues: numDestPixels %d x %d", dNr, dPixelDestW, dPixelDestH);
+      CDBDebug("Allocating valObj[%ld].valueData: imageSize %d x %d", dNr, dImageWidth, dImageHeight);
+    }
     valObj[dNr].fpValues = new float[numDestPixels];
     valObj[dNr].valueData = new float[dImageWidth * dImageHeight];
   }
 
   if (!sourceImage->getFirstAvailableDataObject()->hasNodataValue) {
-/* When the datasource has no nodata value, assign NAN */
-#ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Source image has no NoDataValue, assigning NAN");
-#endif
+    /* When the datasource has no nodata value, assign NAN */
+    if (CImgWarpBilinear_DEBUG) {
+      CDBDebug("Source image has no NoDataValue, assigning NAN");
+    }
     sourceImage->getFirstAvailableDataObject()->dfNodataValue = NAN;
     sourceImage->getFirstAvailableDataObject()->hasNodataValue = true;
   } else {
     /* Create a real nodata value instead of a nanf. */
 
     if (!(sourceImage->getFirstAvailableDataObject()->dfNodataValue == sourceImage->getFirstAvailableDataObject()->dfNodataValue)) {
-#ifdef CImgWarpBilinear_DEBUG
-      CDBDebug("Source image has no nodata value NaNf, changing this to NAN");
-#endif
+      if (CImgWarpBilinear_DEBUG) {
+        CDBDebug("Source image has no nodata value NaNf, changing this to NAN");
+      }
       sourceImage->getFirstAvailableDataObject()->dfNodataValue = NAN;
     }
   }
   // Get the nodatavalue
   float fNodataValue = sourceImage->getFirstAvailableDataObject()->dfNodataValue;
 
-// Reproject all the points
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Nodata value = %f", fNodataValue);
+  // Reproject all the points
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Nodata value = %f", fNodataValue);
 
-  StopWatch_Stop("Start Reprojecting all the points");
-  char temp[32];
-  CDF::getCDFDataTypeName(temp, 31, sourceImage->getFirstAvailableDataObject()->cdfVariable->getType());
-  CDBDebug("datatype: %s", temp);
-  for (int j = 0; j < 4; j++) {
-    CDBDebug("dPixelExtent[%d]=%d", j, dPixelExtent[j]);
+    StopWatch_Stop("Start Reprojecting all the points");
+    CDBDebug("datatype: %s", CDF::getCDFDataTypeName(sourceImage->getFirstAvailableDataObject()->cdfVariable->getType()).c_str());
+    for (int j = 0; j < 4; j++) {
+      CDBDebug("dPixelExtent[%d]=%d", j, dPixelExtent[j]);
+    }
   }
-#endif
 
-#ifdef CImgWarpBilinear_DEBUG
-  StopWatch_Stop("Setting data objects");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    StopWatch_Stop("Setting data objects");
+  }
 
   for (int y = dPixelExtent[1]; y < dPixelExtent[3] + 1; y++) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2] + 1; x++) {
@@ -224,8 +339,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       dpDestX[p] = (int)destX; // 2-200;
       dpDestY[p] = (int)destY; // 2+200;
 
-      // CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
-      //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
       for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {
         void *data = sourceImage->getDataObject(varNr)->cdfVariable->data;
         float *fpValues = valObj[varNr].fpValues;
@@ -237,7 +350,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
         if (y1 >= sourceImage->dHeight) {
           y1 -= sourceImage->dHeight;
         }
-        // if(x1>=0&&x1<sourceImage->dWidth&&y>=0&&y<sourceImage->dHeight){
         size_t sp = x1 + y1 * sourceImage->dWidth;
 
         switch (sourceImage->getDataObject(varNr)->cdfVariable->getType()) {
@@ -275,9 +387,9 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       }
     }
   }
-#ifdef CImgWarpBilinear_DEBUG
-  StopWatch_Stop("reprojection finished");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    StopWatch_Stop("reprojection finished");
+  }
   bool has_u_v_grid_rel = (sourceImage->getNumDataObjects() >= 3 &&
                            (dObjgetVariableName(*sourceImage->getDataObject(2)) == U_COMPONENT_GRID_ABSOLUTE && dObjgetVariableName(*sourceImage->getDataObject(3)) == V_COMPONENT_GRID_ABSOLUTE));
   bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
@@ -286,10 +398,10 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     float *fpValues = valObj[varNr].fpValues;
     float *valueData = valObj[varNr].valueData;
 
-// Smooth the data (better for contour lines)
-#ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("start smoothing data with filter %d", smoothingFilter);
-#endif
+    // Smooth the data (better for contour lines)
+    if (CImgWarpBilinear_DEBUG) {
+      CDBDebug("start smoothing data with filter %d", smoothingFilter);
+    }
     smoothData(fpValues, fNodataValue, smoothingFilter, dPixelDestW + 1, dPixelDestH + 1);
 
     // Draw the obtained raster by using triangle tesselation (eg gouraud shading)
@@ -300,8 +412,12 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     // Set default nodata values
     for (size_t j = 0; j < drawImageSize; j++) valueData[j] = fNodataValue;
 // start drawing triangles
-#if defined(CImgWarpBilinear_DEBUG) || defined(CImgWarpBilinear_TIME)
+#ifdef CImgWarpBilinear_TIME
     StopWatch_Stop("Start triangle generation");
+#else
+    if (CImgWarpBilinear_DEBUG) {
+      StopWatch_Stop("Start triangle generation");
+    }
 #endif
 
     /*
@@ -353,7 +469,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
             if (abs(avgDX - xP[2]) > 0) {
               if (abs(avgDX - xP[2]) < abs(xP[2] - xP[0]) / 4) {
                 doDraw = false;
-                // CDBDebug("%d %d (%d %d %d %d) ",avgDX-xP[2],xP[2]-xP[0],avgDX,xP[0],xP[1],xP[2]);
               }
             }
           }
@@ -366,10 +481,10 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     }
   }
 
-// Copy pointerdatabitmap to graphics
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Start converting float bitmap to graphics");
-#endif
+  // Copy pointerdatabitmap to graphics
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Start converting float bitmap to graphics");
+  }
 
   float *valueData = valObj[0].valueData;
   // Draw bilinear, simple variable
@@ -495,8 +610,6 @@ unsigned short CImgWarpBilinear::checkIfContourRequired(float *val) {
     if (contourDefinitions[j].definedIntervals.size() > 0) {
       for (size_t i = 0; i < contourDefinitions[j].definedIntervals.size(); i++) {
         float c = contourDefinitions[j].definedIntervals[i];
-        //(val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-        //(val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c)
         if ((val[0] >= c && val[1] < c) || (val[0] > c && val[1] <= c) || (val[0] < c && val[1] >= c) || (val[0] <= c && val[1] > c) || (val[0] > c && val[2] <= c) || (val[0] >= c && val[2] < c) ||
             (val[0] <= c && val[2] > c) || (val[0] < c && val[2] >= c)
 
@@ -534,10 +647,8 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   for (int y1 = -smw; y1 < smw + 1; y1++) {
     for (int x1 = -smw; x1 < smw + 1; x1++) {
       float d = sqrt(x1 * x1 + y1 * y1);
-      // d=d*8;
 
       d = 1 / (d + 1);
-      // d=1;
       distanceWindow[dWinP++] = d;
       distanceAmmount += d;
     }
@@ -581,85 +692,83 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
 }
 
 int CImgWarpBilinear::set(const char *pszSettings) {
-  // fprintf(stderr, "CImgWarpBilinear.set(%s)\n", pszSettings);
-  //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
 
   if (pszSettings == NULL) return 0;
   contourDefinitions.clear();
-  CT::string settings(pszSettings);
+  std::string settings(pszSettings);
   if (settings.empty()) return 0;
 
-  auto nodes = settings.split(";");
+  auto nodes = CT::split(settings, ";");
   for (auto &node: nodes) {
-    auto values = node.split("=");
+    auto values = CT::split(node, "=");
     if (values.size() < 2) continue;
 
-    if (values[0].equals("drawMap")) {
+    if (values[0] == "drawMap") {
       if (values[1] == "true") drawMap = true;
       if (values[1] == "false") drawMap = false;
     }
-    if (values[0].equals("drawContour")) {
+    if (values[0] == "drawContour") {
       if (values[1] == "true") enableContour = true;
       if (values[1] == "false") enableContour = false;
     }
-    if (values[0].equals("drawShaded")) {
+    if (values[0] == "drawShaded") {
       if (values[1] == "true") enableShade = true;
       if (values[1] == "false") enableShade = false;
     }
-    if (values[0].equals("drawVector")) {
+    if (values[0] == "drawVector") {
       if (values[1] == "true") enableVector = true;
       if (values[1] == "false") enableVector = false;
     }
-    if (values[0].equals("drawBarb")) {
+    if (values[0] == "drawBarb") {
       if (values[1] == "true") enableBarb = true;
       if (values[1] == "false") enableBarb = false;
     }
 
-    if (values[0].equals("shadeInterval")) {
-      shadeInterval = values[1].toFloat();
+    if (values[0] == "shadeInterval") {
+      shadeInterval = atof(values[1].c_str());
     }
-    if (values[0].equals("smoothingFilter")) {
-      smoothingFilter = values[1].toInt();
+    if (values[0] == "smoothingFilter") {
+      smoothingFilter = atoi(values[1].c_str());
       if (smoothingFilter < 0 || smoothingFilter > 20) {
         CDBWarning("invalid value given for smoothingFilter %s", pszSettings);
       }
     }
 
-    if (values[0].equals("contourBigInterval")) {
-      float f = values[1].toFloat();
+    if (values[0] == "contourBigInterval") {
+      float f = atof(values[1].c_str());
       if (f > 0) {
         contourDefinitions.push_back(ContourDefinition(1.4, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
       }
     }
 
-    if (values[0].equals("contourSmallInterval")) {
-      float f = values[1].toFloat();
+    if (values[0] == "contourSmallInterval") {
+      float f = atof(values[1].c_str());
       if (f > 0) {
         contourDefinitions.push_back(ContourDefinition(0.35, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
       }
     }
 
-    if (values[0].equals("shading")) {
+    if (values[0] == "shading") {
       CColor fillcolor = CColor(0, 0, 0, 0);
       CColor bgColor = CColor(0, 0, 0, 0);
       float max = 0, min = 0;
       bool foundColor = false;
       bool hasBGColor = false;
 
-      auto shadeSettings = values[1].split("$");
+      auto shadeSettings = CT::split(values[1], "$");
       for (auto &shadeSetting: shadeSettings) {
-        auto kvp = shadeSetting.split("(");
+        auto kvp = CT::split(shadeSetting, "(");
         if (kvp.size() < 2) continue;
-        if (kvp[0].equals("min")) min = kvp[1].toFloat();
-        if (kvp[0].equals("max")) max = kvp[1].toFloat();
+        if (kvp[0] == "min") min = atof(kvp[1].c_str());
+        if (kvp[0] == "max") max = atof(kvp[1].c_str());
 
-        if (kvp[0].equals("fillcolor")) {
-          kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
+        if (kvp[0] == "fillcolor") {
+          kvp[1].resize(kvp[1].length() - 1); // Remove trailing bracket (')')
           fillcolor = CColor(kvp[1].c_str());
           foundColor = true;
         }
-        if (kvp[0].equals("bgcolor")) {
-          kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
+        if (kvp[0] == "bgcolor") {
+          kvp[1].resize(kvp[1].length() - 1); // Remove trailing bracket (')')
           CDBDebug("Found bgcolor");
           bgColor = CColor(kvp[1].c_str());
           hasBGColor = true;
@@ -669,7 +778,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       shadeDefinitions.push_back(ShadeDefinition(min, max, fillcolor, foundColor, bgColor, hasBGColor));
     }
 
-    if (values[0].equals("contourline")) {
+    if (values[0] == "contourline") {
       float lineWidth = 1;
       CColor linecolor = CColor(0, 0, 0, 255);
       CColor textcolor = CColor(0, 0, 0, 255);
@@ -677,50 +786,50 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       float interval = 0;
       float fontSize = 0;
       float textStrokeWidth = 0;
-      CT::string textformat;
-      CT::string classes;
-      CT::string dashing;
+      std::string textformat;
+      std::string classes;
+      std::string dashing;
 
-      auto lineSettings = values[1].split("$");
+      auto lineSettings = CT::split(values[1], "$");
       for (auto &lineSetting: lineSettings) {
-        auto kvp = lineSetting.split("(");
+        auto kvp = CT::split(lineSetting, "(");
         if (kvp.size() < 2) continue;
 
-        int endOfKVP = kvp[1].lastIndexOf(")");
+        int endOfKVP = CT::lastIndexOf(kvp[1], ")");
         if (endOfKVP != -1) {
-          kvp[1].setSize(endOfKVP);
+          kvp[1].resize(endOfKVP);
         }
 
-        if (kvp[0].equals("width")) lineWidth = kvp[1].toFloat();
-        if (kvp[0].equals("interval")) {
-          interval = kvp[1].toFloat();
+        if (kvp[0] == "width") lineWidth = atof(kvp[1].c_str());
+        if (kvp[0] == "interval") {
+          interval = atof(kvp[1].c_str());
         }
-        if (kvp[0].equals("classes")) {
+        if (kvp[0] == "classes") {
           classes = (kvp[1].c_str());
         }
-        if (kvp[0].equals("linecolor")) {
-          kvp[1].setSize(7);
+        if (kvp[0] == "linecolor") {
+          kvp[1].resize(7);
           linecolor = CColor(kvp[1].c_str());
         }
-        if (kvp[0].equals("textcolor")) {
-          kvp[1].setSize(7);
+        if (kvp[0] == "textcolor") {
+          kvp[1].resize(7);
           textcolor = CColor(kvp[1].c_str());
         }
-        if (kvp[0].equals("textstrokecolor")) {
-          kvp[1].setSize(7);
+        if (kvp[0] == "textstrokecolor") {
+          kvp[1].resize(7);
           textstrokecolor = CColor(kvp[1].c_str());
         }
-        if (kvp[0].equals("textformatting")) {
-          textformat.copy(kvp[1].c_str(), kvp[1].length());
+        if (kvp[0] == "textformatting") {
+          textformat.assign(kvp[1].c_str(), kvp[1].length());
         }
-        if (kvp[0].equals("dashing")) {
-          dashing.copy(kvp[1].c_str(), kvp[1].length());
+        if (kvp[0] == "dashing") {
+          dashing.assign(kvp[1].c_str(), kvp[1].length());
         }
-        if (kvp[0].equals("textsize")) {
-          fontSize = kvp[1].toFloat();
+        if (kvp[0] == "textsize") {
+          fontSize = atof(kvp[1].c_str());
         }
-        if (kvp[0].equals("textstrokewidth")) {
-          textStrokeWidth = kvp[1].toFloat();
+        if (kvp[0] == "textstrokewidth") {
+          textStrokeWidth = atof(kvp[1].c_str());
         }
       }
 
@@ -733,7 +842,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       }
     }
 
-    if (values[0].equals("drawGridVectors")) {
+    if (values[0] == "drawGridVectors") {
       drawGridVectors = values[1] == "true";
     }
   }
@@ -756,8 +865,8 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
                                                CColor textColor, CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth) {
 
   /* Draw text */
-  CT::string text;
-  text.print(contourDefinition->textFormat.c_str(), value);
+  std::string text;
+  text = CT::printf(contourDefinition->textFormat.c_str(), value);
 
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
   double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
@@ -867,8 +976,6 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
         }
       }
     }
-    // if (!foundLine){
-    //   drawImage->rectangle(lineX-5, lineY-5, lineX+5,lineY+5, 240);
     // }
     lineX = nextLineX;
     lineY = nextLineY;
@@ -890,7 +997,6 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
     }
   }
 
-  // textLocations->clear();
   /* Now draw this line */
   drawImage->moveTo(lineSegmentsX[0], lineSegmentsY[0]);
 
@@ -958,24 +1064,15 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   double scaling = dataSource->getContourScaling();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
 
-  // float ival = interval;
-  //   float ivalLine = interval;
-  // float idval=int(ival+0.5);
-  //  if(idval<1)idval=1;
   // TODO
-
-  // char szTemp[8192];
-  // szTemp[0]='\0';
-  // float currentTextValue = 0;
-  // int contourDefinitionIndex = -1;
 
   int dImageWidth = drawImage->geoParams.width + 1;
   int dImageHeight = drawImage->geoParams.height + 1;
 
   size_t imageSize = (dImageHeight + 0) * (dImageWidth + 1);
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("imagesize = %d", (int)imageSize);
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("imagesize = %d", (int)imageSize);
+  }
 
   // Create a distance field, this is where the line information will be put in.
   DISTANCEFIELDTYPE *distance = new DISTANCEFIELDTYPE[imageSize];
@@ -1001,9 +1098,9 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
        #endif
      }*/
 
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("start shade/contour with nodatavalue %f", fNodataValue);
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("start shade/contour with nodatavalue %f", fNodataValue);
+  }
 
   float val[4];
 
@@ -1028,7 +1125,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
         }
       }
       if (foundOne != -1) {
-        // CDBDebug("SHADEDEF %d uses def %d\t(%f\t%f)",shadeDefinitionsExpanded.size(),foundOne,previ,i);
         shadeDefinitionsExpanded.push_back(
             ShadeDefinition(previ, i, shadeDefinitions[foundOne].fillColor, shadeDefinitions[foundOne].foundColor, shadeDefinitions[foundOne].bgColor, shadeDefinitions[foundOne].hasBGColor));
       }
@@ -1126,8 +1222,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
 
       // Check if all pixels have values...
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
-        //           for(int i=0;i<4;i++){
-        //             if(val[i]<minValue)val[i]=minValue;else if(val[i]>maxValue)val[i]=maxValue;
         //           }
         // Draw contourlines
         if (drawLine || drawText) {
@@ -1149,12 +1243,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
               // Check for continuous lines
               if (contourDefinitions[j].continuousInterval != 0.0) {
                 float contourinterval = contourDefinitions[j].continuousInterval;
-                // float allowedDifference = contourinterval / 100000;
-                /*float a,b;
-                a = (val[0]<val[1]?val[0]:val[1]);b = (val[2]<val[3]?val[2]:val[3]);
-                //float min=a<b?a:b;
-                a = (val[0]>val[1]?val[0]:val[1]);b = (val[2]>val[3]?val[2]:val[3]);
-                //float max=a>b?a:b;*/
                 float min, max;
                 min = val[0];
                 max = val[0];
@@ -1206,11 +1294,11 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     double *dashes = NULL;
     int numDashes = 0;
     if (contourDefinitions[j].dashing.length() > 0) {
-      auto stringDashes = contourDefinitions[j].dashing.split(",");
+      auto stringDashes = CT::split(contourDefinitions[j].dashing, ",");
       numDashes = stringDashes.size();
       dashes = new double[numDashes];
       for (int j = 0; j < numDashes; j++) {
-        dashes[j] = stringDashes[j].toDouble();
+        dashes[j] = CT::toDouble(stringDashes[j]);
       }
     }
 
@@ -1228,13 +1316,13 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     delete[] dashes;
   }
 
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Deleting distance[]");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Deleting distance[]");
+  }
 
   delete[] distance;
 
-#ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Finished drawing lines and text");
-#endif
+  if (CImgWarpBilinear_DEBUG) {
+    CDBDebug("Finished drawing lines and text");
+  }
 }

@@ -25,7 +25,7 @@ int main(int argCount, char **argVars) {
       CDBError("Unable to read file %s", inputfile);
       throw(__LINE__);
     }
-    CT::string dumpString = CDF::dump(cdfObject);
+    std::string dumpString = CDF::dump(cdfObject);
     printf("%s\n", dumpString.c_str());
     delete geoJSONReader;
     geoJSONReader = NULL;

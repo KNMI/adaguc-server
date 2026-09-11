@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,40 +23,29 @@
  *
  ******************************************************************************/
 
-#include "Definitions.h"
 #ifdef ADAGUC_USE_GDAL
 #ifndef CGDALDataWriter_H
 #define CGDALDataWriter_H
-#include "CServerParams.h"
-#include "CDataSource.h"
-#include "CDataReader.h"
-#include "gdalwarper.h"
 #include <gdal.h>
 #include <gdal_pam.h>
 #include <gdal_priv.h>
 #include <gdal_frmts.h>
 #include <cpl_string.h>
+#include "CIBaseDataWriterInterface.h"
 #include <ogr_srs_api.h>
 #include <cpl_conv.h>
 #include <ogr_spatialref.h>
 #include <ctype.h>
-#include "CDebugger.h"
-#include "CTString.h"
-#include "CServerError.h"
-#include "CDrawImage.h"
 
-#include "CImageWarper.h"
 
 #include "CXMLGen.h"
 
-#include "CDataReader.h"
 
-#include "CIBaseDataWriterInterface.h"
 #define MAX_STR_LEN 8191
 
 class CGDALDataWriter : public CBaseDataWriterInterface {
 private:
-  CT::string driverName;
+  std::string driverName;
   struct GdalDrawFunctionState {
     size_t width;
     size_t height;
@@ -80,16 +69,16 @@ private:
 
   int currentBandNr;
   int NrOfBands;
-  CT::string mimeType;
-  CT::string customOptions;
-  CT::string *InputProducts;
-  CT::string TimeUnit;
+  std::string mimeType;
+  std::string customOptions;
+  std::string *InputProducts;
+  std::string TimeUnit;
   double dfNoData;
 
   CDataSource *_dataSource;
 
-  CT::string generateGetCoverageFileName();
-  CT::string getDimensionValue(int d, CCDFDims *dims);
+  std::string generateGetCoverageFileName();
+  std::string getDimensionValue(int d, CCDFDims *dims);
 
 public:
   CGDALDataWriter() { InputProducts = NULL; }

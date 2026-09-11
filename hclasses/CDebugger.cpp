@@ -2,12 +2,12 @@
  *
  * Project:  Helper classes
  * Purpose:  Generic functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,15 @@
  ******************************************************************************/
 
 #include "CDebugger.h"
-#include <iostream>
+#include "CTString.h"
+#include <cstdarg>
+#include <cstdio>
 #include <unistd.h>
 
 unsigned int logMessageNumber = 0;
 
 unsigned long logProcessIdentifier = getpid();
 
-#include "CTString.h"
 /*
  * If these prototypes are changed, also change the extern
  * declarations in CReporter.cpp that are referring to the

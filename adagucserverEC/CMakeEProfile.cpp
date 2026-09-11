@@ -1,21 +1,36 @@
 #include <vector>
 #include <algorithm>
 #include "CMakeEProfile.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CXMLParser.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURTypes.h"
+#include "CDFObjectStore.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CTime.h"
 
-// #define CMakeEProfile_DEBUG
+static const bool CMakeEProfile_DEBUG = false;
 
 #define CMakeEProfile_MAX_DIMS 255
 
 #define DEFAULT_VALIDITY_LENGTH_OF_OBSERVATION_IN_SECONDS 12.0f
 
-std::string encodeJSON(CT::string input) {
-  CT::string str = input;
-  str.replaceSelf("\"", "\\");
-  str.replaceSelf("\n", "");
-  str.replaceSelf("\"", "\\\"");
-  return str.c_str();
+CMakeEProfile::DayPass::DayPass(int x, double offset) {
+  this->x = x;
+  this->offset = offset;
+}
+
+std::string encodeJSON(std::string input) {
+  std::string str = input;
+  CT::replaceSelf(str, "\"", "\\");
+  CT::replaceSelf(str, "\n", "");
+  CT::replaceSelf(str, "\"", "\\\"");
+  return str;
 }
 
 class EProfileUniqueRequests {
@@ -24,7 +39,7 @@ public:
 
   class AggregatedDimension {
   public:
-    CT::string name;
+    std::string name;
     int start;
     std::vector<std::string> values;
   };
@@ -48,7 +63,7 @@ public:
     AggregatedDimension *dimensions[CMakeEProfile_MAX_DIMS];
   };
 
-  int drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *start, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource, CT::string *eProfileJSON);
+  int drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *start, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource, std::string &eProfileJSON);
   int plotHeightRetrieval(CDrawImage *drawImage, CDFObject *cdfObject, const char *varName, CColor c, size_t NrOfDates, double startGraphTime, double startGraphRange, double graphWidth,
                           double graphHeight, int timeWidth);
 
@@ -81,13 +96,10 @@ public:
 
       delete filemapiterator->second;
     }
-    //     for(size_t j=0;j<results.size();j++){
-    //       delete results[j];
     //     }
-    //     results.clear();
   }
 
-  void set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) {
+  void set(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {
 
     /* Find the right file based on filename */
     FileInfo *fileInfo = NULL;
@@ -110,16 +122,12 @@ public:
     }
 
     dimInfo->dimValuesMap[dimIndex] = dimValue.c_str();
-
-#ifdef CMakeEProfile_DEBUG
-//    CDBDebug("Adding %s %d %s",dimName,dimIndex,dimValue.c_str());
-#endif
   }
 
   void addDimSet(DimInfo *dimInfo, int start, std::vector<std::string> valueList) {
-#ifdef CMakeEProfile_DEBUG
-    CDBDebug("Adding %d with %d values", start, valueList->size());
-#endif
+    if (CMakeEProfile_DEBUG) {
+      CDBDebug("Adding %d with %zu values", start, valueList.size());
+    }
     AggregatedDimension *aggregatedValue = new AggregatedDimension();
     aggregatedValue->start = start;
     aggregatedValue->values = valueList;
@@ -142,13 +150,11 @@ public:
       }
       return;
     } else {
-#ifdef CMakeEProfile_DEBUG
-      //      CDBDebug("B %d %s",depth,p.c_str());
-      CDBDebug("Add request with following:");
-#endif
+      if (CMakeEProfile_DEBUG) {
+        CDBDebug("Add request with following:");
+      }
       Request *request = new Request();
       for (int j = 0; j < depth; j++) {
-        // CDBDebug("  %d %s %d %d",j,dimensions[j]->name.c_str(),dimensions[j]->start,dimensions[j]->values.size());
         request->dimensions[j] = dimensions[j];
       }
       request->numDims = depth;
@@ -161,9 +167,9 @@ public:
     for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
 
       for (it_type_diminfo diminfomapiterator = (filemapiterator->second)->dimInfoMap.begin(); diminfomapiterator != (filemapiterator->second)->dimInfoMap.end(); diminfomapiterator++) {
-#ifdef CMakeEProfile_DEBUG
-        CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
-#endif
+        if (CMakeEProfile_DEBUG) {
+          CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
+        }
         auto *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
         int dimindex = 0;
@@ -171,8 +177,6 @@ public:
         int startDimIndex = 0;
         std::vector<std::string> dimValues;
         for (auto dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
-          // const char *filename=(filemapiterator->first).c_str();
-          // const char *dimname=(diminfomapiterator->first).c_str();
           dimindex = dimvalindexmapiterator->first;
           const char *dimvalue = dimvalindexmapiterator->second.c_str();
 
@@ -182,35 +186,32 @@ public:
             } else {
 
               //*** GO ***
-#ifdef CMakeEProfile_DEBUG
-              CDBDebug("Print stop at %d", currentDimIndex);
-#endif
+              if (CMakeEProfile_DEBUG) {
+                CDBDebug("Print stop at %d", currentDimIndex);
+              }
               currentDimIndex = -1;
               addDimSet(diminfomapiterator->second, startDimIndex, dimValues);
             }
           }
 
           if (currentDimIndex == -1) {
-#ifdef CMakeEProfile_DEBUG
-            CDBDebug("Print start at %d", dimindex);
-#endif
+            if (CMakeEProfile_DEBUG) {
+              CDBDebug("Print start at %d", dimindex);
+            }
             currentDimIndex = dimindex;
             startDimIndex = dimindex;
             dimValues.clear();
           }
 
           if (currentDimIndex != -1) {
-#ifdef CMakeEProfile_DEBUG
-//              CDBDebug("Add %d / %s",dimindex,dimvalue);
-#endif
             dimValues.push_back(dimvalue);
           }
         }
         if (currentDimIndex != -1) {
           //*** GO ***
-#ifdef CMakeEProfile_DEBUG
-          CDBDebug("Print stop at %d", dimindex);
-#endif
+          if (CMakeEProfile_DEBUG) {
+            CDBDebug("Print stop at %d", dimindex);
+          }
           currentDimIndex = -1;
           addDimSet(diminfomapiterator->second, startDimIndex, dimValues);
         }
@@ -223,10 +224,10 @@ public:
     }
   }
 
-  void makeRequests(CDrawImage *drawImage, CImageWarper *, CDataSource *dataSource, int, int, CT::string *eProfileJson) {
-#ifdef CMakeEProfile_DEBUG
-    CDBDebug("\\makeRequests");
-#endif
+  void makeRequests(CDrawImage *drawImage, CImageWarper *, CDataSource *dataSource, int, int, std::string &eProfileJson) {
+    if (CMakeEProfile_DEBUG) {
+      CDBDebug("\\makeRequests");
+    }
     CDataReader reader;
 
     reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
@@ -247,24 +248,20 @@ public:
         return;
       }
     }
-#ifdef CMakeEProfile_DEBUG
-    CDBDebug("dataSource->dataObjects.size() = [%d]", dataSource->dataObjects.size());
-#endif
+    if (CMakeEProfile_DEBUG) {
+      CDBDebug("dataSource->dataObjects.size() = [%zu]", dataSource->dataObjects.size());
+    }
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
       DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
-      CT::string variableName = dataObject->cdfVariable->name;
-      variableName.concat("_backup");
+      std::string variableName = dataObject->cdfVariable->name;
+      variableName += "_backup";
       // Show all requests
 
       for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-#ifdef CMakeEProfile_DEBUG
-        CDBDebug("filemapiterator");
-#endif
-        //         CT::string ckey;ckey.print("%d%d%s",dX,dY,dataSource->nativeProj4.c_str());
-        //         CImageDataWriter::ProjCacheInfo projCacheInfo = CImageDataWriter::GetProjInfo(ckey,drawImage,dataSource,imageWarper, dataSource->srvParams,dX,dY);
-        //         CDBDebug("projCacheInfo.isOutsideBBOX == %d",projCacheInfo.isOutsideBBOX);
+        if (CMakeEProfile_DEBUG) {
+          CDBDebug("filemapiterator");
+        }
 
-        // if(projCacheInfo.isOutsideBBOX == false)
         {
 
           CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, (filemapiterator->first).c_str());
@@ -278,9 +275,9 @@ public:
           for (size_t j = 0; j < (filemapiterator->second)->requests.size(); j++) {
 
             Request *request = (filemapiterator->second)->requests[j];
-#ifdef CMakeEProfile_DEBUG
-            CDBDebug("%s", (filemapiterator->first).c_str());
-#endif
+            if (CMakeEProfile_DEBUG) {
+              CDBDebug("%s", (filemapiterator->first).c_str());
+            }
 
             variable->freeData();
 
@@ -296,11 +293,11 @@ public:
                    start[dataSource->dimYIndex] = projCacheInfo.imy;
                */
 
-#ifdef CMakeEProfile_DEBUG
-            for (size_t i = 0; i < variable->dimensionlinks.size(); i++) {
-              CDBDebug("  %d [%d:%d]", i, start[i], count[i]);
+            if (CMakeEProfile_DEBUG) {
+              for (size_t i = 0; i < variable->dimensionlinks.size(); i++) {
+                CDBDebug("  %zu [%zu:%zu]", i, start[i], count[i]);
+              }
             }
-#endif
 
             variable->setType(CDF_FLOAT);
             int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
@@ -321,13 +318,12 @@ public:
                   double dfadd_offset = 0;
                   double dfscale_factor = 1;
 
-                  CT::string offsetStr = proc->attr.b.c_str();
-                  dfadd_offset = offsetStr.toDouble();
-                  CT::string scaleStr = proc->attr.a.c_str();
-                  dfscale_factor = scaleStr.toDouble();
+                  std::string offsetStr = proc->attr.b.c_str();
+                  dfadd_offset = CT::toDouble(offsetStr);
+                  std::string scaleStr = proc->attr.a.c_str();
+                  dfscale_factor = CT::toDouble(scaleStr);
                   double *_data = (double *)variable->data;
                   for (size_t j = 0; j < variable->getSize(); j++) {
-                    // if(j%10000==0){CDBError("%d = %f",j,_data[j]);}
                     _data[j] = _data[j] * dfscale_factor + dfadd_offset;
                   }
                   // Convert the nodata type
@@ -339,17 +335,13 @@ public:
                 }
               }
               /* End of data postproc */
-#ifdef CMakeEProfile_DEBUG
-              CDBDebug("Read %d elements", variable->getSize());
-#endif
+              if (CMakeEProfile_DEBUG) {
+                CDBDebug("Read %zu elements", variable->getSize());
+              }
 
               drawEprofile(drawImage, variable, start.data(), count.data(), request, dataSource, eProfileJson);
 
               //               try{
-              //                 expandData(dataObject,variable,start,count,0,request,0);
-              //               }catch(int e){
-              //                 CDBError("Error in expandData at line %d",e);
-              //                 throw(__LINE__);
               //               }
             }
           }
@@ -365,9 +357,9 @@ public:
           }*/
     }
     reader.close();
-#ifdef CMakeEProfile_DEBUG
-    CDBDebug("/makeRequests");
-#endif
+    if (CMakeEProfile_DEBUG) {
+      CDBDebug("/makeRequests");
+    }
   }
 
   size_t size() { return fileInfoMap.size(); }
@@ -383,30 +375,24 @@ public:
   }
 };
 
-int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CT::string *eProfileJson) {
+int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, std::string &eProfileJson) {
   EProfileUniqueRequests uniqueRequest;
   /**
    * DataPostProc: Here our datapostprocessor comes into action!
    */
-  //   for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
-  //     CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
   //     //Algorithm ax+b:
-  //     if(proc->attr.algorithm ==("ax+b")){
-  //       uniqueRequest.readDataAsCDFDouble = true;
-  //       break;
   //     }
   //   }
 
   int numberOfDims = dataSource->requiredDims.size();
   int numberOfSteps = dataSource->getNumTimeSteps();
 
-#ifdef CMakeEProfile_DEBUG
-  CDBDebug("1) /*Find all individual files*/");
-#endif
+  if (CMakeEProfile_DEBUG) {
+    CDBDebug("1) /*Find all individual files*/");
+  }
 
   for (int step = 0; step < numberOfSteps; step++) {
     dataSource->setTimeStep(step);
-    // CDBDebug("Found file %d %s",step,dataSource->getFileName());
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       COGCDims &ogcDim = dataSource->requiredDims[dimnr];
       uniqueRequest.set(dataSource->getFileName().c_str(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
@@ -435,8 +421,8 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
 int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject *cdfObject, const char *varName, CColor c, size_t NrOfDates, double startGraphTime, double startGraphRange,
                                                 double graphWidth, double graphHeight, int timeWidth) {
 
-  CT::string newVarName;
-  newVarName.print("%s", varName);
+  std::string newVarName;
+  newVarName = CT::printf("%s", varName);
   CDF::Variable *plotHeightRetrievalVariable = cdfObject->getVariableNE(newVarName.c_str());
   if (plotHeightRetrievalVariable != NULL) {
     int status = plotHeightRetrievalVariable->readData(CDF_SHORT);
@@ -476,10 +462,8 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
 }
 
 int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource,
-                                         CT::string *eProfileJson) {
+                                         std::string &eProfileJson) {
 
-  // CTime adagucTime;
-  // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
   CTime *adagucTime = CTime::GetCTimeInstance(((CDFObject *)variable->getParentCDFObject())->getVariableNE("time_obs"));
   if (adagucTime == nullptr) {
     CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
@@ -488,17 +472,17 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
 
   COGCDims &ogcDim = dataSource->requiredDims[0];
 
-#ifdef CMakeEProfile_DEBUG
-  CDBDebug("count %d", count[0]);
-  ;
-  CDBDebug("total %d", ogcDim.uniqueValues.size());
-  CDBDebug("ogcDim.uniqueValues[0].c_str()) = %s", ogcDim.uniqueValues[0].c_str());
-#endif
+  if (CMakeEProfile_DEBUG) {
+    CDBDebug("count %zu", count[0]);
+    ;
+    CDBDebug("total %zu", ogcDim.uniqueValues.size());
+    CDBDebug("ogcDim.uniqueValues[0].c_str()) = %s", ogcDim.uniqueValues[0].c_str());
+  }
 
-  CT::string rangeVarName = variable->dimensionlinks[1]->name.c_str();
-#ifdef CMakeEProfile_DEBUG
-  CDBDebug("Reading range var with name %s", rangeVarName.c_str());
-#endif
+  std::string rangeVarName = variable->dimensionlinks[1]->name.c_str();
+  if (CMakeEProfile_DEBUG) {
+    CDBDebug("Reading range var with name %s", rangeVarName.c_str());
+  }
   CDF::Variable *varRange = ((CDFObject *)variable->getParentCDFObject())->getVariableNE(rangeVarName.c_str());
   if (varRange == NULL) {
     CDBError("%s not found", rangeVarName.c_str());
@@ -539,9 +523,9 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   if (foundTimeDim != -1) {
     auto timeEntries = CT::split(dataSource->srvParams->requestDims[foundTimeDim].value, "/");
     if (timeEntries.size() == 2) {
-#ifdef CMakeEProfile_DEBUG
-      CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
-#endif
+      if (CMakeEProfile_DEBUG) {
+        CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim].value.c_str());
+      }
       startGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[0].c_str()));
       stopGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[1].c_str()));
     }
@@ -558,9 +542,9 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   if (foundElevationDim != -1) {
     auto elevationEntries = CT::split(dataSource->srvParams->requestDims[foundElevationDim].value, "/");
     if (elevationEntries.size() == 2) {
-#ifdef CMakeEProfile_DEBUG
-      CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundElevationDim]->value.c_str());
-#endif
+      if (CMakeEProfile_DEBUG) {
+        CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundElevationDim].value.c_str());
+      }
       startGraphRange = std::stod(elevationEntries[0]);
       stopGraphRange = std::stod(elevationEntries[1]);
     }
@@ -568,28 +552,28 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
 
   if (dataSource->srvParams->InfoFormat == "application/json") {
     float *data = (float *)varRange->data;
-    eProfileJson->concat("{");
-    CT::string units = dObjgetUnits(*dataSource->getDataObject(0));
+    eProfileJson += "{";
+    std::string units = dObjgetUnits(*dataSource->getDataObject(0));
     if (!units.empty()) {
-      eProfileJson->printconcat("\"units\":\"%s\",", encodeJSON(units).c_str());
+      CT::printfconcat(eProfileJson, "\"units\":\"%s\",", encodeJSON(units).c_str());
     } else {
-      eProfileJson->printconcat("\"units\":null,");
+      CT::printfconcat(eProfileJson, "\"units\":null,");
     }
     CDF::Attribute *unitsY = varRange->getAttributeNE("units");
     CDF::Attribute *standardName = variable->getAttributeNE("standard_name");
     CDF::Attribute *longName = variable->getAttributeNE("long_name");
-    CT::string layerName = dataSource->getLayerName();
-    CT::string layerTitle = dataSource->getLayerTitle();
+    std::string layerName = dataSource->getLayerName();
+    std::string layerTitle = dataSource->getLayerTitle();
 
     std::string dq = "\"";
 
-    eProfileJson->printconcat("\"units_y\":%s,", (unitsY != NULL ? dq + std::string(unitsY->toString().c_str()) + dq : "null").c_str());
-    eProfileJson->printconcat("\"standard_name\":%s,", (standardName != NULL ? dq + std::string(standardName->toString().c_str()) + dq : "null").c_str());
-    eProfileJson->printconcat("\"long_name\":%s,", (longName != NULL ? dq + encodeJSON(longName->toString()) + dq : "null").c_str());
-    eProfileJson->printconcat("\"layer_name\":%s,", (layerName.empty() == false ? dq + encodeJSON(layerName) + dq : "null").c_str());
-    eProfileJson->printconcat("\"layer_title\":%s,", (layerTitle.empty() == false ? dq + encodeJSON(layerTitle) + dq : "null").c_str());
-    eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
-    eProfileJson->printconcat("\"name\":\"%s\",", encodeJSON(variable->name.replace("_backup", "")).c_str());
+    CT::printfconcat(eProfileJson, "\"units_y\":%s,", (unitsY != NULL ? dq + std::string(unitsY->toString().c_str()) + dq : "null").c_str());
+    CT::printfconcat(eProfileJson, "\"standard_name\":%s,", (standardName != NULL ? dq + std::string(standardName->toString().c_str()) + dq : "null").c_str());
+    CT::printfconcat(eProfileJson, "\"long_name\":%s,", (longName != NULL ? dq + encodeJSON(longName->toString()) + dq : "null").c_str());
+    CT::printfconcat(eProfileJson, "\"layer_name\":%s,", (layerName.empty() == false ? dq + encodeJSON(layerName) + dq : "null").c_str());
+    CT::printfconcat(eProfileJson, "\"layer_title\":%s,", (layerTitle.empty() == false ? dq + encodeJSON(layerTitle) + dq : "null").c_str());
+    CT::printfconcat(eProfileJson, "\"numValues\":%zu,", varRange->getSize());
+    CT::printfconcat(eProfileJson, "\"name\":\"%s\",", encodeJSON(CT::replace(variable->name, "_backup", "")).c_str());
 
     CDBDebug("%lu", variable->getSize());
 
@@ -608,57 +592,57 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName().c_str());
 
     // Make profile object
-    eProfileJson->concat("\"profile\":{");
+    eProfileJson += "\"profile\":{";
     // Make height object
-    eProfileJson->concat("\n\"heights\":[");
+    eProfileJson += "\n\"heights\":[";
     CDBDebug("startGraphRange %f %f", startGraphRange, stopGraphRange);
     bool firstElDone = false;
     for (size_t j = 0; j < varRange->getSize(); j += 1) {
       float v = float(data[j]);
       if (v >= startGraphRange && v < stopGraphRange) {
         if (firstElDone) {
-          eProfileJson->concat(",");
+          eProfileJson += ",";
         };
         firstElDone = true;
         if (v == v) {
-          eProfileJson->printconcat("%g", v);
+          CT::printfconcat(eProfileJson, "%g", v);
         } else {
-          eProfileJson->printconcat("null");
+          CT::printfconcat(eProfileJson, "null");
         }
       }
     }
-    eProfileJson->concat("],");
+    eProfileJson += "],";
     // Make values object
-    eProfileJson->concat("\n\"values\":[");
+    eProfileJson += "\n\"values\":[";
     firstElDone = false;
     for (size_t j = 0; j < varRange->getSize(); j += 1) {
       float v = float(data[j]);
       if (v >= startGraphRange && v < stopGraphRange) {
         if (firstElDone) {
-          eProfileJson->concat(",");
+          eProfileJson += ",";
         };
         firstElDone = true;
         if (variable->getType() == CDF_FLOAT) {
           float v = ((float *)variable->data)[j + colOffset];
           if (v == v) {
-            eProfileJson->printconcat("%g", v);
+            CT::printfconcat(eProfileJson, "%g", v);
           } else {
-            eProfileJson->printconcat("null");
+            CT::printfconcat(eProfileJson, "null");
           }
         }
         if (variable->getType() == CDF_DOUBLE) {
           double v = ((double *)variable->data)[j + colOffset];
           if (v == v) {
-            eProfileJson->printconcat("%g", v);
+            CT::printfconcat(eProfileJson, "%g", v);
           } else {
-            eProfileJson->printconcat("null");
+            CT::printfconcat(eProfileJson, "null");
           }
         }
       }
     }
-    eProfileJson->concat("]");
+    eProfileJson += "]";
 
-    eProfileJson->concat("\n}}");
+    eProfileJson += "\n}}";
 
     return 0;
   }
@@ -676,14 +660,14 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     graphHeight = imageHeight;
   }
 
-#ifdef CMakeEProfile_DEBUG
-  CDBDebug("startGraphTime = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphTime, stopGraphTime, graphWidth, imageWidth);
-  CDBDebug("startGraphRange = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphRange, stopGraphTime, graphHeight, imageHeight);
-#endif
+  if (CMakeEProfile_DEBUG) {
+    CDBDebug("startGraphTime = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphTime, stopGraphTime, graphWidth, imageWidth);
+    CDBDebug("startGraphRange = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphRange, stopGraphTime, graphHeight, imageHeight);
+  }
 
-#ifdef CMakeEProfile_DEBUG
-  CDBDebug("Number of timesteps: %d", count[0]);
-#endif
+  if (CMakeEProfile_DEBUG) {
+    CDBDebug("Number of timesteps: %zu", count[0]);
+  }
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
@@ -731,7 +715,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
     if (x2 >= 0 && x1 < imageWidth && x1 < x2) {
 
-      // CDBDebug("x1 = %d fileTime = %f",x1,fileTime);
       for (size_t range = 0; range < count[1] - 1; range++) {
 
         int y1 = imageHeight - int(((((float *)varRange->data)[range + 1] - startGraphRange) / graphHeight) * imageHeight);
@@ -758,7 +741,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
             }
 
             int pcolorind = (int)(val * legendScale + legendOffset);
-            // val+=legendOffset;
             if (pcolorind >= 239)
               pcolorind = 239;
             else if (pcolorind <= 0)
@@ -782,8 +764,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   for (size_t j = 0; j < dayPasses.size(); j++) {
     CTime::Date d = adagucTime->offsetToDate(dayPasses[j].offset);
     if (d.minute == 0 && d.hour == 0) {
-      CT::string dateStr = adagucTime->dateToISOString(d);
-      dateStr.setSize(10);
+      std::string dateStr = adagucTime->dateToISOString(d);
+      dateStr.resize(10);
       drawImage->setText(dateStr.c_str(), dayPasses[j].x + 4, 5, CColor(0, 0, 0, 0));
 
       for (int y = 0; y < imageHeight; y++) {
@@ -792,6 +774,5 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
   }
 
-  // drawImage->line(0,0,100,100,248);
   return 0;
 }

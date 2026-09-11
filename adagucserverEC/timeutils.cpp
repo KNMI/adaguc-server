@@ -17,7 +17,29 @@
  ******************************************************************************/
 
 #include <map>
+#include <sstream>
 #include "timeutils.h"
+#include "CTString.h"
+
+long long TimeInterval::toSeconds() const { return seconds + minutes * 60 + hours * 3600 + days * 86400 + months * 2592000 + years * 31536000; }
+
+bool TimeInterval::operator<(const TimeInterval &other) const { return this->toSeconds() < other.toSeconds(); }
+
+bool TimeInterval::operator==(const TimeInterval &other) const {
+  return years == other.years && months == other.months && days == other.days && hours == other.hours && minutes == other.minutes && seconds == other.seconds;
+}
+
+std::string TimeInterval::toString() const {
+  std::ostringstream oss;
+  if (years > 0) oss << years << " year(s) ";
+  if (months > 0) oss << months << " month(s) ";
+  if (days > 0) oss << days << " day(s) ";
+  if (hours > 0) oss << hours << " hour(s) ";
+  if (minutes > 0) oss << minutes << " minute(s) ";
+  if (seconds > 0 || (years == 0 && months == 0 && days == 0 && hours == 0 && minutes == 0)) oss << seconds << " second(s)";
+
+  return oss.str();
+}
 
 TimeInterval calculateTimeInterval(const CTime::Date &start, const CTime::Date &end) {
   TimeInterval interval = {0, 0, 0, 0, 0, 0};
@@ -121,7 +143,7 @@ std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, 
   // Parse all timestamps into tm structs
   std::vector<CTime::Date> parsedTimes;
   for (const auto &timestamp: timestamps) {
-    parsedTimes.push_back(ctime->ISOStringToDate(timestamp.c_str()));
+    parsedTimes.push_back(ctime->ISOStringToDate(timestamp));
   }
 
   // Calculate intervals between consecutive timestamps

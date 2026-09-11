@@ -1,5 +1,6 @@
 
 #include "getVectorStyle.h"
+#include "CColor.h"
 #include <CServerConfig_CPPXSD.h>
 #include <cfloat>
 

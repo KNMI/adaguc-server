@@ -3,11 +3,11 @@
  * Project:  Generic common data format
  * Purpose:  Packages GeoJSON into a NetCDF file
  * Author:   Ernst de Vreede (KNMI)
- * Date:     2013-06-01
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,13 @@
 
 #include "CCDFGeoJSONIO.h"
 #include <CReadFile.h>
-// #define CCDFGEOJSONIO_DEBUG
+#include <cstring>
+static const bool CCDFGEOJSONIO_DEBUG = false;
 
 CDFGeoJSONReader::CDFGeoJSONReader() : CDFReader() {
-#ifdef CCDFGEOJSONIO_DEBUG
-  CDBDebug("New CDFGeoJSONReader");
-#endif
+  if (CCDFGEOJSONIO_DEBUG) {
+    CDBDebug("New CDFGeoJSONReader");
+  }
 }
 
 CDFGeoJSONReader::~CDFGeoJSONReader() { close(); }
@@ -44,7 +45,7 @@ int CDFGeoJSONReader::open(const char *fileName) {
   this->fileName = fileName;
 
   // This is opendap, there the geojson has already been converted to CDM by an IOServiceProvider.
-  if (this->fileName.indexOf("http") == 0) {
+  if (CT::startsWith(this->fileName, "http")) {
     CDBDebug("This is opendap, no conversion needed.");
 
     return 0;
@@ -53,7 +54,7 @@ int CDFGeoJSONReader::open(const char *fileName) {
   cdfObject->addAttribute(new CDF::Attribute("Conventions", "CF-1.6"));
   cdfObject->addAttribute(new CDF::Attribute("history", "Metadata adjusted by ADAGUC from GeoJSON to NetCDF-CF"));
 
-  CT::string fileBaseName;
+  std::string fileBaseName;
   const char *last = rindex(fileName, '/');
   if ((last != NULL) && (*last)) {
     fileBaseName = (last + 1);
@@ -67,7 +68,6 @@ int CDFGeoJSONReader::open(const char *fileName) {
   std::string jsonData = readFile(fileName);
   CDF::Variable *jsonVar = new CDF::Variable();
 
-  // jsonVar->setCDFReaderPointer((void*)this); TODO: Check if this is really needed.
   cdfObject->addVariable(jsonVar);
   jsonVar->setName("jsoncontent");
   jsonVar->currentType = CDF_CHAR;
@@ -83,7 +83,7 @@ int CDFGeoJSONReader::open(const char *fileName) {
   CDF::Attribute *fileAttr = new CDF::Attribute();
   jsonVar->addAttribute(fileAttr);
   fileAttr->setName("ADAGUC_BASENAME");
-  fileAttr->setData(CDF_CHAR, fileBaseName.c_str(), fileBaseName.length() + 1);
+  fileAttr->setString(fileBaseName.c_str());
 
   return 0;
 }

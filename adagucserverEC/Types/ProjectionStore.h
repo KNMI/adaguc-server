@@ -2,8 +2,8 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2024-02-29
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
@@ -30,8 +30,8 @@
 #include "GeoParameters.h"
 
 struct ProjectionMapKey {
-  CT::string sourceCRS;
-  CT::string destCRS;
+  std::string sourceCRS;
+  std::string destCRS;
   f8box extent;
 };
 

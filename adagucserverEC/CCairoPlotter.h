@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Ernst de Vreede vreedede "at" knmi.nl
- * Date:     2013-06-01
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "Definitions.h"
+
 #ifdef ADAGUC_USE_CAIRO
 /*
  * CCairoPlotter2.h
@@ -35,7 +36,6 @@
 #ifndef CCAIROPLOTTER_H_
 #define CCAIROPLOTTER_H_
 #include <cairo.h>
-#include "CDebugger.h"
 #include "CTString.h"
 #include <ft2build.h>
 #include <freetype/freetype.h>
@@ -48,7 +48,6 @@
 #include <cstdint>
 #include "CColor.h"
 
-#include "COctTreeColorQuantizer.h"
 #include "Types/GeoParameters.h"
 
 #define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0
@@ -72,7 +71,6 @@ private:
   FT_Face face;
   unsigned char r, g, b;
   float a;
-  //   void _plot(int x, int y, float alpha);
   void _swap(float &x, float &y);
   void _swap(int &x, int &y);
   static const cairo_format_t FORMAT = CAIRO_FORMAT_ARGB32;

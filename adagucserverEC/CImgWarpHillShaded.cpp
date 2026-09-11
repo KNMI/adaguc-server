@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2020-12-09
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,23 @@
  ******************************************************************************/
 
 #include "CImgWarpHillShaded.h"
+#include "CGenericDataWarper.h"
+#include "utils.h"
 #include "CImageDataWriter.h"
 #include "f8vector.h"
 #include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 /**
  * Lightsource
  */
@@ -111,7 +124,7 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
 }
 
 void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  CT::string color;
+  std::string color;
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -160,7 +173,6 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
     }
   }
   free(settings.destinationGrid);
-  // CDBDebug("render done");
 }
 
 int CImgWarpHillShaded::set(const char *) { return 0; }

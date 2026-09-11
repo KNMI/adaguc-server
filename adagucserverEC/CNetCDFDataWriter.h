@@ -1,19 +1,17 @@
 #ifndef CNetCDFDataWriter_H
 #define CNetCDFDataWriter_H
 
-#include "Definitions.h"
 #include "CGenericDataWarper.h"
-#include "CStopWatch.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CIBaseDataWriterInterface.h"
-#include "CDebugger.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 
 #define CNetCDFDataWriter_NEAREST 0
 #define CNetCDFDataWriter_AVG_RGB 1
 class CNetCDFDataWriter : public CBaseDataWriterInterface {
 private:
-  CT::string JSONdata;
+  std::string JSONdata;
 
   class Settings {
   public:
@@ -65,7 +63,7 @@ private:
   }
   CDataSource *baseDataSource;
   CDFObject *destCDFObject;
-  CT::string tempFileName;
+  std::string tempFileName;
   CServerParams *srvParam;
   CDF::Dimension *projectionDimX, *projectionDimY; // Shorthand pointers to cdfdatamodel (do never delete!)
   CDF::Variable *projectionVarX, *projectionVarY;  // Shorthand pointers to cdfdatamodel (do never delete!)

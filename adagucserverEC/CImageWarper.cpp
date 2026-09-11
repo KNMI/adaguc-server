@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,44 @@
 
 #include "Types/ProjectionStore.h"
 #include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CDrawImage.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "Types/CPointTypes.h"
 #include "ProjCache.h"
 #include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CProj4ToCF.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/GeoParameters.h"
 
-void floatToString(char *string, size_t maxlen, int numdigits, float number) {
+static const bool CIMAGEWARPER_DEBUG = false;
+
+CImageWarper::CImageWarper() {
+  prj = NULL;
+  projSourceToDest = nullptr;
+  projSourceToLatlon = nullptr;
+  projLatlonToDest = nullptr;
+  initialized = false;
+}
+CImageWarper::~CImageWarper() {
+  if (initialized == true) {
+    closereproj();
+    prj = NULL;
+    projSourceToDest = nullptr;
+    projSourceToLatlon = nullptr;
+    projLatlonToDest = nullptr;
+    initialized = false;
+  }
+}
+
+std::string floatToString(int numdigits, float number) {
   // Interpret numdigits as "number of decimals"
   int decimals = numdigits;
 
@@ -46,13 +77,10 @@ void floatToString(char *string, size_t maxlen, int numdigits, float number) {
   // Corner case to avoid "-0.000" and similar
   if (fabsf(rounded) < 1e-12f) rounded = 0.0f;
 
-  // Format with fixed decimals (for the whole series)
-  char format[16];
-  snprintf(format, sizeof(format), "%%.%df", decimals);
-  snprintf(string, maxlen, format, rounded);
+  return CT::printf("%.*f", decimals, rounded);
 }
 
-void floatToString(char *string, size_t maxlen, float number) {
+std::string floatToString(float number) {
   int numdigits = 0;
 
   if (number == 0.0f)
@@ -62,10 +90,10 @@ void floatToString(char *string, size_t maxlen, float number) {
     if (tempp < 0.00000001 && tempp > -0.00000001) tempp += 0.00000001;
     numdigits = int(log10(fabs(tempp))) + 1;
   }
-  floatToString(string, maxlen, numdigits, number);
+  return floatToString(numdigits, number);
 }
 
-void floatToString(char *string, size_t maxlen, float min, float max, float number) {
+std::string floatToString(float min, float max, float number) {
   float range = fabsf(max - min);
 
   // Estimate precision from range magnitude only
@@ -75,7 +103,7 @@ void floatToString(char *string, size_t maxlen, float min, float max, float numb
   // Clamp
   if (decimals > 6) decimals = 6;
 
-  floatToString(string, maxlen, decimals, number);
+  return floatToString(decimals, number);
 }
 
 int CImageWarper::closereproj() {
@@ -89,9 +117,7 @@ int CImageWarper::closereproj() {
 int CImageWarper::reprojpoint(double &dfx, double &dfy) {
   // TODO: Should t all point to HUGE_VAL instead of 0.0?
   if (proj_trans_generic(projSourceToDest, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-    // throw("reprojpoint error");
     return 1;
-    // CDBError("ReprojException");
   }
   if (std::isnan(dfx) || std::isnan(dfy)) {
     dfx = 0;
@@ -116,7 +142,6 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
   }
 
   if (proj_trans_generic(projLatlonToDest, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-    // CDBError("Projection error");
     dfx = 0;
     dfy = 0;
     return 1;
@@ -131,7 +156,6 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
     dfy = 0;
     return 1;
   }
-  // if(status!=0)CDBDebug("DestPJ: %s",GeoDest.CRS.c_str());
   return 0;
 }
 
@@ -157,7 +181,6 @@ int CImageWarper::reprojfromLatLon(f8point &p) {
 
 int CImageWarper::reprojToLatLon(double &dfx, double &dfy) {
   if (proj_trans_generic(projLatlonToDest, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-    // throw("reprojfromLatLon error");
     dfx = 0;
     dfy = 0;
     return 1;
@@ -220,7 +243,6 @@ int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
   if (proj_trans_generic(projSourceToLatlon, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
     return 1;
   }
-  // if(status!=0)CDBDebug("DestPJ: %s",GeoDest.CRS.c_str());
   return 0;
 }
 
@@ -234,7 +256,6 @@ int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, GeoParameters &
 int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
 
   if (proj_trans_generic(projSourceToDest, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-    //  // CDBError("ReprojException: %f %f",dfx,dfy);
     dfx = 0;
     dfy = 0;
     return 1;
@@ -242,20 +263,16 @@ int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
   return 0;
 }
 
-int CImageWarper::decodeCRS(std::string *outputCRS, const std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
+int CImageWarper::decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
   if (prj == NULL) {
     CDBError("decodeCRS: prj==NULL");
     return 1;
   }
-  if (&(*prj) == NULL) {
-    CDBError("decodeCRS: prj==NULL");
-    return 1;
-  }
-  *outputCRS = *inputCRS;
+  outputCRS = inputCRS;
   dMaxExtentDefined = 0;
   for (size_t j = 0; j < (*prj).size(); j++) {
-    if (*outputCRS == (*prj)[j]->attr.id) {
-      *outputCRS = (*prj)[j]->attr.proj4;
+    if (outputCRS == (*prj)[j]->attr.id) {
+      outputCRS = (*prj)[j]->attr.proj4;
       if ((*prj)[j]->LatLonBox.size() == 1) {
         dMaxExtentDefined = 1;
         dfMaxExtent[0] = (*prj)[j]->LatLonBox[0]->attr.minx;
@@ -266,8 +283,8 @@ int CImageWarper::decodeCRS(std::string *outputCRS, const std::string *inputCRS,
       break;
     }
   }
-  if (CT::startsWith(*outputCRS, "PROJ4:")) {
-    *outputCRS = outputCRS->substr(6);
+  if (CT::startsWith(outputCRS, "PROJ4:")) {
+    outputCRS = outputCRS.substr(6);
   }
   return 0;
 }
@@ -285,7 +302,6 @@ int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, st
   }
   if (dataSource->nativeProj4.empty()) {
     dataSource->nativeProj4 = (LATLONPROJECTION);
-    // CDBWarning("dataSource->CRS.empty() setting to default latlon");
   }
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);
 }
@@ -306,17 +322,15 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   std::tie(sourceProjectionUndec, std::ignore) = fixProjection(sourceProjectionUndec);
 
   std::string sourceProjection;
-  if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
+  if (decodeCRS(sourceProjection, sourceProjectionUndec, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }
 
   this->sourceIsLatLonProjection = sourceProjection == LATLONPROJECTION;
 
-  //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
-
   dMaxExtentDefined = 0;
-  if (decodeCRS(&destinationCRS, &_GeoDest.crs, _prj) != 0) {
+  if (decodeCRS(destinationCRS, _GeoDest.crs, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }
@@ -344,7 +358,6 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   }
 
   initialized = true;
-  // CDBDebug("sourceProjection = %s destinationCRS = %s",projString,destinationCRS.c_str());
 
   if (sourceProjection == destinationCRS) {
     initialized = true;
@@ -352,7 +365,6 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
     return 0;
   }
   // Check if we have a projected coordinate system
-  //  projUV p,pout;;
   requireReprojection = false;
   double y = 52;
   double x = 5;
@@ -399,31 +411,25 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
     }
   }
 
-  // CDBDebug("findExtent for %s and %f %f %f %f", destinationCRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
-
   ProjectionMapKey key = {sourceCRSString, destinationCRS, makef8box(dfBBOX)};
   bool found;
   f8box bbox{};
   std::tie(found, bbox) = getBBOXProjection(key);
 
   if (found) {
-#ifdef CIMAGEWARPER_DEBUG
-    CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
-             key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);
-#endif
+    if (CIMAGEWARPER_DEBUG) {
+      CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.get(0), key.extent.get(1),
+               key.extent.get(2), key.extent.get(3), bbox.get(0), bbox.get(1), bbox.get(2), bbox.get(3));
+    }
 
     bbox.toArray(dfBBOX);
     return 0;
   }
 
-  // double tempy;
   double miny1 = dfBBOX[1];
   double maxy1 = dfBBOX[3];
   double minx1 = dfBBOX[0];
-  // double minx2=dfBBOX[0];
   double maxx1 = dfBBOX[2];
-  // double maxx2=dfBBOX[2];
-  // CDBDebug("BBOX=(%f,%f,%f,%f)",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
 
   try {
     double nrTestX = 45;
@@ -459,7 +465,6 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
             double latX = inX, lonY = inY;
             if (reprojToLatLon(latX, lonY) != 0) projError = true;
             ;
-            // CDBDebug("LatX,LatY == %f,%f  %3.3d,%3.3d -- %e,%e -- %f,%f %d",stepX,stepY,x,y,testPosX,testPosY,latX,lonY,projError);
             if (projError == false) {
               if (latX > -200 && latX < 400 && lonY > -180 && lonY < 180) {
                 if (foundFirst == false) {
@@ -469,7 +474,6 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
                   miny1 = inY;
                   maxy1 = inY;
                 }
-                // CDBDebug("testPos (%f;%f)\t proj (%f;%f)",testPosX,testPosY,latX,lonY);
                 if (inX < minx1) minx1 = inX;
                 if (inY < miny1) miny1 = inY;
                 if (inX > maxx1) maxx1 = inX;
@@ -491,7 +495,6 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   dfBBOX[2] = maxx1;
 
   if (dMaxExtentDefined == 0 && 1 == 0) {
-    // CDBDebug("dataSource->nativeProj4 %s %d",dataSource->nativeProj4.c_str(), dataSource->nativeProj4.indexOf("geos")>0);
     if (CT::indexOf(dataSource->nativeProj4, "geos") != -1) {
       dfMaxExtent[0] = -82 * 2;
       dfMaxExtent[1] = -82;
@@ -522,11 +525,11 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
     dfBBOX[1] -= 1;
     dfBBOX[3] += 1;
   }
-#ifdef CIMAGEWARPER_DEBUG
+  if (CIMAGEWARPER_DEBUG) {
 
-  CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1], key.extent.bbox[2],
-           key.extent.bbox[3], dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
-#endif
+    CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.get(0), key.extent.get(1), key.extent.get(2),
+             key.extent.get(3), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+  }
   addBBOXProjection(key, makef8box(dfBBOX));
   return 0;
 };

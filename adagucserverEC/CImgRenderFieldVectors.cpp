@@ -2,6 +2,14 @@
 #include "CImgWarpBilinear.h"
 #include "f8vector.h"
 #include <utils.h>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 bool verboseLog = false;
 
@@ -14,15 +22,10 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8po
     warper->reprojModelToLatLon(pntN);
     f8point pntRadN = pntN.rad();
 
-    // f8point pntE = {.x = _lon_pntEast, .y = _lat_pntEast};
-    // warper->reprojModelToLatLon(pntE);
-    // f8point pntRadE = pntE.rad();
-
     // (lon_pntNorth, lat_pntNorth)
     //     ^
     //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
     //     |
-    // (lon_pnt0,lat_pnt0) ----> (lon_pntEast,lat_pntEast)
     // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
     // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
     // The vector towards north pole at this location will be (0,1,0)
@@ -81,9 +84,9 @@ bool isGridRelative(CDataSource *dataSource) {
     // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
     // if eastward_wind/northward_wind then gridRelative=false
     // default is gridRelative=true
-    CT::string standard_name = getStandardName(*dataSource->getDataObject(4)->cdfVariable);
+    std::string standard_name = getStandardName(*dataSource->getDataObject(4)->cdfVariable);
 
-    if (standard_name.equals("x_wind") || standard_name.equals("grid_eastward_wind") || standard_name.equals("y_wind") || standard_name.equals("grid_northward_wind")) {
+    if (standard_name == "x_wind" || standard_name == "grid_eastward_wind" || standard_name == "y_wind" || standard_name == "grid_northward_wind") {
       gridRelative = true;
     } else {
       gridRelative = false;
@@ -119,7 +122,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
                                                                                    bool enableBarb, bool drawMap, bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData,
                                                                                    float *vValueData, int *dpDestX, int *dpDestY) {
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  CT::string units = "m/s";
+  std::string units = "m/s";
   units = dObjgetUnits(*dataSource->getDataObject(0));
 
   // Wind VECTOR
@@ -131,7 +134,6 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
 
   std::vector<CalculatedWindVector> windVectors; // holds windVectors after calculation to draw them on top
   bool convertToKnots = false;                   // default is false
-                                                 // if((enableVector||enableBarb))
 
   int firstXPos = 0;
   int firstYPos = 0;
@@ -146,7 +148,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   if (verboseLog) {
     CDBDebug("units = %s", units.c_str());
   }
-  if (!(units.equals("kts") || units.equals("knots"))) convertToKnots = true;
+  if (!(units == "kts" || units == "knots")) convertToKnots = true;
 
   // Number of pixels between the vectors:
   int vectorDensityPy = 60; // 22;
@@ -215,7 +217,6 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
           f8component comp = {.u = uValueData[p], .v = vValueData[p]};
           if (comp.u != fNodataValue && comp.v != fNodataValue) {
             // TODO IN FOLLOW UP
-            // windVectors.push_back({.x = dpDestX[p], .y = dpDestY[p], .dir = comp.direction(), .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = false});
           }
         }
       }

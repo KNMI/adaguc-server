@@ -2,12 +2,12 @@
  *
  * Project:  Helper classes
  * Purpose:  Generic functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2021-09-17
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,8 @@
 
 #ifndef CKEYVALUEPAIR_H
 #define CKEYVALUEPAIR_H
-#include <iostream>
+#include <string>
 #include <vector>
-#include <cstdio>
-#include "CTString.h"
 struct CKeyValuePair {
   std::string key;
   std::string value;

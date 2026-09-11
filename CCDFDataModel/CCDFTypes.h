@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@
 
 #include "CTString.h"
 
-// #define CCDFDATAMODEL_DEBUG
 //  CDF: Common Data Format
 
 /* Types supported by CDF */
@@ -98,12 +97,6 @@ namespace CDF {
 
   int fill(void *destdata, CDFType destType, double value, size_t size);
 
-  /*Puts the CDF name of the type in the string array with name (CDF_FLOAT, CDF_INT, etc...)*/
-  void getCDFDataTypeName(char *name, const size_t maxlen, const int type);
-
-  /*Puts the C name of the type in the string array with name (float, int, etc...)*/
-  void getCDataTypeName(char *name, const size_t maxlen, const int type);
-
   /**
    * Static function which converts an exception into a readable message
    * @param int The value of catched exception
@@ -116,7 +109,14 @@ namespace CDF {
    * @param type The CDF type
    * @return string with the name
    */
-  CT::string getCDFDataTypeName(const int type);
+  std::string getCDFDataTypeName(const int type);
+
+  /**
+   * returns the native C type name as string (float, int, etc...)
+   * @param type The CDF type
+   * @return string with the name
+   */
+  std::string getCDataTypeName(const int type);
 
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);

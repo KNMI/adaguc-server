@@ -1,13 +1,16 @@
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 /******************************************************************************
  *
  * Project:  ADAGUC Server
  * Purpose:  Convert HDF5 volume scan data to CDM
  * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
- * Date:     2022-08-15
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +28,6 @@
 
 #ifndef CCONVERTH5VOLSCAN_H
 #define CCONVERTH5VOLSCAN_H
-#include "CConvertH5VolScanUtils.h"
-#include "CDataSource.h"
-#include "CImageWarper.h"
-#include "COGCDims.h"
 
 class CConvertH5VolScan {
 public:

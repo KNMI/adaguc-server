@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,14 @@
 #include <algorithm>
 
 #include "CImageWarper.h"
+#include "CCDFObject.h"
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
 #include "CStyleConfiguration.h"
 #include "CTString.h"
 #include "utils/minMax.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "CTime.h"
 
 static bool measureTime = false;
 
@@ -64,7 +68,7 @@ static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Varia
   CDF::Variable *new2DVar = cdfObject->addVariable(new CDF::Variable(pointVar->name.c_str(), CDF_FLOAT));
   // Assign dims but skip station.
   for (auto *dimensionLink: pointVar->dimensionlinks) {
-    if (!dimensionLink->name.equals("station")) {
+    if (dimensionLink->name != "station") {
       new2DVar->dimensionlinks.push_back(dimensionLink);
     }
   }
@@ -72,11 +76,11 @@ static void createTwoDVariableFromPointVariable(CDFObject *cdfObject, CDF::Varia
   new2DVar->dimensionlinks.push_back(varX->dimensionlinks[0]);
   new2DVar->dimensionlinks.push_back(varY->dimensionlinks[0]);
   // Rename the point data variable.
-  pointVar->name.concat("_backup");
+  pointVar->name += "_backup";
 
   // Copy variable attributes
   for (auto *a: pointVar->attributes) {
-    if (a->name.equals("_FillValue")) {
+    if (a->name == "_FillValue") {
       float scaleFactor = pointVar->getAttrDataAt0("scale_factor", 1);
       float addOffset = pointVar->getAttrDataAt0("addOffset", 0);
       float fillValue = pointVar->getAttrDataAt0("_FillValue", 0);
@@ -245,7 +249,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   auto setStationDimensionIndices = [&](const CDF::Variable *variable, CDFObject *ownerCdfObject) -> size_t {
     int stationDimIndex = -1;
     for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
-      if (variable->dimensionlinks[j]->name.equals("station") || ownerCdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
+      if (variable->dimensionlinks[j]->name == "station" || ownerCdfObject->getVariableNE(variable->dimensionlinks[j]->name.c_str()) == NULL) {
         stationDimIndex = j;
         break;
       }
@@ -309,7 +313,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           return false;
         }
         for (size_t j = 0; j < count[0]; j++) {
-          data[j].copy(((char *)variable->data + j * count[1]), count[1] - 1);
+          data[j].assign(((char *)variable->data + j * count[1]), count[1] - 1);
         }
         variable->freeData();
 
@@ -391,17 +395,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     }
     dataSource->hasFieldData = false;
     // // Allocate 2D field
-    // for (size_t d = 0; d < nrDataObjects; d++) {
-    //   if (pointVar[d] != NULL) {
-    //     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
-    //     new2DVar[d]->setSize(fieldSize);
-    //     new2DVar[d]->allocateData(fieldSize);
 
     //     // Fill in nodata
-    //     auto *dataObject = dataSource->getDataObject(d);
-    //     float *fieldData = (float *)dataObject->cdfVariable->data;
-    //     float fillValue = dataObject->hasNodataValue ? (float)dataObject->dfNodataValue : NAN;
-    //     std::fill_n(fieldData, fieldSize, fillValue);
     //   }
     // }
 
@@ -424,7 +419,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       if (cdfObject0->getVariableNE("customgridprojection") == NULL) {
 
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";

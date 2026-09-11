@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,22 @@
  ******************************************************************************/
 
 #include "CImgRenderPolylines.h"
+#include "Types/CPointTypes.h"
 #include <set>
 #include "CConvertGeoJSON.h"
 #include <string>
 #include <algorithm>
+#include <regex.h>
 #include "CRectangleText.h"
 #include "utils/GeometryUtils.h"
+#include <map>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "Types/GeoParameters.h"
 
 //   #define MEASURETIME
 
@@ -42,11 +52,11 @@ struct FeatureStyle {
   double borderWidth; // 0 means no border
   CColor fillColor;
   bool hasFill;
-  CT::string fontFile;
+  std::string fontFile;
   double fontSize;
   CColor fontColor;
-  CT::string propertyName;
-  CT::string propertyFormat;
+  std::string propertyName;
+  std::string propertyFormat;
   double angle;
   int padding;
 };
@@ -120,7 +130,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
-  CT::string name = dataSource->featureSet;
+  std::string name = dataSource->featureSet;
 
   bool projectionRequired = false;
   if (dataSource->srvParams->geoParams.crs.length() > 0) {
@@ -170,7 +180,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         }
 
         std::vector<Polygon> *polygons = feature->getPolygons();
-        CT::string id = feature->getId();
+        std::string id = feature->getId();
         for (std::vector<Polygon>::iterator itpoly = polygons->begin(); itpoly != polygons->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
@@ -208,10 +218,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               dlon = int((centroidX - offsetX) / cellSizeX) + 1;
               dlat = int((centroidY - offsetY) / cellSizeY);
               std::map<std::string, FeatureProperty *>::iterator it;
-              CT::string featureId;
+              std::string featureId;
               it = feature->getFp()->find(std::string(featureStyle.propertyName.c_str()));
               if (it != feature->getFp()->end()) {
-                featureId.print(it->second->toString(featureStyle.propertyFormat).c_str());
+                featureId = it->second->toString(featureStyle.propertyFormat);
               } else {
                 featureId = feature->getId();
               }
@@ -281,7 +291,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       }
       // Draw polygon labels here, so they end up on top
       for (CRectangleText rect: rects) {
-        // drawImage->setDisc(rect.llx, rect.lly, 2, rect.color, rect.color); // dot
         drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
     }

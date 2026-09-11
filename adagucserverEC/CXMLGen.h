@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,10 @@
 
 #ifndef CXMLGen_H
 #define CXMLGen_H
-#include "CServerParams.h"
 #include <cstdio>
 #include <cstring>
 
-#include "CInspire.h"
 
-#include "CImageDataWriter.h"
-#include "CServerError.h"
-#include "CDataReader.h"
-#include "CImageWarper.h"
-#include "CDrawImage.h"
-#include "CDataSource.h"
-#include "CRequest.h"
-#include "CDebugger.h"
-#include "CStyleConfiguration.h"
 #include "./Types/LayerMetadataType.h"
 
 #define CXMLGEN_FATAL_ERROR_OCCURED 1
@@ -47,17 +36,17 @@
 
 class CXMLGen {
 private:
-  int getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
-  int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
+  int getWMS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWCS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
+  int getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vector<MetadataLayer *> &metadataLayerList);
   CServerParams *srvParam;
-  CT::string serviceInfo;
+  std::string serviceInfo;
 
 public:
-  int OGCGetCapabilities(CServerParams *srvParam, CT::string *XMLDocument);
-  int WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument);
+  int OGCGetCapabilities(CServerParams *srvParam, std::string &XMLDocument);
+  int WCSDescribeCoverage(CServerParams *srvParam, std::string &XMLDocument);
 };
 
 #endif

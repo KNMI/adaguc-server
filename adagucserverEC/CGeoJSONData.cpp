@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  GeoJSON helper files.
  * Author:   Ernst de Vreede (KNMI)
- * Date:     2016-08
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,39 +24,40 @@
  ******************************************************************************/
 
 #include "CGeoJSONData.h"
+#include "CDebugger.h"
 #include <iostream>
 
 #include <cstdio>
 
-CT::string FeatureProperty::toString() {
-  CT::string s;
+std::string FeatureProperty::toString() {
+  std::string s;
   if (type == typeInt) {
-    s.print("%ld", intVal);
+    s = CT::printf("%ld", intVal);
   } else if (type == typeStr) {
-    s.print("%s", pstr.c_str());
+    s = CT::printf("%s", pstr.c_str());
   } else if (type == typeDouble) {
-    s.print("%f", dblVal);
+    s = CT::printf("%f", dblVal);
   } else {
-    s.print("NONE");
+    s = CT::printf("NONE");
   }
   return s;
 };
 
-CT::string FeatureProperty::toString(const char *fmt) {
-  CT::string s;
+std::string FeatureProperty::toString(const char *fmt) {
+  std::string s;
   if (type == typeInt) {
-    s.print(fmt, intVal);
+    s = CT::printf(fmt, intVal);
   } else if (type == typeStr) {
-    s.print(fmt, pstr.c_str());
+    s = CT::printf(fmt, pstr.c_str());
   } else if (type == typeDouble) {
-    s.print(fmt, dblVal);
+    s = CT::printf(fmt, dblVal);
   } else {
-    s.print("NONE");
+    s = CT::printf("NONE");
   }
   return s;
 };
 
-CT::string FeatureProperty::toString(std::string fmt) { return toString(fmt.c_str()); }
+std::string FeatureProperty::toString(std::string fmt) { return toString(fmt.c_str()); }
 
 GeoPoint::GeoPoint(float lon, float lat) {
   this->lat = lat;
@@ -67,9 +68,9 @@ float GeoPoint::getLon() { return this->lon; }
 
 float GeoPoint::getLat() { return this->lat; }
 
-CT::string GeoPoint::toString() {
-  CT::string s;
-  s.print("point(%f, %f)", lon, lat);
+std::string GeoPoint::toString() {
+  std::string s;
+  s = CT::printf("point(%f, %f)", lon, lat);
   return s;
 }
 
@@ -97,9 +98,9 @@ void Polygon::newHole() {
 
 void Polygon::addHolePoint(float lon, float lat) { holes[holes.size() - 1].addPoint(lon, lat); }
 
-CT::string Polygon::toString() {
-  CT::string s;
-  s.print("polygon(%d) holes[%d]\n", points.getSize(), holes.size());
+std::string Polygon::toString() {
+  std::string s;
+  s = CT::printf("polygon(%d) holes[%zu]\n", points.getSize(), holes.size());
   return s;
 }
 
@@ -112,9 +113,9 @@ void Feature::newPolygon() {
   polygons.push_back(poly);
 }
 
-CT::string Polyline::toString() {
-  CT::string s;
-  s.print("polyline(%d)\n", points.getSize());
+std::string Polyline::toString() {
+  std::string s;
+  s = CT::printf("polyline(%d)\n", points.getSize());
   return s;
 }
 
@@ -154,21 +155,21 @@ std::vector<Polyline> *Feature::getPolylines() { return &polylines; }
 
 std::vector<GeoPoint> *Feature::getPoints() { return &points; }
 
-CT::string Feature::toString() {
-  CT::string s;
-  s.print("polygons: %d\n", polygons.size());
+std::string Feature::toString() {
+  std::string s;
+  s = CT::printf("polygons: %zu\n", polygons.size());
   for (unsigned int i = 0; i < polygons.size(); i++) {
     s += polygons[i].toString();
   }
-  s.printconcat("polylines: %d\n", polylines.size());
+  CT::printfconcat(s, "polylines: %zu\n", polylines.size());
   for (unsigned int i = 0; i < polylines.size(); i++) {
     s += polylines[i].toString();
   }
-  s.printconcat("points: %d\n", points.size());
+  CT::printfconcat(s, "points: %zu\n", points.size());
   for (unsigned int i = 0; i < points.size(); i++) {
     s += points[i].toString();
   }
-  s.printconcat("\n");
+  CT::printfconcat(s, "\n");
 
   for (std::map<std::string, FeatureProperty *>::iterator it = fp.begin(); it != fp.end(); ++it) {
     s += it->first.c_str();
@@ -177,6 +178,36 @@ CT::string Feature::toString() {
   }
   return s;
 }
+
+FeatureProperty::FeatureProperty(int64_t i) {
+  type = typeInt;
+  intVal = i;
+  dblVal = i;
+  pstr = "EMPTY i";
+}
+FeatureProperty::FeatureProperty(std::string s) {
+  type = typeStr;
+  pstr = std::string(s);
+  intVal = -1;
+  dblVal = -2;
+}
+
+FeatureProperty::FeatureProperty(double d) {
+  type = typeDouble;
+  dblVal = d;
+  intVal = -21;
+  pstr = "EMPTY d";
+}
+
+FeatureProperty::FeatureProperty() { type = typeNone; }
+
+FeaturePropertyType FeatureProperty::getType() { return type; }
+
+double FeatureProperty::getDblVal() { return dblVal; }
+
+int FeatureProperty::getIntVal() { return intVal; }
+
+std::string FeatureProperty::getStringVal() { return pstr; }
 
 Feature::~Feature() {
   for (std::map<std::string, FeatureProperty *>::iterator it = fp.begin(); it != fp.end(); ++it) {
@@ -187,21 +218,21 @@ Feature::~Feature() {
 
 Feature::Feature() {}
 
-Feature::Feature(CT::string _id) { id = _id; }
+Feature::Feature(std::string _id) { id = _id; }
 
 Feature::Feature(const char *_id) { id = _id; }
 
-void Feature::addPropInt64(CT::string name, int64_t v) {
+void Feature::addPropInt64(std::string name, int64_t v) {
   FeatureProperty *f = new FeatureProperty(v);
   fp[name.c_str()] = f;
 }
 
-void Feature::addProp(CT::string name, char *v) {
+void Feature::addProp(std::string name, char *v) {
   FeatureProperty *f = new FeatureProperty(v);
   fp[name.c_str()] = f;
 }
 
-void Feature::addProp(CT::string name, double v) {
+void Feature::addProp(std::string name, double v) {
   FeatureProperty *f = new FeatureProperty(v);
   fp[name.c_str()] = f;
 }

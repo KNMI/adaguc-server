@@ -20,8 +20,6 @@
 #define RM_POLYGON 32768
 
 #include "CServerConfig_CPPXSD.h"
-#include "CXMLParser.h"
-#include "CDebugger.h"
 
 class CDataSource;
 

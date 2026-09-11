@@ -1,6 +1,3 @@
-#include "CDebugger.h"
-#include "CTString.h"
-#include "CServerConfig_CPPXSD.h"
 #include "CServerParams.h"
 #include "../hclasses/CXMLParser.h"
 
@@ -20,11 +17,11 @@
 class CSLD {
 
 public:
-  bool parameterIsSld(CT::string param);
+  bool parameterIsSld(std::string param);
 
   void setServerParams(CServerParams *serverParams);
 
-  int processSLDUrl(CT::string sldUrl);
+  int processSLDUrl(std::string sldUrl);
 
 private:
   CServerConfig::XMLE_Configuration *serverConfig;

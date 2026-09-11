@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,23 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+#include <regex.h>
 #include "CCreateScaleBar.h"
 #include "CLegendRenderers/CCreateLegend.h"
 
 #include "CImageDataWriter.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CImgWarpNearestNeighbour.h"
+#include "CImgWarpNearestRGBA.h"
+#include "CImgWarpBilinear.h"
+#include "CImgWarpBoolean.h"
+#include "CImgRenderers/CImgRenderPoints.h"
+#include "CImgRenderStippling.h"
+#include "CImgRenderPolylines.h"
+#include "CStyleConfiguration.h"
+#include "CXMLParser.h"
+#include "CDebugger.h"
 #include "CMakeJSONTimeSeries.h"
 #include "CMakeEProfile.h"
 #include "CReporter.h"
@@ -43,6 +56,17 @@
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/GeoParameters.h"
+#include "utils/projectionUtils.h"
+#include "CServerError.h"
+
+static const bool CIMAGEDATAWRITER_DEBUG = false;
 
 std::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 std::map<std::string, CImageDataWriter::ProjCacheInfo> CImageDataWriter::projCacheMap;
@@ -87,11 +111,9 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(std::string key, C
     double x2 = dataSource->dfBBOX[2];
     if (y2 < y1) {
       if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-        // projInvertedFirst = true;
         double checkBBOX[4];
         for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 
-        // CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
         bool hasError = false;
         if (imageWarper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
         if (imageWarper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
@@ -266,9 +288,9 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
 
 int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
   int status = 0;
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("init");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("init");
+  }
   if (writerStatus != uninitialized) {
     CDBError("Already initialized");
     return 1;
@@ -293,7 +315,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
       drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-        // CDBDebug("drawImage.create685Palette();");
         writerStatus = initialized;
         drawImage.createImage(40, 20);
         drawImage.create685Palette();
@@ -332,8 +353,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
         std::string fontSize = srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
         drawImage.setTTFFontSize(std::stod(fontSize));
       }
-      // CDBError("Font %s",srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
-      // return 1;
 
     } else {
       CDBError("In <Font>, attribute \"location\" missing");
@@ -343,20 +362,17 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
   // Set background opacity, if applicable
   if (srvParam->wmsExtensions.opacity < 100) {
-    // CDBDebug("srvParam->wmsExtensions.opacity %d",srvParam->wmsExtensions.opacity);
     drawImage.setBackGroundAlpha((unsigned char)(float(srvParam->wmsExtensions.opacity) * 2.55));
   }
 
   writerStatus = initialized;
 
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
-    //  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
     status = drawImage.createImage(srvParam->geoParams);
 
     if (status != 0) return 1;
   }
   if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-    // drawImage.setTrueColor(false);
 
     int w = LEGEND_WIDTH;
     int h = LEGEND_HEIGHT;
@@ -372,12 +388,11 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     if (status != 0) return 1;
   }
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO || srvParam->requestType == REQUEST_WMS_GETHISTOGRAM) {
-    // status = drawImage.createImage(2,2);
     drawImage.geoParams = srvParam->geoParams;
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("/init");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("/init");
+    }
     return 0;
   }
 
@@ -404,9 +419,9 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
       }
     }
   }
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("/init");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("/init");
+  }
   return 0;
 }
 
@@ -453,9 +468,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   StopWatch_Stop("getFeatureInfo");
 #endif
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
+  }
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
@@ -516,16 +531,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
       }
     }
-    // CDBDebug("gfi_openall: %d %d",dataSource->cfgLayer->FilePath.size(),openAll);
 
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       openAll = true;
     }
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
+    }
     if (isProfileData) {
-      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSource, dX, dY, &eProfileJson);
+      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSource, dX, dY, eProfileJson);
       if (status != 0) {
         CDBError("CMakeEProfile::MakeEProfile failed");
         return status;
@@ -537,7 +551,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         return status;
       }
     } else {
-      // return 1;
       CDBDebug("Num time steps for dataSource %d", dataSource->getNumTimeSteps());
 
       std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
@@ -553,25 +566,22 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
         getFeatureInfoResult.dataSourceIndex = dataSourceIndex;
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("Processing dataSource %s with result %d of %d results (%d) %f", dataSource->getLayerName(), step, dataSource->getNumTimeSteps(),
-                 dataSource->getFirstAvailableDataObject()->hasNodataValue, dataSource->getFirstAvailableDataObject()->dfNodataValue);
-#endif
+        if (CIMAGEDATAWRITER_DEBUG) {
+          CDBDebug("Processing dataSource %s with result %d of %d results (%d) %f", dataSource->getLayerName(), step, dataSource->getNumTimeSteps(),
+                   dataSource->getFirstAvailableDataObject()->hasNodataValue, dataSource->getFirstAvailableDataObject()->dfNodataValue);
+        }
 
         CDataReader reader;
-        // if(!headerIsAvailable)
         {
           if (openAll) {
-// CDBDebug("OPEN ALL");
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("OPEN ALL");
-#endif
+            if (CIMAGEDATAWRITER_DEBUG) {
+              CDBDebug("OPEN ALL");
+            }
             status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
           } else {
-// CDBDebug("OPEN HEADER");
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("OPEN Header %d", headerIsAvailable);
-#endif
+            if (CIMAGEDATAWRITER_DEBUG) {
+              CDBDebug("OPEN Header %d", headerIsAvailable);
+            }
             if (!headerIsAvailable || sameHeaderForAll == true) {
               headerIsAvailable = true;
               status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
@@ -681,7 +691,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             element.value = "nodata";
             element.cdfDims = *dataSource->getCDFDims();
 
-            bool hasData = false;
             if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight) {
               size_t ptr = 0;
               if (openAll) {
@@ -710,7 +719,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   }
                 }
                 dimensionKeyValueMap[dimkey.c_str()] = true;
-                hasData = true;
 
                 if (dataSource->getDataObject(o)->features.empty() == false) {
                   int closestIndex = pixel;
@@ -737,7 +745,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                       warper.closereproj();
 
                       if (pixelDistance > 30) {
-                        hasData = false;
                         element.value = "nodata";
                         return 0;
                       };
@@ -767,13 +774,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
                 element.value = "nodata";
               }
-            } else {
-
-              if (hasData == false && dimensionKeyValueMap.find(dimkey.c_str())->second == true) {
-                //  getFeatureInfoResult.elements.pop_back();
-              }
             }
-            // CDBDebug("Elemeent %s", getFeatureInfoResult.elements.back().value.c_str());
             getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30);
           }
         }
@@ -790,11 +791,18 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
+void CImageDataWriter::setDate(const std::string &date) {
+  drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, date.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
+}
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
   max = 0;
+}
+
+CImageDataWriter::IndexRange::IndexRange(int min, int max) {
+  this->min = min;
+  this->max = max;
 }
 
 std::vector<CImageDataWriter::IndexRange> getIndexRangesForRegex(const std::string &match, const std::vector<std::string> &attributeValues) {
@@ -891,9 +899,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         numFeatures = firstDo->cdfObject->getDimensionThrows("features")->getSize();
       }
     } catch (int e) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
+      }
     }
     if (numFeatures > 0) {
       std::vector<std::string> attributeValues(numFeatures);
@@ -949,9 +957,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use fast nearest neighbourrenderer
    */
   if (renderMethod & RM_NEAREST || renderMethod & RM_POINT_LINEARINTERPOLATION) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgWarpNearestNeighbour");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpNearestNeighbour");
+    }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpNearestNeighbour();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
@@ -963,9 +971,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use RGBA renderer
    */
   if (renderMethod & RM_RGBA) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgWarpNearestRGBA");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpNearestRGBA");
+    }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpNearestRGBA();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
@@ -977,9 +985,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use bilinear renderer
    */
   if (renderMethod & RM_CONTOUR || renderMethod & RM_BILINEAR || renderMethod & RM_SHADED || renderMethod & RM_VECTOR || renderMethod & RM_BARB || renderMethod & RM_THIN) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgWarpBilinear");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpBilinear");
+    }
     if (dataSource->hasFieldData && dataSource->getFirstAvailableDataObject()->points.size() == 0) {
       imageWarperRenderer = new CImgWarpBilinear();
       std::string bilinearSettings;
@@ -1108,9 +1116,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
           }
         }
       }
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
+      }
       imageWarperRenderer->set(bilinearSettings.c_str());
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
@@ -1121,9 +1129,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use HillShade renderer
    */
   if (renderMethod & RM_HILLSHADED) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgWarpHillShaded");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpHillShaded");
+    }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpHillShaded();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
@@ -1135,9 +1143,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use New bilinear renderer
    */
   if (renderMethod & RM_GENERIC) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgWarpGeneric");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpGeneric");
+    }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpGeneric();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
@@ -1149,9 +1157,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use stippling renderer
    */
   if (renderMethod & RM_STIPPLING) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgRenderStippling");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgRenderStippling");
+    }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgRenderStippling();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
@@ -1163,9 +1171,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use point renderer
    */
   if (dataSource->getFirstAvailableDataObject()->points.size() != 0) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgRenderPoints");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgRenderPoints");
+    }
     CImgRenderPoints imageWarperRenderer;
     imageWarperRenderer.render(&imageWarper, dataSource, drawImage);
   }
@@ -1175,9 +1183,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    */
   if (renderMethod & RM_POLYLINE || renderMethod & RM_POLYGON) {
     if (dataSource->featureSet.length() != 0) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Using CImgRenderPolylines");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Using CImgRenderPolylines");
+      }
       imageWarperRenderer = new CImgRenderPolylines();
       std::string renderMethodAsString = getRenderMethodAsString(renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
@@ -1190,38 +1198,37 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
 
   traceTimingsSpanEnd(TraceTimingType::WARPIMAGERENDER);
-  // imageWarper.closereproj();
   reader.close();
 
   return 0;
 }
 
 int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("addData");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("addData");
+  }
   int status = 0;
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Draw data. dataSources.size() =  %lu", dataSources.size());
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("Draw data. dataSources.size() =  %lu", dataSources.size());
+  }
 
   for (size_t j = 0; j < dataSources.size(); j++) {
     CDataSource *dataSource = dataSources[j];
 
     /* DataBase layers */
     if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Drawingnormal legend");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Drawingnormal legend");
+      }
       if (j != 0) {
-/*
- * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
- * For j==0, the legend is already initialized previously
- */
-#ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("REINITLEGEND");
-#endif
+        /*
+         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
+         * For j==0, the legend is already initialized previously
+         */
+        if (CIMAGEDATAWRITER_DEBUG) {
+          CDBDebug("REINITLEGEND");
+        }
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
@@ -1233,23 +1240,22 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Start warping");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Start warping");
+      }
 
       traceTimingsSpanStart(TraceTimingType::WARPIMAGE);
       status = warpImage(dataSource, &drawImage);
       traceTimingsSpanEnd(TraceTimingType::WARPIMAGE);
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Finished warping %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Finished warping %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
+      }
       if (status != 0) {
         CDBError("warpImage for layer %s failed", dataSource->layerName.c_str());
         return status;
       }
     }
-    // if(j==dataSources.size()-1)
     {
       if (status == 0) {
 
@@ -1264,7 +1270,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             // Determine ImageText based on configured netcdf attribute
             const char *attrToSearch = dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
             if (attrToSearch != NULL) {
-              // CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try {
                 CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeThrows(attrToSearch);
                 if (attr->length > 0) {
@@ -1280,7 +1285,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (imageText.length() > 0) {
             size_t len = imageText.length();
             double scaling = dataSource->getScaling();
-            // CDBDebug("Watermark: %s",imageText.c_str());
             float fontSize = 10;
             if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
               fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
@@ -1313,14 +1317,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       bool useProjection = true;
 
       if (srvParam->geoParams.crs == ("EPSG:4326")) {
-        // CDBDebug("Not using projection");
         useProjection = false;
       }
       CImageWarper imageWarper;
       if (useProjection) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("initreproj latlon");
-#endif
+        if (CIMAGEDATAWRITER_DEBUG) {
+          CDBDebug("initreproj latlon");
+        }
         int status = imageWarper.initreproj(LATLONPROJECTION, drawImage.geoParams, &srvParam->cfg->Projection);
         if (status != 0) {
           CDBError("initreproj failed");
@@ -1345,14 +1348,14 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       double numStepsX = (srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left) / numTestSteps;
       double numStepsY = (srvParam->geoParams.bbox.top - srvParam->geoParams.bbox.bottom) / numTestSteps;
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("dfBBOX: %f, %f, %f, %f", srvParam->geoParams.bbox.left, srvParam->geoParams.bbox.bottom, srvParam->geoParams.bbox.right, srvParam->geoParams.bbox.top);
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("dfBBOX: %f, %f, %f, %f", srvParam->geoParams.bbox.left, srvParam->geoParams.bbox.bottom, srvParam->geoParams.bbox.right, srvParam->geoParams.bbox.top);
+      }
       for (double y = srvParam->geoParams.bbox.bottom; y < srvParam->geoParams.bbox.top + numStepsY; y = y + numStepsY) {
         for (double x = srvParam->geoParams.bbox.left; x < srvParam->geoParams.bbox.right + numStepsX; x = x + numStepsX) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("xy: %f, %f", x, y);
-#endif
+          if (CIMAGEDATAWRITER_DEBUG) {
+            CDBDebug("xy: %f, %f", x, y);
+          }
           topLeft.x = x;
           topLeft.y = y;
           if (useProjection) {
@@ -1365,9 +1368,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("SIZE: %f, %f, %f, %f", latLonBBOX.left, latLonBBOX.right, latLonBBOX.top, latLonBBOX.bottom);
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("SIZE: %f, %f, %f, %f", latLonBBOX.left, latLonBBOX.right, latLonBBOX.top, latLonBBOX.bottom);
+      }
 
       latLonBBOX.left = double(int(latLonBBOX.left / gridSize)) * gridSize - gridSize;
       latLonBBOX.right = double(int(latLonBBOX.right / gridSize)) * gridSize + gridSize;
@@ -1381,9 +1384,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       size_t numPoints = numPointsX * numPointsY;
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("numPointsX = %d, numPointsY = %d", numPointsX, numPointsY);
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("numPointsX = %d, numPointsY = %d", numPointsX, numPointsY);
+      }
 
       f8point *gridP = new f8point[numPoints];
 
@@ -1401,9 +1404,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Drawing horizontal lines");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Drawing horizontal lines");
+      }
 
       bool drawText = false;
       const char *fontLoc = NULL;
@@ -1460,9 +1463,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Drawing vertical lines");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Drawing vertical lines");
+      }
       for (int x = 0; x < numPointsX; x = x + s) {
         bool drawnTextTop = false;
         bool drawnTextBottom = false;
@@ -1503,9 +1506,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Delete gridp");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Delete gridp");
+      }
 
       delete[] gridP;
     }
@@ -1571,9 +1574,9 @@ int CImageDataWriter::end() {
   }
   writerStatus = finished;
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("end, number of GF results: %lu", getFeatureInfoResultList.size());
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("end, number of GF results: %lu", getFeatureInfoResultList.size());
+    }
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
 
@@ -1879,7 +1882,6 @@ int CImageDataWriter::end() {
       rootElement.setName("root");
 
       for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-        // CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
         GetFeatureInfoResult *g = &(getFeatureInfoResultList[j]);
 
         // Find out number of different features in getFeatureInfoResultList[j]
@@ -1908,7 +1910,6 @@ int CImageDataWriter::end() {
 
         int nrDims = e->cdfDims.size();
         std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
-        // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;
         for (int j = 0; j < nrDims; j++) {
@@ -1996,38 +1997,37 @@ int CImageDataWriter::end() {
 #endif
 
   // Static image
-  // CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
 
   std::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Creating 8 bit png with alpha");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Creating 8 bit png with alpha");
+    }
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8_NOALPHA) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Creating 8 bit png without alpha");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Creating 8 bit png without alpha");
+    }
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(false);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Creating 24 bit png");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Creating 24 bit png");
+    }
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng24();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Creating 32 bit png");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Creating 32 bit png");
+    }
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Creating webp");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Creating webp");
+    }
     printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
 
     int webPQuality = srvParam->imageQuality;
@@ -2044,7 +2044,6 @@ int CImageDataWriter::end() {
     CDBDebug("Creating 32 bit webp quality = %d", webPQuality);
     status = drawImage.printImageWebP32(webPQuality);
   } else {
-    // CDBDebug("LegendGraphic PNG");
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   }

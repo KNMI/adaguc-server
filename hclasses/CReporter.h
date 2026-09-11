@@ -3,11 +3,11 @@
  * Project:  Reporting function
  * Purpose:  For generic reporting
  * Author:   Saskia Wagenaar
- * Date:     2018-07-18
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #define CREPORTER_H
 #include <list>
 #include <string>
+#include "CDebugger.h"
 #include "CReportMessage.h"
 
 /* Set this to false if you don't want report messages in the log file also. */
@@ -34,11 +35,8 @@
 
 #define REPORT_DEFAULT_FILE "./checker_report.txt"
 
-#define CREPORT_INFO(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::INFO, category, documentationLink, __FILENAME__, __LINE__)
 #define CREPORT_INFO_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::INFO, category, "", __FILENAME__, __LINE__)
-#define CREPORT_WARN(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, documentationLink, __FILENAME__, __LINE__)
 #define CREPORT_WARN_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, "", __FILENAME__, __LINE__)
-#define CREPORT_ERROR(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, documentationLink, __FILENAME__, __LINE__)
 #define CREPORT_ERROR_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, "", __FILENAME__, __LINE__)
 
 class CReporter {

@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,15 @@
  ******************************************************************************/
 
 #include "CConvertHexagon.h"
+#include "CDataSource.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CServerParams.h"
+#include "CTString.h"
+#include <netcdf.h>
+
+static const bool CCONVERTHEXAGON_DEBUG = false;
 
 void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
   int xyIsSwapped = 0;
@@ -47,7 +54,6 @@ void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y
   if (xyIsSwapped == 0) {
 
     for (int x = int(x1); x < x2; x++) {
-      //         plot(x,int(y),1);
       if (y >= 0 && y < h && x >= 0 && x < w) imagedata[int(x) + int(y) * w] = value;
       y += gradient;
     }
@@ -157,7 +163,6 @@ void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
 double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats) {
 
   size_t numCells = lons->dimensionlinks[0]->getSize();
-  // int numVerts = lons->dimensionlinks[1]->getSize();
 
   lons->readData(CDF_FLOAT, true);
   lats->readData(CDF_FLOAT, true);
@@ -220,8 +225,6 @@ double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Varia
 int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *srvParams) {
   // Check whether this is really a hexagon file
   try {
-    // cdfObject->getDimension("col");
-    // cdfObject->getDimension("row");
     cdfObject->getDimensionThrows("nvert_i");
     cdfObject->getDimensionThrows("cell_i");
     cdfObject->getVariableThrows("lon_i");
@@ -236,7 +239,6 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     }
 
   } catch (int e) {
-    // CDBDebug("NOT HEXAGON DATA");
     return 1;
   }
 
@@ -320,9 +322,9 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     cdfObject->addVariable(varY);
     varY->allocateData(dimY->length);
 
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables");
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("Data allocated for 'x' and 'y' variables");
+    }
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -336,21 +338,21 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("wgs84") && !var->name.equals("epsg") && !var->name.equals("lon_i") && !var->name.equals("lat_i") &&
-          !var->name.equals("bounds_lon_i") && !var->name.equals("bounds_lat_i") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
-          !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && (var->name.indexOf("bnds") == -1)) {
+      if (var->name != "time2D" && var->name != "time" && var->name != "wgs84" && var->name != "epsg" && var->name != "lon_i" && var->name != "lat_i" && var->name != "bounds_lon_i" &&
+          var->name != "bounds_lat_i" && var->name != "custom" && var->name != "projection" && var->name != "product" && var->name != "iso_dataset" && var->name != "tile_properties" &&
+          (CT::indexOf(var->name, "bnds") == -1)) {
         if (var->dimensionlinks.size() >= 1) {
           CDBDebug("Checking var %s with dimo %s", var->name.c_str(), var->dimensionlinks[1]->name.c_str());
-          if (var->dimensionlinks[1]->name.equals("cell_i")) {
-            varsToConvert.push_back(CT::string(var->name.c_str()));
+          if (var->dimensionlinks[1]->name == "cell_i") {
+            varsToConvert.push_back(std::string(var->name.c_str()));
           }
         }
       }
-      if (var->name.equals("projection") || var->name.equals("lat_bounds_i") || var->name.equals("bounds_lon_i")) {
+      if (var->name == "projection" || var->name == "lat_bounds_i" || var->name == "bounds_lon_i") {
         var->setAttributeText("ADAGUC_SKIP", "true");
       }
     }
@@ -363,9 +365,9 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
     // Remove projection attribute if we use lat/lon for projecting
     hexagonVar->removeAttribute("grid_mapping");
 
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("Converting %d/%d %s", v, varsToConvert.size(), hexagonVar->name.c_str());
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("Converting %zu/%zu %s", v, varsToConvert.size(), hexagonVar->name.c_str());
+    }
 
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
@@ -379,7 +381,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
 
     new2DVar->setType(hexagonVar->getType());
     new2DVar->name = hexagonVar->name.c_str();
-    hexagonVar->name.concat("_backup");
+    hexagonVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < hexagonVar->attributes.size(); j++) {
@@ -409,8 +411,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really a hexagon file
   try {
-    // cdfObject->getDimension("col");
-    // cdfObject->getDimension("row");
     cdfObject->getDimensionThrows("nvert_i");
     cdfObject->getDimensionThrows("cell_i");
     cdfObject->getVariableThrows("lon_i");
@@ -428,9 +428,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     return 1;
   }
 
-#ifdef CCONVERTHEXAGON_DEBUG
-  CDBDebug("THIS IS Hexagon VECTOR DATA");
-#endif
+  if (CCONVERTHEXAGON_DEBUG) {
+    CDBDebug("THIS IS Hexagon VECTOR DATA");
+  }
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
   std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
@@ -441,11 +441,10 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *hexagonVar;
-  CT::string origSwathName = new2DVar->name.c_str();
-  origSwathName.concat("_backup");
+  std::string origSwathName = new2DVar->name.c_str();
+  origSwathName += "_backup";
   hexagonVar = cdfObject->getVariableNE(origSwathName.c_str());
   if (hexagonVar == NULL) {
-    // CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
     return 1;
   }
 
@@ -458,7 +457,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     count[dimInd] = 1;
     stride[dimInd] = 1;
 
-    CT::string dimName = hexagonVar->dimensionlinks[dimInd]->name.c_str();
+    std::string dimName = hexagonVar->dimensionlinks[dimInd]->name.c_str();
 
     if (numDims - dimInd < 2) {
       start[dimInd] = 0;
@@ -478,9 +477,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
     dataObjects[0]->hasNodataValue = true;
     fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
+    }
     CDF::Attribute *fillValue2d = new2DVar->getAttributeNE("_FillValue");
     if (fillValue2d == NULL) {
       fillValue2d = new CDF::Attribute();
@@ -501,9 +500,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   float max = 0;
   bool firstValueDone = false;
 
-#ifdef CCONVERTHEXAGON_DEBUG
-  CDBDebug("Size == %d", hexagonVar->getSize());
-#endif
+  if (CCONVERTHEXAGON_DEBUG) {
+    CDBDebug("Size == %zu", hexagonVar->getSize());
+  }
   for (size_t j = 0; j < hexagonVar->getSize(); j++) {
     float v = ((float *)hexagonVar->data)[j];
 
@@ -518,23 +517,22 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         max = v;
       }
 
-      //      CDBDebug("Swathvar %f %f %f",v,min,max);
     }
   }
 
-#ifdef CCONVERTHEXAGON_DEBUG
-  CDBDebug("Calculated min/max : %f %f", min, max);
-#endif
+  if (CCONVERTHEXAGON_DEBUG) {
+    CDBDebug("Calculated min/max : %f %f", min, max);
+  }
 
   // Set statistics
   if (dataSource->stretchMinMax) {
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("dataSource->stretchMinMax");
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("dataSource->stretchMinMax");
+    }
     if (dataSource->statistics == NULL) {
-#ifdef CCONVERTHEXAGON_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", min, max);
-#endif
+      if (CCONVERTHEXAGON_DEBUG) {
+        CDBDebug("Setting statistics: min/max : %f %f", min, max);
+      }
       dataSource->statistics = new Statistics();
       dataSource->statistics->max = max;
       dataSource->statistics->min = min;
@@ -562,9 +560,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -584,9 +582,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     varX->allocateData(dimX->length);
     varY->allocateData(dimY->length);
 
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables");
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("Data allocated for 'x' and 'y' variables");
+    }
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -626,7 +624,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         projectionVar->name = ("customgridprojection");
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs;
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        imageWarper.decodeCRS(dataSource->nativeProj4, dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
@@ -636,12 +634,12 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       }
     }
 
-#ifdef CCONVERTHEXAGON_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTHEXAGON_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
     if (projectionRequired) {
       int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
@@ -657,14 +655,12 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (CT::indexOf(styleConfiguration->styleCompositionName, "bilinear") >= 0) {
 
-      // drawBilinear=true;
     }
     /*
      * Bilinear rendering is based on gouraud shading using the center of each quads by using lat and lon variables, while nearest neighbour rendering is based on lat_bnds and lat_bnds variables,
      * drawing the corners of the quads..
      */
 
-    // drawBilinear=true;
     // Bilinear rendering
     // TODO
     if (drawBilinear) {
@@ -679,9 +675,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         CDBError("lat or lon variables not found");
         return 1;
       }
-
-      //       int numCells = cdfObject->getDimension("row")->getSize();
-      //       int numVerts = cdfObject->getDimension("col")->getSize();
 
       int numCells = lons->dimensionlinks[0]->getSize();
       int numVerts = lons->dimensionlinks[1]->getSize();
@@ -707,7 +700,6 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       for (int y = 0; y < numCells - 1; y++) {
         for (int x = 0; x < numVerts - 1; x++) {
           size_t pSwath = x + y * numVerts;
-          // CDBDebug("%d %d %d",x,y,pSwath);
           double lons[4], lats[4];
           float vals[4];
           lons[0] = (float)lonData[pSwath];
@@ -784,16 +776,14 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
       int numCells = swathLon->dimensionlinks[0]->getSize();
       int numVerts = swathLon->dimensionlinks[1]->getSize();
-#ifdef CCONVERTHEXAGON_DEBUG
-      CDBDebug("numCells %d, numVerts %d", numCells, numVerts);
-#endif
+      if (CCONVERTHEXAGON_DEBUG) {
+        CDBDebug("numCells %d, numVerts %d", numCells, numVerts);
+      }
       int numTiles = numCells;
 
-      // int numTiles =     cdfObject->getDimension("col")->getSize()*cdfObject->getDimension("row")->getSize();
-
-#ifdef CCONVERTHEXAGON_DEBUG
-      CDBDebug("There are %d tiles", numTiles);
-#endif
+      if (CCONVERTHEXAGON_DEBUG) {
+        CDBDebug("There are %d tiles", numTiles);
+      }
 
       swathLon->readData(CDF_FLOAT, true);
       swathLat->readData(CDF_FLOAT, true);
@@ -863,14 +853,10 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
           }
         }
         if (tileHasNoData == false) {
-          // CDBDebug(" (%f,%f) (%f,%f) (%f,%f) (%f,%f)",lons[0],lats[0],lons[1],lats[1],lons[2],lats[2],lons[3],lats[3]);
 
           float *flons = new float[numVerts];
           float *flats = new float[numVerts];
           for (int j = 0; j < numVerts; j++) {
-            //             if(tileIsOverDateBorder){
-            //               lons[j]-=360;
-            //               while(lons[j]<-300)lons[j]+=360;
             //             }
             double dflon = lons[j];
             double dflat = lats[j];
@@ -883,14 +869,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
             flats[j] = float((dflat - offsetY) / cellSizeY);
           }
           if (tileHasNoData == false) {
-
-            // CDBDebug(" (%d,%d) (%d,%d) (%d,%d) (%d,%d)",dlons[0],dlats[0],dlons[1],dlats[1],dlons[2],dlats[2],dlons[3],dlats[3]);
-
-            // fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
-
-            // drawpoly2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
             drawNGon(sdata, dataSource->dWidth, dataSource->dHeight, numVerts, flons, flats, val);
-            // drawlines2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
           }
           delete[] flons;
           delete[] flats;
@@ -899,8 +878,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     }
     imageWarper.closereproj();
   }
-#ifdef CCONVERTHEXAGON_DEBUG
-  CDBDebug("/convertHexagonData");
-#endif
+  if (CCONVERTHEXAGON_DEBUG) {
+    CDBDebug("/convertHexagonData");
+  }
   return 0;
 }

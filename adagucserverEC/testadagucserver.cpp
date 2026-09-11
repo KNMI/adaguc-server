@@ -7,6 +7,13 @@
 #include "f8vector.h"
 #include "ProjCache.h"
 #include "CDrawFunction.h"
+#include "CCDFHDF5IO.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CProj4ToCF.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -25,8 +32,8 @@ int main() {
 }
 
 TEST(alreadyMeter, CImageWarper) {
-  CT::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378140 +b=6356750 +x_0=0 y_0=0");
-  CT::string projStringOut;
+  std::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378140 +b=6356750 +x_0=0 y_0=0");
+  std::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
   CHECK(scaling == 1.0);
@@ -34,9 +41,9 @@ TEST(alreadyMeter, CImageWarper) {
 }
 
 TEST(kilometerToMeter, CImageWarper) {
-  CT::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0");
-  CT::string projStringOutExpected("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +ellps=WGS84 +datum=WGS84");
-  CT::string projStringOut;
+  std::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0");
+  std::string projStringOutExpected("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +ellps=WGS84 +datum=WGS84");
+  std::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
   CDBDebug("projStringOut [%s]", projStringOut.c_str());
@@ -45,9 +52,9 @@ TEST(kilometerToMeter, CImageWarper) {
 }
 
 TEST(kilometerToMeterObTran, CImageWarper) {
-  CT::string projStringIn("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378.14 +b=6356.75 +x_0=0.000000 +y_0=0.000000 +no_defs");
-  CT::string projStringOutExpected("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
-  CT::string projStringOut;
+  std::string projStringIn("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378.14 +b=6356.75 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  std::string projStringOutExpected("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  std::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
   CHECK(scaling == 1000.0);
@@ -55,9 +62,9 @@ TEST(kilometerToMeterObTran, CImageWarper) {
 }
 
 TEST(meterToMeterObTran, CImageWarper) {
-  CT::string projStringIn("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
-  CT::string projStringOutExpected("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
-  CT::string projStringOut;
+  std::string projStringIn("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  std::string projStringOutExpected("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  std::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
   CHECK(scaling == 1);
@@ -65,8 +72,8 @@ TEST(meterToMeterObTran, CImageWarper) {
 }
 
 TEST(radians, CImageWarper) {
-  CT::string projStringIn("+proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=1.000000 +a=0.178231 +b=0.177633 +sweep=y");
-  CT::string projStringOut;
+  std::string projStringIn("+proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=1.000000 +a=0.178231 +b=0.177633 +sweep=y");
+  std::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
   CHECK(scaling == 1.0);
@@ -75,7 +82,7 @@ TEST(radians, CImageWarper) {
 
 // From DINI point to latlon
 TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
-  CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
+  std::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
   GeoParameters geo;
   geo.crs = crs;
@@ -108,14 +115,12 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 56.432904, 0.001);
 
   f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
-  // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
   f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -131,7 +136,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
 
 // From latlon to latlon
 TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
-  CT::string crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+  std::string crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 
   GeoParameters geo;
   geo.crs = crs;
@@ -164,14 +169,12 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 1.45, 0.001);
 
   f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
-  // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
 
   f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -186,7 +189,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
 }
 
 f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
-  CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
+  std::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
   GeoParameters geo;
   geo.crs = crs;

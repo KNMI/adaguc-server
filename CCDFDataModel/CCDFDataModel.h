@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@
 #ifndef CCDFDATAMODEL_H
 #define CCDFDATAMODEL_H
 
-// #define CCDFDATAMODEL_DEBUG
-
 #define CCDFDATAMODEL_DUMP_STANDARD 0
 #define CCDFDATAMODEL_DUMP_JSON 1
 
@@ -40,12 +38,12 @@
 
 namespace CDF {
 
-  void _dump(CDFObject *cdfObject, CT::string *dumpString, int returnType);
-  void _dump(CDF::Variable *cdfVariable, CT::string *dumpString, int returnType);
-  CT::string dump(CDFObject *cdfObject);
-  CT::string dump(CDF::Variable *cdfVariable);
-  CT::string dumpAsJSON(CDFObject *cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, CT::string *dumpString, int returnType);
+  void _dump(CDFObject *cdfObject, std::string &dumpString, int returnType);
+  void _dump(CDF::Variable *cdfVariable, std::string &dumpString, int returnType);
+  std::string dump(CDFObject *cdfObject);
+  std::string dump(CDF::Variable *cdfVariable);
+  std::string dumpAsJSON(CDFObject *cdfObject);
+  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, std::string &dumpString, int returnType);
 
 }; // namespace CDF
 

@@ -1,10 +1,12 @@
 
 #include "CHandleMetadata.h"
+#include "CDebugger.h"
 #include "CAutoResource.h"
 #include "CDFObjectStore.h"
+#include "CTString.h"
 
 int CHandleMetadata::process(CServerParams *srvParam) {
-  CT::string metadata = "{}";
+  std::string metadata = "{}";
   bool hasFoundDataSetOrAutoResource = false;
 
   if (CAutoResource::configure(srvParam, true) == 0) {
@@ -16,11 +18,11 @@ int CHandleMetadata::process(CServerParams *srvParam) {
     return 1;
   }
 
-  CT::string fileName = srvParam->internalAutoResourceLocation;
+  std::string fileName = srvParam->internalAutoResourceLocation;
 
   CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(NULL, srvParam, fileName.c_str());
 
-  CT::string data = CDF::dumpAsJSON(cdfObject);
+  std::string data = CDF::dumpAsJSON(cdfObject);
   CDBDebug("dump %s", data.c_str());
   metadata = data;
 
