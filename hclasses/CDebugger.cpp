@@ -189,3 +189,5 @@ void _printError(const char *a, ...) {
 void setDebugFunction(void (*function)(const char *)) { _printDebugStreamPointer = function; }
 void setWarningFunction(void (*function)(const char *)) { _printWarningStreamPointer = function; }
 void setErrorFunction(void (*function)(const char *)) { _printErrorStreamPointer = function; }
+
+void setLoggerPid() { logProcessIdentifier = getpid(); }
