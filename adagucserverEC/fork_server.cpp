@@ -23,8 +23,6 @@ See also: doc/fork_server.md
 - Methods prefixed with `child_` only get executed by the (forked) children
 */
 
-// Check this many seconds for old left-over processes
-const int CHECK_CHILD_PROC_INTERVAL = 30;
 // Default for ADAGUC_NUMPARALLELPROCESSES, matches the python default
 const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
 // Default for ADAGUC_MAX_PROC_TIMEOUT, matches the python default.
@@ -37,6 +35,19 @@ typedef struct {
 
 static std::map<pid_t, child_proc_t> child_procs;
 int self_pipe[2];
+
+/** Close descriptors that belong only to the mother process after a fork. */
+void child_close_mother_file_descriptors(int listen_socket) {
+  close(listen_socket);
+  close(self_pipe[0]);
+  close(self_pipe[1]);
+
+  // Note: `child_procs` comes from the forked mother process but is not shared. Safe to clean everything.
+  for (const auto &[pid, child_proc]: child_procs) {
+    (void)pid;
+    close(child_proc.child_socket_fd);
+  }
+}
 
 /**
  * Gets a positive integer value from the environment.
@@ -241,7 +252,7 @@ void mother_handle_child_exited_events() {
 void mother_kill_old_child_procs(int max_child_proc_timeout) {
   time_t now = time(NULL);
   for (auto it = child_procs.begin(); it != child_procs.end(); ++it) {
-    if (difftime(now, it->second.forked_at) > max_child_proc_timeout) {
+    if (difftime(now, it->second.forked_at) >= max_child_proc_timeout) {
       kill(it->first, SIGKILL);
     }
   }
@@ -317,8 +328,9 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     return 1;
   }
 
-  // Keep one extra child slot above the request limit so ping messages can still be handled when Python's request semaphore is full.
-  int max_child_procs = mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES) + 1;
+  // Use `ADAGUC_NUMPARALLELPROCESSES` to set maximum requests, keep one extra slot so PING can be handled when its semaphore is full.
+  int max_request_child_procs = std::max(mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES), 2);
+  int max_child_procs = max_request_child_procs + 1;
   int max_child_proc_timeout = mother_get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_CHILD_PROC_TIMEOUT);
   CDBDebug("Max child processes: %d", max_child_procs);
   CDBDebug("Max child process timeout: %d", max_child_proc_timeout);
@@ -330,8 +342,6 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
   }
 
   CDBDebug("Entering fork server loop");
-  time_t last_cleanup = time(NULL);
-
   while (1) {
     // fd_set is modified by select(); reinitialize it each loop to monitor listen_socket and self_pipe again
     fd_set readfds;
@@ -359,12 +369,8 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
       continue;
     }
 
-    // Check for dead processes
-    time_t now = time(NULL);
-    if (now - last_cleanup >= CHECK_CHILD_PROC_INTERVAL) {
-      mother_kill_old_child_procs(max_child_proc_timeout);
-      last_cleanup = now;
-    }
+    // select() wakes at least once per second, first check if there are old processes that need cleaning
+    mother_kill_old_child_procs(max_child_proc_timeout);
 
     // Only run if there is activity on the self_pipe (to handle exit events)
     if (FD_ISSET(self_pipe[0], &readfds)) {
@@ -385,7 +391,7 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
       // Both if/else paths are taken. Mother process takes pid > 0, child process takes pid == 0.
       if (pid == 0) {
         // Child process handles request. Communication with python happens through `child_socket_fd`
-        close(listen_socket);
+        child_close_mother_file_descriptors(listen_socket);
         child_handle_client(child_socket_fd, run_adaguc_once, argc, argv, envp);
         _exit(1);
       } else if (pid > 0) {

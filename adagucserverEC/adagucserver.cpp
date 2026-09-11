@@ -88,7 +88,8 @@ int run_adaguc_once(int argc, char **argv, char **envp) {
 
 int main(int argc, char **argv, char **envp) {
   const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
-  if (fork_enable && std::string(fork_enable) == "TRUE") {
+  bool use_fork_server = fork_enable && std::string(fork_enable) == "TRUE" && argc == 1;
+  if (use_fork_server) {
     // Fork children inherit the mother's stdio buffers.
     // This keeps stdout/stderr unbuffered, so old buffered output cannot be written into a the unix socket before the HTTP headers.
     setvbuf(stdout, NULL, _IONBF, 0);

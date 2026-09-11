@@ -5,7 +5,7 @@ Each request is handled in a separate child process, while the mother process re
 
 This design reduces per-request overhead by avoiding repeated process initialization.
 
-The fork server is enabled by setting the environment variable `ADAGUC_FORK_ENABLE` to `TRUE`. If this variable is not set to `TRUE`, ADAGUC runs without the fork server.
+The fork server is enabled by setting the environment variable `ADAGUC_FORK_ENABLE` to `TRUE`. If this variable is not set to `TRUE`, ADAGUC runs without the fork server. Command-style invocations with arguments, such as `--updatedb`, `--updatelayermetadata`, `--lint`, and `--report`, always run as normal subprocesses.
 
 # Components
 
@@ -15,7 +15,7 @@ The system consists of three parts:
 - Mother process (C++): A persistent process that listens for requests and manages child processes.
 - Child processes (C++): Short-lived processes created with `fork()`. Each child handles one request.
 
-The maximum number of concurrent children is limited by the environment variable `ADAGUC_NUMPARALLELPROCESSES`.
+The environment variable `ADAGUC_NUMPARALLELPROCESSES` determines the number of concurrent processes, with a minimum of two so a metadata update does not block other requests. The mother process permits one additional child, so the supervisor can perform its `PING` health check while other requests can get handled.
 
 Communication between the Python server and the mother process occurs via a Unix domain socket.
 
@@ -122,4 +122,4 @@ The fork server (mother process) is managed by a Python supervisor `fork_server_
 - Starts the process during application startup
 - Performs periodic health checks via the Unix socket
 - Restarts the process if it becomes unresponsive or exits
-- Terminates the process during application shutdown
+- Terminates the mother and its child process group during application shutdown
