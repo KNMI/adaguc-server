@@ -290,8 +290,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       dataSource->dataObjects[0].points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
 
       /* Also draw a dot on the virtual echotoppen grid, useful to see something in neartest neighbour rendermethod
-         The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a     CDBDebug("String [%s]\n---\n%s\n ---", projectionString.c_str(),
-         CDF::dump(cdfObject0).c_str());grid.
+         The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a grid.
        */
       drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
     }
