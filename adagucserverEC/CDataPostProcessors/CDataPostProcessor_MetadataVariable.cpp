@@ -58,3 +58,5 @@ int CDDPMetadataVariable::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
   }
   return 0;
 }
+
+int CDDPMetadataVariable::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) { return 0; }

@@ -253,7 +253,6 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     /* Time to instantiate the imagewarper. This is needed to project from HDF5 projection space (polar sterographic) to screenspace and latlon coordinate space*/
     CImageWarper imageWarperEchoToppen;
     std::string projectionString = cdfObject0->getVariableThrows("projection")->getAttributeThrows("proj4_params")->toString();
-    CDBDebug("String [%s]\n---\n%s\n ---", projectionString.c_str(), CDF::dump(cdfObject0).c_str());
     imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     double axisScaling;
     std::tie(std::ignore, axisScaling) = imageWarperEchoToppen.fixProjection(projectionString);
@@ -291,7 +290,8 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       dataSource->dataObjects[0].points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
 
       /* Also draw a dot on the virtual echotoppen grid, useful to see something in neartest neighbour rendermethod
-         The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a grid.
+         The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a     CDBDebug("String [%s]\n---\n%s\n ---", projectionString.c_str(),
+         CDF::dump(cdfObject0).c_str());grid.
        */
       drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
     }

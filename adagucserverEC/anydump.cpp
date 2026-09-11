@@ -26,14 +26,13 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+#include <iostream>
 #include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
-#include "CCDFGeoJSONIO.h"
-#include "CCDFCSVReader.h"
-#include "utils.h"
+#include <utils.h>
 
 int main(int argCount, char **argVars) {
   CDFReader *cdfReader = NULL;
@@ -54,16 +53,16 @@ int main(int argCount, char **argVars) {
 
   for (int j = 0; j < argCount; j++) {
     std::string cmdType = argVars[j];
-    if (cmdType.equals("-h")) dumpHeader = true;
-    if (cmdType.equals("-json")) dumpAsJSON = true;
-    if (cmdType.equals("-v")) {
+    if (cmdType == "-h") dumpHeader = true;
+    if (cmdType == "-json") dumpAsJSON = true;
+    if (cmdType == "-v") {
       if (j + 1 >= argCount) {
         CDBError("Not enough arguments, please specify the variable");
         return 1;
       }
       variableName = argVars[j + 1];
     }
-    if (cmdType.equals("-ncml")) {
+    if (cmdType == "-ncml") {
       if (j + 1 >= argCount) {
         CDBError("Not enough arguments, please specify the ncml file");
         return 1;

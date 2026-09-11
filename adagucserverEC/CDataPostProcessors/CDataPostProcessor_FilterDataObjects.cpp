@@ -42,3 +42,5 @@ int CDDPFilterDataObjects::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 
   return 0;
 }
+
+int CDDPFilterDataObjects::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) { return 0; }
