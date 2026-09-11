@@ -31,6 +31,7 @@ sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to
 ON_POSIX = "posix" in sys.builtin_module_names
 
 MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "10"))
+MAX_COMMAND_TIMEOUT = int(os.getenv("ADAGUC_MAX_COMMAND_TIMEOUT", "300"))
 
 
 class AdagucResponse(NamedTuple):
@@ -84,13 +85,20 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
 
     reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
 
-    writer.write(message_bytes)
-    await writer.drain()
+    try:
+        writer.write(message_bytes)
+        await writer.drain()
 
-    process_output = await reader.read()
+        process_output = await reader.read()
+    finally:
+        writer.close()
+        try:
+            await writer.wait_closed()
+        except OSError:
+            pass
 
-    writer.close()
-    await writer.wait_closed()
+    if len(process_output) < 4:
+        raise RuntimeError("Invalid response from ADAGUC fork server: missing exit status")
 
     # Status code is stored in the last 4 bytes from the received data
     status_code = int.from_bytes(process_output[-4:], sys.byteorder)
@@ -146,7 +154,7 @@ class CGIRunner:
         env: dict = {},
         path: str | None = None,
         isCGI: bool = True,
-        timeout: int = MAX_PROC_TIMEOUT,
+        timeout: int | None = None,
     ) -> tuple[int, list[str], bytes | None, bytes]:
         localenv = {}
         if url != None:
@@ -159,8 +167,11 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
-        # Only use fork server if ADAGUC_FORK_ENABLE=TRUE and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
-        use_fork = is_fork_enabled() and len(cmds) == 1
+        # Command-style calls, such as `--updatelayermetadata`, always use a subprocess and may run much longer than web requests.
+        is_command = len(cmds) > 1
+        use_fork = is_fork_enabled() and not is_command
+        if timeout is None:
+            timeout = MAX_COMMAND_TIMEOUT if is_command else MAX_PROC_TIMEOUT
 
         async with sem:
             if use_fork:
