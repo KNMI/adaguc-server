@@ -1,8 +1,7 @@
 #include "CReadFile.h"
-#include <sys/stat.h>
-#include <string>
 #include <fstream>
 #include <streambuf>
+#include <string>
 
 std::string readFile(const std::string &fileName) {
   std::ifstream t(fileName);

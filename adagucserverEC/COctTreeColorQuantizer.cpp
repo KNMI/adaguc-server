@@ -125,7 +125,6 @@ void MakePaletteTable(OctreeType *tree, RGBType table[], int *index) {
     table[*index].realalpha = (byte)(tree->realalphasum / tree->npixels);
 
     tree->index = *index;
-    //  if(*index>100)return;
     (*index)++;
   } else {
     for (i = 0; i < COLORBITS; i++) {
@@ -143,7 +142,6 @@ int lastColor = -1;
 int lastIndex = 0;
 
 int QuantizeColorMapped(OctreeType *tree, RGBType *color) {
-  // return QuantizeColor(tree,color);;;
   int key = color->r + color->g * 256 + color->b * 65536;
   if (lastColor == key) {
     return lastIndex;

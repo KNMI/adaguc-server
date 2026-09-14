@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,9 @@
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CDFCopyData.h"
+#include <cstring>
 
-void CDF::Attribute::setName(const char *value) { name = (value); }
+void CDF::Attribute::setName(const std::string &value) { name = value; }
 
 CDF::Attribute::Attribute() {
   data = NULL;
@@ -38,7 +39,7 @@ CDF::Attribute::Attribute(Attribute *att) {
   data = NULL;
   length = 0;
 
-  name = (&att->name);
+  name = att->name;
   setData(att);
 }
 
@@ -102,79 +103,78 @@ int CDF::Attribute::setString(const char *dataToSet) {
   return 0;
 }
 
-int CDF::Attribute::_getDataAsString(CT::string *out) {
-  out->copy("");
+int CDF::Attribute::_getDataAsString(std::string &out) {
+  out = "";
   if (type == CDF_CHAR) {
-    out->copy((const char *)data, length);
-    int a = strlen(out->c_str());
-    out->setSize(a);
+    out.assign((const char *)data, length);
+    out.resize(strlen(out.c_str()));
     return 0;
   }
   if (type == CDF_BYTE)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%d", ((char *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%d", ((char *)data)[n]);
     }
   if (type == CDF_UBYTE)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%u", ((unsigned char *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%u", ((unsigned char *)data)[n]);
     }
 
   if (type == CDF_INT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%d", ((int *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%d", ((int *)data)[n]);
     }
   if (type == CDF_UINT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%u", ((unsigned int *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%u", ((unsigned int *)data)[n]);
     }
 
   if (type == CDF_INT64)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%ld", ((long *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%ld", ((long *)data)[n]);
     }
   if (type == CDF_UINT64)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%lu", ((unsigned long *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%lu", ((unsigned long *)data)[n]);
     }
 
   if (type == CDF_SHORT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%d", ((short *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%d", ((short *)data)[n]);
     }
   if (type == CDF_USHORT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%u", ((unsigned short *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%u", ((unsigned short *)data)[n]);
     }
 
   if (type == CDF_FLOAT)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%f", ((float *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%f", ((float *)data)[n]);
     }
   if (type == CDF_DOUBLE)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%f", ((double *)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%f", ((double *)data)[n]);
     }
   if (type == CDF_STRING)
     for (size_t n = 0; n < length; n++) {
-      if (out->length() > 0) out->concat(" ");
-      out->printconcat("%s", ((char **)data)[n]);
+      if (out.length() > 0) out += " ";
+      CT::printfconcat(out, "%s", ((char **)data)[n]);
     }
   return 0;
 }
 
-CT::string CDF::Attribute::toString() {
-  CT::string out = "";
-  _getDataAsString(&out);
+std::string CDF::Attribute::toString() {
+  std::string out = "";
+  _getDataAsString(out);
   return out;
 }
 

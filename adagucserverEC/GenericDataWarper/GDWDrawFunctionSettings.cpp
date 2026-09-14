@@ -2,6 +2,17 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <CImageOperators/smoothRasterField.h>
+#include "CColor.h"
+#include "CDrawImage.h"
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CTString.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
   GDWDrawFunctionSettings settings;

@@ -1,8 +1,5 @@
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CServerParams.h"
-#include "CServerParams.h"
 #include "CXMLGen.h"
+#include "CDrawImage.h"
 
 #ifndef LAYERTYPELIVEUPDATE_H
 

@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,9 @@
 #define CDBFileScanner_H
 
 #include <set>
-#include "CDebugger.h"
-#include "CStopWatch.h"
-#include "CDataReader.h"
-#include "CDFObjectStore.h"
-#include "CServerError.h"
-#include "CDirReader.h"
+#include <string>
+#include <vector>
+#include "CDataSource.h"
 
 #define CDBFILESCANNER_RESCAN 1
 #define CDBFILESCANNER_UPDATEDB 2
@@ -62,13 +59,10 @@ private:
 
   static std::set<std::string> filesDeletedFromFS;
 
-  static void handleDirHasNewFile(std::string) {}
+  static void handleDirHasNewFile(std::string);
 
   static std::vector<std::string> filesToDeleteFromDB;
-  static void handleFileFromDBIsMissing(std::string a) {
-    CDBDebug("DirReader is missing %s", a.c_str());
-    filesToDeleteFromDB.push_back(a);
-  }
+  static void handleFileFromDBIsMissing(std::string a);
 
 public:
   static int scanFile(std::string fileToScan, CDataSource *dataSource, int scanFlags);

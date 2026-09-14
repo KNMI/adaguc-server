@@ -1,4 +1,7 @@
 #include "CDataPostProcessor_Operator.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPOperator  */
@@ -26,11 +29,11 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   }
   CDBDebug("Applying Operator");
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    CT::string newDataObjectName = proc->attr.name;
+    std::string newDataObjectName = proc->attr.name;
     if (newDataObjectName.empty()) {
       newDataObjectName = "result";
     }
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals(newDataObjectName.c_str())) return 0;
+    if (dataSource->getDataObject(0)->cdfVariable->name == newDataObjectName) return 0;
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
     dataSource->dataObjects.insert(dataSource->dataObjects.begin(), DataObject());
@@ -166,4 +169,9 @@ float CDPPOperator::getElement(void *data, CDFType dataType, size_t index) {
     break;
   }
   return 0;
+}
+
+int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

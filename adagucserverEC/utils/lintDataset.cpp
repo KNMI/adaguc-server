@@ -2,6 +2,12 @@
 #include <CDebugger.h>
 #include "ConfigurationUtils.h"
 #include <list>
+#include <set>
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 int lintOutputEnabled = 0;
 
 void removeStringFromVector(const std::string &name, std::vector<std::string> &list) {

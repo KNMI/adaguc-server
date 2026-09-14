@@ -3,7 +3,7 @@
  * Project:  XYZ vector support for ADAGUC Server
  * Purpose:  This simplifies vector calculations within adaguc server
  * Author:   Maarten Plieger, maarten.plieger@knmi.nl
- * Date:     2025-05-07
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *

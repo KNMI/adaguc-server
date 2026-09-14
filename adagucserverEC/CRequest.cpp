@@ -3,12 +3,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,14 @@
  *
  ******************************************************************************/
 
-// #define CREQUEST_DEBUG
+static const bool CREQUEST_DEBUG = false;
 // #define MEASURETIME
 
 #include "Types/ProjectionStore.h"
 #include "CRequest.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
+#include "CServerConfig_CPPXSD.h"
 #include "COpenDAPHandler.h"
 #include "CDBFactory.h"
 #include "CAutoResource.h"
@@ -51,6 +54,16 @@
 #include <traceTimings/traceTimings.h>
 #include "utils/serverutils.h"
 #include "CCreateHistogram.h"
+#include "CAutoConfigure.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CDrawImage.h"
+#include "CImageDataWriter.h"
+#include "CImageWarper.h"
+#include "CStopWatch.h"
+#include "CTime.h"
+#include "CXMLParser.h"
+#include "CCDFStore.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
@@ -72,9 +85,9 @@ int CRequest::process_wms_getmetadata_request() { return process_all_layers(); }
 
 CServerParams *CRequest::getServerParams() { return srvParam; }
 
-int CRequest::generateGetReferenceTimesDoc(CT::string *result, CDataSource *dataSource) {
+int CRequest::generateGetReferenceTimesDoc(std::string &result, CDataSource *dataSource) {
   auto refTimeList = getReferenceTimes(*dataSource);
-  result->print("[\"%s\"]", CT::join(refTimeList).c_str());
+  result = CT::printf("[\"%s\"]", CT::join(refTimeList).c_str());
   return 0;
 }
 
@@ -90,15 +103,15 @@ int CRequest::process_wcs_getcoverage_request() {
 #endif
 }
 
-int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument) {
+int CRequest::generateOGCGetCapabilities(std::string &XMLdocument) {
   CXMLGen XMLGen;
   return XMLGen.OGCGetCapabilities(srvParam, XMLdocument);
 }
 
 int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
-  CT::string XMLdocument;
+  std::string XMLdocument;
 
-  int status = generateGetReferenceTimesDoc(&XMLdocument, dataSource);
+  int status = generateGetReferenceTimesDoc(XMLdocument, dataSource);
 
   if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
 
@@ -113,7 +126,7 @@ int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
   return 0;
 }
 
-int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument) {
+int CRequest::generateOGCDescribeCoverage(std::string &XMLdocument) {
   CXMLGen XMLGen;
   for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
     CDBDebug("WCS_DESCRIBECOVERAGE %s", srvParam->requestedLayerNames[j].c_str());
@@ -122,13 +135,13 @@ int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument) {
 }
 
 int CRequest::process_wms_getcap_request() {
-#ifdef CREQUEST_DEBUG
-  CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
+  }
 
-  CT::string XMLdocument;
+  std::string XMLdocument;
 
-  int status = generateOGCGetCapabilities(&XMLdocument);
+  int status = generateOGCGetCapabilities(XMLdocument);
 
   if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
 
@@ -156,23 +169,23 @@ int CRequest::process_wcs_getcap_request() {
 int CRequest::process_wcs_describecov_request() { return process_all_layers(); }
 
 int CRequest::process_wms_getmap_request() {
-#ifdef CREQUEST_DEBUG
-  CT::string message = "WMS GETMAP ";
-  for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
-    if (j > 0) message.concat(",");
-    message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
+  if (CREQUEST_DEBUG) {
+    std::string message = "WMS GETMAP ";
+    for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
+      if (j > 0) message += ",";
+      CT::printfconcat(message, "(%zu) %s", j, srvParam->requestedLayerNames[j].c_str());
+    }
+    CDBDebug("%s", message.c_str());
   }
-  CDBDebug("%s", message.c_str());
-#endif
   return process_all_layers();
 }
 
 int CRequest::process_wms_gethistogram_request() {
 
-  CT::string message = "WMS GETHISTOGRAM ";
+  std::string message = "WMS GETHISTOGRAM ";
   for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
-    if (j > 0) message.concat(",");
-    message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
+    if (j > 0) message += ",";
+    CT::printfconcat(message, "(%zu) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
   CDBDebug("%s", message.c_str());
 
@@ -180,9 +193,9 @@ int CRequest::process_wms_gethistogram_request() {
 }
 
 int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-#ifdef CREQUEST_DEBUG
-  CDBDebug("setDimValuesForDataSource");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("setDimValuesForDataSource");
+  }
   int status = fillDimValuesForDataSource(dataSource, srvParam);
   if (status != 0) return status;
 
@@ -191,9 +204,9 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
-#ifdef CREQUEST_DEBUG
-  StopWatch_Stop("### [fillDimValuesForDataSource]");
-#endif
+  if (CREQUEST_DEBUG) {
+    StopWatch_Stop("### [fillDimValuesForDataSource]");
+  }
   int status = 0;
   try {
     /*
@@ -212,9 +225,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
      * Get the number of required dims from the given dims
      * Check if all dimensions are given
      */
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Get DIMS from query string");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Get DIMS from query string");
+    }
     for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k].name = CT::toLowerCase(srvParam->requestDims[k].name);
 
     bool hasReferenceTimeDimension = false;
@@ -224,11 +237,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      CT::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
-      dimName.toLowerCaseSelf();
-#ifdef CREQUEST_DEBUG
-      CDBDebug("dimName \"%s\"", dimName.c_str());
-#endif
+      std::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
+      dimName = CT::toLowerCase(dimName);
+      if (CREQUEST_DEBUG) {
+        CDBDebug("dimName \"%s\"", dimName.c_str());
+      }
       // Check if this dim is not already added
       bool alreadyAdded = false;
 
@@ -244,15 +257,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
 
-#ifdef CREQUEST_DEBUG
-      CDBDebug("alreadyAdded = %d", alreadyAdded);
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("alreadyAdded = %d", alreadyAdded);
+      }
       if (alreadyAdded == false) {
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
           if (srvParam->requestDims[k].name == dimName.c_str()) {
-#ifdef CREQUEST_DEBUG
-            CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k].name.c_str(), dimName.c_str());
-#endif
+            if (CREQUEST_DEBUG) {
+              CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k].name.c_str(), dimName.c_str());
+            }
 
             // This dimension has been specified in the request, so the dimension has been found:
 
@@ -273,9 +286,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
                 /* Try to make sense of other timestrings as well */
                 if (CT::indexOf(ogcDim.value, "/") == -1 && CT::indexOf(ogcDim.value, ",") == -1) {
-#ifdef CREQUEST_DEBUG
-                  CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
-#endif
+                  if (CREQUEST_DEBUG) {
+                    CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
+                  }
 
                   try {
                     CTime *ctime = CTime::GetCTimeEpochInstance();
@@ -290,16 +303,16 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     CDBDebug("Unable to convert '%s' to epoch", ogcDim.value.c_str());
                     return 1;
                   }
-#ifdef CREQUEST_DEBUG
-                  CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
-#endif
+                  if (CREQUEST_DEBUG) {
+                    CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
+                  }
                 }
               }
               // If we have a dimension value quantizer adjust the value accordingly
               if (!dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.empty()) {
                 CDBDebug("For dataSource %s found quantizeperiod %s", dataSource->layerName.c_str(), dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.c_str());
-                CT::string quantizemethod = "round";
-                CT::string quantizeperiod = dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod;
+                std::string quantizemethod = "round";
+                std::string quantizeperiod = dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod;
                 if (!dataSource->cfgLayer->Dimension[i]->attr.quantizemethod.empty()) {
                   quantizemethod = dataSource->cfgLayer->Dimension[i]->attr.quantizemethod;
                 }
@@ -310,7 +323,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
             // If we have value 'current', give the dim a special status
             if (ogcDim.value == "current") {
-              CT::string tableName;
+              std::string tableName;
 
               try {
                 tableName = CDBFactory::getDBAdapter(srvParam->cfg)
@@ -363,15 +376,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
     }
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Get DIMS from query string ready");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Get DIMS from query string ready");
+    }
 
     /* Fill in the undefined dims */
 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      CT::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
-      dimName.toLowerCaseSelf();
+      std::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
+      dimName = CT::toLowerCase(dimName);
       bool alreadyAdded = false;
 
       for (size_t k = 0; k < dataSource->requiredDims.size(); k++) {
@@ -381,15 +394,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
       if (alreadyAdded == false) {
-        CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name);
-        if (netCDFDimName.equals("none")) {
+        std::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name);
+        if (netCDFDimName == "none") {
           continue;
         }
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV == "filetimedate") {
           continue;
         }
-        CT::string tableName;
+        std::string tableName;
         try {
           tableName = CDBFactory::getDBAdapter(srvParam->cfg)
                           ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, netCDFDimName.c_str(), dataSource);
@@ -419,10 +432,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           // Try to find a reference time closest to the given time value?
 
           // The current time is:
-          CT::string timeValue;
-          CT::string netcdfTimeDimName;
+          std::string timeValue;
+          std::string netcdfTimeDimName;
           for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-            // CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j].name.c_str(), dataSource->requiredDims[j].value.c_str());
             if (dataSource->requiredDims[j].name == "time") {
               timeValue = dataSource->requiredDims[j].value;
               netcdfTimeDimName = dataSource->requiredDims[j].netCDFDimName;
@@ -430,12 +442,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             }
           }
           if (timeValue.empty()) {
-            // CDBDebug("Time value is not available, getting max reference_time");
             maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), tableName.c_str());
           } else {
             // TIME is set! Get
 
-            CT::string timeTableName;
+            std::string timeTableName;
             try {
               timeTableName =
                   CDBFactory::getDBAdapter(srvParam->cfg)
@@ -462,9 +473,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       }
     }
 
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Fix found time values:");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Fix found time values:");
+    }
     // Fix found time values which are retrieved from the database
     for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
       if (dataSource->requiredDims[i].name == "time" || dataSource->requiredDims[i].name.ends_with("reference_time")) {
@@ -484,9 +495,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     // Check and set value when the value is forced in the layer dimension configuration
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
       if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
-        CT::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
-        CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
-        dimName.toLowerCaseSelf();
+        std::string dimName(dataSource->cfgLayer->Dimension[i]->elementValue);
+        std::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dimName = CT::toLowerCase(dimName);
         for (auto &requiredDim: dataSource->requiredDims) {
           if (requiredDim.name == dimName.c_str()) {
             CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim.value.c_str(), fixedValue.c_str());
@@ -522,23 +533,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     dataSource->requiredDims.push_back(makeEmptyOGCDim());
   }
 
-#ifdef CREQUEST_DEBUG
-  for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    auto requiredDim = dataSource->requiredDims[j];
-    CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.netCDFDimName.c_str());
-    CDBDebug("%s: %s === %s", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str());
+  if (CREQUEST_DEBUG) {
+    for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
+      auto requiredDim = dataSource->requiredDims[j];
+      CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.netCDFDimName.c_str());
+      CDBDebug("%s: %s === %s", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str());
+    }
+    CDBDebug("### [</fillDimValuesForDataSource>]");
   }
-  CDBDebug("### [</fillDimValuesForDataSource>]");
-#endif
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
   for (auto requiredDim: dataSource->requiredDims) {
-    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str(), requiredDim.hasFixedValue);
     if (!requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }
   }
 
-  // CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
   if (allNonFixedDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
@@ -569,7 +578,6 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
       int maxQueryResultLimit = getMaxQueryLimit(*dataSource);
 
-      // CDBDebug("maxQueryResultLimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
@@ -595,20 +603,19 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     }
 
     for (auto &record: store->records) {
-      // CDBDebug("Addstep");
       dataSource->addStep(record.values.at(0));
-#ifdef CREQUEST_DEBUG
-      CDBDebug("Step: [%s]", record.values.at(0).c_str());
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Step: [%s]", record.values.at(0).c_str());
+      }
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
         const auto &value = record.values.at(1 + i * 2);
         size_t idx = size_t(atoi(record.values.at(2 + i * 2).c_str()));
         dataSource->getCDFDims()->push_back({.name = dataSource->requiredDims[i].netCDFDimName, .value = value, .index = idx});
-#ifdef CREQUEST_DEBUG
-        CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
-        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record.values.at(2 + i * 2).c_str()), value.c_str());
-#endif
+        if (CREQUEST_DEBUG) {
+          CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
+          CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record.values.at(2 + i * 2).c_str()), value.c_str());
+        }
         auto it = std::find_if(dataSource->requiredDims[i].uniqueValues.begin(), dataSource->requiredDims[i].uniqueValues.end(), [&value](std::string &a) { return a == value; });
         // Check if not already there. TODO: Would be nice to turn into a set.
         if (it == dataSource->requiredDims[i].uniqueValues.end()) {
@@ -622,15 +629,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     CDBError("Exception %d in queryDimValuesForDataSource", i);
     throw i;
   }
-#ifdef CREQUEST_DEBUG
-  CDBDebug("Datasource has %d steps", dataSource->getNumTimeSteps());
-  StopWatch_Stop("[/setDimValuesForDataSource]");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Datasource has %d steps", dataSource->getNumTimeSteps());
+    StopWatch_Stop("[/setDimValuesForDataSource]");
+  }
   return 0;
 }
 
 int CRequest::process_all_layers() {
-  CT::string pathFileName;
+  std::string pathFileName;
 
   // No layers defined, so maybe the DescribeCoverage request did not define any coverages...
   if (srvParam->requestedLayerNames.size() == 0) {
@@ -654,7 +661,7 @@ int CRequest::process_all_layers() {
 
     // Loop through all layers as request in the request
     for (size_t layerIndex = 0; layerIndex < srvParam->requestedLayerNames.size(); layerIndex++) {
-      CT::string requestedLayerName = srvParam->requestedLayerNames[layerIndex];
+      std::string requestedLayerName = srvParam->requestedLayerNames[layerIndex];
       auto cfgLayer = findLayerConfigForRequestedLayer(srvParam, requestedLayerName);
       if (cfgLayer == nullptr) {
 
@@ -670,8 +677,8 @@ int CRequest::process_all_layers() {
       }
 
       if (cfgLayer != nullptr) {
-        CT::string layerName = makeUniqueLayerName(cfgLayer);
-        if (layerName.equals(requestedLayerName)) {
+        std::string layerName = makeUniqueLayerName(cfgLayer);
+        if (layerName == requestedLayerName) {
           if (this->addDataSources(cfgLayer, layerIndex) != 0) {
             CDBError("Unable to create datasources for %s", layerName.c_str());
             return 1;
@@ -695,8 +702,8 @@ int CRequest::process_all_layers() {
 
   if (srvParam->serviceType == SERVICE_WCS) {
     if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
-      CT::string XMLDocument;
-      status = generateOGCDescribeCoverage(&XMLDocument);
+      std::string XMLDocument;
+      status = generateOGCDescribeCoverage(XMLDocument);
       if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
       const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
       if (pszADAGUCWriteToFile != NULL) {
@@ -851,7 +858,7 @@ int CRequest::process_querystring() {
   }
 
   setErrorMode(ServiceExceptionMode::ExceptionPlainText);
-  CT::string SERVICE, REQUEST;
+  std::string SERVICE, REQUEST;
 
   int dFound_Width = 0;
   int dFound_Height = 0;
@@ -866,7 +873,6 @@ int CRequest::process_querystring() {
   int dFound_CRS = 0;
   int dFound_RESPONSE_CRS = 0;
 
-  // int dFound_Debug=0;
   int dFound_Request = 0;
   int dFound_Service = 0;
   int dFound_Format = 0;
@@ -883,7 +889,6 @@ int CRequest::process_querystring() {
   int dFound_JSONP = 0;
 
   int dFound_autoResourceLocation = 0;
-  // int dFound_OpenDAPVariable=0;
 
   const char *pszQueryString = getenv("QUERY_STRING");
 
@@ -892,22 +897,21 @@ int CRequest::process_querystring() {
    */
   if (srvParam->cfg->OpenDAP.size() == 1) {
     if (srvParam->cfg->OpenDAP[0]->attr.enabled == "true") {
-      CT::string defaultPath = "opendap";
+      std::string defaultPath = "opendap";
       if (srvParam->cfg->OpenDAP[0]->attr.path.empty() == false) {
         defaultPath = srvParam->cfg->OpenDAP[0]->attr.path;
       }
       const char *SCRIPT_NAME = getenv("SCRIPT_NAME");
       const char *REQUEST_URI = getenv("REQUEST_URI");
-      // CDBDebug("SCRIPT_NAME [%s], REQUEST_URI [%s]",SCRIPT_NAME,REQUEST_URI);
       if (SCRIPT_NAME != NULL && REQUEST_URI != NULL) {
         size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
         size_t REQUEST_URI_length = strlen(REQUEST_URI);
         if (REQUEST_URI_length > SCRIPT_NAME_length + 1) {
-          CT::string dapPath = REQUEST_URI + (SCRIPT_NAME_length + 1);
+          std::string dapPath = REQUEST_URI + (SCRIPT_NAME_length + 1);
 
-          if (dapPath.indexOf(defaultPath.c_str()) == 0) {
+          if (CT::indexOf(dapPath, defaultPath.c_str()) == 0) {
             // THIS is OPENDAP!
-            auto items = dapPath.split("?");
+            auto items = CT::split(dapPath, "?");
             if (items.size() > 0) {
               COpenDAPHandler opendapHandler;
               opendapHandler.handleOpenDAPRequest(items[0].c_str(), pszQueryString, srvParam);
@@ -919,7 +923,7 @@ int CRequest::process_querystring() {
     }
   }
 
-  CT::string queryString(pszQueryString);
+  std::string queryString(pszQueryString);
   if (queryString.empty()) {
     queryString = "SERVICE=WMS&request=getcapabilities";
     CGI = 0;
@@ -927,29 +931,28 @@ int CRequest::process_querystring() {
     CGI = 1;
   }
 
-  queryString.decodeURLSelf();
-  // CDBDebug("QueryString: \"%s\"", queryString.c_str());
-  auto parameters = queryString.split("&");
+  queryString = CT::decodeURL(queryString);
+  auto parameters = CT::split(queryString, "&");
 
-#ifdef CREQUEST_DEBUG
-  CDBDebug("Parsing query string parameters");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Parsing query string parameters");
+  }
   for (size_t j = 0; j < parameters.size(); j++) {
-    CT::string uriKeyUpperCase;
-    CT::string uriValue;
+    std::string uriKeyUpperCase;
+    std::string uriValue;
 
-    int equalPos = parameters[j].indexOf("="); // split("=");
+    int equalPos = CT::indexOf(parameters[j], "="); // split("=");
 
     if (equalPos != -1) {
-      uriKeyUpperCase = parameters[j].substring(0, equalPos);
+      uriKeyUpperCase = CT::substring(parameters[j], 0, equalPos);
       uriValue = parameters[j].c_str() + equalPos + 1;
     } else {
       uriKeyUpperCase = parameters[j];
     }
 
-    uriKeyUpperCase.toUpperCaseSelf();
+    uriKeyUpperCase = CT::toUpperCase(uriKeyUpperCase);
 
-    if (uriKeyUpperCase.equals("STYLES")) {
+    if (uriKeyUpperCase == "STYLES") {
       if (dFound_Styles == 0) {
         if (!uriValue.empty()) {
           srvParam->Styles = uriValue;
@@ -962,7 +965,7 @@ int CRequest::process_querystring() {
       }
     }
     // Style parameter
-    if (uriKeyUpperCase.equals("STYLE")) {
+    if (uriKeyUpperCase == "STYLE") {
       if (dFound_Style == 0) {
         if (!uriValue.empty()) {
           srvParam->Style = uriValue;
@@ -976,8 +979,8 @@ int CRequest::process_querystring() {
     }
     if (!uriValue.empty()) {
       // BBOX Parameters
-      if (uriKeyUpperCase.equals("BBOX")) {
-        auto bboxvalues = uriValue.replace("%2C", ",").split(",");
+      if (uriKeyUpperCase == "BBOX") {
+        auto bboxvalues = CT::split(CT::replace(uriValue, "%2C", ","), ",");
         if (bboxvalues.size() == 4) {
           srvParam->geoParams.bbox.left = atof(bboxvalues[0].c_str());
           srvParam->geoParams.bbox.bottom = atof(bboxvalues[1].c_str());
@@ -990,27 +993,27 @@ int CRequest::process_querystring() {
         }
         srvParam->dFound_BBOX = 1;
       }
-      if (uriKeyUpperCase.equals("BBOXWIDTH")) {
+      if (uriKeyUpperCase == "BBOXWIDTH") {
 
         srvParam->geoParams.bbox.left = 0;
         srvParam->geoParams.bbox.bottom = 0;
-        srvParam->geoParams.bbox.right = uriValue.toDouble();
-        srvParam->geoParams.bbox.top = uriValue.toDouble();
+        srvParam->geoParams.bbox.right = CT::toDouble(uriValue);
+        srvParam->geoParams.bbox.top = CT::toDouble(uriValue);
 
         srvParam->dFound_BBOX = 1;
       }
 
-      if (uriKeyUpperCase.equals("FIGWIDTH")) {
+      if (uriKeyUpperCase == "FIGWIDTH") {
         srvParam->figWidth = atoi(uriValue.c_str());
         if (srvParam->figWidth < 1) srvParam->figWidth = -1;
       }
-      if (uriKeyUpperCase.equals("FIGHEIGHT")) {
+      if (uriKeyUpperCase == "FIGHEIGHT") {
         srvParam->figHeight = atoi(uriValue.c_str());
         if (srvParam->figHeight < 1) srvParam->figHeight = -1;
       }
 
       // Width Parameters
-      if (uriKeyUpperCase.equals("WIDTH")) {
+      if (uriKeyUpperCase == "WIDTH") {
         srvParam->geoParams.width = atoi(uriValue.c_str());
         if (srvParam->geoParams.width < 1) {
           CDBError("ADAGUC Server: Parameter Width should be at least 1");
@@ -1019,7 +1022,7 @@ int CRequest::process_querystring() {
         dFound_Width = 1;
       }
       // Height Parameters
-      if (uriKeyUpperCase.equals("HEIGHT")) {
+      if (uriKeyUpperCase == "HEIGHT") {
         srvParam->geoParams.height = atoi(uriValue.c_str());
         if (srvParam->geoParams.height < 1) {
           CDBError("ADAGUC Server: Parameter Height should be at least 1");
@@ -1029,7 +1032,7 @@ int CRequest::process_querystring() {
         dFound_Height = 1;
       }
       // RESX Parameters
-      if (uriKeyUpperCase.equals("RESX")) {
+      if (uriKeyUpperCase == "RESX") {
         srvParam->dfResX = atof(uriValue.c_str());
         if (srvParam->dfResX == 0) {
           CDBError("ADAGUC Server: Parameter RESX should not be zero");
@@ -1038,7 +1041,7 @@ int CRequest::process_querystring() {
         dFound_RESX = 1;
       }
       // RESY Parameters
-      if (uriKeyUpperCase.equals("RESY")) {
+      if (uriKeyUpperCase == "RESY") {
         srvParam->dfResY = atof(uriValue.c_str());
         if (srvParam->dfResY == 0) {
           CDBError("ADAGUC Server: Parameter RESY should not be zero");
@@ -1066,21 +1069,20 @@ int CRequest::process_querystring() {
         dFound_J = 1;
       }
       // SRS / CRS Parameters
-      if (uriKeyUpperCase.equals("SRS")) {
+      if (uriKeyUpperCase == "SRS") {
         if (uriValue.length() > 2) {
           srvParam->geoParams.crs = (uriValue);
-          // srvParam->geoParams.CRS.decodeURLSelf();
           dFound_SRS = 1;
         }
       }
-      if (uriKeyUpperCase.equals("CRS")) {
+      if (uriKeyUpperCase == "CRS") {
         if (uriValue.length() > 2) {
           srvParam->geoParams.crs = (uriValue);
           dFound_CRS = 1;
         }
       }
 
-      if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
+      if (uriKeyUpperCase == "RESPONSE_CRS") {
         if (uriValue.length() > 2) {
           srvParam->responceCrs = (uriValue);
           dFound_RESPONSE_CRS = 1;
@@ -1089,9 +1091,9 @@ int CRequest::process_querystring() {
 
       // DIM Params
       int foundDim = -1;
-      if (uriKeyUpperCase.equals("TIME") || uriKeyUpperCase.equals("ELEVATION")) {
+      if (uriKeyUpperCase == "TIME" || uriKeyUpperCase == "ELEVATION") {
         foundDim = 0;
-      } else if (uriKeyUpperCase.indexOf("DIM_") == 0) {
+      } else if (CT::indexOf(uriKeyUpperCase, "DIM_") == 0) {
         // We store the OGCdim without the DIM_ prefix
         foundDim = 4;
       }
@@ -1107,7 +1109,7 @@ int CRequest::process_querystring() {
       }
 
       // FORMAT parameter
-      if (uriKeyUpperCase.equals("FORMAT")) {
+      if (uriKeyUpperCase == "FORMAT") {
         if (dFound_Format == 0) {
           if (uriValue.length() > 1) {
             srvParam->Format = (uriValue);
@@ -1120,7 +1122,7 @@ int CRequest::process_querystring() {
       }
 
       // INFO_FORMAT parameter
-      if (uriKeyUpperCase.equals("INFO_FORMAT")) {
+      if (uriKeyUpperCase == "INFO_FORMAT") {
         if (dFound_InfoFormat == 0) {
           if (uriValue.length() > 1) {
             srvParam->InfoFormat = uriValue;
@@ -1133,10 +1135,10 @@ int CRequest::process_querystring() {
       }
 
       // TRANSPARENT parameter
-      if (uriKeyUpperCase.equals("TRANSPARENT")) {
+      if (uriKeyUpperCase == "TRANSPARENT") {
         if (dFound_Transparent == 0) {
           if (uriValue.length() > 1) {
-            if (uriValue.toLowerCase() == "true") {
+            if (CT::toLowerCase(uriValue) == "true") {
               srvParam->Transparent = true;
             }
             dFound_Transparent = 1;
@@ -1147,7 +1149,7 @@ int CRequest::process_querystring() {
         }
       }
       // BGCOLOR parameter
-      if (uriKeyUpperCase.equals("BGCOLOR")) {
+      if (uriKeyUpperCase == "BGCOLOR") {
         if (dFound_BGColor == 0) {
           if (uriValue.length() > 1) {
             srvParam->BGColor = uriValue;
@@ -1160,7 +1162,7 @@ int CRequest::process_querystring() {
       }
 
       // Version parameter
-      if (uriKeyUpperCase.equals("VERSION")) {
+      if (uriKeyUpperCase == "VERSION") {
         if (dFound_Version == 0) {
           if (uriValue.length() > 1) {
             Version = uriValue;
@@ -1175,7 +1177,7 @@ int CRequest::process_querystring() {
       }
 
       // Exceptions parameter
-      if (uriKeyUpperCase.equals("EXCEPTIONS")) {
+      if (uriKeyUpperCase == "EXCEPTIONS") {
         if (dFound_Exceptions == 0) {
           if (uriValue.length() > 1) {
             Exceptions = uriValue;
@@ -1189,9 +1191,9 @@ int CRequest::process_querystring() {
 
       // Opendap source parameter
       if (dFound_autoResourceLocation == 0) {
-        if (uriKeyUpperCase.equals("SOURCE")) {
+        if (uriKeyUpperCase == "SOURCE") {
           if (srvParam->autoResourceLocation.empty()) {
-            auto hashList = uriValue.split("#");
+            auto hashList = CT::split(uriValue, "#");
             if (hashList.size() > 0) {
 
               srvParam->autoResourceLocation = (hashList[0]);
@@ -1202,18 +1204,18 @@ int CRequest::process_querystring() {
       }
 
       // WMS Layers parameter
-      if (uriKeyUpperCase.equals("LAYERS") || uriKeyUpperCase.equals("LAYER")) {
+      if (uriKeyUpperCase == "LAYERS" || uriKeyUpperCase == "LAYER") {
         srvParam->requestedLayerNames = CT::split(uriValue, ",");
         dFound_WMSLAYERS = 1;
       }
 
       // WMS Layer parameter
-      if (uriKeyUpperCase.equals("QUERY_LAYERS")) {
+      if (uriKeyUpperCase == "QUERY_LAYERS") {
         srvParam->requestedLayerNames = CT::split(uriValue, ",");
         dFound_WMSLAYERS = 1;
       }
       // WCS Coverage parameter
-      if (uriKeyUpperCase.equals("COVERAGE")) {
+      if (uriKeyUpperCase == "COVERAGE") {
         if (srvParam->requestedLayerNames.size() > 0) {
           CDBError("ADAGUC Server: COVERAGE already defined");
           dErrorOccured = 1;
@@ -1224,61 +1226,60 @@ int CRequest::process_querystring() {
       }
 
       // Service parameters
-      if (uriKeyUpperCase.equals("SERVICE")) {
-        SERVICE = (uriValue.toUpperCase());
+      if (uriKeyUpperCase == "SERVICE") {
+        SERVICE = (CT::toUpperCase(uriValue));
         dFound_Service = 1;
       }
       // Request parameters
-      if (uriKeyUpperCase.equals("REQUEST")) {
-        REQUEST = (uriValue.toUpperCase());
+      if (uriKeyUpperCase == "REQUEST") {
+        REQUEST = (CT::toUpperCase(uriValue));
         dFound_Request = 1;
       }
 
       // debug Parameters
-      if (uriKeyUpperCase.equals("DEBUG")) {
-        if (uriValue.equals("ON")) {
+      if (uriKeyUpperCase == "DEBUG") {
+        if (uriValue == "ON") {
           printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
           printf("Debug mode:ON\nDebug messages:<br>\r\n\n");
-          // dFound_Debug=1;
         }
       }
 
-      if (uriKeyUpperCase.equals("TITLE")) {
+      if (uriKeyUpperCase == "TITLE") {
         if (uriValue.length() > 0) {
           srvParam->mapTitle = uriValue;
         }
       }
-      if (uriKeyUpperCase.equals("SUBTITLE")) {
+      if (uriKeyUpperCase == "SUBTITLE") {
         if (uriValue.length() > 0) {
           srvParam->mapSubTitle = uriValue;
         }
       }
-      if (uriKeyUpperCase.equals("SHOWDIMS")) {
-        if (!uriValue.toLowerCase().equals("false")) {
+      if (uriKeyUpperCase == "SHOWDIMS") {
+        if (CT::toLowerCase(uriValue) != "false") {
           srvParam->showDimensionsInImage = true;
         }
       }
-      if (uriKeyUpperCase.equals("SHOWLEGEND")) {
-        if (!uriValue.toLowerCase().equals("false")) {
-          srvParam->showLegendInImage = uriValue.toLowerCase();
+      if (uriKeyUpperCase == "SHOWLEGEND") {
+        if (CT::toLowerCase(uriValue) != "false") {
+          srvParam->showLegendInImage = CT::toLowerCase(uriValue);
         }
       }
-      if (uriKeyUpperCase.equals("SHOWSCALEBAR")) {
-        if (uriValue.toLowerCase() == "true") {
+      if (uriKeyUpperCase == "SHOWSCALEBAR") {
+        if (CT::toLowerCase(uriValue) == "true") {
           srvParam->showScaleBarInImage = true;
         }
       }
-      if (uriKeyUpperCase.equals("SHOWNORTHARROW")) {
-        if (uriValue.toLowerCase() == "true") {
+      if (uriKeyUpperCase == "SHOWNORTHARROW") {
+        if (CT::toLowerCase(uriValue) == "true") {
           srvParam->showNorthArrow = true;
         }
       }
 
       // http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
-      if (uriKeyUpperCase.equals("OPACITY")) {
-        srvParam->wmsExtensions.opacity = uriValue.toDouble();
+      if (uriKeyUpperCase == "OPACITY") {
+        srvParam->wmsExtensions.opacity = CT::toDouble(uriValue);
       }
-      if (uriKeyUpperCase.equals("COLORSCALERANGE")) {
+      if (uriKeyUpperCase == "COLORSCALERANGE") {
         auto valuesC = CT::split(uriValue, ",");
         if (valuesC.size() == 2) {
           srvParam->wmsExtensions.colorScaleRangeMin = atof(valuesC[0].c_str());
@@ -1286,17 +1287,17 @@ int CRequest::process_querystring() {
           srvParam->wmsExtensions.colorScaleRangeSet = true;
         }
       }
-      if (uriKeyUpperCase.equals("NUMCOLORBANDS")) {
-        srvParam->wmsExtensions.numColorBands = uriValue.toFloat();
+      if (uriKeyUpperCase == "NUMCOLORBANDS") {
+        srvParam->wmsExtensions.numColorBands = atof(uriValue.c_str());
         srvParam->wmsExtensions.numColorBandsSet = true;
       }
-      if (uriKeyUpperCase.equals("LOGSCALE")) {
-        if (uriValue.toLowerCase() == "true") {
+      if (uriKeyUpperCase == "LOGSCALE") {
+        if (CT::toLowerCase(uriValue) == "true") {
           srvParam->wmsExtensions.logScale = true;
         }
       }
       // JSONP parameter
-      if (uriKeyUpperCase.equals("JSONP")) {
+      if (uriKeyUpperCase == "JSONP") {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
             srvParam->JSONP = uriValue;
@@ -1315,14 +1316,14 @@ int CRequest::process_querystring() {
       srvParam->geoParams.width = int(((srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left) / srvParam->dfResX));
       srvParam->geoParams.height = int(((srvParam->geoParams.bbox.bottom - srvParam->geoParams.bbox.top) / srvParam->dfResY));
       srvParam->geoParams.height = abs(srvParam->geoParams.height);
-#ifdef CREQUEST_DEBUG
-      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.width, srvParam->geoParams.height);
-#endif
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.width, srvParam->geoParams.height);
+      }
     }
   }
-#ifdef CREQUEST_DEBUG
-  CDBDebug("Finished parsing query string parameters");
-#endif
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Finished parsing query string parameters");
+  }
 #ifdef MEASURETIME
   StopWatch_Stop("query string processed");
 #endif
@@ -1335,11 +1336,11 @@ int CRequest::process_querystring() {
   if (dFound_Styles == 0) {
     srvParam->Styles = ("");
   }
-  if (SERVICE.equals("WMS"))
+  if (SERVICE == "WMS")
     srvParam->serviceType = SERVICE_WMS;
-  else if (SERVICE.equals("WCS"))
+  else if (SERVICE == "WCS")
     srvParam->serviceType = SERVICE_WCS;
-  else if (SERVICE.equals("METADATA"))
+  else if (SERVICE == "METADATA")
     srvParam->serviceType = SERVICE_METADATA;
   else { // Service not recognised
     CDBError("ADAGUC Server: Parameter SERVICE invalid");
@@ -1348,9 +1349,9 @@ int CRequest::process_querystring() {
   }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Getting parameters for WMS service");
-#endif
+    if (CREQUEST_DEBUG) {
+      CDBDebug("Getting parameters for WMS service");
+    }
 
     // Default is 1.3.0
 
@@ -1361,23 +1362,23 @@ int CRequest::process_querystring() {
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
     } else {
-      if (REQUEST.equals("GETCAPABILITIES"))
+      if (REQUEST == "GETCAPABILITIES")
         srvParam->requestType = REQUEST_WMS_GETCAPABILITIES;
-      else if (REQUEST.equals("GETMAP"))
+      else if (REQUEST == "GETMAP")
         srvParam->requestType = REQUEST_WMS_GETMAP;
-      else if (REQUEST.equals("GETHISTOGRAM"))
+      else if (REQUEST == "GETHISTOGRAM")
         srvParam->requestType = REQUEST_WMS_GETHISTOGRAM;
-      else if (REQUEST.equals("GETSCALEBAR"))
+      else if (REQUEST == "GETSCALEBAR")
         srvParam->requestType = REQUEST_WMS_GETSCALEBAR;
-      else if (REQUEST.equals("GETFEATUREINFO"))
+      else if (REQUEST == "GETFEATUREINFO")
         srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
-      else if (REQUEST.equals("GETPOINTVALUE"))
+      else if (REQUEST == "GETPOINTVALUE")
         srvParam->requestType = REQUEST_WMS_GETPOINTVALUE;
-      else if (REQUEST.equals("GETLEGENDGRAPHIC"))
+      else if (REQUEST == "GETLEGENDGRAPHIC")
         srvParam->requestType = REQUEST_WMS_GETLEGENDGRAPHIC;
-      else if (REQUEST.equals("GETMETADATA"))
+      else if (REQUEST == "GETMETADATA")
         srvParam->requestType = REQUEST_WMS_GETMETADATA;
-      else if (REQUEST.equals("GETREFERENCETIMES"))
+      else if (REQUEST == "GETREFERENCETIMES")
         srvParam->requestType = REQUEST_WMS_GETREFERENCETIMES;
       else {
         dErrorOccured = 1;
@@ -1400,9 +1401,9 @@ int CRequest::process_querystring() {
     // Check the version
     if (dFound_Version != 0) {
       srvParam->OGCVersion = -1; // WMS_VERSION_1_1_1;
-      if (Version.equals("1.0.0")) srvParam->OGCVersion = WMS_VERSION_1_0_0;
-      if (Version.equals("1.1.1")) srvParam->OGCVersion = WMS_VERSION_1_1_1;
-      if (Version.equals("1.3.0")) srvParam->OGCVersion = WMS_VERSION_1_3_0;
+      if (Version == "1.0.0") srvParam->OGCVersion = WMS_VERSION_1_0_0;
+      if (Version == "1.1.1") srvParam->OGCVersion = WMS_VERSION_1_1_1;
+      if (Version == "1.3.0") srvParam->OGCVersion = WMS_VERSION_1_3_0;
       if (srvParam->OGCVersion == -1) {
         CDBError("Invalid version ('%s'): WMS 1.0.0, WMS 1.1.1 and WMS 1.3.0 are supported", Version.c_str());
         dErrorOccured = 1;
@@ -1459,22 +1460,22 @@ int CRequest::process_querystring() {
         }
       }
 
-      if (Exceptions.equals("application/vnd.ogc.se_xml")) {
+      if (Exceptions == "application/vnd.ogc.se_xml") {
         if (srvParam->OGCVersion == WMS_VERSION_1_1_1) setErrorMode(ServiceExceptionMode::ExceptionWMS_1_1_1);
       }
-      if (Exceptions.equals("application/vnd.ogc.se_inimage")) {
+      if (Exceptions == "application/vnd.ogc.se_inimage") {
         setErrorMode(ServiceExceptionMode::ExceptionImage);
       }
-      if (Exceptions.equals("application/vnd.ogc.se_blank")) {
+      if (Exceptions == "application/vnd.ogc.se_blank") {
         setErrorMode(ServiceExceptionMode::ExceptionBlankImage);
       }
-      if (Exceptions.equals("INIMAGE")) {
+      if (Exceptions == "INIMAGE") {
         setErrorMode(ServiceExceptionMode::ExceptionImage);
       }
-      if (Exceptions.equals("BLANK")) {
+      if (Exceptions == "BLANK") {
         setErrorMode(ServiceExceptionMode::ExceptionBlankImage);
       }
-      if (Exceptions.equals("XML")) {
+      if (Exceptions == "XML") {
         if (srvParam->OGCVersion == WMS_VERSION_1_1_1) setErrorMode(ServiceExceptionMode::ExceptionWMS_1_1_1);
         if (srvParam->OGCVersion == WMS_VERSION_1_3_0) setErrorMode(ServiceExceptionMode::ExceptionWMS_1_3_0);
       }
@@ -1492,7 +1493,6 @@ int CRequest::process_querystring() {
 
   // WMS Service
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
-    // CDBDebug("Entering WMS service");
     if (srvParam->requestType == REQUEST_WMS_GETREFERENCETIMES) {
       int status = process_wms_getreferencetimes_request();
       if (status != 0) {
@@ -1508,9 +1508,9 @@ int CRequest::process_querystring() {
       } else {
 
         // Mapping
-        CT::string currentFormat = srvParam->Format;
+        std::string currentFormat = srvParam->Format;
         for (size_t j = 0; j < srvParam->cfg->WMS[0]->WMSFormat.size(); j++) {
-          if (currentFormat.equals(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name)) {
+          if (currentFormat == srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name) {
             if (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.empty() == false) {
               srvParam->Format = (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format);
             }
@@ -1522,26 +1522,24 @@ int CRequest::process_querystring() {
         }
 
         // Set format
-        // CDBDebug("FORMAT: %s",srvParam->Format.c_str());
-        // srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
-        CT::string outputFormat = srvParam->Format;
-        outputFormat.toLowerCaseSelf();
-        if (outputFormat.indexOf("webp") > 0) {
+        std::string outputFormat = srvParam->Format;
+        outputFormat = CT::toLowerCase(outputFormat);
+        if (CT::indexOf(outputFormat, "webp") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("32") > 0) {
+        } else if (CT::indexOf(outputFormat, "32") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG32;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("24") > 0) {
+        } else if (CT::indexOf(outputFormat, "24") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG24;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("8bit_noalpha") > 0) {
+        } else if (CT::indexOf(outputFormat, "8bit_noalpha") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG8_NOALPHA;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("png8_noalpha") > 0) {
+        } else if (CT::indexOf(outputFormat, "png8_noalpha") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG8_NOALPHA;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("8") > 0) {
+        } else if (CT::indexOf(outputFormat, "8") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG8;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
         }
@@ -1563,8 +1561,7 @@ int CRequest::process_querystring() {
       // Check if styles is defined for WMS 1.1.1
       if (dFound_Styles == 0 && srvParam->requestType == REQUEST_WMS_GETMAP) {
         if (srvParam->OGCVersion == WMS_VERSION_1_1_1) {
-          // CDBError("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this! Disabled this
-          // check for the moment.
+          // TODO Google Earth does not provide this! Disabled this check for the moment.
         }
       }
 
@@ -1595,8 +1592,6 @@ int CRequest::process_querystring() {
          * TODO enable strict WMS. If bbox is not given, ADAGUC calculates the best fit bbox itself, handy for preview
          * images!!!
          */
-        //        CDBError("ADAGUC Server: Parameter BBOX missing");
-        //        dErrorOccured=1;
       }
 
       if (dFound_Width == 0 && dFound_Height == 0) {
@@ -1721,8 +1716,8 @@ int CRequest::process_querystring() {
         if (srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty() == false) {
           drawImage.setTTFFontLocation(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location);
           if (srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.empty() == false) {
-            CT::string fontSize = "7"; // srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
-            drawImage.setTTFFontSize(fontSize.toFloat());
+            std::string fontSize = "7"; // srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
+            drawImage.setTTFFontSize(atof(fontSize.c_str()));
           }
         } else {
           CDBError("In <Font>, attribute \"location\" missing");
@@ -1823,11 +1818,11 @@ int CRequest::process_querystring() {
       CDBError("ADAGUC Server: Parameter REQUEST missing");
       return 1;
     } else {
-      if (REQUEST.equals("GETCAPABILITIES"))
+      if (REQUEST == "GETCAPABILITIES")
         srvParam->requestType = REQUEST_WCS_GETCAPABILITIES;
-      else if (REQUEST.equals("DESCRIBECOVERAGE"))
+      else if (REQUEST == "DESCRIBECOVERAGE")
         srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE;
-      else if (REQUEST.equals("GETCOVERAGE"))
+      else if (REQUEST == "GETCOVERAGE")
         srvParam->requestType = REQUEST_WCS_GETCOVERAGE;
       else {
         dErrorOccured = 1;
@@ -1852,8 +1847,8 @@ int CRequest::process_querystring() {
         srvParam->WCS_GoNative = 1;
       else {
         if (dFound_CRS == 1 && dFound_RESPONSE_CRS == 1) {
-          CT::string CRS = srvParam->responceCrs;
-          CT::string RESPONSE_CRS = srvParam->geoParams.crs;
+          std::string CRS = srvParam->responceCrs;
+          std::string RESPONSE_CRS = srvParam->geoParams.crs;
           srvParam->geoParams.crs = CRS;
           srvParam->responceCrs = RESPONSE_CRS;
         } else {
@@ -1896,7 +1891,7 @@ int CRequest::process_querystring() {
   }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_METADATA) {
-    if (REQUEST.equals("GETMETADATA")) srvParam->requestType = REQUEST_METADATA_GETMETADATA;
+    if (REQUEST == "GETMETADATA") srvParam->requestType = REQUEST_METADATA_GETMETADATA;
     if (srvParam->autoResourceLocation.empty()) {
       CDBError("No source defined for metadata request");
       dErrorOccured = 1;
@@ -1931,7 +1926,7 @@ int CRequest::process_querystring() {
   return 0;
 }
 
-int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scanFlags, CT::string layerName) {
+int CRequest::updatedb(std::string tailPath, std::string layerPathToScan, int scanFlags, std::string layerName) {
   int errorHasOccured = 0;
   int status = 0;
   // Fill in all data sources from the configuration object
@@ -1951,8 +1946,8 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
     }
     if (!layerName.empty()) {
       if (cfgLayer->Name.size() == 1) {
-        CT::string simpleLayerName = cfgLayer->Name[0]->elementValue;
-        if (layerName.equals(simpleLayerName)) {
+        std::string simpleLayerName = cfgLayer->Name[0]->elementValue;
+        if (layerName == simpleLayerName) {
           dataSources.push_back(dataSource);
         }
       }
@@ -2001,7 +1996,6 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
   return errorHasOccured > 0;
 }
 
-// pthread_mutex_t CImageDataWriter_addData_lock;
 void *CImageDataWriter_addData(void *arg) {
   CImageDataWriter_addData_args *imgdwArg = (CImageDataWriter_addData_args *)arg;
   imgdwArg->status = imgdwArg->imageDataWriter->addData(imgdwArg->dataSources);
@@ -2072,7 +2066,6 @@ int CRequest::determineTypesForDataSources() {
 
         CDBDebug("Addstep");
         dataSources[j]->addStep(fileList[0]);
-        // dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }
 
@@ -2080,7 +2073,6 @@ int CRequest::determineTypesForDataSources() {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       CDBDebug("Addstep");
       dataSources[j]->addStep("");
-      // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
@@ -2114,10 +2106,10 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
       replaceAllDataSource = true;
     }
 
-    CT::string additionalLayerName = additionalLayer->elementValue;
+    std::string additionalLayerName = additionalLayer->elementValue;
     size_t additionalLayerNo = 0;
     for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
-      CT::string additional = makeUniqueLayerName(srvParam->cfg->Layer[additionalLayerNo]);
+      std::string additional = makeUniqueLayerName(srvParam->cfg->Layer[additionalLayerNo]);
       if (additionalLayerName == (additional)) {
         CDataSource *additionalDataSource = new CDataSource();
         if (additionalDataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[additionalLayerNo], layerIndex) != 0) {
@@ -2127,7 +2119,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
 
         /* Configure the Dimensions object if not set. */
         if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
-          // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
           if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
             CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
           }
@@ -2154,7 +2145,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
           add = false;
         }
 
-        // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
         if (add) {
           if (replaceAllDataSource) {
             for (size_t j = 0; j < dataSources.size(); j++) {
@@ -2201,7 +2191,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
     int dataSourceToUse = 0;
     for (size_t d = 0; d < dataSources.size() && imageDataWriterIsInitialized == false; d++) {
       if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule) {
-        // CDBDebug("INIT");
         status = imageDataWriter.init(srvParam, dataSources[d], dataSources[d]->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
         imageDataWriterIsInitialized = true;
@@ -2228,7 +2217,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         } else {
           useThreading = true;
         }
-        // measurePerformance = true;
       }
     }
     if (measurePerformance) {
@@ -2342,9 +2330,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         }
         if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1 && dataSources[dataSourceToUse]->queryBBOX == false) {
           // Print the animation data into the image
-          char szTemp[1024];
-          snprintf(szTemp, 1023, "%s UTC", dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time", k).c_str());
-          imageDataWriter.setDate(szTemp);
+          imageDataWriter.setDate(CT::printf("%s UTC", dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time", k).c_str()));
         }
       }
     }
@@ -2356,7 +2342,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
     double scaling = dataSources[dataSourceToUse]->getScaling();
     int textY = (int)(scaling * 6);
-    // int prevTextY=0;
     if (srvParam->mapTitle.length() > 0) {
       if (srvParam->cfg->WMS[0]->TitleFont.size() > 0) {
         float fontSize = atof(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
@@ -2365,17 +2350,14 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         textY += int(fontSize);
         textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapTitle.c_str(),
                                                         CColor(0, 0, 0, 255), textBGColor);
-        // textY+=12;
       }
     }
     if (srvParam->mapSubTitle.length() > 0) {
       if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
         float fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
         fontSize = fontSize * scaling;
-        // textY+=int(fontSize)/5;
         textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapSubTitle.c_str(),
                                                         CColor(0, 0, 0, 255), textBGColor);
-        // textY+=8;
       }
     }
 
@@ -2385,11 +2367,11 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       size_t nDims = dataSource->requiredDims.size();
 
       for (size_t d = 0; d < nDims; d++) {
-        CT::string message;
+        std::string message;
         float fontSize = atof(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
         fontSize = fontSize * scaling;
         textY += int(fontSize * 1.2);
-        message.print("%s: %s", dataSource->requiredDims[d].name.c_str(), dataSource->requiredDims[d].value.c_str());
+        message = CT::printf("%s: %s", dataSource->requiredDims[d].name.c_str(), dataSource->requiredDims[d].value.c_str());
         imageDataWriter.drawImage.drawText(6, textY, srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(), fontSize, 0, message.c_str(), CColor(0, 0, 0, 255), textBGColor);
         textY += 4 * (int)scaling;
       }
@@ -2402,7 +2384,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       /* List of specified legends */
       std::vector<std::string> legendLayerList = CT::split(srvParam->showLegendInImage, ",");
 
-      //          int numberOfLegendsDrawn = 0;
       int legendOffsetX = 0;
       for (size_t d = 0; d < dataSources.size(); d++) {
         if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule) {
@@ -2437,13 +2418,9 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
             status = imageDataWriter.createLegend(dataSources[d], &legendImage);
             if (status != 0) throw(__LINE__);
-            // legendImage.rectangle(0,0,10000,10000,240);
             int posX = imageDataWriter.drawImage.geoParams.width - (legendImage.geoParams.width + padding) - legendOffsetX;
-            // int posY=imageDataWriter.drawImage.Geo.dHeight-(legendImage.Geo.dHeight+padding);
-            // int posX=padding*scaling;//imageDataWriter.drawImage.Geo.dWidth-(scaleBarImage.Geo->dWidth+padding);
             int posY = imageDataWriter.drawImage.geoParams.height - (legendImage.geoParams.height + padding * scaling);
             imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
-            //                numberOfLegendsDrawn++;
             legendOffsetX += legendImage.geoParams.width + padding;
           }
         }
@@ -2458,22 +2435,16 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       CDrawImage scaleBarImage;
 
       imageDataWriter.drawImage.enableTransparency(true);
-      // scaleBarImage.setBGColor(1,0,0);
 
       scaleBarImage.createImage(&imageDataWriter.drawImage, 200 * scaling, 30 * scaling);
 
-      // scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
       status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->geoParams, &scaleBarImage, scaling);
       if (status != 0) throw(__LINE__);
       int posX = padding * scaling; // imageDataWriter.drawImage.Geo.dWidth-(scaleBarImage.Geo->dWidth+padding);
       int posY = imageDataWriter.drawImage.geoParams.height - (scaleBarImage.geoParams.height + padding * scaling);
-      // posY-=50;
-      // imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
       imageDataWriter.drawImage.draw(posX, posY, 0, 0, &scaleBarImage);
     }
 
-    if (srvParam->showNorthArrow) {
-    }
     status = imageDataWriter.end();
     if (status != 0) throw(__LINE__);
     fclose(stdout);
@@ -2489,7 +2460,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   }
 
   CBaseDataWriterInterface *wcsWriter = NULL;
-  CT::string driverName = "ADAGUCNetCDF";
+  std::string driverName = "ADAGUCNetCDF";
   setDimValuesForDataSource(firstDataSource, srvParam);
 
   for (const auto &WCSFormat: srvParam->cfg->WCS[0]->WCSFormat) {
@@ -2499,7 +2470,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
     }
   }
 
-  if (driverName.equals("ADAGUCNetCDF")) {
+  if (driverName == "ADAGUCNetCDF") {
     CDBDebug("Creating CNetCDFDataWriter");
     wcsWriter = new CNetCDFDataWriter();
   }

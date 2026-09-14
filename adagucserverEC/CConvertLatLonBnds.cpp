@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@
 #include "CConvertLatLonBnds.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CTString.h"
 
 bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
   CDF::Attribute *attr = cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER");
-  if ((attr != NULL) && attr->toString().toLowerCase() == "true") {
+  if ((attr != NULL) && CT::toLowerCase(attr->toString()) == "true") {
     return true;
   }
   auto *pointLon = cdfObject->getVariableNE("lon_bnds");

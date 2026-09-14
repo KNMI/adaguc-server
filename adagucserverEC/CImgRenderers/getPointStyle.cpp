@@ -1,6 +1,8 @@
 #include <CServerConfig_CPPXSD.h>
 #include <cfloat>
 #include "getPointStyle.h"
+#include "CColor.h"
+#include "CTString.h"
 
 PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XMLE_Configuration *cfg) {
   auto attr = pointCfg->attr;

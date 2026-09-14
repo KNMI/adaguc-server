@@ -3,11 +3,11 @@
  * Project:  Generic common data format
  * Purpose:  Packages PNG into a NetCDF file
  * Author:   Maarten Plieger (KNMI)
- * Date:     2017-08-11
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
 
   png_structp png_ptr = nullptr;
   png_infop info_ptr = nullptr;
-  //   int number_of_passes;
   png_bytep *row_pointers = nullptr;
 
   unsigned char header[8]; // 8 is the maximum size that can be checked
@@ -113,7 +112,6 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   CPNGRaster *pngRaster = new CPNGRaster();
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
   pngRaster->height = png_get_image_height(png_ptr, info_ptr);
-  // CDBDebug("open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 

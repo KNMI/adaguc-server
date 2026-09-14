@@ -5,13 +5,10 @@
 #include <map>
 #include <set>
 
-#include "Definitions.h"
-#include "CStopWatch.h"
-#include "CXMLParser.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CImageDataWriter.h"
-#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CXMLParser.h"
 
 class CMakeJSONTimeSeries {
 public:

@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,17 @@
 
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
-// #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
 #include "CAreaMapper.h"
-#include "CDrawFunction.h"
-#include "utils/projectionUtils.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/GeoParameters.h"
+
+static const bool CIMGWARPNEARESTNEIGHBOUR_DEBUG = false;
 
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
@@ -70,18 +73,8 @@ private:
     DrawMultipleTileSettings *dmf = (DrawMultipleTileSettings *)arg;
     for (int j = dmf->startTile; j < dmf->endTile && j < dmf->numberOfTiles; j++) {
       DrawTileSettings *ct = &dmf->ct[j];
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-// CDBDebug("Drawing tile %d",j);
-#endif
       if (ct->id >= 0) {
-#ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-// CDBDebug("Drawing tile id %d",ct->id);
-#endif
-        // int status =
         ct->drawTile->drawTile(ct->x_corners, ct->y_corners, ct->tile_offset_x, ct->tile_offset_y);
-        /*if(status!=0){
-          CDBError("Unable to draw tile at line %d",status);
-        }*/
       }
     }
     return arg;

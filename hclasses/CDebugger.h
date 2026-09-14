@@ -2,12 +2,12 @@
  *
  * Project:  Helper classes
  * Purpose:  Generic functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,6 @@
 
 #define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
-#include <cstdio>
-#include <iostream>
-#include <vector>
 #include "printfCheckMacro.h"
 // Used to silence -Wunused-parameter warnings
 template <class T> void ignoreParameter(const T &) {}
@@ -78,9 +75,5 @@ void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 #define CDBDebug                                                                                                                                                                                       \
   _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printDebugLine
-
-#define CDBEnterFunction(name)                                                                                                                                                                         \
-  const char *functionName = name;                                                                                                                                                                     \
-  _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
 
 #endif

@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,12 @@
 #ifndef CImgWarpBilinear_H
 #define CImgWarpBilinear_H
 #include <cstdlib>
-#include "CFillTriangle.h"
 #include "CImageWarperRenderInterface.h"
-#include "Types/CPointTypes.h"
+#include <string>
+#include <vector>
+#include "CColor.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 class ShadeDefinition {
 public:
@@ -37,111 +40,34 @@ public:
   bool hasBGColor;
   CColor fillColor;
   CColor bgColor;
-  ShadeDefinition(float min, float max, CColor fillColor, bool foundColor, CColor bgColor, bool hasBGColor) {
-    this->min = min;
-    this->max = max;
-    this->fillColor = fillColor;
-    this->foundColor = foundColor;
-    this->bgColor = bgColor;
-    this->hasBGColor = hasBGColor;
-  }
+  ShadeDefinition(float min, float max, CColor fillColor, bool foundColor, CColor bgColor, bool hasBGColor);
 };
 
 class ContourDefinition {
 public:
-  ContourDefinition() {
-    lineWidth = 1;
-    linecolor.r = 0;
-    linecolor.g = 0;
-    linecolor.b = 0;
-    linecolor.a = 255;
-    textcolor.r = 0;
-    textcolor.g = 0;
-    textcolor.b = 0;
-    textcolor.a = 0;
-    textstrokecolor.r = 0;
-    textstrokecolor.g = 0;
-    textstrokecolor.b = 0;
-    textstrokecolor.a = 0;
-    continuousInterval = 0;
-    textFormat = "%f";
-    fontSize = 0;        // Zero means take default.
-    textStrokeWidth = 0; // Zero means take default.
-  }
+  ContourDefinition();
 
   std::vector<float> definedIntervals;
   float continuousInterval;
   float lineWidth;
   float fontSize;
   float textStrokeWidth;
-  CT::string textFormat;
+  std::string textFormat;
   CColor linecolor;
   CColor textcolor;
   CColor textstrokecolor;
-  CT::string dashing;
+  std::string dashing;
 
   ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, const char *_definedIntervals, const char *_textFormat, float fontSize, float textStrokeWidth,
-                    CT::string dashing) {
-    this->lineWidth = lineWidth;
-    this->linecolor = linecolor;
-    this->textcolor = textcolor;
-    this->textstrokecolor = textstrokecolor;
-    this->fontSize = fontSize;
-    this->textStrokeWidth = textStrokeWidth;
-    this->dashing = dashing;
-    this->continuousInterval = 0;
-
-    if (_definedIntervals != NULL) {
-      CT::string defIntervalString = _definedIntervals;
-      auto defIntervalList = defIntervalString.split(",");
-      for (size_t j = 0; j < defIntervalList.size(); j++) {
-        definedIntervals.push_back(defIntervalList[j].toFloat());
-      }
-    }
-
-    if (_textFormat != NULL) {
-      if (strlen(_textFormat) > 1) {
-        this->textFormat = _textFormat;
-        return;
-      }
-    }
-  }
+                    std::string dashing);
 
   ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, float continuousInterval, const char *_textFormat, float fontSize, float textStrokeWidth,
-                    CT::string dashing) {
-
-    this->lineWidth = lineWidth;
-    this->linecolor = linecolor;
-    this->textcolor = textcolor;
-    this->textstrokecolor = textstrokecolor;
-    this->fontSize = fontSize;
-    this->textStrokeWidth = textStrokeWidth;
-    this->continuousInterval = continuousInterval;
-    this->dashing = dashing;
-
-    if (_textFormat != NULL) {
-      this->textFormat = _textFormat;
-      return;
-    }
-
-    float fracPart = continuousInterval - int(continuousInterval);
-    int textRounding = -int(log10(fracPart) - 0.9999999f);
-    if (textRounding <= 0) textFormat = "%2.0f";
-    if (textRounding == 1) textFormat = "%2.1f";
-    if (textRounding == 2) textFormat = "%2.2f";
-    if (textRounding == 3) textFormat = "%2.3f";
-    if (textRounding == 4) textFormat = "%2.4f";
-    if (textRounding == 5) textFormat = "%2.5f";
-    if (textRounding >= 6) textFormat = "%f";
-  }
+                    std::string dashing);
 };
 
 class Point {
 public:
-  Point(int x, int y) {
-    this->x = x;
-    this->y = y;
-  }
+  Point(int x, int y);
   int x, y;
 };
 
@@ -168,19 +94,8 @@ private:
                     const char *fontLocation, float fontSize, float textStrokeWidth, double *dashes, int numDashes);
 
 public:
-  CImgWarpBilinear() {
-    drawMap = false;
-    enableContour = false;
-    enableVector = false;
-    enableBarb = false;
-    enableShade = false;
-    smoothingFilter = 1;
-    drawGridVectors = false;
-  }
-  ~CImgWarpBilinear() {
-    for (size_t j = 0; j < minimaPoints.size(); j++) delete minimaPoints[j];
-    for (size_t j = 0; j < maximaPoints.size(); j++) delete maximaPoints[j];
-  }
+  CImgWarpBilinear();
+  ~CImgWarpBilinear();
   void render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage);
   int set(const char *pszSettings);
 

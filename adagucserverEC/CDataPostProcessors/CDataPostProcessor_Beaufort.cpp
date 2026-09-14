@@ -1,6 +1,8 @@
 
 #include "CDataPostProcessor_Beaufort.h"
 #include "CDataPostProcessor_UnitsUtils.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 const char *CDPPBeaufort::getId() { return "beaufort"; }
 int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
@@ -45,7 +47,6 @@ float CDPPBeaufort::getBeaufort(float speed) {
   } else {
     bft = 12;
   }
-  //  CDBDebug("bft(%f)=%d", speed, bft);
   return bft;
 }
 int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {

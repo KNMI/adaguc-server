@@ -1,7 +1,17 @@
 #include "LayerTypeLiveUpdate.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 #include "CServerParams.h"
 #include "CDataPostProcessors/CDataPostProcessor.h"
 #include <utils/LayerUtils.h>
+#include "CCDFObject.h"
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
+#include "CDebugger.h"
+#include "CImageDataWriter.h"
+#include "CTString.h"
+#include "CTime.h"
+#include "CImageWarper.h"
 
 bool verbose = false;
 int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) {
@@ -133,7 +143,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   image->create685Palette();
   image->rectangle(0, 0, srvParam->geoParams.width, srvParam->geoParams.height, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
   std::string fontFile = image->getFontLocation();
-  CT::string timeValue = "No time dimension specified";
+  std::string timeValue = "No time dimension specified";
   if (srvParam->requestDims.size() == 1) {
     timeValue = srvParam->requestDims[0].value.c_str();
   }
@@ -186,8 +196,8 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   }
   CTime timeInstance;
 
-  CT::string timeResolution = LIVEUPDATE_DEFAULT_INTERVAL;
-  CT::string offset = LIVEUPDATE_DEFAULT_OFFSET;
+  std::string timeResolution = LIVEUPDATE_DEFAULT_INTERVAL;
+  std::string offset = LIVEUPDATE_DEFAULT_OFFSET;
 
   for (auto dim: metadataLayer->layer->Dimension) {
     if (dim->elementValue == ("time") && !dim->attr.interval.empty()) {
@@ -211,7 +221,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   timeInstance.init("seconds since 1970-01-01", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   double defaultOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
-  CT::string defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));
+  std::string defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));
   LayerMetadataDim dim = {.serviceName = "time",
                           .cdfName = "time",
                           .units = "ISO8601",

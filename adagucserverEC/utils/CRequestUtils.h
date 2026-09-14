@@ -8,7 +8,7 @@
 
 std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSources);
 
-CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *serverParameters, CT::string requestedLayerName);
+CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *serverParameters, std::string requestedLayerName);
 
 /**
  * Finds the reference time dimension as configured in the Layer element of the Dataset.

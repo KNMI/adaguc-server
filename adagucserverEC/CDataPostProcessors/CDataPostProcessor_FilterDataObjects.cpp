@@ -3,6 +3,10 @@
 #include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 #include <CImgRenderFieldVectors.h>
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 /************************/
 /*      CDDPFILTERDATAOBJECTS  */
@@ -38,3 +42,5 @@ int CDDPFilterDataObjects::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 
   return 0;
 }
+
+int CDDPFilterDataObjects::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) { return 0; }

@@ -1,8 +1,18 @@
 #include "smoothRasterField.h"
+#include "./CGenericDataWarper.h"
 #include <cstddef>
 #include <cmath>
 #include <CGenericDataWarper.h>
 #include <GenericDataWarper/GDWDrawFunctionSettings.h>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 #define MEMO_NODATAVALUE -99999999999999.f
 

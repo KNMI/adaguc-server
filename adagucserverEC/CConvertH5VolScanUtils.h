@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  Utils for conversion HDF5 volume scan data to CDM
  * Author:   Mats Veldhuizen mats.veldhuizen "at" knmi.nl
- * Date:     2025-03-20
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,16 @@
 #define CCONVERTH5VOLSCANUTILS_H
 #include <tuple>
 #include <vector>
-#include "CDataSource.h"
-#include "CImageWarper.h"
-#include "COGCDims.h"
+#include <string>
+#include "CCDFObject.h"
 
 int checkIfIsH5VolScan(CDFObject *cdfObject);
 std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObject, int scan);
 std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject);
-CT::string getRadarStartTime(CDFObject *cdfObject);
-std::vector<CT::string> getScanParams(CDFObject *cdfObject);
-std::vector<CT::string> getUnits(CDFObject *cdfObject);
-bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string param);
-CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string param);
-std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, CT::string param);
+std::string getRadarStartTime(CDFObject *cdfObject);
+std::vector<std::string> getScanParams(CDFObject *cdfObject);
+std::vector<std::string> getUnits(CDFObject *cdfObject);
+bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, std::string param);
+CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, std::string param);
+std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, std::string param);
 #endif

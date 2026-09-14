@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,8 @@
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
-//  #define CCDFNETCDFIO_DEBUG
-// #define CCDFNETCDFIO_DEBUG_OPEN
-// #define CCDFNETCDFWRITER_DEBUG
-
 class CDFNetCDFReader : public CDFReader {
 private:
-  // CCDFWarper warper;
   static CDFType _typeConversionVar(nc_type type, bool isUnsigned);
   static CDFType _typeConversionAtt(nc_type type);
 
@@ -56,7 +51,7 @@ private:
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 
-  int _findNCGroupIdForCDFVariable(CT::string *varName);
+  int _findNCGroupIdForCDFVariable(const std::string &varName);
 
 public:
   CDFNetCDFReader();
@@ -71,7 +66,7 @@ private:
   bool writeData;
   bool readData;
   bool listNCCommands;
-  CT::string NCCommands;
+  std::string NCCommands;
   const char *fileName;
   int shuffle;
   int deflate;
@@ -88,8 +83,8 @@ public:
   CDFNetCDFWriter(CDFObject *cdfObject);
   ~CDFNetCDFWriter();
   static nc_type NCtypeConversion(CDFType type);
-  static CT::string NCtypeConversionToString(CDFType type);
-  CT::string getNCCommands();
+  static std::string NCtypeConversionToString(CDFType type);
+  std::string getNCCommands();
   void setNetCDFMode(int mode);
   void disableVariableWrite();
   void disableReadData();

@@ -4,11 +4,8 @@
 #include <cmath>
 #include <float.h>
 #include <pthread.h>
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CGenericDataWarper.h"
-#include "CStyleConfiguration.h"
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "CColor.h"
 struct MemoizationForDeterminePixelColorFromValue {
   double value;
   GDWDrawFunctionSettings *settings;

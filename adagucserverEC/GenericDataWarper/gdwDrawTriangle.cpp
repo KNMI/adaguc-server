@@ -1,4 +1,10 @@
 #include "CGenericDataWarper.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 template <typename T>
 int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoords[3], const T &value, bool tUp, GDWState &warperState,

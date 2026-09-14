@@ -3,7 +3,7 @@
  * Project:  ADAGUC Server
  * Purpose:  Class with static functions to create tiles for files in the db.
  * Author:   Maarten Plieger, maarten.plieger "at" knmi.nl
- * Date:     2021-12-23
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
@@ -26,7 +26,6 @@
 #ifndef CCREATETILES_H
 #define CCREATETILES_H
 
-#include "CDebugger.h"
 #include "CDataSource.h"
 
 /**
@@ -52,7 +51,7 @@ public:
    * @param fileToTile
    * @return int
    */
-  static int createTilesForFile(CDataSource *dataSource, int scanFlags, CT::string fileToTile);
+  static int createTilesForFile(CDataSource *dataSource, int scanFlags, std::string fileToTile);
 };
 
 #endif

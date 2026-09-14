@@ -9,6 +9,6 @@
  * @param cfgLayer t*he configuration object of the corresponding layer
  * @return the returned name
  */
-CT::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *optionalLayerName = nullptr);
+std::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *optionalLayerName = nullptr);
 
 #endif

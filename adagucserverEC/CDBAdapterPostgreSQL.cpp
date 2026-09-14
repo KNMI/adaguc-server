@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2015-05-06
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,12 @@
  *
  ******************************************************************************/
 #include "CDBAdapterPostgreSQL.h"
+#include "CImageDataWriter.h"
+#include "CServerParams.h"
+#include "CDataSource.h"
+#include "CDFObjectStore.h"
+#include "CCDFStore.h"
+#include "CDBStore.h"
 
 #include <set>
 #include <map>
@@ -30,6 +36,14 @@
 #include "CServerError.h"
 #include "Types/GeoParameters.h"
 #include "utils/CRequestUtils.h"
+#include "CCDFReader.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CStopWatch.h"
+#include "CTime.h"
+#include "CXMLParser.h"
+#include "CDBFileScanner.h"
 
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 static const bool debug = false;
@@ -293,7 +307,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 
     std::string subQuery = CT::printf("(select path,dim%s,%s from %s ", netCDFDimName.c_str(), netCDFDimName.c_str(), tableName.c_str());
 
-    // CT::printfconcat(subQuery, "where dim%s = %d ",netCDFDimName.c_str(),start[i]);
     CT::printfconcat(subQuery, "ORDER BY %s ASC limit %zu offset %zu)a%zu ", netCDFDimName.c_str(), count[i], start[i], i);
     if (i < dataSource->requiredDims.size() - 1) subQuery += ",";
     queryOrderedDESC += subQuery;
@@ -556,7 +569,6 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
         dimName = m.first;
 
         CDBFileScanner::markTableDirty(m.second.tableName);
-        // CDBDebug("Dropping old table (if exists)",tableName.c_str());
         std::string query = CT::printf("drop table %s", m.second.tableName.c_str());
         CDBDebug("Try to %s for %s", query.c_str(), dimName.c_str());
         dataBaseConnection->query(query.c_str());
@@ -659,7 +671,6 @@ std::vector<std::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSo
   // Only select tables which really exist in the database by looking it up in pg_tables.
   std::string query = CT::printf("select p.tablename from pg_tables inner join %s as p on pg_tables.tablename = p.tablename where path=E'P_%s' AND filter=E'F_%s';",
                                  CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter.c_str());
-  // CDBDebug("QUERY: %s", query.c_str());
   CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
     for (auto &record: tableNameStore->records) {
@@ -927,13 +938,11 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
 
   // New since 2016-02-15 projection information and level
   tableColumns += ", adaguctilinglevel int";
-  // tableColumns += ", crs varchar (511)";
   tableColumns += ", minx real, miny real, maxx real, maxy real";
   tableColumns += ", startx int, starty int, countx int, county int";
 
   CT::printfconcat(tableColumns, ", PRIMARY KEY (path, %s)", dimname);
 
-  // CDBDebug("tableColumns = %s", tableColumns.c_str());
   int status = dataBaseConnection->checkTable(tablename, tableColumns.c_str());
   if (measureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::createDimTableOfType");
@@ -989,7 +998,6 @@ int CDBAdapterPostgreSQL::removeFile(const char *tablename, const char *file) {
   }
 
   std::string query = CT::printf("delete from %s where path = '%s';", tablename, file);
-  // CDBDebug("DELETEQUERY= [%s]", query.c_str());
   int status = dataBaseConnection->query(query.c_str());
   if (status != 0) {
     CDBWarning("Note:removeFile failed");
@@ -1013,7 +1021,6 @@ int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablena
   std::string query = CT::printf("delete from %s where path = '%s' and (filedate != '%s' or filedate is NULL)", tablename, file, creationDate);
   int status = dataBaseConnection->query(query.c_str());
   if (status != 0) {
-    // CDBError("removeFilesWithChangedCreationDate exception");
     throw(__LINE__);
   }
   if (measureTime) {
@@ -1086,7 +1093,6 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
           rowNumber++;
           if (rowNumber >= it->second.size()) break;
         }
-        // CDBDebug("Inserting %d bytes ",multiInsert.length());
         int status = dataBaseConnection->query(multiInsert.c_str());
         if (status != 0) {
           CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());

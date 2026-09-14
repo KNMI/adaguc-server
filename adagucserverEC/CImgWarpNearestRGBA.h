@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "Types/GeoParameters.h"
 
 /**
  *  This tile just runs over the datasource field, and calculates the destination pixel color over and over again when it is requested twice.
@@ -48,7 +51,6 @@ public:
   float legendLogAsLog;
   CDataSource *dataSource;
   CDrawImage *drawImage;
-  // size_t prev_imgpointer;
   void init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight);
   int drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY, bool debug);
   void pixel_blend(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);

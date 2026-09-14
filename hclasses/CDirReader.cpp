@@ -2,12 +2,12 @@
  *
  * Project:  Helper classes
  * Purpose:  Generic functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,17 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#include <iostream>
-#include <vector>
-#include <map>
-#include <cstdio>
-#include <cstring>
-#include <regex.h>
-#include <cstddef>
-#include <sys/types.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <algorithm> /* For std::sort */
-#include <regex>
 #include "CDirReader.h"
 #include "CTString.h"
 #include "CDebugger.h"
+
+#include <algorithm> /* For std::sort */
+#include <dirent.h>
+#include <map>
+#include <regex>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <vector>
 
 CDirReader::CDirReader() {}
 
@@ -60,7 +56,7 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
-        struct stat path_stat{};
+        struct stat path_stat {};
         int ret = stat(fullName.c_str(), &path_stat);
         if (ret == 0 && S_ISREG(path_stat.st_mode)) {
           d_type = DT_REG;
@@ -112,7 +108,6 @@ int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) 
 }
 
 int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter) {
-  // CDBDebug("Doing recursive directory scan for [%s]", directory);
   try {
     return _ReadDir(directory, ext_filter, 1);
   } catch (int a) {
@@ -223,72 +218,6 @@ void CDirReader::compareLists(std::vector<std::string> L1, std::vector<std::stri
 
   while (it1 != L1.end()) handleMissing(*it1++);
   while (it2 != L2.end()) handleNew(*it2++);
-}
-
-void CDirReader::test_compareLists() {
-
-  std::vector<std::string> oldList;
-  oldList.push_back("ABC");
-  oldList.push_back("OK");
-  oldList.push_back("OK");
-  oldList.push_back("DEF");
-  oldList.push_back("GHI");
-  oldList.push_back("JKL");
-  std::vector<std::string> newList;
-  newList.push_back("PQR");
-  newList.push_back("ABC");
-  newList.push_back("DEF");
-  newList.push_back("PQR");
-  newList.push_back("GHI");
-  newList.push_back("JKL");
-
-  class A {
-  public:
-    static void _handleMissing(std::string a) { CDBDebug("Newlist is missing %s", a.c_str()); }
-
-    static void _handleNew(std::string a) { CDBDebug("Newlist has new %s", a.c_str()); }
-  };
-
-  CDirReader::compareLists(oldList, newList, &A::_handleMissing, &A::_handleNew);
-}
-
-int CDirReader::test_makeCleanPath() {
-  std::string t;
-  t = makeCleanPath("data");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("data/");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("/data/");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("/data");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("/data//");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("data/bla");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("/data/bla");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("data/bla/");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("//data//bla////");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("/data//bla////");
-  CDBDebug("[%s]", t.c_str());
-  ;
-  t = makeCleanPath("/data/bla////");
-  CDBDebug("[%s]", t.c_str());
-  ;
-
-  return 0;
 }
 
 std::map<std::string, CDirReader *> CCachedDirReader::dirReaderMap;

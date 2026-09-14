@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,17 @@
  ******************************************************************************/
 
 #include "CDataSource.h"
+#include "CCDFObject.h"
+#include "COGCDims.h"
+#include "Types/GeoParameters.h"
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
 #include "utils/lintDataset.h"
 #include "utils.h"
 #include "CStyleConfiguration.h"
-// #define CDATASOURCE_DEBUG
+#include "CAutoConfigure.h"
+#include "CTString.h"
 
 bool debugDataSource = false;
 bool configWarningNameMappingSet = false;
@@ -265,7 +269,6 @@ std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::
       return getLegendNames(style->Legend);
     }
   }
-  //  CDBError("No legendlist for layer %s",this->layerName.c_str());
   return {};
 }
 
@@ -494,7 +497,6 @@ CStyleConfiguration *CDataSource::getStyle() {
   }
   std::string styleName = "default";
 
-  // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   std::vector<std::string> layerstyles = CT::split(srvParams->Styles, ",");
   int layerIndex = datasourceIndex;
   if (layerstyles.size() != 0) {
@@ -698,7 +700,6 @@ DataObject *CDataSource::getDataObject(int j) {
   }
 
   DataObject *d = &dataObjects.at(j);
-  // CDBDebug("getDataObject %d %d",currentAnimationStep,j);
   return d;
 }
 

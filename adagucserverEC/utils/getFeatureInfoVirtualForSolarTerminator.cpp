@@ -1,5 +1,16 @@
 #include "getFeatureInfoVirtualForSolarTerminator.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageDataWriter.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CTime.h"
+#include "CXMLParser.h"
+#include "CDPPInterface.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
+
+static const bool CIMAGEDATAWRITER_DEBUG = false;
 
 // When dealing with the solar terminator in particular (or any future liveupdate layer)
 // and testing it with the Adaguc viewer, we run the risk, depending on the interval, of
@@ -22,7 +33,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   }
 
   // Parse time
-  CT::string requestedTime, startTime, stopTime;
+  std::string requestedTime, startTime, stopTime;
   size_t timeIdx = 0;
   for (size_t i = 0; i < srvParams->requestDims.size(); i++) {
     if (CT::toLowerCase(srvParams->requestDims[i].name) == "time") {
@@ -32,7 +43,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
     }
   }
 
-  std::vector<CT::string> timeRangeStrings = requestedTime.split("/");
+  std::vector<std::string> timeRangeStrings = CT::split(requestedTime, "/");
   if (timeRangeStrings.size() == 2) {
     startTime = timeRangeStrings[0];
     stopTime = timeRangeStrings[1];
@@ -67,12 +78,11 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
 
   // Limit the number of generated timeSteps
   size_t expectedSteps = (size_t)((interStop - interStart) / intervalSeconds) + 1;
-  std::vector<CT::string> generatedTimestamps;
+  std::vector<std::string> generatedTimestamps;
   if (expectedSteps <= LIVEUPDATE_MAX_TIMESTEPS) {
     // Build list of timesteps with all of them
     for (double t = interStart; t <= interStop; t += intervalSeconds) {
       generatedTimestamps.push_back(timeInstance.dateToISOString(timeInstance.getDate(t)));
-      // CDBDebug("Generated timestamp %s", generatedTimestamps.back().c_str());
     }
 
   } else {
@@ -92,23 +102,19 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   // Set Geo (bbox)
   getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Current dataSource index is %d", dataSourceIndex);
-  CDBDebug("dX=%d dY=%d", dX, dY);
-  CDBDebug("nativeProj4: '%s'", dataSource->nativeProj4.c_str());
-  CDBDebug("dataSource dWidth=%d dHeight=%d", dataSource->dWidth, dataSource->dHeight);
-  CDBDebug("dataSource dfBBOX=[%.10f, %.10f, %.10f, %.10f]", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  if (drawImage.Geo != NULL) {
-    CDBDebug("drawImage Geo dWidth=%d dHeight=%d", drawImage.Geo->dWidth, drawImage.Geo->dHeight);
-    CDBDebug("drawImage Geo BBOX=[%.10f, %.10f, %.10f, %.10f]", drawImage.Geo->dfBBOX[0], drawImage.Geo->dfBBOX[1], drawImage.Geo->dfBBOX[2], drawImage.Geo->dfBBOX[3]);
-  } else {
-    CDBDebug("drawImage.Geo is NULL!");
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("Current dataSource index is %d", dataSourceIndex);
+    CDBDebug("dX=%d dY=%d", dX, dY);
+    CDBDebug("nativeProj4: '%s'", dataSource->nativeProj4.c_str());
+    CDBDebug("dataSource dWidth=%d dHeight=%d", dataSource->dWidth, dataSource->dHeight);
+    CDBDebug("dataSource dfBBOX=[%.10f, %.10f, %.10f, %.10f]", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
+    CDBDebug("drawImage geoParams width=%d height=%d", img->drawImage.geoParams.width, img->drawImage.geoParams.height);
+    CDBDebug("drawImage geoParams BBOX=[%.10f, %.10f, %.10f, %.10f]", img->drawImage.geoParams.bbox.get(0), img->drawImage.geoParams.bbox.get(1), img->drawImage.geoParams.bbox.get(2),
+             img->drawImage.geoParams.bbox.get(3));
   }
-#endif
 
   // Calculate the corresponding lat/lon, according to the pixel of interest
-  CT::string ckey;
-  ckey.print("%d:%d:%s", dX, dY, dataSource->nativeProj4.c_str());
+  std::string ckey = CT::printf("%d:%d:%s", dX, dY, dataSource->nativeProj4.c_str());
   CImageWarper warper;
   CImageDataWriter::ProjCacheInfo projInfo = CImageDataWriter::GetProjInfo(ckey, &img->drawImage, dataSource, &warper, srvParams, dX, dY);
 
@@ -131,12 +137,12 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
     ptr = projInfo.imx + projInfo.imy * projInfo.dWidth;
   }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Preparing result with name %s", result.layerName.c_str());
-  CDBDebug("lon_coordinate: %f, lat_coordinate: %f", result.lon_coordinate, result.lat_coordinate);
-  CDBDebug("Preparing result with imx %d, imy %d, dWidth %d", projInfo.imx, projInfo.imy, projInfo.dWidth);
-  CDBDebug("Number of timestamps is %ld", generatedTimestamps.size());
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("Preparing result with name %s", result.layerName.c_str());
+    CDBDebug("lon_coordinate: %f, lat_coordinate: %f", result.lon_coordinate, result.lat_coordinate);
+    CDBDebug("Preparing result with imx %d, imy %d, dWidth %d", projInfo.imx, projInfo.imy, projInfo.dWidth);
+    CDBDebug("Number of timestamps is %ld", generatedTimestamps.size());
+  }
 
   // Generate one element per time step;
   for (size_t i = 0; i < generatedTimestamps.size(); ++i) {

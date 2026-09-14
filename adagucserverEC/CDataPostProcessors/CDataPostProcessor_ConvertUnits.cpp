@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstring>
 #include <CCDFTypes.h>
+#include "CDebugger.h"
+#include "CTString.h"
 
 #define CDATAPOSTPROCESSOR_CONVERTUNITS_ID "convert_units"
 #define CDATAPOSTPROCESSOR_TOKNOTS_ID "toknots"

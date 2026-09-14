@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ namespace CDF {
     struct CDFObjectClass {
       void *cdfObjectPointer;
       int dimIndex;
-      CT::string dimValue;
+      std::string dimValue;
     };
     class CustomReader {
     public:
@@ -48,15 +48,7 @@ namespace CDF {
     class CustomMemoryReader : public CDF::Variable::CustomReader {
     public:
       ~CustomMemoryReader() {}
-      int readData(CDF::Variable *thisVar, size_t *, size_t *count, ptrdiff_t *stride) override {
-        int size = 1;
-        for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
-          size *= int((float(count[j]) / float(stride[j])) + 0.5);
-        }
-        thisVar->setSize(size);
-        CDF::allocateData(thisVar->getType(), &thisVar->data, size);
-        return 0;
-      }
+      int readData(CDF::Variable *thisVar, size_t *, size_t *count, ptrdiff_t *stride) override;
     };
     static CustomMemoryReader *CustomMemoryReaderInstance;
 
@@ -78,8 +70,8 @@ namespace CDF {
     Variable(const char *name, CDFType type);
     CDFType nativeType;
     CDFType currentType;
-    CT::string name;
-    CT::string orgName;
+    std::string name;
+    std::string orgName;
     std::vector<Attribute *> attributes;
     std::vector<Dimension *> dimensionlinks; // Note, this vector does not own the Dimension. It is a link to a dimension in the CDFObject model.
     int id = -1;
@@ -87,7 +79,7 @@ namespace CDF {
     void *data = nullptr;
     bool isDimension = false;
     bool enableCache = false;
-    CDF::Variable *clone(CDFType newType, CT::string newName);
+    CDF::Variable *clone(CDFType newType, std::string newName);
     void copy(CDF::Variable *sourceVariable);
     void setCustomReader(CustomReader *customReader);
     CustomReader *getCustomReader();
@@ -117,7 +109,7 @@ namespace CDF {
     void setType(CDFType type);
     bool isString();
     bool isString(bool isString);
-    void setName(const char *value);
+    void setName(const std::string &value);
     void setSize(size_t size);
     size_t getSize();
     Attribute *getAttributeThrows(const std::string &name) const;

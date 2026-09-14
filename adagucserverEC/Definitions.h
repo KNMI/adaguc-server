@@ -4,12 +4,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,65 +107,11 @@
 
 #define ADAGUC_USE_CAIRO
 
-// #define CImgWarpBilinear_DEBUG
 // #define CImgWarpBilinear_TIME
 // #define MEASURETIME
 
-// #define CDATAREADER_DEBUG
-// #define CCDFNETCDFIO_DEBUG
-//  Debug settings:
-/*
-#define CIMAGEDATAWRITER_DEBUG
-#define CDATAREADER_DEBUG
-
-#define CImgWarpBilinear_DEBUG
-#define CImgWarpBilinear_TIME
-
-//Log a summary of different time durations during execution
-//#define MEASURETIME
-
-//#define CXMLGEN_DEBUG
-//#define CCDFNETCDFIO_DEBUG
-#define CDATAREADER_DEBUG
-#define CDATASOURCE_DEBUG
-
-#define CDATAREADER_DEBUG
-#define CCDFNETCDFIO_DEBUG
-#define CXMLGEN_DEBUG
-#define CIMAGEDATAWRITER_DEBUG
-#define CXMLGEN_DEBUG
-#define MEASURETIME
-*/
-
-// #define MEASURETIME
-// #define ADAGUC_TILESTITCHER_DEBUG
-// #define DEBUGON
-#ifdef DEBUGON
-#define CDATASOURCE_DEBUG
-#define CREQUEST_DEBUG
-#define CIMAGEDATAWRITER_DEBUG
-#define CDATAREADER_DEBUG
-#define CXMLGEN_DEBUG
-#define CCDFNETCDFIO_DEBUG
-#define CCONVERTASCAT_DEBUG
-#define MEASURETIME
-#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
-#define CDFOBJECTSTORE_DEBUG
-#define ADAGUC_TILESTITCHER_DEBUG
-#endif
-// #define MEASURETIME
-// #define CCDFNETCDFIO_DEBUG
-// #define CXMLGEN_DEBUG
-// #define CDATAREADER_DEBUG
-// #define CCDFNETCDFIO_DEBUG
-// #define CCDFNETCDFIO_DEBUG_OPEN
-// #define CDATAREADER_DEBUG
-
-// #define MEASURETIME
-// #define CDATAREADER_DEBUG
-// #define CIMAGEDATAWRITER_DEBUG
-// #define CDATASOURCE_DEBUG
-#define CSLD_DEBUG
+// Debug settings: each file now defines its own "static const bool ..._DEBUG"
+// at file scope instead of relying on macros defined here.
 
 // #define ENABLE_CURL in Makefile
 
