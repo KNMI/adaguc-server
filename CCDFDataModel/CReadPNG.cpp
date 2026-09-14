@@ -36,8 +36,10 @@
 #define PNG_DEBUG 3
 #include <png.h>
 
-// TODO, this pngreader should be refactored.
+// TODO, this pngreader should be refactored. `-Wclobbered` is needed to compile this file under g++. The option does not exist under clang.
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic ignored "-Wclobbered"
+#endif
 
 bool pngDebug = false;
 // https://aiddata.rvo.nl/projects
