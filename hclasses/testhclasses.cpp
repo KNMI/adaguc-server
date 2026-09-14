@@ -31,6 +31,8 @@ TEST(string, isInt) {
   CHECK(CT::isInt("14"));
   CHECK(!CT::isInt("14.1"));
   CHECK(CT::isInt("-15"));
+  // A value with more digits than a 32-bit int can hold must be rejected, not silently truncated by a later atoi().
+  CHECK(!CT::isInt("123456789012345678"));
 }
 
 TEST(string, isFloat) {
