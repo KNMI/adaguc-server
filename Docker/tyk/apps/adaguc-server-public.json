@@ -1,0 +1,24 @@
+{
+  "name": "adaguc-server-public",
+  "api_id": "adaguc-server-public",
+  "org_id": "default",
+  "definition": {
+    "location": "header",
+    "key": "version"
+  },
+  "use_keyless": true,
+  "version_data": {
+    "not_versioned": true,
+    "versions": {
+      "Default": {
+        "name": "Default"
+      }
+    }
+  },
+  "proxy": {
+    "listen_path": "/adaguc-server/",
+    "target_url": "ADAGUCTYK_ADAGUC_SERVER_INT_URL",
+    "strip_listen_path": true,
+    "preserve_host_header": true
+  }
+}
