@@ -368,51 +368,79 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                 }
                 multiplies[d] = m;
               }
+
+              /*
+               * Precompute, once per request, everything about each dimension key that does not depend on
+               * indexInVariable: which (if any) dimension variable it maps to, whether it is numeric, and which
+               * slice of `request` (with its multiplyIndex) supplies the per-index name. This used to be
+               * recomputed from scratch (including linear scans over variable->dimensionlinks and request, plus a
+               * map lookup) on every single element below, even though none of it varies with indexInVariable.
+               */
+              struct DimKeyPrecomp {
+                std::string defaultName;
+                CDF::Variable *dimVariable = nullptr;
+                bool isNumeric = false;
+                const std::vector<std::string> *values = nullptr;
+                size_t multiplyIndex = 0;
+              };
+              std::vector<DimKeyPrecomp> dimKeyPrecomp(dataSource->requiredDims.size());
+              for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
+                DimKeyPrecomp &pc = dimKeyPrecomp[dataSourceDimIndex];
+                const std::string &requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex].netCDFDimName;
+                pc.defaultName = dataSource->requiredDims[dataSourceDimIndex].value;
+                pc.dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind);
+                if (pc.dimVariable == nullptr) {
+                  // This one does not have a variable for its dimension.
+                  pc.values = &request[0].values;
+                  pc.multiplyIndex = multiplies[0];
+                  continue;
+                }
+                bool isTime = dataSource->requiredDims[dataSourceDimIndex].isATimeDimension;
+                pc.isNumeric = isTime ? false : CDF::isCDFNumeric(pc.dimVariable->getType());
+
+                int variableDimIndex = -1;
+                for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
+                  if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
+                    variableDimIndex = d;
+                  }
+                }
+                if (variableDimIndex != -1) {
+                  int requestDimIndex = -1;
+                  for (size_t i = 0; i < request.size(); i++) {
+                    if (request[i].name == requestDimNameToFind) {
+                      requestDimIndex = i;
+                    }
+                  }
+                  if (requestDimIndex == -1) {
+                    CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
+                    throw(__LINE__);
+                  }
+                  pc.values = &request[requestDimIndex].values;
+                  pc.multiplyIndex = multiplies[variableDimIndex];
+                }
+              }
+
+              results.reserve(results.size() + variable->getSize());
+
               // Assign keys
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
-                CURResult currentResultForIndex;
-                // currentResultForIndex.parent = this;
+                results.emplace_back();
+                CURResult &currentResultForIndex = results.back();
                 currentResultForIndex.numDims = numberOfDataSourceDims;
                 currentResultForIndex.dimensionKeys.resize(dataSource->requiredDims.size());
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
-                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex].netCDFDimName;
-                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex].value;
-                  auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind);
-                  if (dimVariable == nullptr) {
-                    // This one does not have a variable for its dimension.
-                    auto values = request[0].values;
-                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplies[0]) % values.size()];
-                    continue;
+                  const DimKeyPrecomp &pc = dimKeyPrecomp[dataSourceDimIndex];
+                  CURDimensionKey &key = currentResultForIndex.dimensionKeys[dataSourceDimIndex];
+                  key.name = pc.defaultName;
+                  if (pc.dimVariable != nullptr) {
+                    key.cdfDimensionVariable = pc.dimVariable;
+                    key.isNumeric = pc.isNumeric;
                   }
-                  auto isTime = dataSource->requiredDims[dataSourceDimIndex].isATimeDimension;
-                  auto varType = dimVariable->getType();
-                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
-                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(varType);
-
-                  int variableDimIndex = -1;
-                  for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
-                    if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
-                      variableDimIndex = d;
-                    }
-                  }
-                  if (variableDimIndex != -1) {
-
-                    int requestDimIndex = -1;
-                    for (size_t i = 0; i < request.size(); i++) {
-                      if (request[i].name == requestDimNameToFind) {
-                        requestDimIndex = i;
-                      }
-                    }
-                    if (requestDimIndex == -1) {
-                      CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
-                      throw(__LINE__);
-                    }
-                    auto values = request[requestDimIndex].values;
-                    size_t numValues = values.size();
-                    size_t multiplyIndex = multiplies[variableDimIndex];
-                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplyIndex) % numValues];
+                  if (pc.values != nullptr) {
+                    const std::vector<std::string> &values = *pc.values;
+                    key.name = values[(indexInVariable / pc.multiplyIndex) % values.size()];
                   }
                 }
 
@@ -430,7 +458,6 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                 // Set the value
                 currentResultForIndex.value = pixelValueAsString;
                 currentResultForIndex.dimOrdering = &dimOrdering;
-                results.push_back(currentResultForIndex);
               }
             } catch (int e) {
               CDBError("Error in expandData at line %d", e);

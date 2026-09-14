@@ -50,8 +50,6 @@ void CDFNetCDFReader::enableLonWarp(bool) {}
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { return _readVariableData(var, type, NULL, NULL, NULL); }
 
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
-  int nDims, nVars, nRootAttributes, unlimDimIdP;
-
 #ifdef MEASURETIME
   StopWatch_Stop(">CDFNetCDFReader::_readVariableData");
 #endif
@@ -67,12 +65,6 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 
-    status = nc_inq(root_id, &nDims, &nVars, &nRootAttributes, &unlimDimIdP);
-    if (status != NC_NOERR) {
-      CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq: ", status);
-      return 1;
-    }
-
     if (CCDFNETCDFIO_DEBUG_OPEN) {
       CDBDebug("root_id %d", root_id);
       var->id = -1;
@@ -80,23 +72,22 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     }
 
     /*Check if var id is still OK*/
-    char name[NC_MAX_NAME + 1];
-    nc_type type;
-    int ndims;
-    int natt;
-    int dimids[NC_MAX_VAR_DIMS];
-    for (int j = 0; j < nVars; j++) {
-      int groupId = _findNCGroupIdForCDFVariable(var->name);
-      if (groupId == -1) {
-        CDBError("_findNCGroupIdForCDFVariable for %s = -1", var->name.c_str());
-        return 1;
-      }
-      status = nc_inq_var(groupId, j, name, &type, &ndims, dimids, &natt);
-      if (var->name == name) {
-
-        var->id = j;
-        break;
-      }
+    int groupId = _findNCGroupIdForCDFVariable(var->name);
+    if (groupId == -1) {
+      CDBError("_findNCGroupIdForCDFVariable for %s = -1", var->name.c_str());
+      return 1;
+    }
+    // var->name may be prefixed with a group path (e.g. "grp/subgrp/varname"); nc_inq_varid wants the local name within groupId.
+    std::string localVarName = var->name;
+    auto slashPos = localVarName.find_last_of(CDFNetCDFGroupSeparator);
+    if (slashPos != std::string::npos) {
+      localVarName = localVarName.substr(slashPos + 1);
+    }
+    // Look up the variable id directly instead of linearly scanning (and nc_inq_var-ing) every variable in the file.
+    status = nc_inq_varid(groupId, localVarName.c_str(), &var->id);
+    if (status != NC_NOERR) {
+      CDBError("[%s]: %s %d for variable %s", nc_strerror(status), "nc_inq_varid: ", status, var->name.c_str());
+      return 1;
     }
   }
   if (CCDFNETCDFIO_DEBUG) {

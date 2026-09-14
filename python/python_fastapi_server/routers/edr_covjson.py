@@ -11,7 +11,6 @@ KNMI
 import itertools
 import math
 from datetime import datetime, timezone
-from copy import deepcopy
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
@@ -212,10 +211,15 @@ def covjson_from_resp(dats, metadata, collection_name):
                         axes=time_step_axes,
                         referencing=referencing,
                     )
-                    step_ranges = deepcopy(ranges)
-                    step_ranges[dat["layername"]]["values"] = ranges[dat["layername"]]["values"][
-                        index :: len(time_steps)
-                    ]
+                    layer_range = ranges[dat["layername"]]
+                    step_ranges = {
+                        dat["layername"]: {
+                            "dataType": layer_range["dataType"],
+                            "axisNames": layer_range["axisNames"],
+                            "shape": list(layer_range["shape"]),
+                            "values": layer_range["values"][index :: len(time_steps)],
+                        }
+                    }
                     step_ranges[dat["layername"]]["shape"][1] = 1
 
                     covjson = Coverage(
