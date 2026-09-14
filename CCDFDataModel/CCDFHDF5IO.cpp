@@ -25,6 +25,7 @@
 
 #include "CCDFHDF5IO.h"
 
+#include <cinttypes>
 #include <cmath>
 #include <cstring>
 #include <netcdf.h>
@@ -243,11 +244,11 @@ void CDFHDF5Reader::list(hid_t groupID, const std::string &groupName) {
 
     if (type == H5I_DATASET) {
       if (CCDFHDF5IO_DEBUG) {
-        CDBDebug("H5I_DATASET: %" PRIdHID ",%s", groupID, name);
+        CDBDebug("H5I_DATASET: %" PRId64 ",%s", groupID, name);
       }
       hid_t datasetID = H5Dopen2(groupID, name, H5P_DEFAULT);
       if (CCDFHDF5IO_DEBUG) {
-        CDBDebug("Opened dataset %s with id %" PRIdHID " from %" PRIdHID, name, datasetID, groupID);
+        CDBDebug("Opened dataset %s with id %" PRId64 " from %" PRId64, name, datasetID, groupID);
       }
       if (datasetID > 0) {
         hid_t datasetType = H5Dget_type(datasetID);
@@ -415,7 +416,7 @@ void CDFHDF5Reader::closeH5GroupByName(const char *variableGroupName) {
   ignoreParameter(variableGroupName);
   while (opengroups.size() > 0) {
     if (CCDFHDF5IO_DEBUG) {
-      CDBDebug("closing with id %" PRIdHID, opengroups.back());
+      CDBDebug("closing with id %" PRId64, opengroups.back());
     }
     opengroups.pop_back();
   }
