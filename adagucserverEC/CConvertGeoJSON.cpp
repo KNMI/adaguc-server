@@ -40,6 +40,9 @@
 #include "Types/GeoParameters.h"
 #include "CTime.h"
 #include "CCDFDataModel.h"
+
+#include <cinttypes>
+
 static const bool CCONVERTGEOJSON_DEBUG = false;
 #define CCONVERTGEOJSONCOORDS_NODATA -32000
 #define CCONVERTGEOJSON_FILL 65535u
@@ -586,7 +589,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
           if (id.type == json_string) {
             featureId = id.u.string.ptr;
           } else if (id.type == json_integer) {
-            featureId = CT::printf("%1ld", id.u.integer);
+            featureId = CT::printf("%" PRId64, id.u.integer);
           }
           Feature *feat = new Feature();
 

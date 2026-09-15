@@ -28,11 +28,12 @@
 #include <iostream>
 
 #include <cstdio>
+#include <cinttypes>
 
 std::string FeatureProperty::toString() {
   std::string s;
   if (type == typeInt) {
-    s = CT::printf("%ld", intVal);
+    s = CT::printf("%" PRId64, intVal);
   } else if (type == typeStr) {
     s = CT::printf("%s", pstr.c_str());
   } else if (type == typeDouble) {

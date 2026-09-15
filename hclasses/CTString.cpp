@@ -293,7 +293,7 @@ namespace CT {
   }
 
   bool isInt(const std::string &input) {
-    if (input.empty() || input.size() > CT_MAX_NUM_CHARACTERS_FOR_NUMERIC) {
+    if (input.empty() || input.size() > CT_MAX_NUM_CHARACTERS_FOR_INT) {
       return false;
     }
     if (std::regex_match(input.c_str(), isIntRegex)) {
