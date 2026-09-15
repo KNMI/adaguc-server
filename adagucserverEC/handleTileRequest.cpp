@@ -25,8 +25,8 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  int targetNrOfTilesX = floor((srvParam->geoParams.width / atoi(tileSettings->attr.tilewidthpx.c_str())) + 0.0) + 2;
-  int targetNrOfTilesY = floor((srvParam->geoParams.height / atoi(tileSettings->attr.tileheightpx.c_str())) + 0.0) + 2;
+  int targetNrOfTilesX = floor((srvParam->geoParams.width / atoi(tileSettings.attr.tilewidthpx.c_str())) + 0.0) + 2;
+  int targetNrOfTilesY = floor((srvParam->geoParams.height / atoi(tileSettings.attr.tileheightpx.c_str())) + 0.0) + 2;
   return targetNrOfTilesX * targetNrOfTilesY;
 }
 
@@ -67,9 +67,9 @@ f8box reprojectExtent(std::string targetProjection, std::string sourceProjection
 CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  bool tileSettingsDebug = tileSettings->attr.debug == "true";
+  bool tileSettingsDebug = tileSettings.attr.debug == "true";
   int initialRequestLimit = DEFAULT_REQUEST_LIMIT;
-  size_t maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? atoi(tileSettings->attr.maxtilesinimage.c_str()) : DEFAULT_MAX_TILES_IN_IMAGE;
+  size_t maxTilesInImage = !tileSettings.attr.maxtilesinimage.empty() ? atoi(tileSettings.attr.maxtilesinimage.c_str()) : DEFAULT_MAX_TILES_IN_IMAGE;
 
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   int targetNrOfTiles = estimateNrOfTargetTiles(dataSource);

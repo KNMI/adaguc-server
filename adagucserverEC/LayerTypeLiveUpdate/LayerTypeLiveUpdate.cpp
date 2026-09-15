@@ -39,7 +39,7 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
     std::vector<std::string> fileList;
     if (!dataSource->cfgLayer->FilePath.empty()) {
       try {
-        fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+        fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter, NULL);
       } catch (int e) {
         CDBError("Could not find any filename");
         return 1;
@@ -107,14 +107,13 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
 
   // Add dummy step
   dataSource->addStep("");
-  auto cfgLayer = srvParam->cfg->Layer[0]; // TODO
+  auto cfgLayer = &srvParam->cfg->Layer[0]; // TODO
   std::string layerName = makeUniqueLayerName(cfgLayer);
   if (dataSource->dataObjects.size() == 0) {
     if (cfgLayer->Variable.size() == 0) {
-      cfgLayer->Variable.push_back(new CServerConfig::XMLE_Variable());
-      cfgLayer->Variable[0]->elementValue = "solarterminator";
+      addXmlObj(cfgLayer->Variable)->elementValue = "solarterminator";
     }
-    dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[0], 0);
+    dataSource->setCFGLayer(srvParam, cfgLayer, 0);
   }
   auto &obj = dataSource->dataObjects.at(0);
   dataSource->layerName = layerName;
@@ -181,27 +180,27 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   return status;
 }
 
-static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const std::string &postProcName) {
+static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc> &vec, const std::string &postProcName) {
 
-  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc *p) { return p != nullptr && p->attr.algorithm == (postProcName); });
+  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc &p) { return p.attr.algorithm == (postProcName); });
 
   return (it == vec.end()) ? -1 : int(it - vec.begin());
 }
 
 int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer) {
   if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
-    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Title[0]->elementValue.c_str());
+    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Title[0].elementValue.c_str());
   } else {
-    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Name[0]->elementValue.c_str());
+    metadataLayer->layerMetadata.title = (metadataLayer->dataSource->cfgLayer->Name[0].elementValue.c_str());
   }
   CTime timeInstance;
 
   std::string timeResolution = LIVEUPDATE_DEFAULT_INTERVAL;
   std::string offset = LIVEUPDATE_DEFAULT_OFFSET;
 
-  for (auto dim: metadataLayer->layer->Dimension) {
-    if (dim->elementValue == ("time") && !dim->attr.interval.empty()) {
-      timeResolution = dim->attr.interval;
+  for (auto &dim: metadataLayer->layer->Dimension) {
+    if (dim.elementValue == ("time") && !dim.attr.interval.empty()) {
+      timeResolution = dim.attr.interval;
     }
   }
 
@@ -209,7 +208,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
 
   int idx = findDataPostProcIndex(postProcs, "solarterminator");
 
-  CServerConfig::XMLE_DataPostProc *soltConfig = (idx >= 0) ? postProcs[idx] : nullptr;
+  const CServerConfig::XMLE_DataPostProc *soltConfig = (idx >= 0) ? &postProcs[idx] : nullptr;
 
   if (soltConfig != nullptr) {
     // Calculate the offset based on said parameter

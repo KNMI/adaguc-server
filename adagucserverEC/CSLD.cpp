@@ -61,10 +61,10 @@ int CSLD::processSLDUrl(std::string sldUrl) {
 
       for (size_t j = 0; j < this->serverConfig->Layer.size(); j++) {
 
-        CServerConfig::XMLE_Layer *layer = this->serverConfig->Layer[j];
+        CServerConfig::XMLE_Layer *layer = &this->serverConfig->Layer[j];
 
         // Generate unique layer name for layer in Server Config
-        std::string layerUniqueName = makeUniqueLayerName(this->serverConfig->Layer[j]);
+        std::string layerUniqueName = makeUniqueLayerName(layer);
 
         if (CSLD_DEBUG) {
           CDBDebug("Checking layer [%s]", layerUniqueName.c_str());
@@ -80,21 +80,18 @@ int CSLD::processSLDUrl(std::string sldUrl) {
 
           /* Add SLD style name to Styles element of Layer */
           if (layer->Styles.size() == 0) {
-            CServerConfig::XMLE_Styles *layerStyles = new CServerConfig::XMLE_Styles();
-            layer->Styles.push_back(layerStyles);
+            addXmlObj(layer->Styles);
           }
 
           std::string uniqueStyleName = STYLE_NAME_TEMPLATE;
           uniqueStyleName += std::to_string(i);
 
           // Initialize styling variables, to make sure they are empty and new
-          CServerConfig::XMLE_Style *myOwnStyle = new CServerConfig::XMLE_Style();
-          this->serverConfig->Style.push_back(myOwnStyle);
+          CServerConfig::XMLE_Style *myOwnStyle = addXmlObj(this->serverConfig->Style);
 
-          CServerConfig::XMLE_Legend *myOwnLegend = new CServerConfig::XMLE_Legend();
-          this->serverConfig->Legend.push_back(myOwnLegend);
+          CServerConfig::XMLE_Legend *myOwnLegend = addXmlObj(this->serverConfig->Legend);
 
-          layer->Styles[0]->elementValue = uniqueStyleName.c_str();
+          layer->Styles[0].elementValue = uniqueStyleName.c_str();
           myOwnStyle->attr.name = uniqueStyleName.c_str();
 
           std::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
@@ -102,12 +99,10 @@ int CSLD::processSLDUrl(std::string sldUrl) {
           myOwnLegend->attr.name = uniqueLegendName.c_str();
           myOwnLegend->attr.type = "interval";
 
-          CServerConfig::XMLE_Legend *styleLegend = new CServerConfig::XMLE_Legend();
-          myOwnStyle->Legend.push_back(styleLegend);
+          CServerConfig::XMLE_Legend *styleLegend = addXmlObj(myOwnStyle->Legend);
           styleLegend->elementValue = myOwnLegend->attr.name;
 
-          CServerConfig::XMLE_RenderMethod *renderMethod = new CServerConfig::XMLE_RenderMethod();
-          myOwnStyle->RenderMethod.push_back(renderMethod);
+          CServerConfig::XMLE_RenderMethod *renderMethod = addXmlObj(myOwnStyle->RenderMethod);
           renderMethod->elementValue = "shadedContour";
 
           status = this->validateAndParseSLDElements(namedLayerElement, myOwnStyle);
@@ -216,16 +211,14 @@ int CSLD::buildScaleDenominator(CXMLParserElement &element, CServerConfig::XMLE_
 
   if (element.name == (RULE_MIN_SCALE_DENOMINATOR)) {
 
-    CServerConfig::XMLE_Min *min = new CServerConfig::XMLE_Min();
+    CServerConfig::XMLE_Min *min = addXmlObj(myOwnStyle->Min);
     min->elementValue = element.value;
-    myOwnStyle->Min.push_back(min);
     return 0;
 
   } else if (element.name == (RULE_MAX_SCALE_DENOMINATOR)) {
 
-    CServerConfig::XMLE_Max *max = new CServerConfig::XMLE_Max();
+    CServerConfig::XMLE_Max *max = addXmlObj(myOwnStyle->Max);
     max->elementValue = element.value;
-    myOwnStyle->Max.push_back(max);
 
     return 0;
   }
@@ -260,7 +253,7 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
   for (size_t i = 0; i < colorMapEntries.size(); i++) {
     CXMLParserElement &colorMapEntry = colorMapEntries.at(i);
 
-    CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
+    CServerConfig::XMLE_ShadeInterval *shadeInterval = addXmlObj(myOwnStyle->ShadeInterval);
     shadeInterval->attr.min = atof(colorMapEntry.getAttrValue("quantity").c_str());
 
     // Set the max min value
@@ -274,7 +267,7 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
       shadeInterval->attr.max = atof(max.c_str());
     } else {
       if (myOwnStyle->Max.size() == 1) {
-        shadeInterval->attr.max = atof(myOwnStyle->Max[0]->elementValue.c_str());
+        shadeInterval->attr.max = atof(myOwnStyle->Max[0].elementValue.c_str());
       } else {
         CDBError("Missing element %s for setting the last ColorMapEntry Max attribute", RULE_MAX_SCALE_DENOMINATOR);
         return 1;
@@ -286,7 +279,6 @@ int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *m
     hexColor = CT::toUpperCase(hexColor);
 
     shadeInterval->attr.fillcolor = hexColor;
-    myOwnStyle->ShadeInterval.push_back(shadeInterval);
 
     if (i == (colorMapEntries.size() - 1)) {
       if (CSLD_DEBUG) {

@@ -72,15 +72,15 @@ const std::vector<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { retu
 std::vector<XMLE_DataPostProcAttributes> getProcessorList(CDataSource *dataSource) {
   std::vector<XMLE_DataPostProcAttributes> dataProcessorList;
 
-  for (auto dp: dataSource->cfgLayer->DataPostProc) {
-    XMLE_DataPostProcAttributes dpAttr = dp->attr;
+  for (const auto &dp: dataSource->cfgLayer->DataPostProc) {
+    XMLE_DataPostProcAttributes dpAttr = dp.attr;
     dpAttr.postProcIndexInLayer = dataProcessorList.size();
     dataProcessorList.push_back(dpAttr);
   }
 
   if (dataSource->getStyle() != nullptr) {
-    for (auto dp: dataSource->getStyle()->dataPostProcessors) {
-      XMLE_DataPostProcAttributes dpAttr = dp->attr;
+    for (const auto &dp: dataSource->getStyle()->dataPostProcessors) {
+      XMLE_DataPostProcAttributes dpAttr = dp.attr;
       dpAttr.postProcIndexInLayer = dataProcessorList.size();
       dataProcessorList.push_back(dpAttr);
     }

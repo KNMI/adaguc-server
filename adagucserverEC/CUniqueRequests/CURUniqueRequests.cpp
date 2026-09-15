@@ -329,11 +329,11 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
             /**
              * DataPostProc: Here our datapostprocessor comes into action!
              */
-            for (auto proc: dataSource->cfgLayer->DataPostProc) {
+            for (const auto &proc: dataSource->cfgLayer->DataPostProc) {
               // Algorithm ax+b:
-              if (proc->attr.algorithm == ("ax+b")) {
-                auto dfadd_offset = atof(proc->attr.b.c_str());
-                auto dfscale_factor = atof(proc->attr.a.c_str());
+              if (proc.attr.algorithm == ("ax+b")) {
+                auto dfadd_offset = atof(proc.attr.b.c_str());
+                auto dfscale_factor = atof(proc.attr.a.c_str());
                 double *_data = (double *)variable->data;
                 for (size_t j = 0; j < variable->getSize(); j++) {
                   _data[j] = _data[j] * dfscale_factor + dfadd_offset;
@@ -342,8 +342,8 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                 dataSource->getDataObject(dataObjectNr)->dfNodataValue = dataSource->getDataObject(dataObjectNr)->dfNodataValue * dfscale_factor + dfadd_offset;
               }
               // Apply units:
-              if (proc->attr.units.empty() == false) {
-                dataSource->getDataObject(dataObjectNr)->overruledUnits = proc->attr.units;
+              if (proc.attr.units.empty() == false) {
+                dataSource->getDataObject(dataObjectNr)->overruledUnits = proc.attr.units;
               }
             }
             if (readDataAsCDFDouble) {

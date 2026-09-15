@@ -39,7 +39,7 @@ CDBAdapterPostgreSQL *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration
       CDBError("DataBase not properly configured");
       exit(1);
     }
-    if (CT::endsWith(cfg->DataBase[0]->attr.parameters, ".db")) {
+    if (CT::endsWith(cfg->DataBase[0].attr.parameters, ".db")) {
       CDBError("Sqlite is not supported anymore.");
       exit(1);
     } else {

@@ -48,10 +48,10 @@ private:
 
   std::string sourceCRSString;
   std::string destinationCRS;
-  std::vector<CServerConfig::XMLE_Projection *> *prj;
+  std::vector<CServerConfig::XMLE_Projection> *prj;
   bool initialized;
 
-  int _initreprojSynchronized(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int _initreprojSynchronized(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection> *_prj);
   int findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX);
 
 public:
@@ -60,9 +60,9 @@ public:
   ~CImageWarper();
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   std::string getDestProjString() { return destinationCRS; }
-  int initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
-  int initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
-  int init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection> *prj);
+  int initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection> *_prj);
+  int init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection> *_prj);
 
   int closereproj();
   int reprojpoint(double &dfx, double &dfy);
@@ -90,7 +90,7 @@ public:
   int reprojfromLatLon(double &dfx, double &dfy);
 
   int reprojToLatLon(double &dfx, double &dfy);
-  int decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
+  int decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection> *prj);
   int findExtent(CDataSource *dataSource, double *dfBBOX);
   bool isProjectionRequired() { return requireReprojection; }
   /**

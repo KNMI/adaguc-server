@@ -242,9 +242,9 @@ public:
 
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration->legendIndex != -1) {
-      status = drawImage->createPalette(dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
+      status = drawImage->createPalette(&dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
       if (status != 0) {
-        CDBError("Unknown palette type for %s", dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
+        CDBError("Unknown palette type for %s", dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
         return;
       }
     }
@@ -312,7 +312,7 @@ public:
                * DataPostProc: Here our datapostprocessor comes into action!
                */
               for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
-                CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
+                CServerConfig::XMLE_DataPostProc *proc = &dataSource->cfgLayer->DataPostProc[dpi];
                 // Algorithm ax+b:
                 if (proc->attr.algorithm == ("ax+b")) {
                   double dfadd_offset = 0;

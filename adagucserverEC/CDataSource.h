@@ -81,7 +81,7 @@ private:
   CStyleConfiguration currentStyle;
   std::vector<CStyleConfiguration> styleConfigurationList;
   std::vector<std::string> getLegendListForDataSource(CServerConfig::XMLE_Style *style);
-  std::vector<std::string> getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
+  std::vector<std::string> getStyleNames(const std::vector<CServerConfig::XMLE_Styles> &Styles);
   std::vector<std::string> getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style);
 
 public:

@@ -86,7 +86,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
 
   GeoParameters geo;
   geo.crs = crs;
-  std::vector<CServerConfig::XMLE_Projection *> v;
+  std::vector<CServerConfig::XMLE_Projection> v;
 
   // Init warper
   CImageWarper warper;
@@ -140,7 +140,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
 
   GeoParameters geo;
   geo.crs = crs;
-  std::vector<CServerConfig::XMLE_Projection *> v;
+  std::vector<CServerConfig::XMLE_Projection> v;
 
   // Init warper
   CImageWarper warper;
@@ -193,7 +193,7 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
 
   GeoParameters geo;
   geo.crs = crs;
-  std::vector<CServerConfig::XMLE_Projection *> v;
+  std::vector<CServerConfig::XMLE_Projection> v;
 
   // Init warper
   CImageWarper warper;

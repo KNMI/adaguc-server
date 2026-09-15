@@ -18,13 +18,13 @@ std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvPara
     CDBWarning("No dataset paths are configured");
   }
   for (auto dataset: srvParam->cfg->Dataset) {
-    if (dataset->attr.enabled == ("true") && dataset->attr.location.empty() == false) {
+    if (dataset.attr.enabled == ("true") && dataset.attr.location.empty() == false) {
       if (srvParam->verbose) {
-        CDBDebug("Checking dataset location %s", dataset->attr.location.c_str());
+        CDBDebug("Checking dataset location %s", dataset.attr.location.c_str());
       }
-      auto files = CDirReader::listDir(dataset->attr.location.c_str(), false, "^.*\\.xml$");
+      auto files = CDirReader::listDir(dataset.attr.location.c_str(), false, "^.*\\.xml$");
       if (files.size() == 0) {
-        CDBWarning("No datasets found in directory [%s]", dataset->attr.location.c_str());
+        CDBWarning("No datasets found in directory [%s]", dataset.attr.location.c_str());
       }
       datasetList.insert(datasetList.end(), files.begin(), files.end());
     }
@@ -91,7 +91,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   }
 
   srvParam->configFileName = configFile;
-  srvParam->cfg = srvParam->configObj.Configuration[0];
+  srvParam->cfg = &srvParam->configObj.Configuration[0];
 
 #ifdef MEASURETIME
   StopWatch_Stop("!start next parseConfigFile");
@@ -140,20 +140,20 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   }
   // Include additional config files given in the include statement of the config file, last config file is included first
   for (const auto &include: std::views::reverse(srvParam->cfg->Include)) {
-    if (include->attr.location.empty() == false) {
+    if (include.attr.location.empty() == false) {
       if (srvParam->verbose) {
-        CDBDebug("Include '%s'", include->attr.location.c_str());
+        CDBDebug("Include '%s'", include.attr.location.c_str());
       }
 
 #ifdef MEASURETIME
       StopWatch_Stop("!start  %s", include->attr.location.c_str());
 #endif
-      status = srvParam->parseConfigFile(include->attr.location);
+      status = srvParam->parseConfigFile(include.attr.location);
 #ifdef MEASURETIME
       StopWatch_Stop("!done  %s", include->attr.location.c_str());
 #endif
       if (status != 0) {
-        CDBError("There is an error with include '%s'", include->attr.location.c_str());
+        CDBError("There is an error with include '%s'", include.attr.location.c_str());
         return 1;
       }
     }
@@ -163,12 +163,12 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   int layerIndex = -1;
   for (const auto &layer: srvParam->cfg->Layer) {
     layerIndex++;
-    if (layer->attr.type == ("database")) {
-      if (layer->Variable.size() == 0) {
+    if (layer.attr.type == ("database")) {
+      if (layer.Variable.size() == 0) {
         CDBError("Configuration error at layer %d: <Variable> not defined", layerIndex);
         return 1;
       }
-      if (layer->FilePath.size() == 0) {
+      if (layer.FilePath.size() == 0) {
         CDBError("Configuration error at layer %d: <FilePath> not defined", layerIndex);
         return 1;
       }

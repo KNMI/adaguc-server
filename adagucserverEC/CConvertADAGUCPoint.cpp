@@ -497,10 +497,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     if (dataSource != NULL) {
       CStyleConfiguration *styleConfiguration = dataSource->getStyle();
       if (styleConfiguration != NULL) {
-        for (auto pointInterval: styleConfiguration->pointIntervals) {
-          if (!pointInterval->attr.discradius.empty()) {
+        for (const auto &pointInterval: styleConfiguration->pointIntervals) {
+          if (!pointInterval.attr.discradius.empty()) {
             hasZoomableDiscRadius = true;
-            discSize = atof(pointInterval->attr.discradius.c_str());
+            discSize = atof(pointInterval.attr.discradius.c_str());
           }
         }
       }

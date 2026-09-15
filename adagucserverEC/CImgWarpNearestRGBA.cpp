@@ -333,7 +333,7 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   bool debug = false;
 
   if (dataSource->cfgLayer->TileSettings.size() == 1) {
-    if (dataSource->cfgLayer->TileSettings[0]->attr.debug == "true") {
+    if (dataSource->cfgLayer->TileSettings[0].attr.debug == "true") {
       debug = true;
     }
   }

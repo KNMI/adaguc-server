@@ -312,14 +312,13 @@ struct CServerConfig : CXMLObjectInterface {
   };
 
   struct XMLE_Legend : CXMLObjectInterface {
-    std::vector<XMLE_palette *> palette;
-    ~XMLE_Legend() { XMLE_DELOBJ(palette); }
+    std::vector<XMLE_palette> palette;
     struct Cattr {
       std::string name, type, tickround, tickinterval, fixedclasses, file, textformatting;
     } attr;
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("palette" == elName) {
-        XMLE_ADDOBJ(palette);
+        return addXmlObj(palette);
       }
       return nullptr;
     }
@@ -634,21 +633,17 @@ struct CServerConfig : CXMLObjectInterface {
   };
 
   struct XMLE_AutoResource : CXMLObjectInterface {
-    std::vector<XMLE_Dir *> Dir;
-    std::vector<XMLE_ImageText *> ImageText;
-    ~XMLE_AutoResource() {
-      XMLE_DELOBJ(Dir);
-      XMLE_DELOBJ(ImageText);
-    }
+    std::vector<XMLE_Dir> Dir;
+    std::vector<XMLE_ImageText> ImageText;
     struct Cattr {
       std::string enableautoopendap, enablelocalfile;
     } attr;
 
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Dir" == elName) {
-        XMLE_ADDOBJ(Dir);
+        return addXmlObj(Dir);
       } else if ("ImageText" == elName) {
-        XMLE_ADDOBJ(ImageText);
+        return addXmlObj(ImageText);
       }
       return nullptr;
     }
@@ -917,118 +912,90 @@ struct CServerConfig : CXMLObjectInterface {
   };
 
   struct XMLE_Style : CXMLObjectInterface {
-    std::vector<XMLE_Thinning *> Thinning;
-    std::vector<XMLE_Point *> Point;
-    std::vector<XMLE_Vector *> Vector;
-    std::vector<XMLE_FilterPoints *> FilterPoints;
-    std::vector<XMLE_Legend *> Legend;
-    std::vector<XMLE_Scale *> Scale;
-    std::vector<XMLE_Offset *> Offset;
-    std::vector<XMLE_Min *> Min;
-    std::vector<XMLE_Max *> Max;
-    std::vector<XMLE_ContourIntervalL *> ContourIntervalL;
-    std::vector<XMLE_ContourIntervalH *> ContourIntervalH;
-    std::vector<XMLE_Log *> Log;
-    std::vector<XMLE_ValueRange *> ValueRange;
-    std::vector<XMLE_RenderMethod *> RenderMethod;
-    std::vector<XMLE_ShadeInterval *> ShadeInterval;
-    std::vector<XMLE_SymbolInterval *> SymbolInterval;
-    std::vector<XMLE_ContourLine *> ContourLine;
-    std::vector<XMLE_NameMapping *> NameMapping;
-    std::vector<XMLE_SmoothingFilter *> SmoothingFilter;
-    std::vector<XMLE_StandardNames *> StandardNames;
-    std::vector<XMLE_LegendGraphic *> LegendGraphic;
-    std::vector<XMLE_FeatureInterval *> FeatureInterval;
-    std::vector<XMLE_Stippling *> Stippling;
-    std::vector<XMLE_RenderSettings *> RenderSettings;
-    std::vector<XMLE_DataPostProc *> DataPostProc;
-    std::vector<XMLE_IncludeStyle *> IncludeStyle;
+    std::vector<XMLE_Thinning> Thinning;
+    std::vector<XMLE_Point> Point;
+    std::vector<XMLE_Vector> Vector;
+    std::vector<XMLE_FilterPoints> FilterPoints;
+    std::vector<XMLE_Legend> Legend;
+    std::vector<XMLE_Scale> Scale;
+    std::vector<XMLE_Offset> Offset;
+    std::vector<XMLE_Min> Min;
+    std::vector<XMLE_Max> Max;
+    std::vector<XMLE_ContourIntervalL> ContourIntervalL;
+    std::vector<XMLE_ContourIntervalH> ContourIntervalH;
+    std::vector<XMLE_Log> Log;
+    std::vector<XMLE_ValueRange> ValueRange;
+    std::vector<XMLE_RenderMethod> RenderMethod;
+    std::vector<XMLE_ShadeInterval> ShadeInterval;
+    std::vector<XMLE_SymbolInterval> SymbolInterval;
+    std::vector<XMLE_ContourLine> ContourLine;
+    std::vector<XMLE_NameMapping> NameMapping;
+    std::vector<XMLE_SmoothingFilter> SmoothingFilter;
+    std::vector<XMLE_StandardNames> StandardNames;
+    std::vector<XMLE_LegendGraphic> LegendGraphic;
+    std::vector<XMLE_FeatureInterval> FeatureInterval;
+    std::vector<XMLE_Stippling> Stippling;
+    std::vector<XMLE_RenderSettings> RenderSettings;
+    std::vector<XMLE_DataPostProc> DataPostProc;
+    std::vector<XMLE_IncludeStyle> IncludeStyle;
 
-    ~XMLE_Style() {
-      XMLE_DELOBJ(Thinning);
-      XMLE_DELOBJ(Point);
-      XMLE_DELOBJ(Vector);
-      XMLE_DELOBJ(FilterPoints);
-      XMLE_DELOBJ(Legend);
-      XMLE_DELOBJ(Scale);
-      XMLE_DELOBJ(Offset);
-      XMLE_DELOBJ(Min);
-      XMLE_DELOBJ(Max);
-      XMLE_DELOBJ(Log);
-      XMLE_DELOBJ(ValueRange);
-      XMLE_DELOBJ(ContourIntervalL);
-      XMLE_DELOBJ(ContourIntervalH);
-      XMLE_DELOBJ(RenderMethod);
-      XMLE_DELOBJ(ShadeInterval);
-      XMLE_DELOBJ(SymbolInterval);
-      XMLE_DELOBJ(ContourLine);
-      XMLE_DELOBJ(NameMapping);
-      XMLE_DELOBJ(SmoothingFilter);
-      XMLE_DELOBJ(StandardNames);
-      XMLE_DELOBJ(LegendGraphic);
-      XMLE_DELOBJ(FeatureInterval);
-      XMLE_DELOBJ(Stippling);
-      XMLE_DELOBJ(RenderSettings);
-      XMLE_DELOBJ(DataPostProc);
-      XMLE_DELOBJ(IncludeStyle);
-    }
     struct Cattr {
       std::string name, title, abstract;
     } attr;
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Thinning" == elName) {
-        XMLE_ADDOBJ(Thinning);
+        return addXmlObj(Thinning);
       } else if ("Point" == elName) {
-        XMLE_ADDOBJ(Point);
+        return addXmlObj(Point);
       } else if ("Vector" == elName) {
-        XMLE_ADDOBJ(Vector);
+        return addXmlObj(Vector);
       } else if ("FilterPoints" == elName) {
-        XMLE_ADDOBJ(FilterPoints);
+        return addXmlObj(FilterPoints);
       } else if ("Legend" == elName) {
-        XMLE_ADDOBJ(Legend);
+        return addXmlObj(Legend);
       } else if ("Scale" == elName) {
-        XMLE_ADDOBJ(Scale);
+        return addXmlObj(Scale);
       } else if ("Offset" == elName) {
-        XMLE_ADDOBJ(Offset);
+        return addXmlObj(Offset);
       } else if ("Min" == elName) {
-        XMLE_ADDOBJ(Min);
+        return addXmlObj(Min);
       } else if ("Max" == elName) {
-        XMLE_ADDOBJ(Max);
+        return addXmlObj(Max);
       } else if ("Log" == elName) {
-        XMLE_ADDOBJ(Log);
+        return addXmlObj(Log);
       } else if ("ValueRange" == elName) {
-        XMLE_ADDOBJ(ValueRange);
+        return addXmlObj(ValueRange);
       } else if ("ContourIntervalL" == elName) {
-        XMLE_ADDOBJ(ContourIntervalL);
+        return addXmlObj(ContourIntervalL);
       } else if ("ContourIntervalH" == elName) {
-        XMLE_ADDOBJ(ContourIntervalH);
+        return addXmlObj(ContourIntervalH);
       } else if ("RenderMethod" == elName) {
-        XMLE_ADDOBJ(RenderMethod);
+        return addXmlObj(RenderMethod);
       } else if ("ShadeInterval" == elName) {
-        XMLE_ADDOBJ(ShadeInterval);
+        return addXmlObj(ShadeInterval);
       } else if ("SymbolInterval" == elName) {
-        XMLE_ADDOBJ(SymbolInterval);
+        return addXmlObj(SymbolInterval);
       } else if ("ContourLine" == elName) {
-        XMLE_ADDOBJ(ContourLine);
+        return addXmlObj(ContourLine);
       } else if ("NameMapping" == elName) {
-        XMLE_ADDOBJ(NameMapping);
+        return addXmlObj(NameMapping);
       } else if ("SmoothingFilter" == elName) {
-        XMLE_ADDOBJ(SmoothingFilter);
+        return addXmlObj(SmoothingFilter);
       } else if ("StandardNames" == elName) {
-        XMLE_ADDOBJ(StandardNames);
+        return addXmlObj(StandardNames);
       } else if ("LegendGraphic" == elName) {
-        XMLE_ADDOBJ(LegendGraphic);
+        return addXmlObj(LegendGraphic);
       } else if ("FeatureInterval" == elName) {
-        XMLE_ADDOBJ(FeatureInterval);
+        return addXmlObj(FeatureInterval);
       } else if ("Stippling" == elName) {
-        XMLE_ADDOBJ(Stippling);
+        return addXmlObj(Stippling);
       } else if ("RenderSettings" == elName) {
-        XMLE_ADDOBJ(RenderSettings);
+        return addXmlObj(RenderSettings);
       } else if ("DataPostProc" == elName) {
-        XMLE_ADDOBJ(DataPostProc);
+        return addXmlObj(DataPostProc);
 
       } else if ("IncludeStyle" == elName) {
-        XMLE_ADDOBJ(IncludeStyle);
+        return addXmlObj(IncludeStyle);
       }
       return nullptr;
     }
@@ -1391,8 +1358,7 @@ struct CServerConfig : CXMLObjectInterface {
     struct Cattr {
       std::string id, proj4, invertxyforwms130;
     } attr;
-    std::vector<XMLE_LatLonBox *> LatLonBox;
-    ~XMLE_Projection() { XMLE_DELOBJ(LatLonBox); }
+    std::vector<XMLE_LatLonBox> LatLonBox;
     bool addAttribute(const attribute &attrCfg) {
       if ("id" == attrCfg.name) {
         attr.id = attrCfg.value;
@@ -1408,7 +1374,7 @@ struct CServerConfig : CXMLObjectInterface {
     }
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("LatLonBox" == elName) {
-        XMLE_ADDOBJ(LatLonBox);
+        return addXmlObj(LatLonBox);
       }
       return nullptr;
     }
@@ -1454,21 +1420,16 @@ struct CServerConfig : CXMLObjectInterface {
   };
 
   struct XMLE_RootLayer : CXMLObjectInterface {
-    std::vector<XMLE_Name *> Name;
-    std::vector<XMLE_Title *> Title;
-    std::vector<XMLE_Abstract *> Abstract;
-    ~XMLE_RootLayer() {
-      XMLE_DELOBJ(Name);
-      XMLE_DELOBJ(Title);
-      XMLE_DELOBJ(Abstract);
-    }
+    std::vector<XMLE_Name> Name;
+    std::vector<XMLE_Title> Title;
+    std::vector<XMLE_Abstract> Abstract;
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Name" == elName) {
-        XMLE_SETOBJ(Name);
+        return setXmlObj(Name);
       } else if ("Title" == elName) {
-        XMLE_SETOBJ(Title);
+        return setXmlObj(Title);
       } else if ("Abstract" == elName) {
-        XMLE_SETOBJ(Abstract);
+        return setXmlObj(Abstract);
       }
       return nullptr;
     }
@@ -1478,85 +1439,64 @@ struct CServerConfig : CXMLObjectInterface {
   struct XMLE_DatasetCSW : CXMLObjectInterface {};
 
   struct XMLE_Inspire : CXMLObjectInterface {
-    std::vector<XMLE_ViewServiceCSW *> ViewServiceCSW;
-    std::vector<XMLE_DatasetCSW *> DatasetCSW;
-    std::vector<XMLE_AuthorityURL *> AuthorityURL;
-    std::vector<XMLE_Identifier *> Identifier;
-    ~XMLE_Inspire() {
-      XMLE_DELOBJ(ViewServiceCSW);
-      XMLE_DELOBJ(DatasetCSW);
-      XMLE_DELOBJ(AuthorityURL);
-      XMLE_DELOBJ(Identifier);
-    }
+    std::vector<XMLE_ViewServiceCSW> ViewServiceCSW;
+    std::vector<XMLE_DatasetCSW> DatasetCSW;
+    std::vector<XMLE_AuthorityURL> AuthorityURL;
+    std::vector<XMLE_Identifier> Identifier;
 
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("ViewServiceCSW" == elName) {
-        XMLE_ADDOBJ(ViewServiceCSW);
+        return addXmlObj(ViewServiceCSW);
       } else if ("DatasetCSW" == elName) {
-        XMLE_ADDOBJ(DatasetCSW);
+        return addXmlObj(DatasetCSW);
       } else if ("AuthorityURL" == elName) {
-        XMLE_ADDOBJ(AuthorityURL);
+        return addXmlObj(AuthorityURL);
       } else if ("Identifier" == elName) {
-        XMLE_ADDOBJ(Identifier);
+        return addXmlObj(Identifier);
       }
       return nullptr;
     }
   };
 
   struct XMLE_WMS : CXMLObjectInterface {
-    std::vector<XMLE_Title *> Title;
-    std::vector<XMLE_Abstract *> Abstract;
-    std::vector<XMLE_RootLayer *> RootLayer;
-    std::vector<XMLE_TitleFont *> TitleFont;
-    std::vector<XMLE_ContourFont *> ContourFont;
-    std::vector<XMLE_LegendFont *> LegendFont;
-    std::vector<XMLE_SubTitleFont *> SubTitleFont;
-    std::vector<XMLE_DimensionFont *> DimensionFont;
-    std::vector<XMLE_GridFont *> GridFont;
-    std::vector<XMLE_WMSFormat *> WMSFormat;
-    std::vector<XMLE_WMSExceptions *> WMSExceptions;
-    std::vector<XMLE_Inspire *> Inspire;
+    std::vector<XMLE_Title> Title;
+    std::vector<XMLE_Abstract> Abstract;
+    std::vector<XMLE_RootLayer> RootLayer;
+    std::vector<XMLE_TitleFont> TitleFont;
+    std::vector<XMLE_ContourFont> ContourFont;
+    std::vector<XMLE_LegendFont> LegendFont;
+    std::vector<XMLE_SubTitleFont> SubTitleFont;
+    std::vector<XMLE_DimensionFont> DimensionFont;
+    std::vector<XMLE_GridFont> GridFont;
+    std::vector<XMLE_WMSFormat> WMSFormat;
+    std::vector<XMLE_WMSExceptions> WMSExceptions;
+    std::vector<XMLE_Inspire> Inspire;
 
-    ~XMLE_WMS() {
-      XMLE_DELOBJ(Title);
-      XMLE_DELOBJ(Abstract);
-      XMLE_DELOBJ(RootLayer);
-      XMLE_DELOBJ(TitleFont);
-      XMLE_DELOBJ(ContourFont);
-      XMLE_DELOBJ(LegendFont);
-      XMLE_DELOBJ(SubTitleFont);
-      XMLE_DELOBJ(DimensionFont);
-      XMLE_DELOBJ(GridFont);
-      XMLE_DELOBJ(WMSFormat);
-      XMLE_DELOBJ(WMSExceptions);
-
-      XMLE_DELOBJ(Inspire);
-    }
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Title" == elName) {
-        XMLE_SETOBJ(Title);
+        return setXmlObj(Title);
       } else if ("GridFont" == elName) {
-        XMLE_SETOBJ(GridFont);
+        return setXmlObj(GridFont);
       } else if ("Abstract" == elName) {
-        XMLE_SETOBJ(Abstract);
+        return setXmlObj(Abstract);
       } else if ("RootLayer" == elName) {
-        XMLE_SETOBJ(RootLayer);
+        return setXmlObj(RootLayer);
       } else if ("WMSFormat" == elName) {
-        XMLE_ADDOBJ(WMSFormat);
+        return addXmlObj(WMSFormat);
       } else if ("WMSExceptions" == elName) {
-        XMLE_ADDOBJ(WMSExceptions);
+        return addXmlObj(WMSExceptions);
       } else if ("TitleFont" == elName) {
-        XMLE_ADDOBJ(TitleFont);
+        return addXmlObj(TitleFont);
       } else if ("ContourFont" == elName) {
-        XMLE_ADDOBJ(ContourFont);
+        return addXmlObj(ContourFont);
       } else if ("LegendFont" == elName) {
-        XMLE_SETOBJ(LegendFont);
+        return setXmlObj(LegendFont);
       } else if ("SubTitleFont" == elName) {
-        XMLE_ADDOBJ(SubTitleFont);
+        return addXmlObj(SubTitleFont);
       } else if ("DimensionFont" == elName) {
-        XMLE_ADDOBJ(DimensionFont);
+        return addXmlObj(DimensionFont);
       } else if ("Inspire" == elName) {
-        XMLE_ADDOBJ(Inspire);
+        return addXmlObj(Inspire);
       }
       return nullptr;
     }
@@ -1579,25 +1519,19 @@ struct CServerConfig : CXMLObjectInterface {
   };
 
   struct XMLE_WCS : CXMLObjectInterface {
-    std::vector<XMLE_Name *> Name;
-    std::vector<XMLE_Title *> Title;
-    std::vector<XMLE_Abstract *> Abstract;
-    std::vector<XMLE_WCSFormat *> WCSFormat;
-    ~XMLE_WCS() {
-      XMLE_DELOBJ(Name);
-      XMLE_DELOBJ(Title);
-      XMLE_DELOBJ(Abstract);
-      XMLE_DELOBJ(WCSFormat);
-    }
+    std::vector<XMLE_Name> Name;
+    std::vector<XMLE_Title> Title;
+    std::vector<XMLE_Abstract> Abstract;
+    std::vector<XMLE_WCSFormat> WCSFormat;
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Name" == elName) {
-        XMLE_ADDOBJ(Name);
+        return addXmlObj(Name);
       } else if ("Title" == elName) {
-        XMLE_ADDOBJ(Title);
+        return addXmlObj(Title);
       } else if ("Abstract" == elName) {
-        XMLE_ADDOBJ(Abstract);
+        return addXmlObj(Abstract);
       } else if ("WCSFormat" == elName) {
-        XMLE_ADDOBJ(WCSFormat);
+        return addXmlObj(WCSFormat);
       }
       return nullptr;
     }
@@ -1713,155 +1647,117 @@ struct CServerConfig : CXMLObjectInterface {
       std::string enable_edr = "";
     } attr;
 
-    std::vector<XMLE_Name *> Name;
-    std::vector<XMLE_Group *> Group;
-    std::vector<XMLE_Title *> Title;
-    std::vector<XMLE_Abstract *> Abstract;
+    std::vector<XMLE_Name> Name;
+    std::vector<XMLE_Group> Group;
+    std::vector<XMLE_Title> Title;
+    std::vector<XMLE_Abstract> Abstract;
 
-    std::vector<XMLE_DataBaseTable *> DataBaseTable;
-    std::vector<XMLE_Variable *> Variable;
-    std::vector<XMLE_FilePath *> FilePath;
-    std::vector<XMLE_TileSettings *> TileSettings;
-    std::vector<XMLE_DataReader *> DataReader;
-    std::vector<XMLE_Dimension *> Dimension;
-    std::vector<XMLE_Legend *> Legend;
-    std::vector<XMLE_Scale *> Scale;
-    std::vector<XMLE_Offset *> Offset;
-    std::vector<XMLE_Min *> Min;
-    std::vector<XMLE_Max *> Max;
-    std::vector<XMLE_Log *> Log;
-    std::vector<XMLE_ShadeInterval *> ShadeInterval;
-    std::vector<XMLE_ContourLine *> ContourLine;
-    std::vector<XMLE_ContourIntervalL *> ContourIntervalL;
-    std::vector<XMLE_ContourIntervalH *> ContourIntervalH;
-    std::vector<XMLE_SmoothingFilter *> SmoothingFilter;
-    std::vector<XMLE_ValueRange *> ValueRange;
-    std::vector<XMLE_ImageText *> ImageText;
-    std::vector<XMLE_LatLonBox *> LatLonBox;
-    std::vector<XMLE_Projection *> Projection;
-    std::vector<XMLE_Styles *> Styles;
-    std::vector<XMLE_RenderMethod *> RenderMethod;
-    std::vector<XMLE_MetadataURL *> MetadataURL;
-    std::vector<XMLE_Cache *> Cache;
-    std::vector<XMLE_WMSLayer *> WMSLayer;
-    std::vector<XMLE_DataPostProc *> DataPostProc;
-    std::vector<XMLE_Position *> Position;
-    std::vector<XMLE_WMSFormat *> WMSFormat;
-    std::vector<XMLE_Grid *> Grid;
-    std::vector<XMLE_AdditionalLayer *> AdditionalLayer;
-    std::vector<XMLE_FeatureInterval *> FeatureInterval;
+    std::vector<XMLE_DataBaseTable> DataBaseTable;
+    std::vector<XMLE_Variable> Variable;
+    std::vector<XMLE_FilePath> FilePath;
+    std::vector<XMLE_TileSettings> TileSettings;
+    std::vector<XMLE_DataReader> DataReader;
+    std::vector<XMLE_Dimension> Dimension;
+    std::vector<XMLE_Legend> Legend;
+    std::vector<XMLE_Scale> Scale;
+    std::vector<XMLE_Offset> Offset;
+    std::vector<XMLE_Min> Min;
+    std::vector<XMLE_Max> Max;
+    std::vector<XMLE_Log> Log;
+    std::vector<XMLE_ShadeInterval> ShadeInterval;
+    std::vector<XMLE_ContourLine> ContourLine;
+    std::vector<XMLE_ContourIntervalL> ContourIntervalL;
+    std::vector<XMLE_ContourIntervalH> ContourIntervalH;
+    std::vector<XMLE_SmoothingFilter> SmoothingFilter;
+    std::vector<XMLE_ValueRange> ValueRange;
+    std::vector<XMLE_ImageText> ImageText;
+    std::vector<XMLE_LatLonBox> LatLonBox;
+    std::vector<XMLE_Projection> Projection;
+    std::vector<XMLE_Styles> Styles;
+    std::vector<XMLE_RenderMethod> RenderMethod;
+    std::vector<XMLE_MetadataURL> MetadataURL;
+    std::vector<XMLE_Cache> Cache;
+    std::vector<XMLE_WMSLayer> WMSLayer;
+    std::vector<XMLE_DataPostProc> DataPostProc;
+    std::vector<XMLE_Position> Position;
+    std::vector<XMLE_WMSFormat> WMSFormat;
+    std::vector<XMLE_Grid> Grid;
+    std::vector<XMLE_AdditionalLayer> AdditionalLayer;
+    std::vector<XMLE_FeatureInterval> FeatureInterval;
 
-    ~XMLE_Layer() {
-      XMLE_DELOBJ(Name);
-      XMLE_DELOBJ(Group);
-      XMLE_DELOBJ(Title);
-      XMLE_DELOBJ(Abstract);
-      XMLE_DELOBJ(DataBaseTable);
-      XMLE_DELOBJ(Variable);
-      XMLE_DELOBJ(FilePath);
-      XMLE_DELOBJ(TileSettings)
-      XMLE_DELOBJ(DataReader);
-      XMLE_DELOBJ(Dimension);
-      XMLE_DELOBJ(Legend);
-      XMLE_DELOBJ(Scale);
-      XMLE_DELOBJ(Offset);
-      XMLE_DELOBJ(Min);
-      XMLE_DELOBJ(Max);
-      XMLE_DELOBJ(Log);
-      XMLE_DELOBJ(ShadeInterval);
-      XMLE_DELOBJ(ContourLine);
-      XMLE_DELOBJ(ContourIntervalL);
-      XMLE_DELOBJ(ContourIntervalH);
-      XMLE_DELOBJ(SmoothingFilter);
-      XMLE_DELOBJ(ValueRange);
-      XMLE_DELOBJ(ImageText);
-      XMLE_DELOBJ(LatLonBox);
-      XMLE_DELOBJ(Projection);
-      XMLE_DELOBJ(Styles);
-      XMLE_DELOBJ(RenderMethod);
-      XMLE_DELOBJ(MetadataURL);
-      XMLE_DELOBJ(Cache);
-      XMLE_DELOBJ(WMSLayer);
-      XMLE_DELOBJ(DataPostProc);
-      XMLE_DELOBJ(Position);
-      XMLE_DELOBJ(WMSFormat);
-      XMLE_DELOBJ(Grid);
-      XMLE_DELOBJ(AdditionalLayer);
-      XMLE_DELOBJ(FeatureInterval);
-    }
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Name" == elName) {
-        XMLE_ADDOBJ(Name);
+        return addXmlObj(Name);
       } else if ("Group" == elName) {
-        XMLE_ADDOBJ(Group);
+        return addXmlObj(Group);
       } else if ("Title" == elName) {
-        XMLE_ADDOBJ(Title);
+        return addXmlObj(Title);
       } else if ("Abstract" == elName) {
-        XMLE_ADDOBJ(Abstract);
+        return addXmlObj(Abstract);
       } else if ("DataBaseTable" == elName) {
-        XMLE_ADDOBJ(DataBaseTable);
+        return addXmlObj(DataBaseTable);
       } else if ("Variable" == elName) {
-        XMLE_ADDOBJ(Variable);
+        return addXmlObj(Variable);
       } else if ("FilePath" == elName) {
-        XMLE_ADDOBJ(FilePath);
+        return addXmlObj(FilePath);
       } else if ("TileSettings" == elName) {
-        XMLE_ADDOBJ(TileSettings);
+        return addXmlObj(TileSettings);
       } else if ("DataReader" == elName) {
-        XMLE_ADDOBJ(DataReader);
+        return addXmlObj(DataReader);
       } else if ("Dimension" == elName) {
-        XMLE_ADDOBJ(Dimension);
+        return addXmlObj(Dimension);
       } else if ("Legend" == elName) {
-        XMLE_ADDOBJ(Legend);
+        return addXmlObj(Legend);
       } else if ("Scale" == elName) {
-        XMLE_ADDOBJ(Scale);
+        return addXmlObj(Scale);
       } else if ("Offset" == elName) {
-        XMLE_ADDOBJ(Offset);
+        return addXmlObj(Offset);
       } else if ("Min" == elName) {
-        XMLE_ADDOBJ(Min);
+        return addXmlObj(Min);
       } else if ("Max" == elName) {
-        XMLE_ADDOBJ(Max);
+        return addXmlObj(Max);
       } else if ("Log" == elName) {
-        XMLE_ADDOBJ(Log);
+        return addXmlObj(Log);
       } else if ("ShadeInterval" == elName) {
-        XMLE_ADDOBJ(ShadeInterval);
+        return addXmlObj(ShadeInterval);
       } else if ("ContourLine" == elName) {
-        XMLE_ADDOBJ(ContourLine);
+        return addXmlObj(ContourLine);
       } else if ("ContourIntervalL" == elName) {
-        XMLE_ADDOBJ(ContourIntervalL);
+        return addXmlObj(ContourIntervalL);
       } else if ("ContourIntervalH" == elName) {
-        XMLE_ADDOBJ(ContourIntervalH);
+        return addXmlObj(ContourIntervalH);
       } else if ("ValueRange" == elName) {
-        XMLE_ADDOBJ(ValueRange);
+        return addXmlObj(ValueRange);
       } else if ("ImageText" == elName) {
-        XMLE_ADDOBJ(ImageText);
+        return addXmlObj(ImageText);
       } else if ("LatLonBox" == elName) {
-        XMLE_ADDOBJ(LatLonBox);
+        return addXmlObj(LatLonBox);
       } else if ("Projection" == elName) {
-        XMLE_ADDOBJ(Projection);
+        return addXmlObj(Projection);
       } else if ("Styles" == elName) {
-        XMLE_ADDOBJ(Styles);
+        return addXmlObj(Styles);
       } else if ("RenderMethod" == elName) {
-        XMLE_ADDOBJ(RenderMethod);
+        return addXmlObj(RenderMethod);
       } else if ("MetadataURL" == elName) {
-        XMLE_ADDOBJ(MetadataURL);
+        return addXmlObj(MetadataURL);
       } else if ("Cache" == elName) {
-        XMLE_ADDOBJ(Cache);
+        return addXmlObj(Cache);
       } else if ("WMSLayer" == elName) {
-        XMLE_ADDOBJ(WMSLayer);
+        return addXmlObj(WMSLayer);
       } else if ("DataPostProc" == elName) {
-        XMLE_ADDOBJ(DataPostProc);
+        return addXmlObj(DataPostProc);
       } else if ("SmoothingFilter" == elName) {
-        XMLE_ADDOBJ(SmoothingFilter);
+        return addXmlObj(SmoothingFilter);
       } else if ("Position" == elName) {
-        XMLE_ADDOBJ(Position);
+        return addXmlObj(Position);
       } else if ("WMSFormat" == elName) {
-        XMLE_ADDOBJ(WMSFormat);
+        return addXmlObj(WMSFormat);
       } else if ("Grid" == elName) {
-        XMLE_ADDOBJ(Grid);
+        return addXmlObj(Grid);
       } else if ("AdditionalLayer" == elName) {
-        XMLE_ADDOBJ(AdditionalLayer);
+        return addXmlObj(AdditionalLayer);
       } else if ("FeatureInterval" == elName) {
-        XMLE_ADDOBJ(FeatureInterval);
+        return addXmlObj(FeatureInterval);
       }
       return nullptr;
     }
@@ -1881,97 +1777,74 @@ struct CServerConfig : CXMLObjectInterface {
   };
 
   struct XMLE_Configuration : CXMLObjectInterface {
-    std::vector<XMLE_Legend *> Legend;
-    std::vector<XMLE_WMS *> WMS;
-    std::vector<XMLE_WCS *> WCS;
-    std::vector<XMLE_OpenDAP *> OpenDAP;
-    std::vector<XMLE_Path *> Path;
-    std::vector<XMLE_TempDir *> TempDir;
-    std::vector<XMLE_OnlineResource *> OnlineResource;
-    std::vector<XMLE_DataBase *> DataBase;
-    std::vector<XMLE_Projection *> Projection;
-    std::vector<XMLE_Layer *> Layer;
-    std::vector<XMLE_Style *> Style;
-    std::vector<XMLE_AutoResource *> AutoResource;
-    std::vector<XMLE_Dataset *> Dataset;
-    std::vector<XMLE_Include *> Include;
-    std::vector<XMLE_Logging *> Logging;
-    std::vector<XMLE_Symbol *> Symbol;
-    std::vector<XMLE_Settings *> Settings;
-    std::vector<XMLE_Environment *> Environment;
-
-    ~XMLE_Configuration() {
-      XMLE_DELOBJ(Legend);
-      XMLE_DELOBJ(WMS);
-      XMLE_DELOBJ(WCS);
-      XMLE_DELOBJ(OpenDAP);
-      XMLE_DELOBJ(Path);
-      XMLE_DELOBJ(TempDir);
-      XMLE_DELOBJ(OnlineResource);
-      XMLE_DELOBJ(DataBase);
-      XMLE_DELOBJ(Projection);
-      XMLE_DELOBJ(Layer);
-      XMLE_DELOBJ(Style);
-      XMLE_DELOBJ(AutoResource);
-      XMLE_DELOBJ(Dataset);
-      XMLE_DELOBJ(Include);
-      XMLE_DELOBJ(Logging);
-      XMLE_DELOBJ(Symbol);
-      XMLE_DELOBJ(Settings);
-      XMLE_DELOBJ(Environment);
-    }
+    std::vector<XMLE_Legend> Legend;
+    std::vector<XMLE_WMS> WMS;
+    std::vector<XMLE_WCS> WCS;
+    std::vector<XMLE_OpenDAP> OpenDAP;
+    std::vector<XMLE_Path> Path;
+    std::vector<XMLE_TempDir> TempDir;
+    std::vector<XMLE_OnlineResource> OnlineResource;
+    std::vector<XMLE_DataBase> DataBase;
+    std::vector<XMLE_Projection> Projection;
+    std::vector<XMLE_Layer> Layer;
+    std::vector<XMLE_Style> Style;
+    std::vector<XMLE_AutoResource> AutoResource;
+    std::vector<XMLE_Dataset> Dataset;
+    std::vector<XMLE_Include> Include;
+    std::vector<XMLE_Logging> Logging;
+    std::vector<XMLE_Symbol> Symbol;
+    std::vector<XMLE_Settings> Settings;
+    std::vector<XMLE_Environment> Environment;
 
     CXMLObjectInterface *addElement(const std::string &elName) {
       if ("Legend" == elName) {
-        XMLE_ADDOBJ(Legend);
+        return addXmlObj(Legend);
       } else if ("WMS" == elName) {
-        XMLE_SETOBJ(WMS);
+        return setXmlObj(WMS);
       } else if ("WCS" == elName) {
-        XMLE_SETOBJ(WCS);
+        return setXmlObj(WCS);
       } else if ("Path" == elName) {
-        XMLE_ADDOBJ(Path);
+        return addXmlObj(Path);
       } else if ("OpenDAP" == elName) {
-        XMLE_ADDOBJ(OpenDAP);
+        return addXmlObj(OpenDAP);
       } else if ("TempDir" == elName) {
-        XMLE_ADDOBJ(TempDir);
+        return addXmlObj(TempDir);
       } else if ("OnlineResource" == elName) {
-        XMLE_ADDOBJ(OnlineResource);
+        return addXmlObj(OnlineResource);
       } else if ("DataBase" == elName) {
-        XMLE_ADDOBJ(DataBase);
+        return addXmlObj(DataBase);
       } else if ("Projection" == elName) {
-        XMLE_ADDOBJ(Projection);
+        return addXmlObj(Projection);
       } else if ("Layer" == elName) {
-        XMLE_ADDOBJ(Layer);
+        return addXmlObj(Layer);
       } else if ("Style" == elName) {
-        XMLE_ADDOBJ(Style);
+        return addXmlObj(Style);
       } else if ("AutoResource" == elName) {
-        XMLE_ADDOBJ(AutoResource);
+        return addXmlObj(AutoResource);
       } else if ("Dataset" == elName) {
-        XMLE_ADDOBJ(Dataset);
+        return addXmlObj(Dataset);
       } else if ("Include" == elName) {
-        XMLE_ADDOBJ(Include);
+        return addXmlObj(Include);
       } else if ("Logging" == elName) {
-        XMLE_ADDOBJ(Logging);
+        return addXmlObj(Logging);
       } else if ("Symbol" == elName) {
-        XMLE_ADDOBJ(Symbol);
+        return addXmlObj(Symbol);
       } else if ("Settings" == elName) {
-        XMLE_ADDOBJ(Settings);
+        return addXmlObj(Settings);
       } else if ("Environment" == elName) {
-        XMLE_ADDOBJ(Environment);
+        return addXmlObj(Environment);
       }
       return nullptr;
     }
   };
 
-  std::vector<XMLE_Configuration *> Configuration;
+  std::vector<XMLE_Configuration> Configuration;
 
   CXMLObjectInterface *addElement(const std::string &elName) {
     if ("Configuration" == elName) {
-      XMLE_SETOBJ(Configuration);
+      return setXmlObj(Configuration);
     }
     return nullptr;
   }
-
-  ~CServerConfig() { XMLE_DELOBJ(Configuration); }
 };
 #endif

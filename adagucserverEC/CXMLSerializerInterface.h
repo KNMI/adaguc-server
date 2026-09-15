@@ -34,27 +34,23 @@
 
 extern int numXMLAttributesNotRecognized;
 
-#define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \
-  {                                                                                                                                                                                                    \
-    variableName.push_back(new XMLE_##variableName());                                                                                                                                                 \
-    return variableName.back();                                                                                                                                                                        \
-  }
+/**
+ * Appends a newly constructed element to an XML object vector and returns it.
+ */
+template <typename T> T *addXmlObj(std::vector<T> &elements) {
+  elements.emplace_back();
+  return &elements.back();
+}
 
-#define XMLE_SETOBJ(variableName)                                                                                                                                                                      \
-  {                                                                                                                                                                                                    \
-    if (variableName.size() == 0) {                                                                                                                                                                    \
-      variableName.push_back(new XMLE_##variableName());                                                                                                                                               \
-      return variableName.back();                                                                                                                                                                      \
-    } else {                                                                                                                                                                                           \
-      return variableName.back();                                                                                                                                                                      \
-    }                                                                                                                                                                                                  \
+/**
+ * Returns the (single) element in an XML object vector, constructing it first if not yet present.
+ */
+template <typename T> T *setXmlObj(std::vector<T> &elements) {
+  if (elements.empty()) {
+    elements.emplace_back();
   }
-
-#define XMLE_DELOBJ(variableName)                                                                                                                                                                      \
-  {{for (size_t j = 0; j < variableName.size(); j++){delete variableName[j];                                                                                                                           \
-  }                                                                                                                                                                                                    \
-  }                                                                                                                                                                                                    \
-  }
+  return &elements.back();
+}
 
 struct attribute {
   std::string name;
