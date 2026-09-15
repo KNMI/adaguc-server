@@ -67,29 +67,29 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
 
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->DataReader.size() > 0) {
-      if (dataSource->cfgLayer->DataReader[0]->elementValue == ("HDF5")) {
+      if (dataSource->cfgLayer->DataReader[0].elementValue == ("HDF5")) {
         if (CDFOBJECTSTORE_DEBUG) {
           CDBDebug("Creating HDF5 reader");
         }
         cdfReader = new CDFHDF5Reader();
         CDFHDF5Reader *hdf5Reader = (CDFHDF5Reader *)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
-        if (!dataSource->cfgLayer->DataReader[0]->attr.useendtime.empty()) {
-          if (CT::equalsIgnoreCase(dataSource->cfgLayer->DataReader[0]->attr.useendtime, "true")) {
+        if (!dataSource->cfgLayer->DataReader[0].attr.useendtime.empty()) {
+          if (CT::equalsIgnoreCase(dataSource->cfgLayer->DataReader[0].attr.useendtime, "true")) {
             hdf5Reader->enableKNMIHDF5UseEndTime();
           }
         }
-      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("GEOJSON")) {
+      } else if (dataSource->cfgLayer->DataReader[0].elementValue == ("GEOJSON")) {
         if (CDFOBJECTSTORE_DEBUG) {
           CDBDebug("Creating GEOJSON reader");
         }
         cdfReader = new CDFGeoJSONReader();
-      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("PNG")) {
+      } else if (dataSource->cfgLayer->DataReader[0].elementValue == ("PNG")) {
         if (CDFOBJECTSTORE_DEBUG) {
           CDBDebug("Creating PNG reader");
         }
         cdfReader = new CDFPNGReader();
-      } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("CSV")) {
+      } else if (dataSource->cfgLayer->DataReader[0].elementValue == ("CSV")) {
         if (CDFOBJECTSTORE_DEBUG) {
           CDBDebug("Creating CSV reader");
         }
@@ -243,7 +243,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   if (cdfReader == NULL) {
     if (dataSource != NULL) {
-      CDBError("Unable to get a reader for source %s", dataSource->cfgLayer->Name[0]->elementValue.c_str());
+      CDBError("Unable to get a reader for source %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
     }
     delete cdfObject;
     throw(1);
@@ -265,7 +265,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     if (dataSource->cfgLayer) {
       // Apply NCML file to the datamodel */
       if (dataSource->cfgLayer->FilePath.size() == 1) {
-        std::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
+        std::string ncmlFileName = dataSource->cfgLayer->FilePath[0].attr.ncml;
         if (!ncmlFileName.empty()) {
           CDBDebug("NCML: Applying NCML file %s", ncmlFileName.c_str());
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
@@ -273,20 +273,20 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       }
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
-        for (auto *cfgVar: dataSource->cfgLayer->Variable) {
+        for (auto &cfgVar: dataSource->cfgLayer->Variable) {
           if (CDFOBJECTSTORE_DEBUG) {
-            CDBDebug("Checking variable %s", cfgVar->elementValue.c_str());
+            CDBDebug("Checking variable %s", cfgVar.elementValue.c_str());
           }
           // Rename variable, if requested
-          if (!cfgVar->attr.orgname.empty()) {
-            CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
+          if (!cfgVar.attr.orgname.empty()) {
+            CDF::Variable *var = cdfObject->getVar(cfgVar.attr.orgname);
             if (var == nullptr) {
-              CDBError("Variable specified with orgname named [%s] not found in file", cfgVar->attr.orgname.c_str());
+              CDBError("Variable specified with orgname named [%s] not found in file", cfgVar.attr.orgname.c_str());
               delete cdfObject;
               delete cdfReader;
               return nullptr;
             }
-            var->name = (cfgVar->elementValue);
+            var->name = (cfgVar.elementValue);
             // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
             uniqueIDForFile = uniqueIDForFile + "_" + CT::randomString(10).c_str();
           }

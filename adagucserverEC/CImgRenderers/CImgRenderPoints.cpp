@@ -79,10 +79,10 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, const Ve
 ThinningInfo getThinningInfo(CStyleConfiguration *styleConfiguration) {
   ThinningInfo info;
   if (styleConfiguration != nullptr) {
-    for (auto thinning: styleConfiguration->thinningList) {
-      if (!thinning->attr.radius.empty()) {
+    for (const auto &thinning: styleConfiguration->thinningList) {
+      if (!thinning.attr.radius.empty()) {
         info.doThinning = true;
-        info.thinningRadius = atoi(thinning->attr.radius.c_str());
+        info.thinningRadius = atoi(thinning.attr.radius.c_str());
       }
     }
   }
@@ -159,8 +159,8 @@ void renderVectorPoints(const std::vector<size_t> &thinnedPointIndexList, CImage
 
   // Make a list of vector style objects based on the configuration.
   std::vector<VectorStyle> vectorStyles;
-  for (auto cfgVectorStyle: styleConfiguration->vectorIntervals) {
-    vectorStyles.push_back(getVectorStyle(cfgVectorStyle, dataSource->srvParams->cfg));
+  for (auto &cfgVectorStyle: styleConfiguration->vectorIntervals) {
+    vectorStyles.push_back(getVectorStyle(&cfgVectorStyle, dataSource->srvParams->cfg));
   }
 
   for (auto pointIndex: thinnedPointIndexList) {
@@ -210,8 +210,8 @@ SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
    *
    */
   for (size_t j = 0; j < cfg->Symbol.size(); j++) {
-    auto symbolName = cfg->Symbol[j]->attr.name;
-    std::string coordinates = cfg->Symbol[j]->attr.coordinates;
+    auto symbolName = cfg->Symbol[j].attr.name;
+    std::string coordinates = cfg->Symbol[j].attr.coordinates;
     // Make a single list of numbers
     coordinates = CT::replace(coordinates, "[", "");
     coordinates = CT::replace(coordinates, "]", "");
@@ -514,9 +514,9 @@ std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *style
   std::unordered_set<std::string> usePoints;
 
   if (styleConfiguration->filterPointList.size() == 0) return usePoints;
-  for (auto filterPoint: styleConfiguration->filterPointList) {
-    if (!filterPoint->attr.use.empty()) {
-      for (const auto &token: CT::split(filterPoint->attr.use, ",")) {
+  for (const auto &filterPoint: styleConfiguration->filterPointList) {
+    if (!filterPoint.attr.use.empty()) {
+      for (const auto &token: CT::split(filterPoint.attr.use, ",")) {
         usePoints.insert(token);
       }
     }
@@ -569,11 +569,11 @@ void renderSingleSymbols(const std::vector<size_t> &thinnedPointIndexList, CData
       int x = pointValue->x;
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
 
-      for (auto symbolInterval: styleConfiguration->symbolIntervals) {
-        if (!shouldDrawSymbol(symbolInterval, value)) continue;
+      for (auto &symbolInterval: styleConfiguration->symbolIntervals) {
+        if (!shouldDrawSymbol(&symbolInterval, value)) continue;
 
-        std::string symbolFile = symbolInterval->attr.file;
-        drawSymbolForPoint(drawImage, symbolCache, symbolFile, symbolInterval, x, y);
+        std::string symbolFile = symbolInterval.attr.file;
+        drawSymbolForPoint(drawImage, symbolCache, symbolFile, &symbolInterval, x, y);
 
         if (pointStyle.plotStationId && pointValue->paramList.size() > 0) {
           const std::string &stationid = pointValue->paramList[0].value;
@@ -644,8 +644,8 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   std::unordered_set<std::string> usePoints = shouldUseFilterPoints(styleConfiguration);
   ThinningInfo thinningInfo = getThinningInfo(styleConfiguration);
 
-  for (auto pointConfig: styleConfiguration->pointIntervals) {
-    PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
+  for (auto &pointConfig: styleConfiguration->pointIntervals) {
+    PointStyle pointStyle = getPointStyle(&pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
     if (dataSource->debug) {
       CDBDebug("Point plotting %lu elements %lu", thinnedPointIndexList.size(), usePoints.size());

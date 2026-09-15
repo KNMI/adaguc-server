@@ -81,20 +81,20 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name) {
   // First check wether dims are configured in the DataBase
   for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
     if (COPENDAPHANDLER_DEBUG) {
-      CDBDebug("getDimSize Checking : %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+      CDBDebug("getDimSize Checking : %s", dataSource->cfgLayer->Dimension[d].attr.name.c_str());
     }
-    if (dataSource->cfgLayer->Dimension[d]->attr.name == name) {
+    if (dataSource->cfgLayer->Dimension[d].attr.name == name) {
       if (COPENDAPHANDLER_DEBUG) {
-        CDBDebug("getDimSize found : %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+        CDBDebug("getDimSize found : %s", dataSource->cfgLayer->Dimension[d].attr.name.c_str());
       }
       std::string tableName;
-      std::string dim = dataSource->cfgLayer->Dimension[d]->attr.name;
+      std::string dim = dataSource->cfgLayer->Dimension[d].attr.name;
 
       try {
         tableName = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                        ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, dim.c_str(), dataSource);
+                        ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, dim.c_str(), dataSource);
       } catch (int e) {
-        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
+        CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter.c_str(), dim.c_str());
         return -1;
       }
       if (COPENDAPHANDLER_DEBUG) {
@@ -449,8 +449,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
   }
   CDBDebug("OpenDAP Received [%s] [%s]", path, query.c_str());
   std::string defaultPath = "opendap";
-  if (srvParam->cfg->OpenDAP[0]->attr.path.empty() == false) {
-    defaultPath = srvParam->cfg->OpenDAP[0]->attr.path;
+  if (srvParam->cfg->OpenDAP[0].attr.path.empty() == false) {
+    defaultPath = srvParam->cfg->OpenDAP[0].attr.path;
   }
 
   std::string dapName = path + defaultPath.length() + 1;
@@ -543,9 +543,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     // Check if DATASET is enabled
     if (hasFoundDataSetOrAutoResource == false) {
       for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
-        if (srvParam->cfg->Dataset[j]->attr.enabled == "true" && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
+        if (srvParam->cfg->Dataset[j].attr.enabled == "true" && srvParam->cfg->Dataset[j].attr.location.empty() == false) {
           srvParam->datasetLocation = dataURL;
-          CDBDebug("Checking %s", srvParam->cfg->Dataset[j]->attr.location.c_str());
+          CDBDebug("Checking %s", srvParam->cfg->Dataset[j].attr.location.c_str());
           int status = CAutoResource::configureDataset(srvParam, true);
           if (status == 0) {
             CDBDebug("Found dataset %s", srvParam->datasetLocation.c_str());
@@ -589,8 +589,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
   bool foundLayer = false;
 
   for (size_t layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
-    if (srvParam->cfg->Layer[layerNo]->attr.type == "database") {
-      std::string intLayerName = makeUniqueLayerName(srvParam->cfg->Layer[layerNo]);
+    if (srvParam->cfg->Layer[layerNo].attr.type == "database") {
+      std::string intLayerName = makeUniqueLayerName(&srvParam->cfg->Layer[layerNo]);
 
       if (layerName.length() == 0) {
         layerName = intLayerName;
@@ -598,7 +598,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       CT::replaceSelf(intLayerName, "/", "_");
 
       if (intLayerName == layerName) {
-        if (dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[layerNo], 0) != 0) {
+        if (dataSource->setCFGLayer(srvParam, &srvParam->cfg->Layer[layerNo], 0) != 0) {
           CDBError("Error setCFGLayer");
           delete dataSource;
           return 1;
@@ -633,7 +633,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
     std::vector<std::string> fileList;
     try {
-      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter, NULL);
     } catch (int linenr) {
       CDBError("Could not find any filename");
       delete dataSource;
@@ -654,7 +654,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
   if (COPENDAPHANDLER_DEBUG) {
     CDBDebug("This layer has %zu dims.", dataSource->cfgLayer->Dimension.size());
     for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
-      CDBDebug("%s %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str(), dataSource->cfgLayer->Dimension[d]->elementValue.c_str());
+      CDBDebug("%s %s", dataSource->cfgLayer->Dimension[d].attr.name.c_str(), dataSource->cfgLayer->Dimension[d].elementValue.c_str());
     }
   }
 
@@ -668,8 +668,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
       // Check for the configured dimensions or scalar variables
       // 1 )Is this a scalar?
-      CDF::Variable *dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name);
-      CDF::Dimension *dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name);
+      CDF::Variable *dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d].attr.name);
+      CDF::Dimension *dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d].attr.name);
 
       if (dimVar != NULL && dimDim == NULL) {
         // Check for scalar variable
@@ -690,12 +690,12 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     }
     for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
       COGCDims ogcDim;
-      ogcDim.name = dataSource->cfgLayer->Dimension[d]->attr.name;
+      ogcDim.name = dataSource->cfgLayer->Dimension[d].attr.name;
       ogcDim.value = ogcDim.name;
-      ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[d]->attr.name;
+      ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[d].attr.name;
       dataSource->requiredDims.push_back(ogcDim);
       if (COPENDAPHANDLER_DEBUG) {
-        CDBDebug("Push %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+        CDBDebug("Push %s", dataSource->cfgLayer->Dimension[d].attr.name.c_str());
       }
     }
 

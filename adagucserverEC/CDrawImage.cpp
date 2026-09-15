@@ -721,10 +721,10 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     float cx;
     float rc[4];
     for (size_t j = 0; j < legend->palette.size(); j++) {
-      CServerConfig::XMLE_palette *pbegin = legend->palette[j];
-      CServerConfig::XMLE_palette *pnext = legend->palette[j];
+      CServerConfig::XMLE_palette *pbegin = &legend->palette[j];
+      CServerConfig::XMLE_palette *pnext = &legend->palette[j];
       if (j < legend->palette.size() - 1) {
-        pnext = legend->palette[j + 1];
+        pnext = &legend->palette[j + 1];
       }
 
       if (pbegin->attr.index > 255) pbegin->attr.index = 255;
@@ -760,28 +760,28 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
 
     for (size_t j = 0; j < legend->palette.size(); j++) {
 
-      if (legend->palette[j]->attr.index != -1) {
+      if (legend->palette[j].attr.index != -1) {
 
-        int startIndex = legend->palette[j]->attr.index;
+        int startIndex = legend->palette[j].attr.index;
         int stopIndex = 240;
-        if (j < legend->palette.size() - 1) stopIndex = legend->palette[j + 1]->attr.index;
+        if (j < legend->palette.size() - 1) stopIndex = legend->palette[j + 1].attr.index;
 
         for (int i = startIndex; i < stopIndex; i++) {
           if (i >= 0 && i < 240) {
-            currentLegend->CDIred[i] = legend->palette[j]->attr.red;
-            currentLegend->CDIgreen[i] = legend->palette[j]->attr.green;
-            currentLegend->CDIblue[i] = legend->palette[j]->attr.blue;
-            currentLegend->CDIalpha[i] = legend->palette[j]->attr.alpha;
+            currentLegend->CDIred[i] = legend->palette[j].attr.red;
+            currentLegend->CDIgreen[i] = legend->palette[j].attr.green;
+            currentLegend->CDIblue[i] = legend->palette[j].attr.blue;
+            currentLegend->CDIalpha[i] = legend->palette[j].attr.alpha;
             if (currentLegend->CDIred[i] == 0) currentLegend->CDIred[i] = 1; // for transparency
           }
         }
       } else {
-        for (int i = legend->palette[j]->attr.min; i <= legend->palette[j]->attr.max; i++) {
+        for (int i = legend->palette[j].attr.min; i <= legend->palette[j].attr.max; i++) {
           if (i >= 0 && i < 240) {
-            currentLegend->CDIred[i] = legend->palette[j]->attr.red;
-            currentLegend->CDIgreen[i] = legend->palette[j]->attr.green;
-            currentLegend->CDIblue[i] = legend->palette[j]->attr.blue;
-            currentLegend->CDIalpha[i] = legend->palette[j]->attr.alpha;
+            currentLegend->CDIred[i] = legend->palette[j].attr.red;
+            currentLegend->CDIgreen[i] = legend->palette[j].attr.green;
+            currentLegend->CDIblue[i] = legend->palette[j].attr.blue;
+            currentLegend->CDIalpha[i] = legend->palette[j].attr.alpha;
             if (currentLegend->CDIred[i] == 0) currentLegend->CDIred[i] = 1; // for transparency
           }
         }

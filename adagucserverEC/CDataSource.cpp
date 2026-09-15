@@ -106,14 +106,14 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject newDataObject;
     newDataObject.dataObjectName = "";                                // Should not have a name yet!
-    newDataObject.variableName = cfgLayer->Variable[j]->elementValue; // Has a name, but no cdfVariable yet.
+    newDataObject.variableName = cfgLayer->Variable[j].elementValue; // Has a name, but no cdfVariable yet.
     this->dataObjects.push_back(newDataObject);
   }
 
   // Set the layername
   layerName = makeUniqueLayerName(cfgLayer);
 
-  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->elementValue.empty() ? cfgLayer->Title[0]->elementValue.c_str() : layerName.c_str();
+  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0].elementValue.empty() ? cfgLayer->Title[0].elementValue.c_str() : layerName.c_str();
 
   if (debugDataSource) {
     CDBDebug("LayerName=\"%s\"", layerName.c_str());
@@ -287,7 +287,7 @@ std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerCo
 
     for (size_t j = 0; j < this->cfgLayer->RenderMethod.size(); j++) {
       if (renderMethodList.length() > 0) renderMethodList += ",";
-      renderMethodList += this->cfgLayer->RenderMethod[j]->elementValue;
+      renderMethodList += this->cfgLayer->RenderMethod[j].elementValue;
     }
   }
 
@@ -295,7 +295,7 @@ std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerCo
     if (style->RenderMethod.size() > 0) {
       for (size_t j = 0; j < style->RenderMethod.size(); j++) {
         if (renderMethodList.length() > 0) renderMethodList += ",";
-        renderMethodList += style->RenderMethod[j]->elementValue;
+        renderMethodList += style->RenderMethod[j].elementValue;
       }
     } else {
       return {"generic"};
@@ -358,7 +358,7 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
       if (dStyleIndex != -1) {
 
         CServerConfig::XMLE_Style *style = NULL;
-        if (dStyleIndex != -1) style = serverCFG->Style[dStyleIndex];
+        if (dStyleIndex != -1) style = &serverCFG->Style[dStyleIndex];
 
         renderMethods = getRenderMethodListForDataSource(style);
         legendList = getLegendListForDataSource(style);
@@ -431,9 +431,9 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
                     configWarningNameMappingSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
-                    if (renderMethods[r] == style->NameMapping[j]->attr.name.c_str()) {
-                      styleConfig.styleTitle = style->NameMapping[j]->attr.title;
-                      styleConfig.styleAbstract = style->NameMapping[j]->attr.abstract;
+                    if (renderMethods[r] == style->NameMapping[j].attr.name.c_str()) {
+                      styleConfig.styleTitle = style->NameMapping[j].attr.title;
+                      styleConfig.styleAbstract = style->NameMapping[j].attr.abstract;
                       break;
                     }
                   }
@@ -472,11 +472,11 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
  * @param Style a pointer to XMLE_Style vector configured in a layer
  * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<std::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
+std::vector<std::string> CDataSource::getStyleNames(const std::vector<CServerConfig::XMLE_Styles> &Styles) {
   std::vector<std::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
-    if (Styles[j]->elementValue.empty()) continue;
-    std::vector<std::string> l1 = CT::split(Styles[j]->elementValue, ",");
+    if (Styles[j].elementValue.empty()) continue;
+    std::vector<std::string> l1 = CT::split(Styles[j].elementValue, ",");
     for (auto styleValue: l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
@@ -638,9 +638,9 @@ CDataSource *CDataSource::clone() {
 double CDataSource::getScaling() {
   auto styleConfiguration = this->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting: styleConfiguration->renderSettings) {
-      if (!renderSetting->attr.scalewidth.empty()) {
-        double scaleWidth = atof(renderSetting->attr.scalewidth.c_str());
+    for (const auto &renderSetting: styleConfiguration->renderSettings) {
+      if (!renderSetting.attr.scalewidth.empty()) {
+        double scaleWidth = atof(renderSetting.attr.scalewidth.c_str());
         double imageWidth = (double)this->srvParams->geoParams.width;
         return imageWidth / scaleWidth;
       }
@@ -652,9 +652,9 @@ double CDataSource::getScaling() {
 double CDataSource::getContourScaling() {
   auto styleConfiguration = this->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting: styleConfiguration->renderSettings) {
-      if (!renderSetting->attr.scalecontours.empty()) {
-        double scalecontours = atof(renderSetting->attr.scalecontours.c_str());
+    for (const auto &renderSetting: styleConfiguration->renderSettings) {
+      if (!renderSetting.attr.scalecontours.empty()) {
+        double scalecontours = atof(renderSetting.attr.scalecontours.c_str());
         return scalecontours;
       }
     }
@@ -709,11 +709,11 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
     return 1;
   }
   if (isConfigured == false) {
-    CDBError("Datasource %s is not configured", cfgLayer->Name[0]->elementValue.c_str());
+    CDBError("Datasource %s is not configured", cfgLayer->Name[0].elementValue.c_str());
     return 1;
   }
   if (getNumDataObjects() <= 0) {
-    CDBError("No variables found for datasource %s", cfgLayer->Name[0]->elementValue.c_str());
+    CDBError("No variables found for datasource %s", cfgLayer->Name[0].elementValue.c_str());
     return 1;
   }
   for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
@@ -729,23 +729,23 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
     }
   }
   // Shorthand to variable configuration in the layer.
-  for (auto *cfgVar: cfgLayer->Variable) {
-    CDF::Variable *var = cdfObject->getVar(cfgVar->elementValue);
+  for (auto &cfgVar: cfgLayer->Variable) {
+    CDF::Variable *var = cdfObject->getVar(cfgVar.elementValue);
     if (var != nullptr) {
 
       // Set long_name
-      if (!cfgVar->attr.long_name.empty()) {
-        var->setAttributeText("long_name", cfgVar->attr.long_name);
+      if (!cfgVar.attr.long_name.empty()) {
+        var->setAttributeText("long_name", cfgVar.attr.long_name);
       }
 
       // Set units
-      if (!cfgVar->attr.units.empty()) {
-        var->setAttributeText("units", cfgVar->attr.units);
+      if (!cfgVar.attr.units.empty()) {
+        var->setAttributeText("units", cfgVar.attr.units);
       }
 
       // Set standard_name
-      if (!cfgVar->attr.standard_name.empty()) {
-        var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+      if (!cfgVar.attr.standard_name.empty()) {
+        var->setAttributeText("standard_name", cfgVar.attr.standard_name);
       }
     }
   }

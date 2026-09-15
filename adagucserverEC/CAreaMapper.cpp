@@ -60,7 +60,7 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
   debug = false;
 
   if (dataSource->cfgLayer->TileSettings.size() == 1) {
-    if (dataSource->cfgLayer->TileSettings[0]->attr.debug == "true") {
+    if (dataSource->cfgLayer->TileSettings[0].attr.debug == "true") {
       debug = true;
     }
   }

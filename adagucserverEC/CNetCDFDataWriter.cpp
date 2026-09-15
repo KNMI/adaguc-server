@@ -97,7 +97,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     this->srvParam = srvParam;
 
     std::string randomString = CT::randomString(32);
-    tempFileName = CT::printf("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
+    tempFileName = CT::printf("%s/%s.nc", srvParam->cfg->TempDir[0].attr.value.c_str(), randomString.c_str());
     CDataReader reader;
     reader.silent = this->silent;
     reader.enableReporting(false);
@@ -321,7 +321,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(srcObj, dimName.c_str());
       if (dtype == CDataReader::dtype_none) {
-        CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+        CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d].attr.name.c_str());
       }
 
       bool isTimeDim = dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time;
@@ -587,8 +587,8 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
     bool usePixelExtent = false;
     bool optimizeExtentForTiles = false;
-    if (dataSource->cfgLayer->TileSettings.size() == 1 && !dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.empty()) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent == "true") {
+    if (dataSource->cfgLayer->TileSettings.size() == 1 && !dataSource->cfgLayer->TileSettings[0].attr.optimizeextent.empty()) {
+      if (dataSource->cfgLayer->TileSettings[0].attr.optimizeextent == "true") {
         optimizeExtentForTiles = true;
       }
     }
@@ -688,7 +688,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
         CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(j)->cdfObject, dimName.c_str());
         if (dtype == CDataReader::dtype_none) {
-          CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+          CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d].attr.name.c_str());
         }
 
         bool isTimeDim = false;
@@ -813,11 +813,11 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       destCDFObject->getVariableThrows("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
 
       /* Lookup possible projection EPSG codes based on this */
-      std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
+      std::vector<CServerConfig::XMLE_Projection> *prj = &dataSource->srvParams->cfg->Projection;
       destCDFObject->getVariableThrows("crs")->setAttributeText("id", "unknown");
       for (size_t j = 0; j < (*prj).size(); j++) {
-        if (CT::trim((*prj)[j]->attr.proj4) == dataSourceProjectionString) {
-          destCDFObject->getVariableThrows("crs")->setAttributeText("id", (*prj)[j]->attr.id);
+        if (CT::trim((*prj)[j].attr.proj4) == dataSourceProjectionString) {
+          destCDFObject->getVariableThrows("crs")->setAttributeText("id", (*prj)[j].attr.id);
           break;
         }
       }

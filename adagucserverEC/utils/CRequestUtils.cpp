@@ -42,7 +42,7 @@ std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSour
 
 CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *srvParam, std::string requestedLayerName) {
   for (size_t layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
-    auto cfgLayer = srvParam->cfg->Layer[layerNo];
+    auto *cfgLayer = &srvParam->cfg->Layer[layerNo];
     if (makeUniqueLayerName(cfgLayer) == requestedLayerName) {
       return cfgLayer;
     }
@@ -51,10 +51,10 @@ CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *srvPa
 }
 
 std::string getReferenceTimeDimName(CDataSource &dataSource) {
-  auto dimList = dataSource.cfgLayer->Dimension;
-  auto it = std::find_if(dimList.begin(), dimList.end(), [](const auto &dim) { return CT::toUpperCase(dim->elementValue) == "REFERENCE_TIME"; });
+  const auto &dimList = dataSource.cfgLayer->Dimension;
+  auto it = std::find_if(dimList.begin(), dimList.end(), [](const auto &dim) { return CT::toUpperCase(dim.elementValue) == "REFERENCE_TIME"; });
   if (it != dimList.end()) {
-    return (*it)->attr.name;
+    return (*it).attr.name;
   }
   return "";
 }
@@ -81,16 +81,16 @@ std::vector<std::string> getReferenceTimes(CDataSource &dataSource) {
   std::string tableName;
   try {
     tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                    ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0]->elementValue, dataSource.cfgLayer->FilePath[0]->attr.filter, refTimeDim.c_str(), &dataSource);
+                    ->getTableNameForPathFilterAndDimension(dataSource.cfgLayer->FilePath[0].elementValue, dataSource.cfgLayer->FilePath[0].attr.filter, refTimeDim.c_str(), &dataSource);
   } catch (int e) {
-    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource.cfgLayer->FilePath[0]->elementValue.c_str(), dataSource.cfgLayer->FilePath[0]->attr.filter.c_str(), refTimeDim.c_str());
+    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource.cfgLayer->FilePath[0].elementValue.c_str(), dataSource.cfgLayer->FilePath[0].attr.filter.c_str(), refTimeDim.c_str());
     return {};
   }
 
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(refTimeDim.c_str(), -1, false, tableName.c_str());
   if (store == NULL) {
     setExceptionType(ServiceExceptionType::InvalidDimensionValue);
-    CDBError("Invalid dimension value for layer %s", dataSource.cfgLayer->Name[0]->elementValue.c_str());
+    CDBError("Invalid dimension value for layer %s", dataSource.cfgLayer->Name[0].elementValue.c_str());
     return {};
   }
   std::vector<std::string> resultList;
@@ -106,13 +106,13 @@ int getMaxQueryLimit(CDataSource &dataSource) {
   int maxQueryResultLimit = 512;
 
   /* Get maxquerylimit from database configuration */
-  if (dataSource.srvParams->cfg->DataBase.size() == 1 && dataSource.srvParams->cfg->DataBase[0]->attr.maxquerylimit.empty() == false) {
-    maxQueryResultLimit = atoi(dataSource.srvParams->cfg->DataBase[0]->attr.maxquerylimit.c_str());
+  if (dataSource.srvParams->cfg->DataBase.size() == 1 && dataSource.srvParams->cfg->DataBase[0].attr.maxquerylimit.empty() == false) {
+    maxQueryResultLimit = atoi(dataSource.srvParams->cfg->DataBase[0].attr.maxquerylimit.c_str());
   }
   /* Get maxquerylimit from layer */
   if (dataSource.isConfigured && dataSource.cfgLayer != NULL && dataSource.cfgLayer->FilePath.size() > 0) {
-    if (dataSource.cfgLayer->FilePath[0]->attr.maxquerylimit.empty() == false) {
-      maxQueryResultLimit = atoi(dataSource.cfgLayer->FilePath[0]->attr.maxquerylimit.c_str());
+    if (dataSource.cfgLayer->FilePath[0].attr.maxquerylimit.empty() == false) {
+      maxQueryResultLimit = atoi(dataSource.cfgLayer->FilePath[0].attr.maxquerylimit.c_str());
     }
   }
   return maxQueryResultLimit;

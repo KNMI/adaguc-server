@@ -51,7 +51,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 1;
   }
 
-  if (dataSource->cfgLayer->FilePath.size() != 1 && dataSource->cfgLayer->FilePath[0] != nullptr) {
+  if (dataSource->cfgLayer->FilePath.size() != 1) {
     CDBDebug("(dataSource->cfgLayer->FilePath.size() != 1");
     return 1;
   }
@@ -71,7 +71,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       CDBError("Unable to get a getDBAdapter");
       return 1;
     }
-    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, NULL, dataSource);
+    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, NULL, dataSource);
 
   } catch (int e) {
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
@@ -84,12 +84,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     try {
 
       for (auto &record: store->records) {
-        CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
+        CServerConfig::XMLE_Dimension *xmleDim = addXmlObj(dataSource->cfgLayer->Dimension);
 
         xmleDim->elementValue = (record.get("ogcname"));
         xmleDim->attr.name = (record.get("ncname"));
         xmleDim->attr.units = (record.get("units"));
-        dataSource->cfgLayer->Dimension.push_back(xmleDim);
         if (CAUTOCONFIGURE_DEBUG) {
           CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->elementValue.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
         }
@@ -114,7 +113,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   int status = justLoadAFileHeader(dataSource);
   if (status != 0) {
     if (dataSource->cfgLayer->FilePath.size() > 0) {
-      CDBDebug("Unable to Path %s", dataSource->cfgLayer->FilePath[0]->elementValue.c_str());
+      CDBDebug("Unable to Path %s", dataSource->cfgLayer->FilePath[0].elementValue.c_str());
     } else {
       CDBError("Layer configuration error");
     }
@@ -145,11 +144,10 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         /* When there are no extra dims besides x and y we can skip
          * Each time to find the non existing dims. */
         if (variable->dimensionlinks.size() == 2) {
-          CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
+          CServerConfig::XMLE_Dimension *xmleDim = addXmlObj(dataSource->cfgLayer->Dimension);
           xmleDim->elementValue = ("0");
           xmleDim->attr.name = ("none");
           xmleDim->attr.units = ("none");
-          dataSource->cfgLayer->Dimension.push_back(xmleDim);
           if (CAUTOCONFIGURE_DEBUG) {
             CDBDebug("Creating an empty table, because variable [%s] has only x and y dims", variable->name.c_str());
           }
@@ -198,8 +196,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             if (CAUTOCONFIGURE_DEBUG) {
               CDBDebug("Datasource %s: Dim %s; units %s; netcdfdimname %s", dataSource->layerName.c_str(), dim->name.c_str(), units.c_str(), netcdfdimname.c_str());
             }
-            CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
-            dataSource->cfgLayer->Dimension.push_back(xmleDim);
+            CServerConfig::XMLE_Dimension *xmleDim = addXmlObj(dataSource->cfgLayer->Dimension);
             xmleDim->elementValue = (OGCDimName);
             xmleDim->attr.name = (netcdfdimname);
             if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
@@ -237,15 +234,14 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
               /* But only add if it is not already added */
               bool forecastRefererenceIsAlreadyThere = false;
 
-              auto it = std::find_if(dataSource->cfgLayer->Dimension.begin(), dataSource->cfgLayer->Dimension.end(), [](const auto a) { return "reference_time" == a->elementValue; });
+              auto it = std::find_if(dataSource->cfgLayer->Dimension.begin(), dataSource->cfgLayer->Dimension.end(), [](const auto &a) { return "reference_time" == a.elementValue; });
               if (it != dataSource->cfgLayer->Dimension.end()) {
                 CDBDebug("Found forecast_reference_time variable with name [%s], but it is already configured.", cdfObject->variables[j]->name.c_str());
                 forecastRefererenceIsAlreadyThere = true;
               }
 
               if (!forecastRefererenceIsAlreadyThere) {
-                CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
-                dataSource->cfgLayer->Dimension.push_back(xmleDim);
+                CServerConfig::XMLE_Dimension *xmleDim = addXmlObj(dataSource->cfgLayer->Dimension);
                 xmleDim->elementValue = ("reference_time");
                 xmleDim->attr.name = (cdfObject->variables[j]->name);
                 xmleDim->attr.units = (units);
@@ -305,8 +301,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   };
 
   /* Try to find a style corresponding the the standard_name attribute of the file. */
-  CServerConfig::XMLE_Styles *xmleStyle = new CServerConfig::XMLE_Styles();
-  dataSource->cfgLayer->Styles.push_back(xmleStyle);
+  CServerConfig::XMLE_Styles *xmleStyle = addXmlObj(dataSource->cfgLayer->Styles);
 
   /* If the file header is not yet loaded, load it.*/
   if (dataSource->getDataObject(0)->cdfVariable == NULL) {
@@ -330,28 +325,28 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   std::vector<std::string> styleList;
 
   for (size_t j = 0; j < dataSource->cfg->Style.size(); j++) {
-    const char *styleName = dataSource->cfg->Style[j]->attr.name.c_str();
+    const char *styleName = dataSource->cfg->Style[j].attr.name.c_str();
     if (CAUTOCONFIGURE_DEBUG) {
       CDBDebug("Searching Style \"%s\"", styleName);
     }
     if (styleName != NULL) {
-      for (size_t i = 0; i < dataSource->cfg->Style[j]->StandardNames.size(); i++) {
+      for (size_t i = 0; i < dataSource->cfg->Style[j].StandardNames.size(); i++) {
 
         std::string standard_name = "*";
         std::string variable_name = "*";
         std::string units;
 
-        if (dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.empty() == false) {
-          standard_name = CT::toLowerCase(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name);
+        if (dataSource->cfg->Style[j].StandardNames[i].attr.standard_name.empty() == false) {
+          standard_name = CT::toLowerCase(dataSource->cfg->Style[j].StandardNames[i].attr.standard_name);
         }
 
-        if (dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name.empty() == false) {
-          variable_name = CT::toLowerCase(dataSource->cfg->Style[j]->StandardNames[i]->attr.variable_name);
+        if (dataSource->cfg->Style[j].StandardNames[i].attr.variable_name.empty() == false) {
+          variable_name = CT::toLowerCase(dataSource->cfg->Style[j].StandardNames[i].attr.variable_name);
         }
 
-        if (dataSource->cfg->Style[j]->StandardNames[i]->attr.units.empty() == false) {
+        if (dataSource->cfg->Style[j].StandardNames[i].attr.units.empty() == false) {
 
-          units = (dataSource->cfg->Style[j]->StandardNames[i]->attr.units);
+          units = (dataSource->cfg->Style[j].StandardNames[i].attr.units);
         }
         units = CT::toLowerCase(units);
 
@@ -408,7 +403,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
                 if (CAUTOCONFIGURE_DEBUG) {
                   CDBDebug("*** Match: \"%s\"== \"%s\"", searchStandardName.c_str(), standardNameList[n].c_str());
                 }
-                styleList.push_back(dataSource->cfg->Style[j]->attr.name);
+                styleList.push_back(dataSource->cfg->Style[j].attr.name);
               }
             }
           }

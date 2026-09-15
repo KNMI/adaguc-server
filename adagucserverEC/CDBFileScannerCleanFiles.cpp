@@ -34,14 +34,14 @@ void CDBFileScanner::_removeFileFromTables(std::string fileNamestr, CDataSource 
 }
 
 std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
-  if (dataSource->cfgLayer->FilePath[0]->attr.retentiontype.empty() || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
+  if (dataSource->cfgLayer->FilePath[0].attr.retentiontype.empty() || dataSource->cfgLayer->FilePath[0].attr.retentionperiod.empty()) {
     return std::make_pair(0, filesDeletedFromFS);
   }
 
   std::set<std::string> retentionTypes = {CDBFILESCANNER_RETENTIONTYPE_DATATIME, CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE};
 
-  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0]->attr.retentiontype) == retentionTypes.end()) {
-    CDBDebug("retentiontype is set to unknown value %s, no cleaning done", dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
+  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0].attr.retentiontype) == retentionTypes.end()) {
+    CDBDebug("retentiontype is set to unknown value %s, no cleaning done", dataSource->cfgLayer->FilePath[0].attr.retentiontype.c_str());
     return std::make_pair(0, filesDeletedFromFS);
   }
 
@@ -49,18 +49,18 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     CDBWarning("Note, more Settings elements were configured. Using the first one.");
   };
 
-  std::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
+  std::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0].attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem == ("true");
   bool enableCleanupIsInform = enableCleanupSystem == ("dryrun");
-  int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? atoi(dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.c_str())
+  int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0].attr.cleanupsystemlimit.empty() ? atoi(dataSource->cfg->Settings[0].attr.cleanupsystemlimit.c_str())
                                                                                                                                   : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
   if (!enableCleanupIsTrue && !enableCleanupIsInform) {
     CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to %s", enableCleanupSystem.c_str());
     return std::make_pair(1, filesDeletedFromFS);
   }
 
-  std::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
-  std::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
+  std::string retentiontype = dataSource->cfgLayer->FilePath[0].attr.retentiontype;
+  std::string retentionperiod = dataSource->cfgLayer->FilePath[0].attr.retentionperiod;
   CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s], limit %d", retentiontype.c_str(), retentionperiod.c_str(), cleanupSystemLimit);
 
   if (enableCleanupIsInform) {
@@ -108,9 +108,9 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   try {
     tableNameForTimeDimension =
-        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->elementValue, dataSource->cfgLayer->FilePath[0]->attr.filter, colName.c_str(), dataSource);
+        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, colName.c_str(), dataSource);
   } catch (int e) {
-    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
+    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter.c_str(), colName.c_str());
     return std::make_pair(1, filesDeletedFromFS);
   }
 

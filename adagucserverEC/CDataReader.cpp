@@ -223,8 +223,8 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
   CREPORT_INFO_NODOC("Projection is obtained from ADAGUC config file", CReportMessage::Categories::GENERAL);
 
   // Read the EPSG-code from configuration.
-  if (dataSource->cfgLayer->Projection[0]->attr.id.empty() == false) {
-    dataSource->nativeEPSG = dataSource->cfgLayer->Projection[0]->attr.id;
+  if (dataSource->cfgLayer->Projection[0].attr.id.empty() == false) {
+    dataSource->nativeEPSG = dataSource->cfgLayer->Projection[0].attr.id;
   } else {
     std::string defaultEPSGCode = "EPSG:4326";
     CREPORT_WARN_NODOC(std::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
@@ -232,8 +232,8 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
   }
 
   // Read proj4 string from configuration.
-  if (dataSource->cfgLayer->Projection[0]->attr.proj4.empty() == false) {
-    dataSource->nativeProj4 = dataSource->cfgLayer->Projection[0]->attr.proj4;
+  if (dataSource->cfgLayer->Projection[0].attr.proj4.empty() == false) {
+    dataSource->nativeProj4 = dataSource->cfgLayer->Projection[0].attr.proj4;
   } else {
     std::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
     CREPORT_WARN_NODOC(std::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
@@ -756,10 +756,10 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting: styleConfiguration->renderSettings) {
-      if (renderSetting->attr.striding.empty() == false) {
-        dataSource->stride2DMap = atoi(renderSetting->attr.striding.c_str());
-        CREPORT_INFO_NODOC(std::string("Determined a stride of ") + renderSetting->attr.striding + std::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
+    for (const auto &renderSetting: styleConfiguration->renderSettings) {
+      if (renderSetting.attr.striding.empty() == false) {
+        dataSource->stride2DMap = atoi(renderSetting.attr.striding.c_str());
+        CREPORT_INFO_NODOC(std::string("Determined a stride of ") + renderSetting.attr.striding + std::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
         return;
       }
     }
