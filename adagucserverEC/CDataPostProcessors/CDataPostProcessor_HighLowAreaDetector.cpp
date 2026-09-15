@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <CDebugger.h>
 
 /************************/
 /*  CDPPHighLowAreaDetector  */
