@@ -1,5 +1,6 @@
 #include <CKeyValuePair.h>
 #include <cmath>
+#include <map>
 #ifndef CPOINT_TYPES_H
 #define CPOINT_TYPES_H
 
@@ -33,7 +34,7 @@ public:
   }
   int x, y;
   float v;
-  CT::string id;
+  std::string id;
 };
 
 /**

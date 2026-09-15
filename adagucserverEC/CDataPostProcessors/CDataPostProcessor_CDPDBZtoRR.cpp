@@ -1,5 +1,7 @@
 #include <type_traits>
 #include "CDataPostProcessor_CDPDBZtoRR.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPDBZtoRR     */

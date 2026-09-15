@@ -9,7 +9,6 @@ public:
   enum Categories { PROJECTION, GENERAL };
   CReportMessage(const CReportMessage &m);
   CReportMessage(const std::string &message, Severities severity, Categories category, const std::string &documentationLink);
-  const std::string to_string() const;
   std::string getMessage() const;
   std::string getSeverity() const;
   std::string getCategory() const;

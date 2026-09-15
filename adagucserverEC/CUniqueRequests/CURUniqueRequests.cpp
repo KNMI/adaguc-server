@@ -3,6 +3,15 @@
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
+#include "CDFObjectStore.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "Types/CPointTypes.h"
+#include "CDPPInterface.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
 
 bool enableLogUnique = false;
 
@@ -384,7 +393,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
                   int variableDimIndex = -1;
                   for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
-                    if (variable->dimensionlinks[d]->name.equals(requestDimNameToFind)) {
+                    if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
                       variableDimIndex = d;
                     }
                   }

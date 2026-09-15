@@ -143,3 +143,4 @@ perf.svg
 log.txt
 Docker/.env*
 Docker/geoweb.env
+.claude/settings.json

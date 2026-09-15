@@ -1,8 +1,6 @@
 #ifndef CREPORT_WRITER_JSON_H
 #define CREPORT_WRITER_JSON_H
 
-#include "CTString.h"
-
 namespace CReportWriter {
 
   /**
@@ -27,6 +25,6 @@ namespace CReportWriter {
    * @returns True if it was possible to write the report to a file.
    */
   bool writeJSONReportToFile();
-};
+}; // namespace CReportWriter
 
 #endif

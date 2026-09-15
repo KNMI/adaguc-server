@@ -27,6 +27,15 @@ ELSE()
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -pedantic -Werror -g3 -p -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -pedantic -Werror -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
 ENDIF()
+
+# GCC's -Wrestrict emits false positives on plain `std::string member = "literal";`
+# assignments once several such assignments to different objects get inlined together at -O3
+# (seen with GCC 12/13, e.g. reported byte offsets/sizes are nonsensical). Not a real bug in our code.
+# Clang does not recognize this warning option.
+IF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-restrict>)
+ENDIF()
+
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_PROFILE: ${CMAKE_CXX_FLAGS_PROFILE}")
@@ -46,6 +55,7 @@ add_subdirectory(adagucserverEC)
 
 add_executable(adagucserver ./adagucserverEC/adagucserver.cpp)
 add_executable(h5ncdump ./adagucserverEC/h5ncdump.cpp)
+add_executable(anydump ./adagucserverEC/anydump.cpp)
 add_executable(aggregate_time ./adagucserverEC/aggregate_time.cpp)
 add_executable(geojsondump ./adagucserverEC/geojsondump.cpp)
 
@@ -55,6 +65,6 @@ add_test(testtimeutils adagucserverEC/testtimeutils)
 
 target_link_libraries(adagucserver adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(h5ncdump adagucserverEC hclasses CCDFDataModel)
+target_link_libraries(anydump adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(aggregate_time adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(geojsondump adagucserverEC hclasses CCDFDataModel)
-

@@ -2,8 +2,8 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2024-01-26
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
@@ -26,14 +26,19 @@
 #include "CConvertLatLonGrid.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
+
+static const bool CConvertLatLonGrid_DEBUG = false;
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerParams *) {
-#ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("CHECKING convertLatLonGridHeader");
-#endif
+  if (CConvertLatLonGrid_DEBUG) {
+    CDBDebug("CHECKING convertLatLonGridHeader");
+  }
   if (!isLatLonGrid(cdfObject)) return 1;
 
   // Determine bbox based on 2D lat/lon
@@ -127,13 +132,13 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->dimensionlinks.size() >= 2 && !var->name.equals("acquisition_time") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") &&
-          !var->name.equals("longitude") && !var->name.equals("latitude")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->dimensionlinks.size() >= 2 && var->name != "acquisition_time" && var->name != "time" && var->name != "lon" && var->name != "lat" && var->name != "longitude" &&
+          var->name != "latitude") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
     }
   }
@@ -161,9 +166,9 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *irregularGridVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
     if (irregularGridVar->dimensionlinks.size() >= 2) {
-#ifdef CConvertLatLonGrid_DEBUG
-      CDBDebug("Converting %s", irregularGridVar->name.c_str());
-#endif
+      if (CConvertLatLonGrid_DEBUG) {
+        CDBDebug("Converting %s", irregularGridVar->name.c_str());
+      }
 
       CDF::Variable *destRegularGrid = new CDF::Variable();
       cdfObject->addVariable(destRegularGrid);
@@ -188,7 +193,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
       // The newly allocated grid will always be a float grid and will be internally handled as a float
       destRegularGrid->setType(CDF_FLOAT);
       destRegularGrid->name = irregularGridVar->name.c_str();
-      irregularGridVar->name.concat("_backup");
+      irregularGridVar->name += "_backup";
 
       // Copy variable attributes
       for (size_t j = 0; j < irregularGridVar->attributes.size(); j++) {

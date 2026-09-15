@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,14 @@
 #ifndef CDataReader_H
 #define CDataReader_H
 #include <cmath>
-#include "CDebugger.h"
+#include <string>
 #include "CDataSource.h"
-#include "CServerError.h"
-#include "CDirReader.h"
 
 // #include "CADAGUC_time.h"
-#include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
 
-#include "CProj4ToCF.h"
-#include "CStopWatch.h"
 #include <sys/stat.h>
 
-#include "CDFObjectStore.h"
 
-#include "CAutoConfigure.h"
 class CDataReader {
 private:
   bool _enableReporting = false;
@@ -151,7 +143,7 @@ public:
    * @return time units for this datasource
    */
   // DEPRECATED
-  CT::string getTimeUnit(CDataSource *dataSource);
+  std::string getTimeUnit(CDataSource *dataSource);
 
   /**
    * Possible dimension types

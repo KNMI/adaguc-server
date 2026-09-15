@@ -82,7 +82,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
             if colls:
                 collections.extend(colls)
             else:
-                logger.warning("Unable to fetch WMS GetMetadata for %s", dataset_name)
+                logger.warning("Unable to parse WMS GetMetadata for %s", dataset_name)
         except Exception:
             print("ERR", dataset_name, traceback.format_exc())
     collections_data = Collections(links=links, collections=collections)

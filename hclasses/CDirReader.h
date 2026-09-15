@@ -2,12 +2,12 @@
  *
  * Project:  Helper classes
  * Purpose:  Generic functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@
 
 #define CDIRREADER_INCLUDE_FILES 1
 #define CDIRREADER_INCLUDE_DIRECTORIES 2
-#define CDIRREADER_INCLUDE_ALL 3
 
 static std::map<std::string, std::string> lookupTableFileModificationDateMap;
 class CDirReader {
@@ -76,9 +75,6 @@ public:
   static void makePublicDirectory(const char *dirname);
 
   static void compareLists(std::vector<std::string> a, std::vector<std::string> b, void (*handleMissing)(std::string), void (*handleNew)(std::string));
-
-  static void test_compareLists();
-  static int test_makeCleanPath();
 };
 
 class CCachedDirReader {

@@ -1,5 +1,17 @@
 #include "CDrawFunction.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CStyleConfiguration.h"
 #include <algorithm>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CTString.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 template <class T> void drawIndexPixel(int &x, int &y, T &val, GDWDrawFunctionSettings &settings) {
   if (settings.legendLog != 0) {

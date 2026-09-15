@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2020-12-09
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,24 @@
  ******************************************************************************/
 
 #include "CImgWarpGeneric.h"
+#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 #include <CImageOperators/drawContour.h>
 #include <CImageOperators/smoothRasterField.h>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
+#include "CDrawFunction.h"
 
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
@@ -154,7 +168,7 @@ template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState 
 
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
 
-  CT::string color;
+  std::string color;
   void *sourceData;
   bool debug = false;
 

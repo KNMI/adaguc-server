@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2015-05-06
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,12 @@
 #define CDBADAPTERPOSTGRESQL_H
 
 #include <cstdlib>
-#include "CImageDataWriter.h"
-#include "CServerParams.h"
-#include "CDataSource.h"
-#include "CDFObjectStore.h"
-#include "CCDFStore.h"
-#include "CDBStore.h"
-#include "CDebugger.h"
 
-#include "Types/GeoParameters.h"
 #include "CPGSQLDB.h"
+#include <map>
+#include "CDataSource.h"
+#include "CServerConfig_CPPXSD.h"
+#include "Types/GeoParameters.h"
 
 #define TABLETYPE_TIMESTAMP 1
 #define TABLETYPE_INT 2

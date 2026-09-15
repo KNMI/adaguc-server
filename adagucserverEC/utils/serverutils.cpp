@@ -1,25 +1,31 @@
 
 #include "serverutils.h"
+#include "CTString.h"
 #include "CRequest.h"
 #include "ConfigurationUtils.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CServerParams.h"
+#include "CXMLParser.h"
 
-bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
+bool checkIfFileMatchesLayer(std::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
   // Get the directory of the file to scan:
-  CT::string directoryOfFileToScan = layerPathToScan = makeCleanPath(layerPathToScan.c_str());
-  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
+  std::string directoryOfFileToScan = layerPathToScan = makeCleanPath(layerPathToScan.c_str());
+  directoryOfFileToScan = CT::substring(directoryOfFileToScan, 0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
   directoryOfFileToScan = makeCleanPath(directoryOfFileToScan.c_str()) + "/";
 
   if (layer->attr.type.empty() || layer->attr.type == ("database")) {
     if (layer->FilePath.size() > 0) {
-      CT::string filePath = makeCleanPath(layer->FilePath[0]->elementValue.c_str());
+      std::string filePath = makeCleanPath(layer->FilePath[0]->elementValue.c_str());
       // Directories need to end with a /
-      CT::string filePathWithTrailingSlash = filePath + "/";
-      CT::string filter = layer->FilePath[0]->attr.filter;
+      std::string filePathWithTrailingSlash = filePath + "/";
+      std::string filter = layer->FilePath[0]->attr.filter;
       // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
       if (layerPathToScan == (filePath)) {
         return true;
         // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
-      } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash.c_str())) {
+      } else if (CT::startsWith(directoryOfFileToScan, filePathWithTrailingSlash)) {
         if (CT::testRegEx(CT::basename(layerPathToScan).c_str(), filter.c_str())) {
           return true;
         }
@@ -32,7 +38,7 @@ bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Lay
 /**
  * @param layerPathToScan: the provided file to scan
  */
-std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbose) {
+std::set<std::string> findDataSetsToScan(std::string layerPathToScan, bool verbose) {
   std::set<std::string> datasetsToScan;
   // loop all datasets
   CRequest baseRequest;
@@ -43,8 +49,8 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
   auto srvParam = baseRequest.getServerParams();
 
   // Get the directory of the file to scan:
-  CT::string directoryOfFileToScan = layerPathToScan = makeCleanPath(layerPathToScan.c_str());
-  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
+  std::string directoryOfFileToScan = layerPathToScan = makeCleanPath(layerPathToScan.c_str());
+  directoryOfFileToScan = CT::substring(directoryOfFileToScan, 0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
   directoryOfFileToScan = makeCleanPath(directoryOfFileToScan.c_str()) + "/";
   if (verbose) {
     CDBDebug("directoryOfFileToScan = [%s]", directoryOfFileToScan.c_str());

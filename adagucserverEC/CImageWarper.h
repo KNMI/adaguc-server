@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,22 @@
 
 #ifndef CImageWarper_H
 #define CImageWarper_H
-#include "CServerParams.h"
 #include "CDataReader.h"
-#include "CDrawImage.h"
 #include <proj.h>
 #include <cmath>
-#include "CDebugger.h"
-#include "CStopWatch.h"
+#include <string>
+#include <vector>
+#include "CDataSource.h"
+#include "CServerConfig_CPPXSD.h"
 #include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-void floatToString(char *string, size_t maxlen, float number);
-void floatToString(char *string, size_t maxlen, int numdigits, float number);
-void floatToString(char *string, size_t maxlen, float min, float max, float number);
+std::string floatToString(float number);
+std::string floatToString(int numdigits, float number);
+std::string floatToString(float min, float max, float number);
 
 class CImageWarper {
-  //  CNetCDFReader reader;
 private:
   double dfMaxExtent[4];
   int dMaxExtentDefined;
@@ -56,23 +56,8 @@ private:
 
 public:
   bool requireReprojection;
-  CImageWarper() {
-    prj = NULL;
-    projSourceToDest = nullptr;
-    projSourceToLatlon = nullptr;
-    projLatlonToDest = nullptr;
-    initialized = false;
-  }
-  ~CImageWarper() {
-    if (initialized == true) {
-      closereproj();
-      prj = NULL;
-      projSourceToDest = nullptr;
-      projSourceToLatlon = nullptr;
-      projLatlonToDest = nullptr;
-      initialized = false;
-    }
-  }
+  CImageWarper();
+  ~CImageWarper();
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   std::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
@@ -105,7 +90,7 @@ public:
   int reprojfromLatLon(double &dfx, double &dfy);
 
   int reprojToLatLon(double &dfx, double &dfy);
-  int decodeCRS(std::string *outputCRS, const std::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
+  int decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int findExtent(CDataSource *dataSource, double *dfBBOX);
   bool isProjectionRequired() { return requireReprojection; }
   /**

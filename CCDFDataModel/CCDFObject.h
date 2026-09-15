@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public:
 
   std::vector<CDF::Dimension *> dimensions;
   std::vector<CDF::Variable *> variables;
-  CT::string name;
+  std::string name;
   int getVariableIndexThrows(const char *name);
   CDF::Variable *getVariableThrows(std::string name);
   int getVariableIndexNE(const char *name);
@@ -91,12 +91,12 @@ public:
 
   int applyNCMLFile(const char *ncmlFileName);
   int aggregateDim(CDFObject *sourceCDFObject, const char *dimName);
-  CT::string currentFile;
+  std::string currentFile;
   int open(const char *fileName);
   int close();
   void clear();
   int attachCDFReader(void *reader);
-  void *getCDFReader() { return reader; }
+  void *getCDFReader();
 
   /**
    * Returns or creates a 1 dimnensional coordinate variable of given length and size. Both the dimension and the variable are available after this. When all arguments are similar to the settings

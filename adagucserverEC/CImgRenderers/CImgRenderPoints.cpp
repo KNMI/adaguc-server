@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,15 @@
 #include "getPointStyle.h"
 #include "getVectorStyle.h"
 #include <CDataPostProcessors/CDataPostProcessor_UnitsUtils.h>
+#include <string>
+#include <vector>
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CDebugger.h"
+#include "CDrawImage.h"
+#include "CStyleConfiguration.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 struct ThinningInfo {
   bool doThinning = false;
@@ -705,8 +714,8 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
     for (const auto &shadeInterval: styleConfiguration->shadeIntervals) {
-      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+      if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
+        if ((val >= shadeInterval.attr.min) && (val < shadeInterval.attr.max)) {
           return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }

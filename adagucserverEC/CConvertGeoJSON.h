@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,12 @@
 
 #ifndef CCONVERTGEOJSON_H
 #define CCONVERTGEOJSON_H
-#include "CDataSource.h"
 #include "CGeoJSONData.h"
 #include "CImageWarper.h"
 #include "json.h"
-#include "CDebugger.h"
+#include "CCDFObject.h"
+#include "CDataSource.h"
+#include "CServerParams.h"
 
 class CConvertGeoJSON {
 public:
@@ -55,7 +56,7 @@ private:
 public:
   static std::map<std::string, std::vector<Feature *>> featureStore;
   static void clearFeatureStore();
-  static void clearFeatureStore(CT::string name);
+  static void clearFeatureStore(std::string name);
 
   static int convertGeoJSONHeader(CDFObject *cdfObject);
   static int convertGeoJSONData(CDataSource *dataSource, int mode);

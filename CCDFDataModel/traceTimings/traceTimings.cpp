@@ -2,6 +2,7 @@
 
 #include "traceTimings.h"
 #include "CDebugger.h"
+#include "CTString.h"
 
 bool adagucTraceTimings = false;
 uint64_t tracingStart = 0;
@@ -18,8 +19,8 @@ uint64_t micros() {
 void traceTimingsCheckEnabled() {
   const char *ADAGUC_TRACE_TIMINGS = getenv("ADAGUC_TRACE_TIMINGS");
   if (ADAGUC_TRACE_TIMINGS != NULL) {
-    CT::string check = ADAGUC_TRACE_TIMINGS;
-    if (check.equalsIgnoreCase("true")) {
+    std::string check = ADAGUC_TRACE_TIMINGS;
+    if (CT::equalsIgnoreCase(check, "true")) {
       traceTimingsEnableAndInit();
     }
   }
@@ -38,14 +39,14 @@ void traceTimingsSpanStart(TraceTimingType type) {
 
 void traceTimingsSpanEnd(TraceTimingType type) {
   if (!adagucTraceTimings) return;
+  auto &starts = timingsMapRel[type];
   // Should always be defined, but it could theoratically not be. TODO, what if it does?
-  if (timingsMapRel[type].empty()) {
+  if (starts.empty()) {
     return;
   }
   auto current = micros();
-  auto last = timingsMapRel[type].back();
-
-  timingsMapRel[type].pop_back();
+  auto last = starts.back();
+  starts.pop_back();
   auto relative = (current - last);
   if (timingsMapTotal.find(type) == timingsMapTotal.end()) {
     timingsMapTotal[type] = {.total = 0, .numevents = 0};
@@ -55,8 +56,7 @@ void traceTimingsSpanEnd(TraceTimingType type) {
   timingsMapTotal[type].numevents++;
 }
 
-CT::string typeToString(TraceTimingType typein) {
-  CT::string type;
+std::string typeToString(TraceTimingType typein) {
   switch (typein) {
   case TraceTimingType::DB:
     return "DB";
@@ -76,37 +76,41 @@ CT::string typeToString(TraceTimingType typein) {
     return "FSOPEN";
   case TraceTimingType::APP:
     return "APP";
-  case TraceTimingType::GETMETADATAJSON:
-    return "GETMETADATAJSON";
+  case TraceTimingType::GETMETADATAJSONREQ:
+    return "GETMETADATAJSONREQ";
+  case TraceTimingType::GETMETADATAJSONDB:
+    return "GETMETADATAJSONDB";
+  case TraceTimingType::GETMETADATAJSONPARSE:
+    return "GETMETADATAJSONPARSE";
   default:
     return "?";
   }
 }
 
-CT::string traceTimingsGetReport() {
+std::string traceTimingsGetReport() {
   if (!adagucTraceTimings) return "";
 
-  CT::string summary;
+  std::string summary;
 
-  for (auto timingsInfo : timingsMapTotal) {
+  for (const auto &timingsInfo: timingsMapTotal) {
     auto type = typeToString(timingsInfo.first);
     if (summary.length() > 0) {
-      summary.concat(",");
+      summary += ",";
     }
     auto allPopped = timingsMapRel[timingsInfo.first].size();
-    summary.printconcat("[%s %0.1f/%d/%d]", type.c_str(), timingsInfo.second.total / 1000., timingsInfo.second.numevents, allPopped);
+    CT::printfconcat(summary, "[%s %0.1f/%d/%zu]", type.c_str(), timingsInfo.second.total / 1000., timingsInfo.second.numevents, allPopped);
   }
 
   auto tracingTotal = micros() - tracingStart;
   auto tracingTotalMs = tracingTotal / 1000.;
-  summary.printconcat(",[total %0.1fms] {%0.0f}", tracingTotalMs, tracingTotalMs);
+  CT::printfconcat(summary, ",[total %0.1fms] {%0.0f}", tracingTotalMs, tracingTotalMs);
   return summary;
 }
 
-CT::string traceTimingsGetHeader() {
+std::string traceTimingsGetHeader() {
   if (!adagucTraceTimings) return "";
-  CT::string summary = traceTimingsGetReport();
-  return CT::string("\r\nX-Trace-Timings: ") + summary;
+  std::string summary = traceTimingsGetReport();
+  return "\r\nX-Trace-Timings: " + summary;
 }
 
 TraceTimingsReport traceTimingsGetMap() { return timingsMapTotal; }

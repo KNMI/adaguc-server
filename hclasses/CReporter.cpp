@@ -1,8 +1,6 @@
 #include "CReporter.h"
 #include "CDebugger.h"
 
-#include <fstream>
-#include <sstream>
 #include <string>
 
 using Severities = CReportMessage::Severities;

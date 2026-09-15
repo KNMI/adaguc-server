@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,13 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+#include <iostream>
 #include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
-#include "CCDFGeoJSONIO.h"
-#include "CCDFCSVReader.h"
-#include "utils.h"
+#include <utils.h>
 
 int main(int argCount, char **argVars) {
   CDFReader *cdfReader = NULL;
@@ -48,22 +47,22 @@ int main(int argCount, char **argVars) {
     return 0;
   }
 
-  CT::string variableName, ncmlFile;
+  std::string variableName, ncmlFile;
   bool dumpHeader = false;
   bool dumpAsJSON = false;
 
   for (int j = 0; j < argCount; j++) {
-    CT::string cmdType = argVars[j];
-    if (cmdType.equals("-h")) dumpHeader = true;
-    if (cmdType.equals("-json")) dumpAsJSON = true;
-    if (cmdType.equals("-v")) {
+    std::string cmdType = argVars[j];
+    if (cmdType == "-h") dumpHeader = true;
+    if (cmdType == "-json") dumpAsJSON = true;
+    if (cmdType == "-v") {
       if (j + 1 >= argCount) {
         CDBError("Not enough arguments, please specify the variable");
         return 1;
       }
       variableName = argVars[j + 1];
     }
-    if (cmdType.equals("-ncml")) {
+    if (cmdType == "-ncml") {
       if (j + 1 >= argCount) {
         CDBError("Not enough arguments, please specify the ncml file");
         return 1;
@@ -72,7 +71,7 @@ int main(int argCount, char **argVars) {
     }
   }
 
-  CT::string inputFile = argVars[argCount - 1]; //"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
+  std::string inputFile = argVars[argCount - 1]; //"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
 
   int status = 0;
   try {
@@ -96,11 +95,11 @@ int main(int argCount, char **argVars) {
     }
 
     if (dumpHeader && !dumpAsJSON) {
-      CT::string dumpString = CDF::dump(cdfObject);
+      std::string dumpString = CDF::dump(cdfObject);
       printf("%s\n", dumpString.c_str());
     }
     if (dumpAsJSON) {
-      CT::string dumpString = CDF::dumpAsJSON(cdfObject);
+      std::string dumpString = CDF::dumpAsJSON(cdfObject);
       printf("%s\n", dumpString.c_str());
     }
 
@@ -112,7 +111,7 @@ int main(int argCount, char **argVars) {
       }
 
       printf("// Data dump for variable [%s]:\n", var->name.c_str());
-      CT::string dumpString = CDF::dump(var);
+      std::string dumpString = CDF::dump(var);
       printf("%s\n", dumpString.c_str());
 
       bool isString = var->getNativeType() == CDF_STRING;

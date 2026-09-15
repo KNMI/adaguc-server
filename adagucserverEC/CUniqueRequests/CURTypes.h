@@ -2,7 +2,6 @@
 #define CURTYPES_H
 
 #include <map>
-#include "CTString.h"
 #include "CCDFObject.h"
 #define CCUniqueRequests_MAX_DIMS 255
 

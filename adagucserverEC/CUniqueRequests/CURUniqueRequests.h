@@ -12,6 +12,7 @@
 #include "CImageWarper.h"
 #include "CUniqueRequests/requestUtils.h"
 #include "requestUtils.h"
+#include "CXMLParser.h"
 
 class CURUniqueRequests {
 public:

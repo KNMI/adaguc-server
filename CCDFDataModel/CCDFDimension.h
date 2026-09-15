@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,45 +25,25 @@
 
 #ifndef CCDFDIMENSION_H
 #define CCDFDIMENSION_H
+#include <string>
 
 namespace CDF {
   class Dimension {
 
   public:
-    Dimension() {
-      isIterative = false;
-      length = 0;
-      id = -1;
-    }
-    Dimension(const char *_name, size_t _length) {
-      isIterative = false;
-      length = _length;
-      name = (_name);
-      id = -1;
-    }
-    Dimension(const std::string &_name, size_t _length) {
-      isIterative = false;
-      length = _length;
-      name = (_name);
-      id = -1;
-    }
-    CT::string name;
+    Dimension();
+    Dimension(const char *_name, size_t _length);
+    Dimension(const std::string &_name, size_t _length);
+    std::string name;
     size_t length;
     bool isIterative;
     int id;
-    size_t getSize() { return length; }
-    void setSize(size_t _length) { length = _length; }
-    void setName(const char *value) { name = (value); }
-    CT::string getName() { return name; }
+    size_t getSize();
+    void setSize(size_t _length);
+    void setName(const std::string &value);
+    std::string getName();
     // Returns a new copy of this dimension
-    Dimension *clone() {
-      Dimension *newDim = new Dimension();
-      newDim->name = name.c_str();
-      newDim->length = length;
-      newDim->isIterative = isIterative;
-      newDim->id = id;
-      return newDim;
-    }
+    Dimension *clone();
   };
 } // namespace CDF
 

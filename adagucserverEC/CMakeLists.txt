@@ -24,6 +24,7 @@ add_library(
     CCairoPlotter.cpp
     CCairoPlotter.h
     CColor.h
+    CColor.cpp
     CConvertADAGUCPoint.cpp
     CConvertADAGUCPoint.h
     CConvertADAGUCVector.cpp
@@ -111,6 +112,7 @@ add_library(
     utils/GeometryUtils.h
     utils/GeometryUtils.cpp
     Types/LayerMetadataType.h
+    Types/LayerMetadataType.cpp
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
     GenericDataWarper/gdwDrawTriangle.cpp

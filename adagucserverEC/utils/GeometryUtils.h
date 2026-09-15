@@ -1,5 +1,4 @@
 #include <vector>
-#include "Types/GeoParameters.h"
 #include <CDataSource.h>
 #include <CImageWarper.h>
 

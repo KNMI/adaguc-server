@@ -1,5 +1,7 @@
 
 #include "GeometryUtils.h"
+#include "Types/GeoParameters.h"
+#include "CTString.h"
 
 f8point compute2DPolygonCentroid(const std::vector<f8point> &vertices) {
   f8point centroid = {0, 0};

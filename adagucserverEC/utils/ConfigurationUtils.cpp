@@ -6,6 +6,11 @@
 #include <ranges>
 #include <vector>
 #include <iostream>
+#include "CDataSource.h"
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvParam) {
   std::vector<std::string> datasetList;
@@ -28,21 +33,22 @@ std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvPara
 }
 
 // TODO: configure a list of possible extensions for adaguc at a central place
-bool checkIfPathIsFile(CT::string filePath) {
-  return (filePath.endsWith(".nc") || filePath.endsWith(".h5") || filePath.endsWith(".hdf5") || filePath.endsWith(".he5") || filePath.endsWith(".png") || filePath.endsWith(".csv") ||
-          filePath.endsWith(".geojson") || filePath.endsWith(".json") || filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("dodsc://"));
+bool checkIfPathIsFile(std::string filePath) {
+  return (CT::endsWith(filePath, ".nc") || CT::endsWith(filePath, ".h5") || CT::endsWith(filePath, ".hdf5") || CT::endsWith(filePath, ".he5") || CT::endsWith(filePath, ".png") ||
+          CT::endsWith(filePath, ".csv") || CT::endsWith(filePath, ".geojson") || CT::endsWith(filePath, ".json") || CT::startsWith(filePath, "http://") || CT::startsWith(filePath, "https://") ||
+          CT::startsWith(filePath, "dodsc://"));
 }
 
 void serverLogFunctionNothing(const char *) {}
 
 /* Set config file from environment variable ADAGUC_CONFIG */
-int setCRequestConfigFromEnvironment(CRequest *request, CT::string additionalDataset) {
+int setCRequestConfigFromEnvironment(CRequest *request, std::string additionalDataset) {
   char *configfile = getenv("ADAGUC_CONFIG");
   if (configfile != NULL) {
-    CT::string configWithAdditionalDataset = configfile;
+    std::string configWithAdditionalDataset = configfile;
     if (additionalDataset.empty() == false) {
-      configWithAdditionalDataset.concat(",");
-      configWithAdditionalDataset.concat(additionalDataset);
+      configWithAdditionalDataset += ",";
+      configWithAdditionalDataset += additionalDataset;
     }
 
 #ifdef MEASURETIME

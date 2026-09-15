@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  Utils for conversion HDF5 volume scan data to CDM
  * Author:   Mats Veldhuizen mats.veldhuizen "at" knmi.nl
- * Date:     2025-03-20
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,19 @@
 #include <tuple>
 #include <vector>
 #include "CConvertH5VolScanUtils.h"
+#include "CDataSource.h"
+#include "CImageWarper.h"
+#include "COGCDims.h"
 #include "CCDFHDF5IO.h"
+#include <string>
+#include "CCDFObject.h"
+#include "CTString.h"
 
-const CT::string scan_params_odim[] = {"CCORH", "CCORV", "CPAH", "CPAV", "KDP", "PHIDP", "RHOHV", "SQIH", "VRADH", "VRADV", "WRADH", "WRADV", "DBZH", "DBZV", "TH", "TV", "ZDR", "Height"};
-const CT::string units_odim[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "dBZ", "dBZ", "dB", "km"};
+const std::string scan_params_odim[] = {"CCORH", "CCORV", "CPAH", "CPAV", "KDP", "PHIDP", "RHOHV", "SQIH", "VRADH", "VRADV", "WRADH", "WRADV", "DBZH", "DBZV", "TH", "TV", "ZDR", "Height"};
+const std::string units_odim[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "dBZ", "dBZ", "dB", "km"};
 
-const CT::string scan_params_knmi[] = {"CCOR", "CCORv", "CPA", "CPAv", "KDP", "PhiDP", "RhoHV", "SQI", "V", "Vv", "W", "Wv", "Z", "Zv", "uPhiDP", "uZ", "uZv", "ZDR", "Height"};
-const CT::string units_knmi[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "deg", "dBZ", "dBZ", "dB", "km"};
+const std::string scan_params_knmi[] = {"CCOR", "CCORv", "CPA", "CPAv", "KDP", "PhiDP", "RhoHV", "SQI", "V", "Vv", "W", "Wv", "Z", "Zv", "uPhiDP", "uZ", "uZv", "ZDR", "Height"};
+const std::string units_knmi[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "deg", "dBZ", "dBZ", "dB", "km"};
 
 enum FileType { ODIM_H5, KNMI_H5 };
 
@@ -40,8 +46,8 @@ FileType checkH5VolScanType(CDFObject *cdfObject) {
   /* If ODIM file then don't handle as KNMI hdf5, for support of hybrid format */
   CDF::Attribute *conventionsAttr = cdfObject->getAttributeNE("Conventions");
   if (conventionsAttr != nullptr) {
-    CT::string conventionsString = conventionsAttr->toString();
-    if (conventionsString.startsWith("ODIM_H5")) {
+    std::string conventionsString = conventionsAttr->toString();
+    if (CT::startsWith(conventionsString, "ODIM_H5")) {
       return ODIM_H5;
     }
   }
@@ -53,8 +59,8 @@ int checkIfIsH5VolScan(CDFObject *cdfObject) {
     if (checkH5VolScanType(cdfObject) == ODIM_H5) {
       CDF::Variable *whatVar = cdfObject->getVariableThrows("what");
       CDF::Attribute *whatObjectAttr = whatVar->getAttributeThrows("object");
-      CT::string whatObjectString = whatObjectAttr->toString();
-      if (not whatObjectString.equals("SCAN") && not whatObjectString.equals("PVOL")) {
+      std::string whatObjectString = whatObjectAttr->toString();
+      if (whatObjectString != "SCAN" && whatObjectString != "PVOL") {
         CDBDebug("Is not a volume or scan dataset, skipping parsing as ODIM volume dataset");
         return 1;
       }
@@ -74,8 +80,8 @@ int checkIfIsH5VolScan(CDFObject *cdfObject) {
 
 std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObject, int scan) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-    CT::string scanVarWhereName;
-    scanVarWhereName.print("dataset%1d.where", scan);
+    std::string scanVarWhereName;
+    scanVarWhereName = CT::printf("dataset%1d.where", scan);
     CDF::Variable *scanVarWhere = cdfObject->getVariableNE(scanVarWhereName.c_str());
     if (scanVarWhere == nullptr) return std::make_tuple(-1.0, -1, -1.0, -1, -1.0);
     double scan_elevation;
@@ -89,8 +95,8 @@ std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObjec
     double scan_ascale = 360.0 / scan_nazim;
     return std::make_tuple(scan_elevation, scan_nrang, scan_rscale * 0.001, scan_nazim, scan_ascale);
   } else {
-    CT::string scanVarName;
-    scanVarName.print("scan%1d", scan);
+    std::string scanVarName;
+    scanVarName = CT::printf("scan%1d", scan);
     CDF::Variable *scanVar = cdfObject->getVariableNE(scanVarName.c_str());
     if (scanVar == nullptr) return std::make_tuple(-1.0, -1, -1.0, -1, -1.0);
     double scan_elevation;
@@ -125,12 +131,12 @@ std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject) {
   }
 }
 
-CT::string getRadarStartTime(CDFObject *cdfObject) {
+std::string getRadarStartTime(CDFObject *cdfObject) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-    CT::string h5Date = cdfObject->getVariableThrows("what")->getAttributeThrows("date")->toString();
-    CT::string h5Time = cdfObject->getVariableThrows("what")->getAttributeThrows("time")->toString();
-    CT::string timeString;
-    timeString.print("%sT%s00Z", h5Date.c_str(), h5Time.substring(0, 4).c_str());
+    std::string h5Date = cdfObject->getVariableThrows("what")->getAttributeThrows("date")->toString();
+    std::string h5Time = cdfObject->getVariableThrows("what")->getAttributeThrows("time")->toString();
+    std::string timeString;
+    timeString = CT::printf("%sT%s00Z", h5Date.c_str(), CT::substring(h5Time, 0, 4).c_str());
     return timeString;
   } else {
     auto timeString = knmiH5TimeToISOString(cdfObject->getVariableThrows("overview")->getAttributeThrows("product_datetime_start")->toString());
@@ -141,56 +147,56 @@ CT::string getRadarStartTime(CDFObject *cdfObject) {
   }
 }
 
-std::vector<CT::string> getScanParams(CDFObject *cdfObject) {
+std::vector<std::string> getScanParams(CDFObject *cdfObject) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-    return std::vector<CT::string>(std::begin(scan_params_odim), std::end(scan_params_odim));
+    return std::vector<std::string>(std::begin(scan_params_odim), std::end(scan_params_odim));
   } else {
-    return std::vector<CT::string>(std::begin(scan_params_knmi), std::end(scan_params_knmi));
+    return std::vector<std::string>(std::begin(scan_params_knmi), std::end(scan_params_knmi));
   }
 }
 
-std::vector<CT::string> getUnits(CDFObject *cdfObject) {
+std::vector<std::string> getUnits(CDFObject *cdfObject) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-    return std::vector<CT::string>(std::begin(units_odim), std::end(units_odim));
+    return std::vector<std::string>(std::begin(units_odim), std::end(units_odim));
   } else {
-    return std::vector<CT::string>(std::begin(units_knmi), std::end(units_knmi));
+    return std::vector<std::string>(std::begin(units_knmi), std::end(units_knmi));
   }
 }
 
-int findOdimParamNum(CDFObject *cdfObject, int scan, CT::string param) {
+int findOdimParamNum(CDFObject *cdfObject, int scan, std::string param) {
   /* Assume no more than 99 params */
   for (int paramNum = 1; paramNum < 100; paramNum++) {
-    CT::string dataWhatVarName;
-    dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
+    std::string dataWhatVarName;
+    dataWhatVarName = CT::printf("dataset%1d.data%1d.what", scan, paramNum);
     CDF::Variable *dataWhatVar = cdfObject->getVariableNE(dataWhatVarName.c_str());
     if (dataWhatVar == nullptr) break;
-    CT::string quantity = dataWhatVar->getAttributeThrows("quantity")->toString();
-    if (quantity.equals(param)) return paramNum;
+    std::string quantity = dataWhatVar->getAttributeThrows("quantity")->toString();
+    if (quantity == param) return paramNum;
   }
   return -1;
 }
 
-bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string param) {
+bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, std::string param) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
     int paramNum = findOdimParamNum(cdfObject, sorted_scans[0], param);
-    if (paramNum == -1 && !param.equals("Height")) {
-      if (!param.equals("ZDR")) return false;
-      int paramNumDBZV = findOdimParamNum(cdfObject, sorted_scans[0], CT::string("DBZV"));
-      int paramNumDBZH = findOdimParamNum(cdfObject, sorted_scans[0], CT::string("DBZH"));
+    if (paramNum == -1 && param != "Height") {
+      if (param != "ZDR") return false;
+      int paramNumDBZV = findOdimParamNum(cdfObject, sorted_scans[0], std::string("DBZV"));
+      int paramNumDBZH = findOdimParamNum(cdfObject, sorted_scans[0], std::string("DBZH"));
       if (paramNumDBZV == -1 || paramNumDBZH == -1) return false;
     }
     return true;
   } else {
-    CT::string dataVarName;
-    dataVarName.print("scan%1d.scan_%s_data", sorted_scans[0], param.c_str());
+    std::string dataVarName;
+    dataVarName = CT::printf("scan%1d.scan_%s_data", sorted_scans[0], param.c_str());
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
-    if (dataVar == nullptr && !param.equals("Height")) {
-      if (!param.equals("ZDR")) return false;
-      CT::string dataDBZVName;
-      dataDBZVName.print("scan%1d.scan_Zv_data", sorted_scans[0]);
+    if (dataVar == nullptr && param != "Height") {
+      if (param != "ZDR") return false;
+      std::string dataDBZVName;
+      dataDBZVName = CT::printf("scan%1d.scan_Zv_data", sorted_scans[0]);
       CDF::Variable *dataDBZV = cdfObject->getVariableNE(dataDBZVName.c_str());
-      CT::string dataDBZHName;
-      dataDBZHName.print("scan%1d.scan_Z_data", sorted_scans[0]);
+      std::string dataDBZHName;
+      dataDBZHName = CT::printf("scan%1d.scan_Z_data", sorted_scans[0]);
       CDF::Variable *dataDBZH = cdfObject->getVariableNE(dataDBZHName.c_str());
       if (dataDBZV == nullptr || dataDBZH == nullptr) return false;
     }
@@ -198,30 +204,30 @@ bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string pa
   }
 }
 
-CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string param) {
+CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, std::string param) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
     int paramNum = findOdimParamNum(cdfObject, scan, param);
     if (paramNum == -1) return nullptr;
-    CT::string dataVarName;
-    dataVarName.print("dataset%1d.data%1d.data", scan, paramNum);
+    std::string dataVarName;
+    dataVarName = CT::printf("dataset%1d.data%1d.data", scan, paramNum);
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
     return dataVar;
   } else {
-    if (param.equals("DBZH")) param = CT::string("Z");
-    if (param.equals("DBZV")) param = CT::string("Zv");
-    CT::string dataVarName;
-    dataVarName.print("scan%1d.scan_%s_data", scan, param.c_str());
+    if (param == "DBZH") param = std::string("Z");
+    if (param == "DBZV") param = std::string("Zv");
+    std::string dataVarName;
+    dataVarName = CT::printf("scan%1d.scan_%s_data", scan, param.c_str());
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
     return dataVar;
   }
 }
 
-std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, CT::string param) {
+std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, std::string param) {
   /* Use doubles here so that the most integer values can be represented exactly */
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
     int paramNum = findOdimParamNum(cdfObject, scan, param);
-    CT::string dataWhatVarName;
-    dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
+    std::string dataWhatVarName;
+    dataWhatVarName = CT::printf("dataset%1d.data%1d.what", scan, paramNum);
     CDF::Variable *dataWhatVar = cdfObject->getVariableThrows(dataWhatVarName.c_str());
     double gain;
     double offset;
@@ -247,22 +253,22 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
     }
     return std::make_tuple(gain, offset, undetect, nodata);
   } else {
-    if (param.equals("DBZH")) param = CT::string("Z");
-    if (param.equals("DBZV")) param = CT::string("Zv");
-    CT::string scanCalibrationVarName;
-    scanCalibrationVarName.print("scan%1d.calibration", scan);
+    if (param == "DBZH") param = std::string("Z");
+    if (param == "DBZV") param = std::string("Zv");
+    std::string scanCalibrationVarName;
+    scanCalibrationVarName = CT::printf("scan%1d.calibration", scan);
     CDF::Variable *scanCalibrationVar = cdfObject->getVariableThrows(scanCalibrationVarName);
-    CT::string componentCalibrationStringName;
-    componentCalibrationStringName.print("calibration_%s_formulas", param.c_str());
-    CT::string formula = scanCalibrationVar->getAttributeThrows(componentCalibrationStringName.c_str())->toString();
-    int rightPartFormulaPos = formula.indexOf("=");
-    int multiplicationSignPos = formula.indexOf("*");
-    int additionSignPos = formula.indexOf("+");
+    std::string componentCalibrationStringName;
+    componentCalibrationStringName = CT::printf("calibration_%s_formulas", param.c_str());
+    std::string formula = scanCalibrationVar->getAttributeThrows(componentCalibrationStringName.c_str())->toString();
+    int rightPartFormulaPos = CT::indexOf(formula, "=");
+    int multiplicationSignPos = CT::indexOf(formula, "*");
+    int additionSignPos = CT::indexOf(formula, "+");
     double gain;
     double offset;
     if (rightPartFormulaPos != -1 && multiplicationSignPos != -1 && additionSignPos != -1) {
-      gain = formula.substring(rightPartFormulaPos + 1, multiplicationSignPos).trim().toDouble();
-      offset = formula.substring(additionSignPos + 1, formula.length()).trim().toDouble();
+      gain = CT::toDouble(CT::trim(CT::substring(formula, rightPartFormulaPos + 1, multiplicationSignPos)));
+      offset = CT::toDouble(CT::trim(CT::substring(formula, additionSignPos + 1, formula.length())));
     } else {
       CDBDebug("Using default gain/offset");
       gain = 1.0;

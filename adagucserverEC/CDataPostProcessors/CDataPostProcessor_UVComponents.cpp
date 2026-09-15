@@ -3,6 +3,10 @@
 #include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 #include <CImgRenderFieldVectors.h>
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 /************************/
 /*      CDDPUVComponents  */
@@ -25,7 +29,7 @@ void adjustCDFModel(CDataSource *dataSource) {
 
   auto cdfObject = dataSource->getDataObject(0)->cdfObject;
   auto globAttr = cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID);
-  if (globAttr != nullptr && (globAttr->toString().equals("metadata") || globAttr->toString().equals("applied"))) {
+  if (globAttr != nullptr && (globAttr->toString() == "metadata" || globAttr->toString() == "applied")) {
     return;
   }
 
@@ -79,7 +83,6 @@ void adjustCDFModel(CDataSource *dataSource) {
 
 void addDataObject(CDataSource *dataSource) {
   if (dataSource->getNumDataObjects() == 6) {
-    // CDBDebug("DataSource has already 6 dataObjects. Skipping further.");
     return;
   }
 

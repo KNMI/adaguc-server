@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2020-12-09
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 #define CImgWarpHillShaded_H
 #include <cstdlib>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
-#include "utils.h"
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
 public:

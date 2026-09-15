@@ -3,6 +3,10 @@
 #include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 #include <CImgRenderFieldVectors.h>
+#include "CDrawImage.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
 
 /************************/
 /*      CDDPMETADATA_VARIABLE  */
@@ -54,3 +58,5 @@ int CDDPMetadataVariable::execute(CServerConfig::XMLE_DataPostProc *proc, CDataS
   }
   return 0;
 }
+
+int CDDPMetadataVariable::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) { return 0; }

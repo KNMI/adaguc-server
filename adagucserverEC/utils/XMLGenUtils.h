@@ -23,7 +23,7 @@ bool compareDim(const LayerMetadataDim &p1, const LayerMetadataDim &p2);
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDb);
 int getTitleForLayer(MetadataLayer *metadataLayer);
 int getFileNameForLayer(MetadataLayer *metadataLayer);
-bool multiTypeSort(const CT::string &a, const CT::string &b);
+bool multiTypeSort(const std::string &a, const std::string &b);
 int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList);
 
 std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList, size_t limit = 5);

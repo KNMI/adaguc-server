@@ -1,4 +1,14 @@
 #include "CCreateLegend.h"
+#include "Definitions.h"
+#include "CStopWatch.h"
+#include "CDebugger.h"
+#include "CImageWarper.h"
+#include "CTString.h"
+#include "CXMLParser.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+
+static const bool CIMAGEDATAWRITER_DEBUG = false;
+
 #include "CCreateLegendRenderDiscreteLegend.cpp"
 #include "CCreateLegendRenderContinuousLegend.cpp"
 #include "CDataReader.h"
@@ -10,9 +20,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 }
 
 int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage, bool rotate) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("createLegend");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("createLegend");
+  }
 
   if (dataSource->cfgLayer != NULL) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -80,14 +90,14 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 
   if (!dataSource->getFileName().empty()) {
     if (estimateMinMax) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
+      }
       status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
     } else {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Opening CNETCDFREADER_MODE_OPEN_HEADER");
-#endif
+      if (CIMAGEDATAWRITER_DEBUG) {
+        CDBDebug("Opening CNETCDFREADER_MODE_OPEN_HEADER");
+      }
       status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     }
 
@@ -97,14 +107,14 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   } else {
     estimateMinMax = false;
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("createLegend without any file information");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("createLegend without any file information");
+    }
   }
-//}
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Determine legendtype");
-#endif
+  //}
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("Determine legendtype");
+  }
 
   // Determine legendtype.
   if (dataSource->getDataObject(0)->hasStatusFlag) {
@@ -151,11 +161,10 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 
   // Create a legend based on status flags.
   if (legendType == statusflag) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("legendtype statusflag");
-#endif
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("legendtype statusflag");
+    }
     int dH = 30;
-    // cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
     float cbW = 20; // legendWidth/8;
     float cbH = legendHeight - 13 - 13 - 30;
 
@@ -189,8 +198,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
       }
 
       std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(0)->statusFlagList, value);
-      CT::string legendMessage;
-      legendMessage.print("%d) %s", (int)value, flagMeaning.c_str());
+      std::string legendMessage;
+      legendMessage = CT::printf("%d) %s", (int)value, flagMeaning.c_str());
       legendImage->setText(legendMessage.c_str(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, 248);
     }
   }
@@ -211,9 +220,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 
   reader.close();
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("cropping");
-#endif
+  if (CIMAGEDATAWRITER_DEBUG) {
+    CDBDebug("cropping");
+  }
 
   double scaling = dataSource->getScaling();
 

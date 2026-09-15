@@ -1,6 +1,9 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataReader.h"
 #include <algorithm>
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPAddFeatures     */
@@ -19,8 +22,6 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    //    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
-    //    dataSource->getDataObject(0)->overruledUnits=("mm/hr");
     try {
       if (dataSource->getDataObject(0)->cdfVariable->getAttributeThrows("ADAGUC_GEOJSONPOINT")) return 0;
     } catch (int a) {
@@ -61,7 +62,6 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     CDataReader reader;
     CDBDebug("Opening %s", featureDataSource.getFileName().c_str());
     int status = reader.open(&featureDataSource, CNETCDFREADER_MODE_OPEN_ALL);
-    //   CDBDebug("fds: %s", CDF::dump(featureDataSource.getDataObject(0)->cdfObject).c_str());
 
     if (status != 0) {
       CDBDebug("Can't open file %s", proc->attr.a.c_str());
@@ -72,7 +72,6 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       if (fvar == NULL) {
         CDBDebug("featureids not found");
       } else {
-        //       CDBDebug("featureids found %d %d", fvar->getType(), fvar->dimensionlinks[0]->getSize());
         size_t start = 0;
         nrFeatures = fvar->dimensionlinks[0]->getSize();
         ptrdiff_t stride = 1;
@@ -130,4 +129,9 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     }
   }
   return 0;
+}
+
+int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

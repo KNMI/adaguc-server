@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,13 @@
  ******************************************************************************/
 
 #include "CDFObjectStore.h"
+#include "CDebugger.h"
+#include "CStopWatch.h"
+#include "CCDFDataModel.h"
+#include "CCDFNetCDFIO.h"
+#include "CCDFHDF5IO.h"
+#include "CCDFGeoJSONIO.h"
+#include "CCDFPNGIO.h"
 
 #include <algorithm>
 #include "CConvertASCAT.h"
@@ -41,7 +48,10 @@
 #include "CConvertLatLonBnds.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
-// #define CDFOBJECTSTORE_DEBUG
+#include "CCDFReader.h"
+#include "CDataSource.h"
+#include "CTString.h"
+static const bool CDFOBJECTSTORE_DEBUG = false;
 #define MAX_OPEN_FILES 500
 
 CDFObjectStore *_cdfObjectStore = nullptr;
@@ -53,16 +63,14 @@ bool EXTRACT_HDF_NC_VERBOSE = false;
  */
 CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fileName) {
   // Do we have a datareader defined in the configuration file?
-  // if(cdfReader !=NULL){delete cdfReader;cdfReader = NULL;}
   CDFReader *cdfReader = NULL;
 
-  // CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->DataReader.size() > 0) {
       if (dataSource->cfgLayer->DataReader[0]->elementValue == ("HDF5")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating HDF5 reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating HDF5 reader");
+        }
         cdfReader = new CDFHDF5Reader();
         CDFHDF5Reader *hdf5Reader = (CDFHDF5Reader *)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
@@ -72,19 +80,19 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
           }
         }
       } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("GEOJSON")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating GEOJSON reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating GEOJSON reader");
+        }
         cdfReader = new CDFGeoJSONReader();
       } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("PNG")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating PNG reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating PNG reader");
+        }
         cdfReader = new CDFPNGReader();
       } else if (dataSource->cfgLayer->DataReader[0]->elementValue == ("CSV")) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Creating CSV reader");
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Creating CSV reader");
+        }
         cdfReader = new CDFCSVReader();
       }
     } else {
@@ -93,9 +101,9 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
   }
   // Defaults to the netcdf reader
   if (cdfReader == NULL) {
-#ifdef CDFOBJECTSTORE_DEBUG
-    CDBDebug("Creating NetCDF reader");
-#endif
+    if (CDFOBJECTSTORE_DEBUG) {
+      CDBDebug("Creating NetCDF reader");
+    }
     cdfReader = new CDFNetCDFReader();
   }
   return cdfReader;
@@ -195,9 +203,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   if (cached) {
     for (size_t j = 0; j < fileNames.size(); j++) {
       if (fileNames[j] == uniqueIDForFile) {
-#ifdef CDFOBJECTSTORE_DEBUG
-        CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
-#endif
+        if (CDFOBJECTSTORE_DEBUG) {
+          CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
+        }
         return cdfObjects[j];
       }
     }
@@ -205,14 +213,14 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   if (cdfObjects.size() > MAX_OPEN_FILES) {
     deleteCDFObject(fileNames[0]);
   }
-#ifdef CDFOBJECTSTORE_DEBUG
-  CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
-#endif
+  if (CDFOBJECTSTORE_DEBUG) {
+    CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
+  }
 
-// Open the object.
-#ifdef CDFOBJECTSTORE_DEBUG
-  CDBDebug("Opening %s", fileName);
-#endif
+  // Open the object.
+  if (CDFOBJECTSTORE_DEBUG) {
+    CDBDebug("Opening %s", fileName);
+  }
 
   // Open header
 
@@ -257,7 +265,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     if (dataSource->cfgLayer) {
       // Apply NCML file to the datamodel */
       if (dataSource->cfgLayer->FilePath.size() == 1) {
-        CT::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
+        std::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
         if (!ncmlFileName.empty()) {
           CDBDebug("NCML: Applying NCML file %s", ncmlFileName.c_str());
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
@@ -266,9 +274,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
         for (auto *cfgVar: dataSource->cfgLayer->Variable) {
-#ifdef CDFOBJECTSTORE_DEBUG
-          CDBDebug("Checking variable %s", cfgVar->value.c_str());
-#endif
+          if (CDFOBJECTSTORE_DEBUG) {
+            CDBDebug("Checking variable %s", cfgVar->elementValue.c_str());
+          }
           // Rename variable, if requested
           if (!cfgVar->attr.orgname.empty()) {
             CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
@@ -287,7 +295,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     }
   }
 
-  // CDBDebug("opened");
   if (status != 0) {
     // TODO in case of basic/digest authentication, username and password is currently also listed....
     CDBError("Unable to open file '%s'", fileLocationToOpen);
@@ -296,7 +303,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     return NULL;
   }
 
-  // CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   // Push everything into the store
   if (cached) {
     fileNames.push_back(uniqueIDForFile);
@@ -420,16 +426,16 @@ void CDFObjectStore::clear() {
   cdfObjects.clear();
 }
 
-std::vector<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject) {
-  std::vector<CT::string> variableList;
+std::vector<std::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject) {
+  std::vector<std::string> variableList;
 
   if (cdfObject != NULL) {
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
       if (cdfObject->variables[j]->dimensionlinks.size() >= 2) {
         if (cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP") == NULL) {
-          if (!cdfObject->variables[j]->name.equals("lon") && !cdfObject->variables[j]->name.equals("lat") && !cdfObject->variables[j]->name.equals("lon_bounds") &&
-              !cdfObject->variables[j]->name.equals("lat_bounds") && !cdfObject->variables[j]->name.equals("time_bounds") && !cdfObject->variables[j]->name.equals("lon_bnds") &&
-              !cdfObject->variables[j]->name.equals("lat_bnds") && !cdfObject->variables[j]->name.equals("time_bnds") && !cdfObject->variables[j]->name.equals("time")) {
+          if (cdfObject->variables[j]->name != "lon" && cdfObject->variables[j]->name != "lat" && cdfObject->variables[j]->name != "lon_bounds" && cdfObject->variables[j]->name != "lat_bounds" &&
+              cdfObject->variables[j]->name != "time_bounds" && cdfObject->variables[j]->name != "lon_bnds" && cdfObject->variables[j]->name != "lat_bnds" &&
+              cdfObject->variables[j]->name != "time_bnds" && cdfObject->variables[j]->name != "time") {
             variableList.push_back(cdfObject->variables[j]->name.c_str());
           }
         }

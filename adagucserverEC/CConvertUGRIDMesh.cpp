@@ -2,12 +2,12 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CCDFObject.h"
+#include "CDebugger.h"
+#include "CTString.h"
+
+static const bool CCONVERTADAGUCPOINT_DEBUG = false;
+static const bool CCONVERTUGRIDMESH_DEBUG = false;
 
 #define CCONVERTUGRIDMESH_NODATA -32000
 
@@ -49,7 +55,6 @@ void line(float *imagedata, int w, int h, float x1, float y1, float x2, float y2
   if (xyIsSwapped == 0) {
 
     for (int x = int(x1); x < x2; x++) {
-      //         plot(x,int(y),1);
       if (y >= 0 && y < h && x >= 0 && x < w) imagedata[int(x) + int(y) * w] = value;
       y += gradient;
     }
@@ -219,14 +224,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   }
 
   // Make a list of variables which will be available as 2D fields
-  std::vector<CT::string> varsToConvert;
+  std::vector<std::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->name.equals("mesh")) {
-        varsToConvert.push_back(CT::string(var->name.c_str()));
+      if (var->name == "mesh") {
+        varsToConvert.push_back(std::string(var->name.c_str()));
       }
-      // CDBDebug("%s",var->name.c_str());
       var->setAttributeText("ADAGUC_SKIP", "true");
     }
   }
@@ -235,9 +239,9 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *meshVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Converting %s", meshVar->name.c_str());
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("Converting %s", meshVar->name.c_str());
+    }
 
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
@@ -247,7 +251,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
 
     new2DVar->setType(meshVar->getType());
     new2DVar->name = meshVar->name.c_str();
-    meshVar->name.concat("_backup");
+    meshVar->name += "_backup";
 
     // Copy variable attributes
     for (size_t j = 0; j < meshVar->attributes.size(); j++) {
@@ -275,9 +279,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
-  //   #ifdef CCONVERTUGRIDMESH_DEBUG
-  //   CDBDebug("convertUGRIDMeshData");
-  //   #endif
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really an ugrid file
   try {
@@ -295,8 +296,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   new2DVar = dataObjects[0]->cdfVariable;
 
   CDF::Variable *meshVar;
-  CT::string origMeshName = new2DVar->name.c_str();
-  origMeshName.concat("_backup");
+  std::string origMeshName = new2DVar->name.c_str();
+  origMeshName += "_backup";
   meshVar = cdfObject->getVariableNE(origMeshName.c_str());
   if (meshVar == NULL) {
     CDBError("Unable to find orignal mesh variable with name %s", origMeshName.c_str());
@@ -314,7 +315,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   }
 
   // Read original data first
-  //   meshVar->readData(CDF_FLOAT,true);
   meshLon->readData(CDF_FLOAT, true);
   meshLat->readData(CDF_FLOAT, true);
 
@@ -338,19 +338,19 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   if (fillValue != NULL) {
     dataObjects[0]->hasNodataValue = true;
     fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
-#ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
-#endif
+    if (CCONVERTADAGUCPOINT_DEBUG) {
+      CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
+    }
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("convertUGRIDMeshData OPEN ALL");
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("convertUGRIDMeshData OPEN ALL");
+    }
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Drawing %s", new2DVar->name.c_str());
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("Drawing %s", new2DVar->name.c_str());
+    }
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -398,34 +398,18 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     size_t numMeshPoints = meshLon->getSize();
 
     CImageWarper imageWarper;
-    //     bool projectionRequired=false;
-    //     if(dataSource->srvParams->geoParams.CRS.length()>0){
-    //       projectionRequired=true;
-    //       new2DVar->setAttributeText("grid_mapping","customgridprojection");
-    //       if(cdfObject->getVariableNE("customgridprojection")==NULL){
-    //         CDF::Variable *projectionVar = new CDF::Variable();
-    //         projectionVar->name= ("customgridprojection");
-    //         cdfObject->addVariable(projectionVar);
-    //         dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
-    //         imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
-    //         if(dataSource->nativeProj4.length()==0){
-    //           dataSource->nativeProj4=LATLONPROJECTION;
-    //           dataSource->nativeEPSG="EPSG:4326";
-    //           projectionRequired=false;
     //         }
-    //         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
     //       }
     //     }
     //
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
-             dataSource->srvParams->geoParams.bbox.top);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
+    if (CCONVERTUGRIDMESH_DEBUG) {
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+               dataSource->srvParams->geoParams.bbox.top);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+    }
 
-    // if(projectionRequired){
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to init projection");
@@ -433,7 +417,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     }
     // }
     bool projectionRequired = imageWarper.isProjectionRequired();
-    //     int polyCorners = 5;
     float *projectedX = new float[numMeshPoints]; //={10,100,40,110,20,10};
     float *projectedY = new float[numMeshPoints]; //={10,20,40,100,110,10};
 
@@ -502,7 +485,6 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
       }
       polyX[numPoints] = polyX[0];
       polyY[numPoints++] = polyY[0];
-      // drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
       drawlines(sdata, dataSource->dWidth, dataSource->dHeight, numPoints, polyX, polyY, 0);
       numPoints = 0;
     }

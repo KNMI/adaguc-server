@@ -2,6 +2,17 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <CImageOperators/smoothRasterField.h>
+#include "CColor.h"
+#include "CDrawImage.h"
+#include "CCDFObject.h"
+#include "CCDFTypes.h"
+#include "CDataSource.h"
+#include "CGenericDataWarper.h"
+#include "CImageWarper.h"
+#include "CServerConfig_CPPXSD.h"
+#include "CTString.h"
+#include "Types/CPointTypes.h"
+#include "Types/GeoParameters.h"
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
   GDWDrawFunctionSettings settings;
@@ -71,7 +82,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
       } else {
         settings.intervals.reserve(numShadeDefs);
         for (const auto &shadeInterval : styleConfiguration->shadeIntervals) {
-          settings.intervals.push_back(Interval({.min = atof(shadeInterval.attr.min.c_str()), .max = atof(shadeInterval.attr.max.c_str()), .color = CColor(shadeInterval.attr.fillcolor.c_str())}));
+          settings.intervals.push_back(Interval({.min = shadeInterval.attr.min, .max = shadeInterval.attr.max, .color = CColor(shadeInterval.attr.fillcolor.c_str())}));
         }
         // Sort shaded intervals on min value
         std::sort(settings.intervals.begin(), settings.intervals.end(), [](const Interval &left, const Interval &right) { return left.min < right.min; });

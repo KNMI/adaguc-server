@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
@@ -143,6 +144,32 @@ def test_collections(client: TestClient):
             "label": "extra_metadata",
         },
     }
+
+
+def test_hrefs(client: TestClient):
+    """Test if all hrefs from a collection don't return 404"""
+    resp = client.get("/edr/collections")
+    collection = next((c for c in resp.json()["collections"] if c["id"] == "adaguc.tests.arcus_uwcw.hagl_member"))
+
+    # collect all urls
+    urls = [links["href"] for links in collection["links"]]
+    urls += [query["link"]["href"] for query in collection["data_queries"].values()]
+
+    # make unique, and remove base urls.
+    urls = sorted(set(urls))
+    urls = [urlsplit(url).path for url in urls]
+
+    assert urls == [
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/cube",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/locations",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/position",
+    ]
+
+    for url in urls:
+        resp = client.get(url)
+        assert resp.status_code != 404
 
 
 def test_coll_multi_dim_position_single_coverage(client: TestClient):

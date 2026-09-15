@@ -2,12 +2,12 @@
  *
  * Project:  CTime
  * Purpose:  Date Time functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,26 @@
 #include <sys/time.h>
 #include <cmath>
 #include <algorithm>
+#include <cstring>
 
-std::map<CT::string, CTime *> CTime::CTimeInstances;
+#define CTIME_CONVERSION_ERROR 1
+
+#define CTIME_MODE_UTCALENDAR 0
+#define CTIME_MODE_YYYYMM 1
+#define CTIME_MODE_YYYYMMDD_NUMBER 2
+#define CTIME_MODE_365day 3
+#define CTIME_MODE_360day 4
+
+#define CTIME_UNITTYPE_SECONDS 1
+#define CTIME_UNITTYPE_MINUTES 2
+#define CTIME_UNITTYPE_HOURS 3
+#define CTIME_UNITTYPE_DAYS 4
+#define CTIME_UNITTYPE_MONTHS 5
+#define CTIME_UNITTYPE_YEARS 6
+
+#define CTIME_EPOCH_UNITS "seconds since 1970-01-01 0:0:0"
+
+std::map<std::string, CTime *> CTime::CTimeInstances;
 
 CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
   if (timeVariable == nullptr) {
@@ -41,19 +59,19 @@ CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
     CDBError("No time units available for dimension %s", timeVariable->name.c_str());
     return nullptr;
   }
-  CT::string units = unitsAttr->toString();
+  std::string units = unitsAttr->toString();
   if (units.length() == 0) {
     CDBError("No units data available for dimension %s", timeVariable->name.c_str());
     return NULL;
   }
-  CT::string calendar;
+  std::string calendar;
   auto calendarAttr = timeVariable->getAttributeNE("calendar");
   if (calendarAttr != nullptr && calendarAttr->data != nullptr) {
     calendar = calendarAttr->toString();
   }
-  CT::string key = units + CT::string("_") + calendar;
+  std::string key = units + std::string("_") + calendar;
 
-  std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(key);
+  std::map<std::string, CTime *>::iterator it = CTimeInstances.find(key);
   if (it != CTimeInstances.end()) {
     return it->second;
   } else {
@@ -62,14 +80,14 @@ CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
       CDBError("Unable to initialize CTime");
       return NULL;
     }
-    CTimeInstances.insert(std::pair<CT::string, CTime *>(key, ctime));
+    CTimeInstances.insert(std::pair<std::string, CTime *>(key, ctime));
     return ctime;
   }
 }
 
 CTime *CTime::GetCTimeEpochInstance() {
-  CT::string timeUnits = CTIME_EPOCH_UNITS;
-  std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(timeUnits);
+  std::string timeUnits = CTIME_EPOCH_UNITS;
+  std::map<std::string, CTime *>::iterator it = CTimeInstances.find(timeUnits);
   if (it != CTimeInstances.end()) {
     return it->second;
   }
@@ -78,12 +96,12 @@ CTime *CTime::GetCTimeEpochInstance() {
     CDBError("Unable to initialize CTime");
     return NULL;
   }
-  CTimeInstances.insert(std::pair<CT::string, CTime *>(timeUnits, ctime));
+  CTimeInstances.insert(std::pair<std::string, CTime *>(timeUnits, ctime));
   return ctime;
 }
 
 void CTime::cleanInstances() {
-  for (std::map<CT::string, CTime *>::iterator it = CTimeInstances.begin(); it != CTimeInstances.end(); ++it) {
+  for (std::map<std::string, CTime *>::iterator it = CTimeInstances.begin(); it != CTimeInstances.end(); ++it) {
     delete it->second;
   }
   CTime::CTimeInstances.clear();
@@ -95,11 +113,6 @@ int CTime::CTIME_CALENDARTYPE_360day_MonthsCumul[] = {0, 30, 60, 90, 120, 150, 1
 int CTime::CTIME_CALENDARTYPE_365day_Months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 int CTime::CTIME_CALENDARTYPE_365day_MonthsCumul[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
 
-void CTime::safestrcpy(char *s1, const char *s2, size_t size_s1) {
-  strncpy(s1, s2, size_s1);
-  s1[size_s1] = '\0';
-}
-
 CTime::CTime() {
   isInitialized = false;
   currentUnit = "";
@@ -108,8 +121,10 @@ CTime::CTime() {
 }
 CTime::~CTime() { reset(); }
 
-CT::string CTime::getErrorMessage(int CTimeParserException) {
-  CT::string message = "Unknown error";
+int CTime::getMode() { return mode; }
+
+std::string CTime::getErrorMessage(int CTimeParserException) {
+  std::string message = "Unknown error";
   if (CTimeParserException == CTIME_CONVERSION_ERROR) message = "CTIME_CONVERSION_ERROR";
   return message;
 }
@@ -128,7 +143,7 @@ int CTime::init(CDF::Variable *timeVariable) {
     CDBError("CTime::init: Given timeVariable == NULL");
     return 1;
   }
-  CT::string units, calendar;
+  std::string units, calendar;
 
   CDF::Attribute *unitsAttr = timeVariable->getAttributeNE("units");
   CDF::Attribute *calendarAttr = timeVariable->getAttributeNE("calendar");
@@ -153,7 +168,6 @@ int CTime::init(CDF::Variable *timeVariable) {
   if (calendarAttr != NULL) {
     if (calendarAttr->data != NULL) {
       calendar = calendarAttr->toString();
-      // CDBDebug("Found calendar %s",calendar.c_str());
     }
   }
 
@@ -162,7 +176,7 @@ int CTime::init(CDF::Variable *timeVariable) {
 
 int CTime::init(std::string units, std::string calendar) {
   if (isInitialized) {
-    if (!currentUnit.equals(units)) {
+    if (currentUnit != units) {
       if (mode == CTIME_MODE_360day) {
         CDBError("CTIME_MODE_360day: already initialized with %s", currentUnit.c_str());
       }
@@ -193,13 +207,13 @@ int CTime::init(std::string units, std::string calendar) {
   bool parseTimeUnitsMySelf = false;
 
   if (currentCalendar.length() > 0) {
-    if (currentCalendar.equals("360days") || currentCalendar.equals("360_day")) {
+    if (currentCalendar == "360days" || currentCalendar == "360_day") {
       // Mode is 360day
       mode = CTIME_MODE_360day;
       parseTimeUnitsMySelf = true;
       CDBDebug("360day calendar with units %s", currentUnit.c_str());
     }
-    if (currentCalendar.equals("365days") || currentCalendar.equals("365_day") || currentCalendar.equals("noleap") || currentCalendar.equals("no_leap")) {
+    if (currentCalendar == "365days" || currentCalendar == "365_day" || currentCalendar == "noleap" || currentCalendar == "no_leap") {
       // Mode is 365day  || noleap
       mode = CTIME_MODE_365day;
       parseTimeUnitsMySelf = true;
@@ -208,10 +222,10 @@ int CTime::init(std::string units, std::string calendar) {
   }
   if (parseTimeUnitsMySelf) {
     // Eg parse "days since 1949-12-01 00:00:00"
-    CT::string YYYYMMDDPart;
-    CT::string HHMMSSPart;
+    std::string YYYYMMDDPart;
+    std::string HHMMSSPart;
 
-    auto timeItems = currentUnit.split(" ");
+    auto timeItems = CT::split(currentUnit, " ");
 
     bool hasError = false;
     try {
@@ -219,29 +233,29 @@ int CTime::init(std::string units, std::string calendar) {
         CDBError("timeItems length <3 for %s", currentUnit.c_str());
         throw(__LINE__);
       }
-      if (timeItems[1].equals("since") == false) {
+      if (timeItems[1] != "since") {
         CDBError("timeItems is missing since for %s", currentUnit.c_str());
         throw(__LINE__);
       }
 
       int unitType = -1;
       // Determine unit type (days since, hours since)
-      if (timeItems[0].equals("seconds")) {
+      if (timeItems[0] == "seconds") {
         unitType = CTIME_UNITTYPE_SECONDS;
       }
-      if (timeItems[0].equals("minutes")) {
+      if (timeItems[0] == "minutes") {
         unitType = CTIME_UNITTYPE_MINUTES;
       }
-      if (timeItems[0].equals("hours")) {
+      if (timeItems[0] == "hours") {
         unitType = CTIME_UNITTYPE_HOURS;
       }
-      if (timeItems[0].equals("days")) {
+      if (timeItems[0] == "days") {
         unitType = CTIME_UNITTYPE_DAYS;
       }
-      if (timeItems[0].equals("months")) {
+      if (timeItems[0] == "months") {
         unitType = CTIME_UNITTYPE_MONTHS;
       }
-      if (timeItems[0].equals("years")) {
+      if (timeItems[0] == "years") {
         unitType = CTIME_UNITTYPE_YEARS;
       }
 
@@ -261,27 +275,27 @@ int CTime::init(std::string units, std::string calendar) {
       // Determince the since part, e.g. 1949-12-01 00:00:00
       YYYYMMDDPart = timeItems[2].c_str();
 
-      auto YYYYMMDDPartSplitted = YYYYMMDDPart.split("-");
+      auto YYYYMMDDPartSplitted = CT::split(YYYYMMDDPart, "-");
 
       if (YYYYMMDDPartSplitted.size() != 3) {
         CDBError("YYYYMMDD part is incorrect [%s]", YYYYMMDDPart.c_str());
         hasError = true;
       } else {
-        timeUnits.date.year = YYYYMMDDPartSplitted[0].toInt();
-        timeUnits.date.month = YYYYMMDDPartSplitted[1].toInt();
-        timeUnits.date.day = YYYYMMDDPartSplitted[2].toInt();
+        timeUnits.date.year = atoi(YYYYMMDDPartSplitted[0].c_str());
+        timeUnits.date.month = atoi(YYYYMMDDPartSplitted[1].c_str());
+        timeUnits.date.day = atoi(YYYYMMDDPartSplitted[2].c_str());
       }
 
       if (timeItems.size() > 3) {
         HHMMSSPart = timeItems[3].c_str();
-        auto HHMMSSPartSplited = HHMMSSPart.split(":");
+        auto HHMMSSPartSplited = CT::split(HHMMSSPart, ":");
         if (HHMMSSPartSplited.size() != 3) {
           CDBError("HHMMSS part is incorrect [%s]", HHMMSSPart.c_str());
           hasError = true;
         } else {
-          timeUnits.date.hour = HHMMSSPartSplited[0].toInt();
-          timeUnits.date.minute = HHMMSSPartSplited[1].toInt();
-          timeUnits.date.second = (double)HHMMSSPartSplited[2].toInt();
+          timeUnits.date.hour = atoi(HHMMSSPartSplited[0].c_str());
+          timeUnits.date.minute = atoi(HHMMSSPartSplited[1].c_str());
+          timeUnits.date.second = (double)atoi(HHMMSSPartSplited[2].c_str());
         }
       }
     } catch (int e) {
@@ -317,15 +331,11 @@ int CTime::init(std::string units, std::string calendar) {
     // Calculate date since offset for units
     timeUnits.dateSinceOffset = 0;
 
-    //       timeUnits.dateSinceOffset = dateToOffset(
     if (timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
       if (mode == CTIME_MODE_360day) {
         timeUnits.dateSinceOffset += timeUnits.date.year * 360;
         timeUnits.dateSinceOffset += CTIME_CALENDARTYPE_360day_MonthsCumul[(timeUnits.date.month - 1)];
         timeUnits.dateSinceOffset += (timeUnits.date.day - 1);
-        //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.hour)/24.);  TODO
-        //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.minute)/(24*60.)); TODO
-        //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.second)/(24*60*60.));   TODO
       }
       if (mode == CTIME_MODE_365day) {
         timeUnits.dateSinceOffset += timeUnits.date.year * 365;
@@ -335,19 +345,11 @@ int CTime::init(std::string units, std::string calendar) {
         timeUnits.dateSinceOffset += (((double)timeUnits.date.minute) / (24 * 60.));
         timeUnits.dateSinceOffset += (((double)timeUnits.date.second) / (24 * 60 * 60.));
 
-        //         CDBDebug("timeUnits.date.month = %f",float(timeUnits.date.month));
         //
         //
         //
-        //         CDBDebug("Y = %f",float(timeUnits.date.year*365));
-        //         CDBDebug("m = %f",float(CTIME_CALENDARTYPE_365day_MonthsCumul[(timeUnits.date.month-1)]));
-        //         CDBDebug("D = %f",float(timeUnits.date.day));
-        //         CDBDebug("H = %f",(((double)timeUnits.date.hour)/24.));
-        //         CDBDebug("M = %f",(((double)timeUnits.date.minute)/(24*60.)));
-        //         CDBDebug("S = %f",(((double)timeUnits.date.second)/(24*60*60.)));
         //
         //
-        //         CDBDebug("dateSinceOffset = %f",timeUnits.dateSinceOffset);
       }
 
     } else {
@@ -359,12 +361,6 @@ int CTime::init(std::string units, std::string calendar) {
       CDBWarning("timeUnits.dateSinceOffset == 0, probably the unit parsing has failed!");
     }
 
-    //       CDBDebug("timeUnits.date.year   = %d",timeUnits.date.year);
-    //       CDBDebug("timeUnits.date.month  = %d",timeUnits.date.month);
-    //       CDBDebug("timeUnits.date.day    = %d",timeUnits.date.day);
-    //       CDBDebug("timeUnits.date.hour   = %d",timeUnits.date.hour);
-    //       CDBDebug("timeUnits.date.minute = %d",timeUnits.date.minute);
-    //       CDBDebug("timeUnits.date.second = %f",timeUnits.date.second);
     /*
     for(int d=1;d<366;d++){
       CDBDebug("day %d = %d",d,getMonthByDayInYear(d,CTIME_CALENDARTYPE_365day_MonthsCumul));
@@ -395,14 +391,14 @@ int CTime::init(std::string units, std::string calendar) {
   }
 
   // Mode is in YYYYMM format
-  if (currentUnit.indexOf("YYYYMM") >= 0) {
+  if (CT::indexOf(currentUnit, "YYYYMM") >= 0) {
     mode = CTIME_MODE_YYYYMM;
     isInitialized = true;
     return 0;
   }
 
   // Mode is in YYYYMMDD format as nunmber
-  if (currentUnit.equals("day as %Y%m%d.%f")) {
+  if (currentUnit == "day as %Y%m%d.%f") {
     mode = CTIME_MODE_YYYYMMDD_NUMBER;
     isInitialized = true;
     return 0;
@@ -493,9 +489,6 @@ CTime::Date CTime::getDate(double offset) {
   if (mode == CTIME_MODE_365day) {
     if (timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
       double newOffset = timeUnits.dateSinceOffset + offset;
-      //       CDBDebug("timeUnits.dateSinceOffset = %f",timeUnits.dateSinceOffset);
-      //       CDBDebug("newOffset = %f",newOffset);
-      //       CDBDebug("offset = %f",offset);
       date.year = int(newOffset / 365);
       newOffset -= (date.year * 365);
 
@@ -508,21 +501,16 @@ CTime::Date CTime::getDate(double offset) {
 
       date.day = newOffset;
 
-      //       CDBDebug("YMD: %f %f %f",float(date.year),float(date.month),float(date.day));
-
       newOffset -= date.day;
       ;
       if (newOffset > 0) {
-        // CDBDebug("newOffset>0");
         date.hour = int(newOffset * 24) % 24;
         newOffset -= float(date.hour) / 24;
         date.minute = int(newOffset * 24 * 60) % 60;
         newOffset -= float(date.minute) / (60 * 24);
         date.second = int(newOffset * 24 * 60 * 60) % 60;
         newOffset -= float(date.second) / (60 * 60 * 24);
-        //         CDBDebug("newOffset>0: %f %f %f",float(date.hour),float(date.minute),float(date.second));
         //
-        //         CDBDebug("Remaining offset: %f (should be zero)",newOffset);
       } else {
         date.hour = 0;
         date.minute = 0;
@@ -570,7 +558,6 @@ CTime::Date CTime::getDate(double offset) {
     float s = 0;
     int status = utCalendar(date.offset, &dataunits, &date.year, &date.month, &date.day, &date.hour, &date.minute, &s);
     if (status != 0) {
-      //       CDBError("dataunits: %d", dataunits);
       CDBError("OffsetToAdaguc: Internal error: utCalendar, status = [%d]", status);
       throw CTIME_CONVERSION_ERROR;
     }
@@ -578,6 +565,8 @@ CTime::Date CTime::getDate(double offset) {
   }
   return date;
 }
+
+CTime::Date CTime::offsetToDate(double offset) { return getDate(offset); }
 
 double CTime::dateToOffset(Date date) {
   if (mode == CTIME_MODE_360day && timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
@@ -630,42 +619,32 @@ double CTime::dateToOffset(Date date) {
   throw CTIME_CONVERSION_ERROR;
 }
 
-CTime::Date CTime::stringToDate(const char *szTime) {
-  size_t timeLength = strlen(szTime);
+CTime::Date CTime::stringToDate(const std::string &szTime) {
+  size_t timeLength = szTime.length();
   if (timeLength < 15) {
-    CDBError("stringToDate internal error: invalid time format: [%s]", szTime);
+    CDBError("stringToDate internal error: invalid time format: [%s]", szTime.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   Date date;
-  char szTemp[64];
-  safestrcpy(szTemp, szTime, 4);
-  date.year = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 4, 2);
-  date.month = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 6, 2);
-  date.day = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 9, 2);
-  date.hour = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 11, 2);
-  date.minute = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 13, 2);
-  date.second = (float)atoi(szTemp);
+  date.year = atoi(szTime.substr(0, 4).c_str());
+  date.month = atoi(szTime.substr(4, 2).c_str());
+  date.day = atoi(szTime.substr(6, 2).c_str());
+  date.hour = atoi(szTime.substr(9, 2).c_str());
+  date.minute = atoi(szTime.substr(11, 2).c_str());
+  date.second = (float)atoi(szTime.substr(13, 2).c_str());
   if (timeLength > 18) {
-    safestrcpy(szTemp, szTime + 16, 3);
-    date.second += ((float)atoi(szTemp)) / 1000;
+    date.second += ((float)atoi(szTime.substr(16, 3).c_str())) / 1000;
   }
-  //  CDBDebug("szTime %s %s %f",szTime,szTemp,date.second);
   try {
     date.offset = dateToOffset(date);
   } catch (int e) {
-    CDBError("Exception in stringToDate with input %s", szTime);
+    CDBError("Exception in stringToDate with input %s", szTime.c_str());
     throw e;
   }
   Date checkDate = getDate(date.offset);
-  CT::string checkStr = dateToString(checkDate);
-  std::string strTime = szTime;
-  if (!checkStr.equals(strTime.substr(0, 15))) {
-    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime, checkStr.c_str());
+  std::string checkStr = dateToString(checkDate);
+  if (checkStr != szTime.substr(0, 15)) {
+    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime.c_str(), checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   if (checkDate.offset != date.offset) {
@@ -675,42 +654,30 @@ CTime::Date CTime::stringToDate(const char *szTime) {
   return date;
 }
 
-CTime::Date CTime::ISOStringToDate(const char *szTime) {
-  if (strlen(szTime) < 19) {
-
-    CDBError("ISOStringToDate internal error: intime is too short: '%s'", szTime);
+CTime::Date CTime::ISOStringToDate(const std::string &szTime) {
+  if (szTime.length() < 19) {
+    CDBError("ISOStringToDate internal error: intime is too short: '%s'", szTime.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   Date date;
-  char szTemp[64];
-  safestrcpy(szTemp, szTime, 4);
-  date.year = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 5, 2);
-  date.month = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 8, 2);
-  date.day = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 11, 2);
-  date.hour = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 14, 2);
-  date.minute = atoi(szTemp);
-  safestrcpy(szTemp, szTime + 17, 2);
-  szTemp[19] = 'Z';
-  szTemp[20] = '0';
-  date.second = (float)atoi(szTemp);
+  date.year = atoi(szTime.substr(0, 4).c_str());
+  date.month = atoi(szTime.substr(5, 2).c_str());
+  date.day = atoi(szTime.substr(8, 2).c_str());
+  date.hour = atoi(szTime.substr(11, 2).c_str());
+  date.minute = atoi(szTime.substr(14, 2).c_str());
+  date.second = (float)atoi(szTime.substr(17, 2).c_str());
   try {
     date.offset = dateToOffset(date);
   } catch (int e) {
-    CDBError("ISOStringToDate: input '%s'", szTime);
+    CDBError("ISOStringToDate: input '%s'", szTime.c_str());
     throw e;
   }
-  // CDBDebug("date.offset %f",date.offset);
   Date checkDate = getDate(date.offset);
-  CT::string checkStr = dateToISOString(checkDate);
-  // CDBDebug("checkStr %s",checkStr.c_str());
-  checkStr.setChar(19, 'Z');
-  checkStr.setSize(20);
-  if (!checkStr.equals(szTime)) {
-    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime, checkStr.c_str());
+  std::string checkStr = dateToISOString(checkDate);
+  checkStr[19] = 'Z';
+  checkStr.resize(20);
+  if (checkStr != szTime) {
+    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime.c_str(), checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
   if (checkDate.offset != date.offset) {
@@ -720,33 +687,25 @@ CTime::Date CTime::ISOStringToDate(const char *szTime) {
   return date;
 }
 
-CT::string CTime::dateToString(Date date) {
-  CT::string s;
+std::string CTime::dateToString(Date date) {
+  std::string s;
   int second = date.second;
 
   int minute = date.minute;
-  //   if(date.second>=60.){
-  //     second-=60;minute+=1;
-  //   }
-  s.print("%04d%02d%02dT%02d%02d%02d", date.year, date.month, date.day, date.hour, minute, second);
+  s = CT::printf("%04d%02d%02dT%02d%02d%02d", date.year, date.month, date.day, date.hour, minute, second);
   return s;
 }
 
-CT::string CTime::dateToISOString(Date date) {
-  CT::string s;
+std::string CTime::dateToISOString(Date date) {
+  std::string s;
   float second = date.second;
-  // int minute = date.minute;
-  //   if(date.second>=60.){
-  //     second-=60;minute+=1;
-  //   }
-  // s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,minute,second);
 
   int seconds = int(second);
   int milliseconds = int((second - seconds) * 1000);
   if (milliseconds != 0) {
-    s.print("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", date.year, date.month, date.day, date.hour, date.minute, seconds, milliseconds);
+    s = CT::printf("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", date.year, date.month, date.day, date.hour, date.minute, seconds, milliseconds);
   } else {
-    s.print("%04d-%02d-%02dT%02d:%02d:%02dZ", date.year, date.month, date.day, date.hour, date.minute, seconds);
+    s = CT::printf("%04d-%02d-%02dT%02d:%02d:%02dZ", date.year, date.month, date.day, date.hour, date.minute, seconds);
   }
 
   return s;
@@ -759,24 +718,24 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 20100201090000
   if (len == 14) {
     if (szTime[8] != 'T') {
-      CT::string date = "";
-      date.concatlength(szTime + 0, 8);
-      date.concat("T");
-      date.concatlength(szTime + 8, 6);
-      date.concat("Z");
+      std::string date = "";
+      date.append(szTime + 0, 8);
+      date += "T";
+      date.append(szTime + 8, 6);
+      date += "Z";
       CDBDebug("Fixing time to [%s]", date.c_str());
-      return stringToDate(date.c_str());
+      return stringToDate(date);
     }
   }
 
   // 201002010900
   if (len == 12) {
-    CT::string date = "";
-    date.concatlength(szTime + 0, 8);
-    date.concat("T");
-    date.concatlength(szTime + 8, 4);
-    date.concat("00Z");
-    return stringToDate(date.c_str());
+    std::string date = "";
+    date.append(szTime + 0, 8);
+    date += "T";
+    date.append(szTime + 8, 4);
+    date += "00Z";
+    return stringToDate(date);
   }
 
   if (len < 14) {
@@ -787,21 +746,21 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 2010-01-01T00:00:00.000000
   // 012345678901234567890
   if (szTime[4] == '-' && szTime[7] == '-' && szTime[13] == ':' && szTime[16] == ':') {
-    CT::string date = "";
-    date.concatlength(szTime + 0, 4);
-    date.concat("-");
-    date.concatlength(szTime + 5, 2);
-    date.concat("-");
-    date.concatlength(szTime + 8, 2);
-    date.concat("T");
-    date.concatlength(szTime + 11, 2);
-    date.concat(":");
-    date.concatlength(szTime + 14, 2);
-    date.concat(":");
-    date.concatlength(szTime + 17, 2);
-    date.concat("Z");
+    std::string date = "";
+    date.append(szTime + 0, 4);
+    date += "-";
+    date.append(szTime + 5, 2);
+    date += "-";
+    date.append(szTime + 8, 2);
+    date += "T";
+    date.append(szTime + 11, 2);
+    date += ":";
+    date.append(szTime + 14, 2);
+    date += ":";
+    date.append(szTime + 17, 2);
+    date += "Z";
     try {
-      return ISOStringToDate(date.c_str());
+      return ISOStringToDate(date);
     } catch (int e) {
       CDBError("freeDateStringToDate exception on '%s'", szTime);
       throw e;
@@ -811,60 +770,58 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 20041201T00:00:00.000000
   // 012345678901234567890
   if (szTime[8] == 'T' && szTime[11] == ':' && szTime[14] == ':') {
-    CT::string date = "";
-    date.concatlength(szTime + 0, 8);
-    date.concat("T");
-    date.concatlength(szTime + 9, 2);
+    std::string date = "";
+    date.append(szTime + 0, 8);
+    date += "T";
+    date.append(szTime + 9, 2);
 
-    date.concatlength(szTime + 12, 2);
+    date.append(szTime + 12, 2);
 
-    date.concatlength(szTime + 15, 2);
-    date.concat("Z");
-    return stringToDate(date.c_str());
+    date.append(szTime + 15, 2);
+    date += "Z";
+    return stringToDate(date);
   }
 
   // 20100101T000000
   // 012345678901234567890
   if (szTime[8] == 'T') {
-    CT::string date = "";
-    date.concatlength(szTime + 0, 8);
-    date.concat("T");
-    date.concatlength(szTime + 9, 6);
-    date.concat("Z");
-    return stringToDate(date.c_str());
+    std::string date = "";
+    date.append(szTime + 0, 8);
+    date += "T";
+    date.append(szTime + 9, 6);
+    date += "Z";
+    return stringToDate(date);
   }
 
   // 2008-05-13T12:10Z
   // 012345678901234567890
   if (szTime[4] == '-' && szTime[7] == '-' && szTime[10] == 'T' && szTime[13] == ':' && szTime[16] == 'Z') {
-    CT::string date = "";
-    date.concatlength(szTime + 0, 4);
-    date.concat("-");
-    date.concatlength(szTime + 5, 2);
-    date.concat("-");
-    date.concatlength(szTime + 8, 2);
-    date.concat("T");
-    date.concatlength(szTime + 11, 2);
-    date.concat(":");
-    date.concatlength(szTime + 14, 2);
-    date.concat(":");
-    date.concatlength("00", 2);
-    date.concat("Z");
+    std::string date = "";
+    date.append(szTime + 0, 4);
+    date += "-";
+    date.append(szTime + 5, 2);
+    date += "-";
+    date.append(szTime + 8, 2);
+    date += "T";
+    date.append(szTime + 11, 2);
+    date += ":";
+    date.append(szTime + 14, 2);
+    date += ":";
+    date.append("00", 2);
+    date += "Z";
     try {
-      return ISOStringToDate(date.c_str());
+      return ISOStringToDate(date);
     } catch (int e) {
       CDBError("freeDateStringToDate exception");
       throw e;
     }
   }
 
-  // CDBError("Format for date string \"%s\" not recognised",szTime);
-
   throw CTIME_CONVERSION_ERROR;
   return CTime::Date();
 }
 
-CT::string CTime::currentDateTime() {
+std::string CTime::currentDateTime() {
   timeval curTime;
   gettimeofday(&curTime, NULL);
   int milli = curTime.tv_usec / 1000;
@@ -872,13 +829,10 @@ CT::string CTime::currentDateTime() {
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", gmtime(&curTime.tv_sec));
 
-  char currentTime[100] = "";
-  snprintf(currentTime, 99, "%s.%03dZ", buffer, milli);
-
-  return currentTime;
+  return CT::printf("%s.%03dZ", buffer, milli);
 }
 
-double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::string method) {
+double CTime::quantizeTimeToISO8601(double offsetOrig, std::string period, std::string method) {
   double offsetLow = 0;
   double offsetHigh = 0;
   // P1Y
@@ -887,18 +841,18 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
   CTime *thisTime = this;
   Date date = thisTime->getDate(offsetOrig);
 
-  if (period.indexOf("T") != -1) { // Contains HMS
+  if (CT::indexOf(period, "T") != -1) { // Contains HMS
 
-    auto items = period.split("T");
+    auto items = CT::split(period, "T");
     if (items.size() != 2) {
       throw(-1);
     }
-    CT::string hmsPart = items[1];
+    std::string hmsPart = items[1];
 
     // hmsPart contains 15M, 1M, 12S, 6H, etc...
-    if (hmsPart.indexOf("H") != -1) { // 6H
-      hmsPart.replaceSelf("H", "");
-      int H = hmsPart.toInt();
+    if (CT::indexOf(hmsPart, "H") != -1) { // 6H
+      CT::replaceSelf(hmsPart, "H", "");
+      int H = atoi(hmsPart.c_str());
       int origH = date.hour;
       date.minute = 0;
       date.second = 0;
@@ -910,9 +864,9 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       } else {
         offsetHigh = offsetLow;
       }
-    } else if (hmsPart.indexOf("M") != -1) { // 5M
-      hmsPart.replaceSelf("M", "");
-      int M = hmsPart.toInt();
+    } else if (CT::indexOf(hmsPart, "M") != -1) { // 5M
+      CT::replaceSelf(hmsPart, "M", "");
+      int M = atoi(hmsPart.c_str());
       int origM = date.minute;
       date.second = 0;
       int restM = origM % M;
@@ -923,9 +877,9 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       } else {
         offsetHigh = offsetLow;
       }
-    } else if (hmsPart.indexOf("S") != -1) { // 30S
-      hmsPart.replaceSelf("S", "");
-      int S = hmsPart.toInt();
+    } else if (CT::indexOf(hmsPart, "S") != -1) { // 30S
+      CT::replaceSelf(hmsPart, "S", "");
+      int S = atoi(hmsPart.c_str());
       int origS = date.second;
       int restS = origS % S;
       date.second = origS - restS;
@@ -940,13 +894,13 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
 
   } else { // Contains YMD
 
-    CT::string hmsPart = period;
-    hmsPart.replaceSelf("P", "");
+    std::string hmsPart = period;
+    CT::replaceSelf(hmsPart, "P", "");
 
     // hmsPart contains 15M, 1M, 12S, 6H, etc...
-    if (hmsPart.indexOf("Y") != -1) { // 6H
-      hmsPart.replaceSelf("Y", "");
-      int Y = hmsPart.toInt();
+    if (CT::indexOf(hmsPart, "Y") != -1) { // 6H
+      CT::replaceSelf(hmsPart, "Y", "");
+      int Y = atoi(hmsPart.c_str());
       int origY = date.year;
       date.month = 1;
       date.day = 1;
@@ -960,13 +914,13 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
         date.year = date.year + Y;
       }
       offsetHigh = thisTime->dateToOffset(date);
-    } else if (hmsPart.indexOf("M") != -1) { // 5M
+    } else if (CT::indexOf(hmsPart, "M") != -1) { // 5M
       date.day = 1;
       date.hour = 0;
       date.minute = 0;
       date.second = 0;
-      hmsPart.replaceSelf("M", "");
-      int M = hmsPart.toInt();
+      CT::replaceSelf(hmsPart, "M", "");
+      int M = atoi(hmsPart.c_str());
       int origM = date.month;
       int restM = origM % M;
       date.month = origM - restM;
@@ -975,12 +929,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
         date.month = date.month + M;
       }
       offsetHigh = thisTime->dateToOffset(date);
-    } else if (hmsPart.indexOf("D") != -1) { // 30S
+    } else if (CT::indexOf(hmsPart, "D") != -1) { // 30S
       date.hour = 0;
       date.minute = 0;
       date.second = 0;
-      hmsPart.replaceSelf("D", "");
-      int D = hmsPart.toInt();
+      CT::replaceSelf(hmsPart, "D", "");
+      int D = atoi(hmsPart.c_str());
       int origD = date.day;
       int restD = origD % D;
       date.day = origD - restD;
@@ -992,11 +946,11 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
     }
   }
 
-  if (method.equals("low")) {
+  if (method == "low") {
     offsetOrig = offsetLow;
-  } else if (method.equals("high")) {
+  } else if (method == "high") {
     offsetOrig = offsetHigh;
-  } else if (method.equals("round")) {
+  } else if (method == "round") {
     double diffL = fabs(offsetOrig - offsetLow);
     double diffH = fabs(offsetOrig - offsetHigh);
     if (diffL < diffH) {
@@ -1008,31 +962,28 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
   return offsetOrig;
 }
 
-CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
-  CT::string newDateString = value;
-  // CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
+std::string CTime::quantizeTimeToISO8601(std::string value, std::string period, std::string method) {
+  std::string newDateString = value;
   try {
     CTime time;
     time.init("seconds since 0000-01-01T00:00:00Z", "");
     double offsetOrig = time.dateToOffset(time.freeDateStringToDate(value.c_str()));
-    double quantizedOffset = time.quantizeTimeToISO8601(offsetOrig, &period, &method);
+    double quantizedOffset = time.quantizeTimeToISO8601(offsetOrig, period, method);
     newDateString = time.dateToISOString(time.getDate(quantizedOffset));
   } catch (int e) {
     CDBError("Exception in quantizetime with message %s", CTime::getErrorMessage(e).c_str());
   }
-  // CDBDebug("New date is %s", newDateString.c_str());
   return newDateString;
-  // return "2016-01-13T09:50:00Z";
 }
 
-time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
+time_t CTime::getEpochTimeFromDateString(std::string dateString) {
   struct tm result;
-  std::vector<CT::string> formats;
+  std::vector<std::string> formats;
   formats.push_back("%a %b %d %H:%M:%S %Y"); /* 'Sun Sep 22 13:23:18 2019' string  */
   formats.push_back("%Y-%m-%dT%H:%M:%S");    /* 'yyyy-mm-ddTHH:MM:SS' string  */
 
   for (size_t j = 0; j < formats.size(); j++) {
-    CT::string format = formats[j];
+    std::string format = formats[j];
     if (strptime(dateString.c_str(), format.c_str(), &result) != NULL) {
       /* Disable timezone, try to do conversion in UTC */
       time_t timeSinceEpoch = 0;
@@ -1046,7 +997,7 @@ time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
   throw(CTIME_CONVERSION_ERROR);
 }
 
-CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CT::string period) {
+CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, std::string period) {
   CTime::Date datePeriod = periodToDate(period);
   return this->subtractPeriodFromDate(date, datePeriod);
 }
@@ -1063,7 +1014,7 @@ CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CTime::Date datePeri
   return this->offsetToDate(offset);
 }
 
-CTime::Date CTime::addPeriodToDate(CTime::Date date, CT::string period) {
+CTime::Date CTime::addPeriodToDate(CTime::Date date, std::string period) {
   CTime::Date datePeriod = periodToDate(period);
   return this->addPeriodToDate(date, datePeriod);
 }
@@ -1097,45 +1048,45 @@ CTime::Date CTime::addPeriodToDate(CTime::Date date, CTime::Date datePeriod) {
   return this->offsetToDate(offset);
 }
 
-CT::string CTime::dateToPeriod(CTime::Date date) {
-  CT::string period = "P";
-  if (date.year > 0) period.printconcat("%dY", date.year);
-  if (date.month > 0) period.printconcat("%dM", date.month);
-  if (date.day > 0) period.printconcat("%dD", date.day);
+std::string CTime::dateToPeriod(CTime::Date date) {
+  std::string period = "P";
+  if (date.year > 0) CT::printfconcat(period, "%dY", date.year);
+  if (date.month > 0) CT::printfconcat(period, "%dM", date.month);
+  if (date.day > 0) CT::printfconcat(period, "%dD", date.day);
   if (date.hour > 0 || date.minute > 0 || date.second > 0) {
-    period.concat("T");
+    period += "T";
   }
-  if (date.hour > 0) period.printconcat("%dH", date.hour);
-  if (date.minute > 0) period.printconcat("%dM", date.minute);
-  if (date.second > 0) period.printconcat("%0.fS", date.second);
+  if (date.hour > 0) CT::printfconcat(period, "%dH", date.hour);
+  if (date.minute > 0) CT::printfconcat(period, "%dM", date.minute);
+  if (date.second > 0) CT::printfconcat(period, "%0.fS", date.second);
   return period;
 }
 
-CTime::Date CTime::periodToDate(CT::string period) {
-  std::vector<CT::string> p = period.split("T");
-  if (p.size() < 1 || !p[0].startsWith("P")) {
+CTime::Date CTime::periodToDate(std::string period) {
+  std::vector<std::string> p = CT::split(period, "T");
+  if (p.size() < 1 || !CT::startsWith(p[0], "P")) {
     CDBError("Invalid time period %s", period.c_str());
     throw(__LINE__);
   }
-  CT::string ymdPeriodPart = p[0].substring(1, -1);
-  CT::string hmsPeriodPart = p.size() > 1 ? p[1] : "";
+  std::string ymdPeriodPart = CT::substring(p[0], 1, -1);
+  std::string hmsPeriodPart = p.size() > 1 ? p[1] : "";
 
-  int indexY = ymdPeriodPart.indexOf("Y");
-  int indexMo = ymdPeriodPart.indexOf("M");
-  int indexD = ymdPeriodPart.indexOf("D");
+  int indexY = CT::indexOf(ymdPeriodPart, "Y");
+  int indexMo = CT::indexOf(ymdPeriodPart, "M");
+  int indexD = CT::indexOf(ymdPeriodPart, "D");
 
-  int indexH = hmsPeriodPart.indexOf("H");
-  int indexMi = hmsPeriodPart.indexOf("M");
-  int indexS = hmsPeriodPart.indexOf("S");
+  int indexH = CT::indexOf(hmsPeriodPart, "H");
+  int indexMi = CT::indexOf(hmsPeriodPart, "M");
+  int indexS = CT::indexOf(hmsPeriodPart, "S");
 
   Date dateOperator;
-  dateOperator.year = ymdPeriodPart.substring(0, indexY == -1 ? 0 : indexY).toInt();
-  dateOperator.month = ymdPeriodPart.substring(std::max({0, indexY + 1}), indexMo == -1 ? 0 : indexMo).toInt();
-  dateOperator.day = ymdPeriodPart.substring(std::max({0, indexY + 1, indexMo + 1}), indexD == -1 ? 0 : indexD).toInt();
+  dateOperator.year = atoi(CT::substring(ymdPeriodPart, 0, indexY == -1 ? 0 : indexY).c_str());
+  dateOperator.month = atoi(CT::substring(ymdPeriodPart, std::max({0, indexY + 1}), indexMo == -1 ? 0 : indexMo).c_str());
+  dateOperator.day = atoi(CT::substring(ymdPeriodPart, std::max({0, indexY + 1, indexMo + 1}), indexD == -1 ? 0 : indexD).c_str());
 
-  dateOperator.hour = hmsPeriodPart.substring(0, indexH == -1 ? 0 : indexH).toInt();
-  dateOperator.minute = hmsPeriodPart.substring(std::max({0, indexH + 1}), indexMi == -1 ? 0 : indexMi).toInt();
-  dateOperator.second = hmsPeriodPart.substring(std::max({0, indexH + 1, indexMi + 1}), indexS == -1 ? 0 : indexS).toInt();
+  dateOperator.hour = atoi(CT::substring(hmsPeriodPart, 0, indexH == -1 ? 0 : indexH).c_str());
+  dateOperator.minute = atoi(CT::substring(hmsPeriodPart, std::max({0, indexH + 1}), indexMi == -1 ? 0 : indexMi).c_str());
+  dateOperator.second = atoi(CT::substring(hmsPeriodPart, std::max({0, indexH + 1, indexMi + 1}), indexS == -1 ? 0 : indexS).c_str());
 
   return dateOperator;
 }

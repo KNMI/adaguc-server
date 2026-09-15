@@ -1,4 +1,6 @@
 #include "CDataPostProcessor_ClipMinMax.h"
+#include "CDebugger.h"
+#include "CTString.h"
 
 /************************/
 /*      CDPPClipMinMax  */
@@ -30,14 +32,14 @@ int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource 
       void *d = dataSource->getDataObject(varNr)->cdfVariable->data;
       double fa = 0, fb = 0;
       if (proc->attr.a.empty() == false) {
-        CT::string a;
+        std::string a;
         a = (proc->attr.a.c_str());
-        fa = a.toDouble();
+        fa = CT::toDouble(a);
       }
       if (proc->attr.b.empty() == false) {
-        CT::string b;
+        std::string b;
         b = (proc->attr.b.c_str());
-        fb = b.toDouble();
+        fb = CT::toDouble(b);
       }
       switch (dataSource->getDataObject(0)->cdfVariable->getType()) {
       case CDF_CHAR:
@@ -71,4 +73,9 @@ int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource 
     }
   }
   return 0;
+}
+
+int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
+  return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
 }

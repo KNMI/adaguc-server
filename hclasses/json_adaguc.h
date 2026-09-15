@@ -1,7 +1,6 @@
 #ifndef JSON_ADAGUC_H
 #define JSON_ADAGUC_H
 
-#include "CTString.h"
 #include "json.hpp"
 #include "CReportMessage.h"
 
@@ -12,10 +11,6 @@ using json = nlohmann::json;
  * Note that the to_json methods need to live in the same namespace as the namespace in which the datatypes are defined.
  * Documentation: https://github.com/nlohmann/json
  */
-
-namespace CT {
-  void to_json(json &j, const string &s);
-}; /* namespace CT */
 
 void to_json(json &j, const CReportMessage &m);
 

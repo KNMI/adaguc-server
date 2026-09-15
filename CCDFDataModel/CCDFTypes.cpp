@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,14 +55,12 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
 
   size_t typeSize = getTypeSize(type);
   if (typeSize == 0) {
-    // CDBError("In CDF::allocateData: Unknown type");
     return 1;
   }
 
   *p = malloc(length * typeSize);
 
   if (*p == NULL) {
-    // CDBError("In CDF::allocateData: Unable to allocate %d elements",length);
     return 1;
   }
 
@@ -74,41 +72,6 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
   }
 
   return 0;
-}
-
-void CDF::getCDFDataTypeName(char *name, const size_t maxlen, const int type) {
-  snprintf(name, maxlen, "CDF_UNDEFINED");
-  if (type == CDF_NONE) snprintf(name, maxlen, "CDF_NONE");
-  if (type == CDF_BYTE) snprintf(name, maxlen, "CDF_BYTE");
-  if (type == CDF_CHAR) snprintf(name, maxlen, "CDF_CHAR");
-  if (type == CDF_SHORT) snprintf(name, maxlen, "CDF_SHORT");
-  if (type == CDF_INT) snprintf(name, maxlen, "CDF_INT");
-  if (type == CDF_INT64) snprintf(name, maxlen, "CDF_INT64");
-  if (type == CDF_FLOAT) snprintf(name, maxlen, "CDF_FLOAT");
-  if (type == CDF_DOUBLE) snprintf(name, maxlen, "CDF_DOUBLE");
-  if (type == CDF_UNKNOWN) snprintf(name, maxlen, "CDF_UNKNOWN");
-  if (type == CDF_UBYTE) snprintf(name, maxlen, "CDF_UBYTE");
-  if (type == CDF_USHORT) snprintf(name, maxlen, "CDF_USHORT");
-  if (type == CDF_UINT) snprintf(name, maxlen, "CDF_UINT");
-  if (type == CDF_UINT64) snprintf(name, maxlen, "CDF_UINT64");
-  if (type == CDF_STRING) snprintf(name, maxlen, "CDF_STRING");
-}
-
-void CDF::getCDataTypeName(char *name, const size_t maxlen, const int type) {
-  snprintf(name, maxlen, "CDF_UNDEFINED");
-  if (type == CDF_NONE) snprintf(name, maxlen, "none");
-  if (type == CDF_BYTE) snprintf(name, maxlen, "uchar");
-  if (type == CDF_CHAR) snprintf(name, maxlen, "char");
-  if (type == CDF_SHORT) snprintf(name, maxlen, "short");
-  if (type == CDF_INT) snprintf(name, maxlen, "int");
-  if (type == CDF_INT64) snprintf(name, maxlen, "long");
-  if (type == CDF_FLOAT) snprintf(name, maxlen, "float");
-  if (type == CDF_DOUBLE) snprintf(name, maxlen, "double");
-  if (type == CDF_UBYTE) snprintf(name, maxlen, "ubyte");
-  if (type == CDF_USHORT) snprintf(name, maxlen, "ushort");
-  if (type == CDF_UINT) snprintf(name, maxlen, "uint");
-  if (type == CDF_UINT64) snprintf(name, maxlen, "ulong");
-  if (type == CDF_STRING) snprintf(name, maxlen, "char*");
 }
 
 std::string CDF::getErrorMessage(const int errorCode) {
@@ -125,11 +88,39 @@ std::string CDF::getErrorMessage(const int errorCode) {
   return errorMessage;
 }
 
-CT::string CDF::getCDFDataTypeName(const int type) {
-  char data[100];
-  getCDFDataTypeName(data, 99, type);
-  CT::string d = data;
-  return d;
+std::string CDF::getCDFDataTypeName(const int type) {
+  if (type == CDF_NONE) return "CDF_NONE";
+  if (type == CDF_BYTE) return "CDF_BYTE";
+  if (type == CDF_CHAR) return "CDF_CHAR";
+  if (type == CDF_SHORT) return "CDF_SHORT";
+  if (type == CDF_INT) return "CDF_INT";
+  if (type == CDF_INT64) return "CDF_INT64";
+  if (type == CDF_FLOAT) return "CDF_FLOAT";
+  if (type == CDF_DOUBLE) return "CDF_DOUBLE";
+  if (type == CDF_UNKNOWN) return "CDF_UNKNOWN";
+  if (type == CDF_UBYTE) return "CDF_UBYTE";
+  if (type == CDF_USHORT) return "CDF_USHORT";
+  if (type == CDF_UINT) return "CDF_UINT";
+  if (type == CDF_UINT64) return "CDF_UINT64";
+  if (type == CDF_STRING) return "CDF_STRING";
+  return "CDF_UNDEFINED";
+}
+
+std::string CDF::getCDataTypeName(const int type) {
+  if (type == CDF_NONE) return "none";
+  if (type == CDF_BYTE) return "uchar";
+  if (type == CDF_CHAR) return "char";
+  if (type == CDF_SHORT) return "short";
+  if (type == CDF_INT) return "int";
+  if (type == CDF_INT64) return "long";
+  if (type == CDF_FLOAT) return "float";
+  if (type == CDF_DOUBLE) return "double";
+  if (type == CDF_UBYTE) return "ubyte";
+  if (type == CDF_USHORT) return "ushort";
+  if (type == CDF_UINT) return "uint";
+  if (type == CDF_UINT64) return "ulong";
+  if (type == CDF_STRING) return "char*";
+  return "CDF_UNDEFINED";
 }
 
 bool CDF::isCDFNumeric(CDFType type) {

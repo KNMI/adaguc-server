@@ -1,4 +1,15 @@
-* - Added `pointsfromfeature` DataPostProc, which derives point/vector data (such as magnitude and direction) from the properties of GeoJSON features by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
+**Version 8.3.0**
+
+- Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
+- Removed CT::string class, and cleaned up codebase.
+- Fix EDR hrefs by adding a missing slash. The Metoffice EDR tool can be used again: https://github.com/KNMI/adaguc-server/pull/757
+
+
+**Version 8.2.0**
+
+* 652 feature request showing speed vectors on top of polygons based on geojson files by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
+* Optimize getmetadata json, also add extra tracing to figure out where the bottleneck is by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/748
+
 
 **Version 8.1.0**
 

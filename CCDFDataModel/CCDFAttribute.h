@@ -2,12 +2,12 @@
  *
  * Project:  Generic common data format
  * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Maarten Plieger, plieger "at" knmi.nl, GST - GeoSpatialTeam KNMI
+ * Date:     2026-09-10
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2026, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ namespace CDF {
   private:
     void allocateData(size_t size);
     void freeData();
-    int _getDataAsString(CT::string *out);
+    int _getDataAsString(std::string &out);
 
   public:
     ~Attribute();
@@ -39,9 +39,9 @@ namespace CDF {
     Attribute(Attribute *att);
     Attribute(const char *attrName, const char *attrString);
     Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength);
-    void setName(const char *value);
+    void setName(const std::string &value);
     CDFType type;
-    CT::string name;
+    std::string name;
     size_t length;
     void *data;
     CDFType getType();
@@ -62,7 +62,7 @@ namespace CDF {
      */
     template <class T> T getDataAt(size_t index, T defaultValue);
     int setString(const char *dataToSet);
-    CT::string toString();
+    std::string toString();
     size_t size();
   };
 } // namespace CDF

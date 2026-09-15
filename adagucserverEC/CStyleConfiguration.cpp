@@ -1,5 +1,10 @@
 #include "CStyleConfiguration.h"
+#include "CXMLParser.h"
+#include "CDebugger.h"
 #include "CDataSource.h"
+#include "CTString.h"
+
+static const bool CDATASOURCE_DEBUG = false;
 
 RenderMethod getRenderMethodFromString(std::string renderMethodString) {
   RenderMethod renderMethod = RM_UNDEFINED;
@@ -208,7 +213,6 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   this->minValue = 0.0f;
   this->maxValue = 0.0f;
   this->minMaxSet = false;
-  // this->renderMethod = RM_UNDEFINED;
   if (dataSource->cfg->Style.size() == 0) {
     CDBError("Server configuration has no styles at all.");
     return 1;
@@ -313,9 +317,9 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 
   // When min and max are given, calculate the scale and offset according to min and max.
   if (this->minMaxSet) {
-#ifdef CDATASOURCE_DEBUG
-    CDBDebug("Found min and max in layer configuration");
-#endif
+    if (CDATASOURCE_DEBUG) {
+      CDBDebug("Found min and max in layer configuration");
+    }
 
     stretchLegend(this->minValue, this->maxValue);
     dataSource->stretchMinMax = false;
@@ -336,7 +340,6 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 
 void CStyleConfiguration::stretchLegend(double min, double max) {
   if (this->legendLog != 0.0f) {
-    // CDBDebug("LOG = %f",log);
     min = log10(min) / log10(this->legendLog);
     max = log10(max) / log10(this->legendLog);
   }
