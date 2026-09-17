@@ -152,16 +152,19 @@ class ForkServerSupervisor:
 
         try:
             while self._running:
-                if self._stopping:
-                    break
+                try:
+                    if self._stopping:
+                        break
 
-                # Restart if process crashed
-                if self.process and self.process.returncode is not None:
-                    await self.restart_process()
+                    # Restart if process crashed
+                    if self.process and self.process.returncode is not None:
+                        await self.restart_process()
 
-                # Health check
-                elif not await self.health_check_mother():
-                    await self.restart_process()
+                    # Health check
+                    elif not await self.health_check_mother():
+                        await self.restart_process()
+                except Exception:
+                    logger.exception("Forkserver supervision failed; retrying")
 
                 await asyncio.sleep(self.interval)
 
