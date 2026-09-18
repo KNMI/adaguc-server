@@ -43,6 +43,7 @@
 #include "CXMLParser.h"
 #include "CStopWatch.h"
 #include "CServerError.h"
+#include "fork_server.h"
 
 int processQueryStringRequest() {
   /* Process the OGC request */
@@ -58,7 +59,7 @@ int processQueryStringRequest() {
   return getStatusCode();
 }
 
-int main(int argc, char **argv, char **envp) {
+int run_adaguc_once(int argc, char **argv, char **envp) {
 
   StopWatch_Start();
 
@@ -92,4 +93,20 @@ int main(int argc, char **argv, char **envp) {
   closeLogFile();
 
   return status;
+}
+
+int main(int argc, char **argv, char **envp) {
+  const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
+  bool use_fork_server = fork_enable && std::string(fork_enable) == "TRUE" && argc == 1;
+  if (use_fork_server) {
+    // Fork children inherit the mother's stdio buffers.
+    // This keeps stdout/stderr unbuffered, so old buffered output cannot be written into a the unix socket before the HTTP headers.
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+
+    return mother_run_as_fork_service(run_adaguc_once, argc, argv, envp);
+  } else {
+    // normal flow without unix socket server/fork
+    return run_adaguc_once(argc, argv, envp);
+  }
 }

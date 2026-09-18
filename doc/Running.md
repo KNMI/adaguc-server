@@ -44,6 +44,8 @@ bash docker-compose-generate-env.sh \
 # You can view or edit the file ./.env file
 ```
 
+For more info on what environment variables you can configure, see [Environment variables](EnvironmentVariablesAndExitCodes.md).
+
 ### Step 3. Once the steps above have been done, it is time to start:
 
 ```
