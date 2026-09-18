@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
+import psutil
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
@@ -49,31 +50,23 @@ async def fork_server(fork_environment, monkeypatch, request):
     assert not FORK_SOCKET.exists()
 
 
-async def get_child_pids(parent_pid):
-    process = await asyncio.create_subprocess_exec(
-        "ps", "-eo", "pid=,ppid=", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-    )
-    stdout, stderr = await process.communicate()
-    assert process.returncode == 0, stderr.decode()
-
-    child_pids = set()
-    for line in stdout.decode().splitlines():
-        parts = line.split()
-        if len(parts) == 2 and int(parts[1]) == parent_pid:
-            child_pids.add(int(parts[0]))
-    return child_pids
+def get_child_pids(parent_pid) -> set:
+    try:
+        return {child.pid for child in psutil.Process(parent_pid).children()}
+    except psutil.NoSuchProcess:
+        return set()
 
 
 async def wait_for_child_count(parent_pid, expected_count, timeout=2):
     loop = asyncio.get_running_loop()
     deadline = loop.time() + timeout
     while loop.time() < deadline:
-        child_pids = await get_child_pids(parent_pid)
+        child_pids = get_child_pids(parent_pid)
         if len(child_pids) == expected_count:
             return child_pids
         await asyncio.sleep(0.02)
 
-    child_pids = await get_child_pids(parent_pid)
+    child_pids = get_child_pids(parent_pid)
     pytest.fail(f"Expected {expected_count} fork-server children, found {child_pids}")
 
 
