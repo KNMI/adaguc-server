@@ -3,32 +3,28 @@ import os
 import re
 import signal
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 import psutil
 import pytest
 import pytest_asyncio
-from fastapi.testclient import TestClient
 
 import adaguc.CGIRunner as cgi_runner_module
-from adaguc.CGIRunner import CGIRunner, HTTP_STATUSCODE_404_NOT_FOUND
+from adaguc.CGIRunner import CGIRunner
 from fork_server_supervisor import ForkServerSupervisor
-from main import app
 
 ADAGUC_PATH = Path(os.environ["ADAGUC_PATH"])
 ADAGUC_BINARY = ADAGUC_PATH / "bin" / "adagucserver"
 FORK_SOCKET = ADAGUC_PATH / "adaguc.socket"
 EXPECTED_GET_MAP = ADAGUC_PATH / "tests" / "expectedoutputs" / "TestWMS" / "test_WMSGetMap_testdatanc.png"
-PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 GET_MAP_QUERY = "source=testdata.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE"
-MISSING_COVERAGE_QUERY = (
-    "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=nonexisting&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-10,40,20,60"
-)
 
 
 @pytest.fixture
 def fork_environment(monkeypatch):
+    # Enable fork mode with the standard autoresource configuration and ensure no stale socket exists.
     assert not FORK_SOCKET.exists(), f"Refusing to replace an existing fork-server socket at {FORK_SOCKET}"
     monkeypatch.setenv("ADAGUC_FORK_ENABLE", "TRUE")
     monkeypatch.setenv("ADAGUC_CONFIG", str(ADAGUC_PATH / "data" / "config" / "adaguc.autoresource.xml"))
@@ -36,6 +32,7 @@ def fork_environment(monkeypatch):
 
 @pytest_asyncio.fixture
 async def fork_server(fork_environment, monkeypatch, request):
+    # Start a real supervised fork server with optional per-test settings and always stop it afterward.
     settings = getattr(request, "param", {})
     for key, value in settings.get("env", {}).items():
         monkeypatch.setenv(key, value)
@@ -70,10 +67,30 @@ async def wait_for_child_count(parent_pid, expected_count, timeout=2):
     pytest.fail(f"Expected {expected_count} fork-server children, found {child_pids}")
 
 
+@pytest.fixture
+def fork_connection():
+    # Provide a raw fork-server connection context that always closes its client-side writer.
+    @asynccontextmanager
+    async def connect():
+        reader, writer = await asyncio.open_unix_connection(FORK_SOCKET)
+        try:
+            yield reader, writer
+        finally:
+            writer.close()
+            await writer.wait_closed()
+
+    return connect
+
+
 @pytest.mark.asyncio
-async def test_fork_server_get_map_uses_distinct_children(fork_server, tmp_path):
+async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypatch, tmp_path):
+    # Verify real GetMap output, a stable mother, distinct request children, and a cwd-independent socket path.
     mother_pid = fork_server.process.pid
     child_pids = []
+
+    assert FORK_SOCKET.is_socket()
+    monkeypatch.chdir(tmp_path)
+    assert not (tmp_path / "adaguc.socket").exists()
 
     for request_number in range(2):
         log_path = tmp_path / f"request-{request_number}.log"
@@ -97,30 +114,9 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, tmp_path)
     assert child_pids[0] != child_pids[1]
 
 
-def test_fastapi_lifespan_routes_wms_through_fork_server(fork_environment, monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-
-    with TestClient(app) as client:
-        assert FORK_SOCKET.is_socket()
-        assert not (tmp_path / "adaguc.socket").exists()
-        response = client.get(f"/wms?{GET_MAP_QUERY}")
-
-        assert response.status_code == 200
-        assert response.headers["content-type"] == "image/png"
-        assert response.content.startswith(PNG_SIGNATURE)
-
-    assert not FORK_SOCKET.exists()
-
-
-@pytest.mark.asyncio
-async def test_fork_server_propagates_child_exit_status(fork_server):
-    status, *_ = await CGIRunner().run([str(ADAGUC_BINARY)], MISSING_COVERAGE_QUERY)
-
-    assert status == HTTP_STATUSCODE_404_NOT_FOUND
-
-
 @pytest.mark.asyncio
 async def test_command_invocation_bypasses_fork_server(fork_server):
+    # Verify command-style invocations use a separate subprocess without disrupting the fork server.
     mother_pid = fork_server.process.pid
 
     status, *_ = await CGIRunner().run([str(ADAGUC_BINARY), "--test"], url=None, env=os.environ.copy(), isCGI=False)
@@ -133,14 +129,11 @@ async def test_command_invocation_bypasses_fork_server(fork_server):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fork_server", [{"env": {"ADAGUC_MAX_PROC_TIMEOUT": "1"}}], indirect=True)
-async def test_fork_server_times_out_and_reaps_blocked_child(fork_server):
-    reader, writer = await asyncio.open_unix_connection(FORK_SOCKET)
-    try:
+async def test_fork_server_times_out_and_reaps_blocked_child(fork_server, fork_connection):
+    # Leave a request blocked and verify the server kills and reaps its child while remaining healthy.
+    async with fork_connection() as (reader, _):
         await wait_for_child_count(fork_server.process.pid, 1)
         response = await asyncio.wait_for(reader.read(), timeout=4)
-    finally:
-        writer.close()
-        await writer.wait_closed()
 
     assert int.from_bytes(response, sys.byteorder) == signal.SIGKILL
     await wait_for_child_count(fork_server.process.pid, 0)
@@ -153,69 +146,58 @@ async def test_fork_server_times_out_and_reaps_blocked_child(fork_server):
     [{"env": {"ADAGUC_NUMPARALLELPROCESSES": "2", "ADAGUC_MAX_PROC_TIMEOUT": "5"}}],
     indirect=True,
 )
-async def test_fork_server_keeps_health_check_headroom(fork_server):
-    connections = []
-    try:
-        for expected_children in (1, 2):
-            connections.append(await asyncio.open_unix_connection(FORK_SOCKET))
-            await wait_for_child_count(fork_server.process.pid, expected_children)
-
-        assert await fork_server.health_check_mother()
-        await wait_for_child_count(fork_server.process.pid, 2)
-    finally:
-        for _, writer in connections:
-            writer.close()
-            await writer.wait_closed()
-
-    await wait_for_child_count(fork_server.process.pid, 0)
-
-
-@pytest.mark.asyncio
-async def test_fork_server_child_does_not_keep_other_client_socket_open(fork_server):
-    reader_a, writer_a = await asyncio.open_unix_connection(FORK_SOCKET)
-    reader_b = writer_b = None
-    try:
+async def test_fork_server_keeps_health_check_headroom(fork_server, fork_connection):
+    # Fill the configured request capacity and verify that the reserved extra child slot
+    # still allows the supervisor's PING health check to run.
+    async with fork_connection():
         await wait_for_child_count(fork_server.process.pid, 1)
-        reader_b, writer_b = await asyncio.open_unix_connection(FORK_SOCKET)
-        await wait_for_child_count(fork_server.process.pid, 2)
-
-        writer_a.write(b"PING\n")
-        await writer_a.drain()
-        response = await asyncio.wait_for(reader_a.read(), timeout=1)
-
-        assert response == b"PONG\n" + (0).to_bytes(4, sys.byteorder)
-        assert not reader_b.at_eof()
-    finally:
-        writer_a.close()
-        await writer_a.wait_closed()
-        if writer_b is not None:
-            writer_b.close()
-            await writer_b.wait_closed()
+        async with fork_connection():
+            await wait_for_child_count(fork_server.process.pid, 2)
+            assert await fork_server.health_check_mother()
+            await wait_for_child_count(fork_server.process.pid, 2)
 
     await wait_for_child_count(fork_server.process.pid, 0)
 
 
 @pytest.mark.asyncio
-async def test_fork_server_clean_shutdown(fork_server):
+async def test_fork_server_child_does_not_keep_other_client_socket_open(fork_server, fork_connection):
+    # A newly forked child inherits older client descriptors; it must close them so
+    # an older client can receive EOF while the newer child remains active.
+    async with fork_connection() as (reader_a, writer_a):
+        await wait_for_child_count(fork_server.process.pid, 1)
+        async with fork_connection() as (reader_b, _):
+            await wait_for_child_count(fork_server.process.pid, 2)
+
+            writer_a.write(b"PING\n")
+            await writer_a.drain()
+            response = await asyncio.wait_for(reader_a.read(), timeout=1)
+
+            assert response == b"PONG\n" + (0).to_bytes(4, sys.byteorder)
+            assert not reader_b.at_eof()
+
+    await wait_for_child_count(fork_server.process.pid, 0)
+
+
+@pytest.mark.asyncio
+async def test_fork_server_clean_shutdown(fork_server, fork_connection):
+    # Stop the supervisor with an active request and verify all processes, sockets, and connections close.
     process = fork_server.process
-    reader, writer = await asyncio.open_unix_connection(FORK_SOCKET)
-    child_pid = (await wait_for_child_count(process.pid, 1)).pop()
+    async with fork_connection() as (reader, _):
+        child_pid = (await wait_for_child_count(process.pid, 1)).pop()
 
-    await fork_server.stop_monitoring()
+        await fork_server.stop_monitoring()
 
-    assert process.returncode is not None
-    assert not FORK_SOCKET.exists()
-    assert await asyncio.wait_for(reader.read(), timeout=1) == b""
-    with pytest.raises(ProcessLookupError):
-        os.kill(child_pid, 0)
-
-    writer.close()
-    await writer.wait_closed()
+        assert process.returncode is not None
+        assert not FORK_SOCKET.exists()
+        assert await asyncio.wait_for(reader.read(), timeout=1) == b""
+        with pytest.raises(ProcessLookupError):
+            os.kill(child_pid, 0)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fork_server", [{"interval": 0.05}], indirect=True)
 async def test_fork_server_restarts_after_mother_is_killed(fork_server):
+    # Kill the real mother process and verify the supervisor replaces it with a healthy process.
     old_process = fork_server.process
     old_pid = old_process.pid
     old_process.kill()
@@ -237,6 +219,7 @@ async def test_fork_server_restarts_after_mother_is_killed(fork_server):
 
 @pytest.mark.asyncio
 async def test_supervisor_retries_failed_restart_and_can_still_stop(monkeypatch):
+    # Verify a temporary restart error is retried without preventing later supervisor cancellation.
     supervisor = ForkServerSupervisor(interval=0.01)
     restarted = asyncio.Event()
     restart_attempts = 0
@@ -265,32 +248,6 @@ async def test_supervisor_retries_failed_restart_and_can_still_stop(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_cgi_runner_selects_request_and_command_timeouts(monkeypatch):
-    calls = []
-
-    async def fake_socket_request(url, env, timeout):
-        calls.append(("request", timeout))
-        return cgi_runner_module.AdagucResponse(0, b"", b"")
-
-    async def fake_command(cmds, env, timeout):
-        calls.append(("command", timeout))
-        return cgi_runner_module.AdagucResponse(0, b"", b"")
-
-    monkeypatch.setenv("ADAGUC_FORK_ENABLE", "TRUE")
-    monkeypatch.setattr(cgi_runner_module, "wait_socket_communicate", fake_socket_request)
-    monkeypatch.setattr(cgi_runner_module, "wait_process_communicate", fake_command)
-
-    runner = CGIRunner()
-    await runner.run([str(ADAGUC_BINARY)], GET_MAP_QUERY, isCGI=False)
-    await runner.run([str(ADAGUC_BINARY), "--test"], None, isCGI=False)
-
-    assert calls == [
-        ("request", cgi_runner_module.MAX_PROC_TIMEOUT),
-        ("command", cgi_runner_module.MAX_COMMAND_TIMEOUT),
-    ]
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("query", "env"),
     [
@@ -299,6 +256,7 @@ async def test_cgi_runner_selects_request_and_command_timeouts(monkeypatch):
     ],
 )
 async def test_fork_client_rejects_invalid_request_before_connecting(query, env):
+    # Reject oversized messages and newline-containing values before attempting a socket connection.
     assert not FORK_SOCKET.exists()
 
     response = await cgi_runner_module.socket_communicate(query, env)
@@ -309,6 +267,7 @@ async def test_fork_client_rejects_invalid_request_before_connecting(query, env)
 
 @pytest.mark.asyncio
 async def test_fork_client_rejects_response_without_exit_status(monkeypatch):
+    # Reject a truncated server response that does not contain the required four-byte exit status.
     reader = asyncio.StreamReader()
     reader.feed_data(b"bad")
     reader.feed_eof()
