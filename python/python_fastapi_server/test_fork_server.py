@@ -181,15 +181,19 @@ async def test_fork_server_child_does_not_keep_other_client_socket_open(fork_ser
 @pytest.mark.asyncio
 async def test_fork_server_clean_shutdown(fork_server, fork_connection):
     # Stop the supervisor with an active request and verify all processes, sockets, and connections close.
-    process = fork_server.process
     async with fork_connection() as (reader, _):
-        child_pid = (await wait_for_child_count(process.pid, 1)).pop()
+        child_pid = (await wait_for_child_count(fork_server.process.pid, 1)).pop()
 
+        # stop_monitoring sends SIGTERM to the entire fork-server process group. Both mother process and child process will be killed.
         await fork_server.stop_monitoring()
 
-        assert process.returncode is not None
+        assert fork_server.process.returncode is not None
         assert not FORK_SOCKET.exists()
-        assert await asyncio.wait_for(reader.read(), timeout=1) == b""
+        try:
+            assert await asyncio.wait_for(reader.read(), timeout=1) == b""
+        except ConnectionResetError:
+            pass
+
         with pytest.raises(ProcessLookupError):
             os.kill(child_pid, 0)
 
