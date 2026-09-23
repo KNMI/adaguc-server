@@ -35,18 +35,6 @@ services:
         max-file: "10"
   adaguc-server:
     image: knmiadaguc/adaguc-server
-    build:
-      context: ..
-      # args:
-      #   BUILD_TYPE: --profile
-      extra_hosts:
-      - "host.docker.internal:host-gateway"
-    # cap_add:
-    #   - SYS_ADMIN
-    #   - PERFMON
-    #   - SYS_PTRACE
-    # security_opt:
-    #   - seccomp=unconfined
     # build:
     #   context: ..
     #   extra_hosts:
@@ -72,7 +60,7 @@ services:
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
-      # - "ADAGUC_REDIS=redis://adaguc-redis:6379"
+      - "ADAGUC_REDIS=redis://adaguc-redis:6379"
       - "ADAGUC_TRACE_TIMINGS=TRUE"
       - "ADAGUC_TRUSTED_PROXIES=*"
       - "ADAGUC_TRUSTED_HOST=*"
