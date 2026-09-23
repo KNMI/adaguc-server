@@ -150,16 +150,6 @@ class runAdaguc:
         # Forward all environment variables starting with ADAGUCENV_
         adagucenv.update(ADAGUC_ENV_CACHE)
 
-        prefix: str = "ADAGUCENV_"
-        for key, value in os.environ.items():
-            if key[: len(prefix)] == prefix:
-                adagucenv[key] = value
-
-            # Don't use adaguc fork server when running Adaguc through this method
-            if key == "ADAGUC_FORK_ENABLE":
-                adagucenv[key] = ""
-                continue
-
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
         ADAGUC_LOGFILE = adagucenv["ADAGUC_LOGFILE"]
 

@@ -50,7 +50,7 @@ Normally, ADAGUC receives these values via environment variables at process star
 
 ## 3. Connection Accepted
 
-The mother process detects activity on the socket, accepts the connection using accept(), and then creates a new process using `fork()`. `fork()` creates a new child process, while the original mother process keeps running.
+The mother process detects activity on the socket, accepts the connection using `accept()`, and then creates a new process using `fork()`. `fork()` creates a new child process, while the original mother process keeps running.
 
 After `fork()`, the child process inherits the parent’s state, including open file descriptors, memory, and environment. Memory is shared using copy-on-write (COW), meaning pages are only duplicated if either process modifies them.
 

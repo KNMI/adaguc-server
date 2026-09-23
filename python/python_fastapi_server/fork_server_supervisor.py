@@ -12,11 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class ForkServerSupervisor:
-    def __init__(self, interval: int = 5, startup_timeout: float = 10.0):
-        """Initialize supervisor with binary path and health check interval.
-
-        ADAGUC_CONFIG and ADAGUC_ONLINERESOURCE need to be set manually
-        """
+    def __init__(self, interval: float = 5.0, startup_timeout: float = 10.0):
+        """Initialize the supervisor and its fork-server environment."""
 
         self.interval = interval
         self.startup_timeout = startup_timeout
@@ -57,9 +54,13 @@ class ForkServerSupervisor:
                 os.killpg(process_group_id, 0)
             except ProcessLookupError:
                 return True
-            if loop.time() >= deadline:
+
+            remaining = deadline - loop.time()
+            if remaining <= 0:
                 return False
-            await asyncio.sleep(min(0.05, deadline - loop.time()))
+
+            # Avoid busy-waiting while keeping shutdown responsive.
+            await asyncio.sleep(min(0.05, remaining))
 
     async def stop_process(self):
         """Terminate the subprocess gracefully, force kill if needed."""
@@ -68,32 +69,41 @@ class ForkServerSupervisor:
             return
 
         logger.info("Stopping forkserver")
+        process = self.process
+        process_group_id = process.pid
         loop = asyncio.get_running_loop()
         deadline = loop.time() + 2
 
         try:
             # Signal the isolated process group, including the mother and every forked request child.
-            os.killpg(self.process.pid, signal.SIGTERM)
+            os.killpg(process_group_id, signal.SIGTERM)
         except ProcessLookupError:
             pass
 
-        if self.process.returncode is None:
-            try:
-                await asyncio.wait_for(self.process.wait(), timeout=max(0, deadline - loop.time()))
-            except asyncio.TimeoutError:
-                pass
+        if process.returncode is None:
+            remaining = deadline - loop.time()
+            if remaining > 0:
+                try:
+                    await asyncio.wait_for(process.wait(), timeout=remaining)
+                except asyncio.TimeoutError:
+                    pass
 
-        group_exited = await self.wait_for_process_group_exit(self.process.pid, timeout=max(0, deadline - loop.time()))
+        remaining = max(0.0, deadline - loop.time())
+        group_exited = await self.wait_for_process_group_exit(process_group_id, timeout=remaining)
+
         if not group_exited:
             logger.warning("Force killing forkserver process group")
             try:
                 # Force-stop anything in the group that did not handle SIGTERM within the grace period.
-                os.killpg(self.process.pid, signal.SIGKILL)
+                os.killpg(process_group_id, signal.SIGKILL)
             except ProcessLookupError:
                 pass
 
-        if self.process.returncode is None:
-            await self.process.wait()
+        if process.returncode is None:
+            await process.wait()
+
+        if not group_exited and not await self.wait_for_process_group_exit(process_group_id, timeout=2):
+            logger.error("Forkserver process group still exists after SIGKILL")
 
         try:
             os.unlink(get_fork_socket_path())
@@ -195,5 +205,6 @@ class ForkServerSupervisor:
                 await self._task
             except asyncio.CancelledError:
                 pass
+            self._task = None
 
         await self.stop_process()

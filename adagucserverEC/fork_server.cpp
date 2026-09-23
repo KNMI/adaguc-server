@@ -336,8 +336,6 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
   int max_request_child_procs = std::max(mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES), 2);
   int max_child_procs = max_request_child_procs + 1;
   int max_child_proc_timeout = mother_get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_CHILD_PROC_TIMEOUT);
-  CDBDebug("Max child processes: %d", max_child_procs);
-  CDBDebug("Max child process timeout: %d", max_child_proc_timeout);
 
   // Start listening on the socket. Can only accept `max_child_procs` number of children.
   if (listen(listen_socket, max_child_procs) != 0) {
