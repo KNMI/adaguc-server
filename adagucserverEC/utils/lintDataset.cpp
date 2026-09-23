@@ -84,16 +84,16 @@ int lintDataset(std::string config) {
     numXMLAttributesNotRecognized++;
   }
   // Remove the ones already configured in the base
-  for (auto Legend: srvParamsBase.cfg->Legend) {
+  for (const auto &Legend: srvParamsBase.cfg->Legend) {
     removeStringFromVector(Legend.attr.name, availableLegendNames);
   }
 
-  for (auto Style: srvParamsBase.cfg->Style) {
+  for (const auto &Style: srvParamsBase.cfg->Style) {
     removeStringFromVector(Style.attr.name, availableStyleNames);
   }
 
   // Remove the ones with standardname mappings, these cannot be properly checked.
-  for (auto Style: srvParamsBase.cfg->Style) {
+  for (const auto &Style: srvParamsBase.cfg->Style) {
     if (Style.StandardNames.size() > 0) {
       removeStringFromVector(Style.attr.name, availableStyleNames);
     }

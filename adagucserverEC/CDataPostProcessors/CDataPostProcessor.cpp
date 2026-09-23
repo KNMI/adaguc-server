@@ -90,7 +90,7 @@ std::vector<XMLE_DataPostProcAttributes> getProcessorList(CDataSource *dataSourc
 
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
   std::vector<XMLE_DataPostProcAttributes> dataProcessorList = getProcessorList(dataSource);
-  for (auto procAttr: dataProcessorList) {
+  for (const auto &procAttr: dataProcessorList) {
     // The data postprocessor implementations still expect a CServerConfig::XMLE_DataPostProc* as argument. // TODO
     CServerConfig::XMLE_DataPostProc proc;
     proc.attr = procAttr;
@@ -134,7 +134,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
 
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems) {
   std::vector<XMLE_DataPostProcAttributes> dataProcessorList = getProcessorList(dataSource);
-  for (auto procAttr: dataProcessorList) {
+  for (const auto &procAttr: dataProcessorList) {
     // The data postprocessor implementations still expect a CServerConfig::XMLE_DataPostProc* as argument. // TODO
     CServerConfig::XMLE_DataPostProc proc;
     proc.attr = procAttr;

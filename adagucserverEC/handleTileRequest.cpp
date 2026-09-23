@@ -104,7 +104,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
 
   // Put the results per tiling level into a map, so we can find the closest matching tile level.
   std::map<int, int> levelMap;
-  for (auto record: store->records) {
+  for (const auto &record: store->records) {
     auto tilingLevel = std::stoi(record.get("adaguctilinglevel"));
     if (tilingLevel > 0) {
       levelMap[tilingLevel]++;
@@ -120,13 +120,13 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
     dataSource->queryLevel = std::stoi(store->records.at(0).get("adaguctilinglevel"));
   } else {
     // Find tiling level that has amount of tiles closest to targetNrOfTiles. If equal amount of tiles occur for tiling levels, the lowest tilinglevel is taken.
-    std::stable_sort(begin(v), end(v), [targetNrOfTiles](const mypair &a, const mypair &b) { return fabs(targetNrOfTiles - a.second) < fabs(targetNrOfTiles - b.second); });
+    std::stable_sort(begin(v), end(v), [targetNrOfTiles](const mypair &a, const mypair &b) { return std::abs(targetNrOfTiles - a.second) < std::abs(targetNrOfTiles - b.second); });
     dataSource->queryLevel = v.at(0).first;
   }
 
   // Now filter out the unwanted tiling levels from the list
   std::vector<CDBStore::Record> filteredRecords;
-  for (auto record: store->records) {
+  for (const auto &record: store->records) {
     // Make sure that there are not too many tiles
     if (filteredRecords.size() >= maxTilesInImage) {
       break;

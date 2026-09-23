@@ -51,12 +51,12 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       std::string fullName = directory;
-      fullName += fullName + "/" + ent->d_name;
+      fullName = fullName + "/" + ent->d_name;
 
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
-        struct stat path_stat {};
+        struct stat path_stat{};
         int ret = stat(fullName.c_str(), &path_stat);
         if (ret == 0 && S_ISREG(path_stat.st_mode)) {
           d_type = DT_REG;
@@ -241,7 +241,7 @@ CDirReader *CCachedDirReader::getDirReader(const char *directory, const char *ex
 }
 
 void CCachedDirReader::removeFileFromCachedList(std::string fileToRemove) {
-  for (auto i: dirReaderMap) {
+  for (const auto &i: dirReaderMap) {
     CDirReader *dirReader = i.second;
     // Find the file in the vector
     auto itr = std::find(dirReader->fileList.begin(), dirReader->fileList.end(), fileToRemove);

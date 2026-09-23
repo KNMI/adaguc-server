@@ -82,7 +82,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
-    for (auto projection: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &projection: firstWMLayer->layerMetadata.projectionList) {
       XMLDoc += "<SRS>";
       XMLDoc += projection.name;
       XMLDoc += "</SRS>\n";
@@ -113,7 +113,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<Me
         CT::printfconcat(XMLDoc, "<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[1],
                          layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[3]);
         // Dims
-        for (auto dim: layer->layerMetadata.dimList) {
+        for (const auto &dim: layer->layerMetadata.dimList) {
           if (dim.hidden) continue;
           CT::printfconcat(XMLDoc, "<Dimension name=\"%s\" units=\"%s\"/>\n", dim.serviceName.c_str(), dim.units.c_str());
           CT::printfconcat(XMLDoc, "<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.serviceName.c_str(), dim.defaultValue.c_str(), 1);
@@ -141,7 +141,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
-    for (auto proj: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &proj: firstWMLayer->layerMetadata.projectionList) {
       XMLDoc += "<SRS>";
       XMLDoc += proj.name;
       XMLDoc += "</SRS>\n";
@@ -225,7 +225,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             XMLDoc += layerTitle;
             XMLDoc += "</Title>\n";
 
-            for (auto proj: layer->layerMetadata.projectionList) {
+            for (const auto &proj: layer->layerMetadata.projectionList) {
               XMLDoc += "<SRS>";
               XMLDoc += proj.name;
               XMLDoc += "</SRS>\n";
@@ -236,7 +236,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             CT::printfconcat(XMLDoc, "<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[1],
                              layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[3]);
             // Dims
-            for (auto dim: layer->layerMetadata.dimList) {
+            for (const auto &dim: layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
               CT::printfconcat(XMLDoc, "<Dimension name=\"%s\" units=\"%s\"/>\n", dim.serviceName.c_str(), dim.units.c_str());
               CT::printfconcat(XMLDoc, "<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.serviceName.c_str(), dim.defaultValue.c_str(), 1);
@@ -245,7 +245,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             }
 
             // Styles
-            for (auto style: layer->layerMetadata.styleList) {
+            for (const auto &style: layer->layerMetadata.styleList) {
 
               XMLDoc += "   <Style>\n";
               CT::printfconcat(XMLDoc, "    <Name>%s</Name>\n", style.name.c_str());
@@ -463,14 +463,14 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
 
-    for (auto proj: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &proj: firstWMLayer->layerMetadata.projectionList) {
       if (!proj.name.empty()) {
         XMLDoc += "<CRS>";
         XMLDoc += proj.name;
         XMLDoc += "</CRS>\n";
       }
     }
-    for (auto proj: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &proj: firstWMLayer->layerMetadata.projectionList) {
       if (!proj.name.empty()) {
         if (srvParam->checkBBOXXYOrder(proj.name.c_str()) == true) {
           CT::printfconcat(XMLDoc, "<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", proj.name.c_str(), proj.dfBBOX[1], proj.dfBBOX[0], proj.dfBBOX[3], proj.dfBBOX[2]);
@@ -603,7 +603,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
                              "</EX_GeographicBoundingBox>",
                              layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[1], layer->layerMetadata.dfLatLonBBOX[3]);
 
-            for (auto proj: layer->layerMetadata.projectionList) {
+            for (const auto &proj: layer->layerMetadata.projectionList) {
               if (srvParam->checkBBOXXYOrder(proj.name.c_str()) == true) {
                 CT::printfconcat(XMLDoc, "<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", proj.name.c_str(), proj.dfBBOX[1], proj.dfBBOX[0], proj.dfBBOX[3],
                                  proj.dfBBOX[2]);
@@ -623,7 +623,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
             }
 
             // Dims
-            for (auto dim: layer->layerMetadata.dimList) {
+            for (const auto &dim: layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
               if (CT::indexOf(dim.serviceName, "time") != -1) {
                 CT::printfconcat(XMLDoc, "<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" current=\"1\">", dim.serviceName.c_str(), dim.units.c_str(),
@@ -655,7 +655,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
               CT::printfconcat(XMLDoc, " <Identifier authority=\"%s\">%s</Identifier>\n", identifierAuthority.c_str(), layer->layerMetadata.name.c_str());
             }
             // Styles
-            for (auto style: layer->layerMetadata.styleList) {
+            for (const auto &style: layer->layerMetadata.styleList) {
 
               XMLDoc += "   <Style>\n";
               CT::printfconcat(XMLDoc, "    <Name>%s</Name>\n", style.name.c_str());
@@ -848,7 +848,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
             // Look wether and which dimension is a time dimension
             int timeDimIndex = -1;
             int d = 0;
-            for (auto dim: layer->layerMetadata.dimList) {
+            for (const auto &dim: layer->layerMetadata.dimList) {
               if (dim.units == "ISO8601") {
                 timeDimIndex = d;
               }
@@ -887,7 +887,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
               XMLDoc += "  </lonLatEnvelope>\n"
                         "  <domainSet>\n"
                         "    <spatialDomain>\n";
-              for (auto proj: layer->layerMetadata.projectionList) {
+              for (const auto &proj: layer->layerMetadata.projectionList) {
 
                 std::string encodedProjString(proj.name.c_str());
 
@@ -954,7 +954,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
               // Supported CRSs
               XMLDoc += "    <supportedCRSs>\n";
 
-              for (auto proj: layer->layerMetadata.projectionList) {
+              for (const auto &proj: layer->layerMetadata.projectionList) {
                 std::string encodedProjString(proj.name.c_str());
                 CT::printfconcat(XMLDoc, "      <requestResponseCRSs>%s</requestResponseCRSs>\n", encodedProjString.c_str());
               }

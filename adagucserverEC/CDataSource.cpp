@@ -477,7 +477,7 @@ std::vector<std::string> CDataSource::getStyleNames(const std::vector<CServerCon
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j].elementValue.empty()) continue;
     std::vector<std::string> l1 = CT::split(Styles[j].elementValue, ",");
-    for (auto styleValue: l1) {
+    for (const auto &styleValue: l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
       }

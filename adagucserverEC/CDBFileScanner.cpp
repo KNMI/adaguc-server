@@ -971,7 +971,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, std::string _tailPath, std
       if (cleanFilesResult.second.size() > 0) {
         CDBDebug("Cleanfiles deleted %lu files.", cleanFilesResult.second.size());
         // Remove the deleted files from the fileList.
-        for (auto item: cleanFilesResult.second) {
+        for (const auto &item: cleanFilesResult.second) {
           auto it = std::find(fileList.begin(), fileList.end(), item);
           if (it != fileList.end()) {
             fileList.erase(it);

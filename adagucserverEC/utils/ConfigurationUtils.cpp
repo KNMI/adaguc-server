@@ -17,7 +17,7 @@ std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvPara
   if (srvParam->cfg->Dataset.size() == 0) {
     CDBWarning("No dataset paths are configured");
   }
-  for (auto dataset: srvParam->cfg->Dataset) {
+  for (const auto &dataset: srvParam->cfg->Dataset) {
     if (dataset.attr.enabled == ("true") && dataset.attr.location.empty() == false) {
       if (srvParam->verbose) {
         CDBDebug("Checking dataset location %s", dataset.attr.location.c_str());

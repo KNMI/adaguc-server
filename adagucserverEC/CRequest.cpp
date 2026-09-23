@@ -542,7 +542,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     CDBDebug("### [</fillDimValuesForDataSource>]");
   }
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
-  for (auto requiredDim: dataSource->requiredDims) {
+  for (const auto &requiredDim: dataSource->requiredDims) {
     if (!requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }

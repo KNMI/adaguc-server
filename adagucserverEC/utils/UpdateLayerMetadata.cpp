@@ -77,7 +77,7 @@ int updateLayerMetadata(CRequest &request) {
 
   std::set<DatasetAndLayerPair> datasetNamesFromDB;
 
-  for (auto record : records) {
+  for (const auto &record : records) {
     const std::string &datasetName = record.get("datasetname");
     const std::string &layerName = record.get("layername");
     datasetNamesFromDB.insert(std::make_pair(datasetName, layerName));
@@ -88,7 +88,7 @@ int updateLayerMetadata(CRequest &request) {
   std::set_difference(datasetNamesFromDB.begin(), datasetNamesFromDB.end(), dataSetConfigsWithLayers.begin(), dataSetConfigsWithLayers.end(),
                       std::inserter(layersToDeleteFromMetadataTable, layersToDeleteFromMetadataTable.end()));
 
-  for (auto p : layersToDeleteFromMetadataTable) {
+  for (const auto &p : layersToDeleteFromMetadataTable) {
     CDBDebug("DROP: %s/%s ", p.first.c_str(), p.second.c_str());
     CDBFactory::getDBAdapter(srvParam->cfg)->dropLayerFromLayerMetadataStore(p.first.c_str(), p.second.c_str());
   }

@@ -27,7 +27,7 @@ std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 void CDBFileScanner::_removeFileFromTables(std::string fileNamestr, CDataSource *dataSource) {
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   auto tableList = dbAdapter->getTableNames(dataSource);
-  for (auto tableName: tableList) {
+  for (const auto &tableName: tableList) {
     CDBDebug("DB: Removing from table %s and file %s", tableName.c_str(), fileNamestr.c_str());
     dbAdapter->removeFile(tableName.c_str(), fileNamestr.c_str());
   }

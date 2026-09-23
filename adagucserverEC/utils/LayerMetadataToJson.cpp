@@ -42,7 +42,7 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
     return dimensionNameAndValues;
   }
   // Set other dims to * if not set in the request.
-  for (auto dim: dataSource.requiredDims) {
+  for (const auto &dim: dataSource.requiredDims) {
 
     if (dim.queryValue.empty()) {
       newRequiredDims.push_back({.name = dim.name,
