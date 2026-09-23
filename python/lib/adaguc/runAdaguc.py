@@ -149,6 +149,7 @@ class runAdaguc:
 
         # Forward all environment variables starting with ADAGUCENV_
         adagucenv.update(ADAGUC_ENV_CACHE)
+
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
         ADAGUC_LOGFILE = adagucenv["ADAGUC_LOGFILE"]
 
