@@ -63,7 +63,14 @@ int parseInt(const attribute &attrCfg);
  */
 struct CXMLObjectInterface {
   std::string elementValue;
-  virtual ~CXMLObjectInterface() {}
+
+  CXMLObjectInterface() = default;
+  CXMLObjectInterface(const CXMLObjectInterface &) = default;
+  CXMLObjectInterface(CXMLObjectInterface &&) noexcept = default;
+  CXMLObjectInterface &operator=(const CXMLObjectInterface &) = default;
+  CXMLObjectInterface &operator=(CXMLObjectInterface &&) noexcept = default;
+  virtual ~CXMLObjectInterface() = default;
+
   virtual CXMLObjectInterface *addElement(const std::string &) { return nullptr; };
   virtual void handleValue() {};
   virtual bool addAttribute(const attribute &) { return false; }
