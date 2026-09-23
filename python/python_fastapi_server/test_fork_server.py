@@ -87,7 +87,7 @@ def fork_connection():
 
 @pytest.mark.asyncio
 async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypatch, tmp_path):
-    # Verify real GetMap output, a stable mother, distinct request children, and a cwd-independent socket path.
+    # Verify real GetMap output, a stable mother, distinct request children
     mother_pid = fork_server.process.pid
     child_pids = []
 
@@ -95,6 +95,7 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypat
     monkeypatch.chdir(tmp_path)
     assert not (tmp_path / "adaguc.socket").exists()
 
+    # Do two regular adaguc GetMap requests through fork-server
     for request_number in range(2):
         log_path = tmp_path / f"request-{request_number}.log"
         status, headers, process_error, body = await CGIRunner().run(
@@ -107,6 +108,7 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypat
         if request_number == 0:
             assert body == EXPECTED_GET_MAP.read_bytes()
 
+        # The request log should contain the pid of the child
         request_pids = set(re.findall(r"pid(\d+)", log_path.read_text(encoding="utf-8")))
         assert len(request_pids) == 1
         child_pids.append(request_pids.pop())
@@ -122,6 +124,7 @@ async def test_command_invocation_bypasses_fork_server(fork_server):
     # Verify command-style invocations use a separate subprocess without disrupting the fork server.
     mother_pid = fork_server.process.pid
 
+    # The extra command-line argument must make CGIRunner select the subprocess path.
     status, *_ = await CGIRunner().run([str(ADAGUC_BINARY), "--test"], url=None, env=os.environ.copy(), isCGI=False)
 
     assert status == 0
@@ -134,10 +137,12 @@ async def test_command_invocation_bypasses_fork_server(fork_server):
 @pytest.mark.parametrize("fork_server", [{"env": {"ADAGUC_MAX_PROC_TIMEOUT": "1"}}], indirect=True)
 async def test_fork_server_times_out_and_reaps_blocked_child(fork_server, fork_connection):
     # Leave a request blocked and verify the server kills and reaps its child while remaining healthy.
+    # Opening the connection without writing keeps the child blocked in recv().
     async with fork_connection() as (reader, _):
         await wait_for_child_count(fork_server.process.pid, 1)
         response = await asyncio.wait_for(reader.read(), timeout=4)
 
+    # The mother returns the signal that terminated the child as its exit status.
     assert int.from_bytes(response, sys.byteorder) == signal.SIGKILL
     await wait_for_child_count(fork_server.process.pid, 0)
     assert await fork_server.health_check_mother()
@@ -152,6 +157,7 @@ async def test_fork_server_times_out_and_reaps_blocked_child(fork_server, fork_c
 async def test_fork_server_keeps_health_check_headroom(fork_server, fork_connection):
     # Fill the configured request capacity and verify that the reserved extra child slot
     # still allows the supervisor's PING health check to run.
+    # Nested contexts keep both request children active during the health check.
     async with fork_connection():
         await wait_for_child_count(fork_server.process.pid, 1)
         async with fork_connection():
@@ -171,6 +177,7 @@ async def test_fork_server_child_does_not_keep_other_client_socket_open(fork_ser
         async with fork_connection() as (reader_b, _):
             await wait_for_child_count(fork_server.process.pid, 2)
 
+            # A must receive its response and EOF while B remains open and blocked.
             writer_a.write(b"PING\n")
             await writer_a.drain()
             response = await asyncio.wait_for(reader_a.read(), timeout=1)
@@ -194,6 +201,7 @@ async def test_fork_server_clean_shutdown(fork_server, fork_connection):
         assert process.returncode is not None
         assert fork_server.process is None
         assert not FORK_SOCKET.exists()
+        # An orderly EOF and a peer reset are both valid process-group shutdown outcomes.
         try:
             assert await asyncio.wait_for(reader.read(), timeout=1) == b""
         except ConnectionResetError:
@@ -212,6 +220,7 @@ async def test_fork_server_restarts_after_mother_is_killed(fork_server):
     old_process.kill()
     await old_process.wait()
 
+    # Poll while the background supervision task creates and validates the replacement.
     loop = asyncio.get_running_loop()
     deadline = loop.time() + 3
     while loop.time() < deadline:
@@ -236,10 +245,12 @@ async def test_supervisor_retries_failed_restart_and_can_still_stop(monkeypatch)
     async def restart_process():
         nonlocal restart_attempts
         restart_attempts += 1
+        # Fail once, then signal that the supervision loop successfully retried.
         if restart_attempts == 1:
             raise OSError("temporary process-start failure")
         restarted.set()
 
+    # Skip real process startup and force every health check into the restart path.
     monkeypatch.setattr(supervisor, "start_process", AsyncMock())
     monkeypatch.setattr(supervisor, "wait_until_ready", AsyncMock(return_value=True))
     monkeypatch.setattr(supervisor, "health_check_mother", AsyncMock(return_value=False))
@@ -277,6 +288,8 @@ async def test_fork_client_rejects_invalid_request_before_connecting(query, env)
 @pytest.mark.asyncio
 async def test_fork_client_rejects_response_without_exit_status(monkeypatch):
     # Reject a truncated server response that does not contain the required four-byte exit status.
+
+    # open_unix_connection will be mocked. Act like adaguc sent b"bad" over the socket.
     reader = asyncio.StreamReader()
     reader.feed_data(b"bad")
     reader.feed_eof()
