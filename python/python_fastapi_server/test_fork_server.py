@@ -77,7 +77,10 @@ def fork_connection():
             yield reader, writer
         finally:
             writer.close()
-            await writer.wait_closed()
+            try:
+                await writer.wait_closed()
+            except OSError:
+                pass
 
     return connect
 

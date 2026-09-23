@@ -36,7 +36,11 @@ typedef struct {
 static std::map<pid_t, child_proc_t> child_procs;
 int self_pipe[2];
 
-/** Close descriptors that belong only to the mother process after a fork. */
+/**
+ * Close descriptors that belong only to the mother process after a fork.
+ *
+ * @param listen_socket The listen_socket from the mother.
+ */
 void child_close_mother_file_descriptors(int listen_socket) {
   close(listen_socket);
   close(self_pipe[0]);
