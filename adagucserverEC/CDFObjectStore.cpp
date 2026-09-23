@@ -32,7 +32,6 @@
 #include "CCDFGeoJSONIO.h"
 #include "CCDFPNGIO.h"
 
-#include <algorithm>
 #include "CConvertASCAT.h"
 #include "CConvertUGRIDMesh.h"
 #include "CConvertADAGUCVector.h"
@@ -388,32 +387,12 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore() {
 };
 
 void CDFObjectStore::deleteCDFObject(const std::string &fileName) {
-  auto it = cdfObjectEntries.begin();
-  std::vector<ptrdiff_t> indicesToDelete;
-
-  auto matchesFileName = [&fileName](const CDFObjectStoreEntry &e) { return e.fileName == fileName; };
-  while ((it = std::find_if(it, cdfObjectEntries.end(), matchesFileName)) != cdfObjectEntries.end()) {
-    indicesToDelete.push_back(it - cdfObjectEntries.begin());
-    it++;
-  }
-
-  // indicesToDelete is ordered, we iterate over it in reverse order to delete from the back, to avoid issues with moves
-  for (auto indexIter = indicesToDelete.rbegin(); indexIter != indicesToDelete.rend(); ++indexIter) {
-    auto index = *indexIter;
-    cdfObjectEntries.erase(cdfObjectEntries.begin() + index);
-  }
-  // Erasing from the middle shifts every following index, so the index map needs to be rebuilt.
-  // Deletions only happen on a cache miss that triggers eviction (or an explicit external call), never on a lookup,
-  // so this stays rare compared to the lookups that fileNameIndex exists to speed up.
-  if (!indicesToDelete.empty()) {
-    rebuildFileNameIndex();
-  }
-}
-
-void CDFObjectStore::rebuildFileNameIndex() {
-  fileNameIndex.clear();
-  for (size_t j = 0; j < cdfObjectEntries.size(); j++) {
-    fileNameIndex[cdfObjectEntries[j].fileName] = j;
+  size_t numRemoved = std::erase_if(cdfObjectEntries, [&fileName](const CDFObjectStoreEntry &e) { return e.fileName == fileName; });
+  if (numRemoved > 0) {
+    fileNameIndex.clear();
+    for (size_t j = 0; j < cdfObjectEntries.size(); j++) {
+      fileNameIndex[cdfObjectEntries[j].fileName] = j;
+    }
   }
 }
 

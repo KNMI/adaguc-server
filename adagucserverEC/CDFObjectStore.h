@@ -45,7 +45,6 @@ private:
   // fileName -> index into cdfObjectEntries, kept in sync with it, so lookups don't need to linearly scan cdfObjectEntries.
   // A request can open (and thus look up) hundreds of files, so this turns an O(numOpenFiles) scan per lookup into O(1).
   std::unordered_map<std::string, size_t> fileNameIndex;
-  void rebuildFileNameIndex();
 
   /**
    * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
