@@ -34,27 +34,23 @@
 
 extern int numXMLAttributesNotRecognized;
 
-#define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \
-  {                                                                                                                                                                                                    \
-    variableName.push_back(new XMLE_##variableName());                                                                                                                                                 \
-    return variableName.back();                                                                                                                                                                        \
-  }
+/**
+ * Appends a newly constructed element to an XML object vector and returns it.
+ */
+template <typename T> T *addXmlObj(std::vector<T> &elements) {
+  elements.emplace_back();
+  return &elements.back();
+}
 
-#define XMLE_SETOBJ(variableName)                                                                                                                                                                      \
-  {                                                                                                                                                                                                    \
-    if (variableName.size() == 0) {                                                                                                                                                                    \
-      variableName.push_back(new XMLE_##variableName());                                                                                                                                               \
-      return variableName.back();                                                                                                                                                                      \
-    } else {                                                                                                                                                                                           \
-      return variableName.back();                                                                                                                                                                      \
-    }                                                                                                                                                                                                  \
+/**
+ * Returns the (single) element in an XML object vector, constructing it first if not yet present.
+ */
+template <typename T> T *setXmlObj(std::vector<T> &elements) {
+  if (elements.empty()) {
+    elements.emplace_back();
   }
-
-#define XMLE_DELOBJ(variableName)                                                                                                                                                                      \
-  {{for (size_t j = 0; j < variableName.size(); j++){delete variableName[j];                                                                                                                           \
-  }                                                                                                                                                                                                    \
-  }                                                                                                                                                                                                    \
-  }
+  return &elements.back();
+}
 
 struct attribute {
   std::string name;
@@ -67,7 +63,14 @@ int parseInt(const attribute &attrCfg);
  */
 struct CXMLObjectInterface {
   std::string elementValue;
-  virtual ~CXMLObjectInterface() {}
+
+  CXMLObjectInterface() = default;
+  CXMLObjectInterface(const CXMLObjectInterface &) = default;
+  CXMLObjectInterface(CXMLObjectInterface &&) noexcept = default;
+  CXMLObjectInterface &operator=(const CXMLObjectInterface &) = default;
+  CXMLObjectInterface &operator=(CXMLObjectInterface &&) noexcept = default;
+  virtual ~CXMLObjectInterface() = default;
+
   virtual CXMLObjectInterface *addElement(const std::string &) { return nullptr; };
   virtual void handleValue() {};
   virtual bool addAttribute(const attribute &) { return false; }

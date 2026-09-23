@@ -326,31 +326,31 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.name == ("image/png32")) {
+      if (dataSource->cfgLayer->WMSFormat[0].attr.name == ("image/png32")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.format == ("image/png32")) {
+      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png32")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.format == ("image/png24")) {
+      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png24")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.format == ("image/webp")) {
+      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/webp")) {
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
-      if (dataSource->cfgLayer->WMSFormat[0]->attr.quality.empty() == false) {
-        srvParam->imageQuality = atoi(dataSource->cfgLayer->WMSFormat[0]->attr.quality.c_str());
+      if (dataSource->cfgLayer->WMSFormat[0].attr.quality.empty() == false) {
+        srvParam->imageQuality = atoi(dataSource->cfgLayer->WMSFormat[0].attr.quality.c_str());
       }
     }
   }
   // Set font location
-  if (srvParam->cfg->WMS[0]->ContourFont.size() != 0) {
-    if (srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty() == false) {
-      drawImage.setTTFFontLocation(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
+  if (srvParam->cfg->WMS[0].ContourFont.size() != 0) {
+    if (srvParam->cfg->WMS[0].ContourFont[0].attr.location.empty() == false) {
+      drawImage.setTTFFontLocation(srvParam->cfg->WMS[0].ContourFont[0].attr.location.c_str());
 
-      if (srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.empty() == false) {
-        std::string fontSize = srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
+      if (srvParam->cfg->WMS[0].ContourFont[0].attr.size.empty() == false) {
+        std::string fontSize = srvParam->cfg->WMS[0].ContourFont[0].attr.size.c_str();
         drawImage.setTTFFontSize(std::stod(fontSize));
       }
 
@@ -410,9 +410,9 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-          status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
-            CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
+            CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
           }
         }
@@ -523,10 +523,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           sameHeaderForAll = true;
         }
 
-        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall == ("true")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0].attr.gfi_openall == ("true")) {
           openAll = true;
         }
-        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall == ("headers")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0].attr.gfi_openall == ("headers")) {
           sameHeaderForAll = true;
         }
       }
@@ -907,7 +907,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       std::vector<std::string> attributeValues(numFeatures);
       /* Loop through all configured FeatureInterval elements */
       for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
-        CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
+        CServerConfig::XMLE_FeatureInterval *featureInterval = &styleConfiguration->featureIntervals[j];
         if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
           /* Get the matchid attribute for the feature */
           std::string attributeName = featureInterval->attr.matchid;
@@ -1010,8 +1010,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
       */
       if (styleConfiguration != nullptr) {
-        for (auto renderSetting: styleConfiguration->renderSettings) {
-          std::string renderHint = renderSetting->attr.renderhint;
+        for (const auto &renderSetting: styleConfiguration->renderSettings) {
+          std::string renderHint = renderSetting.attr.renderhint;
           if (renderHint == RENDERHINT_DISCRETECLASSES) {
             drawMap = false;   // Don't use continous legends with the bilinear renderer
             drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
@@ -1047,7 +1047,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       if (drawContour == true) {
 
         for (size_t j = 0; j < styleConfiguration->contourLines.size(); j++) {
-          CServerConfig::XMLE_ContourLine *contourLine = styleConfiguration->contourLines[j];
+          CServerConfig::XMLE_ContourLine *contourLine = &styleConfiguration->contourLines[j];
           // Check if we have a interval contour line or a contourline with separate classes
           if (contourLine->attr.interval.empty() == false) {
             // ContourLine interval
@@ -1232,9 +1232,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
-            CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
+            CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
           }
         }
@@ -1262,13 +1262,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         if (dataSource->cfgLayer->ImageText.size() > 0) {
 
           std::string imageText = "";
-          if (dataSource->cfgLayer->ImageText[0]->elementValue.empty() == false) {
-            imageText = dataSource->cfgLayer->ImageText[0]->elementValue;
+          if (dataSource->cfgLayer->ImageText[0].elementValue.empty() == false) {
+            imageText = dataSource->cfgLayer->ImageText[0].elementValue;
           }
 
           if (dataSource->getNumDataObjects() > 0) {
             // Determine ImageText based on configured netcdf attribute
-            const char *attrToSearch = dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
+            const char *attrToSearch = dataSource->cfgLayer->ImageText[0].attr.attribute.c_str();
             if (attrToSearch != NULL) {
               try {
                 CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeThrows(attrToSearch);
@@ -1286,11 +1286,11 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             size_t len = imageText.length();
             double scaling = dataSource->getScaling();
             float fontSize = 10;
-            if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
-              fontSize = atof(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+            if (srvParam->cfg->WMS[0].SubTitleFont.size() > 0) {
+              fontSize = atof(srvParam->cfg->WMS[0].SubTitleFont[0].attr.size.c_str());
               fontSize = fontSize * scaling;
             }
-            drawImage.drawText(int(drawImage.geoParams.width / 2 - len * 3), drawImage.geoParams.height - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
+            drawImage.drawText(int(drawImage.geoParams.width / 2 - len * 3), drawImage.geoParams.height - 2 * fontSize, srvParam->cfg->WMS[0].SubTitleFont[0].attr.location.c_str(), fontSize, 0,
                                imageText.c_str(), CColor(0, 0, 0, 255));
           }
         }
@@ -1306,12 +1306,12 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       float lineWidth = 0.25;
       int lineColor = 247;
 
-      if (dataSource->cfgLayer->Grid[0]->attr.resolution.empty() == false) {
-        gridSize = atof(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
+      if (dataSource->cfgLayer->Grid[0].attr.resolution.empty() == false) {
+        gridSize = atof(dataSource->cfgLayer->Grid[0].attr.resolution.c_str());
       }
       precision = gridSize / 10;
-      if (dataSource->cfgLayer->Grid[0]->attr.precision.empty() == false) {
-        precision = atof(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
+      if (dataSource->cfgLayer->Grid[0].attr.precision.empty() == false) {
+        precision = atof(dataSource->cfgLayer->Grid[0].attr.precision.c_str());
       }
 
       bool useProjection = true;
@@ -1411,10 +1411,10 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       bool drawText = false;
       const char *fontLoc = NULL;
       float fontSize = 6.0;
-      if (srvParam->cfg->WMS[0]->GridFont.size() == 1) {
+      if (srvParam->cfg->WMS[0].GridFont.size() == 1) {
 
-        fontLoc = srvParam->cfg->WMS[0]->GridFont[0]->attr.location.c_str();
-        fontSize = atof(srvParam->cfg->WMS[0]->GridFont[0]->attr.size.c_str());
+        fontLoc = srvParam->cfg->WMS[0].GridFont[0].attr.location.c_str();
+        fontSize = atof(srvParam->cfg->WMS[0].GridFont[0].attr.size.c_str());
         drawText = true;
       }
 

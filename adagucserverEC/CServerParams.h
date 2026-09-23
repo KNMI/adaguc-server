@@ -248,7 +248,7 @@ void showWCSNotEnabledErrorMessage();
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<std::string> getLegendNames(const std::vector<CServerConfig::XMLE_Legend *> Legend);
+std::vector<std::string> getLegendNames(const std::vector<CServerConfig::XMLE_Legend> &Legend);
 
 /**
  * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.

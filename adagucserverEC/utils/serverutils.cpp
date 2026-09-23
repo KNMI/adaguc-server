@@ -17,10 +17,10 @@ bool checkIfFileMatchesLayer(std::string layerPathToScan, CServerConfig::XMLE_La
 
   if (layer->attr.type.empty() || layer->attr.type == ("database")) {
     if (layer->FilePath.size() > 0) {
-      std::string filePath = makeCleanPath(layer->FilePath[0]->elementValue.c_str());
+      std::string filePath = makeCleanPath(layer->FilePath[0].elementValue.c_str());
       // Directories need to end with a /
       std::string filePathWithTrailingSlash = filePath + "/";
-      std::string filter = layer->FilePath[0]->attr.filter;
+      std::string filter = layer->FilePath[0].attr.filter;
       // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
       if (layerPathToScan == (filePath)) {
         return true;
@@ -68,9 +68,9 @@ std::set<std::string> findDataSetsToScan(std::string layerPathToScan, bool verbo
     setCRequestConfigFromEnvironment(&configParser, dataset.c_str());
 
     if (configSrvParam && configSrvParam->cfg) {
-      auto layers = configSrvParam->cfg->Layer;
-      for (auto layer: layers) {
-        if (checkIfFileMatchesLayer(layerPathToScan, layer)) {
+      auto &layers = configSrvParam->cfg->Layer;
+      for (auto &layer: layers) {
+        if (checkIfFileMatchesLayer(layerPathToScan, &layer)) {
           datasetsToScan.insert(dataset.c_str());
           break;
         }

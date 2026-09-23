@@ -146,11 +146,11 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   adfDstGeoTransform[5] = (dfDstBBOX[1] - dfDstBBOX[3]) / double(srvParam->geoParams.height);
 
   // Retrieve output format
-  for (size_t j = 0; j < srvParam->cfg->WCS[0]->WCSFormat.size(); j++) {
-    if (srvParam->Format == srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name) {
-      driverName = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
-      mimeType = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
-      customOptions = (srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
+  for (size_t j = 0; j < srvParam->cfg->WCS[0].WCSFormat.size(); j++) {
+    if (srvParam->Format == srvParam->cfg->WCS[0].WCSFormat[j].attr.name) {
+      driverName = (srvParam->cfg->WCS[0].WCSFormat[j].attr.driver.c_str());
+      mimeType = (srvParam->cfg->WCS[0].WCSFormat[j].attr.mimetype.c_str());
+      customOptions = (srvParam->cfg->WCS[0].WCSFormat[j].attr.options.c_str());
       break;
     }
   }
@@ -363,7 +363,7 @@ int CGDALDataWriter::end() {
   } else {
     // Generate a temporary filename for storage
 
-    auto fileName = srvParam->cfg->TempDir[0]->attr.value.c_str() + std::string("/") + generateUniqueGetCoverageFileName(this);
+    auto fileName = srvParam->cfg->TempDir[0].attr.value.c_str() + std::string("/") + generateUniqueGetCoverageFileName(this);
 
     tmpFileName = fileName;
 

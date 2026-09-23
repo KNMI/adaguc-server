@@ -35,13 +35,13 @@ CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, std::string baseLay
   CDataSource *tempDataSource = new CDataSource();
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    std::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
+    std::string layerName = makeUniqueLayerName(&dataSource->srvParams->cfg->Layer[j]);
     if (baseLayerName == layerName) {
       additionalLayerNo = j;
       break;
     }
   }
-  tempDataSource->setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[additionalLayerNo], 0);
+  tempDataSource->setCFGLayer(dataSource->srvParams, &dataSource->srvParams->cfg->Layer[additionalLayerNo], 0);
   return tempDataSource;
 }
 

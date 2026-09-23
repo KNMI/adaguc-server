@@ -141,23 +141,23 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   mode = CImgRenderStipplingModeDefault; // Mode 0 is standard stippling
 
   if (styleConfiguration != nullptr) {
-    for (auto stippling: styleConfiguration->stipplingList) {
-      if (!stippling->attr.distancex.empty()) {
-        xDistance = atoi(stippling->attr.distancex.c_str());
+    for (const auto &stippling: styleConfiguration->stipplingList) {
+      if (!stippling.attr.distancex.empty()) {
+        xDistance = atoi(stippling.attr.distancex.c_str());
       }
-      if (!stippling->attr.distancey.empty()) {
-        yDistance = atoi(stippling->attr.distancey.c_str());
+      if (!stippling.attr.distancey.empty()) {
+        yDistance = atoi(stippling.attr.distancey.c_str());
       }
-      if (!stippling->attr.discradius.empty()) {
-        discSize = atoi(stippling->attr.discradius.c_str());
+      if (!stippling.attr.discradius.empty()) {
+        discSize = atoi(stippling.attr.discradius.c_str());
       }
-      if (!stippling->attr.mode.empty()) {
-        if (stippling->attr.mode == "threshold") {
+      if (!stippling.attr.mode.empty()) {
+        if (stippling.attr.mode == "threshold") {
           mode = CImgRenderStipplingModeThreshold;
         }
       }
-      if (!stippling->attr.color.empty()) {
-        color = stippling->attr.color;
+      if (!stippling.attr.color.empty()) {
+        color = stippling.attr.color;
       }
     }
   }

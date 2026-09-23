@@ -64,8 +64,8 @@ struct FeatureStyle {
 FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleConfiguration *styleConfig) {
 
   CColor backgroundColor = CColor(0, 0, 0, 0);
-  for (const auto featureIntervalCfg: styleConfig->featureIntervals) {
-    const auto &featureAttr = featureIntervalCfg->attr;
+  for (const auto &featureIntervalCfg: styleConfig->featureIntervals) {
+    const auto &featureAttr = featureIntervalCfg.attr;
     if (styleConfig->renderMethod == RM_POLYGON && !featureAttr.bgcolor.empty()) {
       backgroundColor = featureAttr.bgcolor.c_str();
     }
@@ -149,12 +149,12 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   bool noOverlap = true;
   bool randomStart = false;
-  for (auto renderSetting: styleConfiguration->renderSettings) {
-    if (!renderSetting->attr.featuresoverlap.empty()) {
-      noOverlap = renderSetting->attr.featuresoverlap != "true";
+  for (const auto &renderSetting: styleConfiguration->renderSettings) {
+    if (!renderSetting.attr.featuresoverlap.empty()) {
+      noOverlap = renderSetting.attr.featuresoverlap != "true";
     }
-    if (!renderSetting->attr.randomizefeatures.empty()) {
-      randomStart = renderSetting->attr.randomizefeatures == ("true"); // TODO: Ask Ernst if this is correct?
+    if (!renderSetting.attr.randomizefeatures.empty()) {
+      randomStart = renderSetting.attr.randomizefeatures == ("true"); // TODO: Ask Ernst if this is correct?
     }
   }
 
@@ -290,7 +290,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 #endif
       }
       // Draw polygon labels here, so they end up on top
-      for (CRectangleText rect: rects) {
+      for (const CRectangleText &rect: rects) {
         drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
     }

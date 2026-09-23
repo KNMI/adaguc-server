@@ -430,9 +430,9 @@ void CImgWarpNearestNeighbour::render(CImageWarper *warper, CDataSource *dataSou
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   int renderSettings = 0; // auto
-  for (auto renderSetting: styleConfiguration->renderSettings) {
-    if (!renderSetting->attr.settings.empty()) {
-      std::string renderSettingsAttr = renderSetting->attr.settings;
+  for (const auto &renderSetting: styleConfiguration->renderSettings) {
+    if (!renderSetting.attr.settings.empty()) {
+      std::string renderSettingsAttr = renderSetting.attr.settings;
       if (renderSettingsAttr == "fast") {
         renderSettings = 1; // fast
       }

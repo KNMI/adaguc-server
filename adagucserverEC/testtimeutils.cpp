@@ -103,13 +103,13 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   CDataSource dataSource;
   dataSource.cfgLayer = new CServerConfig::XMLE_Layer();
 
-  auto timeDim = new CServerConfig::XMLE_Dimension();
-  timeDim->elementValue = "time";
-  dataSource.cfgLayer->Dimension.push_back(timeDim);
+  // Note: index into Dimension (rather than a cached pointer) is used throughout, since
+  // further push_back calls on this vector may relocate previously constructed elements.
+  addXmlObj(dataSource.cfgLayer->Dimension)->elementValue = "time";
   std::vector<LayerMetadataDim> dimList;
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
-  timeDim->attr.defaultV = "reference_time+PT1H";
+  dataSource.cfgLayer->Dimension[0].attr.defaultV = "reference_time+PT1H";
 
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
@@ -118,9 +118,7 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
 
-  auto refTimeDim = new CServerConfig::XMLE_Dimension();
-  refTimeDim->elementValue = "reference_time";
-  dataSource.cfgLayer->Dimension.push_back(refTimeDim);
+  addXmlObj(dataSource.cfgLayer->Dimension)->elementValue = "reference_time";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA)
 
@@ -148,7 +146,7 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   CHECK(result == 0)
   CHECK(dimList[0].defaultValue == "2025-05-10T19:00:00Z");
 
-  timeDim->attr.defaultV = "reference_time+PT1S";
+  dataSource.cfgLayer->Dimension[0].attr.defaultV = "reference_time+PT1S";
   dimList[1].defaultValue = "2025-05-10T23:00:59Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
@@ -159,18 +157,18 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   CHECK(result == 0)
   CHECK(dimList[0].defaultValue == "2025-05-11T00:00:00Z");
 
-  timeDim->attr.defaultV = "reference_time+PT3600S";
+  dataSource.cfgLayer->Dimension[0].attr.defaultV = "reference_time+PT3600S";
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)
   CHECK(dimList[0].defaultValue == "2025-05-10T19:00:00Z");
 
-  timeDim->attr.defaultV = "reference_time";
+  dataSource.cfgLayer->Dimension[0].attr.defaultV = "reference_time";
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
 
-  timeDim->attr.defaultV = "reference_time+PT0H";
+  dataSource.cfgLayer->Dimension[0].attr.defaultV = "reference_time+PT0H";
   dimList[1].defaultValue = "2025-05-10T18:00:00Z";
   result = checkDependenciesBetweenDims(&dataSource, dimList);
   CHECK(result == 0)

@@ -31,7 +31,7 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig:
     vectorStyle.fontFile = vectorCfg->attr.fontfile;
   } else {
     // Try to get it from global WMS config
-    vectorStyle.fontFile = globalConfig->WMS[0]->ContourFont[0]->attr.location;
+    vectorStyle.fontFile = globalConfig->WMS[0].ContourFont[0].attr.location;
   }
 
   if (!vectorCfg->attr.linecolor.empty()) {

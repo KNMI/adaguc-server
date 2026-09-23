@@ -42,7 +42,7 @@ std::map<std::string, std::vector<std::string>> getAllDimensionCombinationsFromD
     return dimensionNameAndValues;
   }
   // Set other dims to * if not set in the request.
-  for (auto dim: dataSource.requiredDims) {
+  for (const auto &dim: dataSource.requiredDims) {
 
     if (dim.queryValue.empty()) {
       newRequiredDims.push_back({.name = dim.name,
@@ -86,15 +86,15 @@ json querySpecificDims(CServerParams *srvParams, const std::string &layerName) {
   if (srvParams->verbose) {
     CDBDebug("Start query specific dims for [%s]", layerName.c_str());
   }
-  auto it = std::find_if(srvParams->cfg->Layer.begin(), srvParams->cfg->Layer.end(), [&layerName](auto *a) { return makeUniqueLayerName(a) == layerName; });
+  auto it = std::find_if(srvParams->cfg->Layer.begin(), srvParams->cfg->Layer.end(), [&layerName](auto &a) { return makeUniqueLayerName(&a) == layerName; });
 
-  if ((*it)->Variable.size() == 0) {
+  if (it->Variable.size() == 0) {
     CDBError("No variables defined");
     return 1;
   }
   CDataSource dataSource;
   auto index = it - srvParams->cfg->Layer.begin();
-  dataSource.setCFGLayer(srvParams, (*it), index);
+  dataSource.setCFGLayer(srvParams, &(*it), index);
   if (dataSource.dataObjects.size() == 0) {
     CDBError("No dataobjects defined for %s", dataSource.layerName.c_str());
     return 1;

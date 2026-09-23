@@ -19,7 +19,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
       .useFillColor = false,
 
       .fontSize = 8,
-      .fontFile = cfg->WMS[0]->ContourFont[0]->attr.location.c_str(),
+      .fontFile = cfg->WMS[0].ContourFont[0].attr.location.c_str(),
 
       .discRadius = 8,
       .textRadius = 16,

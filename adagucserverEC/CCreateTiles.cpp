@@ -38,15 +38,15 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   }
   /* Find all files on disk */
   std::vector<std::string> fileList;
-  std::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
+  std::string filter = dataSource->cfgLayer->FilePath[0].attr.filter.c_str();
   std::string tailPath;
   if (scanFlags & CDBFILESCANNER_IGNOREFILTER) {
     filter = "^.*$";
   }
   try {
-    fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
+    fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0].elementValue.c_str(), filter.c_str(), tailPath.c_str());
   } catch (int linenr) {
-    CDBError("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->elementValue.c_str(), filter.c_str(), tailPath.c_str());
+    CDBError("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), filter.c_str(), tailPath.c_str());
     return 1;
   }
   if (fileList.size() == 0) {
@@ -69,13 +69,13 @@ struct DestinationGrids {
 std::vector<DestinationGrids> makeTileSet(CDataSource &dataSource) {
   std::vector<DestinationGrids> destinationGrids;
   auto tileSettings = dataSource.cfgLayer->TileSettings[0];
-  int desiredWidth = atoi(tileSettings->attr.tilewidthpx.c_str());
-  int desiredHeight = atoi(tileSettings->attr.tileheightpx.c_str());
+  int desiredWidth = atoi(tileSettings.attr.tilewidthpx.c_str());
+  int desiredHeight = atoi(tileSettings.attr.tileheightpx.c_str());
   // Level 0 means no tiles
   // Level 1 is same resolution as source data
   // Level 2 is half the resolution, etc...
-  int minLevel = tileSettings->attr.minlevel.empty() ? 1 : atoi(tileSettings->attr.minlevel.c_str());
-  int maxLevel = tileSettings->attr.maxlevel.empty() ? 3 : atoi(tileSettings->attr.maxlevel.c_str());
+  int minLevel = tileSettings.attr.minlevel.empty() ? 1 : atoi(tileSettings.attr.minlevel.c_str());
+  int maxLevel = tileSettings.attr.maxlevel.empty() ? 3 : atoi(tileSettings.attr.maxlevel.c_str());
   double cellSizeX = fabs(dataSource.dfCellSizeX);
   double cellSizeY = fabs(dataSource.dfCellSizeY);
   double xminB = std::min(dataSource.dfBBOX[0], dataSource.dfBBOX[2]);
@@ -161,8 +161,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, std::stri
   std::string basename = CT::basename(fileToTile);
   basename = CT::substring(basename, 0, CT::lastIndexOf(basename, "."));
   std::string tileBasePath = CT::substring(fileToTile, 0, CT::lastIndexOf(fileToTile, "/"));
-  if (tileSettings->attr.tilepath.empty() == false) {
-    tileBasePath = tileSettings->attr.tilepath;
+  if (tileSettings.attr.tilepath.empty() == false) {
+    tileBasePath = tileSettings.attr.tilepath;
     tileBasePath = makeCleanPath(tileBasePath.c_str());
     if (!CDirReader::isDir(tileBasePath.c_str())) {
 
@@ -173,8 +173,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, std::stri
   srvParam->responceCrs = baseDataSource->nativeProj4;
   srvParam->geoParams.crs = srvParam->responceCrs;
   srvParam->WCS_GoNative = false;
-  srvParam->geoParams.width = atoi(tileSettings->attr.tilewidthpx.c_str());
-  srvParam->geoParams.height = atoi(tileSettings->attr.tileheightpx.c_str());
+  srvParam->geoParams.width = atoi(tileSettings.attr.tilewidthpx.c_str());
+  srvParam->geoParams.height = atoi(tileSettings.attr.tileheightpx.c_str());
 
   int index = 0;
   std::string suffix;

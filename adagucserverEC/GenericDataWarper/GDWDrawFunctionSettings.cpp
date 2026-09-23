@@ -35,7 +35,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
 
   if (styleConfiguration->renderSettings.size() > 0) {
     auto renderSetting = styleConfiguration->renderSettings.back();
-    auto &renderSettingsAttr = renderSetting->attr;
+    auto &renderSettingsAttr = renderSetting.attr;
     if (renderSettingsAttr.renderhint == (RENDERHINT_DISCRETECLASSES)) {
       settings.isUsingShadeIntervals = true;
     }
@@ -68,8 +68,8 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   if (styleConfiguration->smoothingFilterVector.size() > 0) {
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
 
-    if (!smoothingFilter->elementValue.empty()) {
-      settings.smoothingFiter = atof(smoothingFilter->elementValue.c_str());
+    if (!smoothingFilter.elementValue.empty()) {
+      settings.smoothingFiter = atof(smoothingFilter.elementValue.c_str());
     }
   }
 
