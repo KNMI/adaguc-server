@@ -82,6 +82,14 @@ std::string typeToString(TraceTimingType typein) {
     return "GETMETADATAJSONDB";
   case TraceTimingType::GETMETADATAJSONPARSE:
     return "GETMETADATAJSONPARSE";
+  case TraceTimingType::FSNCOPEN:
+    return "FSNCOPEN";
+  case TraceTimingType::FSNCREADVARS:
+    return "FSNCREADVARS";
+  case TraceTimingType::FSNCREADATTRS:
+    return "FSNCREADATTRS";
+  case TraceTimingType::FSNCREADDIMS:
+    return "FSNCREADDIMS";
   default:
     return "?";
   }
