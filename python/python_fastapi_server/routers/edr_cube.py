@@ -26,6 +26,7 @@ from .utils.edr_utils import (
     get_dataset_from_collection,
     get_instance,
     get_parameters,
+    get_trace_timings_from_adaguc_headers,
     get_ttl_from_adaguc_headers,
     get_vertical,
     instance_to_iso,
@@ -104,7 +105,7 @@ async def get_coll_inst_cube(
         "resolution_y",
     ]
 
-    metadata = await get_metadata(collection_name)
+    metadata = await get_metadata(collection_name, response=response)
 
     dataset_name = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
@@ -127,6 +128,7 @@ async def get_coll_inst_cube(
 
     coveragejsons = []
     parameters = {}
+    trace_timings = []
     datetime_arg = datetime_par
     if datetime_par is None:
         datetime_arg = "*"
@@ -152,6 +154,9 @@ async def get_coll_inst_cube(
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
+        trace_timing = get_trace_timings_from_adaguc_headers(headers)
+        if trace_timing is not None:
+            trace_timings.append(trace_timing)
 
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
@@ -163,6 +168,10 @@ async def get_coll_inst_cube(
             coveragejsons.extend(coveragejson)
             for covjson in coveragejson:
                 parameters = parameters | covjson.parameters
+
+    # Propagate the trace timings of every internal ADAGUC call as separate response headers
+    for trace_timing in trace_timings:
+        response.headers.append("X-Trace-Timings", trace_timing)
 
     if len(coveragejsons) == 0:
         raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")

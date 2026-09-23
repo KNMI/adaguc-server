@@ -31,7 +31,6 @@
 #include <cstdlib>
 #include <cstring>
 
-
 extern int numXMLAttributesNotRecognized;
 
 /**
@@ -57,7 +56,6 @@ struct attribute {
   std::string value;
 };
 
-int parseInt(const attribute &attrCfg);
 /**
  * Base objects
  */

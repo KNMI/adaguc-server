@@ -27,6 +27,7 @@ from .utils.edr_utils import (
     get_instance,
     get_metadata,
     get_parameters,
+    get_trace_timings_from_adaguc_headers,
     get_ttl_from_adaguc_headers,
     get_vertical,
     instance_to_iso,
@@ -88,7 +89,7 @@ async def get_coll_inst_position(
         allowed_params,
     )
 
-    metadata = await get_metadata(collection_name)
+    metadata = await get_metadata(collection_name, response=response)
 
     return await handle_coll_inst_position(
         collection_name,
@@ -149,6 +150,9 @@ async def handle_coll_inst_position(
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
+        trace_timing = get_trace_timings_from_adaguc_headers(headers)
+        if trace_timing is not None:
+            response.headers.append("X-Trace-Timings", trace_timing)
         return covjson_from_resp(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
