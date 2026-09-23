@@ -206,11 +206,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (CDFOBJECTSTORE_DEBUG) {
         CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
       }
-      return entries[it->second].cdfObject;
+      return cdfObjectEntries[it->second].cdfObject.get();
     }
   }
-  if (entries.size() > MAX_OPEN_FILES) {
-    deleteCDFObject(entries[0].fileName);
+  if (cdfObjectEntries.size() > MAX_OPEN_FILES) {
+    deleteCDFObject(cdfObjectEntries[0].fileName);
   }
   if (CDFOBJECTSTORE_DEBUG) {
     CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
@@ -302,10 +302,10 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     return NULL;
   }
 
-  // Push everything into the store
+  // Push everything into the store, which now owns cdfObject and cdfReader.
   if (cached) {
-    fileNameIndex[uniqueIDForFile] = entries.size();
-    entries.push_back({uniqueIDForFile, cdfObject, cdfReader});
+    fileNameIndex[uniqueIDForFile] = cdfObjectEntries.size();
+    cdfObjectEntries.push_back({uniqueIDForFile, std::unique_ptr<CDFObject>(cdfObject), std::unique_ptr<CDFReader>(cdfReader)});
   }
 
   if (plain == false) {
@@ -388,21 +388,19 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore() {
 };
 
 void CDFObjectStore::deleteCDFObject(const std::string &fileName) {
-  auto it = entries.begin();
+  auto it = cdfObjectEntries.begin();
   std::vector<ptrdiff_t> indicesToDelete;
 
-  auto matchesFileName = [&fileName](const Entry &e) { return e.fileName == fileName; };
-  while ((it = std::find_if(it, entries.end(), matchesFileName)) != entries.end()) {
-    indicesToDelete.push_back(it - entries.begin());
+  auto matchesFileName = [&fileName](const CDFObjectStoreEntry &e) { return e.fileName == fileName; };
+  while ((it = std::find_if(it, cdfObjectEntries.end(), matchesFileName)) != cdfObjectEntries.end()) {
+    indicesToDelete.push_back(it - cdfObjectEntries.begin());
     it++;
   }
 
   // indicesToDelete is ordered, we iterate over it in reverse order to delete from the back, to avoid issues with moves
   for (auto indexIter = indicesToDelete.rbegin(); indexIter != indicesToDelete.rend(); ++indexIter) {
     auto index = *indexIter;
-    delete entries[index].cdfObject;
-    delete entries[index].cdfReader;
-    entries.erase(entries.begin() + index);
+    cdfObjectEntries.erase(cdfObjectEntries.begin() + index);
   }
   // Erasing from the middle shifts every following index, so the index map needs to be rebuilt.
   // Deletions only happen on a cache miss that triggers eviction (or an explicit external call), never on a lookup,
@@ -414,8 +412,8 @@ void CDFObjectStore::deleteCDFObject(const std::string &fileName) {
 
 void CDFObjectStore::rebuildFileNameIndex() {
   fileNameIndex.clear();
-  for (size_t j = 0; j < entries.size(); j++) {
-    fileNameIndex[entries[j].fileName] = j;
+  for (size_t j = 0; j < cdfObjectEntries.size(); j++) {
+    fileNameIndex[cdfObjectEntries[j].fileName] = j;
   }
 }
 
@@ -423,11 +421,7 @@ void CDFObjectStore::rebuildFileNameIndex() {
  * Clean the CDFObject store and throw away all readers and objects
  */
 void CDFObjectStore::clear() {
-  for (auto &entry: entries) {
-    delete entry.cdfObject;
-    delete entry.cdfReader;
-  }
-  entries.clear();
+  cdfObjectEntries.clear();
   fileNameIndex.clear();
 }
 
@@ -450,12 +444,12 @@ std::vector<std::string> CDFObjectStore::getListOfVisualizableVariables(CDFObjec
   return variableList;
 }
 
-int CDFObjectStore::getNumberOfOpenObjects() { return entries.size(); }
+int CDFObjectStore::getNumberOfOpenObjects() { return cdfObjectEntries.size(); }
 
 int CDFObjectStore::getMaxNumberOfOpenObjects() { return MAX_OPEN_FILES; }
 
 void CDFObjectStore::registerCustomCDFObject(CDFObject *&cdfObject) {
   std::string key = CT::randomString(32).c_str();
-  fileNameIndex[key] = entries.size();
-  entries.push_back({key, cdfObject, nullptr});
+  fileNameIndex[key] = cdfObjectEntries.size();
+  cdfObjectEntries.push_back({key, std::unique_ptr<CDFObject>(cdfObject), nullptr});
 }

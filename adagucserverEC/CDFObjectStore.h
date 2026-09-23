@@ -28,6 +28,7 @@
 
 #include "CDataSource.h"
 #include "CCDFReader.h"
+#include <memory>
 #include <unordered_map>
 
 // Datasource can share multiple cdfObjects
@@ -35,13 +36,13 @@
 //  When a CDFObject is already opened
 class CDFObjectStore {
 private:
-  struct Entry {
+  struct CDFObjectStoreEntry {
     std::string fileName;
-    CDFObject *cdfObject;
-    CDFReader *cdfReader;
+    std::unique_ptr<CDFObject> cdfObject;
+    std::unique_ptr<CDFReader> cdfReader;
   };
-  std::vector<Entry> entries;
-  // fileName -> index into entries, kept in sync with it, so lookups don't need to linearly scan entries.
+  std::vector<CDFObjectStoreEntry> cdfObjectEntries;
+  // fileName -> index into cdfObjectEntries, kept in sync with it, so lookups don't need to linearly scan cdfObjectEntries.
   // A request can open (and thus look up) hundreds of files, so this turns an O(numOpenFiles) scan per lookup into O(1).
   std::unordered_map<std::string, size_t> fileNameIndex;
   void rebuildFileNameIndex();
