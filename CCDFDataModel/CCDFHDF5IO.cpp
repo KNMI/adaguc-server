@@ -466,7 +466,7 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
         data_start[d] = start[d + dimDiff]; // mem_start[d];
         data_count[d] = mem_count[d];
         if (CCDFHDF5IO_DEBUG) {
-          CDBDebug("%d %llu, %llu", d, data_start[d], data_count[d]);
+          CDBDebug("%d %llu, %llu", d, static_cast<unsigned long long>(data_start[d]), static_cast<unsigned long long>(data_count[d]));
         }
         totalVariableSize *= mem_count[d];
         ;
