@@ -263,7 +263,7 @@ int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
   return 0;
 }
 
-int CImageWarper::decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj) {
+int CImageWarper::decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection> *prj) {
   if (prj == NULL) {
     CDBError("decodeCRS: prj==NULL");
     return 1;
@@ -271,14 +271,14 @@ int CImageWarper::decodeCRS(std::string &outputCRS, const std::string &inputCRS,
   outputCRS = inputCRS;
   dMaxExtentDefined = 0;
   for (size_t j = 0; j < (*prj).size(); j++) {
-    if (outputCRS == (*prj)[j]->attr.id) {
-      outputCRS = (*prj)[j]->attr.proj4;
-      if ((*prj)[j]->LatLonBox.size() == 1) {
+    if (outputCRS == (*prj)[j].attr.id) {
+      outputCRS = (*prj)[j].attr.proj4;
+      if ((*prj)[j].LatLonBox.size() == 1) {
         dMaxExtentDefined = 1;
-        dfMaxExtent[0] = (*prj)[j]->LatLonBox[0]->attr.minx;
-        dfMaxExtent[1] = (*prj)[j]->LatLonBox[0]->attr.miny;
-        dfMaxExtent[2] = (*prj)[j]->LatLonBox[0]->attr.maxx;
-        dfMaxExtent[3] = (*prj)[j]->LatLonBox[0]->attr.maxy;
+        dfMaxExtent[0] = (*prj)[j].LatLonBox[0].attr.minx;
+        dfMaxExtent[1] = (*prj)[j].LatLonBox[0].attr.miny;
+        dfMaxExtent[2] = (*prj)[j].LatLonBox[0].attr.maxx;
+        dfMaxExtent[3] = (*prj)[j].LatLonBox[0].attr.maxy;
       }
       break;
     }
@@ -289,13 +289,13 @@ int CImageWarper::decodeCRS(std::string &outputCRS, const std::string &inputCRS,
   return 0;
 }
 
-int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection> *_prj) {
   GeoParameters geo;
   geo.crs = fromProjString;
   return initreproj(destString, geo, _prj);
 }
 
-int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection> *_prj) {
   if (dataSource == NULL) {
     CDBError("dataSource==%s", dataSource == NULL ? "NULL" : "not-null");
     return 1;
@@ -306,8 +306,8 @@ int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, st
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);
 }
 
-int CImageWarper::initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) { return _initreprojSynchronized(projString, GeoDest, _prj); }
-int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters &_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection> *_prj) { return _initreprojSynchronized(projString, GeoDest, _prj); }
+int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters &_GeoDest, std::vector<CServerConfig::XMLE_Projection> *_prj) {
 
   if (projString == NULL) {
     projString = LATLONPROJECTION;
@@ -392,7 +392,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   bool useLatLonSourceProj = false;
   // Maybe it is defined in the configuration file:
   if (dataSource->cfgLayer->LatLonBox.size() > 0) {
-    CServerConfig::XMLE_LatLonBox *box = dataSource->cfgLayer->LatLonBox[0];
+    CServerConfig::XMLE_LatLonBox *box = &dataSource->cfgLayer->LatLonBox[0];
     dfBBOX[1] = box->attr.miny;
     dfBBOX[3] = box->attr.maxy;
     dfBBOX[0] = box->attr.minx;
@@ -579,12 +579,12 @@ std::string CImageWarper::getProj4FromId(CDataSource *dataSource, const std::str
   if (projectionId == "native") {
     return dataSource->nativeProj4;
   }
-  std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
+  std::vector<CServerConfig::XMLE_Projection> *prj = &dataSource->srvParams->cfg->Projection;
   std::string trimmedProjectionId = CT::trim(projectionId);
 
-  const auto projection = std::find_if(prj->begin(), prj->end(), [&trimmedProjectionId](const auto *projection) { return projection->attr.id == trimmedProjectionId; });
+  const auto projection = std::find_if(prj->begin(), prj->end(), [&trimmedProjectionId](const auto &projection) { return projection.attr.id == trimmedProjectionId; });
   if (projection != prj->end()) {
-    return (*projection)->attr.proj4;
+    return projection->attr.proj4;
   }
   return projectionId;
 }

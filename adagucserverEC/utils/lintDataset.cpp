@@ -42,18 +42,18 @@ int lintDataset(std::string config) {
 
   // Make a list of legends and styles
   std::vector<std::string> availableLegendNames;
-  for (auto Legend: serverParamsAll.cfg->Legend) {
-    availableLegendNames.push_back(Legend->attr.name);
+  for (const auto &Legend: serverParamsAll.cfg->Legend) {
+    availableLegendNames.push_back(Legend.attr.name);
   }
   std::vector<std::string> availableStyleNames;
-  for (auto Style: serverParamsAll.cfg->Style) {
-    availableStyleNames.push_back(Style->attr.name);
+  for (const auto &Style: serverParamsAll.cfg->Style) {
+    availableStyleNames.push_back(Style.attr.name);
   }
 
   std::string datasetName = (CT::split(config, ",").back());
   // Check for missing styles or legend
-  for (auto Layer: serverParamsAll.cfg->Layer) {
-    CDataSource dataSource(&serverParamsAll, Layer);
+  for (auto &Layer: serverParamsAll.cfg->Layer) {
+    CDataSource dataSource(&serverParamsAll, &Layer);
     auto styleList = dataSource.getStyleListForDataSource();
     for (const auto &style: styleList) {
       if (style.styleName.size() > 0) {
@@ -84,23 +84,23 @@ int lintDataset(std::string config) {
     numXMLAttributesNotRecognized++;
   }
   // Remove the ones already configured in the base
-  for (auto Legend: srvParamsBase.cfg->Legend) {
-    removeStringFromVector(Legend->attr.name, availableLegendNames);
+  for (const auto &Legend: srvParamsBase.cfg->Legend) {
+    removeStringFromVector(Legend.attr.name, availableLegendNames);
   }
 
-  for (auto Style: srvParamsBase.cfg->Style) {
-    removeStringFromVector(Style->attr.name, availableStyleNames);
+  for (const auto &Style: srvParamsBase.cfg->Style) {
+    removeStringFromVector(Style.attr.name, availableStyleNames);
   }
 
   // Remove the ones with standardname mappings, these cannot be properly checked.
-  for (auto Style: srvParamsBase.cfg->Style) {
-    if (Style->StandardNames.size() > 0) {
-      removeStringFromVector(Style->attr.name, availableStyleNames);
+  for (const auto &Style: srvParamsBase.cfg->Style) {
+    if (Style.StandardNames.size() > 0) {
+      removeStringFromVector(Style.attr.name, availableStyleNames);
     }
   }
   // Remove the ones used in each layer
-  for (auto Layer: serverParamsAll.cfg->Layer) {
-    CDataSource dataSource(&serverParamsAll, Layer);
+  for (auto &Layer: serverParamsAll.cfg->Layer) {
+    CDataSource dataSource(&serverParamsAll, &Layer);
     auto styleList = dataSource.getStyleListForDataSource();
     for (const auto &style: styleList) {
       removeStringFromVector(style.styleName, availableStyleNames);

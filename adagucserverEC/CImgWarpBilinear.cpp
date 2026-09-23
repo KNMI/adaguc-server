@@ -521,8 +521,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     if (enableBarb) {
       bool rendertextforvectors = false;
       if (styleConfiguration != nullptr) {
-        for (auto r: styleConfiguration->renderSettings) {
-          if (r->attr.rendertextforvectors == "true") {
+        for (const auto &r: styleConfiguration->renderSettings) {
+          if (r.attr.rendertextforvectors == "true") {
             rendertextforvectors = true;
           }
         }
@@ -1062,7 +1062,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   }
 
   double scaling = dataSource->getContourScaling();
-  const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+  const char *fontLocation = dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.location.c_str();
 
   // TODO
 
@@ -1282,7 +1282,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     textColor = contourDefinitions[j].textcolor;
     CColor textstrokecolor = contourDefinitions[j].textstrokecolor;
     lineWidth = contourDefinitions[j].lineWidth;
-    float fontSize = atof(dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.c_str());
+    float fontSize = atof(dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.size.c_str());
     float textStrokeWidth = 0.75;
     if (contourDefinitions[j].fontSize > 0) {
       fontSize = contourDefinitions[j].fontSize;

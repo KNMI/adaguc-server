@@ -238,8 +238,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     int maxInterval = shadeIntervalsFilteredForLegendGraphic.size();
     int angle = 0; // Text angle (in radians)
 
-    for (auto renderSetting: styleConfiguration->renderSettings) {
-      if (renderSetting->attr.cliplegend == "true") {
+    for (const auto &renderSetting: styleConfiguration->renderSettings) {
+      if (renderSetting.attr.cliplegend == "true") {
         std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, shadeIntervalsFilteredForLegendGraphic);
       }
     }
@@ -331,7 +331,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   if (definedLegendForFeatures) {
 
     for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
-      CServerConfig::XMLE_FeatureInterval *s = styleConfiguration->featureIntervals[j];
+      CServerConfig::XMLE_FeatureInterval *s = &styleConfiguration->featureIntervals[j];
       int cY1 = int(cbH - (j * 12));
       int cY2 = int(cbH - (((j + 1) * 12) - 2));
       CColor color;

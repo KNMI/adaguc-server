@@ -75,14 +75,14 @@ int CXMLGen::getWMS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   std::string onlineResource = srvParam->getOnlineResource();
   onlineResource += "SERVICE=WMS&amp;";
   XMLDoc = (WMS_1_0_0_GetCapabilities_Header);
-  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0].Title[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0].Abstract[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0].RootLayer[0].Title[0].elementValue.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEONLINERESOURCE]", onlineResource.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
-    for (auto projection: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &projection: firstWMLayer->layerMetadata.projectionList) {
       XMLDoc += "<SRS>";
       XMLDoc += projection.name;
       XMLDoc += "</SRS>\n";
@@ -113,7 +113,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<Me
         CT::printfconcat(XMLDoc, "<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[1],
                          layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[3]);
         // Dims
-        for (auto dim: layer->layerMetadata.dimList) {
+        for (const auto &dim: layer->layerMetadata.dimList) {
           if (dim.hidden) continue;
           CT::printfconcat(XMLDoc, "<Dimension name=\"%s\" units=\"%s\"/>\n", dim.serviceName.c_str(), dim.units.c_str());
           CT::printfconcat(XMLDoc, "<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.serviceName.c_str(), dim.defaultValue.c_str(), 1);
@@ -134,14 +134,14 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
   std::string onlineResource = srvParam->getOnlineResource();
   onlineResource += "SERVICE=WMS&amp;";
   XMLDoc = (WMS_1_1_1_GetCapabilities_Header);
-  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0].Title[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0].Abstract[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0].RootLayer[0].Title[0].elementValue.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEONLINERESOURCE]", onlineResource.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
-    for (auto proj: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &proj: firstWMLayer->layerMetadata.projectionList) {
       XMLDoc += "<SRS>";
       XMLDoc += proj.name;
       XMLDoc += "</SRS>\n";
@@ -225,7 +225,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             XMLDoc += layerTitle;
             XMLDoc += "</Title>\n";
 
-            for (auto proj: layer->layerMetadata.projectionList) {
+            for (const auto &proj: layer->layerMetadata.projectionList) {
               XMLDoc += "<SRS>";
               XMLDoc += proj.name;
               XMLDoc += "</SRS>\n";
@@ -236,7 +236,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             CT::printfconcat(XMLDoc, "<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[1],
                              layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[3]);
             // Dims
-            for (auto dim: layer->layerMetadata.dimList) {
+            for (const auto &dim: layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
               CT::printfconcat(XMLDoc, "<Dimension name=\"%s\" units=\"%s\"/>\n", dim.serviceName.c_str(), dim.units.c_str());
               CT::printfconcat(XMLDoc, "<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.serviceName.c_str(), dim.defaultValue.c_str(), 1);
@@ -245,7 +245,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             }
 
             // Styles
-            for (auto style: layer->layerMetadata.styleList) {
+            for (const auto &style: layer->layerMetadata.styleList) {
 
               XMLDoc += "   <Style>\n";
               CT::printfconcat(XMLDoc, "    <Name>%s</Name>\n", style.name.c_str());
@@ -264,7 +264,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(std::string &XMLDoc, const std::vector<Me
             }
 
             if (layer->layer->MetadataURL.size() > 0) {
-              std::string layerMetaDataURL = layer->layer->MetadataURL[0]->elementValue.c_str();
+              std::string layerMetaDataURL = layer->layer->MetadataURL[0].elementValue.c_str();
               CT::replaceSelf(layerMetaDataURL, "&", "&amp;");
               XMLDoc += "   <MetadataURL type=\"TC211\">\n";
               XMLDoc += "     <Format>text/xml</Format>\n";
@@ -293,8 +293,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   std::string onlineResource = srvParam->getOnlineResource();
   onlineResource += "SERVICE=WMS&amp;";
   XMLDoc = (WMS_1_3_0_GetCapabilities_Header);
-  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0]->Title[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0]->Abstract[0]->elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WMS[0].Title[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WMS[0].Abstract[0].elementValue.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEONLINERESOURCE]", onlineResource.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
 
@@ -306,16 +306,16 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
 #ifdef ENABLE_INSPIRE
   CInspire::InspireMetadataFromCSW inspireMetadata;
 
-  if (srvParam->cfg->WMS[0]->Inspire.size() == 1) {
-    if (srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW.size() == 1) {
-      if (srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->elementValue.empty() == false) {
-        viewServiceCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->elementValue.c_str();
+  if (srvParam->cfg->WMS[0].Inspire.size() == 1) {
+    if (srvParam->cfg->WMS[0].Inspire[0].ViewServiceCSW.size() == 1) {
+      if (srvParam->cfg->WMS[0].Inspire[0].ViewServiceCSW[0].elementValue.empty() == false) {
+        viewServiceCSWURL = srvParam->cfg->WMS[0].Inspire[0].ViewServiceCSW[0].elementValue.c_str();
         CT::replaceSelf(viewServiceCSWURL, "&", "&amp;");
       }
     }
-    if (srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW.size() == 1) {
-      if (srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->elementValue.empty() == false) {
-        datasetCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->elementValue.c_str();
+    if (srvParam->cfg->WMS[0].Inspire[0].DatasetCSW.size() == 1) {
+      if (srvParam->cfg->WMS[0].Inspire[0].DatasetCSW[0].elementValue.empty() == false) {
+        datasetCSWURL = srvParam->cfg->WMS[0].Inspire[0].DatasetCSW[0].elementValue.c_str();
         CT::replaceSelf(datasetCSWURL, "&", "&amp;");
       }
     }
@@ -458,19 +458,19 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   }
 
   XMLDoc += "<Layer>\n";
-  CT::printfconcat(XMLDoc, "<Title>%s</Title>\n", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->elementValue.c_str());
+  CT::printfconcat(XMLDoc, "<Title>%s</Title>\n", srvParam->cfg->WMS[0].RootLayer[0].Title[0].elementValue.c_str());
 
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
 
-    for (auto proj: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &proj: firstWMLayer->layerMetadata.projectionList) {
       if (!proj.name.empty()) {
         XMLDoc += "<CRS>";
         XMLDoc += proj.name;
         XMLDoc += "</CRS>\n";
       }
     }
-    for (auto proj: firstWMLayer->layerMetadata.projectionList) {
+    for (const auto &proj: firstWMLayer->layerMetadata.projectionList) {
       if (!proj.name.empty()) {
         if (srvParam->checkBBOXXYOrder(proj.name.c_str()) == true) {
           CT::printfconcat(XMLDoc, "<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", proj.name.c_str(), proj.dfBBOX[1], proj.dfBBOX[0], proj.dfBBOX[3], proj.dfBBOX[2]);
@@ -603,7 +603,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
                              "</EX_GeographicBoundingBox>",
                              layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[1], layer->layerMetadata.dfLatLonBBOX[3]);
 
-            for (auto proj: layer->layerMetadata.projectionList) {
+            for (const auto &proj: layer->layerMetadata.projectionList) {
               if (srvParam->checkBBOXXYOrder(proj.name.c_str()) == true) {
                 CT::printfconcat(XMLDoc, "<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", proj.name.c_str(), proj.dfBBOX[1], proj.dfBBOX[0], proj.dfBBOX[3],
                                  proj.dfBBOX[2]);
@@ -614,7 +614,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
             }
 
             if (firstWMLayer->layer->MetadataURL.size() > 0) {
-              std::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0]->elementValue.c_str();
+              std::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0].elementValue.c_str();
               CT::replaceSelf(layerMetaDataURL, "&", "&amp;");
               XMLDoc += "  <MetadataURL type=\"ISO19115:2005\">\n";
               XMLDoc += "     <Format>application/gml+xml; version=3.2</Format>\n";
@@ -623,7 +623,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
             }
 
             // Dims
-            for (auto dim: layer->layerMetadata.dimList) {
+            for (const auto &dim: layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
               if (CT::indexOf(dim.serviceName, "time") != -1) {
                 CT::printfconcat(XMLDoc, "<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" current=\"1\">", dim.serviceName.c_str(), dim.units.c_str(),
@@ -640,22 +640,22 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
               std::string authorityOnlineResource = "unknown";
               std::string identifierAuthority = "unknown";
               std::string identifierId = "unknown";
-              if (srvParam->cfg->WMS[0]->Inspire.size() == 1) {
-                if (srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL.size() == 1) {
-                  if (!srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.name.empty()) authorityName = srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.name.c_str();
-                  if (!srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.onlineresource.empty())
-                    authorityOnlineResource = srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.onlineresource.c_str();
+              if (srvParam->cfg->WMS[0].Inspire.size() == 1) {
+                if (srvParam->cfg->WMS[0].Inspire[0].AuthorityURL.size() == 1) {
+                  if (!srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.name.empty()) authorityName = srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.name.c_str();
+                  if (!srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.onlineresource.empty())
+                    authorityOnlineResource = srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.onlineresource.c_str();
                 }
-                if (srvParam->cfg->WMS[0]->Inspire[0]->Identifier.size() == 1) {
-                  if (!srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.authority.empty()) identifierAuthority = srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.authority.c_str();
-                  if (!srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.id.empty()) identifierId = srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.id.c_str();
+                if (srvParam->cfg->WMS[0].Inspire[0].Identifier.size() == 1) {
+                  if (!srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.authority.empty()) identifierAuthority = srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.authority.c_str();
+                  if (!srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.id.empty()) identifierId = srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.id.c_str();
                 }
               }
               CT::printfconcat(XMLDoc, " <AuthorityURL name=\"%s\"><OnlineResource xlink:href=\"%s\" /></AuthorityURL>\n", authorityName.c_str(), authorityOnlineResource.c_str());
               CT::printfconcat(XMLDoc, " <Identifier authority=\"%s\">%s</Identifier>\n", identifierAuthority.c_str(), layer->layerMetadata.name.c_str());
             }
             // Styles
-            for (auto style: layer->layerMetadata.styleList) {
+            for (const auto &style: layer->layerMetadata.styleList) {
 
               XMLDoc += "   <Style>\n";
               CT::printfconcat(XMLDoc, "    <Name>%s</Name>\n", style.name.c_str());
@@ -694,21 +694,21 @@ int CXMLGen::getWCS_1_0_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   onlineResource += "SERVICE=WCS&amp;";
 
   XMLDoc = (WCS_1_0_0_GetCapabilities_Header);
-  if (srvParam->cfg->WCS[0]->Title.size() == 0) {
+  if (srvParam->cfg->WCS[0].Title.size() == 0) {
     CDBError("No title defined for WCS");
     return 1;
   }
-  if (srvParam->cfg->WCS[0]->Name.size() == 0) {
-    srvParam->cfg->WCS[0]->Name.push_back(new CServerConfig::XMLE_Name());
-    srvParam->cfg->WCS[0]->Name[0]->elementValue = (srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
+  if (srvParam->cfg->WCS[0].Name.size() == 0) {
+    CServerConfig::XMLE_Name *name = addXmlObj(srvParam->cfg->WCS[0].Name);
+    name->elementValue = (srvParam->cfg->WCS[0].Title[0].elementValue.c_str());
   }
-  if (srvParam->cfg->WCS[0]->Abstract.size() == 0) {
-    srvParam->cfg->WCS[0]->Abstract.push_back(new CServerConfig::XMLE_Abstract());
-    srvParam->cfg->WCS[0]->Abstract[0]->elementValue = (srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
+  if (srvParam->cfg->WCS[0].Abstract.size() == 0) {
+    CServerConfig::XMLE_Abstract *abstract = addXmlObj(srvParam->cfg->WCS[0].Abstract);
+    abstract->elementValue = (srvParam->cfg->WCS[0].Title[0].elementValue.c_str());
   }
-  CT::replaceSelf(XMLDoc, "[SERVICENAME]", srvParam->cfg->WCS[0]->Title[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WCS[0]->Name[0]->elementValue.c_str());
-  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WCS[0]->Abstract[0]->elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICENAME]", srvParam->cfg->WCS[0].Title[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICETITLE]", srvParam->cfg->WCS[0].Name[0].elementValue.c_str());
+  CT::replaceSelf(XMLDoc, "[SERVICEABSTRACT]", srvParam->cfg->WCS[0].Abstract[0].elementValue.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEONLINERESOURCE]", onlineResource.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
 
@@ -848,7 +848,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
             // Look wether and which dimension is a time dimension
             int timeDimIndex = -1;
             int d = 0;
-            for (auto dim: layer->layerMetadata.dimList) {
+            for (const auto &dim: layer->layerMetadata.dimList) {
               if (dim.units == "ISO8601") {
                 timeDimIndex = d;
               }
@@ -887,7 +887,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
               XMLDoc += "  </lonLatEnvelope>\n"
                         "  <domainSet>\n"
                         "    <spatialDomain>\n";
-              for (auto proj: layer->layerMetadata.projectionList) {
+              for (const auto &proj: layer->layerMetadata.projectionList) {
 
                 std::string encodedProjString(proj.name.c_str());
 
@@ -954,7 +954,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
               // Supported CRSs
               XMLDoc += "    <supportedCRSs>\n";
 
-              for (auto proj: layer->layerMetadata.projectionList) {
+              for (const auto &proj: layer->layerMetadata.projectionList) {
                 std::string encodedProjString(proj.name.c_str());
                 CT::printfconcat(XMLDoc, "      <requestResponseCRSs>%s</requestResponseCRSs>\n", encodedProjString.c_str());
               }
@@ -966,8 +966,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
                         "      <formats>GeoTIFF</formats>\n"
                         "      <formats>AAIGRID</formats>\n";
 
-              for (size_t p = 0; p < srvParam->cfg->WCS[0]->WCSFormat.size(); p++) {
-                CT::printfconcat(XMLDoc, "      <formats>%s</formats>\n", srvParam->cfg->WCS[0]->WCSFormat[p]->attr.name.c_str());
+              for (size_t p = 0; p < srvParam->cfg->WCS[0].WCSFormat.size(); p++) {
+                CT::printfconcat(XMLDoc, "      <formats>%s</formats>\n", srvParam->cfg->WCS[0].WCSFormat[p].attr.name.c_str());
               }
               XMLDoc += "    </supportedFormats>\n";
               CT::printfconcat(XMLDoc, "    <supportedInterpolations default=\"nearest neighbor\">\n"
@@ -994,16 +994,16 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, std::string &XMLDocume
   std::vector<MetadataLayer *> metadataLayerList;
 
   for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-    if (srvParam->cfg->Layer[j]->attr.type == "autoscan") {
+    if (srvParam->cfg->Layer[j].attr.type == "autoscan") {
       continue;
     }
-    if (srvParam->cfg->Layer[j]->attr.hidden == "true") {
+    if (srvParam->cfg->Layer[j].attr.hidden == "true") {
       continue;
     }
     // Create a new layer and push it in the list
     MetadataLayer *metadataLayer = new MetadataLayer();
     metadataLayerList.push_back(metadataLayer);
-    metadataLayer->layer = srvParam->cfg->Layer[j];
+    metadataLayer->layer = &srvParam->cfg->Layer[j];
     metadataLayer->srvParams = srvParam;
     populateMetadataLayerStruct(metadataLayer, true);
   }

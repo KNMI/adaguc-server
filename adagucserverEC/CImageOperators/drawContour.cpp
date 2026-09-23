@@ -226,11 +226,11 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   }
 
   double scaling = dataSource->getContourScaling();
-  const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+  const char *fontLocation = dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.location.c_str();
 
   double defaultLineWidth = 4;
   double defaultStrokeWidth = 0.75;
-  double defaultFontSize = atof(dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.c_str());
+  double defaultFontSize = atof(dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.size.c_str());
   CColor defaultLineColor = CColor(0, 0, 0, 255);
   CColor defaultTextColor = CColor(0, 0, 0, 255);
   CColor defaultTextStrokeColor = CColor(0, 0, 0, 0);
@@ -247,8 +247,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   std::vector<ContourLineStructure> contourlineList;
 
-  for (auto contourLine: (styleConfiguration->contourLines)) {
-    auto &attr = contourLine->attr;
+  for (const auto &contourLine: (styleConfiguration->contourLines)) {
+    auto &attr = contourLine.attr;
     std::vector<double> classes;
     double interval = 0;
     if (attr.classes.empty() == false) {

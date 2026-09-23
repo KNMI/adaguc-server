@@ -14,7 +14,7 @@ static const bool measureTime = false;
 json getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList) {
   json dimListJson;
 
-  for (auto dimension: dimList) {
+  for (const auto &dimension: dimList) {
     json item;
     item["defaultValue"] = dimension.defaultValue;
     item["hasMultipleValues"] = dimension.hasMultipleValues;
@@ -62,7 +62,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["gridspec"] = gridspec;
 
     json variables;
-    for (auto lv: metadataLayer->layerMetadata.variableList) {
+    for (const auto &lv: metadataLayer->layerMetadata.variableList) {
       json variable;
       variable["units"] = lv.units;
       variable["label"] = lv.label;
@@ -80,7 +80,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
 }
 int getProjectionListAsJson(MetadataLayer *metadataLayer, json &projsettings) {
   try {
-    for (auto projection: metadataLayer->layerMetadata.projectionList) {
+    for (const auto &projection: metadataLayer->layerMetadata.projectionList) {
       json item = {projection.dfBBOX[0], projection.dfBBOX[1], projection.dfBBOX[2], projection.dfBBOX[3]};
       projsettings[projection.name] = item;
     }
@@ -93,7 +93,7 @@ int getProjectionListAsJson(MetadataLayer *metadataLayer, json &projsettings) {
 
 int getStyleListMetadataAsJson(MetadataLayer *metadataLayer, json &styleListJson) {
   try {
-    for (auto style: metadataLayer->layerMetadata.styleList) {
+    for (const auto &style: metadataLayer->layerMetadata.styleList) {
       json item;
       item["abstract"] = style.abstract;
       item["title"] = style.title;
@@ -211,7 +211,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.cellsizeY = gridspec["cellsizey"].get<double>();
     metadataLayer->layerMetadata.projstring = gridspec["projstring"].get<std::string>();
     auto c = i["variables"];
-    for (auto styleJson: c.items()) {
+    for (const auto &styleJson: c.items()) {
       auto variableProps = styleJson.value();
       LayerMetadataVariable variable = {
           .variableName = variableProps["variableName"].get<std::string>(),
@@ -318,7 +318,7 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
     json a;
     auto c = a.parse(styleListAsJson);
 
-    for (auto styleJson: c.items()) {
+    for (const auto &styleJson: c.items()) {
       auto styleProperties = styleJson.value();
       LayerMetadataStyle style = {
           .name = styleProperties["name"].get<std::string>(),
@@ -367,7 +367,7 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
     json a;
     auto c = a.parse(dimensionListAsJson);
 
-    for (auto d: c.items()) {
+    for (const auto &d: c.items()) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim dimension = {

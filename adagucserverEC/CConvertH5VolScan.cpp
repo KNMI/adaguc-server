@@ -296,7 +296,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     }
   }
   int cnt = -1;
-  for (std::string param: scan_params) {
+  for (const std::string &param: scan_params) {
     cnt++;
     if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
