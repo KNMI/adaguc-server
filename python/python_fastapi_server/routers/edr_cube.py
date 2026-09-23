@@ -9,6 +9,7 @@ KNMI
 """
 
 from __future__ import annotations
+import asyncio
 import logging
 import time
 from typing_extensions import Annotated
@@ -132,7 +133,8 @@ async def get_coll_inst_cube(
     datetime_arg = datetime_par
     if datetime_par is None:
         datetime_arg = "*"
-    for parameter_name in parameter_names:
+
+    async def get_coverage_for_parameter(parameter_name: str):
         _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
 
         urlrequest = "&".join(
@@ -151,6 +153,15 @@ async def get_coll_inst_cube(
 
         start = time.time()
         status, wcs_response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+        logger.info("status: %d [%f]", status, time.time() - start)
+        return status, wcs_response, headers
+
+    # The per-parameter getcoverage calls are independent of each other, so fetch them
+    # concurrently rather than waiting for each one before starting the next.
+    results = await asyncio.gather(*(get_coverage_for_parameter(parameter_name) for parameter_name in parameter_names))
+
+    status = None
+    for parameter_name, (status, wcs_response, headers) in zip(parameter_names, results):
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
@@ -158,7 +169,6 @@ async def get_coll_inst_cube(
         if trace_timing is not None:
             trace_timings.append(trace_timing)
 
-        logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             continue
         result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response)

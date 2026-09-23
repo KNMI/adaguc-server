@@ -9,6 +9,7 @@ from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
 from main import app
+from routers.utils.edr_utils import clear_metadata_cache
 
 logger = logging.getLogger(__name__)
 
@@ -669,6 +670,11 @@ def test_trace_timings_header(client: TestClient):
 
         os.environ["ADAGUC_TRACE_TIMINGS"] = "TRUE"
 
+        # Position's getmetadata call is cached for a few seconds (see
+        # test_position_metadata_cache below), so clear it to guarantee this call is a
+        # fresh getmetadata call and not a cache hit from the disabled-tracing call above.
+        clear_metadata_cache()
+
         # Position makes a single internal adaguc data call and a single getmetadata call,
         # so a single header of each kind is expected.
         resp = client.get(
@@ -704,6 +710,40 @@ def test_trace_timings_header(client: TestClient):
         assert len(metadata_trace_headers) == 2
         assert all(h != "" for h in metadata_trace_headers)
     finally:
+        if old_trace_timings is None:
+            os.environ.pop("ADAGUC_TRACE_TIMINGS", None)
+        else:
+            os.environ["ADAGUC_TRACE_TIMINGS"] = old_trace_timings
+
+
+def test_position_metadata_cache(client: TestClient):
+    """/position's getmetadata call is cached for a few seconds, so that repeated position
+    requests for the same collection/instance within that window don't each re-trigger a
+    getmetadata call. We use the X-Trace-Timings-Metadata header (only emitted when a
+    getmetadata call is actually made) as an observable proxy for a cache hit vs miss."""
+    old_trace_timings = os.environ.get("ADAGUC_TRACE_TIMINGS")
+    try:
+        os.environ["ADAGUC_TRACE_TIMINGS"] = "TRUE"
+        clear_metadata_cache()
+
+        url = "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
+
+        # First call is a cache miss: a getmetadata call is made.
+        resp = client.get(url)
+        assert resp.status_code == 200
+        assert len(resp.headers.get_list("x-trace-timings-metadata")) == 1
+
+        # Second call, shortly after, is a cache hit: no new getmetadata call is made, so no
+        # new metadata trace-timings header, even though tracing is still enabled.
+        resp = client.get(url)
+        assert resp.status_code == 200
+        assert resp.headers.get_list("x-trace-timings-metadata") == []
+
+        # The data call itself is never cached, so its trace-timings header is still present
+        # on every call.
+        assert len(resp.headers.get_list("x-trace-timings")) == 1
+    finally:
+        clear_metadata_cache()
         if old_trace_timings is None:
             os.environ.pop("ADAGUC_TRACE_TIMINGS", None)
         else:

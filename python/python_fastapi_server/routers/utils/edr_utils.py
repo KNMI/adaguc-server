@@ -14,6 +14,7 @@ import logging
 import re
 from datetime import datetime, timezone
 
+from cachetools import TTLCache
 from dateutil.relativedelta import relativedelta
 from edr_pydantic.collections import Collection, Instance
 from edr_pydantic.data_queries import DataQueries, EDRQuery
@@ -41,6 +42,16 @@ from .edr_exception import (
 from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
+
+# Short-lived cache for getmetadata results, keyed by (collection_name, instance).
+# Used by callers that can tolerate slightly stale metadata in exchange for not
+# hitting the adaguc executable again on every request (e.g. /position).
+_metadata_cache: TTLCache = TTLCache(maxsize=256, ttl=10)
+
+
+def clear_metadata_cache():
+    """Clears the getmetadata result cache. Mainly useful for tests."""
+    _metadata_cache.clear()
 
 location_list = [
     {"id": "06260", "name": "De Bilt", "coordinates": [5.1797, 52.0989]},
@@ -521,15 +532,24 @@ def handle_metadata(metadata: dict):
     return collections
 
 
-async def get_metadata(collection_name: str = "", instance: str = "", response: Response = None) -> dict:
+async def get_metadata(
+    collection_name: str = "", instance: str = "", response: Response = None, use_cache: bool = False
+) -> dict:
     """Get metadata from ADAGUC.
 
     This method will either return a dictionary representing the metadata, or throw an exception
 
     If a response is passed, the trace timings of this getmetadata call are propagated to it as
     an X-Trace-Timings-Metadata header, distinct from the X-Trace-Timings header used for the
-    data call(s) that a request may additionally make.
+    data call(s) that a request may additionally make. No header is added on a cache hit, since
+    no getmetadata call is actually made in that case.
+
+    If use_cache is True, a successful result is cached (and may be served from cache) for a
+    few seconds, keyed by collection_name and instance.
     """
+    cache_key = (collection_name, instance)
+    if use_cache and cache_key in _metadata_cache:
+        return _metadata_cache[cache_key]
 
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
     if collection_name:
@@ -575,13 +595,18 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
 
     # Return all metadata if no collection_name is specified
     if not collection_name:
+        if use_cache:
+            _metadata_cache[cache_key] = collection_metadata
         return collection_metadata
 
     coll = collection_metadata.get(collection_name, None)
     if coll is None:
         raise exc_unknown_collection(collection_name)
 
-    return {collection_name: coll}
+    result = {collection_name: coll}
+    if use_cache:
+        _metadata_cache[cache_key] = result
+    return result
 
 
 def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
