@@ -1,18 +1,18 @@
 """
- This Python script runs the ADAGUC executable without an webserver. It can be used as example to run ADAGUC in your own environment from python.
- Created by Maarten Plieger - 2020-09-02
+This Python script runs the ADAGUC executable without an webserver. It can be used as example to run ADAGUC in your own environment from python.
+Created by Maarten Plieger - 2020-09-02
 """
 
 import os
 
-url="source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&"
+url = "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&"
 
 from adaguc.runAdaguc import runAdaguc
 
 adagucInstance = runAdaguc()
 
 
-adagucServerHome = os.getenv('ADAGUC_PATH', os.getcwd() + "/../../../../")
+adagucServerHome = os.getenv("ADAGUC_PATH", os.getcwd() + "/../../../../")
 adagucInstance.setAdagucPath(adagucServerHome)
 adagucInstance.setConfiguration(adagucServerHome + "/python/lib/adaguc/adaguc-server-config-python.xml")
 adagucInstance.setAutoWMSDir(adagucServerHome + "/data/datasets/")
@@ -22,12 +22,11 @@ img, logfile = adagucInstance.runGetMapUrl(url)
 
 print(logfile)
 
-if img is not None:
-  img.save("result.png")
-  img.show()
+if img is None:
+    raise RuntimeError(f"GetMap did not return an image:\n{logfile}")
 
-
-
+img.save("result.png")
+img.show()
 
 
 """ 
