@@ -36,8 +36,10 @@ async def handle_opendap(req: Request, opendappath: str):
 
     status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False)
 
-    # Obtain logfile
-    logfile = adaguc_instance.getLogFile()
+    # Obtain logfile, but only bother reading it if it will actually be logged.
+    logfile = ""
+    if logger.isEnabledFor(logging.INFO):
+        logfile = adaguc_instance.getLogFile()
     adaguc_instance.removeLogFile()
 
     logger.info(logfile)

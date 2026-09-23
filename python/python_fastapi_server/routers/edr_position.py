@@ -89,7 +89,7 @@ async def get_coll_inst_position(
         allowed_params,
     )
 
-    metadata = await get_metadata(collection_name, response=response, use_cache=True)
+    metadata = await get_metadata(collection_name, response=response)
 
     return await handle_coll_inst_position(
         collection_name,

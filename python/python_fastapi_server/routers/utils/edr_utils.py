@@ -532,9 +532,7 @@ def handle_metadata(metadata: dict):
     return collections
 
 
-async def get_metadata(
-    collection_name: str = "", instance: str = "", response: Response = None, use_cache: bool = False
-) -> dict:
+async def get_metadata(collection_name: str = "", instance: str = "", response: Response = None) -> dict:
     """Get metadata from ADAGUC.
 
     This method will either return a dictionary representing the metadata, or throw an exception
@@ -544,11 +542,11 @@ async def get_metadata(
     data call(s) that a request may additionally make. No header is added on a cache hit, since
     no getmetadata call is actually made in that case.
 
-    If use_cache is True, a successful result is cached (and may be served from cache) for a
-    few seconds, keyed by collection_name and instance.
+    A successful result is cached (and may be served from cache) for a few seconds, keyed by
+    collection_name and instance.
     """
     cache_key = (collection_name, instance)
-    if use_cache and cache_key in _metadata_cache:
+    if cache_key in _metadata_cache:
         return _metadata_cache[cache_key]
 
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
@@ -595,8 +593,7 @@ async def get_metadata(
 
     # Return all metadata if no collection_name is specified
     if not collection_name:
-        if use_cache:
-            _metadata_cache[cache_key] = collection_metadata
+        _metadata_cache[cache_key] = collection_metadata
         return collection_metadata
 
     coll = collection_metadata.get(collection_name, None)
@@ -604,8 +601,7 @@ async def get_metadata(
         raise exc_unknown_collection(collection_name)
 
     result = {collection_name: coll}
-    if use_cache:
-        _metadata_cache[cache_key] = result
+    _metadata_cache[cache_key] = result
     return result
 
 
