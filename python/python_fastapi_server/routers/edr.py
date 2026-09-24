@@ -74,7 +74,7 @@ async def rest_get_edr_collections(request: Request, response: Response):
     links.append(self_link)
     collections: list[Collection] = []
     ttl_set = set()
-    metadata = await get_metadata()
+    metadata = await get_metadata(response=response)
 
     for dataset_name in metadata.keys():
         try:
@@ -104,12 +104,12 @@ async def rest_get_edr_collection_by_id(collection_name: str, req: Request, resp
     base_url = get_base_url(req)
 
     # Query metadata to find last reference time
-    metadata = await get_metadata(collection_name)
+    metadata = await get_metadata(collection_name, response=response)
     instance = get_instance(metadata, collection_name)
 
     # Query metadata again with the most recent reference time, so time.values matches the reference time
     # TODO: it would be good if we can prevent the extra call to metadata.
-    metadata = await get_metadata(collection_name, instance)
+    metadata = await get_metadata(collection_name, instance, response=response)
     collection = get_collectioninfo_from_md(metadata[collection_name], collection_name, base_url)[0]
 
     if collection is None:

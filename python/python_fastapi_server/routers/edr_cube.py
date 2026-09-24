@@ -9,6 +9,7 @@ KNMI
 """
 
 from __future__ import annotations
+import asyncio
 import logging
 import time
 from typing_extensions import Annotated
@@ -26,6 +27,7 @@ from .utils.edr_utils import (
     get_dataset_from_collection,
     get_instance,
     get_parameters,
+    get_trace_timings_from_adaguc_headers,
     get_ttl_from_adaguc_headers,
     get_vertical,
     instance_to_iso,
@@ -104,7 +106,7 @@ async def get_coll_inst_cube(
         "resolution_y",
     ]
 
-    metadata = await get_metadata(collection_name)
+    metadata = await get_metadata(collection_name, response=response)
 
     dataset_name = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
@@ -127,10 +129,12 @@ async def get_coll_inst_cube(
 
     coveragejsons = []
     parameters = {}
+    trace_timings = []
     datetime_arg = datetime_par
     if datetime_par is None:
         datetime_arg = "*"
-    for parameter_name in parameter_names:
+
+    async def get_coverage_for_parameter(parameter_name: str):
         _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
 
         urlrequest = "&".join(
@@ -149,11 +153,22 @@ async def get_coll_inst_cube(
 
         start = time.time()
         status, wcs_response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+        logger.info("status: %d [%f]", status, time.time() - start)
+        return status, wcs_response, headers
+
+    # The per-parameter getcoverage calls are independent of each other, so fetch them
+    # concurrently rather than waiting for each one before starting the next.
+    results = await asyncio.gather(*(get_coverage_for_parameter(parameter_name) for parameter_name in parameter_names))
+
+    status = None
+    for parameter_name, (status, wcs_response, headers) in zip(parameter_names, results):
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
+        trace_timing = get_trace_timings_from_adaguc_headers(headers)
+        if trace_timing is not None:
+            trace_timings.append(trace_timing)
 
-        logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             continue
         result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response)
@@ -163,6 +178,10 @@ async def get_coll_inst_cube(
             coveragejsons.extend(coveragejson)
             for covjson in coveragejson:
                 parameters = parameters | covjson.parameters
+
+    # Propagate the trace timings of every internal ADAGUC call as separate response headers
+    for trace_timing in trace_timings:
+        response.headers.append("X-Trace-Timings", trace_timing)
 
     if len(coveragejsons) == 0:
         raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")

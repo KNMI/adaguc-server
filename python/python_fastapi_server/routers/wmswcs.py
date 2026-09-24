@@ -48,8 +48,10 @@ async def handle_wms(req: Request):
     # Run adaguc-server
     status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False, showLog=False)
 
-    # Obtain logfile
-    logfile = adaguc_instance.getLogFile()
+    # Obtain logfile, but only bother reading it if it will actually be logged.
+    logfile = ""
+    if logger.isEnabledFor(logging.INFO):
+        logfile = adaguc_instance.getLogFile()
     adaguc_instance.removeLogFile()
 
     if len(logfile) > 0:

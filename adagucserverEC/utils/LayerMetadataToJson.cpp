@@ -154,7 +154,9 @@ json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &lay
 ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   std::string datasetLocation = srvParams->datasetLocation;
   traceTimingsSpanStart(TraceTimingType::GETMETADATAJSONDB);
-  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
+  // When a specific dataset was requested, let the DB filter for it (WHERE datasetname = ...) instead of pulling
+  // every dataset's layer metadata over the wire and through the JSON index below just to discard all but one.
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(datasetLocation.empty() ? nullptr : datasetLocation.c_str());
   traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONDB);
   if (layerMetaDataStore == nullptr) {
     CDBError("Unable to get layer metadata store");
