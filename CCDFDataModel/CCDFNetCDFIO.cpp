@@ -141,19 +141,6 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   }
   var->setSize(totalVariableSize);
 
-  // On a slow (e.g. network) filesystem, HDF5's small default per-variable chunk cache (1MB)
-  // can force the same chunks to be re-fetched multiple times within a single read, if the
-  // requested region spans more chunks than fit in the cache at once. Size the cache to
-  // comfortably hold the region we're about to read, so it's fetched from storage once.
-  int storageType;
-  if (nc_inq_var_chunking(varGroupId, var->id, &storageType, NULL) == NC_NOERR && storageType == NC_CHUNKED) {
-    const size_t minCacheBytes = 1024 * 1024;       // HDF5's own default, used as a floor.
-    const size_t maxCacheBytes = 128 * 1024 * 1024; // Cap so one read can't blow up process memory.
-    size_t cacheBytes = totalVariableSize * (size_t)CDF::getTypeSize(type);
-    cacheBytes = std::max(minCacheBytes, std::min(cacheBytes, maxCacheBytes));
-    nc_set_var_chunk_cache(varGroupId, var->id, cacheBytes, 4133, 0.75);
-  }
-
   if (CCDFNETCDFIO_DEBUG) {
     CDBDebug("Allocating data for variable %s, type: %s, size: %zu", var->name.c_str(), CDF::getCDFDataTypeName(var->currentType).c_str(), var->getSize());
   }
