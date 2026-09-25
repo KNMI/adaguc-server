@@ -1104,7 +1104,7 @@ struct CServerConfig : CXMLObjectInterface {
     struct Cattr {
       std::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
-    void handleValue() { this->elementValue = makeCleanPath(this->elementValue.c_str()); }
+    void handleValue() { this->elementValue = makeCleanPath(this->elementValue); }
 
     bool addAttribute(const attribute &attrCfg) {
       if ("filter" == attrCfg.name) {

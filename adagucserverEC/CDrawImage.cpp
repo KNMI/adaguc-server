@@ -799,7 +799,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
     CXMLParserElement element;
 
     try {
-      element.parseFile(legend->attr.file.c_str());
+      element.parseFile(legend->attr.file);
       auto stops = element.getThrows("svg")->getThrows("g")->getThrows("defs")->getThrows("linearGradient")->getList("stop");
       float cx;
       float rc[4];

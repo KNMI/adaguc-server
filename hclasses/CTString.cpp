@@ -102,29 +102,44 @@ namespace CT {
     appendString += buf;
   }
 
-  std::string replace(const std::string &input, const std::string &from, const std::string &to) {
-    std::string str = input;
-    if (from.empty()) {
-      return str;
-    }
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-      str.replace(start_pos, from.length(), to);
-      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-    }
-    return str;
+  // Builds a copy of input with every occurrence of from replaced by to, pos is the first occurrence
+  static std::string buildReplaced(std::string_view input, std::string_view from, std::string_view to, size_t pos) {
+    std::string result;
+    result.reserve(input.size());
+    size_t last = 0;
+    do {
+      result.append(input, last, pos - last);
+      result.append(to);
+      last = pos + from.size();
+      pos = input.find(from, last);
+    } while (pos != std::string_view::npos);
+    result.append(input, last);
+    return result;
   }
 
-  void replaceSelf(std::string &input, const std::string &from, const std::string &to) {
-    if (from.empty()) {
+  std::string replace(std::string_view input, std::string_view from, std::string_view to) {
+    size_t pos = from.empty() ? std::string_view::npos : input.find(from);
+    if (pos == std::string_view::npos) {
+      return std::string(input);
+    }
+    return buildReplaced(input, from, to, pos);
+  }
+
+  void replaceSelf(std::string &input, std::string_view from, std::string_view to) {
+    size_t pos = from.empty() ? std::string::npos : input.find(from);
+    if (pos == std::string::npos) {
       return;
     }
-    size_t start_pos = 0;
-    while ((start_pos = input.find(from, start_pos)) != std::string::npos) {
-      input.replace(start_pos, from.length(), to);
-      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    if (from.size() == to.size()) {
+      // Same length: overwrite in place, nothing needs to shift
+      do {
+        input.replace(pos, from.size(), to);
+        pos = input.find(from, pos + to.size());
+      } while (pos != std::string::npos);
+      return;
     }
-    return;
+    // Different length: build the result in one pass instead of shifting the tail for every match
+    input = buildReplaced(input, from, to, pos);
   }
 
   std::string toLowerCase(const std::string &input) {
@@ -182,11 +197,12 @@ namespace CT {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
   }
 
-  std::string trim(const std::string &input) {
-    std::string result = input;
-    rtrim(result);
-    ltrim(result);
-    return result;
+  std::string trim(std::string_view input) {
+    auto isSpace = [](unsigned char ch) { return std::isspace(ch) != 0; };
+    size_t start = 0, end = input.size();
+    while (start < end && isSpace(input[start])) start++;
+    while (end > start && isSpace(input[end - 1])) end--;
+    return std::string(input.substr(start, end - start));
   }
 
   // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"

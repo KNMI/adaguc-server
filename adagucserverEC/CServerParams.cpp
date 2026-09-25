@@ -140,18 +140,18 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
     }
 
     for (size_t d = 0; d < cfg->AutoResource[0].Dir.size(); d++) {
-      const char *_baseDir = cfg->AutoResource[0].Dir[d].attr.basedir.c_str();
-      const char *dirPrefix = cfg->AutoResource[0].Dir[d].attr.prefix.c_str();
+      const auto &dir = cfg->AutoResource[0].Dir[d];
+      const std::string &dirPrefix = dir.attr.prefix;
 
       char baseDir[PATH_MAX];
-      if (realpath(_baseDir, baseDir) == NULL) {
+      if (realpath(dir.attr.basedir.c_str(), baseDir) == NULL) {
         CDBError("Skipping AutoResource[0]->Dir[%lu]->basedir: Configured value is not a valid realpath", d);
         continue;
       }
 
-      if (strlen(baseDir) > 0 && strlen(dirPrefix) > 0) {
+      if (strlen(baseDir) > 0 && !dirPrefix.empty()) {
         // Prepend the prefix to make the absolute path
-        std::string pathToCheck = CT::printf("%s/%s", dirPrefix, path.c_str());
+        std::string pathToCheck = dirPrefix + "/" + path;
         // Make a realpath
         char szResolvedPath[PATH_MAX];
         if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL) {
@@ -165,7 +165,7 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
         if (strlen(baseDir)) {
           CDBDebug("basedir not defined");
         }
-        if (dirPrefix == NULL) {
+        if (dirPrefix.empty()) {
           CDBDebug("prefix not defined");
         }
       }
@@ -176,7 +176,7 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
   return false;
 }
 
-void CServerParams::setOnlineResource(std::string r) { _onlineResource = r; };
+void CServerParams::setOnlineResource(const std::string &r) { _onlineResource = r; };
 
 std::string CServerParams::getOnlineResource() {
   if (_onlineResource.length() > 0) {
@@ -194,7 +194,7 @@ std::string CServerParams::getOnlineResource() {
     return onlineResource;
   }
 
-  std::string onlineResource = cfg->OnlineResource[0].attr.value.c_str();
+  const std::string &onlineResource = cfg->OnlineResource[0].attr.value;
 
   // A full path is given in the configuration
   if (CT::indexOf(onlineResource, "http") == 0) {
@@ -218,13 +218,8 @@ std::string CServerParams::getOnlineResource() {
 
 bool CServerParams::checkBBOXXYOrder(const char *projName) {
   if (OGCVersion == WMS_VERSION_1_3_0) {
-    std::string projNameString;
-    if (projName == NULL) {
-      projNameString = geoParams.crs.c_str();
-    } else {
-      projNameString = projName;
-    }
-    auto comp = [projNameString](const CServerConfig::XMLE_Projection &a) { return a.attr.id == projNameString.c_str(); };
+    const std::string projNameString = projName == NULL ? geoParams.crs : projName;
+    auto comp = [&projNameString](const CServerConfig::XMLE_Projection &a) { return a.attr.id == projNameString; };
     auto it = std::find_if(cfg->Projection.begin(), cfg->Projection.end(), comp);
     if (it != cfg->Projection.end()) {
       return CT::equalsIgnoreCase((*it).attr.invertxyforwms130, "true");
@@ -299,7 +294,7 @@ static void substituteStandardEnvironment(std::string &configFileData) {
   const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
   if (pszADAGUC_PATH != NULL) {
     std::string adagucPath = makeCleanPath(pszADAGUC_PATH) + "/";
-    CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath.c_str());
+    CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath);
   }
 
   /* Substitute ADAGUC_TMP */
@@ -307,15 +302,15 @@ static void substituteStandardEnvironment(std::string &configFileData) {
   CT::replaceSelf(configFileData, "{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
 
   /* Substitute the others only when set */
-  for (const char *name : {"ADAGUC_DB", "ADAGUC_DATASET_DIR", "ADAGUC_DATA_DIR", "ADAGUC_AUTOWMS_DIR"}) {
+  for (const char *name: {"ADAGUC_DB", "ADAGUC_DATASET_DIR", "ADAGUC_DATA_DIR", "ADAGUC_AUTOWMS_DIR"}) {
     const char *value = getenv(name);
-    if (value != NULL) CT::replaceSelf(configFileData, CT::printf("{%s}", name).c_str(), value);
+    if (value != NULL) CT::replaceSelf(configFileData, CT::printf("{%s}", name), value);
   }
 }
 
 // Substitutes the variables declared by <Environment> elements, using the environment value or the default
 static void substituteExtraEnvironment(std::string &configFileData, const std::vector<CServerConfig::XMLE_Environment> &environments, bool verbose) {
-  for (const auto &env : environments) {
+  for (const auto &env: environments) {
     const std::string &name = env.attr.name;
     const std::string &defaultVal = env.attr.defaultVal;
     if (name.empty() || defaultVal.empty()) {
@@ -332,7 +327,7 @@ static void substituteExtraEnvironment(std::string &configFileData, const std::v
     if (verbose) {
       CDBDebug("Replacing %s with %s value %s", substituteName.c_str(), environmentValue != NULL ? "environment" : "default", value);
     }
-    CT::replaceSelf(configFileData, substituteName.c_str(), value);
+    CT::replaceSelf(configFileData, substituteName, value);
   }
 }
 
@@ -347,10 +342,17 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
     CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
     return 1;
   }
-  std::string datasetName = CT::basename(pszConfigFile.c_str());
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile: File contents read.");
+  }
+  std::string datasetName = CT::basename(pszConfigFile);
 
   try {
     substituteStandardEnvironment(configFileData);
+
+    if (adagucMeasureTime) {
+      StopWatch_Stop("CServerParams::parseConfigFile: substituteStandardEnvironment done");
+    }
 
     // Environment elements declare extra variables to substitute. Finding them requires parsing the XML first,
     // so this extra pass is only done when the file can contain them.
@@ -362,6 +364,9 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
       if (parseConfig(&environmentConfig, configFileData, datasetName) == 0 && !environmentConfig.Configuration.empty()) {
         substituteExtraEnvironment(configFileData, environmentConfig.Configuration[0].Environment, verbose);
       }
+    }
+    if (adagucMeasureTime) {
+      StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
     }
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
@@ -461,13 +466,13 @@ bool CServerParams::isEdrEnabled() {
   return true;
 }
 
-int CServerParams::getServerLegendIndexByName(std::string legendName) {
-  auto comp = [legendName](const CServerConfig::XMLE_Legend &a) { return a.attr.name == (legendName); };
+int CServerParams::getServerLegendIndexByName(const std::string &legendName) {
+  auto comp = [&legendName](const CServerConfig::XMLE_Legend &a) { return a.attr.name == legendName; };
   auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), comp);
   return it == cfg->Legend.end() ? -1 : it - cfg->Legend.begin();
 }
 
-int CServerParams::getServerStyleIndexByName(std::string styleName) {
+int CServerParams::getServerStyleIndexByName(const std::string &styleName) {
   if (styleName.empty()) {
     CDBError("No style name provided");
     return -1;
@@ -478,7 +483,7 @@ int CServerParams::getServerStyleIndexByName(std::string styleName) {
   // Remove last slash (/). E.g. windbarbs/shaded => windbarbs
   std::string sanitizedStyleName = CT::substring(styleName, 0, CT::indexOf(styleName, "/"));
 
-  auto comp = [sanitizedStyleName](const CServerConfig::XMLE_Style &a) { return a.attr.name == (sanitizedStyleName); };
+  auto comp = [&sanitizedStyleName](const CServerConfig::XMLE_Style &a) { return a.attr.name == sanitizedStyleName; };
   auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);
   int index = it == cfg->Style.end() ? -1 : it - cfg->Style.begin();
 

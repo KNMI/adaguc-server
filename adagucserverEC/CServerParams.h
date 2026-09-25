@@ -162,7 +162,7 @@ public:
   /**
    * Set online resource
    */
-  void setOnlineResource(std::string onlineResource);
+  void setOnlineResource(const std::string &onlineResource);
 
   /**
    * Determine whether boundingbox y and x are swapped, for example the case with WMS 1.3.0 and EPSG:4326
@@ -208,7 +208,7 @@ public:
    * @param legendName The name of the legend to locate
    * @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
    */
-  int getServerLegendIndexByName(std::string legendName);
+  int getServerLegendIndexByName(const std::string &legendName);
 
   /**
    * Retrieves the style index in the server configuration by stylename.
@@ -219,7 +219,7 @@ public:
    * @param styleName The name of the style to locate
    * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
    */
-  int getServerStyleIndexByName(std::string styleName);
+  int getServerStyleIndexByName(const std::string &styleName);
 };
 
 /**

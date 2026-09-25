@@ -747,13 +747,30 @@ int CRequest::process_all_layers() {
           srvParam->dFound_BBOX = 1;
           layerTypeLiveUpdateRender(firstDataSource, srvParam);
         } else {
+          if (adagucMeasureTime) {
+            StopWatch_Stop("start imageDataWriter.init");
+          }
+
           CImageDataWriter imageDataWriter;
           status = imageDataWriter.init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
           if (status != 0) throw(__LINE__);
+
+          if (adagucMeasureTime) {
+            StopWatch_Stop("start imageDataWriter.getFeatureInfo");
+          }
+
           status = imageDataWriter.getFeatureInfo(dataSources, 0, int(srvParam->dX), int(srvParam->dY));
           if (status != 0) throw(__LINE__);
+
+          if (adagucMeasureTime) {
+            StopWatch_Stop("start imageDataWriter.end");
+          }
           status = imageDataWriter.end();
           if (status != 0) throw(__LINE__);
+
+          if (adagucMeasureTime) {
+            StopWatch_Stop("imageDataWriter.getFeatureInfo done");
+          };
         }
       }
 

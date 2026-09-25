@@ -26,6 +26,7 @@
 #ifndef CTSTRING_H
 #define CTSTRING_H
 #include <string>
+#include <string_view>
 #include <vector>
 #include "printfCheckMacro.h"
 
@@ -80,8 +81,8 @@ namespace CT {
    * @returns new string with replaced values
    */
 
-  std::string replace(const std::string &input, const std::string &from, const std::string &to);
-  void replaceSelf(std::string &input, const std::string &from, const std::string &to);
+  std::string replace(std::string_view input, std::string_view from, std::string_view to);
+  void replaceSelf(std::string &input, std::string_view from, std::string_view to);
 
   /**
    * Converts a string to lowercase
@@ -102,7 +103,7 @@ namespace CT {
    * @param input The input string
    * @returns the input string with removed spaces
    */
-  std::string trim(const std::string &input);
+  std::string trim(std::string_view input);
 
   /**
    * Converts a string to double after trimming whitespace.
