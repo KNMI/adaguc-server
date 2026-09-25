@@ -293,138 +293,93 @@ bool checkTimeFormat(const std::string &timeToCheck) {
   return timeToCheck.find_first_not_of(timeFormatAllowedCharsString) == std::string::npos;
 }
 
-int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
-  // Find variables to substitute
-  std::vector<CServerConfig::XMLE_Environment> extraEnvironment;
-
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start first  %s", pszConfigFile.c_str());
-#endif
-  CServerParams tempServerParam;
-  tempServerParam._parseConfigFile(pszConfigFile, nullptr);
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile done first %s", pszConfigFile.c_str());
-#endif
-
-  if (tempServerParam.configObj.Configuration.size() > 0 && tempServerParam.configObj.Configuration[0].Environment.size() > 0) {
-    for (size_t j = 0; j < tempServerParam.configObj.Configuration[0].Environment.size(); j++) {
-      CServerConfig::XMLE_Environment tmpEnv;
-      tmpEnv.attr.name = tempServerParam.configObj.Configuration[0].Environment[j].attr.name;
-      tmpEnv.attr.defaultVal = tempServerParam.configObj.Configuration[0].Environment[j].attr.defaultVal;
-      extraEnvironment.push_back(tmpEnv);
-    }
+// Substitutes the standard ADAGUC_* environment variables in the configuration data
+static void substituteStandardEnvironment(std::string &configFileData) {
+  /* Substitute ADAGUC_PATH */
+  const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
+  if (pszADAGUC_PATH != NULL) {
+    std::string adagucPath = makeCleanPath(pszADAGUC_PATH) + "/";
+    CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath.c_str());
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start second  %s", pszConfigFile.c_str());
-#endif
-  int status = _parseConfigFile(pszConfigFile, &extraEnvironment);
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile done second  %s", pszConfigFile.c_str());
-#endif
-  return status;
+
+  /* Substitute ADAGUC_TMP */
+  const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
+  CT::replaceSelf(configFileData, "{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
+
+  /* Substitute the others only when set */
+  for (const char *name : {"ADAGUC_DB", "ADAGUC_DATASET_DIR", "ADAGUC_DATA_DIR", "ADAGUC_AUTOWMS_DIR"}) {
+    const char *value = getenv(name);
+    if (value != NULL) CT::replaceSelf(configFileData, CT::printf("{%s}", name).c_str(), value);
+  }
 }
 
-int CServerParams::_parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
-  std::string configFileData = "";
+// Substitutes the variables declared by <Environment> elements, using the environment value or the default
+static void substituteExtraEnvironment(std::string &configFileData, const std::vector<CServerConfig::XMLE_Environment> &environments, bool verbose) {
+  for (const auto &env : environments) {
+    const std::string &name = env.attr.name;
+    const std::string &defaultVal = env.attr.defaultVal;
+    if (name.empty() || defaultVal.empty()) {
+      CDBWarning("Environment element found, but either name or default are not set [%s] [%s]", name.c_str(), defaultVal.c_str());
+      continue;
+    }
+    if (!CT::startsWith(name, CSERVERPARAMS_ADAGUCENV_PREFIX)) {
+      CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
+      continue;
+    }
+    const char *environmentValue = getenv(name.c_str());
+    const char *value = environmentValue != NULL ? environmentValue : defaultVal.c_str();
+    std::string substituteName = CT::printf("{%s}", name.c_str());
+    if (verbose) {
+      CDBDebug("Replacing %s with %s value %s", substituteName.c_str(), environmentValue != NULL ? "environment" : "default", value);
+    }
+    CT::replaceSelf(configFileData, substituteName.c_str(), value);
+  }
+}
+
+int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
+  }
+  std::string configFileData;
+  try {
+    configFileData = readFile(pszConfigFile);
+  } catch (int e) {
+    CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
+    return 1;
+  }
+  std::string datasetName = CT::basename(pszConfigFile.c_str());
 
   try {
-    try {
-      configFileData = readFile(pszConfigFile);
-    } catch (int e) {
-      CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
-      return 1;
-    }
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::_parseConfigFile Start substitutions");
-#endif
-    /* Substitute ADAGUC_PATH */
-    const char *pszADAGUC_PATH = getenv("ADAGUC_PATH");
-    if (pszADAGUC_PATH != NULL) {
-      std::string adagucPath = makeCleanPath(pszADAGUC_PATH);
-      adagucPath = adagucPath + "/";
-      CT::replaceSelf(configFileData, "{ADAGUC_PATH}", adagucPath.c_str());
-    }
+    substituteStandardEnvironment(configFileData);
 
-    /* Substitute ADAGUC_TMP */
-    const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
-    CT::replaceSelf(configFileData, "{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
-
-    /* Substitute ADAGUC_DB */
-    const char *pszADAGUC_DB = getenv("ADAGUC_DB");
-    if (pszADAGUC_DB != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DB}", pszADAGUC_DB);
-
-    /* Substitute ADAGUC_DATASET_DIR */
-    const char *pszADAGUC_DATASET_DIR = getenv("ADAGUC_DATASET_DIR");
-    if (pszADAGUC_DATASET_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DATASET_DIR}", pszADAGUC_DATASET_DIR);
-
-    /* Substitute ADAGUC_DATA_DIR */
-    const char *pszADAGUC_DATA_DIR = getenv("ADAGUC_DATA_DIR");
-    if (pszADAGUC_DATA_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_DATA_DIR}", pszADAGUC_DATA_DIR);
-
-    /* Substitute ADAGUC_AUTOWMS_DIR */
-    const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
-    if (pszADAGUC_AUTOWMS_DIR != NULL) CT::replaceSelf(configFileData, "{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::_parseConfigFile Start extra substitutions");
-#endif
-
-    if (extraEnvironment != nullptr) {
-      /* Substitute any others as specified in env */
-      if (extraEnvironment->size() > 0) {
-        for (size_t j = 0; j < (*extraEnvironment).size(); j++) {
-          CServerConfig::XMLE_Environment *env = &(*extraEnvironment)[j];
-          if (env != nullptr) {
-            if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
-
-              if (CT::startsWith(env->attr.name, CSERVERPARAMS_ADAGUCENV_PREFIX)) {
-                const char *environmentVarName = env->attr.name.c_str();
-                const char *environmentVarDefault = env->attr.defaultVal.c_str();
-                const char *environmentValue = getenv(environmentVarName);
-                std::string substituteName = CT::printf("{%s}", environmentVarName);
-                const char *environmentSubstituteName = substituteName.c_str();
-
-                if (environmentValue != NULL) {
-                  if (verbose) {
-                    CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
-                  }
-                  CT::replaceSelf(configFileData, environmentSubstituteName, environmentValue);
-                } else {
-                  if (verbose) {
-                    CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
-                  }
-                  CT::replaceSelf(configFileData, environmentSubstituteName, environmentVarDefault);
-                }
-              } else {
-                CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
-              }
-            } else {
-              CDBWarning("Environment element found, but either name or default are not set [%s] [%s]", env->attr.name.c_str(), env->attr.defaultVal.c_str());
-            }
-          }
-        }
+    // Environment elements declare extra variables to substitute. Finding them requires parsing the XML first,
+    // so this extra pass is only done when the file can contain them.
+    if (configFileData.find("Environment") != std::string::npos) {
+      if (adagucMeasureTime) {
+        StopWatch_Stop("CServerParams::parseConfigFile start extra substitutions");
+      }
+      CServerConfig environmentConfig;
+      if (parseConfig(&environmentConfig, configFileData, datasetName) == 0 && !environmentConfig.Configuration.empty()) {
+        substituteExtraEnvironment(configFileData, environmentConfig.Configuration[0].Environment, verbose);
       }
     }
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }
 
-  std::string datasetName = CT::basename(pszConfigFile.c_str());
-
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::_parseConfigFile Start parseConfig");
-#endif
-
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile start parseConfig");
+  }
   int status = parseConfig(&configObj, configFileData, datasetName);
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::_parseConfigFile Done parseConfig");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile done parseConfig");
+  }
 
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
-  } else {
-    CDBError("Invalid XML file %s", pszConfigFile.c_str());
-    return 1;
   }
+  CDBError("Invalid XML file %s", pszConfigFile.c_str());
+  return 1;
 }
 
 std::string CServerParams::getResponseHeaders(int mode) {

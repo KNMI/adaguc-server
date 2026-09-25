@@ -90,6 +90,6 @@ int CDFGeoJSONReader::open(const char *fileName) {
 
 int CDFGeoJSONReader::close() { return 0; }
 
-int CDFGeoJSONReader::_readVariableData(CDF::Variable *, CDFType) { return 0; };
+int CDFGeoJSONReader::cdfReadVariableData(CDF::Variable *, CDFType) { return 0; };
 
-int CDFGeoJSONReader::_readVariableData(CDF::Variable *, CDFType, size_t *, size_t *, ptrdiff_t *) { return 0; };
+int CDFGeoJSONReader::cdfReadVariableData(CDF::Variable *, CDFType, size_t *, size_t *, ptrdiff_t *) { return 0; };

@@ -208,6 +208,9 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
   std::vector<CURResult> results;
 
+  // Avoids reading x and y again.
+  dataSource->formatConverterActive = true;
+
   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
 
   if (enableLogUnique) {
@@ -292,18 +295,6 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
             }
           }
 
-          /*
-           * In case a scale_factor and add_offset attribute is present, we need to read the data into the same datatype as this attribute
-           * This allows it to be unpacked properly to the final scaled values
-           */
-          CDF::Attribute *scale_factor = variable->getAttributeNE("scale_factor");
-          if (scale_factor != NULL) {
-            variable->setType(CDF_FLOAT);
-            if (scale_factor->getType() == CDF_DOUBLE) {
-              variable->setType(CDF_DOUBLE);
-            }
-          }
-
           if (readDataAsCDFDouble) {
             variable->setType(CDF_DOUBLE);
           }
@@ -311,6 +302,8 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
           if (enableLogUnique) {
             CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
           }
+
+          // Read data
           int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
           if (enableLogUnique) {
             CDBDebug("Read %lu elements", variable->getSize());

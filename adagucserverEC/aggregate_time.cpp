@@ -5,6 +5,7 @@
 #include <netcdf.h>
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
+#include "CCDFNetCDFIOWriter.h"
 #include "CCDFHDF5IO.h"
 #include "CDirReader.h"
 #include "CTime.h"

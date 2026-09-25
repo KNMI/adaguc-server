@@ -116,9 +116,9 @@ int CDrawImage::createImage(int _dW, int _dH) {
 }
 
 int CDrawImage::createImage(GeoParameters &_Geo) {
-#ifdef MEASURETIME
-  StopWatch_Stop("start createImage of size");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("start createImage of size");
+  }
   if (dImageCreated == 1) {
     CDBError("createImage: image already created");
     return 1;
@@ -133,9 +133,9 @@ int CDrawImage::createImage(GeoParameters &_Geo) {
     cairo = new CCairoPlotter(geoParams.width, geoParams.height, TTFFontSize, TTFFontLocation, 0, 0, 0, 0);
   }
   dImageCreated = 1;
-#ifdef MEASURETIME
-  StopWatch_Stop("image created");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("image created");
+  }
 
   return 0;
 }
@@ -1016,9 +1016,9 @@ int CDrawImage::createImage(CDrawImage *image, int width, int height) {
   if (width < 0) {
     width = 0;
   }
-#ifdef MEASURETIME
-  CDBDebug("createImage(CDrawImage *image,int width,int height)");
-#endif
+  if (adagucMeasureTime) {
+    CDBDebug("createImage(CDrawImage *image,int width,int height)");
+  }
   enableTransparency(image->_bEnableTransparency);
   setTTFFontLocation(image->TTFFontLocation);
 

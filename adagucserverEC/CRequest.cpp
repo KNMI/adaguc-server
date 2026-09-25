@@ -25,7 +25,6 @@
  ******************************************************************************/
 
 static const bool CREQUEST_DEBUG = false;
-// #define MEASURETIME
 
 #include "Types/ProjectionStore.h"
 #include "CRequest.h"
@@ -844,9 +843,9 @@ int CRequest::process_all_layers() {
 
 int CRequest::process_querystring() {
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Start processing query string");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Start processing query string");
+  }
 
   if (srvParam == nullptr || srvParam->cfg == nullptr || srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
@@ -1324,9 +1323,9 @@ int CRequest::process_querystring() {
   if (CREQUEST_DEBUG) {
     CDBDebug("Finished parsing query string parameters");
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("query string processed");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("query string processed");
+  }
 
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
@@ -1919,9 +1918,9 @@ int CRequest::process_querystring() {
     setExceptionType(ServiceExceptionType::UnprocessableEntity);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("End of query string");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("End of query string");
+  }
 
   return 0;
 }

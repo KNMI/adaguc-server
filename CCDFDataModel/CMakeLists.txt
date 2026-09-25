@@ -11,6 +11,7 @@ add_library(CCDFDataModel
     traceTimings/traceTimingsTests.cpp
     CCDFDataModel.h
     CCDFNetCDFIO.h
+    CCDFNetCDFIOWriter.h
     CCDFAttribute.h
     CCDFAttribute.cpp
     CCDFDimension.h
@@ -35,6 +36,7 @@ add_library(CCDFDataModel
     ProjCache.h
     CCDFDataModel.cpp
     CCDFNetCDFIO.cpp
+    CCDFNetCDFIOWriter.cpp
     CTime.cpp
     CCDFHDF5IO.cpp
     CCDFHDF5IO_ODIM.cpp

@@ -63,6 +63,7 @@ int main(int argc, char **argv, char **envp) {
   StopWatch_Start();
 
   traceTimingsCheckEnabled();
+  checkMeasureTimeEnabled();
   checkLogSettings();
 
   int status = processCMDArgs(argc, argv, envp);
@@ -85,9 +86,9 @@ int main(int argc, char **argv, char **envp) {
 
   proj_clear_cache();
   BBOXProjectionClearCache();
-#ifdef MEASURETIME
-  StopWatch_Stop("Finished");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Finished");
+  }
   varCacheClear();
   closeLogFile();
 

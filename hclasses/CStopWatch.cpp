@@ -24,9 +24,11 @@
  ******************************************************************************/
 
 #include "CStopWatch.h"
+#include "CTString.h"
 
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 #include <ctime>
 #include <string>
 #include <sys/time.h>
@@ -35,6 +37,15 @@
 
 extern unsigned int logMessageNumber;
 extern unsigned long logProcessIdentifier;
+
+bool adagucMeasureTime = false;
+
+void checkMeasureTimeEnabled() {
+  const char *env = getenv("ADAGUCENV_MEASURETIME");
+  if (env != NULL && CT::equalsIgnoreCase(env, "true")) {
+    adagucMeasureTime = true;
+  }
+}
 
 timespec starttime, stoptime, currenttime;
 double CSTOPWATCH_H_prevTime = 0;

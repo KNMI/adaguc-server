@@ -69,7 +69,6 @@ private:
   int autoLocalFileResourceEnabled = -1;
   int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
   std::string _onlineResource;
-  int _parseConfigFile(const std::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
 
 public:
   bool Transparent = false;

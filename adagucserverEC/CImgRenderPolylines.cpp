@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CImgRenderPolylines.h"
+#include "CStopWatch.h"
 #include "Types/CPointTypes.h"
 #include <set>
 #include "CConvertGeoJSON.h"
@@ -41,7 +42,6 @@
 #include "CServerParams.h"
 #include "Types/GeoParameters.h"
 
-//   #define MEASURETIME
 
 #define POLY_NODATA -32000
 const char *fontLoc = getenv("ADAGUC_FONT");
@@ -285,9 +285,9 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           drawImage->poly(polyPoints, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, false, featureStyle.hasFill);
         }
 
-#ifdef MEASURETIME
-        StopWatch_Stop("Feature drawn %d", featureIndex);
-#endif
+        if (adagucMeasureTime) {
+          StopWatch_Stop("Feature drawn %d", featureIndex);
+        }
       }
       // Draw polygon labels here, so they end up on top
       for (const CRectangleText &rect: rects) {

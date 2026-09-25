@@ -26,6 +26,7 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CStopWatch.h"
 #include "CCDFObject.h"
 #include "CDebugger.h"
 #include "CTString.h"
@@ -155,19 +156,19 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
     return 1;
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("UGRID MESH DATA");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("UGRID MESH DATA");
+  }
   pointLon->readData(CDF_FLOAT, true);
   pointLat->readData(CDF_FLOAT, true);
-#ifdef MEASURETIME
-  StopWatch_Stop("DATA READ");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("DATA READ");
+  }
   MinMax lonMinMax = getMinMax(pointLon);
   MinMax latMinMax = getMinMax(pointLat);
-#ifdef MEASURETIME
-  StopWatch_Stop("MIN/MAX Calculated");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("MIN/MAX Calculated");
+  }
   double dfBBOX[] = {lonMinMax.min, latMinMax.min, lonMinMax.max, latMinMax.max};
 
   // Default size of adaguc 2dField is 2x2
@@ -420,9 +421,9 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     float *projectedX = new float[numMeshPoints]; //={10,100,40,110,20,10};
     float *projectedY = new float[numMeshPoints]; //={10,20,40,100,110,10};
 
-#ifdef MEASURETIME
-    StopWatch_Stop("Iterating lat/lon data");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("Iterating lat/lon data");
+    }
 
     for (size_t j = 0; j < numMeshPoints; j++) {
 
@@ -445,9 +446,9 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
       projectedY[j] = dlat;
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("Start reading face nodes");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("Start reading face nodes");
+    }
 
     CDF::Variable *Mesh2_face_nodes = cdfObject->getVariableThrows("mesh_face_nodes");
     Mesh2_face_nodes->readData(CDF_INT, false);

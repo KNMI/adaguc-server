@@ -323,7 +323,7 @@ int CDFCSVReader::open(const char *fileName) {
 
 int CDFCSVReader::close() { return 0; }
 
-int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
+int CDFCSVReader::cdfReadVariableData(CDF::Variable *varToRead, CDFType type) {
   if (this->csvLines.size() < 2) {
     CDBError("No CSV data found, less than 2 lines detected");
     return 1;
@@ -389,7 +389,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   return 0;
 };
 
-int CDFCSVReader::_readVariableData(CDF::Variable *, CDFType, size_t *, size_t *, ptrdiff_t *) {
+int CDFCSVReader::cdfReadVariableData(CDF::Variable *, CDFType, size_t *, size_t *, ptrdiff_t *) {
   CDBError("Error: CSV readVariableData with start,count and stride is NOT YET IMPLEMENTED");
   return 1;
 };

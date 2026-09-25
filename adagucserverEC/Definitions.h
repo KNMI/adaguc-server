@@ -108,10 +108,13 @@
 #define ADAGUC_USE_CAIRO
 
 // #define CImgWarpBilinear_TIME
-// #define MEASURETIME
 
 // Debug settings: each file now defines its own "static const bool ..._DEBUG"
 // at file scope instead of relying on macros defined here.
+
+// StopWatch_Stop() timing output is now controlled by the single, shared adagucMeasureTime
+// flag (see CStopWatch.h), set at runtime via the ADAGUCENV_MEASURETIME environment variable
+// instead of this file's old compile-time MEASURETIME macro.
 
 // #define ENABLE_CURL in Makefile
 

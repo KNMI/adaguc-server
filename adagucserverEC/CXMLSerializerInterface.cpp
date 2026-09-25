@@ -94,13 +94,13 @@ int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::st
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Start xmlParseMemory");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Start xmlParseMemory");
+  }
   doc = xmlParseMemory(xmlData.c_str(), xmlData.length());
-#ifdef MEASURETIME
-  StopWatch_Stop("Done xmlParseMemory");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Done xmlParseMemory");
+  }
   if (doc == NULL) {
     CDBError("error: could not parse xmldata %s", xmlData.c_str());
     xmlFreeDoc(doc);
@@ -108,13 +108,13 @@ int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::st
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
-#ifdef MEASURETIME
-  StopWatch_Stop("start parse_element_names");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("start parse_element_names");
+  }
   parse_element_names(root_element, object, datasetName);
-#ifdef MEASURETIME
-  StopWatch_Stop("done parse_element_names");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("done parse_element_names");
+  }
   xmlFreeDoc(doc);
   xmlCleanupParser();
   return 0;

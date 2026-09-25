@@ -65,7 +65,7 @@ namespace CDF {
     ~Variable();
     Variable();
     Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable);
-    Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable);
+    Variable(const char *name, CDFType type, const std::vector<CDF::Dimension *> &idimensionlinks, bool isCoordinateVariable);
     Variable(const std::string &name, CDFType type, const std::vector<CDF::Dimension *> &dimensionlinks, bool isCoordinateVariable);
     Variable(const char *name, CDFType type);
     CDFType nativeType;
@@ -79,7 +79,7 @@ namespace CDF {
     void *data = nullptr;
     bool isDimension = false;
     bool enableCache = false;
-    CDF::Variable *clone(CDFType newType, std::string newName);
+    CDF::Variable *clone(CDFType newType, const std::string &newName);
     void copy(CDF::Variable *sourceVariable);
     void setCustomReader(CustomReader *customReader);
     CustomReader *getCustomReader();
@@ -126,7 +126,7 @@ namespace CDF {
     int getDimIndex(const std::string &name) const;
     Dimension *getDimensionNE(const std::string &name) const;
 
-    Attribute *getAttr(std::string name) const;
+    Attribute *getAttr(const std::string &name) const;
     Attribute *getAttributeNE(const std::string &name) const;
 
     /**
@@ -134,7 +134,7 @@ namespace CDF {
      * @param name The name of the attribute
      * @returns Returns empty string if not found or if empty
      */
-    std::string getAttrText(std::string name) const;
+    std::string getAttrText(const std::string &name) const;
 
     /**
      * Gets data from the variables attribute at given index. If not able to find the attribute name, or the index is wrong, the defaultValue is returned.
@@ -160,7 +160,7 @@ namespace CDF {
     template <class T> int setAttribute(const char *attrName, CDFType attrType, T data);
     int setAttributeText(const char *attrName, const char *attrString, size_t strLen);
     int setAttributeText(const char *attrName, const char *attrString);
-    int setAttributeText(std::string attrName, std::string attrString);
+    int setAttributeText(const std::string &attrName, const std::string &attrString);
     void *getCDFObjectClassPointer(size_t *start, size_t *count);
     int setData(CDFType type, const void *dataToSet, size_t dataLength);
   };

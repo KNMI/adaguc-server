@@ -1,5 +1,6 @@
 #include "CAutoResource.h"
 #include "CDebugger.h"
+#include "CStopWatch.h"
 #include "CTString.h"
 #include "CServerError.h"
 #include "CDFObjectStore.h"
@@ -238,9 +239,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
 // Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
 // Open the opendap resource
-#ifdef MEASURETIME
-    StopWatch_Stop("Opening data file [%s]", srvParam->internalAutoResourceLocation.c_str());
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("Opening data file [%s]", srvParam->internalAutoResourceLocation.c_str());
+    }
     CDFObject *cdfObject = NULL;
     if (plain == false) {
       cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, srvParam->internalAutoResourceLocation.c_str());
@@ -251,9 +252,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
       CDBError("Unable to open resource %s", srvParam->autoResourceLocation.c_str());
       return 1;
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("File opened");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("File opened");
+    }
     std::string serverTitle = "";
     try {
       serverTitle = cdfObject->getAttributeThrows("title")->toString();
@@ -436,9 +437,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     onlineResource += stringToAdd;
     srvParam->setOnlineResource(onlineResource);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("Auto opendap configured");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("Auto opendap configured");
+    }
   }
   return 0;
 };

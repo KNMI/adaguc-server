@@ -421,7 +421,7 @@ void CDFHDF5Reader::closeH5GroupByName(const char *variableGroupName) {
     opengroups.pop_back();
   }
 }
-int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *) {
+int CDFHDF5Reader::cdfReadVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *) {
   if (var->data != NULL) {
     CDBWarning("Not reading any data because it is already in memory");
     return 0;
@@ -501,7 +501,7 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
   closeH5GroupByName(var->name.c_str());
   return 0;
 }
-int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
+int CDFHDF5Reader::cdfReadVariableData(CDF::Variable *var, CDFType type) {
   // All ready in memory
   int status = 0;
   if (var->data != NULL) {

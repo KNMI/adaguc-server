@@ -25,6 +25,7 @@
 #include "json_adaguc.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
+#include "CCDFNetCDFIOWriter.h"
 
 void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, std::string &dumpString, int) {
   // print attributes:
