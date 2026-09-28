@@ -89,9 +89,15 @@ def testadaguc():
     adagucenv["ADAGUC_ONLINERESOURCE"] = "https://example.com/adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
-    # Run adaguc-server
+    # Run adaguc-server as a subprocess. This check runs before the fork server is started (main.py, autosync.py),
+    # so fork mode is disabled for the duration of this call.
     # pylint: disable=unused-variable
-    status, _data, headers = asyncio.run(adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False))
+    fork_enable = os.environ.pop("ADAGUC_FORK_ENABLE", None)
+    try:
+        status, _data, headers = asyncio.run(adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False))
+    finally:
+        if fork_enable is not None:
+            os.environ["ADAGUC_FORK_ENABLE"] = fork_enable
     assert status == 0
     assert "Content-Type:text/xml" in headers
     logger.info("adaguc-server seems [OK]")

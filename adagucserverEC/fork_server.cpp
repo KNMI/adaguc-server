@@ -1,5 +1,6 @@
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <csignal>
 #include <ctime>
 #include <fcntl.h>
@@ -28,9 +29,11 @@ const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
 // Default for ADAGUC_MAX_PROC_TIMEOUT, matches the python default.
 const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 10;
 
+typedef std::chrono::steady_clock steady_clock;
+
 typedef struct {
   int child_socket_fd;
-  time_t forked_at;
+  steady_clock::time_point deadline;
 } child_proc_t;
 
 static std::map<pid_t, child_proc_t> child_procs;
@@ -42,6 +45,11 @@ int self_pipe[2];
  * @param listen_socket The listen_socket from the mother.
  */
 void child_close_mother_file_descriptors(int listen_socket) {
+  // Restore default signal handling. The mother's SIGCHLD handler writes to `self_pipe[1]`, which is closed below,
+  // so its fd number could be reused by the child. Keeping SIGPIPE ignored would also differ from the subprocess path.
+  signal(SIGCHLD, SIG_DFL);
+  signal(SIGPIPE, SIG_DFL);
+
   close(listen_socket);
   close(self_pipe[0]);
   close(self_pipe[1]);
@@ -230,18 +238,21 @@ void mother_handle_child_exited_events() {
   while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
     auto node = child_procs.extract(pid);
     if (!node.empty()) {
-      auto &[child_socket_fd, forked_at] = node.mapped();
+      auto &[child_socket_fd, deadline] = node.mapped();
       int child_status;
 
       if (WIFEXITED(status))
         child_status = WEXITSTATUS(status);
       else if (WIFSIGNALED(status))
-        child_status = WTERMSIG(status);
+        // Negative signal number, same convention as python's subprocess returncode (e.g. -9 for SIGKILL)
+        child_status = -WTERMSIG(status);
       else
         child_status = 1;
 
       // Write exit status to child socket fd and then close it
-      write(child_socket_fd, &child_status, sizeof(child_status));
+      // If python already gave up on this request the write fails, which is fine: there is nobody left to inform.
+      ssize_t result = write(child_socket_fd, &child_status, sizeof(child_status));
+      (void)result;
       close(child_socket_fd);
     }
   }
@@ -250,16 +261,24 @@ void mother_handle_child_exited_events() {
 /**
  * Terminates child processes that have exceeded the maximum allowed runtime.
  *
- * Iterates over all entries in `child_procs` and compares the current time against the recorded `forked_at` timestamp for each child.
- * If a child has been running longer than `max_child_proc_timeout`, it is forcefully terminated using `SIGKILL`.
+ * Iterates over all entries in `child_procs` and compares the current time against the recorded `deadline` for each child.
+ * If a child has passed its deadline, it is forcefully terminated using `SIGKILL`. Killed children stay in `child_procs`
+ * until they are reaped by `mother_handle_child_exited_events`.
+ *
+ * @param max_wait Upper bound for the returned wait time.
+ * @return Time until the next deadline of a still running child, capped at `max_wait`. Used as `select()` timeout.
  */
-void mother_kill_old_child_procs(int max_child_proc_timeout) {
-  time_t now = time(NULL);
-  for (auto it = child_procs.begin(); it != child_procs.end(); ++it) {
-    if (difftime(now, it->second.forked_at) >= max_child_proc_timeout) {
-      kill(it->first, SIGKILL);
+steady_clock::duration mother_kill_old_child_procs(steady_clock::duration max_wait) {
+  steady_clock::time_point now = steady_clock::now();
+  steady_clock::duration wait = max_wait;
+  for (const auto &[pid, child_proc]: child_procs) {
+    if (now >= child_proc.deadline) {
+      kill(pid, SIGKILL);
+    } else {
+      wait = std::min(wait, child_proc.deadline - now);
     }
   }
+  return wait;
 }
 
 /**
@@ -335,7 +354,7 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
   // Use `ADAGUC_NUMPARALLELPROCESSES` to set maximum requests, keep one extra slot so PING can be handled when its semaphore is full.
   int max_request_child_procs = std::max(mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES), 2);
   int max_child_procs = max_request_child_procs + 1;
-  int max_child_proc_timeout = mother_get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_CHILD_PROC_TIMEOUT);
+  std::chrono::seconds max_child_proc_timeout(mother_get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_CHILD_PROC_TIMEOUT));
 
   // Start listening on the socket. Can only accept `max_child_procs` number of children.
   if (listen(listen_socket, max_child_procs) != 0) {
@@ -358,9 +377,12 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
 
     int maxfd = std::max(listen_socket, self_pipe[0]);
 
+    // Kill children past their deadline, and wake up again at the next deadline (at most one second from now).
+    // This way a timed-out child is killed right when python gives up on it, and does not keep occupying a slot.
+    auto wait = std::chrono::duration_cast<std::chrono::microseconds>(mother_kill_old_child_procs(std::chrono::seconds(1)));
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = wait.count() / 1000000;
+    tv.tv_usec = wait.count() % 1000000;
 
     // Select will block until there is activity on either listen_socket or self_pipe, or until the `timeval tv` has passed.
     int ready = select(maxfd + 1, &readfds, NULL, NULL, &tv);
@@ -370,9 +392,6 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
       perror("select");
       continue;
     }
-
-    // select() wakes at least once per second, first check if there are old processes that need cleaning
-    mother_kill_old_child_procs(max_child_proc_timeout);
 
     // Only run if there is activity on the self_pipe (to handle exit events)
     if (FD_ISSET(self_pipe[0], &readfds)) {
@@ -398,7 +417,7 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
         _exit(1);
       } else if (pid > 0) {
         // Parent process keeps track of new socket and returns to listen for new connections
-        child_proc_t child_proc = {child_socket_fd, time(NULL)};
+        child_proc_t child_proc = {child_socket_fd, steady_clock::now() + max_child_proc_timeout};
         child_procs[pid] = child_proc;
       } else {
         close(child_socket_fd);
