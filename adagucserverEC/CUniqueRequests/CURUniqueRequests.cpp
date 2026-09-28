@@ -297,6 +297,18 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
           if (readDataAsCDFDouble) {
             variable->setType(CDF_DOUBLE);
+          } else {
+            /*
+             * In case a scale_factor and add_offset attribute is present, we need to read the data into the same datatype as this attribute
+             * This allows it to be unpacked properly to the final scaled values
+             */
+            CDF::Attribute *scale_factor = variable->getAttributeNE("scale_factor");
+            if (scale_factor != NULL) {
+              variable->setType(CDF_FLOAT);
+              if (scale_factor->getType() == CDF_DOUBLE) {
+                variable->setType(CDF_DOUBLE);
+              }
+            }
           }
 
           if (enableLogUnique) {

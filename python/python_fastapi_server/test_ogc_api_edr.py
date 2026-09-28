@@ -722,7 +722,7 @@ def test_trace_timings_header(client: TestClient):
             os.environ["ADAGUC_TRACE_TIMINGS"] = old_trace_timings
 
 
-def test_metadata_cache(client: TestClient):
+def test_metadata_cache(client: TestClient, monkeypatch):
     """getmetadata results are cached for a few seconds, keyed by (collection_name, instance),
     so that repeated requests for the same collection/instance within that window don't each
     re-trigger a getmetadata call. This is shared across all EDR endpoints, not just /position:
@@ -730,6 +730,8 @@ def test_metadata_cache(client: TestClient):
     request can be served from the cache a preceding /position request filled, and vice versa.
     We use the X-Trace-Timings-Metadata header (only emitted when a getmetadata call is
     actually made) as an observable proxy for a cache hit vs miss."""
+    # The cache is disabled by default, enable it for this test
+    monkeypatch.setattr("routers.utils.edr_utils.METADATA_CACHE_ENABLED", True)
     old_trace_timings = os.environ.get("ADAGUC_TRACE_TIMINGS")
     try:
         os.environ["ADAGUC_TRACE_TIMINGS"] = "TRUE"

@@ -174,9 +174,9 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
 
   // TODO needs to cope correctly with cdfReader.
   if (data != NULL) {
-    // if (CCDFDATAMODEL_DEBUG) {
-    CDBWarning("Data is already defined");
-    // }
+    if (CCDFDATAMODEL_DEBUG) {
+      CDBWarning("Data is already defined");
+    }
     return 0;
   }
 
@@ -342,7 +342,7 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
         CDBDebug("cdfReadVariableData start count stride");
       }
       // This is used for example by curunique requests when reading 1 gridcell and making a timeseries.
-      CDBDebug("cdfReader->cdfReadVariableData(this, type, _start, _count, _stride);");
+      // CDBDebug("cdfReader->cdfReadVariableData(this, type, _start, _count, _stride);");
       status = cdfReader->cdfReadVariableData(this, type, _start, _count, _stride);
     } else {
       if (CCDFDATAMODEL_DEBUG) {

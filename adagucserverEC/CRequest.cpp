@@ -556,7 +556,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   return 0;
 }
 int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Start queryDimValuesForDataSource");
+  }
   try {
     CDBStore::Store *store = NULL;
 
@@ -576,8 +578,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       dataSource->queryLevel = hasTileSettings ? 0 : -1;
 
       int maxQueryResultLimit = getMaxQueryLimit(*dataSource);
-
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Start getFilesAndIndicesForDimensions");
+      }
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Done getFilesAndIndicesForDimensions");
+      }
     }
 
     if (store == NULL) {

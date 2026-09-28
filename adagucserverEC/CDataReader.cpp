@@ -60,7 +60,7 @@
 #include "CTString.h"
 #include "utils/projectionUtils.h"
 
-bool verboseLogging = true;
+bool verboseLogging = false;
 
 #define uchar unsigned char
 #define MAX_STR_LEN 8191

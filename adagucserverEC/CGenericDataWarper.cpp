@@ -41,7 +41,6 @@ void ProjectionGrid::initSize(size_t dataSize) {
   skip = new bool[dataSize];
 }
 ProjectionGrid::~ProjectionGrid() {
-  CDBDebug("Destructed ProjectionGrid");
   delete[] px;
   delete[] py;
   delete[] skip;

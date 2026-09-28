@@ -46,12 +46,15 @@ logger = logging.getLogger(__name__)
 # Short-lived cache for getmetadata results, keyed by (collection_name, instance).
 # Used by callers that can tolerate slightly stale metadata in exchange for not
 # hitting the adaguc executable again on every request (e.g. /position).
-_metadata_cache: TTLCache = TTLCache(maxsize=256, ttl=10)
+_metadata_cache: TTLCache = TTLCache(maxsize=256, ttl=5)
+# Set to True to enable the getmetadata result cache
+METADATA_CACHE_ENABLED = False
 
 
 def clear_metadata_cache():
     """Clears the getmetadata result cache. Mainly useful for tests."""
     _metadata_cache.clear()
+
 
 location_list = [
     {"id": "06260", "name": "De Bilt", "coordinates": [5.1797, 52.0989]},
@@ -542,11 +545,11 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
     data call(s) that a request may additionally make. No header is added on a cache hit, since
     no getmetadata call is actually made in that case.
 
-    A successful result is cached (and may be served from cache) for a few seconds, keyed by
-    collection_name and instance.
+    When METADATA_CACHE_ENABLED is set, a successful result is cached (and may be served from
+    cache) for a few seconds, keyed by collection_name and instance.
     """
     cache_key = (collection_name, instance)
-    if cache_key in _metadata_cache:
+    if METADATA_CACHE_ENABLED and cache_key in _metadata_cache:
         return _metadata_cache[cache_key]
 
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
@@ -593,7 +596,8 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
 
     # Return all metadata if no collection_name is specified
     if not collection_name:
-        _metadata_cache[cache_key] = collection_metadata
+        if METADATA_CACHE_ENABLED:
+            _metadata_cache[cache_key] = collection_metadata
         return collection_metadata
 
     coll = collection_metadata.get(collection_name, None)
@@ -601,7 +605,8 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
         raise exc_unknown_collection(collection_name)
 
     result = {collection_name: coll}
-    _metadata_cache[cache_key] = result
+    if METADATA_CACHE_ENABLED:
+        _metadata_cache[cache_key] = result
     return result
 
 

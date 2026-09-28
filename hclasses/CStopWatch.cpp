@@ -32,7 +32,6 @@
 #include <ctime>
 #include <string>
 #include <sys/time.h>
-#include <vector>
 /* Stopwatch functions for timing */
 
 extern unsigned int logMessageNumber;
@@ -86,18 +85,41 @@ void __StopWatch_Stop(const char *msg) {
   CSTOPWATCH_H_prevTime = stop;
 }
 
+static std::string formatMessage(const char *format, va_list ap) {
+  std::string buf(300, '\0');
+  va_list apCopy;
+  va_copy(apCopy, ap);
+  int numWritten = vsnprintf(buf.data(), buf.size() + 1, format, apCopy);
+  va_end(apCopy);
+  if (numWritten < 0) return "";
+  if ((size_t)numWritten > buf.size()) {
+    buf.resize(numWritten);
+    vsnprintf(buf.data(), buf.size() + 1, format, ap);
+  } else {
+    buf.resize(numWritten);
+  }
+  return buf;
+}
+
 void _StopWatch_Stop(const char *a, ...) {
-  std::vector<char> buf(300 + 1);
   va_list ap;
   va_start(ap, a);
-  int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+  std::string message = formatMessage(a, ap);
   va_end(ap);
-  if (numWritten > 300) {
-    buf.resize(numWritten + 1);
-    va_list ap;
-    va_start(ap, a);
-    vsnprintf(&buf[0], buf.size(), a, ap);
-    va_end(ap);
+  __StopWatch_Stop(message.c_str());
+}
+
+void _printDebugLineMeasured(const char *a, ...) {
+  va_list ap;
+  va_start(ap, a);
+  std::string message = formatMessage(a, ap);
+  va_end(ap);
+  if (adagucMeasureTime) {
+    // Same output as StopWatch_Stop, so debug messages show up in the timing overview
+    __StopWatch_Stop(message.c_str());
+    return;
   }
-  __StopWatch_Stop(std::string(buf.begin(), buf.end()).c_str());
+  logMessageNumber++;
+  message += "\n";
+  printDebugStream(message.c_str());
 }

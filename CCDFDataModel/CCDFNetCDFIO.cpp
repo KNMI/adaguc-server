@@ -154,7 +154,7 @@ int CDFNetCDFReader::cdfReadVariableData(CDF::Variable *var, CDFType type, size_
   if (adagucMeasureTime) {
     StopWatch_Stop(">CDFNetCDFReader::cdfReadVariableData");
   }
-  CDBDebug("CDFNetCDFReader::cdfReadVariableData read from [%s]", fileName.c_str());
+  // CDBDebug("CDFNetCDFReader::cdfReadVariableData read from [%s]", fileName.c_str());
   if (root_id == -1) {
     CDBDebug("reopen");
     if (_netcdfReOpen(var) != 0) {

@@ -55,6 +55,8 @@ void setWarningFunction(void (*function)(const char *));
 void setErrorFunction(void (*function)(const char *));
 
 void _printDebugLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+// Like _printDebugLine, but prints with stopwatch timings when adagucMeasureTime is enabled (see CStopWatch.h)
+void _printDebugLineMeasured(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 void _printWarningLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 void _printErrorLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
@@ -74,6 +76,6 @@ void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
   _printErrorLine
 #define CDBDebug                                                                                                                                                                                       \
   _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
-  _printDebugLine
+  _printDebugLineMeasured
 
 #endif
