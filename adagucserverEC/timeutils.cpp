@@ -18,6 +18,8 @@
 
 #include <map>
 #include <sstream>
+#include <cstring>
+#include <cctype>
 #include "timeutils.h"
 #include "CTString.h"
 
@@ -129,6 +131,35 @@ std::string toISO8601Interval(const TimeInterval &interval) {
   return result;
 }
 
+// Checks if the string matches the ISO8601 pattern YYYY-MM-DDTHH:MM:SS[.ffffff][Z]
+// Only the digit pattern is checked, not whether the values themselves are valid
+bool checkIfValidISOTimeString(const std::string &timeString) {
+  const char *pattern = "dddd-dd-ddTdd:dd:dd";
+  size_t patternLength = strlen(pattern);
+  if (timeString.length() < patternLength) return false;
+  for (size_t i = 0; i < patternLength; i++) {
+    if (pattern[i] == 'd') {
+      if (!isdigit((unsigned char)timeString[i])) return false;
+    } else if (timeString[i] != pattern[i]) {
+      return false;
+    }
+  }
+  size_t pos = patternLength;
+  // Optional fraction of seconds, up to microseconds
+  if (pos < timeString.length() && timeString[pos] == '.') {
+    pos++;
+    size_t numDigits = 0;
+    while (pos < timeString.length() && isdigit((unsigned char)timeString[pos])) {
+      pos++;
+      numDigits++;
+    }
+    if (numDigits < 1 || numDigits > 6) return false;
+  }
+  // Optional Z
+  if (pos < timeString.length() && timeString[pos] == 'Z') pos++;
+  return pos == timeString.length();
+}
+
 // Heuristic estimation of duration in ISO8601 format, given an array of timestamps
 // Checks that a consistent interval is (generally found), with room for inaccuracies (holes in data)
 // controlled by the threshold argument.
@@ -143,7 +174,7 @@ std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, 
   // Parse all timestamps into tm structs
   std::vector<CTime::Date> parsedTimes;
   for (const auto &timestamp: timestamps) {
-    if (timestamp.length() < 19) return "";
+    if (!checkIfValidISOTimeString(timestamp)) return "";
     parsedTimes.push_back(ctime->ISOStringToDate(timestamp));
   }
 

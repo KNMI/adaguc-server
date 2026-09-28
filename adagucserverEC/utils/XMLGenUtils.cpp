@@ -439,10 +439,18 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
   return dim;
 }
 
+// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units
+bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
+  const auto &name = cfgDim->attr.name;
+  const auto &type = cfgDim->attr.type;
+  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" ||
+         (CT::indexOf(name, "time") >= 0 && cfgDim->attr.units == "ISO8601");
+}
+
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
+  if (!isATimeDimension(cfgDim)) {
     return timeStampList;
   }
   // Get the tablename
@@ -459,7 +467,8 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
   }
   try {
     for (auto &record: store->records) {
-      timeStampList.push_back(makeIsoStringFromDbString(record.get("time")));
+      // The column is named after the dimension, so use the index
+      timeStampList.push_back(makeIsoStringFromDbString(record.get(0)));
     }
   } catch (int e) {
   }
@@ -486,7 +495,8 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
       if (dataSource->srvParams->verbose) {
         CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
       }
-      const auto &interval = makeIntervalFromTimeList(dimValues);
+      // Only time dimensions can get an auto calculated interval
+      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;
