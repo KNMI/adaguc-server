@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+#include <libxml/parser.h>
 #include "CDebugger.h"
 #include "utils/ConfigurationUtils.h"
 #include "utils/writelogfile.h"
@@ -89,6 +90,8 @@ int main(int argc, char **argv, char **envp) {
   StopWatch_Stop("Finished");
 #endif
   varCacheClear();
+  // Free libxml2's global state once at exit. Calling this after every parse would make libxml2 re-initialize for each document.
+  xmlCleanupParser();
   closeLogFile();
 
   return status;

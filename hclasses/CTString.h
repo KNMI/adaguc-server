@@ -26,6 +26,7 @@
 #ifndef CTSTRING_H
 #define CTSTRING_H
 #include <string>
+#include <string_view>
 #include <vector>
 #include "printfCheckMacro.h"
 
@@ -55,7 +56,7 @@ namespace CT {
    * @param str2 -
    * @return true if equal
    */
-  bool equalsIgnoreCase(const std::string &str1, const std::string &str2);
+  bool equalsIgnoreCase(std::string_view str1, std::string_view str2);
 
   /**
    * Print like printf but returns a stdstring;
@@ -80,29 +81,29 @@ namespace CT {
    * @returns new string with replaced values
    */
 
-  std::string replace(const std::string &input, const std::string &from, const std::string &to);
-  void replaceSelf(std::string &input, const std::string &from, const std::string &to);
+  std::string replace(std::string_view input, std::string_view from, std::string_view to);
+  void replaceSelf(std::string &input, std::string_view from, std::string_view to);
 
   /**
    * Converts a string to lowercase
    * @param input The input string
    * @returns the input string converted to lowercase
    */
-  std::string toLowerCase(const std::string &input);
+  std::string toLowerCase(std::string_view input);
 
   /**
    * Converts a string to uppercase
    * @param input The input string
    * @returns the input string converted to uppercase
    */
-  std::string toUpperCase(const std::string &input);
+  std::string toUpperCase(std::string_view input);
 
   /**
    * Removes spaces in the string and returns the new string
    * @param input The input string
    * @returns the input string with removed spaces
    */
-  std::string trim(const std::string &input);
+  std::string trim(std::string_view input);
 
   /**
    * Converts a string to double after trimming whitespace.
@@ -116,7 +117,7 @@ namespace CT {
    * @param value The token to split the string on
    * @returns vector of split strings
    */
-  std::vector<std::string> split(const std::string &stdstring, const std::string &value);
+  std::vector<std::string> split(std::string_view input, std::string_view separator);
 
   /**
    * Generates a random string of the specified length consisting of digits, uppercase and lowercase letters
@@ -132,9 +133,9 @@ namespace CT {
    * @param pattern pattern tofind
    * @return Index of pattern in input. -1 if not found. 0 if pattern is an empty string
    */
-  int indexOf(const std::string &input, const std::string &pattern);
+  int indexOf(std::string_view input, std::string_view pattern);
 
-  int lastIndexOf(const std::string &input, const std::string &pattern);
+  int lastIndexOf(std::string_view input, std::string_view pattern);
 
   /**
    * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.
@@ -143,7 +144,7 @@ namespace CT {
    * @param pattern pattern tofind
    * @return True if input ends with pattern. True if pattern is empty
    */
-  bool endsWith(const std::string &input, const std::string &pattern);
+  bool endsWith(std::string_view input, std::string_view pattern);
 
   /**
    * Checks if a string starts with another given string. If the argument is an empty string, then the method returns true.
@@ -152,7 +153,7 @@ namespace CT {
    * @param pattern pattern tofind
    * @return True if input starts with pattern. True if pattern is empty
    */
-  bool startsWith(const std::string &input, const std::string &pattern);
+  bool startsWith(std::string_view input, std::string_view pattern);
 
   /**
    * Replaces characters so it can be used as valid xml

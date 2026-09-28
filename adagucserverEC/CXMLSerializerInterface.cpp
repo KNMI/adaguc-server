@@ -33,33 +33,18 @@ int numXMLAttributesNotRecognized = 0;
 
 int parseInt(const attribute &attrCfg) { return atoi(attrCfg.value.c_str()); }
 
-bool parseBool(const attribute &attrCfg) {
-  if (attrCfg.value.empty()) return false;
-  return CT::toLowerCase(attrCfg.value) == "true";
-}
+bool parseBool(const attribute &attrCfg) { return CT::equalsIgnoreCase(attrCfg.value, "true"); }
 
 double parseDouble(const attribute &attrCfg) {
   if (attrCfg.value.empty()) return 0;
   return (double)atof(attrCfg.value.c_str());
 }
 
-void parse_element_attributes(void *_a_node, std::vector<attribute> &attributes) {
-  xmlAttr *a_node = (xmlAttr *)_a_node;
-  char *content = NULL;
-  char *name = NULL;
-  name = (char *)a_node->name;
-  if (a_node->children != NULL) content = (char *)a_node->children->content;
-  if (content != NULL) {
-    attributes.push_back({.name = name, .value = content});
-  }
-  a_node = a_node->next;
-  if (a_node != NULL) parse_element_attributes(a_node, attributes);
-}
-
-void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string datasetName) {
+void parse_element_names(void *_a_node, CXMLObjectInterface *object, const std::string &datasetName) {
   xmlNode *a_node = (xmlNode *)_a_node;
   xmlNode *cur_node = NULL;
   CXMLObjectInterface *addedElement = nullptr;
+  attribute attr; // Reused for every attribute, so its strings keep their capacity
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {
       char *content = cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE ? (char *)cur_node->children->content : nullptr;
@@ -69,14 +54,13 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
           addedElement->elementValue = CT::trim(content);
         }
         addedElement->handleValue();
-        if (cur_node->properties != NULL) {
-          std::vector<attribute> attributes;
-          parse_element_attributes(cur_node->properties, attributes);
-          for (auto &attribute: attributes) {
-            if (addedElement->addAttribute(attribute) == false) {
-              CDBWarning("[LINT]: In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attribute.name.c_str(), (char *)cur_node->name);
-              numXMLAttributesNotRecognized++;
-            }
+        for (xmlAttr *xmlAttribute = cur_node->properties; xmlAttribute != NULL; xmlAttribute = xmlAttribute->next) {
+          if (xmlAttribute->children == NULL || xmlAttribute->children->content == NULL) continue;
+          attr.name = (const char *)xmlAttribute->name;
+          attr.value = (const char *)xmlAttribute->children->content;
+          if (addedElement->addAttribute(attr) == false) {
+            CDBWarning("[LINT]: In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attr.name.c_str(), (char *)cur_node->name);
+            numXMLAttributesNotRecognized++;
           }
         }
       } else {
@@ -89,22 +73,21 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
   }
 }
 
-int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::string datasetName) {
+int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, const std::string &datasetName) {
   LIBXML_TEST_VERSION
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
 
 #ifdef MEASURETIME
-  StopWatch_Stop("Start xmlParseMemory");
+  StopWatch_Stop("Start xmlReadMemory");
 #endif
-  doc = xmlParseMemory(xmlData.c_str(), xmlData.length());
+  doc = xmlReadMemory(xmlData.c_str(), xmlData.length(), nullptr, nullptr, 0);
 #ifdef MEASURETIME
-  StopWatch_Stop("Done xmlParseMemory");
+  StopWatch_Stop("Done xmlReadMemory");
 #endif
   if (doc == NULL) {
     CDBError("error: could not parse xmldata %s", xmlData.c_str());
     xmlFreeDoc(doc);
-    xmlCleanupParser();
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
@@ -116,6 +99,5 @@ int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::st
   StopWatch_Stop("done parse_element_names");
 #endif
   xmlFreeDoc(doc);
-  xmlCleanupParser();
   return 0;
 }

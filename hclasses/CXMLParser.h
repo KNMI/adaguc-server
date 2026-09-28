@@ -108,7 +108,7 @@ public:
      * Throws CXMLPARSER_ATTR_NOT_FOUND if attribute was not found.
      * @param name the name of the attribute to search for
      */
-    std::string getAttrValue(const std::string &name);
+    const std::string &getAttrValue(const std::string &name) const;
 
     /**
      * getLast returns the last XMLElement
@@ -149,7 +149,7 @@ public:
 
     XMLElement &add(const std::string &name);
 
-    void add(std::string name, std::string value);
+    void add(const std::string &name, const std::string &value);
     /**
      * Add xmlAttibute
      */
