@@ -77,3 +77,30 @@ class TestMetadataRequest:
             "dataset=blabla&&service=wms&version=1.3.0&request=getmetadata&format=application/json&dim_reference_time=5024-05-23T00:00:00Z&layer=air_temperature_hagl",
             404,
         )
+
+    def test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings(self):
+        """
+        This checks the metadata call for a specific reference time. The time dimension will then advertise the matching dates for the given model run.
+        """
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw_ml.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_model_runs.json",
+            "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&",
+        )
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_modelruns_060.json",
+            "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&DIM_reference_time=2026-09-28T06:00:00Z",
+        )
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_modelruns_070.json",
+            "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&DIM_reference_time=2026-09-28T07:00:00Z",
+        )
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_modelruns_080.json",
+            "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&DIM_reference_time=2026-09-28T08:00:00Z",
+        )

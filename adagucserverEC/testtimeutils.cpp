@@ -181,6 +181,8 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
 TEST(makeIntervalFromTimeList, TimeUtils) {
   CHECK(makeIntervalFromTimeList({""}) == "")
 
+  CHECK(makeIntervalFromTimeList({"1"}) == "")
+
   CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z", "2020-10-02T00:20:00Z"}) == "PT5M")
   CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z"}) == "")
 

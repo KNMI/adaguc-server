@@ -143,6 +143,7 @@ std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, 
   // Parse all timestamps into tm structs
   std::vector<CTime::Date> parsedTimes;
   for (const auto &timestamp: timestamps) {
+    if (timestamp.length() < 19) return "";
     parsedTimes.push_back(ctime->ISOStringToDate(timestamp));
   }
 
@@ -168,7 +169,7 @@ std::string estimateISO8601Duration(const std::vector<std::string> &timestamps, 
   // If the smallest interval is not the most frequent, we do not have a regular interval
   if (!(smallestInterval == mostFrequentInterval)) return "";
 
-    // Otherwise, it is possible we have some missing data. Check if frequency is over threshold
+  // Otherwise, it is possible we have some missing data. Check if frequency is over threshold
   if ((double(mostFrequentIntervalInfo.second) / double(timestamps.size() - 1)) >= threshold) {
     // We return the interval corresponding to this estimation
     return toISO8601Interval(mostFrequentInterval);

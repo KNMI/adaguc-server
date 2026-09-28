@@ -417,8 +417,12 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
   if (timeStampList.size() < limit) {
     return "";
   }
-
-  return estimateISO8601Duration(timeStampList, 1);
+  try {
+    // The time routines can throw a ctime exception, if that happens no interval could be made.
+    return estimateISO8601Duration(timeStampList, 1);
+  } catch (int e) {
+    return "";
+  }
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
@@ -479,6 +483,9 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
     if (cfgDim->attr.interval.empty()) {
       const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
       const auto &dimValues = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
+      if (dataSource->srvParams->verbose) {
+        CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
+      }
       const auto &interval = makeIntervalFromTimeList(dimValues);
       if (!interval.empty()) {
         // Add dimension with auto calculated interval

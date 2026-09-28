@@ -13,7 +13,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="8.3.0"
+LABEL version="8.4.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -153,12 +153,12 @@ WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
 RUN rm -f result.png \
     && if [ "$TEST_IN_CONTAINER" = "local_build" ]; then \
-         db_host="host.docker.internal"; \
-       else \
-         db_host="localhost"; \
-       fi \
+    db_host="host.docker.internal"; \
+    else \
+    db_host="localhost"; \
+    fi \
     && ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" \
-       python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py \
+    python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py \
     && ls -lrtha result.png
 
 WORKDIR /adaguc/adaguc-server-master
