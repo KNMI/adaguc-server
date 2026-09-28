@@ -33,7 +33,6 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
-#include <algorithm>
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
@@ -146,7 +145,7 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
           return true;
         }
       } else {
-        if (strlen(baseDir)) {
+        if (strlen(baseDir) == 0) {
           CDBDebug("basedir not defined");
         }
         if (dirPrefix.empty()) {
