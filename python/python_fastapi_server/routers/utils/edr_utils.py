@@ -23,7 +23,7 @@ from edr_pydantic.observed_property import ObservedProperty
 from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
-from fastapi import Request
+from fastapi import Request, Response
 from fastapi.datastructures import QueryParams
 
 # TODO; this import should be possible!
@@ -136,6 +136,17 @@ def get_ttl_from_adaguc_headers(headers):
     if max_age and age:
         return max_age - age
     return max_age
+
+
+def get_trace_timings_from_adaguc_headers(headers):
+    """Extracts the X-Trace-Timings header value from a list of raw ADAGUC CGI header lines, if present."""
+    if not headers:
+        return None
+    for hdr in headers:
+        hdr_terms = hdr.split(":", 1)
+        if hdr_terms[0].strip().lower() == "x-trace-timings":
+            return hdr_terms[1].strip()
+    return None
 
 
 def generate_max_age(ttl):
@@ -510,10 +521,14 @@ def handle_metadata(metadata: dict):
     return collections
 
 
-async def get_metadata(collection_name: str = "", instance: str = "") -> dict:
+async def get_metadata(collection_name: str = "", instance: str = "", response: Response = None) -> dict:
     """Get metadata from ADAGUC.
 
     This method will either return a dictionary representing the metadata, or throw an exception
+
+    If a response is passed, the trace timings of this getmetadata call are propagated to it as
+    an X-Trace-Timings-Metadata header, distinct from the X-Trace-Timings header used for the
+    data call(s) that a request may additionally make.
     """
 
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
@@ -524,10 +539,14 @@ async def get_metadata(collection_name: str = "", instance: str = "") -> dict:
         reference_time = instance_to_iso(instance)
         urlrequest = f"{urlrequest}&dim_reference_time={reference_time}"
 
-    status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
+    status, metadata_response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     logger.info("status for %s: %d", urlrequest, status)
 
-    raw_response = response.decode("UTF-8")
+    trace_timing = get_trace_timings_from_adaguc_headers(headers)
+    if trace_timing is not None and response is not None:
+        response.headers.append("X-Trace-Timings-Metadata", trace_timing)
+
+    raw_response = metadata_response.decode("UTF-8")
     try:
         parsed_json = json.loads(raw_response)
     except json.JSONDecodeError:

@@ -95,7 +95,8 @@ class AdagucTestTools:
         if (status != 0 and showLogOnError == True) or showLog == True:
             print("LOG:", ADAGUC_LOGFILE)
             print("\n\n--- START ADAGUC DEBUG INFO ---")
-            print("Adaguc-server has non zero exit status %d " % status)
+            if status != 0:
+                print(f"Adaguc-server has non zero exit status {status}")
             if isCGI == False:
                 print(output.decode())
             else:

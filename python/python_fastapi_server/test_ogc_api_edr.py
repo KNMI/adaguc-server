@@ -649,6 +649,67 @@ def test_coll_multi_dim_cube(client: TestClient):
     ]
 
 
+def test_trace_timings_header(client: TestClient):
+    """The adaguc executable emits an X-Trace-Timings header when ADAGUC_TRACE_TIMINGS is
+    enabled. EDR endpoints can invoke adaguc multiple times per request (e.g. /cube does
+    one call per requested parameter, plus a separate getmetadata call), so every internal
+    call's header must be propagated to the response, not just the last one. The getmetadata
+    call's trace timings are propagated under their own X-Trace-Timings-Metadata header, kept
+    distinct from the data call(s)' X-Trace-Timings header."""
+    old_trace_timings = os.environ.get("ADAGUC_TRACE_TIMINGS")
+    try:
+        # Tracing disabled (the default for this test suite): no header should be present.
+        os.environ["ADAGUC_TRACE_TIMINGS"] = "FALSE"
+        resp = client.get(
+            "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
+        )
+        assert resp.status_code == 200
+        assert resp.headers.get_list("x-trace-timings") == []
+        assert resp.headers.get_list("x-trace-timings-metadata") == []
+
+        os.environ["ADAGUC_TRACE_TIMINGS"] = "TRUE"
+
+        # Position makes a single internal adaguc data call and a single getmetadata call,
+        # so a single header of each kind is expected.
+        resp = client.get(
+            "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
+        )
+        assert resp.status_code == 200
+        trace_headers = resp.headers.get_list("x-trace-timings")
+        assert len(trace_headers) == 1
+        assert trace_headers[0] != ""
+        metadata_trace_headers = resp.headers.get_list("x-trace-timings-metadata")
+        assert len(metadata_trace_headers) == 1
+        assert metadata_trace_headers[0] != ""
+
+        # Cube with two parameters makes two internal adaguc data calls, one per parameter,
+        # so both of their headers are expected to be propagated, alongside the single
+        # getmetadata call cube makes regardless of the number of parameters.
+        resp = client.get(
+            "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,7.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata,testdata2&z=30"
+        )
+        assert resp.status_code == 200
+        trace_headers = resp.headers.get_list("x-trace-timings")
+        assert len(trace_headers) == 2
+        assert all(h != "" for h in trace_headers)
+        metadata_trace_headers = resp.headers.get_list("x-trace-timings-metadata")
+        assert len(metadata_trace_headers) == 1
+        assert metadata_trace_headers[0] != ""
+
+        # Collection-by-id makes two getmetadata calls in a row (once to find the latest
+        # instance, once more with that instance), so two metadata headers are expected.
+        resp = client.get("/edr/collections/testcollection.testcollection")
+        assert resp.status_code == 200
+        metadata_trace_headers = resp.headers.get_list("x-trace-timings-metadata")
+        assert len(metadata_trace_headers) == 2
+        assert all(h != "" for h in metadata_trace_headers)
+    finally:
+        if old_trace_timings is None:
+            os.environ.pop("ADAGUC_TRACE_TIMINGS", None)
+        else:
+            os.environ["ADAGUC_TRACE_TIMINGS"] = old_trace_timings
+
+
 def test_point_custom_dim(client: TestClient):
     # position call on data which includes a custom dimension, should mention dimension even if we don't query it specifically
     resp = client.get(
