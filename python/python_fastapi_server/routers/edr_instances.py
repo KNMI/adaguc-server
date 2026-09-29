@@ -43,7 +43,7 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
 
     instances: list[Instance] = []
 
-    metadata = await get_metadata(collection_name)
+    metadata = await get_metadata(collection_name, response=response)
 
     ref_times = get_ref_times_for_coll(metadata[collection_name])
     links: list[Link] = []
@@ -70,11 +70,11 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_collection_info(collection_name: str, req: Request, instance: str):
+async def rest_get_collection_info(collection_name: str, req: Request, response: Response, instance: str):
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
-    metadata = await get_metadata(collection_name, instance)
+    metadata = await get_metadata(collection_name, instance, response=response)
     instance = get_instance(metadata, collection_name, instance)
 
     coll = get_collectioninfo_from_md(metadata[collection_name], collection_name, get_base_url(req), instance)
