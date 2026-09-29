@@ -1,0 +1,72 @@
+{
+  "adaguc.tests.arcus_uwcw_ml": {
+    "air_temperature_ml": {
+      "dims": {
+        "model_level": {
+          "cdfName": "ml",
+          "defaultValue": "1",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "model_level",
+          "type": "dimtype_vertical",
+          "units": " ",
+          "values": "1,20,40,50,70,90"
+        },
+        "reference_time": {
+          "cdfName": "forecast_reference_time",
+          "defaultValue": "2026-09-28T08:00:00Z",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "reference_time",
+          "type": "dimtype_reference_time",
+          "units": "ISO8601",
+          "values": "2026-09-28T06:00:00Z,2026-09-28T07:00:00Z,2026-09-28T08:00:00Z"
+        },
+        "time": {
+          "cdfName": "time",
+          "defaultValue": "2026-09-28T09:00:00Z",
+          "hasMultipleValues": 0,
+          "hidden": false,
+          "serviceName": "time",
+          "type": "dimtype_time",
+          "units": "ISO8601",
+          "values": "2026-09-28T07:00:00Z/2026-09-28T13:00:00Z/PT1H"
+        }
+      },
+      "layer": {
+        "abstract": "",
+        "collection": "ml",
+        "enable_edr": true,
+        "gridspec": {
+          "bbox": [
+            2.6796559025370366, 49.45506650914718, 8.441696431478755,
+            54.358377127001454
+          ],
+          "cellsizex": 0.5762040528941719,
+          "cellsizey": -0.4903310617854275,
+          "height": 10,
+          "projstring": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs",
+          "width": 10
+        },
+        "hidden": false,
+        "isqueryable": 1,
+        "latlonbox": [
+          2.6796559025370366, 49.45506650914718, 8.441696431478755,
+          54.358377127001454
+        ],
+        "layername": "air_temperature_ml",
+        "nativeepsg": "PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs",
+        "title": "Air temperature at model level",
+        "variables": [
+          {
+            "label": "Air temperature at model level",
+            "standard_name": "air_temperature",
+            "units": "C",
+            "variableName": "air-temperature-ml"
+          }
+        ],
+        "wmsgroup": ""
+      }
+    }
+  }
+}

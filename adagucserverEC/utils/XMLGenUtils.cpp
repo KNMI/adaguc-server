@@ -417,8 +417,12 @@ std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampLi
   if (timeStampList.size() < limit) {
     return "";
   }
-
-  return estimateISO8601Duration(timeStampList, 1);
+  try {
+    // The time routines can throw a ctime exception, if that happens no interval could be made.
+    return estimateISO8601Duration(timeStampList, 1);
+  } catch (int e) {
+    return "";
+  }
 }
 
 LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
@@ -435,10 +439,18 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
   return dim;
 }
 
+// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units
+bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
+  const auto &name = cfgDim->attr.name;
+  const auto &type = cfgDim->attr.type;
+  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" ||
+         (CT::indexOf(name, "time") >= 0 && cfgDim->attr.units == "ISO8601");
+}
+
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
+  if (!isATimeDimension(cfgDim)) {
     return timeStampList;
   }
   // Get the tablename
@@ -455,7 +467,8 @@ std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServ
   }
   try {
     for (auto &record: store->records) {
-      timeStampList.push_back(makeIsoStringFromDbString(record.get("time")));
+      // The column is named after the dimension, so use the index
+      timeStampList.push_back(makeIsoStringFromDbString(record.get(0)));
     }
   } catch (int e) {
   }
@@ -479,7 +492,11 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
     if (cfgDim->attr.interval.empty()) {
       const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
       const auto &dimValues = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
-      const auto &interval = makeIntervalFromTimeList(dimValues);
+      if (dataSource->srvParams->verbose) {
+        CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
+      }
+      // Only time dimensions can get an auto calculated interval
+      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;

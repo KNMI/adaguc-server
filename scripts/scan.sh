@@ -50,7 +50,7 @@ usage () {
     echo "  [-l]                                              [List all datasets]"
     echo "  [-v]                                              [Verbose logging]"
     echo "  [-r]                                              [Rescan by ignoring file modification date of files (--rescan)]"
-    echo "  [-t]                                              [Drops and recreates database tables for mathing file or dataset (--recreate)]"
+    echo "  [-t]                                              [Drops and recreates database tables for matching file or dataset (--recreate)]"
     echo "  [-k]                                              [Keep index information in database, disable cleaning (--noclean)]"
     echo "  [-m]                                              [Update dataset and layermetadata table only (--updatelayermetadata)]"
     echo "  [-e]                                              [Inspect environment]"
