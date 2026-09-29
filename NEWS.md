@@ -1,3 +1,10 @@
+**Version t.b.d.**
+
+- Added fork server. See [fork-server.md](/doc/fork_server.md). Optional, can be enabled by setting `ADAGUC_FORK_ENABLE=TRUE`. Enabling this makes adaguc run a persistent fork server. This reduces process startup overhead, which improves performance.
+- The default process timeout changed from max 300 seconds to 60 seconds. Configurable through `ADAGUC_MAX_PROC_TIMEOUT`.
+- The default adaguc command timeout (e.g. --updatedb for scan tasks) timeout is still 300 seconds, but is now configurable through `ADAGUC_MAX_COMMAND_TIMEOUT`.
+
+
 **Version 8.3.0**
 
 - Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754

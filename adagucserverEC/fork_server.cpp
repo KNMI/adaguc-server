@@ -27,7 +27,7 @@ See also: doc/fork_server.md
 // Default for ADAGUC_NUMPARALLELPROCESSES, matches the python default
 const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
 // Default for ADAGUC_MAX_PROC_TIMEOUT, matches the python default.
-const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 10;
+const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 60;
 
 typedef std::chrono::steady_clock steady_clock;
 
@@ -351,9 +351,10 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     return 1;
   }
 
-  // Use `ADAGUC_NUMPARALLELPROCESSES` to set maximum requests, keep one extra slot so PING can be handled when its semaphore is full.
-  int max_request_child_procs = std::max(mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES), 2);
-  int max_child_procs = max_request_child_procs + 1;
+  // Requests are limited by Python's semaphore. Keep ample capacity on the C++ side so concurrent health checks
+  // and other control connections can still be handled while all request slots are occupied.
+  int num_parallel_processes = mother_get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_NUM_PARALLEL_PROCESSES);
+  int max_child_procs = std::max(10, 2 * num_parallel_processes);
   std::chrono::seconds max_child_proc_timeout(mother_get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_CHILD_PROC_TIMEOUT));
 
   // Start listening on the socket. Can only accept `max_child_procs` number of children.

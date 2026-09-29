@@ -30,6 +30,11 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    This method starts the ForkServerSupervisor class, which checks if the fork server mother process is still alive.
+    Nothing extra happens if the fork server is not enabled (through `ADAGUC_FORK_ENABLE`)
+    """
+
     fork_supervisor = None
 
     if is_fork_enabled():

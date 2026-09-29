@@ -30,7 +30,7 @@ sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to
 
 ON_POSIX = "posix" in sys.builtin_module_names
 
-MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "10"))
+MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "60"))
 MAX_COMMAND_TIMEOUT = int(os.getenv("ADAGUC_MAX_COMMAND_TIMEOUT", "300"))
 
 

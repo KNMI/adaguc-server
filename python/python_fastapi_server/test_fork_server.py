@@ -3,7 +3,7 @@ import os
 import re
 import signal
 import sys
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
@@ -143,7 +143,7 @@ async def test_fork_server_times_out_and_reaps_blocked_child(fork_server, fork_c
         response = await asyncio.wait_for(reader.read(), timeout=4)
 
     # The mother returns the signal that terminated the child as its exit status.
-    assert int.from_bytes(response, sys.byteorder) == signal.SIGKILL
+    assert int.from_bytes(response, sys.byteorder, signed=True) == -signal.SIGKILL
     await wait_for_child_count(fork_server.process.pid, 0)
     assert await fork_server.health_check_mother()
 
@@ -155,15 +155,25 @@ async def test_fork_server_times_out_and_reaps_blocked_child(fork_server, fork_c
     indirect=True,
 )
 async def test_fork_server_keeps_health_check_headroom(fork_server, fork_connection):
-    # Fill the configured request capacity and verify that the reserved extra child slot
-    # still allows the supervisor's PING health check to run.
-    # Nested contexts keep both request children active during the health check.
-    async with fork_connection():
-        await wait_for_child_count(fork_server.process.pid, 1)
-        async with fork_connection():
-            await wait_for_child_count(fork_server.process.pid, 2)
-            assert await fork_server.health_check_mother()
-            await wait_for_child_count(fork_server.process.pid, 2)
+    # Fill the configured Python request capacity, then verify that five concurrent
+    # PING connections are all accepted without waiting for a request slot.
+    async with AsyncExitStack() as request_stack:
+        for _ in range(2):
+            await request_stack.enter_async_context(fork_connection())
+        await wait_for_child_count(fork_server.process.pid, 2)
+
+        async with AsyncExitStack() as ping_stack:
+            ping_connections = [await ping_stack.enter_async_context(fork_connection()) for _ in range(5)]
+            await wait_for_child_count(fork_server.process.pid, 7)
+
+            for _, writer in ping_connections:
+                writer.write(b"PING\n")
+            await asyncio.gather(*(writer.drain() for _, writer in ping_connections))
+
+            responses = await asyncio.gather(*(reader.read() for reader, _ in ping_connections))
+            assert responses == [b"PONG\n" + (0).to_bytes(4, sys.byteorder)] * 5
+
+        await wait_for_child_count(fork_server.process.pid, 2)
 
     await wait_for_child_count(fork_server.process.pid, 0)
 

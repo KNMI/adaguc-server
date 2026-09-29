@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+from adaguc.CGIRunner import HTTP_STATUSCODE_400_BAD_REQUEST
 from adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 from adaguc.CGIRunner import HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY
 from adaguc.CGIRunner import HTTP_STATUSCODE_500_TIMEOUT
@@ -60,7 +61,9 @@ async def handle_wms(req: Request):
     # desired response codes. Otherwise, a 500 status will be returned on exiting with errors.
     if status != 0:
         logger.info("Adaguc status code was %d", status)
-        if status == HTTP_STATUSCODE_404_NOT_FOUND:
+        if status == HTTP_STATUSCODE_400_BAD_REQUEST:
+            response_code = 400
+        elif status == HTTP_STATUSCODE_404_NOT_FOUND:
             response_code = 404  # Not Found
         elif status == HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY:
             response_code = 422  # Unprocessable Entity
