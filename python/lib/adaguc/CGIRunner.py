@@ -100,8 +100,8 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     if len(process_output) < 4:
         raise RuntimeError("Invalid response from ADAGUC fork server: missing exit status")
 
-    # Status code is stored in the last 4 bytes from the received data
-    status_code = int.from_bytes(process_output[-4:], sys.byteorder)
+    # Status code is stored in the last 4 bytes from the received data. It is negative when the child was killed by a signal.
+    status_code = int.from_bytes(process_output[-4:], sys.byteorder, signed=True)
     process_output = process_output[:-4]
     return AdagucResponse(status_code=status_code, process_output=process_output, process_error=b"")
 
