@@ -4,11 +4,6 @@
 #include <string>
 
 std::string readFile(const std::string &fileName) {
-  std::error_code ec;
-  // Only read regular files: directories, FIFOs and device files open fine but report a wrong size
-  if (!std::filesystem::is_regular_file(fileName, ec)) {
-    throw(CREADFILE_FILENOTFOUND);
-  }
   std::ifstream file(fileName, std::ios::binary);
   if (!file || !file.seekg(0, std::ios::end)) {
     throw(CREADFILE_FILENOTFOUND);
