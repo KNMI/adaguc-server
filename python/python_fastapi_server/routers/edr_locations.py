@@ -113,7 +113,7 @@ async def get_locations_(
     """
     Returns locations where you could query data by id
     """
-    metadata = await get_metadata(collection_name)
+    metadata = await get_metadata(collection_name, response=response)
     location_list = await get_locations_for_collection(collection_name, metadata)
 
     if location_id is None:

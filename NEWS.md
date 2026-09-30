@@ -1,3 +1,8 @@
+**Version 8.4.0**
+
+- Fix BUG: Edr instances on model data with vertical levels returns wrong list of time values: https://github.com/KNMI/adaguc-server/issues/778
+
+
 **Version 8.3.0**
 
 - Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
