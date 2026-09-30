@@ -99,18 +99,23 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node, int depth) {
 
 std::string CXMLParser::XMLElement::toJSON(const XMLElement &el, int depth, int mode) const {
   std::string data;
-  std::vector<std::string> done;
+  std::vector<std::string_view> done;
+  // Pointers to the elements sharing a name, instead of getList() which deep copies every matching subtree
+  std::vector<const XMLElement *> els;
   for (size_t j = 0; j < el.xmlElements.size(); j++) {
     const auto &name = el.xmlElements[j].name;
     if (std::find(done.begin(), done.end(), name) != done.end()) continue;
     done.push_back(name);
-    const auto &els = el.getList(name);
+    els.clear();
+    for (size_t k = j; k < el.xmlElements.size(); k++) {
+      if (el.xmlElements[k].name == name) els.push_back(&el.xmlElements[k]);
+    }
     if (els.size() > 1) {
       if (j > 0) data += ",";
       data += "\"" + name + "\":[";
       for (size_t i = 0; i < els.size(); i++) {
-        std::string value = CT::trim(CT::replace(els[i].value, "\n", ""));
-        std::string subdata = toJSON(els[i], depth++, mode);
+        std::string value = CT::trim(CT::replace(els[i]->value, "\n", ""));
+        std::string subdata = toJSON(*els[i], depth++, mode);
         if (subdata.length() > 0) {
           if (i > 0) data += ",";
           data += "{" + subdata + "}";
@@ -229,7 +234,6 @@ int CXMLParser::XMLElement::parseData(const std::string &xmlData) {
   xmlNode *root_element = NULL;
   doc = xmlReadMemory(xmlData.c_str(), xmlData.length(), nullptr, nullptr, 0);
   if (doc == NULL) {
-    xmlCleanupParser();
     throw(CXMLPARSER_INVALID_XML);
     return 1;
   }
@@ -238,7 +242,6 @@ int CXMLParser::XMLElement::parseData(const std::string &xmlData) {
   value = "";
   parse_element_names(root_element, 0);
   xmlFreeDoc(doc);
-  xmlCleanupParser();
   return 0;
 }
 
@@ -254,7 +257,6 @@ int CXMLParser::XMLElement::parseFile(const std::string &filename) {
   xmlNode *root_element = NULL;
   doc = xmlReadFile(filename.c_str(), nullptr, 0);
   if (doc == NULL) {
-    xmlCleanupParser();
     throw(CXMLPARSER_INVALID_XML);
     return 1;
   }
@@ -263,7 +265,6 @@ int CXMLParser::XMLElement::parseFile(const std::string &filename) {
   value = "";
   parse_element_names(root_element, 0);
   xmlFreeDoc(doc);
-  xmlCleanupParser();
   return 0;
 }
 
@@ -285,9 +286,7 @@ CXMLParser::XMLElement &CXMLParser::XMLElement::add(const XMLElement &el) {
   return xmlElements.back();
 }
 
-CXMLParser::XMLElement &CXMLParser::XMLElement::add(const std::string &name) {
-  return xmlElements.emplace_back(name);
-}
+CXMLParser::XMLElement &CXMLParser::XMLElement::add(const std::string &name) { return xmlElements.emplace_back(name); }
 
 void CXMLParser::XMLElement::add(const std::string &name, const std::string &value) { xmlElements.emplace_back(name, value); }
 

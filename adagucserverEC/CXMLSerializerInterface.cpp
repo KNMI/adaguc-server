@@ -33,10 +33,7 @@ int numXMLAttributesNotRecognized = 0;
 
 int parseInt(const attribute &attrCfg) { return atoi(attrCfg.value.c_str()); }
 
-bool parseBool(const attribute &attrCfg) {
-  if (attrCfg.value.empty()) return false;
-  return CT::toLowerCase(attrCfg.value) == "true";
-}
+bool parseBool(const attribute &attrCfg) { return CT::equalsIgnoreCase(attrCfg.value, "true"); }
 
 double parseDouble(const attribute &attrCfg) {
   if (attrCfg.value.empty()) return 0;
@@ -44,35 +41,28 @@ double parseDouble(const attribute &attrCfg) {
 }
 
 void parse_element_names(void *_a_node, CXMLObjectInterface *object, const std::string &datasetName) {
-  xmlNode *a_node = (xmlNode *)_a_node;
-  xmlNode *cur_node = NULL;
-  CXMLObjectInterface *addedElement = nullptr;
   attribute attr; // Reused for every attribute, so its strings keep their capacity
-  for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
-    if (cur_node->type == XML_ELEMENT_NODE) {
-      char *content = cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE ? (char *)cur_node->children->content : nullptr;
-      addedElement = object->addElement((const char *)cur_node->name);
-      if (addedElement != nullptr) {
-        if (content != nullptr) {
-          addedElement->elementValue = CT::trim(content);
-        }
-        addedElement->handleValue();
-        for (xmlAttr *xmlAttribute = cur_node->properties; xmlAttribute != NULL; xmlAttribute = xmlAttribute->next) {
-          if (xmlAttribute->children == NULL || xmlAttribute->children->content == NULL) continue;
-          attr.name = (const char *)xmlAttribute->name;
-          attr.value = (const char *)xmlAttribute->children->content;
-          if (addedElement->addAttribute(attr) == false) {
-            CDBWarning("[LINT]: In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attr.name.c_str(), (char *)cur_node->name);
-            numXMLAttributesNotRecognized++;
-          }
-        }
-      } else {
-        CDBWarning("In [%s]: no matches for Element [%s]", datasetName.c_str(), (char *)cur_node->name);
+  for (xmlNode *cur_node = (xmlNode *)_a_node; cur_node; cur_node = cur_node->next) {
+    if (cur_node->type != XML_ELEMENT_NODE) continue;
+    auto addedElement = object->addElement((const char *)cur_node->name);
+    if (addedElement == nullptr) {
+      CDBWarning("In [%s]: no matches for Element [%s]", datasetName.c_str(), (char *)cur_node->name);
+      continue;
+    }
+    if (cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE) {
+      addedElement->elementValue = CT::trim((char *)cur_node->children->content);
+    }
+    addedElement->handleValue();
+    for (xmlAttr *xmlAttribute = cur_node->properties; xmlAttribute != NULL; xmlAttribute = xmlAttribute->next) {
+      if (xmlAttribute->children == NULL || xmlAttribute->children->content == NULL) continue;
+      attr.name = (const char *)xmlAttribute->name;
+      attr.value = (const char *)xmlAttribute->children->content;
+      if (addedElement->addAttribute(attr) == false) {
+        CDBWarning("[LINT]: In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attr.name.c_str(), (char *)cur_node->name);
+        numXMLAttributesNotRecognized++;
       }
     }
-    if (addedElement != nullptr) {
-      parse_element_names(cur_node->children, addedElement, datasetName);
-    }
+    parse_element_names(cur_node->children, addedElement, datasetName);
   }
 }
 
@@ -91,7 +81,6 @@ int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, const s
   if (doc == NULL) {
     CDBError("error: could not parse xmldata %s", xmlData.c_str());
     xmlFreeDoc(doc);
-    xmlCleanupParser();
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
@@ -103,6 +92,5 @@ int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, const s
     StopWatch_Stop("done parse_element_names");
   }
   xmlFreeDoc(doc);
-  xmlCleanupParser();
   return 0;
 }

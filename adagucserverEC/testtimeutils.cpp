@@ -67,6 +67,26 @@ TEST(ToSeconds, TimeUtils) {
   CHECK(result == expected);
 }
 
+TEST(CheckIfValidISOTimeString, TimeUtils) {
+  CHECK(checkIfValidISOTimeString("2024-07-29T15:30:45Z"));
+  CHECK(checkIfValidISOTimeString("2024-07-29T15:30:45"));
+  CHECK(checkIfValidISOTimeString("2024-07-29T15:30:45.1Z"));
+  CHECK(checkIfValidISOTimeString("2024-07-29T15:30:45.123456Z"));
+  CHECK(checkIfValidISOTimeString("2024-07-29T15:30:45.123456"));
+  CHECK(checkIfValidISOTimeString("2023-02-29T24:60:60Z")); // Values are not validated, only the pattern
+
+  CHECK(!checkIfValidISOTimeString(""));
+  CHECK(!checkIfValidISOTimeString("2024-07-29T15:30"));
+  CHECK(!checkIfValidISOTimeString("2024-07-29 15:30:45Z"));
+  CHECK(!checkIfValidISOTimeString("2024-7-29T15:30:45Z"));
+  CHECK(!checkIfValidISOTimeString("2024-07-2xT15:30:45Z"));
+  CHECK(!checkIfValidISOTimeString("2024-07-29T15:30:45Z "));
+  CHECK(!checkIfValidISOTimeString("2024-07-29T15:30:45ZZ"));
+  CHECK(!checkIfValidISOTimeString("2024-07-29T15:30:45.Z"));
+  CHECK(!checkIfValidISOTimeString("2024-07-29T15:30:45.1234567Z"));
+  CHECK(!checkIfValidISOTimeString("2024-07-29T15:30:45.12a"));
+}
+
 TEST(EstimateISO8601Duration, TimeUtils) {
   // Most straightforward case
   std::vector<std::string> timestamps = {"2024-07-29T15:30:45Z", "2024-07-29T16:30:45Z", "2024-07-29T17:30:45Z", "2024-07-29T18:30:45Z"};
@@ -180,6 +200,8 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
 
 TEST(makeIntervalFromTimeList, TimeUtils) {
   CHECK(makeIntervalFromTimeList({""}) == "")
+
+  CHECK(makeIntervalFromTimeList({"1"}) == "")
 
   CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z", "2020-10-02T00:20:00Z"}) == "PT5M")
   CHECK(makeIntervalFromTimeList({"2020-10-02T00:00:00Z", "2020-10-02T00:05:00Z", "2020-10-02T00:10:00Z", "2020-10-02T00:15:00Z"}) == "")

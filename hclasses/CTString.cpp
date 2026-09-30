@@ -16,17 +16,6 @@ std::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
 std::regex isFloatRegex = std::regex("[+-]?[0-9]*[.][0-9]+f?");
 std::regex isIntRegex = std::regex("[+-]?[0-9]+");
 
-const char *strrstr(const char *x, const char *y) {
-  const char *prev = nullptr;
-  const char *next;
-  if (*y == '\0') return strchr(x, '\0');
-  while ((next = strstr(x, y)) != nullptr) {
-    prev = next;
-    x = next + 1;
-  }
-  return prev;
-}
-
 /**
  * Converts 0-15 to 0-F
  */
@@ -60,7 +49,7 @@ namespace CT {
 
   std::string basename(const std::string &input) { return input.substr(input.find_last_of("/\\") + 1); }
 
-  bool equalsIgnoreCase(const std::string &str1, const std::string &str2) {
+  bool equalsIgnoreCase(std::string_view str1, std::string_view str2) {
     if (str1.length() != str2.length()) return false;
     for (size_t i = 0; i < str1.length(); ++i) {
       if (tolower(str1[i]) != tolower(str2[i])) return false;
@@ -142,14 +131,14 @@ namespace CT {
     input = buildReplaced(input, from, to, pos);
   }
 
-  std::string toLowerCase(const std::string &input) {
-    std::string result = input;
+  std::string toLowerCase(std::string_view input) {
+    std::string result(input);
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
     return result;
   }
 
-  std::string toUpperCase(const std::string &input) {
-    std::string result = input;
+  std::string toUpperCase(std::string_view input) {
+    std::string result(input);
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c); });
     return result;
   }
@@ -228,50 +217,38 @@ namespace CT {
     return str;
   }
 
-  std::vector<std::string> split(const std::string &stdstring, const std::string &value) {
+  std::vector<std::string> split(std::string_view input, std::string_view separator) {
     std::vector<std::string> stringList;
-    const char *fo = strstr(stdstring.c_str(), value.c_str());
-    const char *prevFo = stdstring.c_str();
-    size_t keyLength = value.length();
-    while (fo != nullptr) {
-      stringList.push_back(std::string(prevFo, (fo - prevFo)));
-      prevFo = fo + keyLength;
-      fo = strstr(fo + keyLength, value.c_str());
+    // Empty pieces are kept, except a trailing one. An empty separator does not split.
+    size_t start = 0;
+    if (!separator.empty()) {
+      for (size_t pos = input.find(separator); pos != std::string_view::npos; pos = input.find(separator, start)) {
+        stringList.emplace_back(input.substr(start, pos - start));
+        start = pos + separator.size();
+      }
     }
-    size_t prevFoLength = strlen(prevFo);
-    if (prevFoLength > 0) {
-      stringList.push_back(std::string(prevFo, prevFoLength));
+    if (start < input.size()) {
+      stringList.emplace_back(input.substr(start));
     }
     return stringList;
   }
 
-  int indexOf(const std::string &input, const std::string &pattern) {
-    std::string::size_type loc = input.find(pattern, 0);
-    if (loc != std::string::npos) {
-      return loc;
-    }
-    return -1;
+  int indexOf(std::string_view input, std::string_view pattern) {
+    size_t loc = input.find(pattern);
+    return loc != std::string_view::npos ? (int)loc : -1;
   }
 
-  int lastIndexOf(const std::string &input, const std::string &pattern) {
-    if (pattern.length() == 0) {
+  int lastIndexOf(std::string_view input, std::string_view pattern) {
+    if (pattern.empty()) {
       return 0;
     }
-    if (input.length() == 0) {
-      return -1;
-    }
-    auto pi = strrstr(input.c_str(), pattern.c_str());
-    if (pi == nullptr) return -1;
-    auto c = pi - input.c_str();
-    if (c < 0) c = -1;
-    return c;
+    size_t loc = input.rfind(pattern);
+    return loc != std::string_view::npos ? (int)loc : -1;
   }
 
-  bool endsWith(const std::string &input, const std::string &pattern) {
-    return pattern.size() == 0 || (input.size() >= pattern.size() && input.compare(input.size() - pattern.size(), pattern.size(), pattern) == 0);
-  }
+  bool endsWith(std::string_view input, std::string_view pattern) { return input.ends_with(pattern); }
 
-  bool startsWith(const std::string &input, const std::string &pattern) { return pattern.size() == 0 || (input.rfind(pattern, 0) == 0); }
+  bool startsWith(std::string_view input, std::string_view pattern) { return input.starts_with(pattern); }
 
   std::string encodeXml(const std::string &input) {
     auto out = input;

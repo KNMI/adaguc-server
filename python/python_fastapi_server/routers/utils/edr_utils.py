@@ -542,11 +542,7 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
 
     If a response is passed, the trace timings of this getmetadata call are propagated to it as
     an X-Trace-Timings-Metadata header, distinct from the X-Trace-Timings header used for the
-    data call(s) that a request may additionally make. No header is added on a cache hit, since
-    no getmetadata call is actually made in that case.
-
-    When METADATA_CACHE_ENABLED is set, a successful result is cached (and may be served from
-    cache) for a few seconds, keyed by collection_name and instance.
+    data call(s) that a request may additionally make.
     """
     cache_key = (collection_name, instance)
     if METADATA_CACHE_ENABLED and cache_key in _metadata_cache:

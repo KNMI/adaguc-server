@@ -33,7 +33,6 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
-#include <algorithm>
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
@@ -100,28 +99,15 @@ bool checkIfPathHasValidTokens(const std::string &path) { return checkForValidTo
 
 bool checkForValidTokens(const std::string &path, const std::string &validPATHTokens) {
   // Check for valid tokens
-  size_t pathLength = path.length();
-  size_t allowedTokenLength = validPATHTokens.length();
-  for (size_t j = 0; j < pathLength; j++) {
-    bool isInvalid = true;
-    for (size_t i = 0; i < allowedTokenLength; i++) {
-      if (path[j] == validPATHTokens[i]) {
-        isInvalid = false;
-        break;
-      }
-    }
-    if (isInvalid) {
-      CDBDebug("Invalid token '%c' in '%s'", path[j], path.c_str());
-      return false;
-    }
-
-    // Check for sequences
-    if (j > 0) {
-      if (path[j - 1] == '.' && path[j] == '.') {
-        CDBDebug("Invalid sequence in '%s'", path.c_str());
-        return false;
-      }
-    }
+  size_t invalidPos = path.find_first_not_of(validPATHTokens);
+  if (invalidPos != std::string::npos) {
+    CDBDebug("Invalid token '%c' in '%s'", path[invalidPos], path.c_str());
+    return false;
+  }
+  // Check for sequences
+  if (path.find("..") != std::string::npos) {
+    CDBDebug("Invalid sequence in '%s'", path.c_str());
+    return false;
   }
   return true;
 }
@@ -154,15 +140,12 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
         std::string pathToCheck = dirPrefix + "/" + path;
         // Make a realpath
         char szResolvedPath[PATH_MAX];
-        if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL) {
-          std::string resolvedPathStr = szResolvedPath;
-          if (CT::startsWith(resolvedPathStr, baseDir)) {
-            outputtedResolvedPath = resolvedPathStr;
-            return true;
-          }
+        if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL && CT::startsWith(szResolvedPath, baseDir)) {
+          outputtedResolvedPath = szResolvedPath;
+          return true;
         }
       } else {
-        if (strlen(baseDir)) {
+        if (strlen(baseDir) == 0) {
           CDBDebug("basedir not defined");
         }
         if (dirPrefix.empty()) {
@@ -178,28 +161,23 @@ bool CServerParams::checkResolvePath(const std::string &path, std::string &outpu
 
 void CServerParams::setOnlineResource(const std::string &r) { _onlineResource = r; };
 
-std::string CServerParams::getOnlineResource() {
+const std::string &CServerParams::getOnlineResource() {
   if (_onlineResource.length() > 0) {
     return _onlineResource;
   }
   if (cfg->OnlineResource.size() == 0) {
     // No Online resource is given.
     const char *pszADAGUCOnlineResource = getenv("ADAGUC_ONLINERESOURCE");
-    if (pszADAGUCOnlineResource == NULL) {
-      _onlineResource = "";
-      return "";
-    }
-    std::string onlineResource = pszADAGUCOnlineResource;
-    _onlineResource = onlineResource;
-    return onlineResource;
+    _onlineResource = pszADAGUCOnlineResource == NULL ? "" : pszADAGUCOnlineResource;
+    return _onlineResource;
   }
 
   const std::string &onlineResource = cfg->OnlineResource[0].attr.value;
 
   // A full path is given in the configuration
-  if (CT::indexOf(onlineResource, "http") == 0) {
+  if (CT::startsWith(onlineResource, "http")) {
     _onlineResource = onlineResource;
-    return onlineResource;
+    return _onlineResource;
   }
 
   // Only the last part is given, we need to prepend the HTTP_HOST environment variable.
@@ -207,13 +185,10 @@ std::string CServerParams::getOnlineResource() {
   if (pszHTTPHost == NULL) {
     CDBError("Unable to determine HTTP_HOST");
     _onlineResource = "";
-    return "";
+    return _onlineResource;
   }
-  std::string httpHost = "http://";
-  httpHost += pszHTTPHost;
-  httpHost += onlineResource;
-  _onlineResource = httpHost;
-  return httpHost;
+  _onlineResource = std::string("http://") + pszHTTPHost + onlineResource;
+  return _onlineResource;
 }
 
 bool CServerParams::checkBBOXXYOrder(const char *projName) {
@@ -304,7 +279,7 @@ static void substituteStandardEnvironment(std::string &configFileData) {
   /* Substitute the others only when set */
   for (const char *name: {"ADAGUC_DB", "ADAGUC_DATASET_DIR", "ADAGUC_DATA_DIR", "ADAGUC_AUTOWMS_DIR"}) {
     const char *value = getenv(name);
-    if (value != NULL) CT::replaceSelf(configFileData, CT::printf("{%s}", name), value);
+    if (value != NULL) CT::replaceSelf(configFileData, std::string("{") + name + "}", value);
   }
 }
 
@@ -323,7 +298,7 @@ static void substituteExtraEnvironment(std::string &configFileData, const std::v
     }
     const char *environmentValue = getenv(name.c_str());
     const char *value = environmentValue != NULL ? environmentValue : defaultVal.c_str();
-    std::string substituteName = CT::printf("{%s}", name.c_str());
+    std::string substituteName = "{" + name + "}";
     if (verbose) {
       CDBDebug("Replacing %s with %s value %s", substituteName.c_str(), environmentValue != NULL ? "environment" : "default", value);
     }
@@ -332,9 +307,11 @@ static void substituteExtraEnvironment(std::string &configFileData, const std::v
 }
 
 int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
+
   if (adagucMeasureTime) {
     StopWatch_Stop("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
   }
+
   std::string configFileData;
   try {
     configFileData = readFile(pszConfigFile);
@@ -368,6 +345,9 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
     if (adagucMeasureTime) {
       StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
     }
+#ifdef MEASURETIME
+    StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
+#endif
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }
@@ -481,7 +461,7 @@ int CServerParams::getServerStyleIndexByName(const std::string &styleName) {
     return -1;
   }
   // Remove last slash (/). E.g. windbarbs/shaded => windbarbs
-  std::string sanitizedStyleName = CT::substring(styleName, 0, CT::indexOf(styleName, "/"));
+  std::string_view sanitizedStyleName = std::string_view(styleName).substr(0, styleName.find('/'));
 
   auto comp = [&sanitizedStyleName](const CServerConfig::XMLE_Style &a) { return a.attr.name == sanitizedStyleName; };
   auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);

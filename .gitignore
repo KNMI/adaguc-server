@@ -145,10 +145,10 @@ Docker/.env*
 Docker/geoweb.env
 .claude/settings.json
 adagucserver
-CCDFDataModel/traceTimingsTests
 aggregate_time
 anydump
 geojsondump
 h5ncdump
 adagucserverEC/testadagucserver
 adagucserverEC/testtimeutils
+CCDFDataModel/traceTimingsTests

@@ -157,7 +157,7 @@ public:
   /**
    * Get configured online resource
    */
-  std::string getOnlineResource();
+  const std::string &getOnlineResource();
 
   /**
    * Set online resource

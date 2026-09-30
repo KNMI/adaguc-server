@@ -100,12 +100,22 @@ json querySpecificDims(CServerParams *srvParams, const std::string &layerName) {
     return 1;
   }
 
+  if (srvParams->verbose) {
+    CDBDebug("start getAllDimensionCombinationsFromDb");
+  }
   auto dimCombiAndData = getAllDimensionCombinationsFromDb(dataSource);
 
+  if (srvParams->verbose) {
+    CDBDebug("start getDimsForLayer");
+  }
   std::vector<LayerMetadataDim> dimList;
   getDimsForLayer(&dataSource, dimList, dimCombiAndData);
   if (dataSource.srvParams->verbose) {
     CDBDebug("Succesfully queried specific dims for [%s]", layerName.c_str());
+  }
+
+  if (srvParams->verbose) {
+    CDBDebug("start getDimensionListAsJson");
   }
   return getDimensionListAsJson(dimList);
 }
@@ -121,7 +131,9 @@ json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &lay
   if (it != srvParams->requestDims.end()) {
     hasReferenceTimeValue = (*it).value;
   }
-
+  if (srvParams->verbose) {
+    CDBDebug("hasReferenceTimeValue [%s]", hasReferenceTimeValue.c_str());
+  }
   for (const auto &[layerName, metadataBlobs]: layerBlobsByLayer) {
     if (layerNameInRequest.empty() || layerNameInRequest == layerName) {
 
