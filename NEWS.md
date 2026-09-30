@@ -1,8 +1,9 @@
-**Version 9.0.0**
+**Version 9.0.1**
 
 - Added fork server. See [fork-server.md](/doc/fork_server.md). Optional, can be enabled by setting `ADAGUC_FORK_ENABLE=TRUE`. Enabling this makes adaguc run a persistent fork server. This reduces process startup overhead, which improves performance.
 - The default process timeout changed from max 300 seconds to 60 seconds. Configurable through `ADAGUC_MAX_PROC_TIMEOUT`.
 - The default adaguc command timeout (e.g. --updatedb for scan tasks) timeout is still 300 seconds, but is now configurable through `ADAGUC_MAX_COMMAND_TIMEOUT`.
+- getLayerMetadataAsJson now only queries the requested dataset name https://github.com/KNMI/adaguc-server/pull/783
 
 
 **Version 8.4.0 - 2026-09-30**
