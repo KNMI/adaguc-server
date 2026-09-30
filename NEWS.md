@@ -1,4 +1,4 @@
-**Version t.b.d.**
+**Version 9.0.0**
 
 - Added fork server. See [fork-server.md](/doc/fork_server.md). Optional, can be enabled by setting `ADAGUC_FORK_ENABLE=TRUE`. Enabling this makes adaguc run a persistent fork server. This reduces process startup overhead, which improves performance.
 - The default process timeout changed from max 300 seconds to 60 seconds. Configurable through `ADAGUC_MAX_PROC_TIMEOUT`.
@@ -15,7 +15,6 @@
 * Dockerfile caches dependencies, no constant re-install upon source changes by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/777
 
 **Version 8.3.0 - 2026-09-18**
->>>>>>> master
 
 - Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
 - Removed CT::string class, and cleaned up codebase.
