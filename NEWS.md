@@ -1,22 +1,26 @@
-**Version 8.4.0**
+**Version 8.4.0 - 2026-09-30**
 
-- Fix BUG: Edr instances on model data with vertical levels returns wrong list of time values: https://github.com/KNMI/adaguc-server/issues/778
+* Upgrade debian 13 by @mgrunbauer in https://github.com/KNMI/adaguc-server/pull/773
+* Avoid using new/delete for the config parser by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/772
+* EDR now outputs trace timings header by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/781
+* Fix BUG: Edr instances on model data with vertical levels returns wrong list of time values by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/780
+* Optimized configuration parser by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/779
+* Dockerfile caches dependencies, no constant re-install upon source changes by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/777
 
-
-**Version 8.3.0**
+**Version 8.3.0 - 2026-09-18**
 
 - Support showinlegend property in ShadeInterVal to filter out items for the GetLegendGraphic request: https://github.com/KNMI/adaguc-server/issues/754
 - Removed CT::string class, and cleaned up codebase.
 - Fix EDR hrefs by adding a missing slash. The Metoffice EDR tool can be used again: https://github.com/KNMI/adaguc-server/pull/757
 
 
-**Version 8.2.0**
+**Version 8.2.0 - 2026-07-23**
 
 * 652 feature request showing speed vectors on top of polygons based on geojson files by @belentorrente in https://github.com/KNMI/adaguc-server/pull/746
 * Optimize getmetadata json, also add extra tracing to figure out where the bottleneck is by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/748
 
 
-**Version 8.1.0**
+**Version 8.1.0 - 2026-07-17**
 
 * Reduce CT::string by @mgrunbauer in https://github.com/KNMI/adaguc-server/pull/734
 * 629 unable to remove decimal in continuous legend by @belentorrente in https://github.com/KNMI/adaguc-server/pull/733
@@ -29,7 +33,7 @@
 
 **Full Changelog**: https://github.com/KNMI/adaguc-server/compare/8.0.0...8.1.0
 
-**Version 8.0.0**
+**Version 8.0.0 - 2026-07-07**
 
 * Refactored makeIntervalFromTimeList by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/726
 * Refactor cdbstore by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/728
