@@ -405,7 +405,6 @@ int CDFObject::applyNCMLFile(const char *ncmlFileName) {
   root_element = xmlDocGetRootElement(doc);
   putNCMLAttributes(root_element);
   xmlFreeDoc(doc);
-  xmlCleanupParser();
   if (errorRaised == 1) return 1;
   return 0;
 }

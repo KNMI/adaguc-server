@@ -923,7 +923,8 @@ int CRequest::process_querystring() {
     }
   }
 
-  std::string queryString(pszQueryString);
+  // An unset QUERY_STRING (e.g. running adagucserver from the command line) is handled like an empty one
+  std::string queryString = CT::fromCharPointer(pszQueryString);
   if (queryString.empty()) {
     queryString = "SERVICE=WMS&request=getcapabilities";
     CGI = 0;

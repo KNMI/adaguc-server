@@ -1,19 +1,25 @@
 #include "CReadFile.h"
+#include <filesystem>
 #include <fstream>
-#include <streambuf>
 #include <string>
 
 std::string readFile(const std::string &fileName) {
-  std::ifstream t(fileName);
-  std::string str;
-  if (!t.seekg(0, std::ios::end)) {
+  std::error_code ec;
+  if (!std::filesystem::is_regular_file(fileName, ec)) {
+    throw CREADFILE_FILENOTFOUND;
+  }
+  std::ifstream file(fileName, std::ios::binary);
+  if (!file || !file.seekg(0, std::ios::end)) {
     throw(CREADFILE_FILENOTFOUND);
   }
-  str.reserve(t.tellg());
-  if (!t.seekg(0, std::ios::beg)) {
+  std::streamoff size = file.tellg();
+  if (size < 0 || !file.seekg(0, std::ios::beg)) {
     throw(CREADFILE_FILENOTFOUND);
   }
-  str.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+  // Read the whole file in one go instead of character by character
+  std::string str(size, '\0');
+  file.read(str.data(), size);
+  str.resize(file.gcount());
   return str;
 }
 

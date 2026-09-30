@@ -144,3 +144,11 @@ log.txt
 Docker/.env*
 Docker/geoweb.env
 .claude/settings.json
+adagucserver
+aggregate_time
+anydump
+geojsondump
+h5ncdump
+adagucserverEC/testadagucserver
+adagucserverEC/testtimeutils
+CCDFDataModel/traceTimingsTests
