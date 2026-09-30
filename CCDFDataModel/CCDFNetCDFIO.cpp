@@ -27,6 +27,7 @@
 #include "CStopWatch.h"
 #include "CDFCopyData.h"
 #include <cstring>
+#include "traceTimings/traceTimings.h"
 
 // #define MEASURETIME
 
@@ -60,8 +61,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     if (CCDFNETCDFIO_DEBUG_OPEN) {
       CDBDebug("NC_OPEN re-opening %s for %s", fileName.c_str(), var->name.c_str());
     }
-
+    traceTimingsSpanStart(TraceTimingType::FSNCOPEN);
     status = nc_open(fileName.c_str(), NC_NOWRITE, &root_id);
+    traceTimingsSpanEnd(TraceTimingType::FSNCOPEN);
     if (status != NC_NOERR) {
       CDBError("[%s]: %s %d", nc_strerror(status), "nc_open: ", status);
       return 1;
@@ -701,7 +703,9 @@ int CDFNetCDFReader::open(const char *fileName) {
     CDBDebug("NC_OPEN opening %s", fileName);
   }
 
+  traceTimingsSpanStart(TraceTimingType::FSNCOPEN);
   status = nc_open(fileName, NC_NOWRITE, &root_id);
+  traceTimingsSpanEnd(TraceTimingType::FSNCOPEN);
   if (status != NC_NOERR) {
     CDBError("[%s]: %s %d", nc_strerror(status), "nc_open: ", status);
     return 1;
@@ -722,19 +726,25 @@ int CDFNetCDFReader::open(const char *fileName) {
 
   // First readdims
   std::string groupName = "";
+  traceTimingsSpanStart(TraceTimingType::FSNCREADDIMS);
   status = readVariables(root_id, groupName, 0);
+  traceTimingsSpanEnd(TraceTimingType::FSNCREADDIMS);
   if (status != 0) return 1;
 
   // Second read vars
   groupName = "";
+  traceTimingsSpanStart(TraceTimingType::FSNCREADVARS);
   status = readVariables(root_id, groupName, 1);
+  traceTimingsSpanEnd(TraceTimingType::FSNCREADVARS);
   if (status != 0) return 1;
 
 #ifdef MEASURETIME
   StopWatch_Stop("readVar");
 #endif
 
+  traceTimingsSpanStart(TraceTimingType::FSNCREADATTRS);
   status = readAttributes(root_id, cdfObject->attributes, NC_GLOBAL, nRootAttributes);
+  traceTimingsSpanEnd(TraceTimingType::FSNCREADATTRS);
   if (status != 0) return 1;
 #ifdef MEASURETIME
   StopWatch_Stop("readAttr");

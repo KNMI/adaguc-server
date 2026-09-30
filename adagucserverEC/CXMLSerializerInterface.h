@@ -31,7 +31,6 @@
 #include <cstdlib>
 #include <cstring>
 
-
 extern int numXMLAttributesNotRecognized;
 
 /**
@@ -57,7 +56,6 @@ struct attribute {
   std::string value;
 };
 
-int parseInt(const attribute &attrCfg);
 /**
  * Base objects
  */
@@ -65,15 +63,19 @@ struct CXMLObjectInterface {
   std::string elementValue;
 
   CXMLObjectInterface() = default;
-  CXMLObjectInterface(const CXMLObjectInterface &) = default;
-  CXMLObjectInterface(CXMLObjectInterface &&) noexcept = default;
-  CXMLObjectInterface &operator=(const CXMLObjectInterface &) = default;
-  CXMLObjectInterface &operator=(CXMLObjectInterface &&) noexcept = default;
   virtual ~CXMLObjectInterface() = default;
 
   virtual CXMLObjectInterface *addElement(const std::string &) { return nullptr; };
   virtual void handleValue() {};
   virtual bool addAttribute(const attribute &) { return false; }
+
+protected:
+  // Protected to prevent slicing when copying through a base reference (C++ Core Guidelines C.67).
+  // Derived elements keep their implicit public copy and move, so they can still be copied by value.
+  CXMLObjectInterface(const CXMLObjectInterface &) = default;
+  CXMLObjectInterface(CXMLObjectInterface &&) noexcept = default;
+  CXMLObjectInterface &operator=(const CXMLObjectInterface &) = default;
+  CXMLObjectInterface &operator=(CXMLObjectInterface &&) noexcept = default;
 };
 
 /**
@@ -81,7 +83,7 @@ struct CXMLObjectInterface {
  * Inherits the CXMLObjectInterface base object
  */
 
-int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, std::string datasetName);
+int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, const std::string &datasetName);
 
 /**
  * parses a character string to int

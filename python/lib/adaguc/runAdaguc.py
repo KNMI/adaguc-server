@@ -74,6 +74,8 @@ class runAdaguc:
             adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB")
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv("ADAGUC_ENABLELOGBUFFER", "TRUE")
         adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv("ADAGUC_TRACE_TIMINGS", "FALSE")
+        # adaguc does not use BLAS, but GDAL loads OpenBLAS, which otherwise starts a busy-waiting thread per CPU core for every request
+        adagucenv["OPENBLAS_NUM_THREADS"] = os.getenv("OPENBLAS_NUM_THREADS", "1")
         ld_library_path = os.getenv("LD_LIBRARY_PATH")
         if ld_library_path:
             adagucenv["LD_LIBRARY_PATH"] = ld_library_path
