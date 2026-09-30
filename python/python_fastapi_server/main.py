@@ -1,5 +1,6 @@
 """Main file where FastAPI is defined and started"""
 
+from contextlib import asynccontextmanager
 import logging
 import os
 import time
@@ -19,13 +20,34 @@ from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
 from routers.caching_middleware import CachingMiddleware
 from configure_logging import configure_logging
+from fork_server_supervisor import ForkServerSupervisor
+from adaguc.fork_settings import is_fork_enabled
 
 configure_logging(logging)
 
 logger = logging.getLogger(__name__)
 
 
-app = FastAPI(redirect_slashes=False)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    This method starts the ForkServerSupervisor class, which checks if the fork server mother process is still alive.
+    Nothing extra happens if the fork server is not enabled (through `ADAGUC_FORK_ENABLE`)
+    """
+
+    fork_supervisor = None
+
+    if is_fork_enabled():
+        fork_supervisor = ForkServerSupervisor()
+        await fork_supervisor.start_monitoring()
+
+    yield
+
+    if fork_supervisor:
+        await fork_supervisor.stop_monitoring()
+
+
+app = FastAPI(redirect_slashes=False, lifespan=lifespan)
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'

@@ -77,3 +77,8 @@ void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
   _printDebugLine
 
 #endif
+
+/**
+ * Set the logProcessIdentifier to `getpid`. Used in the fork server, so that child processes show their own PID in the logging.
+ */
+void setLoggerPid();

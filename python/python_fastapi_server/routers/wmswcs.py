@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+from adaguc.CGIRunner import HTTP_STATUSCODE_400_BAD_REQUEST
 from adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 from adaguc.CGIRunner import HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY
 from adaguc.CGIRunner import HTTP_STATUSCODE_500_TIMEOUT
@@ -60,7 +61,9 @@ async def handle_wms(req: Request):
     # desired response codes. Otherwise, a 500 status will be returned on exiting with errors.
     if status != 0:
         logger.info("Adaguc status code was %d", status)
-        if status == HTTP_STATUSCODE_404_NOT_FOUND:
+        if status == HTTP_STATUSCODE_400_BAD_REQUEST:
+            response_code = 400
+        elif status == HTTP_STATUSCODE_404_NOT_FOUND:
             response_code = 404  # Not Found
         elif status == HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY:
             response_code = 422  # Unprocessable Entity
@@ -89,9 +92,15 @@ def testadaguc():
     adagucenv["ADAGUC_ONLINERESOURCE"] = "https://example.com/adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
-    # Run adaguc-server
+    # Run adaguc-server as a subprocess. This check runs before the fork server is started (main.py, autosync.py),
+    # so fork mode is disabled for the duration of this call.
     # pylint: disable=unused-variable
-    status, _data, headers = asyncio.run(adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False))
+    fork_enable = os.environ.pop("ADAGUC_FORK_ENABLE", None)
+    try:
+        status, _data, headers = asyncio.run(adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False))
+    finally:
+        if fork_enable is not None:
+            os.environ["ADAGUC_FORK_ENABLE"] = fork_enable
     assert status == 0
     assert "Content-Type:text/xml" in headers
     logger.info("adaguc-server seems [OK]")

@@ -59,7 +59,6 @@ def ensure_adaguc_test_db():
 
     # Clear testing db and create initial database
     sql = """
-        DROP SCHEMA public CASCADE; CREATE SCHEMA public;
         DROP DATABASE IF EXISTS adaguc_test;
         CREATE DATABASE adaguc_test;
     """
