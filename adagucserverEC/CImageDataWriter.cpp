@@ -464,9 +464,9 @@ void CImageDataWriter::setValue(CDFType type, void *data, size_t ptr, double pix
 
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
   CImageWarper imageWarper;
-#ifdef MEASURETIME
-  StopWatch_Stop("getFeatureInfo");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("getFeatureInfo");
+  }
 
   if (CIMAGEDATAWRITER_DEBUG) {
     CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
@@ -1193,9 +1193,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       delete imageWarperRenderer;
     }
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("Thread[%d]: warp finished", dataSource->threadNr);
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Thread[%d]: warp finished", dataSource->threadNr);
+  }
 
   traceTimingsSpanEnd(TraceTimingType::WARPIMAGERENDER);
   reader.close();
@@ -1992,9 +1992,9 @@ int CImageDataWriter::end() {
     return 1;
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Drawing finished, start printing image");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Drawing finished, start printing image");
+  }
 
   // Static image
   int status = 1;
@@ -2048,9 +2048,9 @@ int CImageDataWriter::end() {
     status = drawImage.printImagePng8(true);
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Image printed");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Image printed");
+  }
   if (status != 0) {
     CDBError("Errors occured during image printing");
   }

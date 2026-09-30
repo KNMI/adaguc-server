@@ -28,16 +28,23 @@
 
 #include "CDataSource.h"
 #include "CCDFReader.h"
+#include <memory>
+#include <unordered_map>
 
 // Datasource can share multiple cdfObjects
 // A cdfObject is allways opened using a dataSource path/filter combo
 //  When a CDFObject is already opened
 class CDFObjectStore {
 private:
-  // These vectors are related, same index represents a set. TODO: Use a single vector with a object containing these 3.
-  std::vector<std::string> fileNames;
-  std::vector<CDFObject *> cdfObjects;
-  std::vector<CDFReader *> cdfReaders;
+  struct CDFObjectStoreEntry {
+    std::string fileName;
+    std::unique_ptr<CDFObject> cdfObject;
+    std::unique_ptr<CDFReader> cdfReader;
+  };
+  std::vector<CDFObjectStoreEntry> cdfObjectEntries;
+  // fileName -> index into cdfObjectEntries, kept in sync with it, so lookups don't need to linearly scan cdfObjectEntries.
+  // A request can open (and thus look up) hundreds of files, so this turns an O(numOpenFiles) scan per lookup into O(1).
+  std::unordered_map<std::string, size_t> fileNameIndex;
 
   /**
    * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>

@@ -9,6 +9,7 @@ from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
 from main import app
+from routers.utils.edr_utils import clear_metadata_cache
 
 logger = logging.getLogger(__name__)
 

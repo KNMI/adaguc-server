@@ -95,8 +95,8 @@ public:
 
   void closeH5GroupByName(const char *variableGroupName);
   hid_t openH5GroupByName(std::string &varNameOut, const std::string &variableGroupName);
-  int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *);
-  int _readVariableData(CDF::Variable *var, CDFType type);
+  int cdfReadVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *);
+  int cdfReadVariableData(CDF::Variable *var, CDFType type);
 
 private:
   CustomForecastReader *forecastReader;

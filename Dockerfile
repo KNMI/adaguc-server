@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ######### First stage (build) ############
 FROM python:3.14-slim-trixie AS build
 
@@ -52,8 +53,8 @@ WORKDIR /adaguc/adaguc-server-master
 ARG BUILD_TYPE
 RUN bash compile.sh "$BUILD_TYPE"
 
-######### Second stage, base image for test and prod ############
-FROM python:3.14-slim-trixie AS base
+######### Second stage, runtime dependencies (no source code, so it stays cached) ############
+FROM python:3.14-slim-trixie AS deps
 
 # Determine if we're building in github actions or via a local docker build
 ARG TEST_IN_CONTAINER=local_build
@@ -83,21 +84,33 @@ RUN apt-get -q -y update \
 WORKDIR /adaguc/adaguc-server-master
 
 # Upgrade pip and install python requirements.txt
+# The pip cache mount keeps downloaded wheels between builds, so a change in requirements.txt only fetches what changed
 COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
-RUN pip3 install --no-cache-dir --upgrade pip pip-tools setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install --upgrade pip pip-tools setuptools wheel \
+    && pip install -r requirements.txt
+
+######### Third stage, test dependencies (no source code, so it stays cached) ############
+FROM deps AS test-deps
+
+COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements-dev.txt
+
+######### Base image for prod ############
+FROM deps AS base
 
 # Install compiled adaguc binaries from stage one
 COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
 
-######### Third stage, test ############
-FROM base AS test
+######### Test stage ############
+FROM test-deps AS test
 
-COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
+COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
+COPY data /adaguc/adaguc-server-master/data
+COPY python /adaguc/adaguc-server-master/python
 COPY tests /adaguc/adaguc-server-master/tests
 COPY scripts /adaguc/adaguc-server-master/scripts
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
@@ -109,7 +122,7 @@ RUN bash runtests_psql.sh
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
 
-######### Fourth stage, prod ############
+######### Prod stage ############
 FROM base AS prod
 
 # Set same uid as vivid

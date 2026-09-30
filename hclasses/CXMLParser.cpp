@@ -286,9 +286,7 @@ CXMLParser::XMLElement &CXMLParser::XMLElement::add(const XMLElement &el) {
   return xmlElements.back();
 }
 
-CXMLParser::XMLElement &CXMLParser::XMLElement::add(const std::string &name) {
-  return xmlElements.emplace_back(name);
-}
+CXMLParser::XMLElement &CXMLParser::XMLElement::add(const std::string &name) { return xmlElements.emplace_back(name); }
 
 void CXMLParser::XMLElement::add(const std::string &name, const std::string &value) { xmlElements.emplace_back(name, value); }
 

@@ -55,8 +55,8 @@ public:
 
   int close();
 
-  int _readVariableData(CDF::Variable *var, CDFType type);
+  int cdfReadVariableData(CDF::Variable *var, CDFType type);
 
-  int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
+  int cdfReadVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 };
 #endif

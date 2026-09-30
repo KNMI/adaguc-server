@@ -47,7 +47,6 @@
 
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 static const bool debug = false;
-static const bool measureTime = false;
 
 // Table names need to be different between dims like time and height.
 //  Therefor create unique tablenames like tablename_time and tablename_height
@@ -79,7 +78,7 @@ CDBAdapterPostgreSQL::~CDBAdapterPostgreSQL() {
 
 CPGSQLDB *CDBAdapterPostgreSQL::getDataBaseConnection() {
   if (dataBaseConnection == NULL) {
-    if (measureTime) {
+    if (adagucMeasureTime) {
       StopWatch_Stop(">CDBAdapterPostgreSQL::getDataBaseConnection");
     }
     dataBaseConnection = new CPGSQLDB();
@@ -91,7 +90,7 @@ CPGSQLDB *CDBAdapterPostgreSQL::getDataBaseConnection() {
 
     assertLookupTableExists();
 
-    if (measureTime) {
+    if (adagucMeasureTime) {
       StopWatch_Stop("<CDBAdapterPostgreSQL::getDataBaseConnection");
     }
   }
@@ -104,7 +103,7 @@ int CDBAdapterPostgreSQL::setConfig(CServerConfig::XMLE_Configuration *cfg) {
 }
 
 std::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, const char *table) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getDimValueForFileName");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -120,7 +119,7 @@ std::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, c
     CDBError("query failed");
     return "";
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getDimValueForFileName");
   }
   std::string dimValue = store->records[0].values.at(1);
@@ -129,7 +128,7 @@ std::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, c
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name, const char *table) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getMax");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -144,14 +143,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name, const char *tabl
     CDBDebug("Unable to find latest timestep from table. Skipping...");
     return NULL;
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getMax");
   }
   return maxStore;
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getMin(const char *name, const char *table) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getMin");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -166,14 +165,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMin(const char *name, const char *tabl
     CDBError("query failed");
     return NULL;
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getMin");
   }
   return maxStore;
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *max, const char *colname, const char *table, int limit) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getBetween");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -190,14 +189,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *m
     CDBError("query failed");
     return NULL;
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getBetween");
   }
   return maxStore;
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -213,14 +212,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue(const char 
   if (store == NULL) {
     CDBDebug("Query %s failed", query.c_str());
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue");
   }
   return store;
 }
 
 CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char *name, int limit, bool, const char *table) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -232,7 +231,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char 
   if (limit > 0) {
     CT::printfconcat(query, " limit %d", limit);
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex");
   }
   return DB->queryToStore(query.c_str());
@@ -240,7 +239,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char 
 
 CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfReferenceTimeDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName,
                                                         const char *referenceTimeTableName) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getReferenceTime");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -250,14 +249,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfRefere
   std::string query = CT::printf("select max(forecast_reference_time) from (select %s,%s as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path )a0",
                                  netcdfReferenceTimeDimName, netcdfTimeDimName, referenceTimeTableName, timeTableName, netcdfTimeDimName, timeValue);
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getReferenceTime");
   }
   return DB->queryToStore(query.c_str());
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -266,7 +265,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
   }
   std::string query = CT::printf("SELECT %s,abs(EXTRACT(EPOCH FROM (to_timestamp(%s) - now()))) as t from %s order by t asc limit 1", netcdfDimName, netcdfDimName, tableName);
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime");
   }
   return DB->queryToStore(query.c_str());
@@ -348,7 +347,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getFilesForIndices");
   }
   return store;
@@ -366,7 +365,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   Returns the DBStore of this query.
   */
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions");
   }
   CPGSQLDB *DB = getDataBaseConnection();
@@ -496,14 +495,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     }
   }
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions");
   }
   return store;
 }
 
 int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSource) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables");
   }
   CServerParams *srvParams = dataSource->srvParams;
@@ -594,7 +593,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
   if (debug) {
     CDBDebug("[/checkDimTables]");
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables");
   }
   return 0;
@@ -684,7 +683,7 @@ std::vector<std::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSo
 
 std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const std::string &path, const std::string &filter, std::vector<std::string> dimensions,
                                                                                              CDataSource *dataSource) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
   }
   /*
@@ -706,7 +705,7 @@ std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterA
       std::string correctedTableName = makeCorrectTableName(tableName, dim);
       mapping[dim] = {correctedTableName, ""};
     }
-    if (measureTime) {
+    if (adagucMeasureTime) {
       StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
     }
     return mapping;
@@ -729,7 +728,7 @@ std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterA
 
   // We've found all requested dimensions in the lookupTableNameCache. No need to update the lookup table, we're done!
   if (done) {
-    if (measureTime) {
+    if (adagucMeasureTime) {
       StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
     }
     return mapping;
@@ -776,7 +775,7 @@ std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterA
   size_t found = tableDimStore->records.size();
   delete tableDimStore;
   if (found == mapping.size()) {
-    if (measureTime) {
+    if (adagucMeasureTime) {
       StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
     }
     return mapping;
@@ -795,7 +794,7 @@ std::map<std::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterA
     mapping[m.first] = d;
   }
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
   }
   return mapping;
@@ -812,7 +811,7 @@ std::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(CDataSou
 
 std::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const std::string &path, const std::string &filter, const char *dimension, CDataSource *dataSource) {
   // This is now a wrapper which calls `getTableNamesForPathFilterAndDimensions` directly for a single dimension.
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension");
   }
 
@@ -824,14 +823,14 @@ std::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const st
     CDBDebug("Using getTableNamesForPathFilterAndDimensions, found mapping %s -> %s", dimension, mapping[dimString].tableName.c_str());
   }
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension");
   }
   return mapping[dimString].tableName;
 }
 
 CDBStore::Store *CDBAdapterPostgreSQL::getDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *layername) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getDimensionInfoForLayerTableAndLayerName");
   }
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
@@ -844,14 +843,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getDimensionInfoForLayerTableAndLayerName
   if (store == NULL) {
     CDBDebug("No dimension info stored for %s", layername);
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getDimensionInfoForLayerTableAndLayerName");
   }
   return store;
 }
 
 int CDBAdapterPostgreSQL::storeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *layername, const char *netcdfname, const char *ogcname, const char *units) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::storeDimensionInfoForLayerTableAndLayerName");
   }
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
@@ -873,14 +872,14 @@ int CDBAdapterPostgreSQL::storeDimensionInfoForLayerTableAndLayerName(const char
     CDBError("Unable to insert records: \"%s\"", query.c_str());
     throw(__LINE__);
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::storeDimensionInfoForLayerTableAndLayerName");
   }
   return 0;
 }
 
 int CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName");
   }
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
@@ -889,14 +888,14 @@ int CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName(const cha
   }
   std::string query = CT::printf("delete FROM autoconfigure_dimensions where layerid like E'%s%%'", layertable);
   int status = dataBaseConnection->query(query.c_str());
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName");
   }
   return status;
 }
 
 int CDBAdapterPostgreSQL::dropTable(const char *tablename) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::dropTable");
   }
 
@@ -910,14 +909,14 @@ int CDBAdapterPostgreSQL::dropTable(const char *tablename) {
     CDBError("Query %s failed", query.c_str());
     return 1;
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::dropTable");
   }
   return 0;
 }
 
 int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *tablename, int type) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::createDimTableOfType");
   }
 
@@ -944,7 +943,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
   CT::printfconcat(tableColumns, ", PRIMARY KEY (path, %s)", dimname);
 
   int status = dataBaseConnection->checkTable(tablename, tableColumns.c_str());
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::createDimTableOfType");
   }
   if (status == 2) {
@@ -961,7 +960,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
 }
 
 int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename, const char *filename) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::checkIfFileIsInTable");
   }
   int fileIsOK = 1;
@@ -982,14 +981,14 @@ int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename, const char
     fileIsOK = 1;
   }
   delete pathValues;
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::checkIfFileIsInTable");
   }
   return fileIsOK;
 }
 
 int CDBAdapterPostgreSQL::removeFile(const char *tablename, const char *file) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::removeFile");
   }
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
@@ -1003,14 +1002,14 @@ int CDBAdapterPostgreSQL::removeFile(const char *tablename, const char *file) {
     CDBWarning("Note:removeFile failed");
   }
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::removeFile");
   }
   return 0;
 }
 
 int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablename, const char *file, const char *creationDate) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate");
   }
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
@@ -1023,7 +1022,7 @@ int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablena
   if (status != 0) {
     throw(__LINE__);
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate");
   }
   return 0;
@@ -1066,7 +1065,7 @@ int CDBAdapterPostgreSQL::setFileTimeStamp(const char *tablename, const char *fi
   return 0;
 }
 int CDBAdapterPostgreSQL::addFilesToDataBase() {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::addFilesToDataBase");
   }
   if (debug) {
@@ -1106,14 +1105,14 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
     CDBDebug("clearing arrays");
   }
   fileListPerTable.clear();
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::addFilesToDataBase");
   }
   return 0;
 }
 
 int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadataBlob) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::storeLayerMetadata");
   }
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
@@ -1141,14 +1140,14 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     CDBError("Unable to insert records: \"%s\", error %s", query.c_str(), dataBaseConnection->getError().c_str());
     throw(__LINE__);
   }
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::storeLayerMetadata");
   }
   return 0;
 }
 
 CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *datasetName) {
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop(">CDBAdapterPostgreSQL::getLayerMetadata");
   }
 
@@ -1181,7 +1180,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
     }
   }
 
-  if (measureTime) {
+  if (adagucMeasureTime) {
     StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
   }
   return layerMetaDataStore;

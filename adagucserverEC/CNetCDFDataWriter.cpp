@@ -17,6 +17,7 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "CCDFNetCDFIO.h"
+#include "CCDFNetCDFIOWriter.h"
 #include "CTime.h"
 
 static const bool CNetCDFDataWriter_DEBUG = false;

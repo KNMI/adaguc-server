@@ -42,56 +42,26 @@ private:
 
   int status, root_id;
   bool keepFileOpen;
-  int readDimensions(int groupId, std::string &groupName);
-  int readAttributes(int root_id, std::vector<CDF::Attribute *> &attributes, int varID, int natt);
+  int _readDimensions(int groupId, std::string &groupName);
+  int _readAttributes(int root_id, std::vector<CDF::Attribute *> &attributes, int varID, int natt);
   /**
    * @param mode, mode = 0: read dims, 1: read variables
    */
-  int readVariables(int groupId, std::string &groupName, int mode);
-  int _readVariableData(CDF::Variable *var, CDFType type);
-  int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
+  int _readVariables(int groupId, std::string &groupName, int mode);
+  int _netcdfReOpen(CDF::Variable *var);
+  int _readStringVariableData(CDF::Variable *var, size_t *start, size_t *count, ptrdiff_t *stride, int varGroupId, bool useStartCount, bool useStriding);
+  int _readVariableRequestedType(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride, int varGroupId, bool useStartCount, bool useStriding);
+  int _readVariableNativeType(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride, int varGroupId, bool useStartCount, bool useStriding);
+  int cdfReadVariableData(CDF::Variable *var, CDFType type);
+  int cdfReadVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 
   int _findNCGroupIdForCDFVariable(const std::string &varName);
 
 public:
   CDFNetCDFReader();
   ~CDFNetCDFReader();
-  void enableLonWarp(bool enableLonWarp);
   int open(const char *fileName);
   int close();
-};
-
-class CDFNetCDFWriter {
-private:
-  bool writeData;
-  bool readData;
-  bool listNCCommands;
-  std::string NCCommands;
-  const char *fileName;
-  int shuffle;
-  int deflate;
-  int deflate_level;
-  std::vector<CDF::Dimension *> dimensions;
-  CDFObject *cdfObject;
-
-  int root_id, status;
-  int netcdfMode;
-  int _write(void (*progress)(const char *message, float percentage));
-  int copyVar(CDF::Variable *variable, int nc_var_id, size_t *start, size_t *count);
-
-public:
-  CDFNetCDFWriter(CDFObject *cdfObject);
-  ~CDFNetCDFWriter();
-  static nc_type NCtypeConversion(CDFType type);
-  static std::string NCtypeConversionToString(CDFType type);
-  std::string getNCCommands();
-  void setNetCDFMode(int mode);
-  void disableVariableWrite();
-  void disableReadData();
-  void setDeflateShuffle(int deflate, int deflate_level, int shuffle);
-  void recordNCCommands(bool enable);
-  int write(const char *fileName);
-  int write(const char *fileName, void (*progress)(const char *message, float percentage));
 };
 
 #endif

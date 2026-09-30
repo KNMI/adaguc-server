@@ -29,6 +29,7 @@
 #include "CGenericDataWarper.h"
 #include "CTime.h"
 #include "CCDFNetCDFIO.h"
+#include "CCDFNetCDFIOWriter.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #include "CServerParams.h"

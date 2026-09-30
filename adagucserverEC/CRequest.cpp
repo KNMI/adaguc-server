@@ -25,7 +25,6 @@
  ******************************************************************************/
 
 static const bool CREQUEST_DEBUG = false;
-// #define MEASURETIME
 
 #include "Types/ProjectionStore.h"
 #include "CRequest.h"
@@ -557,7 +556,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   return 0;
 }
 int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Start queryDimValuesForDataSource");
+  }
   try {
     CDBStore::Store *store = NULL;
 
@@ -577,8 +578,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       dataSource->queryLevel = hasTileSettings ? 0 : -1;
 
       int maxQueryResultLimit = getMaxQueryLimit(*dataSource);
-
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Start getFilesAndIndicesForDimensions");
+      }
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Done getFilesAndIndicesForDimensions");
+      }
     }
 
     if (store == NULL) {
@@ -748,13 +754,30 @@ int CRequest::process_all_layers() {
           srvParam->dFound_BBOX = 1;
           layerTypeLiveUpdateRender(firstDataSource, srvParam);
         } else {
+          if (adagucMeasureTime) {
+            StopWatch_Stop("start imageDataWriter.init");
+          }
+
           CImageDataWriter imageDataWriter;
           status = imageDataWriter.init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
           if (status != 0) throw(__LINE__);
+
+          if (adagucMeasureTime) {
+            StopWatch_Stop("start imageDataWriter.getFeatureInfo");
+          }
+
           status = imageDataWriter.getFeatureInfo(dataSources, 0, int(srvParam->dX), int(srvParam->dY));
           if (status != 0) throw(__LINE__);
+
+          if (adagucMeasureTime) {
+            StopWatch_Stop("start imageDataWriter.end");
+          }
           status = imageDataWriter.end();
           if (status != 0) throw(__LINE__);
+
+          if (adagucMeasureTime) {
+            StopWatch_Stop("imageDataWriter.getFeatureInfo done");
+          };
         }
       }
 
@@ -844,9 +867,9 @@ int CRequest::process_all_layers() {
 
 int CRequest::process_querystring() {
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Start processing query string");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("Start processing query string");
+  }
 
   if (srvParam == nullptr || srvParam->cfg == nullptr || srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
@@ -1325,9 +1348,9 @@ int CRequest::process_querystring() {
   if (CREQUEST_DEBUG) {
     CDBDebug("Finished parsing query string parameters");
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("query string processed");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("query string processed");
+  }
 
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
@@ -1920,9 +1943,9 @@ int CRequest::process_querystring() {
     setExceptionType(ServiceExceptionType::UnprocessableEntity);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("End of query string");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("End of query string");
+  }
 
   return 0;
 }

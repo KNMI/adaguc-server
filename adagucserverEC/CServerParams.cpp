@@ -193,8 +193,8 @@ const std::string &CServerParams::getOnlineResource() {
 
 bool CServerParams::checkBBOXXYOrder(const char *projName) {
   if (OGCVersion == WMS_VERSION_1_3_0) {
-    std::string_view projNameString = projName == NULL ? std::string_view(geoParams.crs) : std::string_view(projName);
-    auto comp = [projNameString](const CServerConfig::XMLE_Projection &a) { return a.attr.id == projNameString; };
+    const std::string projNameString = projName == NULL ? geoParams.crs : projName;
+    auto comp = [&projNameString](const CServerConfig::XMLE_Projection &a) { return a.attr.id == projNameString; };
     auto it = std::find_if(cfg->Projection.begin(), cfg->Projection.end(), comp);
     if (it != cfg->Projection.end()) {
       return CT::equalsIgnoreCase((*it).attr.invertxyforwms130, "true");
@@ -307,9 +307,11 @@ static void substituteExtraEnvironment(std::string &configFileData, const std::v
 }
 
 int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
-#endif
+
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
+  }
+
   std::string configFileData;
   try {
     configFileData = readFile(pszConfigFile);
@@ -317,28 +319,31 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
     CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile: File contents read.");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile: File contents read.");
+  }
   std::string datasetName = CT::basename(pszConfigFile);
 
   try {
     substituteStandardEnvironment(configFileData);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::parseConfigFile: substituteStandardEnvironment done");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("CServerParams::parseConfigFile: substituteStandardEnvironment done");
+    }
 
     // Environment elements declare extra variables to substitute. Finding them requires parsing the XML first,
     // so this extra pass is only done when the file can contain them.
     if (configFileData.find("Environment") != std::string::npos) {
-#ifdef MEASURETIME
-      StopWatch_Stop("CServerParams::parseConfigFile start extra substitutions");
-#endif
+      if (adagucMeasureTime) {
+        StopWatch_Stop("CServerParams::parseConfigFile start extra substitutions");
+      }
       CServerConfig environmentConfig;
       if (parseConfig(&environmentConfig, configFileData, datasetName) == 0 && !environmentConfig.Configuration.empty()) {
         substituteExtraEnvironment(configFileData, environmentConfig.Configuration[0].Environment, verbose);
       }
+    }
+    if (adagucMeasureTime) {
+      StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
     }
 #ifdef MEASURETIME
     StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
@@ -347,13 +352,13 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
     CDBError("Exception %d in substituting", e);
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start parseConfig");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile start parseConfig");
+  }
   int status = parseConfig(&configObj, configFileData, datasetName);
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile done parseConfig");
-#endif
+  if (adagucMeasureTime) {
+    StopWatch_Stop("CServerParams::parseConfigFile done parseConfig");
+  }
 
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
@@ -458,7 +463,7 @@ int CServerParams::getServerStyleIndexByName(const std::string &styleName) {
   // Remove last slash (/). E.g. windbarbs/shaded => windbarbs
   std::string_view sanitizedStyleName = std::string_view(styleName).substr(0, styleName.find('/'));
 
-  auto comp = [sanitizedStyleName](const CServerConfig::XMLE_Style &a) { return a.attr.name == sanitizedStyleName; };
+  auto comp = [&sanitizedStyleName](const CServerConfig::XMLE_Style &a) { return a.attr.name == sanitizedStyleName; };
   auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);
   int index = it == cfg->Style.end() ? -1 : it - cfg->Style.begin();
 

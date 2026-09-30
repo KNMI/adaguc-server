@@ -543,9 +543,9 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     GeoParameters geo;
     geo.crs = (srvParam->cfg->Projection[p].attr.id);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start initreproj %s", geo.crs.c_str());
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("start initreproj %s", geo.crs.c_str());
+    }
     CImageWarper warper;
     int status = warper.initreproj(metadataLayer->dataSource, geo, &srvParam->cfg->Projection);
     if (status != 0) {
@@ -553,9 +553,9 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       return 1;
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("finished initreproj");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("finished initreproj");
+    }
 
     if (CXMLGEN_DEBUG) {
       if (status != 0) {
@@ -564,16 +564,16 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       }
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start findExtent");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("start findExtent");
+    }
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
     metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs, bboxToFind));
 
-#ifdef MEASURETIME
-    StopWatch_Stop("finished findExtent");
-#endif
+    if (adagucMeasureTime) {
+      StopWatch_Stop("finished findExtent");
+    }
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX

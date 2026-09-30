@@ -23,26 +23,46 @@
  *
  ******************************************************************************/
 
-#ifndef CCDFREADER_H
-#define CCDFREADER_H
+#ifndef CCDFNETCDFIOWRITER_H
+#define CCDFNETCDFIOWRITER_H
 
+#include <string>
+#include <vector>
+#include <netcdf.h>
 #include "CCDFDataModel.h"
-#include "CCDFVariable.h"
-#include "CCDFObject.h"
+#include "CDebugger.h"
 
-class CDFReader {
-public:
-  std::string fileName;
-  CDFReader();
-  virtual ~CDFReader();
+class CDFNetCDFWriter {
+private:
+  bool writeData;
+  bool readData;
+  bool listNCCommands;
+  std::string NCCommands;
+  const char *fileName;
+  int shuffle;
+  int deflate;
+  int deflate_level;
+  std::vector<CDF::Dimension *> dimensions;
   CDFObject *cdfObject;
-  virtual int open(const char *fileName) = 0;
-  virtual int close() = 0;
 
-  // These two function may only be used by the variable class itself (TODO create friend class, protected?).
-  virtual int cdfReadVariableData(CDF::Variable *var, CDFType type) = 0;
-  // Allocates and reads the variable data
-  virtual int cdfReadVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) = 0;
+  int root_id, status;
+  int netcdfMode;
+  int _write(void (*progress)(const char *message, float percentage));
+  int copyVar(CDF::Variable *variable, int nc_var_id, size_t *start, size_t *count);
+
+public:
+  CDFNetCDFWriter(CDFObject *cdfObject);
+  ~CDFNetCDFWriter();
+  static nc_type NCtypeConversion(CDFType type);
+  static std::string NCtypeConversionToString(CDFType type);
+  std::string getNCCommands();
+  void setNetCDFMode(int mode);
+  void disableVariableWrite();
+  void disableReadData();
+  void setDeflateShuffle(int deflate, int deflate_level, int shuffle);
+  void recordNCCommands(bool enable);
+  int write(const char *fileName);
+  int write(const char *fileName, void (*progress)(const char *message, float percentage));
 };
 
 #endif

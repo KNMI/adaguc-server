@@ -102,8 +102,10 @@ async def call_adaguc(url):
     # Run adaguc-server
     status, data, headers = await adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=True)
 
-    # Obtain logfile
-    logfile = adaguc_instance.getLogFile()
+    # Obtain logfile, but only bother reading it if it will actually be logged.
+    logfile = ""
+    if logger.isEnabledFor(logging.INFO):
+        logfile = adaguc_instance.getLogFile()
     adaguc_instance.removeLogFile()
 
     stage2 = time.perf_counter()

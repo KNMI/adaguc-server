@@ -27,6 +27,18 @@
 #define CSTOPWATCH_H
 #include "CDebugger.h"
 
+/**
+ * Single, shared flag read by every StopWatch_Stop() call site across the codebase, instead of
+ * each file defining its own MEASURETIME toggle. Set once via checkMeasureTimeEnabled().
+ */
+extern bool adagucMeasureTime;
+
+/**
+ * Reads the ADAGUCENV_MEASURETIME environment variable and enables adagucMeasureTime if set to "true".
+ * Call once at startup (see adagucserver.cpp), analogous to traceTimingsCheckEnabled().
+ */
+void checkMeasureTimeEnabled();
+
 void StopWatch_Start();
 void _StopWatch_Stop(const char *a, ...);
 extern unsigned int logMessageNumber;

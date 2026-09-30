@@ -60,7 +60,6 @@
 #include "CTString.h"
 #include "utils/projectionUtils.h"
 
-// #define MEASURETIME
 bool verboseLogging = false;
 
 #define uchar unsigned char
@@ -337,7 +336,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   }
 
   // Projection string was created, set it in the datasource.
-  if (verbose) {
+  if (verboseLogging) {
     CREPORT_INFO_NODOC(std::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
   }
   dataSource->nativeProj4 = projString;
@@ -409,7 +408,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
 
   if (dataSource->cfgLayer->Dimension.size() == 0) {
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("Auto configuring dims");
     }
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
@@ -421,6 +420,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   bool singleCellMode = false;
 
   if (x != -1 && y != -1) {
+    CDBDebug("SingleCell");
     singleCellMode = true;
   }
 
@@ -435,7 +435,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     return 1;
   }
 
-  if (verbose) {
+  if (verboseLogging) {
     CDBDebug("Number of dimensions = %d", dataSource->dNetCDFNumDims);
   }
   // Determine the X and Y dimensions and variables.
@@ -483,7 +483,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
       sto[0] = 2;
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("[%lu %lu %lu] for %s/%s", sta[0], str[0], sto[0], dataSourceVar->name.c_str(), dataSource->varX->name.c_str());
     }
 
@@ -507,7 +507,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
       sto[0] = 2;
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("[%lu %lu %lu] for %s/%s", sta[0], str[0], sto[0], dataSourceVar->name.c_str(), dataSource->varY->name.c_str());
     }
 
@@ -532,7 +532,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (units != NULL) {
       const std::string unitString = units->toString();
       if (unitString == "rad" || unitString == "radian") {
-        if (verbose) {
+        if (verboseLogging) {
           CDBDebug("units: %s", units->toString().c_str());
         }
 
@@ -625,16 +625,16 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
               if (X_standard_name != NULL) {
                 str_std_x_name = X_standard_name->toString();
-                if (verbose) {
+                if (verboseLogging) {
                   CDBDebug("Standard Name of the nx variable: %s", str_std_x_name.c_str());
                 }
               }
-              if (verbose) {
+              if (verboseLogging) {
                 CDBDebug("-----------------");
                 CDBDebug("Assuming  CF 1.9 or posterior geostationary projection, keeping radians as units");
               }
               std::string UpdatedProjString = CT::printf("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", lon_0, lat_0, 1.0, a / perspectiveHeight, b / perspectiveHeight, sweep.c_str());
-              if (verbose) {
+              if (verboseLogging) {
                 CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
               }
 
@@ -655,11 +655,11 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     return 1;
   }
 
-  if (verbose) {
+  if (verboseLogging) {
     StopWatch_Stop("XY dimensions read");
   }
 
-  if (verbose) {
+  if (verboseLogging) {
     CDBDebug("PROJ4 = [%s]", dataSource->nativeProj4.c_str());
   }
 
@@ -782,7 +782,7 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
   dataSource->dHeight = dimY->length / dataSource->stride2DMap;
   dataSource->dOrigWidth = dataSource->dWidth;
 
-  if (verbose) {
+  if (verboseLogging) {
     if (gridExtent != NULL) {
       CDBDebug("gridExtent = [%d %d %d %d]", gridExtent[0], gridExtent[1], gridExtent[2], gridExtent[3]);
     } else {
@@ -863,8 +863,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
-  if (verbose) {
-    CDBDebug("Open mode:%d x:%d y:%d, numdataObjects %lu", mode, x, y, dataSource->getNumDataObjects());
+  if (verboseLogging) {
+
+    StopWatch_Stop("Open mode:%d x:%d y:%d, numdataObjects %lu", mode, x, y, dataSource->getNumDataObjects());
   }
 
   bool singleCellMode = false;
@@ -898,8 +899,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   CDFObject *cdfObject = NULL;
-  if (verbose) {
-    CDBDebug("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
+  if (verboseLogging) {
+    StopWatch_Stop("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
   } else {
     if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
       if (silent == false) {
@@ -941,7 +942,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
-  if (verbose) {
+  if (verboseLogging) {
     StopWatch_Stop("parseDimensions done");
   }
   if (dataSource->useLonTransformation != -1 && gridExtent == NULL) {
@@ -952,7 +953,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS) {
 
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("Dimensions parsed");
     }
     return 0;
@@ -998,7 +999,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     count[dataSource->dimYIndex] = 1;
     stride[dataSource->dimXIndex] = 1;
     stride[dataSource->dimYIndex] = 1;
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("Single cell mode for x,y: (%d, %d)", x, y);
     }
   }
@@ -1010,11 +1011,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
    */
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
 
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("Working on variable %s, %lu/%lu", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       StopWatch_Stop("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
     }
 
@@ -1042,11 +1043,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       }
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
     }
   }
@@ -1056,7 +1057,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("Get metadata");
     }
 
@@ -1077,14 +1078,14 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         dataSource->metaDataItems.push_back({.key = variableName->c_str(), .value = attribute->name, .abstract = attribute->toString()});
       }
     }
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("Metadata Finished.");
     }
     return 0;
   }
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-    if (verbose) {
+    if (verboseLogging) {
       StopWatch_Stop("Reading _FillValue");
     }
     CDF::Attribute *fillValue = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("_FillValue");
@@ -1098,11 +1099,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    if (verbose) {
+    if (verboseLogging) {
       CDBDebug("CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT");
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       StopWatch_Stop("start reading image data");
     }
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
@@ -1124,7 +1125,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           return 1;
         }
 
-        if (verbose) {
+        if (verboseLogging) {
           CDBDebug("DATA IS READ FOR varNR [%lu], name=\"%s\": DATA IS READ", varNr, dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
         }
 
@@ -1136,7 +1137,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
       }
 
-      if (verbose) {
+      if (verboseLogging) {
         StopWatch_Stop("data read");
       }
 
@@ -1260,7 +1261,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           add_offset->getData(&dfadd_offset, 1);
         }
 
-        if (verbose) {
+        if (verboseLogging) {
           CDBDebug("Applying scale and offset with %f and %f (var size=%lu) type=%s", dfscale_factor, dfadd_offset, dataSource->getDataObject(varNr)->cdfVariable->getSize(),
                    CDF::getCDFDataTypeName(dataSource->getDataObject(varNr)->cdfVariable->getType()).c_str());
         }
@@ -1297,7 +1298,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
       }
 
-      if (verbose) {
+      if (verboseLogging) {
         StopWatch_Stop("Scale and offset applied");
       }
     }
@@ -1322,12 +1323,12 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       styleConfiguration->stretchLegend(min, max);
     }
 
-    if (verbose) {
+    if (verboseLogging) {
       StopWatch_Stop("all read");
     }
   }
 
-  if (verbose) {
+  if (verboseLogging) {
     CDBDebug("/Finished datareader now has %lu dataobjects", dataSource->getNumDataObjects());
   }
   return 0;

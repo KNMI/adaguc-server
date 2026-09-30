@@ -269,7 +269,7 @@ int CDFPNGReader::open(const char *fileName) {
   return 0;
 }
 
-int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
+int CDFPNGReader::cdfReadVariableData(CDF::Variable *var, CDFType) {
 
   bool isSingleImageWithCoordinates = true;
 
@@ -377,9 +377,9 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
   return 0;
 }
 
-int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *) {
+int CDFPNGReader::cdfReadVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *) {
   if (CCDFPNGIO_DEBUG) {
-    CDBDebug("_readVariableData %s %d", var->name.c_str(), type);
+    CDBDebug("cdfReadVariableData %s %d", var->name.c_str(), type);
   }
 
   size_t requestedSize = 1;
@@ -394,7 +394,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
     dummyVar->name = var->name;
     dummyVar->setType(type);
     dummyVar->setParentCDFObject(var->getParentCDFObject());
-    this->_readVariableData(dummyVar, type);
+    this->cdfReadVariableData(dummyVar, type);
     for (size_t j = 0; j < count[0]; j++) {
       size_t i = j + start[0];
       if (i < dummyVar->getSize()) {
