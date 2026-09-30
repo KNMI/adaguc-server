@@ -173,7 +173,7 @@ ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &resu
     layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(datasetFilter);
   } catch (...) {
     traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONDB);
-    CDBError("Invalid dataset name");
+    CDBError("Invalid dataset name [%s]", datasetLocation.empty() ? "*" : datasetLocation.c_str());
     setExceptionType(ServiceExceptionType::InvalidDataset);
     return ServiceExceptionType::InvalidDataset;
   }
