@@ -166,7 +166,17 @@ json makeMetadataForDataSet(const std::map<std::string, LayerMetadataBlobs> &lay
 ServiceExceptionType getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   std::string datasetLocation = srvParams->datasetLocation;
   traceTimingsSpanStart(TraceTimingType::GETMETADATAJSONDB);
-  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
+  // Only query the requested dataset, or all datasets when none is given.
+  const char *datasetFilter = datasetLocation.empty() ? nullptr : datasetLocation.c_str();
+  CDBStore::Store *layerMetaDataStore = nullptr;
+  try {
+    layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(datasetFilter);
+  } catch (...) {
+    traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONDB);
+    CDBError("Invalid dataset name [%s]", datasetLocation.empty() ? "*" : datasetLocation.c_str());
+    setExceptionType(ServiceExceptionType::InvalidDataset);
+    return ServiceExceptionType::InvalidDataset;
+  }
   traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSONDB);
   if (layerMetaDataStore == nullptr) {
     CDBError("Unable to get layer metadata store");
