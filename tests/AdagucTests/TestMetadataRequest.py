@@ -2,6 +2,7 @@
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
 
+import json
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
@@ -103,4 +104,24 @@ class TestMetadataRequest:
             env,
             "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_modelruns_080.json",
             "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&DIM_reference_time=2026-09-28T08:00:00Z",
+        )
+
+    def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes(self):
+        """
+        This checks that many reference times are returned as an interval in the GetMetadata response.
+        """
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw_manymodelruns", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
+        filename = "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes.json"
+        run_adaguc_and_compare_json(
+            env,
+            filename,
+            "dataset=adaguc.tests.arcus_uwcw_manymodelruns&&service=WMS&request=GetMetadata&format=application/json",
+        )
+        with open(self.testresultspath + filename, encoding="utf-8") as f:
+            metadata = json.load(f)
+        reference_time = metadata["adaguc.tests.arcus_uwcw_manymodelruns"]["air_temperature"]["dims"]["reference_time"]
+        assert (
+            reference_time["values"]
+            == "2026-09-30T12:00:00Z,2026-09-30T13:00:00Z,2026-09-30T14:00:00Z,2026-09-30T15:00:00Z,2026-09-30T16:00:00Z,2026-09-30T17:00:00Z,2026-09-30T18:00:00Z,2026-09-30T19:00:00Z,2026-09-30T20:00:00Z,2026-09-30T21:00:00Z,2026-09-30T22:00:00Z,2026-09-30T23:00:00Z,2026-10-01T00:00:00Z,2026-10-01T01:00:00Z,2026-10-01T02:00:00Z,2026-10-01T03:00:00Z,2026-10-01T04:00:00Z,2026-10-01T05:00:00Z,2026-10-01T06:00:00Z,2026-10-01T07:00:00Z,2026-10-01T08:00:00Z,2026-10-01T09:00:00Z"
         )
