@@ -2,6 +2,7 @@
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
 
+import json
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
@@ -104,3 +105,20 @@ class TestMetadataRequest:
             "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_modelruns_080.json",
             "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&DIM_reference_time=2026-09-28T08:00:00Z",
         )
+
+    def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes(self):
+        """
+        This checks that many reference times are returned as an interval in the GetMetadata response.
+        """
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw_manymodelruns", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
+        filename = "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes.json"
+        run_adaguc_and_compare_json(
+            env,
+            filename,
+            "dataset=adaguc.tests.arcus_uwcw_manymodelruns&&service=WMS&request=GetMetadata&format=application/json",
+        )
+        with open(self.testresultspath + filename, encoding="utf-8") as f:
+            metadata = json.load(f)
+        reference_time = metadata["adaguc.tests.arcus_uwcw_manymodelruns"]["air_temperature"]["dims"]["reference_time"]
+        assert reference_time["values"] == "2026-09-30T12:00:00Z/2026-10-01T09:00:00Z/PT1H"
