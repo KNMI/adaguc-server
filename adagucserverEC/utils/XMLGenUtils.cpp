@@ -439,12 +439,11 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
   return dim;
 }
 
-// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units
+// Time dimensions are time, or dimensions configured with a time type or ISO8601 units
 bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
   const auto &name = cfgDim->attr.name;
   const auto &type = cfgDim->attr.type;
-  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" ||
-         (CT::indexOf(name, "time") >= 0 && cfgDim->attr.units == "ISO8601");
+  return name == "time" || type == "dimtype_time";
 }
 
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
