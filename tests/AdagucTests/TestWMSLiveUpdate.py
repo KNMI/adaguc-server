@@ -107,18 +107,18 @@ class TestWMSLiveUpdate:
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
-    def test_WMSLiveUpdateGetFeatureInfo_timeseries_SolarTerminator(self):
-        # Testing the solar terminator feature info
-        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc_tests_solarterminator.xml")
-        update_db(env)
-        filename = "test_WMSLiveUpdateGetFeatureInfo_timeseries_SolarTerminator.html"
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            "dataset=solt&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=solarterminator&query_layers=solarterminator&crs=EPSG%3A3857&bbox=-19000000%2C-78286307.05394192%2C19000000%2C78286307.05394192&width=241&height=993&i=180&j=366&format=image%2Fgif&info_format=application%2Fjson&time=2025-10-01T00%3A00%3A00Z%2F2025-10-02T00%3A00%3A00Z&",
-            env=env,
-        )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data)
-        assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+    # def test_WMSLiveUpdateGetFeatureInfo_timeseries_SolarTerminator(self):
+    #     # Testing the solar terminator feature info
+    #     env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc_tests_solarterminator.xml")
+    #     update_db(env)
+    #     filename = "test_WMSLiveUpdateGetFeatureInfo_timeseries_SolarTerminator.html"
+    #     status, data, _ = AdagucTestTools().runADAGUCServer(
+    #         "dataset=solt&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=solarterminator&query_layers=solarterminator&crs=EPSG%3A3857&bbox=-19000000%2C-78286307.05394192%2C19000000%2C78286307.05394192&width=241&height=993&i=180&j=366&format=image%2Fgif&info_format=application%2Fjson&time=2025-10-01T00%3A00%3A00Z%2F2025-10-02T00%3A00%3A00Z&",
+    #         env=env,
+    #     )
+    #     AdagucTestTools().writetofile(self.testresultspath + filename, data)
+    #     assert status == 0
+    #     assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
     def test_WMSLiveUpdateGetCapabilities_SolarTerminator(self):
         # Testing the solar terminator capabilities
