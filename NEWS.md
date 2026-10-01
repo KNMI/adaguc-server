@@ -1,3 +1,7 @@
+**Version 9.0.2**
+
+- Patch for incorrectly making an interval for the reference time dimension
+
 **Version 9.0.1**
 
 - Added fork server. See [fork-server.md](/doc/fork_server.md). Optional, can be enabled by setting `ADAGUC_FORK_ENABLE=TRUE`. Enabling this makes adaguc run a persistent fork server. This reduces process startup overhead, which improves performance.
