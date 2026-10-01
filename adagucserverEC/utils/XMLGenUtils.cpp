@@ -495,7 +495,7 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
         CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
       }
       // Only time dimensions can get an auto calculated interval
-      const std::string interval = cfgDim->attr.name == "time" && isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
+      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;

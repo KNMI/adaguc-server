@@ -121,7 +121,4 @@ class TestMetadataRequest:
         with open(self.testresultspath + filename, encoding="utf-8") as f:
             metadata = json.load(f)
         reference_time = metadata["adaguc.tests.arcus_uwcw_manymodelruns"]["air_temperature"]["dims"]["reference_time"]
-        assert (
-            reference_time["values"]
-            == "2026-09-30T12:00:00Z,2026-09-30T13:00:00Z,2026-09-30T14:00:00Z,2026-09-30T15:00:00Z,2026-09-30T16:00:00Z,2026-09-30T17:00:00Z,2026-09-30T18:00:00Z,2026-09-30T19:00:00Z,2026-09-30T20:00:00Z,2026-09-30T21:00:00Z,2026-09-30T22:00:00Z,2026-09-30T23:00:00Z,2026-10-01T00:00:00Z,2026-10-01T01:00:00Z,2026-10-01T02:00:00Z,2026-10-01T03:00:00Z,2026-10-01T04:00:00Z,2026-10-01T05:00:00Z,2026-10-01T06:00:00Z,2026-10-01T07:00:00Z,2026-10-01T08:00:00Z,2026-10-01T09:00:00Z"
-        )
+        assert reference_time["values"] == "2026-09-30T12:00:00Z/2026-10-01T09:00:00Z/PT1H"
