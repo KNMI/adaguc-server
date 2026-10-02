@@ -1,6 +1,10 @@
 **Version 9.0.3**
 
-- `bash compile.sh --debug --measuretime` now creates an exutable that outputs detailed timing statistics in the logs
+- `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
+- Faster rendering of large images (over 1 megapixel) with the generic renderer: the reprojected grid and the contour lines are drawn with multiple threads. A 126 megapixel image with shaded contours now renders in ~1.9 s instead of ~4.8 s. The output is unchanged.
+- Faster WebP encoding: the RGB to YUV conversion is done with multiple threads
+- Faster contour line calculation and triangle drawing in the generic data warper
+- Fixed autowms path check failing when the configured data directory contains double slashes
 
 **Version 9.0.2**
 
