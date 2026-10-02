@@ -37,8 +37,6 @@
 #include "CStopWatch.h"
 #include "CTime.h"
 
-static bool measureTime = false;
-
 static std::vector<std::string> variablesNotToConvert = {
     "time2D", "time", "lon", "lat", "x", "y", "lat_bnds", "lon_bnds", "custom", "projection", "product", "iso_dataset", "tile_properties", "forecast_reference_time"};
 
@@ -126,9 +124,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     return 1;
   }
 
-  if (measureTime) {
-    StopWatch_Stop("ADAGUC POINT DATA");
-  }
+  StopWatch_Measure("ADAGUC POINT DATA");
   if (pointLon->readData(CDF_FLOAT, true) != 0) {
     CDBError("Unable to read lon data");
     return 1;
@@ -138,9 +134,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     return 1;
   }
 
-  if (measureTime) {
-    StopWatch_Stop("DATA READ");
-  }
+  StopWatch_Measure("DATA READ");
   MinMax lonMinMax;
   MinMax latMinMax;
   lonMinMax.min = -180; // Initialize to whole world
@@ -151,9 +145,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     lonMinMax = getMinMax(pointLon);
     latMinMax = getMinMax(pointLat);
   }
-  if (measureTime) {
-    StopWatch_Stop("MIN/MAX Calculated");
-  }
+  StopWatch_Measure("MIN/MAX Calculated");
   // Default size of adaguc 2dField is 2x2
   int width = 2;
   int height = 2;
@@ -166,9 +158,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   CDF::Variable *varX = createOrUpdateCoordinateVariable(cdfObject, "x", width, offsetX, cellSizeX);
   CDF::Variable *varY = createOrUpdateCoordinateVariable(cdfObject, "y", height, offsetY, cellSizeY);
 
-  if (measureTime) {
-    StopWatch_Stop("2D Coordinate dimensions created");
-  }
+  StopWatch_Measure("2D Coordinate dimensions created");
 
   // Make a list of variables which will be available as 2D fields
   std::vector<std::string> varsToConvert;
@@ -188,9 +178,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     createTwoDVariableFromPointVariable(cdfObject, cdfObject->getVar(varToConvert), varX, varY);
   }
 
-  if (measureTime) {
-    StopWatch_Stop("Header done");
-  }
+  StopWatch_Measure("Header done");
 
   return 0;
 }
@@ -205,9 +193,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     return 1;
   }
 
-  if (measureTime) {
-    StopWatch_Stop("Reading data");
-  }
+  StopWatch_Measure("Reading data");
 
   CDF::Variable *pointLon = cdfObject0->getVar("lon");
   CDF::Variable *pointLat = cdfObject0->getVar("lat");
@@ -283,9 +269,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     return 1;
   }
 
-  if (measureTime) {
-    StopWatch_Stop("Lat and lon read");
-  }
+  StopWatch_Measure("Lat and lon read");
 
   // Reads the actual data for data object d's point variable: figures out the station dimension
   // index, sets up start/count/stride for it, and reads FLOAT, CDF_CHAR (fixed-width strings, LCW
@@ -342,9 +326,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     }
   }
 
-  if (measureTime) {
-    StopWatch_Stop("Variables read");
-  }
+  StopWatch_Measure("Variables read");
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     if (pointVar[d] != NULL) {
@@ -356,9 +338,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     }
   }
 
-  if (measureTime) {
-    StopWatch_Stop("FillValues set");
-  }
+  StopWatch_Measure("FillValues set");
 
   // Set statistics
   if (dataSource->stretchMinMax) {
@@ -369,9 +349,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     }
   }
 
-  if (measureTime) {
-    StopWatch_Stop("Statistics set");
-  }
+  StopWatch_Measure("Statistics set");
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->geoParams.width;
@@ -390,9 +368,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     createOrUpdateCoordinateVariable(cdfObject0, "x", dataSource->dWidth, offsetX, cellSizeX);
     createOrUpdateCoordinateVariable(cdfObject0, "y", dataSource->dHeight, offsetY, cellSizeY);
 
-    if (measureTime) {
-      StopWatch_Stop("Dimensions set");
-    }
+    StopWatch_Measure("Dimensions set");
     dataSource->hasFieldData = false;
     // // Allocate 2D field
 
@@ -400,9 +376,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     //   }
     // }
 
-    if (measureTime) {
-      StopWatch_Stop("2D Field allocated");
-    }
+    StopWatch_Measure("2D Field allocated");
 
     float *lonData = (float *)pointLon->data;
     float *latData = (float *)pointLat->data;
@@ -479,9 +453,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       }
     }
 
-    if (measureTime) {
-      CDBDebug("Date numStations = %d", numStations);
-    }
+    StopWatch_Measure("Date numStations = %d", numStations);
 
     /**
      * The following code is for
@@ -621,9 +593,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       }
     }
 
-    if (measureTime) {
-      StopWatch_Stop("Points added");
-    }
+    StopWatch_Measure("Points added");
     imageWarper.closereproj();
   }
 
