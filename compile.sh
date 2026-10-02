@@ -71,26 +71,39 @@ function build {
 
 }
 
+# --measuretime can be combined with the other build options, e.g. ./compile.sh --debug --measuretime
+MEASURETIME=OFF
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--measuretime" ]; then
+    MEASURETIME=ON
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+
 mkdir -p $CURRENTDIR/bin
 cd $CURRENTDIR/bin
+echo "MEASURETIME timing output: ${MEASURETIME}"
 if [ "$*" = "--clean" ]; then
   echo "Cleaning"
   clean
 elif [ "$*" = "--debug" ]; then
   echo "Making Debug build"
-  cmake -DCMAKE_BUILD_TYPE=Debug  ..
+  cmake -DCMAKE_BUILD_TYPE=Debug -DADAGUC_MEASURETIME=${MEASURETIME} -S .. -B .
   build; res=$?; exit $res;
 elif [ "$*" = "--sanitize" ]; then
   echo "Making sanitize build"
-  cmake -DCMAKE_BUILD_TYPE=Sanitize ..
+  cmake -DCMAKE_BUILD_TYPE=Sanitize  -S .. -B .
   build; res=$?; exit $res;
 elif [ "$*" = "--profile" ]; then
   echo "Making profile build"
-  cmake -DCMAKE_BUILD_TYPE=Profile ..
+  cmake -DCMAKE_BUILD_TYPE=Profile -S .. -B .
   build 
 elif [ "$*" = "" ]; then
   echo "Making Release build!"
-  cmake -DCMAKE_BUILD_TYPE=Release ..
+  cmake -DCMAKE_BUILD_TYPE=Release -DADAGUC_MEASURETIME=${MEASURETIME} -S .. -B .
   build; res=$?; exit $res;
 else
   echo "Unrecognized build type"

@@ -11,6 +11,7 @@
 #include "CImageWarper.h"
 #include "CTString.h"
 #include "CXMLParser.h"
+#include "CStopWatch.h"
 
 std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvParam) {
   std::vector<std::string> datasetList;
@@ -51,18 +52,14 @@ int setCRequestConfigFromEnvironment(CRequest *request, std::string additionalDa
       configWithAdditionalDataset += additionalDataset;
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("Start parseAndCheckConfigFile");
-#endif
+    StopWatch_Measure("Start parseAndCheckConfigFile");
     int status = parseAndCheckConfigFile(configWithAdditionalDataset, request->getServerParams());
 
     /* Check logging level */
     if (request->getServerParams()->isDebugLoggingEnabled() == false) {
       setDebugFunction(serverLogFunctionNothing);
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("Done parseAndCheckConfigFile");
-#endif
+    StopWatch_Measure("Done parseAndCheckConfigFile");
     return status;
   } else {
     CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");
@@ -79,9 +76,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   // The configfile can be a comma separated list of configuration files
   std::vector<std::string> configFileList = CT::split(configFile, ",");
 
-#ifdef MEASURETIME
-  StopWatch_Stop("!start first parseConfigFile %s", configFile.c_str());
-#endif
+  StopWatch_Measure("Start first parseConfigFile %s", configFile.c_str());
 
   // Parse the main configuration file
   int status = srvParam->parseConfigFile(configFileList[0]);
@@ -93,9 +88,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   srvParam->configFileName = configFile;
   srvParam->cfg = &srvParam->configObj.Configuration[0];
 
-#ifdef MEASURETIME
-  StopWatch_Stop("!start next parseConfigFile");
-#endif
+  StopWatch_Measure("Start next parseConfigFile");
   // Include additional config files given as argument
   if (configFileList.size() > 1) {
     for (size_t j = 1; j < configFileList.size() - 1; j++) {
@@ -104,9 +97,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
       }
 
       status = srvParam->parseConfigFile(configFileList[j]);
-#ifdef MEASURETIME
-      StopWatch_Stop("!done  %s", configFileList[j].c_str());
-#endif
+      StopWatch_Measure("!done  %s", configFileList[j].c_str());
       if (status != 0) {
         CDBError("There is an error with include '%s'", configFileList[j].c_str());
         return 1;
@@ -120,14 +111,10 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
       CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start configureDataset");
-#endif
+    StopWatch_Measure("start configureDataset");
 
     status = CAutoResource::configureDataset(srvParam, false);
-#ifdef MEASURETIME
-    StopWatch_Stop("done configureDataset");
-#endif
+    StopWatch_Measure("done configureDataset");
     if (status != 0) {
       CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
       return status;
@@ -145,13 +132,9 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
         CDBDebug("Include '%s'", include.attr.location.c_str());
       }
 
-#ifdef MEASURETIME
-      StopWatch_Stop("!start  %s", include->attr.location.c_str());
-#endif
+      StopWatch_Measure("Start parseConfigFile  %s", include.attr.location.c_str());
       status = srvParam->parseConfigFile(include.attr.location);
-#ifdef MEASURETIME
-      StopWatch_Stop("!done  %s", include->attr.location.c_str());
-#endif
+      StopWatch_Measure("Done parseConfigFile %s", include.attr.location.c_str());
       if (status != 0) {
         CDBError("There is an error with include '%s'", include.attr.location.c_str());
         return 1;

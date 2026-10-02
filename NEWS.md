@@ -1,3 +1,7 @@
+**Version 9.0.3**
+
+- `bash compile.sh --debug --measuretime` now creates an exutable that outputs detailed timing statistics in the logs
+
 **Version 9.0.2**
 
 - Patch for incorrectly making an interval for the reference time dimension
