@@ -798,9 +798,78 @@ void CCairoPlotter::setToSurface(cairo_surface_t *png) {
 #include "webp/decode.h"
 #include "webp/types.h"
 
+#include <algorithm>
+#include <cstring>
+#include <thread>
+
 static int MyWriter(const uint8_t *data, size_t data_size, const WebPPicture *const pic) {
   FILE *const out = (FILE *)pic->custom_ptr;
   return data_size ? (fwrite(data, data_size, 1, out) == 1) : 1;
+}
+
+// Import BGRA into a YUV(A) picture, with the RGB to YUV conversion done in horizontal bands on multiple threads.
+// Each band is imported in its own WebPPicture and copied into the full picture. Bands have an even height, so the 2x2 chroma blocks never cross bands
+// and the result is identical to a single WebPPictureImportBGRA call.
+static bool importBGRAThreaded(WebPPicture *picture, const uint8_t *bgra, int stride, int numThreads) {
+  int width = picture->width;
+  int height = picture->height;
+  int bandHeight = ((height + numThreads - 1) / numThreads + 1) & ~1;
+  int numBands = (height + bandHeight - 1) / bandHeight;
+  std::vector<WebPPicture> bands(numBands);
+  std::vector<int> bandOk(numBands, 0);
+  std::vector<std::thread> threads;
+  for (int b = 0; b < numBands; b++) {
+    threads.emplace_back([&, b]() {
+      WebPPicture &band = bands[b];
+      WebPPictureInit(&band);
+      band.use_argb = 0;
+      band.width = width;
+      int top = b * bandHeight;
+      band.height = std::min(bandHeight, height - top);
+      bandOk[b] = WebPPictureImportBGRA(&band, bgra + (size_t)top * stride, stride);
+    });
+  }
+  for (auto &thread: threads) {
+    thread.join();
+  }
+
+  bool ok = true;
+  bool hasAlpha = false;
+  for (int b = 0; b < numBands; b++) {
+    if (!bandOk[b]) ok = false;
+    if (bands[b].a != nullptr) hasAlpha = true;
+  }
+  picture->use_argb = 0;
+  picture->colorspace = hasAlpha ? WEBP_YUV420A : WEBP_YUV420;
+  if (ok && !WebPPictureAlloc(picture)) ok = false;
+  int uvWidth = (width + 1) / 2;
+  for (int b = 0; b < numBands; b++) {
+    WebPPicture &band = bands[b];
+    if (ok) {
+      int top = b * bandHeight;
+      for (int y = 0; y < band.height; y++) {
+        memcpy(picture->y + (size_t)(top + y) * picture->y_stride, band.y + (size_t)y * band.y_stride, width);
+      }
+      int uvRows = (band.height + 1) / 2;
+      for (int y = 0; y < uvRows; y++) {
+        memcpy(picture->u + (size_t)(top / 2 + y) * picture->uv_stride, band.u + (size_t)y * band.uv_stride, uvWidth);
+        memcpy(picture->v + (size_t)(top / 2 + y) * picture->uv_stride, band.v + (size_t)y * band.uv_stride, uvWidth);
+      }
+      if (hasAlpha) {
+        // A band without transparency has no alpha plane, it is fully opaque.
+        for (int y = 0; y < band.height; y++) {
+          uint8_t *alphaRow = picture->a + (size_t)(top + y) * picture->a_stride;
+          if (band.a != nullptr) {
+            memcpy(alphaRow, band.a + (size_t)y * band.a_stride, width);
+          } else {
+            memset(alphaRow, 255, width);
+          }
+        }
+      }
+    }
+    WebPPictureFree(&band);
+  }
+  return ok;
 }
 
 #endif
@@ -824,24 +893,39 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
   config.preprocessing = 0;                 // preprocessing filter (0=none, 1=segment-smooth)
   config.partitions = 0;                    // log2(number of token partitions) in [0..3] Default is set to 0 for easier progressive decoding.
   config.partition_limit = 100;             // quality degradation allowed to fit the 512k limit on prediction modes coding (0: no degradation, 100: maximum possible degradation).
-  picture.use_argb = 1;                     // To select between ARGB and YUVA input.
+  // Lossless needs ARGB input. For lossy, YUVA input is faster: the RGB to YUV conversion is then done during import, which can be multithreaded.
+  // The encoded result is the same for both.
+  picture.use_argb = config.lossless ? 1 : 0; // To select between ARGB and YUVA input.
   config.thread_level = 1;
   picture.width = width;
   picture.height = height;
   picture.writer = MyWriter;
   picture.custom_ptr = (void *)fp;
-  if (!WebPPictureAlloc(&picture)) return; // memory error
 
   if (!WebPValidateConfig(&config)) {
     CDBError("Error! Invalid configuration.");
     return;
   }
 
-  WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
+  StopWatch_Measure("writeToWebP32Stream: start import %dx%d", width, height);
+  bool importOk = false;
+  if (picture.use_argb) {
+    importOk = WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
+  } else {
+    int numThreads = std::max(1, std::min(8, (int)std::thread::hardware_concurrency()));
+    importOk = importBGRAThreaded(&picture, ARGBByteBuffer, stride, numThreads);
+  }
+  if (!importOk) {
+    CDBError("Error! Cannot import picture for WebP");
+    WebPPictureFree(&picture);
+    return;
+  }
+  StopWatch_Measure("writeToWebP32Stream: done import, start encode");
 
   if (!WebPEncode(&config, &picture)) {
     CDBError("Error!  Cannot encode picture as WebP");
   }
+  StopWatch_Measure("writeToWebP32Stream: done encode");
   WebPPictureFree(&picture);
 
 #else
