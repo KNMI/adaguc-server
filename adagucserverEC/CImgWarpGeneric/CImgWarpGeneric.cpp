@@ -42,11 +42,17 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "CDrawFunction.h"
+#include "CStopWatch.h"
+
+// Draw the quads of the generic data warper and fill the contour distance field with multiple threads for large images
+// (see GenericDataWarper::drawFunctionIsThreadSafe and drawContour). Comment out to use a single thread.
+#define GENERICDATAWARPER_MULTITHREADED
 
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
 
-MemoizationForDeterminePixelColorFromValue memo;
+// thread_local, because the draw functions can be called from multiple threads (see GENERICDATAWARPER_MULTITHREADED)
+thread_local MemoizationForDeterminePixelColorFromValue memo;
 template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
@@ -194,6 +200,10 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
+#ifdef GENERICDATAWARPER_MULTITHREADED
+  // The nearest and bilinear draw functions only write to their own destination pixel. Smoothing fills a shared memo, so then it is not thread safe.
+  genericDataWarper.drawFunctionIsThreadSafe = settings.smoothingFiter == 0;
+#endif
 
   if (!settings.drawgridboxoutline) {
     if (settings.interpolationMethod == InterpolationMethodNearest) {
@@ -219,13 +229,20 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     }
 
     if (styleConfiguration->contourLines.size() > 0) {
+      StopWatch_Measure("CImgWarpGeneric: start drawContour");
+#ifdef GENERICDATAWARPER_MULTITHREADED
+      drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration, true);
+#else
       drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
+#endif
+      StopWatch_Measure("CImgWarpGeneric: done drawContour");
     }
   }
 
   // Draw grid outlines
   if (settings.drawgridboxoutline) {
     genericDataWarper.useHalfCellOffset = false;
+    genericDataWarper.drawFunctionIsThreadSafe = false;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings); });

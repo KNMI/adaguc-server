@@ -55,7 +55,7 @@ void StopWatch_Start() {
   CSTOPWATCH_H_prevTime = stop;
 }
 
-void __StopWatch_Stop(const char *msg) {
+void _printStopWatchTime() {
 #if _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &stoptime);
 #else
@@ -64,6 +64,10 @@ void __StopWatch_Stop(const char *msg) {
   stoptime.tv_sec = tv.tv_sec;
   stoptime.tv_nsec = tv.tv_usec * 1000;
 #endif
+  // If StopWatch_Start was never called, start counting from the first timed message
+  if (starttime.tv_sec == 0 && starttime.tv_nsec == 0) {
+    starttime = stoptime;
+  }
   double start, stop;
   start = double(starttime.tv_nsec) / 1000000 + starttime.tv_sec * 1000;
   stop = double(stoptime.tv_nsec) / 1000000 + stoptime.tv_sec * 1000;
@@ -71,11 +75,18 @@ void __StopWatch_Stop(const char *msg) {
     CSTOPWATCH_H_prevTime = stop;
     firstTime = 1;
   }
-  _printDebugLine("[T] %5.1f ms %5.3f ms: %s", stop - start, stop - CSTOPWATCH_H_prevTime, msg);
+  char buf[64];
+  snprintf(buf, sizeof(buf), "[T] %5.1f ms %5.3f ms: ", stop - start, stop - CSTOPWATCH_H_prevTime);
+  printDebugStream(buf);
   CSTOPWATCH_H_prevTime = stop;
 }
 
-void _StopWatch_Stop(const char *a, ...) {
+void __StopWatch_Measure(const char *msg) {
+  _printStopWatchTime();
+  _printDebugLine("%s", msg);
+}
+
+void _StopWatch_Measure(const char *a, ...) {
   std::vector<char> buf(300 + 1);
   va_list ap;
   va_start(ap, a);
@@ -88,5 +99,5 @@ void _StopWatch_Stop(const char *a, ...) {
     vsnprintf(&buf[0], buf.size(), a, ap);
     va_end(ap);
   }
-  __StopWatch_Stop(std::string(buf.begin(), buf.end()).c_str());
+  __StopWatch_Measure(std::string(buf.begin(), buf.end()).c_str());
 }

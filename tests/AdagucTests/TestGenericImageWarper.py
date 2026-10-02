@@ -110,6 +110,34 @@ class TestGenericImageWarper:
             maxAllowedColorPercentage=0.02,
         )
 
+    @pytest.mark.parametrize(
+        ("filetocheck", "styles"),
+        [
+            ("ahn_utrechtseheuvelrug_500m_large_bilinear.png", "style_colormapped_bilinear_elevation"),
+            ("ahn_utrechtseheuvelrug_500m_large_nearest.png", "style_colormapped_nearest_elevation"),
+            ("ahn_utrechtseheuvelrug_500m_large_bilinear_contours.png", "style_colormapped_bilinear_multicolor_contours"),
+        ],
+    )
+    def test_GenericImageWarperOnAHNDataset_large(self, filetocheck: str, styles: str):
+        """Images larger than one megapixel are drawn with multiple threads, also the contour lines (GENERICDATAWARPER_MULTITHREADED). The output should be identical to one thread"""
+        AdagucTestTools().cleanTempDir()
+
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml"
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        assert status == 0
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            f"LAYERS=ahn_utrechtseheuvelrug_500m&STYLES={styles}&DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=1200&HEIGHT=1000&CRS=EPSG%3A3857&BBOX=590359.2826213799,6784102.0088095935,707368.84890462,6894816.225400406&FORMAT=image/png&TRANSPARENT=TRUE",
+            env=env,
+            showLog=False,
+        )
+
+        AdagucTestTools().writetofile(self.testresultspath + filetocheck, data)
+
+        assert status == 0
+        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filetocheck)
+
     def test_getmap_latlon_latdecreasing_and_increasing_genericbilinear(self):
         """
         Test rendering of data aligned upwards and downwards with bilinear interpolation

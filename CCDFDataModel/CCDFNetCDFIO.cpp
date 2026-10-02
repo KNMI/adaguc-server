@@ -29,7 +29,6 @@
 #include <cstring>
 #include "traceTimings/traceTimings.h"
 
-// #define MEASURETIME
 
 #define CDFNetCDFGroupSeparator "/"
 
@@ -53,9 +52,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { retur
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
   int nDims, nVars, nRootAttributes, unlimDimIdP;
 
-#ifdef MEASURETIME
-  StopWatch_Stop(">CDFNetCDFReader::_readVariableData");
-#endif
+  StopWatch_Measure(">CDFNetCDFReader::_readVariableData");
 
   if (root_id == -1) {
     if (CCDFNETCDFIO_DEBUG_OPEN) {
@@ -211,9 +208,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("<CDFNetCDFReader::_readVariableData");
-#endif
+    StopWatch_Measure("<CDFNetCDFReader::_readVariableData");
     return 0;
   }
 
@@ -329,9 +324,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   if (CCDFNETCDFIO_DEBUG) {
     CDBDebug("Ready.");
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("<CDFNetCDFReader::_readVariableData");
-#endif
+  StopWatch_Measure("<CDFNetCDFReader::_readVariableData");
   return 0;
 }
 
@@ -514,9 +507,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       CDBError("readDimensions failed for group [%s]", groupName.c_str());
       return 1;
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("readDim");
-#endif
+    StopWatch_Measure("readDim");
     return 0;
   }
 
@@ -711,18 +702,14 @@ int CDFNetCDFReader::open(const char *fileName) {
     return 1;
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("CDFNetCDFReader open file\n");
-#endif
+  StopWatch_Measure("CDFNetCDFReader open file\n");
   int nDims, nVars, nRootAttributes, unlimDimIdP;
   status = nc_inq(root_id, &nDims, &nVars, &nRootAttributes, &unlimDimIdP);
   if (status != NC_NOERR) {
     CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq: ", status);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("NC_INQ");
-#endif
+  StopWatch_Measure("NC_INQ");
 
   // First readdims
   std::string groupName = "";
@@ -738,17 +725,13 @@ int CDFNetCDFReader::open(const char *fileName) {
   traceTimingsSpanEnd(TraceTimingType::FSNCREADVARS);
   if (status != 0) return 1;
 
-#ifdef MEASURETIME
-  StopWatch_Stop("readVar");
-#endif
+  StopWatch_Measure("readVar");
 
   traceTimingsSpanStart(TraceTimingType::FSNCREADATTRS);
   status = readAttributes(root_id, cdfObject->attributes, NC_GLOBAL, nRootAttributes);
   traceTimingsSpanEnd(TraceTimingType::FSNCREADATTRS);
   if (status != 0) return 1;
-#ifdef MEASURETIME
-  StopWatch_Stop("readAttr");
-#endif
+  StopWatch_Measure("readAttr");
   return 0;
 }
 

@@ -40,6 +40,7 @@
 #include "Types/GeoParameters.h"
 #include "CTime.h"
 #include "CCDFDataModel.h"
+#include "CStopWatch.h"
 
 #include <cinttypes>
 
@@ -212,9 +213,7 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   std::string inputjsondata = (char *)jsonVar->data;
   json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 
-#ifdef MEASURETIME
-  StopWatch_Stop("GeoJSON DATA");
-#endif
+  StopWatch_Measure("GeoJSON DATA");
 
   if (json == 0) {
     CDBDebug("Error parsing jsonfile");
@@ -237,13 +236,9 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   featureStore[geojsonkey] = features;
 
   json_value_free(json);
-#ifdef MEASURETIME
-  StopWatch_Stop("DATA READ");
-#endif
+  StopWatch_Measure("DATA READ");
 
-#ifdef MEASURETIME
-  StopWatch_Stop("BBOX Calculated");
-#endif
+  StopWatch_Measure("BBOX Calculated");
 
   if (CCONVERTGEOJSON_DEBUG) {
     CDBDebug("CConvertGeoJSON::convertGeoJSONHeader() done");
@@ -1063,9 +1058,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       // Fill the data with the nodatavalue
       CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject.dfNodataValue, fieldSize);
 
-#ifdef MEASURETIME
-      StopWatch_Stop("GeoJSON DATA");
-#endif
+      StopWatch_Measure("GeoJSON DATA");
 
       if (CCONVERTGEOJSON_DEBUG) {
         CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
@@ -1082,13 +1075,9 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         }
       }
 
-#ifdef MEASURETIME
-      StopWatch_Stop("Iterating lat/lon data");
-#endif
+      StopWatch_Measure("Iterating lat/lon data");
 
-#ifdef MEASURETIME
-      StopWatch_Stop("Feature drawing starts");
-#endif
+      StopWatch_Measure("Feature drawing starts");
 
       unsigned short int featureIndex = 0;
       float min = NAN;
@@ -1114,9 +1103,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
         }
       }
 
-#ifdef MEASURETIME
-      StopWatch_Stop("Feature drawing done");
-#endif
+      StopWatch_Measure("Feature drawing done");
       if (CCONVERTGEOJSON_DEBUG) {
         CDBDebug("/convertGEOJSONData");
       }
@@ -1215,9 +1202,7 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
         holeArray[h].projectedHoleXY[j * 2] = dlon;
         holeArray[h].projectedHoleXY[j * 2 + 1] = dlat;
 
-#ifdef MEASURETIME
-        StopWatch_Stop("Feature drawn %d", featureIndex);
-#endif
+        StopWatch_Measure("Feature drawn %d", featureIndex);
       }
       h++;
     }
