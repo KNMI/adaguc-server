@@ -76,7 +76,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   // The configfile can be a comma separated list of configuration files
   std::vector<std::string> configFileList = CT::split(configFile, ",");
 
-  StopWatch_Measure("!start first parseConfigFile %s", configFile.c_str());
+  StopWatch_Measure("Start first parseConfigFile %s", configFile.c_str());
 
   // Parse the main configuration file
   int status = srvParam->parseConfigFile(configFileList[0]);
@@ -88,7 +88,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   srvParam->configFileName = configFile;
   srvParam->cfg = &srvParam->configObj.Configuration[0];
 
-  StopWatch_Measure("!start next parseConfigFile");
+  StopWatch_Measure("Start next parseConfigFile");
   // Include additional config files given as argument
   if (configFileList.size() > 1) {
     for (size_t j = 1; j < configFileList.size() - 1; j++) {
