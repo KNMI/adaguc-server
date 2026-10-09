@@ -8,9 +8,6 @@
 #include <proj.h>
 #include <cfloat>
 #include <algorithm>
-#include <atomic>
-#include <chrono>
-#include <thread>
 #include <vector>
 #include "CImageWarper.h"
 #include "Types/GeoParameters.h"
@@ -19,7 +16,6 @@
 #include "utils/projectionUtils.h"
 #include "GenericDataWarper/GDWState.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
-#include "utils/ThreadUtils.h"
 
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
@@ -54,10 +50,6 @@ public:
   GenericDataWarper() = default;
   ~GenericDataWarper();
   bool useHalfCellOffset = false;
-  // Set to true when the drawFunction only writes to the destination pixel (x, y) it is called for, and uses no other shared state.
-  // Then the quads in warpTransformGrid are drawn with multiple threads when the destination grid is larger than one megapixel.
-  // Each thread draws bands of destination rows, the result is identical to drawing with one thread.
-  bool drawFunctionIsThreadSafe = false;
   // The drawFunction is a template parameter (instead of std::function), so that it can be inlined in the pixel loops.
   // It is called with the signature void(int x, int y, T value, GDWState &warperState).
   template <typename T, typename DrawFn> int render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams, const DrawFn &drawFunction);
@@ -179,7 +171,7 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 // Warp the grid from the source projection to the destination projection.
 template <typename T, typename DrawFn>
 void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
-                       const DrawFn &drawFunction, int numThreads) {
+                       const DrawFn &drawFunction) {
 
   StopWatch_Measure("[warpTransformGrid] source %dx%d dest %dx%d", warperState.sourceGridWidth, warperState.sourceGridHeight, warperState.destGridWidth, warperState.destGridHeight);
   bool debug = false;
@@ -275,8 +267,7 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
     }
   }
 
-  // Draws all quads, but only the destination rows in [bandTop, bandBottom). The state is a per thread copy of warperState.
-  auto drawQuads = [&](GDWState &state, int bandTop, int bandBottom) {
+  auto drawQuads = [&](GDWState &state) {
     double avgDX = 0;
     double avgDY = 0;
     double pLengthD = 0;
@@ -359,47 +350,16 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
             const double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
             const double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
             const double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
-            gdwDrawTriangle(xCornersA, yCornersA, value, false, state, drawFunction, bandTop, bandBottom);
-            gdwDrawTriangle(xCornersB, yCornersB, value, true, state, drawFunction, bandTop, bandBottom);
+            gdwDrawTriangle(xCornersA, yCornersA, value, false, state, drawFunction);
+            gdwDrawTriangle(xCornersB, yCornersB, value, true, state, drawFunction);
           }
         }
       }
     }
   };
 
-  StopWatch_Measure("warpTransformGrid: start drawing %dx%d quads with %d thread(s)", dataWidth, dataHeight, numThreads);
-  if (numThreads <= 1) {
-    drawQuads(warperState, 0, warperState.destGridHeight);
-  } else {
-    // The destination rows are divided in bands. Each thread takes the next free band until all bands are drawn, so faster cores draw more bands.
-    // Within a band the pixels are drawn in the same order as with one thread, so the result is identical.
-    int destHeight = warperState.destGridHeight;
-    int numBands = numThreads * 4;
-    int bandHeight = (destHeight + numBands - 1) / numBands;
-    std::atomic<int> nextBand(0);
-    std::vector<double> threadMs(numThreads, 0);
-    std::vector<std::thread> threads;
-    for (int t = 0; t < numThreads; t++) {
-      threads.emplace_back([&, t]() {
-        auto start = std::chrono::steady_clock::now();
-        // Each thread has its own copy of the state on its own stack. The state is written for every pixel, a shared array would make threads compete for the same cache lines.
-        GDWState state = warperState;
-        for (int band = nextBand++; band < numBands; band = nextBand++) {
-          int bandTop = band * bandHeight;
-          int bandBottom = std::min(destHeight, bandTop + bandHeight);
-          if (bandTop < bandBottom) {
-            drawQuads(state, bandTop, bandBottom);
-          }
-        }
-        threadMs[t] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-      });
-    }
-    for (auto &thread: threads) {
-      thread.join();
-    }
-    StopWatch_Measure("warpTransformGrid: %d bands, thread times fastest %.1f ms, slowest %.1f ms", numBands, *std::min_element(threadMs.begin(), threadMs.end()),
-                      *std::max_element(threadMs.begin(), threadMs.end()));
-  }
+  StopWatch_Measure("warpTransformGrid: start drawing %dx%d quads", dataWidth, dataHeight);
+  drawQuads(warperState);
   StopWatch_Measure("warpTransformGrid: done drawing quads");
 
   StopWatch_Measure("[/warpTransformGrid]");
@@ -441,11 +401,7 @@ template <typename T, typename DrawFn> int GenericDataWarper::render(CImageWarpe
       CDBDebug("Reprojection required, doing warp transformation");
     }
     /* If geographical map projection is different, we have to transform the grid */
-    int numThreads = 1;
-    if (drawFunctionIsThreadSafe) {
-      numThreads = getNumRenderThreads();
-    }
-    warpTransformGrid<T>(warperState, projectionGrid, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction, numThreads);
+    warpTransformGrid<T>(warperState, projectionGrid, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
   }
 
   StopWatch_Measure("[/GenericDataWarper::render]");

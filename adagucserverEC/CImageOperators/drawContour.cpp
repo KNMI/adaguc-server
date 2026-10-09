@@ -5,12 +5,9 @@
 #include "CDebugger.h"
 #include "CStopWatch.h"
 #include "CTString.h"
-#include "utils/ThreadUtils.h"
 #include <algorithm>
-#include <atomic>
 #include <chrono>
 #include <cstdlib>
-#include <thread>
 
 static const bool CImgWarpBilinear_DEBUG = false;
 
@@ -256,7 +253,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   stats.drawMs += msSince(drawStart);
 }
 
-void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, bool useMultipleThreads) {
+void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
 
   if (styleConfiguration->contourLines.size() == 0) {
     return;
@@ -382,34 +379,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   };
 
   int numRows = dImageHeight - 1;
-  int numThreads = 1;
-  if (useMultipleThreads) {
-    numThreads = getNumRenderThreads();
-  }
-  StopWatch_Measure("drawContour: filling distance field with %d thread(s)", numThreads);
-  if (numThreads <= 1) {
-    fillRows(0, numRows);
-  } else {
-    // The rows are divided in bands, each thread takes the next free band until all bands are filled. Faster cores then fill more bands.
-    int numBands = numThreads * 4;
-    int bandHeight = (numRows + numBands - 1) / numBands;
-    std::atomic<int> nextBand(0);
-    std::vector<std::thread> threads;
-    for (int t = 0; t < numThreads; t++) {
-      threads.emplace_back([&]() {
-        for (int band = nextBand++; band < numBands; band = nextBand++) {
-          int rowStart = band * bandHeight;
-          int rowEnd = std::min(numRows, rowStart + bandHeight);
-          if (rowStart < rowEnd) {
-            fillRows(rowStart, rowEnd);
-          }
-        }
-      });
-    }
-    for (auto &thread: threads) {
-      thread.join();
-    }
-  }
+  StopWatch_Measure("drawContour: filling distance field");
+  fillRows(0, numRows);
 
   StopWatch_Measure("drawContour: done filling distance field");
 

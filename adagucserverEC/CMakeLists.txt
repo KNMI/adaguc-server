@@ -111,8 +111,6 @@ add_library(
     utils/getFeatureInfoVirtualForSolarTerminator.cpp
     utils/GeometryUtils.h
     utils/GeometryUtils.cpp
-    utils/ThreadUtils.h
-    utils/ThreadUtils.cpp
     Types/LayerMetadataType.h
     Types/LayerMetadataType.cpp
     Types/CPointTypes.h
