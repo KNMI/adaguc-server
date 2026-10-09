@@ -65,6 +65,11 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
         ".csv",
     )
 
+    # Collapse repeated slashes first: besides being harmless elsewhere, a leading "//" left over
+    # in sub_path would make os.path.join() below discard data_dir entirely (it resets to an
+    # absolute path whenever its next argument starts with "/"), breaking otherwise valid requests.
+    url_param_path = "/" + "/".join(part for part in url_param_path.split("/") if part)
+
     sub_path = url_param_path.replace(f"{autowms_prefix}/", "")
     sub_path = sub_path.replace(autowms_prefix, "")
     if len(sub_path) != 0:
@@ -73,16 +78,23 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
     browse_path = os.path.realpath(os.path.join(data_dir, sub_path))
     logger.info(f"data_dir={data_dir}, sub_path={sub_path} browse_path={browse_path}")
 
-    # To protect from `../../` path traversals, check if we begin with data_dir
+    # To protect from `../../` path traversals, check if we are inside data_dir.
     # Normalize data_dir the same way as browse_path, so a trailing or double slash in the
-    # configured dir does not cause a false mismatch
+    # configured dir does not cause a false mismatch. A plain startswith() is not enough here:
+    # without the trailing separator it would also match a sibling directory whose name happens
+    # to start with the same characters (e.g. "datasets" vs "datasets_backup").
     real_data_dir = os.path.realpath(data_dir)
-    if not browse_path.startswith(real_data_dir):
+    if browse_path != real_data_dir and not browse_path.startswith(real_data_dir + os.sep):
         logger.error(f"Invalid path detected, used {url_param_path} to get {browse_path}, does not start with {data_dir}")
         raise HTTPException(status_code=400, detail="Invalid path detected")
 
     data = []
-    with os.scandir(browse_path) as entries:
+    try:
+        scandir_entries = os.scandir(browse_path)
+    except (FileNotFoundError, NotADirectoryError) as e:
+        raise HTTPException(status_code=404, detail="Path not found") from e
+
+    with scandir_entries as entries:
         for entry in entries:
             if entry.is_file() and entry.name.lower().endswith(ALLOWED_EXTENSIONS):
                 source = urllib.parse.quote_plus(f"{sub_path}{entry.name}")

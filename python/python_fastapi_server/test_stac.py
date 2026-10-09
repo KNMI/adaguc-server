@@ -114,3 +114,52 @@ def test_stac_item_dataset_xml(client: TestClient):
     item = resp.json()
     assert item["id"] == "adaguc.testautotiling"
     assert item["assets"]["data"]["href"].endswith("dataset=adaguc.testautotiling&")
+
+
+def test_stac_item_tolerates_double_slash(client: TestClient):
+    # A double slash right after the prefix must not desync item lookup from the single-slash
+    # paths list_data_files() returns, and must not make os.path.join() discard the data dir.
+    resp = client.get("/stac/item/adaguc::autowms//alpha-test.png")
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "alpha-test.png"
+
+
+def test_stac_catalog_rejects_percent_encoded_traversal(client: TestClient):
+    resp = client.get("/stac/catalog/adaguc::data/%2e%2e/etc")
+    assert resp.status_code == 400
+
+
+def test_stac_item_rejects_percent_encoded_traversal(client: TestClient):
+    resp = client.get("/stac/item/adaguc::data/%2e%2e/etc/passwd")
+    assert resp.status_code == 400
+
+
+def test_stac_catalog_missing_subdir_is_404_not_500(client: TestClient):
+    resp = client.get("/stac/catalog/adaguc::data/this-subdir-does-not-exist")
+    assert resp.status_code == 404
+
+
+def test_stac_item_missing_subdir_is_404_not_500(client: TestClient):
+    resp = client.get("/stac/item/adaguc::data/this-subdir-does-not-exist/x.nc")
+    assert resp.status_code == 404
+
+
+def test_stac_catalog_rejects_sibling_directory_escape(monkeypatch, tmp_path):
+    # A traversal that lands in a sibling directory sharing a name prefix with the configured
+    # data dir (e.g. "data" vs "data_secret") must still be rejected: a naive startswith()
+    # containment check without a path-separator boundary would wrongly allow this through.
+    sandbox = tmp_path / "data"
+    sandbox.mkdir()
+    secret = tmp_path / "data_secret"
+    secret.mkdir()
+    (secret / "leaked.nc").write_text("secret")
+
+    monkeypatch.setenv("ADAGUC_DATA_DIR", str(sandbox))
+    monkeypatch.setenv("ADAGUC_AUTOWMS_DIR", str(sandbox))
+
+    sandboxed_client = TestClient(app)
+    resp = sandboxed_client.get("/stac/catalog/adaguc::data/%2e%2e/data_secret")
+    assert resp.status_code == 400
+
+    resp = sandboxed_client.get("/stac/item/adaguc::data/%2e%2e/data_secret/leaked.nc")
+    assert resp.status_code == 400

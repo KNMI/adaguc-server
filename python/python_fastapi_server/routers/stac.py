@@ -45,6 +45,13 @@ def guess_media_type(name: str) -> str:
     return "application/octet-stream"
 
 
+def normalize_path(path: str) -> str:
+    """Collapse repeated/leading/trailing slashes into a single leading-slash form, so an
+    accidental double slash in the URL does not desync href matching elsewhere in this module
+    from the single-slash paths list_data_files() returns"""
+    return "/" + "/".join(part for part in path.split("/") if part)
+
+
 def stac_link(rel: str, href: str, media_type: str = "application/json", title: str | None = None) -> dict:
     """Build a STAC link object"""
     link = {"rel": rel, "href": href, "type": media_type}
@@ -117,7 +124,7 @@ async def get_stac_catalog(path: str, req: Request) -> Response:
     adaguc_online_resource = get_base_url(req)
     stac_base = f"{adaguc_online_resource}stac"
 
-    full_path = "/" + path.strip("/")
+    full_path = normalize_path(path)
     entries = await list_entries(full_path, adaguc_instance, adaguc_online_resource)
 
     clean_path = full_path.strip("/")
@@ -282,7 +289,7 @@ async def get_stac_item(path: str, req: Request) -> Response:
     adaguc_online_resource = get_base_url(req)
     stac_base = f"{adaguc_online_resource}stac"
 
-    full_path = "/" + path.strip("/")
+    full_path = normalize_path(path)
     parent_path = "/".join(full_path.split("/")[:-1]) or "/"
 
     entries = await list_entries(parent_path, adaguc_instance, adaguc_online_resource)
