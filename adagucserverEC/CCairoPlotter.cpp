@@ -33,7 +33,6 @@
 #include "CColor.h"
 #include "Types/GeoParameters.h"
 #ifdef ADAGUC_USE_CAIRO
-// #define MEASURETIME
 
 #include <cairo-ft.h>
 #include "CStopWatch.h"
@@ -825,24 +824,33 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
   config.preprocessing = 0;                 // preprocessing filter (0=none, 1=segment-smooth)
   config.partitions = 0;                    // log2(number of token partitions) in [0..3] Default is set to 0 for easier progressive decoding.
   config.partition_limit = 100;             // quality degradation allowed to fit the 512k limit on prediction modes coding (0: no degradation, 100: maximum possible degradation).
-  picture.use_argb = 1;                     // To select between ARGB and YUVA input.
-  config.thread_level = 1;
+  // Lossless needs ARGB input. For lossy, YUVA input is faster: the RGB to YUV conversion is then done during import.
+  // The encoded result is the same for both.
+  picture.use_argb = config.lossless ? 1 : 0; // To select between ARGB and YUVA input.
+  config.thread_level = 0; // Assume a single core available: libwebp's internal encoder threading is not cgroup-aware and can be slower under a constrained CPU quota.
   picture.width = width;
   picture.height = height;
   picture.writer = MyWriter;
   picture.custom_ptr = (void *)fp;
-  if (!WebPPictureAlloc(&picture)) return; // memory error
 
   if (!WebPValidateConfig(&config)) {
     CDBError("Error! Invalid configuration.");
     return;
   }
 
-  WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
+  StopWatch_Measure("writeToWebP32Stream: start import %dx%d", width, height);
+  bool importOk = WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
+  if (!importOk) {
+    CDBError("Error! Cannot import picture for WebP");
+    WebPPictureFree(&picture);
+    return;
+  }
+  StopWatch_Measure("writeToWebP32Stream: done import, start encode");
 
   if (!WebPEncode(&config, &picture)) {
     CDBError("Error!  Cannot encode picture as WebP");
   }
+  StopWatch_Measure("writeToWebP32Stream: done encode");
   WebPPictureFree(&picture);
 
 #else

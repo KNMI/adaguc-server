@@ -115,7 +115,7 @@ add_library(
     Types/LayerMetadataType.cpp
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
-    GenericDataWarper/gdwDrawTriangle.cpp
+    GenericDataWarper/GDWState.h
     GenericDataWarper/GDWDrawFunctionSettings.h
     GenericDataWarper/GDWDrawFunctionSettings.cpp   
     CGenericDataWarper.cpp
