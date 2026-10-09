@@ -797,6 +797,7 @@ void CCairoPlotter::setToSurface(cairo_surface_t *png) {
 #include "webp/encode.h"
 #include "webp/decode.h"
 #include "webp/types.h"
+#include "utils/ThreadUtils.h"
 
 #include <algorithm>
 #include <cstring>
@@ -912,8 +913,12 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
   if (picture.use_argb) {
     importOk = WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
   } else {
-    int numThreads = std::max(1, std::min(8, (int)std::thread::hardware_concurrency()));
-    importOk = importBGRAThreaded(&picture, ARGBByteBuffer, stride, numThreads);
+    int numThreads = getNumRenderThreads();
+    if (numThreads <= 1) {
+      importOk = WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
+    } else {
+      importOk = importBGRAThreaded(&picture, ARGBByteBuffer, stride, numThreads);
+    }
   }
   if (!importOk) {
     CDBError("Error! Cannot import picture for WebP");

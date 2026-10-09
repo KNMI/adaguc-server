@@ -5,6 +5,7 @@
 #include "CDebugger.h"
 #include "CStopWatch.h"
 #include "CTString.h"
+#include "utils/ThreadUtils.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -383,7 +384,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   int numRows = dImageHeight - 1;
   int numThreads = 1;
   if (useMultipleThreads) {
-    numThreads = std::max(1, std::min(8, (int)std::thread::hardware_concurrency()));
+    numThreads = getNumRenderThreads();
   }
   StopWatch_Measure("drawContour: filling distance field with %d thread(s)", numThreads);
   if (numThreads <= 1) {

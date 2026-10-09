@@ -19,6 +19,7 @@
 #include "utils/projectionUtils.h"
 #include "GenericDataWarper/GDWState.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
+#include "utils/ThreadUtils.h"
 
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
@@ -442,7 +443,7 @@ template <typename T, typename DrawFn> int GenericDataWarper::render(CImageWarpe
     /* If geographical map projection is different, we have to transform the grid */
     int numThreads = 1;
     if (drawFunctionIsThreadSafe) {
-      numThreads = std::max(1, std::min(8, (int)std::thread::hardware_concurrency()));
+      numThreads = getNumRenderThreads();
     }
     warpTransformGrid<T>(warperState, projectionGrid, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction, numThreads);
   }
