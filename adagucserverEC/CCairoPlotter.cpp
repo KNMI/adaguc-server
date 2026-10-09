@@ -824,10 +824,10 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
   config.preprocessing = 0;                 // preprocessing filter (0=none, 1=segment-smooth)
   config.partitions = 0;                    // log2(number of token partitions) in [0..3] Default is set to 0 for easier progressive decoding.
   config.partition_limit = 100;             // quality degradation allowed to fit the 512k limit on prediction modes coding (0: no degradation, 100: maximum possible degradation).
-  // Lossless needs ARGB input. For lossy, YUVA input is faster: the RGB to YUV conversion is then done during import, which can be multithreaded.
+  // Lossless needs ARGB input. For lossy, YUVA input is faster: the RGB to YUV conversion is then done during import.
   // The encoded result is the same for both.
   picture.use_argb = config.lossless ? 1 : 0; // To select between ARGB and YUVA input.
-  config.thread_level = 1;
+  config.thread_level = 0; // Assume a single core available: libwebp's internal encoder threading is not cgroup-aware and can be slower under a constrained CPU quota.
   picture.width = width;
   picture.height = height;
   picture.writer = MyWriter;

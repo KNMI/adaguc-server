@@ -1,15 +1,12 @@
 #ifndef GDW_DRAWTRIANGLE_UTILS_H
 #define GDW_DRAWTRIANGLE_UTILS_H
 
-#include <climits>
 #include <cmath>
 #include "GenericDataWarper/GDWState.h"
 
 // Header only, so that drawFunction (any callable with signature void(int x, int y, T value, GDWState &warperState)) can be inlined in the pixel loop.
-// Only destination rows in [bandTop, bandBottom) are drawn, this is used to draw bands of rows in separate threads.
 template <typename T, typename DrawFn>
-int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoords[3], const T &value, bool tUp, GDWState &warperState, const DrawFn &drawFunction, int bandTop = 0,
-                    int bandBottom = INT_MAX) {
+int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoords[3], const T &value, bool tUp, GDWState &warperState, const DrawFn &drawFunction) {
   int W = warperState.destGridWidth;
   int H = warperState.destGridHeight;
   if (triangleXCoords[0] < 0 && triangleXCoords[1] < 0 && triangleXCoords[2] < 0) return 0;
@@ -86,11 +83,6 @@ int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoord
   double xlength_B = X3 - X2;
   double r_longside = xlength / ylength;
 
-  // The triangle is completely outside the band of rows to draw
-  if (Y3 <= bandTop || Y1 >= bandBottom) {
-    return 0;
-  }
-
   // clip startY and endY to the screen
   double sy = Y1 < 0 ? 0 : Y1;
   double ey = Y3 > screenH ? screenH : Y3;
@@ -104,10 +96,6 @@ int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoord
   } else {
     r_upper = xlength_A / ylength_A;
   }
-
-  // clip startY and endY to the band of rows to draw
-  if (sy < bandTop) sy = bandTop;
-  if (ey > bandBottom) ey = bandBottom;
 
   double r_lower = ylength_B > 0 ? xlength_B / ylength_B : 0;
   double dn = ((yv2 - yv3) * (xv1 - xv3) + (xv3 - xv2) * (yv1 - yv3));

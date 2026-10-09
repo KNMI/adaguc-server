@@ -333,7 +333,11 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   size_t numContourLines = contourlineList.size();
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  // Fills the distance field for rows [rowStart, rowEnd). Each pixel only writes its own distance field element, so rows can be filled by different threads.
+  // Pixels where at least one contour definition set a bit. The distance field is sparse, so tracing below only
+  // needs to look at these candidates instead of rescanning the full image once per contour definition. No bit is
+  // ever set after this point, only cleared, so this candidate set stays valid for every contour definition.
+  std::vector<i4point> candidatePixels;
+  // Fills the distance field for rows [rowStart, rowEnd).
   auto fillRows = [&](int rowStart, int rowEnd) {
     for (int y = rowStart; y < rowEnd; y++) {
       for (int x = 0; x < dImageWidth - 1; x++) {
@@ -373,6 +377,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
         // Only write when a line was found, untouched parts of the calloc-ed distance field then do not need to be mapped into memory
         if (foundLines) {
           distance[p1] |= foundLines;
+          candidatePixels.push_back({.x = x, .y = y});
         }
       }
     }
@@ -392,13 +397,10 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   for (auto &contourLine: contourlineList) {
     StopWatch_Measure("drawContour: start contour definition %d", contourLineIndex);
     ContourLineStats stats;
-    /* Everywhere */
-    for (int y = 0; y < dImageHeight; y++) {
-      for (int x = 0; x < dImageWidth; x++) {
-        size_t p = x + y * dImageWidth;
-        if (distance[p] & lineMask) {
-          traverseLine(drawImage, distance, sourceGrid, x, y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation, stats);
-        }
+    for (const auto &candidate: candidatePixels) {
+      size_t p = candidate.x + candidate.y * dImageWidth;
+      if (distance[p] & lineMask) {
+        traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation, stats);
       }
     }
     StopWatch_Measure("drawContour: done contour definition %d: %zu lines, %zu line segments, %zu texts. Tracing %.1f ms, drawing %.1f ms (of which texts %.1f ms)", contourLineIndex, stats.numLines,
