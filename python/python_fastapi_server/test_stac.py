@@ -1,8 +1,11 @@
 import logging
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
+import routers.stac as stac_module
 from main import app
 
 logger = logging.getLogger(__name__)
@@ -53,20 +56,27 @@ def test_stac_catalog_data_listing(client: TestClient):
 
 
 def test_stac_catalog_datasets_listing(client: TestClient):
+    # adaguc::datasets lists every dataset flatly again (no separate edr-collections/
+    # wms-datasets child catalogs): EDR detail now lives on the item itself.
     resp = client.get("/stac/catalog/adaguc::datasets")
     assert resp.status_code == 200
     catalog = resp.json()
 
-    item_links = [link for link in catalog["links"] if link["rel"] == "item"]
-    titles = {link["title"] for link in item_links}
+    assert "child" not in {link["rel"] for link in catalog["links"]}
+
+    titles = {link["title"] for link in catalog["links"] if link["rel"] == "item"}
     assert "adaguc.testautotiling" in titles
     # Dataset entries are flat, so the .xml suffix must not leak into the title/id.
     assert all(not title.endswith(".xml") for title in titles)
 
-    # The datasets catalog advertises EDR collections as an additional resource,
-    # since EDR is keyed by dataset name.
-    rels = {link["rel"]: link for link in catalog["links"]}
-    assert rels["data"]["href"].endswith("/edr/collections")
+
+def test_stac_catalog_datasets_matches_raw_autowms_listing(client: TestClient):
+    resp = client.get("/stac/catalog/adaguc::datasets")
+    autowms = client.get("/autowms?request=getfiles&path=/adaguc::datasets").json()
+
+    titles = {link["title"] for link in resp.json()["links"] if link["rel"] == "item"}
+    autowms_titles = {entry["name"] for entry in autowms["result"]}
+    assert titles == autowms_titles
 
 
 def test_stac_catalog_autowms_listing(client: TestClient):
@@ -108,6 +118,12 @@ def test_stac_item_png_source(client: TestClient):
     assert "layers=pngdata" in thumbnail["href"]
     assert thumbnail["type"] == "image/png"
 
+    assert rels["alternate"]["href"] == (
+        "https://adaguc.knmi.nl/adaguc-viewer/index.html"
+        "?autowms=http://testserver/autowms"
+        "#addlayer('http://testserver/adagucserver?source=alpha-test.png&','pngdata')"
+    )
+
 
 def test_stac_item_netcdf_source(client: TestClient):
     resp = client.get("/stac/item/adaguc::data/testdata.nc")
@@ -133,6 +149,44 @@ def test_stac_item_dataset_xml(client: TestClient):
     assert "edr" not in {link["rel"] for link in item["links"]}
 
 
+def test_stac_item_edr_links_cover_every_sub_collection(client: TestClient):
+    # A dataset's layers can be split into several EDR sub-collections (e.g. by vertical level
+    # type, named "{dataset}.{group}" such as "hagl"/"ml"/"pl"); metadata is then keyed by those
+    # dotted names only, never by the bare dataset name, so every one must be discovered and
+    # linked, each with its own parameters. parameter_names is a pydantic
+    # RootModel[Dict[str, Parameter]] wrapper (accessed via .root), not a plain dict - this
+    # mocks real objects shaped that way rather than plain dicts, to catch that.
+    fake_metadata = {
+        "adaguc.testautotiling.hagl": {"layer": {}},
+        "adaguc.testautotiling.pl": {"layer": {}},
+        "unrelated.dataset": {"layer": {}},
+    }
+
+    def fake_collection(_metadata, collection_name, _base_url):
+        param = SimpleNamespace(label=f"Label for {collection_name}")
+        param_id = f"param_{collection_name.rsplit('.', 1)[-1]}"
+        return [SimpleNamespace(id=collection_name, parameter_names=SimpleNamespace(root={param_id: param}))]
+
+    with (
+        patch.object(stac_module, "get_metadata", new=AsyncMock(return_value=fake_metadata)),
+        patch.object(stac_module, "get_collectioninfo_from_md", side_effect=fake_collection),
+    ):
+        resp = client.get("/stac/item/adaguc::datasets/adaguc.testautotiling.xml")
+
+    assert resp.status_code == 200
+    item = resp.json()
+    edr_links = [link for link in item["links"] if link["rel"] == "edr"]
+    links_by_href = {link["href"]: link for link in edr_links}
+
+    assert set(links_by_href) == {
+        "http://testserver/edr/collections/adaguc.testautotiling.hagl",
+        "http://testserver/edr/collections/adaguc.testautotiling.pl",
+    }
+    assert links_by_href["http://testserver/edr/collections/adaguc.testautotiling.hagl"]["edr:parameters"] == {
+        "param_hagl": "Label for adaguc.testautotiling.hagl"
+    }
+
+
 def test_stac_item_links_to_per_layer_collections(client: TestClient):
     resp = client.get("/stac/item/adaguc::datasets/adaguc.tests.graticules.xml")
     assert resp.status_code == 200
@@ -143,6 +197,57 @@ def test_stac_item_links_to_per_layer_collections(client: TestClient):
         "grid1": "http://testserver/stac/collections/adaguc.tests.graticules.grid1",
         "grid10": "http://testserver/stac/collections/adaguc.tests.graticules.grid10",
     }
+
+
+def test_stac_item_wms_link_lists_only_first_layer(client: TestClient):
+    # The item's "wms" link must advertise only the first layer, even for a multi-layer
+    # dataset: some STAC browsers auto-render a preview by combining every name in
+    # wms:layers into one GetMap request, which would stack all layers on top of each other.
+    resp = client.get("/stac/item/adaguc::datasets/adaguc.tests.graticules.xml")
+    assert resp.status_code == 200
+    item = resp.json()
+
+    wms_link = next(link for link in item["links"] if link["rel"] == "wms")
+    assert wms_link["wms:layers"] == ["grid1"]
+
+
+def test_stac_item_has_one_thumbnail_per_layer(client: TestClient):
+    # A multi-layer dataset must get an individually addressable preview per layer,
+    # not a single thumbnail covering only the first one.
+    resp = client.get("/stac/item/adaguc::datasets/adaguc.tests.graticules.xml")
+    assert resp.status_code == 200
+    item = resp.json()
+
+    thumbnails = {k: a for k, a in item["assets"].items() if a.get("roles") == ["thumbnail"]}
+    assert set(thumbnails) == {"thumbnail", "thumbnail_grid10"}
+    assert "layers=grid1&" in thumbnails["thumbnail"]["href"]
+    assert "layers=grid10&" in thumbnails["thumbnail_grid10"]["href"]
+
+
+def test_stac_item_has_one_viewer_link_per_layer(client: TestClient):
+    resp = client.get("/stac/item/adaguc::datasets/adaguc.tests.graticules.xml")
+    assert resp.status_code == 200
+    item = resp.json()
+
+    viewer_links = {link["href"] for link in item["links"] if link["rel"] == "alternate"}
+    assert viewer_links == {
+        "https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://testserver/autowms"
+        "#addlayer('http://testserver/adagucserver?dataset=adaguc.tests.graticules&','grid1')",
+        "https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://testserver/autowms"
+        "#addlayer('http://testserver/adagucserver?dataset=adaguc.tests.graticules&','grid10')",
+    }
+
+
+def test_stac_collection_has_viewer_link(client: TestClient):
+    resp = client.get("/stac/collections/adaguc.tests.graticules.grid1")
+    assert resp.status_code == 200
+    collection = resp.json()
+
+    viewer_link = next(link for link in collection["links"] if link["rel"] == "alternate")
+    assert viewer_link["href"] == (
+        "https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://testserver/autowms"
+        "#addlayer('http://testserver/adagucserver?dataset=adaguc.tests.graticules&','grid1')"
+    )
 
 
 def test_stac_item_source_entry_has_no_layer_collection_children(client: TestClient):

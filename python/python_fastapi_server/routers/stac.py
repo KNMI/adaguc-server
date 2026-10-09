@@ -11,7 +11,7 @@ from owslib.wms import WebMapService
 
 from .autowms import list_data_files, list_dataset_files
 from .setup_adaguc import setup_adaguc
-from .utils.edr_utils import get_metadata
+from .utils.edr_utils import get_collectioninfo_from_md, get_metadata
 from .utils.ogcapi_tools import call_adaguc
 from .utils.utils import get_base_url
 
@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 STAC_VERSION = "1.0.0"
 
 WEB_MAP_LINKS_EXTENSION = "https://stac-extensions.github.io/web-map-links/v1.1.0/schema.json"
+
+ADAGUC_VIEWER_URL = "https://adaguc.knmi.nl/adaguc-viewer/index.html"
 
 TOP_LEVEL_PATHS = ("adaguc::datasets", "adaguc::data", "adaguc::autowms")
 
@@ -60,6 +62,16 @@ def stac_link(rel: str, href: str, media_type: str = "application/json", title: 
     if title:
         link["title"] = title
     return link
+
+
+def adaguc_viewer_link(base_url: str, adaguc_source: str, layer_name: str) -> dict:
+    """Build a link that opens a single layer directly in the ADAGUC viewer.
+
+    `adaguc_source` is an entry's "adaguc" field (e.g. ".../adagucserver?dataset=X&" or
+    ".../adagucserver?source=Y&"), used as-is: the viewer's #addlayer(...) fragment is read
+    client-side by its own JavaScript, not by this server, so it is not URL-decoded here."""
+    href = f"{ADAGUC_VIEWER_URL}?autowms={base_url}autowms#addlayer('{adaguc_source}','{layer_name}')"
+    return stac_link("alternate", href, media_type="text/html", title=f"View {layer_name} in ADAGUC Viewer")
 
 
 async def fetch_capabilities_xml(wms_base: str) -> bytes | None:
@@ -192,14 +204,15 @@ async def get_stac_catalog(path: str, req: Request) -> Response:
     stac_base = f"{adaguc_online_resource}stac"
 
     full_path = normalize_path(path)
-    entries = await list_entries(full_path, adaguc_instance, adaguc_online_resource)
-
     clean_path = full_path.strip("/")
+
     links = [
         stac_link("self", f"{stac_base}/catalog/{clean_path}"),
         stac_link("root", stac_base),
         stac_link("parent", parent_catalog_href(full_path, stac_base)),
     ]
+
+    entries = await list_entries(full_path, adaguc_instance, adaguc_online_resource)
     for entry in entries:
         entry_path = entry["path"].strip("/")
         if entry["leaf"]:
@@ -213,10 +226,6 @@ async def get_stac_catalog(path: str, req: Request) -> Response:
             )
         else:
             links.append(stac_link("child", f"{stac_base}/catalog/{entry_path}", title=entry["name"]))
-
-    if clean_path == "adaguc::datasets":
-        # Additional resource: datasets may also be queryable through OGC API - EDR.
-        links.append(stac_link("data", f"{adaguc_online_resource}edr/collections", title="OGC API - EDR collections"))
 
     catalog = {
         "stac_version": STAC_VERSION,
@@ -240,10 +249,11 @@ async def build_stac_item(entry: dict, stac_base: str, parent_path: str, base_ur
     end_datetime = None
     capabilities_href = None
     wms_link = None
-    edr_link = None
+    edr_links = []
     stac_extensions = []
-    thumbnail_asset = None
+    thumbnail_assets = {}
     layer_links = []
+    viewer_links = []
 
     # Only dataset= entries (adaguc::datasets) can have an EDR collection or per-layer STAC
     # collections; source= entries (adaguc::data, adaguc::autowms) have no dataset identity
@@ -251,12 +261,27 @@ async def build_stac_item(entry: dict, stac_base: str, parent_path: str, base_ur
     is_dataset_entry = entry["adaguc"].split("?", 1)[1].startswith("dataset=")
     if is_dataset_entry:
         try:
-            await get_metadata(item_id)
-            edr_link = stac_link(
-                "edr",
-                f"{base_url}edr/collections/{item_id}",
-                title=f"OGC API - EDR collection for {item_id}",
+            # A dataset's layers can be grouped into more than one EDR (sub-)collection (e.g.
+            # by vertical level type, such as "hagl"/"ml"/"pl"); when that happens, metadata is
+            # keyed by the dotted "{dataset}.{group}" names only, never by the bare dataset
+            # name, so every matching (sub-)collection name must be found first.
+            all_metadata = await get_metadata()
+            collection_names = sorted(
+                name for name in all_metadata if name == item_id or name.startswith(f"{item_id}.")
             )
+            for collection_name in collection_names:
+                edr_collections = get_collectioninfo_from_md(all_metadata[collection_name], collection_name, base_url) or []
+                for edr_collection in edr_collections:
+                    # parameter_names is a pydantic RootModel[Dict[str, Parameter]] wrapper, not a plain dict.
+                    param_dict = edr_collection.parameter_names.root if edr_collection.parameter_names else {}
+                    parameters = {pid: param.label for pid, param in param_dict.items()}
+                    edr_link = stac_link(
+                        "edr",
+                        f"{base_url}edr/collections/{edr_collection.id}",
+                        title=f"OGC API - EDR collection for {edr_collection.id}",
+                    )
+                    edr_link["edr:parameters"] = parameters
+                    edr_links.append(edr_link)
         except Exception:  # pylint: disable=broad-except
             logger.debug("No EDR collection available for %s", item_id, exc_info=True)
 
@@ -281,18 +306,27 @@ async def build_stac_item(entry: dict, stac_base: str, parent_path: str, base_ur
                     "href": wms_base,
                     "title": f"WMS endpoint for {item_id}",
                     "type": "image/png",
-                    "wms:layers": layer_names,
+                    # Only the first layer: some STAC browsers auto-render a preview by
+                    # combining every name in wms:layers into one GetMap request, which would
+                    # stack all of this dataset's layers on top of each other in one image.
+                    # The other layers are still discoverable via the per-layer "child" links.
+                    "wms:layers": [layer_names[0]],
                 }
-                thumbnail_asset = {
-                    "href": (
-                        f"{wms_base}request=GetMap&format=image/png"
-                        f"&layers={layer_names[0]}&width=400"
-                        "&crs=EPSG:4326&styles=&exceptions=INIMAGE&showlegend=true"
-                    ),
-                    "title": f"Preview of {layer_names[0]}",
-                    "type": "image/png",
-                    "roles": ["thumbnail"],
-                }
+                for index, layer_name in enumerate(layer_names):
+                    # Keep "thumbnail" (singular) for the first layer too, since many STAC
+                    # browsers use that exact asset key as the item's cover/preview image.
+                    key = "thumbnail" if index == 0 else f"thumbnail_{layer_name}"
+                    thumbnail_assets[key] = {
+                        "href": (
+                            f"{wms_base}request=GetMap&format=image/png"
+                            f"&layers={layer_name}&width=400"
+                            "&crs=EPSG:4326&styles=&exceptions=INIMAGE&showlegend=true"
+                        ),
+                        "title": f"Preview of {layer_name}",
+                        "type": "image/png",
+                        "roles": ["thumbnail"],
+                    }
+                    viewer_links.append(adaguc_viewer_link(base_url, entry["adaguc"], layer_name))
 
             if is_dataset_entry:
                 # Each WMS layer in this dataset is also browsable as its own STAC collection,
@@ -323,9 +357,9 @@ async def build_stac_item(entry: dict, stac_base: str, parent_path: str, base_ur
         links.append(stac_link("service-desc", capabilities_href, media_type="text/xml", title="WMS GetCapabilities"))
     if wms_link:
         links.append(wms_link)
-    if edr_link:
-        links.append(edr_link)
+    links.extend(edr_links)
     links.extend(layer_links)
+    links.extend(viewer_links)
 
     assets = {
         "data": {
@@ -335,8 +369,7 @@ async def build_stac_item(entry: dict, stac_base: str, parent_path: str, base_ur
             "roles": ["data"],
         }
     }
-    if thumbnail_asset:
-        assets["thumbnail"] = thumbnail_asset
+    assets.update(thumbnail_assets)
 
     item = {
         "stac_version": STAC_VERSION,
@@ -426,6 +459,7 @@ async def get_stac_collection(collection_id: str, req: Request) -> Response:
             "type": "image/png",
             "wms:layers": [layer_name],
         },
+        adaguc_viewer_link(base_url, f"{base_url}adagucserver?dataset={dataset_name}&", layer_name),
     ]
 
     collection = {
