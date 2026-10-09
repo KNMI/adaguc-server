@@ -17,6 +17,7 @@ from routers.autowms import autowms_router
 from routers.edr import edrApiApp
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
+from routers.stac import stac_router
 from routers.wmswcs import testadaguc, wmsWcsRouter
 from routers.caching_middleware import CachingMiddleware
 from configure_logging import configure_logging
@@ -121,7 +122,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     """Root page"""
-    return {"message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"}
+    return {"message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap, /ogcapi or /stac"}
 
 
 app.mount("/ogcapi", ogcApiApp)
@@ -130,6 +131,7 @@ app.mount("/edr", edrApiApp)
 app.include_router(wmsWcsRouter)
 app.include_router(autowms_router)
 app.include_router(opendapRouter)
+app.include_router(stac_router)
 
 logging.info("Starting server on 0.0.0.0")
 

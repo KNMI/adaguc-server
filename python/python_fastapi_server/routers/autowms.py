@@ -74,7 +74,10 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
     logger.info(f"data_dir={data_dir}, sub_path={sub_path} browse_path={browse_path}")
 
     # To protect from `../../` path traversals, check if we begin with data_dir
-    if not browse_path.startswith(data_dir):
+    # Normalize data_dir the same way as browse_path, so a trailing or double slash in the
+    # configured dir does not cause a false mismatch
+    real_data_dir = os.path.realpath(data_dir)
+    if not browse_path.startswith(real_data_dir):
         logger.error(f"Invalid path detected, used {url_param_path} to get {browse_path}, does not start with {data_dir}")
         raise HTTPException(status_code=400, detail="Invalid path detected")
 
