@@ -4,14 +4,20 @@
   <Include location="{ADAGUC_PATH}/data/config/datasets/adaguc.tests.arcus_uwcw.xml"/>
 
   <!--
-    Version 8.0.0 started enforcing the WMS 1.3.0 spec's authority-defined axis order for these
-    projections (invertxyforwms130="true" in data/config/includes/Projection.include.xml), which
-    swaps the BBOX axis order in GetCapabilities/GetMap for them (e.g. lat,lon instead of lon,lat
-    for EPSG:4326). These overrides set invertxyforwms130 back to "false" so this dataset keeps
-    the pre-8.0.0 (non-inverted) axis order, for configs that still depend on it.
+    Before version 8.0.0 (PR #731, https://github.com/KNMI/adaguc-server/pull/731),
+    CServerParams::checkBBOXXYOrder hardcoded exactly three CRSs as flipped for WMS 1.3.0 BBOX
+    order (y,x instead of x,y): EPSG:4326, EPSG:4258 and CRS:84. That PR replaced the hardcoding
+    with the declarative invertxyforwms130 attribute on <Projection> (see
+    data/config/includes/Projection.include.xml) - which kept EPSG:4326/EPSG:4258 flipped (so
+    those two need no override here), but:
+      - dropped CRS:84 from the flipped set (no invertxyforwms130 attribute on it there at all,
+        so it now defaults to false/non-inverted) - CRS:84 needs to be flipped again here.
+      - newly flipped EPSG:32661, as that PR's own purpose - introduced behaviour that did not
+        exist pre-8.0.0 - EPSG:32661 needs to be set back to non-inverted here.
+    EPSG:3035 was flipped later still, in a separate change, and likewise never was pre-8.0.0 -
+    it needs to be set back to non-inverted here too.
   -->
-  <Projection id="EPSG:4258" invertxyforwms130="false" proj4="+proj=longlat +ellps=GRS80 +no_defs"/>
-  <Projection id="EPSG:4326" invertxyforwms130="false" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
+  <Projection id="CRS:84" invertxyforwms130="true" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
   <Projection id="EPSG:32661" invertxyforwms130="false" proj4="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
   <Projection id="EPSG:3035" invertxyforwms130="false" proj4="+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"/>
 

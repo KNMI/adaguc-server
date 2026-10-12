@@ -41,27 +41,43 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    # Before version 8.0.0 (PR #731, https://github.com/KNMI/adaguc-server/pull/731),
+    # CServerParams::checkBBOXXYOrder hardcoded exactly three CRSs as flipped for WMS 1.3.0 BBOX
+    # order (y,x instead of x,y): EPSG:4326, EPSG:4258 and CRS:84. That PR replaced the hardcoding
+    # with the declarative invertxyforwms130 attribute on <Projection> (see
+    # data/config/includes/Projection.include.xml), which kept EPSG:4326/EPSG:4258 flipped (so
+    # those two are unaffected by this change) but dropped CRS:84 from the flipped set and newly
+    # flipped EPSG:32661 (that PR's own purpose). EPSG:3035 was flipped later still, in a separate
+    # change. Maps each CRS this dataset is relevant for to whether it should come out *swapped*
+    # between the regular and the orgprojv1-reverted dataset (True), or identical because its
+    # behaviour never changed (False).
+    ORGPROJV1_RELEVANT_CRS_SWAPPED = {
+        "EPSG:4326": False,
+        "EPSG:4258": False,
+        "CRS:84": True,
+        "EPSG:32661": True,
+        "EPSG:3035": True,
+    }
+
     def test_WMSGetCapabilities_arcus_uwcw_orgprojv1_bbox_axis_order_reverted(self):
         """
-        Version 8.0.0 started enforcing the WMS 1.3.0 spec's authority-defined axis order for
-        EPSG:4326 and a few other projections (invertxyforwms130="true" in
-        data/config/includes/Projection.include.xml), which swaps GetCapabilities' BoundingBox
-        from the traditional x,y=lon,lat order to the spec-mandated y,x=lat,lon order.
         adaguc.tests.arcus_uwcw.orgprojv1.xml includes adaguc.tests.arcus_uwcw.xml and overrides
-        those projections back to invertxyforwms130="false", for configs that still depend on the
-        pre-8.0.0 (non-inverted) axis order. This checks that override actually takes effect: the
-        reverted dataset's EPSG:4326 BoundingBox for a layer should be the regular (unreverted)
-        dataset's BoundingBox for that same layer with x and y swapped.
+        CRS:84, EPSG:32661 and EPSG:3035 back to their pre-8.0.0 invertxyforwms130 behaviour (see
+        ORGPROJV1_RELEVANT_CRS_SWAPPED above and the comment in that dataset file) - EPSG:4326 and
+        EPSG:4258 need no override, since their behaviour never changed. For each of those five
+        CRSs, this checks the reverted dataset's BoundingBox for a layer against the regular
+        (unreverted) dataset's BoundingBox for that same layer: swapped where pre-8.0.0 behaviour
+        differs from current behaviour, identical where it doesn't.
         """
 
-        def bbox_for_layer(root, layer_name):
+        def bbox_for_layer(root, layer_name, crs):
             for layer in root.findall(".//Layer"):
                 name = layer.find("Name")
                 if name is not None and name.text == layer_name:
                     for bbox in layer.findall("BoundingBox"):
-                        if bbox.attrib["CRS"] == "EPSG:4326":
+                        if bbox.attrib["CRS"] == crs:
                             return {k: float(v) for k, v in bbox.attrib.items() if k != "CRS"}
-            raise AssertionError(f"No EPSG:4326 BoundingBox found for layer '{layer_name}'")
+            raise AssertionError(f"No {crs} BoundingBox found for layer '{layer_name}'")
 
         # The regular dataset: current (post-8.0.0) axis-order-enforced behaviour. Forces a fresh
         # --updatedb (rather than relying on the DATASETS_LOADED cache) immediately before the
@@ -74,7 +90,7 @@ class TestWMS(unittest.TestCase):
             env=regular_env,
         )
         self.assertEqual(status, 0)
-        regular_bbox = bbox_for_layer(objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", data, count=1)), "air_temperature_hagl")
+        regular_root = objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", data, count=1))
 
         # The reverted dataset, snapshot-tested like any other GetCapabilities response.
         env = make_adaguc_env("adaguc.tests.arcus_uwcw.orgprojv1.xml", self.testresultspath, self.expectedoutputsspath)
@@ -86,13 +102,18 @@ class TestWMS(unittest.TestCase):
             "dataset=adaguc.tests.arcus_uwcw.orgprojv1&SERVICE=WMS&request=getcapabilities",
         )
         reverted_data = AdagucTestTools().readfromfile(self.testresultspath + filename)
-        reverted_bbox = bbox_for_layer(objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", reverted_data, count=1)), "air_temperature_hagl")
+        reverted_root = objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", reverted_data, count=1))
 
-        # Pre-8.0.0 (reverted) order is the regular (post-8.0.0, inverted) order with x and y swapped.
-        self.assertEqual(reverted_bbox["minx"], regular_bbox["miny"])
-        self.assertEqual(reverted_bbox["miny"], regular_bbox["minx"])
-        self.assertEqual(reverted_bbox["maxx"], regular_bbox["maxy"])
-        self.assertEqual(reverted_bbox["maxy"], regular_bbox["maxx"])
+        for crs, expect_swapped in self.ORGPROJV1_RELEVANT_CRS_SWAPPED.items():
+            regular_bbox = bbox_for_layer(regular_root, "air_temperature_hagl", crs)
+            reverted_bbox = bbox_for_layer(reverted_root, "air_temperature_hagl", crs)
+            if expect_swapped:
+                self.assertEqual(reverted_bbox["minx"], regular_bbox["miny"], f"{crs} minx")
+                self.assertEqual(reverted_bbox["miny"], regular_bbox["minx"], f"{crs} miny")
+                self.assertEqual(reverted_bbox["maxx"], regular_bbox["maxy"], f"{crs} maxx")
+                self.assertEqual(reverted_bbox["maxy"], regular_bbox["maxx"], f"{crs} maxy")
+            else:
+                self.assertEqual(reverted_bbox, regular_bbox, f"{crs} should be unchanged")
 
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
