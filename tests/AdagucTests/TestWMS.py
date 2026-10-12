@@ -11,7 +11,12 @@ import re
 import datetime
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
-from conftest import make_adaguc_env, run_adaguc_and_compare_image, update_db
+from conftest import (
+    make_adaguc_env,
+    run_adaguc_and_compare_getcapabilities,
+    run_adaguc_and_compare_image,
+    update_db,
+)
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -35,6 +40,59 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
+    def test_WMSGetCapabilities_arcus_uwcw_orgprojv1_bbox_axis_order_reverted(self):
+        """
+        Version 8.0.0 started enforcing the WMS 1.3.0 spec's authority-defined axis order for
+        EPSG:4326 and a few other projections (invertxyforwms130="true" in
+        data/config/includes/Projection.include.xml), which swaps GetCapabilities' BoundingBox
+        from the traditional x,y=lon,lat order to the spec-mandated y,x=lat,lon order.
+        adaguc.tests.arcus_uwcw.orgprojv1.xml includes adaguc.tests.arcus_uwcw.xml and overrides
+        those projections back to invertxyforwms130="false", for configs that still depend on the
+        pre-8.0.0 (non-inverted) axis order. This checks that override actually takes effect: the
+        reverted dataset's EPSG:4326 BoundingBox for a layer should be the regular (unreverted)
+        dataset's BoundingBox for that same layer with x and y swapped.
+        """
+
+        def bbox_for_layer(root, layer_name):
+            for layer in root.findall(".//Layer"):
+                name = layer.find("Name")
+                if name is not None and name.text == layer_name:
+                    for bbox in layer.findall("BoundingBox"):
+                        if bbox.attrib["CRS"] == "EPSG:4326":
+                            return {k: float(v) for k, v in bbox.attrib.items() if k != "CRS"}
+            raise AssertionError(f"No EPSG:4326 BoundingBox found for layer '{layer_name}'")
+
+        # The regular dataset: current (post-8.0.0) axis-order-enforced behaviour. Forces a fresh
+        # --updatedb (rather than relying on the DATASETS_LOADED cache) immediately before the
+        # request, since this layer's DB-cached metadata can otherwise go stale by the time this
+        # test runs, deep into a large suite run, and report "no files found" for it.
+        regular_env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(regular_env, True)
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&SERVICE=WMS&request=getcapabilities",
+            env=regular_env,
+        )
+        self.assertEqual(status, 0)
+        regular_bbox = bbox_for_layer(objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", data, count=1)), "air_temperature_hagl")
+
+        # The reverted dataset, snapshot-tested like any other GetCapabilities response.
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw.orgprojv1.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, True)
+        filename = "test_WMSGetCapabilities_arcus_uwcw_orgprojv1.xml"
+        run_adaguc_and_compare_getcapabilities(
+            env,
+            filename,
+            "dataset=adaguc.tests.arcus_uwcw.orgprojv1&SERVICE=WMS&request=getcapabilities",
+        )
+        reverted_data = AdagucTestTools().readfromfile(self.testresultspath + filename)
+        reverted_bbox = bbox_for_layer(objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", reverted_data, count=1)), "air_temperature_hagl")
+
+        # Pre-8.0.0 (reverted) order is the regular (post-8.0.0, inverted) order with x and y swapped.
+        self.assertEqual(reverted_bbox["minx"], regular_bbox["miny"])
+        self.assertEqual(reverted_bbox["miny"], regular_bbox["minx"])
+        self.assertEqual(reverted_bbox["maxx"], regular_bbox["maxy"])
+        self.assertEqual(reverted_bbox["maxy"], regular_bbox["maxx"])
 
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
