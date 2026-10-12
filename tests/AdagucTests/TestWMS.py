@@ -36,6 +36,28 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    def test_WMSMissingRequestParameter(self):
+        # Regression test: a missing REQUEST parameter must produce a proper WMS
+        # ServiceExceptionReport (with headers and a body), not an empty response.
+        AdagucTestTools().cleanTempDir()
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS", env=self.env, showLogOnError=False)
+        self.assertEqual(status, 422)
+        self.assertIn(b"<ServiceExceptionReport", data)
+        self.assertIn(b"WMS request parameter is missing. Please use for example GetCapabilities or GetMap.", data)
+
+    def test_WMSInvalidRequestParameter(self):
+        # Regression test: an unrecognised REQUEST value must also produce a proper
+        # WMS ServiceExceptionReport, not an empty response.
+        AdagucTestTools().cleanTempDir()
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=testdata.nc&SERVICE=WMS&REQUEST=BogusRequest", env=self.env, showLogOnError=False
+        )
+        self.assertEqual(status, 422)
+        self.assertIn(b"<ServiceExceptionReport", data)
+        self.assertIn(b"ADAGUC Server: Parameter REQUEST invalid", data)
+
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc.png"

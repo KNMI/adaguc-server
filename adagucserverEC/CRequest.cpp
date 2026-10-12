@@ -1352,9 +1352,10 @@ int CRequest::process_querystring() {
     srvParam->OGCVersion = WMS_VERSION_1_3_0;
 
     if (dFound_Request == 0) {
-      CDBError("ADAGUC Server: Parameter REQUEST missing");
-      dErrorOccured = 1;
+      setErrorMode(ServiceExceptionMode::ExceptionWMS_1_3_0);
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
+      CDBError("WMS request parameter is missing. Please use for example GetCapabilities or GetMap.");
+      return 1;
     } else {
       if (REQUEST == "GETCAPABILITIES")
         srvParam->requestType = REQUEST_WMS_GETCAPABILITIES;
@@ -1375,9 +1376,10 @@ int CRequest::process_querystring() {
       else if (REQUEST == "GETREFERENCETIMES")
         srvParam->requestType = REQUEST_WMS_GETREFERENCETIMES;
       else {
-        dErrorOccured = 1;
+        setErrorMode(ServiceExceptionMode::ExceptionWMS_1_3_0);
         setExceptionType(ServiceExceptionType::UnprocessableEntity);
         CDBError("ADAGUC Server: Parameter REQUEST invalid");
+        return 1;
       }
     }
 
