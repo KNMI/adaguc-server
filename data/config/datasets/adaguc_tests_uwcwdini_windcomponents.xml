@@ -4,17 +4,23 @@
   <Style name="Windbarbs" title="Wind barbs" abstract="Rendered with barbs">
     <Scale>1</Scale>
     <Offset>0</Offset>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
     <RenderMethod>barb</RenderMethod>
   </Style>
 
   <Style name="Windbarbwithnumbers" title="Wind barbs with number" abstract="Rendered with barbs and windspeed number">
     <Scale>1</Scale>
     <Offset>0</Offset>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0" plotvalue="true"/>
+    <Thinning radius="40"/>
     <RenderMethod>barb</RenderMethod>
     <RenderSettings rendertextforvectors="true" />
   </Style>
 
   <Style name="windbarbs_kts" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs">
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
     <ShadeInterval min="0" max="7" label="0-7 (&lt;3 bft)" fillcolor="#FFFFB4"/>
     <ShadeInterval min="7" max="11" label="7-11 (3 bft)" fillcolor="#FFFF00"/>
     <ShadeInterval min="11" max="16" label="11-16 (4 bft)" fillcolor="#81FF00"/>
@@ -42,6 +48,7 @@
     <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
     <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
   </Layer>
 
   <!-- The following layer returns only the speed component in EDR and GetFeatureinfo -->

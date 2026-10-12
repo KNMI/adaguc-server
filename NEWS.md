@@ -1,9 +1,10 @@
-**Version 9.0.3**
+**Version 9.1.0**
 
+- `CImgWarpBilinear` has been removed. The `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` `RenderMethod` keywords are now all drawn by the generic warper, rendering equivalent output. See [Migrating_from_CImgWarpBilinear_to_the_generic_warper.md](/doc/tutorials/Migrating_from_CImgWarpBilinear_to_the_generic_warper.md) for the handful of known rendering differences.
+- `SmoothingFilter` no longer re-sums the full `(2*radius+1)^2` window for every pixel: it now uses a separable sliding-window pass, so its cost no longer grows with the smoothing radius. A `SmoothingFilter` of 32 is now about 12x faster, with unchanged output.
+- Rewrote contour line tracing in the generic warper to avoid gaps on realistic, noisy data.
+- Combined shaded + smoothed + contour styles now render about 30% faster than the old `CImgWarpBilinear`.
 - `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
-- Faster rendering of large images (over 1 megapixel) with the generic renderer: the reprojected grid and the contour lines are drawn with multiple threads. A 126 megapixel image with shaded contours now renders in ~1.9 s instead of ~4.8 s. The output is unchanged.
-- Faster WebP encoding: the RGB to YUV conversion is done with multiple threads
-- Faster contour line calculation and triangle drawing in the generic data warper
 - Fixed autowms path check failing when the configured data directory contains double slashes
 
 **Version 9.0.2**

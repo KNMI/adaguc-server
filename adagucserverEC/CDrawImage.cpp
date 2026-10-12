@@ -352,9 +352,9 @@ void CDrawImage::endLine() {
   cairo->endLine();
 }
 
-void CDrawImage::endLine(const double *dashes, int num_dashes) {
+void CDrawImage::endLine(std::span<const double> dashes, bool roundCap) {
   if (currentLegend == NULL) return;
-  cairo->endLine(dashes, num_dashes);
+  cairo->endLine(dashes, roundCap);
 }
 
 CColor CDrawImage::getColorForIndex(int colorIndex) {
@@ -504,6 +504,13 @@ void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float 
   freeType->drawFilledText(x, y, angle, text);
   cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
+int CDrawImage::getTextWidth(const char *fontfile, float size, const char *text) {
+  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  int w, h;
+  freeType->getTextSize(w, h, 0, text);
+  return w;
+}
+
 void CDrawImage::setDisc(int x, int y, int discRadius, int fillCol, int lineCol) {
   if (currentLegend == NULL) return;
   cairo->setFillColor(currentLegend->CDIred[fillCol], currentLegend->CDIgreen[fillCol], currentLegend->CDIblue[fillCol], currentLegend->CDIalpha[fillCol]);

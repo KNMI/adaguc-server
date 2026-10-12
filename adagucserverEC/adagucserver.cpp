@@ -46,6 +46,11 @@
 #include "CServerError.h"
 #include "fork_server.h"
 
+// PROJ reports failed grid/datum lookups and similar issues straight to stderr by default, even
+// when it still produces a usable (if less precise) transformation. Disabled for now rather than
+// routed through CDBDebug - revisit if these turn out to carry real diagnostic value.
+static void projLogFunction(void *, int /*level*/, const char * /*message*/) {}
+
 int processQueryStringRequest() {
   /* Process the OGC request */
   setErrorFunction(serverErrorFunction);
@@ -97,6 +102,8 @@ int run_adaguc_once(int argc, char **argv, char **envp) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  proj_log_func(PJ_DEFAULT_CTX, nullptr, projLogFunction);
+
   const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
   bool use_fork_server = fork_enable && std::string(fork_enable) == "TRUE" && argc == 1;
   if (use_fork_server) {

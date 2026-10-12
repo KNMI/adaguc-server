@@ -26,6 +26,12 @@ class CDataSource;
 typedef unsigned int RenderMethod;
 std::string getRenderMethodAsString(RenderMethod renderMethod);
 RenderMethod getRenderMethodFromString(std::string renderMethodString);
+
+// A legacy style selects one of the old CImgWarpBilinear keywords (bilinear/shaded/contour).
+// These are still routed through the generic warper, but need its old always-smooth-sampling
+// default and its RenderMethod-subset selection behavior - centralized here so that "is this a
+// legacy style" isn't re-derived independently (and potentially inconsistently) at each call site.
+inline bool isLegacyScalarRenderMethod(RenderMethod renderMethod) { return (renderMethod & (RM_BILINEAR | RM_SHADED | RM_CONTOUR)) != 0; }
 struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;

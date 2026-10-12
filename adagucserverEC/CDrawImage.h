@@ -119,7 +119,12 @@ public:
   void moveTo(float x1, float y1);
   void lineTo(float x1, float y1, float w, CColor color);
   void endLine();
-  void endLine(const double *dashes, int num_dashes);
+  // roundCap: use round line caps/joins instead of the default butt/bevel. Needed where a line
+  // can be made of several touching-but-separate sub-paths (e.g. contour tracing, which starts a
+  // new sub-path at every branch point) - round caps let two sub-paths that meet at the same
+  // pixel blend into each other instead of showing a seam where their butt-capped ends meet at
+  // an angle.
+  void endLine(std::span<const double> dashes, bool roundCap = false);
 
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
@@ -152,6 +157,9 @@ public:
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
   void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
+  // Rendered width in pixels of text at the given font/size, drawn horizontally (angle 0) -
+  // used to center a label within a reserved span without exceeding it.
+  int getTextWidth(const char *fontfile, float size, const char *text);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);

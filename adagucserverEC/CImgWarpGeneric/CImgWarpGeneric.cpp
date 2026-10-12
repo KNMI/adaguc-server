@@ -24,7 +24,6 @@
  ******************************************************************************/
 
 #include "CImgWarpGeneric.h"
-#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 #include <CImageOperators/drawContour.h>
@@ -104,6 +103,16 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     values[1][0] = sourceData[x1 + y0 * sourceDataWidth];
     values[0][1] = sourceData[x0 + y1 * sourceDataWidth];
     values[1][1] = sourceData[x1 + y1 * sourceDataWidth];
+  }
+
+  // Reject the whole quad, like CImgWarpBilinear used to, if any of the 4 corners actually being
+  // blended below is nodata/NaN. Checking only the single nearest-sample `val` above isn't
+  // enough: without a SmoothingFilter, blending a nodata sentinel into real neighbors produces
+  // wildly wrong values along every nodata/data edge instead of leaving the pixel untouched.
+  for (const auto &row: values) {
+    for (const T &cornerValue: row) {
+      if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || !(cornerValue == cornerValue)) return;
+    }
   }
 
   float dx = warperState.sourceTileDx;
@@ -219,7 +228,19 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 #undef RENDER
     }
 
-    if (styleConfiguration->contourLines.size() > 0) {
+    // A pure generic style (no legacy bilinear/shaded/contour keyword, e.g. no <RenderMethod>
+    // tag at all) has only one rendering mode, so configuring a ContourLine is enough to draw
+    // it. A legacy style can list several RenderMethod keywords on one style block so that a
+    // single GetMap request can pick a specific subset via STYLES=name/keyword (e.g.
+    // "nearest,bilinear,shadedcontour"); for those, only the "contour" keyword (RM_CONTOUR)
+    // should draw the contour lines - otherwise selecting the "bilinear" subset would always
+    // draw them too, even though "bilinear" was deliberately chosen to leave them out.
+    bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
+    bool shouldDrawContours = styleConfiguration->renderMethod & RM_CONTOUR;
+    if (!isLegacyRenderMethod) {
+      shouldDrawContours = styleConfiguration->contourLines.size() > 0;
+    }
+    if (shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
       StopWatch_Measure("CImgWarpGeneric: start drawContour");
       drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
       StopWatch_Measure("CImgWarpGeneric: done drawContour");

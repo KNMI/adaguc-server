@@ -138,6 +138,38 @@ class TestGenericImageWarper:
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filetocheck)
 
+    def test_GenericImageWarperOnAHNDataset_contour_tight_curve_no_gap(self):
+        """
+        Regression test for a contour-tracing bug where a tight curve's apex (more than one
+        valid neighbor pixel to continue onto, e.g. the flat top of a U-turn) silently dropped
+        every continuation but one, leaving a visible gap in the line. Bounding box below is
+        zoomed in on exactly such an apex in this dataset.
+        """
+        AdagucTestTools().cleanTempDir()
+
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml"
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        assert status == 0
+
+        filetocheck = "ahn_utrechtseheuvelrug_500m_hillshaded_contour_tight_curve_no_gap.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            f"DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+            "&LAYERS=ahn_utrechtseheuvelrug_500m_hillshaded&WIDTH=686&HEIGHT=1057&CRS=EPSG%3A3857"
+            "&BBOX=599744.071003962,6783137.928485779,696607.8022179123,6932387.146988906"
+            "&STYLES=style_colormapped_bilinear_multicolor_contours&FORMAT=image/png&TRANSPARENT=TRUE",
+            env=env,
+            showLog=False,
+        )
+
+        AdagucTestTools().writetofile(self.testresultspath + filetocheck, data)
+
+        assert status == 0
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filetocheck,
+            self.testresultspath + filetocheck,
+        )
+
     def test_getmap_latlon_latdecreasing_and_increasing_genericbilinear(self):
         """
         Test rendering of data aligned upwards and downwards with bilinear interpolation

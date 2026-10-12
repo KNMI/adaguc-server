@@ -115,6 +115,15 @@
     <StandardNames standard_name="data"/>
   </Style>
 
+  <Style name="testdata_style_gridboxoutline" title="Grid box outlines" abstract="Draws the source grid cell boundaries, without interpolating or shading the field">
+    <Legend fixed="true">multicolor</Legend>
+    <Min>0</Min>
+    <Max>5</Max>
+    <RenderSettings drawgridboxoutline="true"/>
+    <StandardNames standard_name="test_data"/>
+    <StandardNames standard_name="data"/>
+  </Style>
+
   <Style name="testdata_style_manycontours" title="Rainbow colors" abstract="Drawing with rainbow colors">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0.0</Min>

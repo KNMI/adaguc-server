@@ -1,5 +1,4 @@
 #include "CStyleConfiguration.h"
-#include "CXMLParser.h"
 #include "CDebugger.h"
 #include "CDataSource.h"
 #include "CTString.h"
@@ -27,6 +26,14 @@ RenderMethod getRenderMethodFromString(std::string renderMethodString) {
   if (CT::indexOf(renderMethodString, "stippling") != -1) renderMethod |= RM_STIPPLING;
   if (CT::indexOf(renderMethodString, "polyline") != -1) renderMethod |= RM_POLYLINE;
   if (CT::indexOf(renderMethodString, "polygon") != -1) renderMethod |= RM_POLYGON;
+
+  // Scalar render methods (bilinear/shaded/contour) are rendered by the generic warper. This is
+  // independent of vector/barb/thin-grid rendering, which happens separately through points (see
+  // CImgRenderPoints) once a pointsfromgrid DataPostProc has populated them; both can run on the
+  // same style (e.g. a shaded background with barbs drawn on top).
+  if (isLegacyScalarRenderMethod(renderMethod)) {
+    renderMethod |= RM_GENERIC;
+  }
 
   return renderMethod;
 }

@@ -3,11 +3,13 @@
 #ifndef GDW_DRAWFUNCTION_UTILS_H
 #define GDW_DRAWFUNCTION_UTILS_H
 
-#include "CGenericDataWarper.h"
+#include <vector>
 #include "CCDFTypes.h"
 #include "CColor.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
+
+class CDataSource;
+class CDrawImage;
+class CStyleConfiguration;
 
 enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };

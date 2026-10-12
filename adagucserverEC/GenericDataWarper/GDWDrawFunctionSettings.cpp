@@ -33,6 +33,27 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
 
+  // A legacy style can list several RenderMethod keywords on one style block (e.g.
+  // "nearest,bilinear,shadedcontour") so that a single GetMap request can pick a specific subset
+  // via STYLES=name/keyword; "legacy" here means the style uses one of those old keywords at all.
+  bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
+
+  if (isLegacyRenderMethod) {
+    // Legacy render methods (bilinear/shaded/contour), now routed through the generic warper.
+    // CImgWarpBilinear always sampled values with smooth (gouraud) interpolation regardless of
+    // its "nearest"/"bilinear" keyword, and only painted the field's own colors for the
+    // bilinear/shaded render methods, not for contour-only rendering (which just draws lines
+    // over whatever is already on the canvas). This also applies when a vector/barb render
+    // method is combined with shaded/contour on the same style (e.g. "barbshadedcontour") - the
+    // scalar background still needs smoothing and painting, the barbs are drawn separately
+    // through points (see CImageDataWriter.cpp). These are defaults only: an explicit
+    // <RenderSettings> interpolationmethod/drawgrid attribute below still overrides them - a
+    // style can have a <RenderSettings> tag for an unrelated attribute (e.g. just a renderhint)
+    // without wanting to give up the always-smooth legacy sampling.
+    settings.interpolationMethod = InterpolationMethodBilinear;
+    settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
+  }
+
   if (styleConfiguration->renderSettings.size() > 0) {
     auto renderSetting = styleConfiguration->renderSettings.back();
     auto &renderSettingsAttr = renderSetting.attr;
@@ -57,9 +78,16 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
   /* Check the if we want to use discrete type */
 
-  // For the generic renderer and when shadeinterval is set, always apply shading.
+  // For a pure generic style (no legacy bilinear/shaded/contour keyword at all, e.g.
+  // <RenderMethod>generic</RenderMethod> or no <RenderMethod> tag) there's only one rendering
+  // mode, so configuring a ShadeInterval is enough to turn shading on. For a legacy style, only
+  // the "shaded" keyword (RM_SHADED) should turn shading on - otherwise selecting the "bilinear"
+  // subset of such a style would always draw the shaded classes too, even though "bilinear" was
+  // deliberately chosen to get the plain continuous legend instead.
   if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
-    if (styleConfiguration->renderMethod == RM_GENERIC) {
+    if (styleConfiguration->renderMethod & RM_SHADED) {
+      settings.isUsingShadeIntervals = true;
+    } else if ((styleConfiguration->renderMethod & RM_GENERIC) && !isLegacyRenderMethod) {
       settings.isUsingShadeIntervals = true;
     }
   }

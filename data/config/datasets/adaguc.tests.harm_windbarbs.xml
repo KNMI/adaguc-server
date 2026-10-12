@@ -36,20 +36,32 @@
   <Style name="Windbarbs" title="Wind barbs" abstract="Rendered with barbs">
     <Scale>1</Scale>
     <Offset>0</Offset>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
     <RenderMethod>barb</RenderMethod>
   </Style>
 
   <Style name="Windbarbwithnumbers" title="Wind barbs with number" abstract="Rendered with barbs and wundspeed number">
     <Scale>1</Scale>
     <Offset>0</Offset>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0" plotvalue="true"/>
+    <Thinning radius="40"/>
     <RenderMethod>barb</RenderMethod>
     <RenderSettings rendertextforvectors="true" />
   </Style>
 
-  <Style name="windbarbs_kts" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs">
+  <Style name="windbarbs_kts_shaded" title="Wind barbs + shading" abstract="Rendered with barbs and shaded wind speed">
+    <IncludeStyle name="wind_colors_from_kts"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <RenderMethod>barbshaded,vectorshaded,barb</RenderMethod>
+    <StandardNames standard_name="x_wind,y_wind"/>
+  </Style>
+
+  <Style name="windbarbs_kts_shaded_contour" title="Shaded wind speed + contour lines" abstract="Rendered with shading and contour lines, without barbs">
     <IncludeStyle name="wind_colors_from_kts"/>
     <ContourLine width="1" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,74,84,100,200"/>
-    <RenderMethod>barbshaded,barbshadedcontour,vectorshaded,vectorshadedcontour,barb</RenderMethod>
+    <RenderMethod>shadedcontour</RenderMethod>
     <StandardNames standard_name="x_wind,y_wind"/>
   </Style>
 
@@ -62,8 +74,9 @@
     <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
-    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts_shaded,windbarbs_kts_shaded_contour</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="3"/>
   </Layer>
 
   <!-- The following layer returns only the speed component in EDR and GetFeatureinfo -->
@@ -76,7 +89,7 @@
     <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
-    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts_shaded,windbarbs_kts_shaded_contour</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
     <DataPostProc algorithm="filter_dataobjects" select="speed_component"/>
   </Layer>
@@ -92,7 +105,7 @@
     <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
-    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts_shaded,windbarbs_kts_shaded_contour</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
     <DataPostProc algorithm="filter_dataobjects" select="direction_component"/>
   </Layer>
