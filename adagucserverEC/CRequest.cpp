@@ -25,7 +25,6 @@
  ******************************************************************************/
 
 static const bool CREQUEST_DEBUG = false;
-// #define MEASURETIME
 
 #include "Types/ProjectionStore.h"
 #include "CRequest.h"
@@ -204,9 +203,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
-  if (CREQUEST_DEBUG) {
-    StopWatch_Stop("### [fillDimValuesForDataSource]");
-  }
+  StopWatch_Measure("### [fillDimValuesForDataSource]");
   int status = 0;
   try {
     /*
@@ -631,8 +628,8 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
   }
   if (CREQUEST_DEBUG) {
     CDBDebug("Datasource has %d steps", dataSource->getNumTimeSteps());
-    StopWatch_Stop("[/setDimValuesForDataSource]");
   }
+  StopWatch_Measure("[/setDimValuesForDataSource]");
   return 0;
 }
 
@@ -844,9 +841,7 @@ int CRequest::process_all_layers() {
 
 int CRequest::process_querystring() {
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Start processing query string");
-#endif
+  StopWatch_Measure("Start processing query string");
 
   if (srvParam == nullptr || srvParam->cfg == nullptr || srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
@@ -1325,9 +1320,7 @@ int CRequest::process_querystring() {
   if (CREQUEST_DEBUG) {
     CDBDebug("Finished parsing query string parameters");
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("query string processed");
-#endif
+  StopWatch_Measure("query string processed");
 
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
@@ -1920,9 +1913,7 @@ int CRequest::process_querystring() {
     setExceptionType(ServiceExceptionType::UnprocessableEntity);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("End of query string");
-#endif
+  StopWatch_Measure("End of query string");
 
   return 0;
 }
@@ -2206,7 +2197,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       dataSourceToUse = 0;
       imageDataWriterIsInitialized = true;
     }
-    bool measurePerformance = false;
 
     bool useThreading = false;
     int numThreads = 4;
@@ -2220,9 +2210,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         }
       }
     }
-    if (measurePerformance) {
-      StopWatch_Stop("Start imagewarper");
-    }
+    StopWatch_Measure("Start imagewarper");
     if (useThreading) {
       size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
 
@@ -2265,9 +2253,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
                   return 1;
                 }
 
-                if (measurePerformance) {
-                  StopWatch_Stop("Started thread %d for timestep %d", worker, k);
-                }
+                StopWatch_Measure("Started thread %d for timestep %d", worker, k);
                 OK = true;
                 break;
               }
@@ -2278,9 +2264,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
           }
         }
       }
-      if (measurePerformance) {
-        StopWatch_Stop("All submitted");
-      }
+      StopWatch_Measure("All submitted");
       for (int worker = 0; worker < numThreads; worker++) {
         if (args[worker].used) {
           args[worker].used = false;
@@ -2291,18 +2275,14 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
           }
         }
       }
-      if (measurePerformance) {
-        StopWatch_Stop("All done");
-      }
+      StopWatch_Measure("All done");
       for (int worker = 0; worker < numThreads; worker++) {
         for (size_t j = 0; j < args[worker].dataSources.size(); j++) {
           delete args[worker].dataSources[j];
         }
         args[worker].dataSources.clear();
       }
-      if (measurePerformance) {
-        StopWatch_Stop("All deleted");
-      }
+      StopWatch_Measure("All deleted");
     } else {
       /*Standard non threading functionality */
       for (size_t k = 0; k < (size_t)dataSources[dataSourceToUse]->getNumTimeSteps(); k++) {
@@ -2335,9 +2315,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         }
       }
     }
-    if (measurePerformance) {
-      StopWatch_Stop("Finished imagewarper");
-    }
+    StopWatch_Measure("Finished imagewarper");
 
     CColor textBGColor = CColor(255, 255, 255, 0); /* TODO: 2021-01-12, Maarten Plieger: Should make the text background configurable */
 

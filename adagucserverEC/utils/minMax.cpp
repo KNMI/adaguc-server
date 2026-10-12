@@ -100,9 +100,7 @@ int Statistics::calculate(CDataSource *dataSource) {
 }
 
 template <class T> void Statistics::calcMinMax(size_t size, std::vector<DataObject> &dataObject) {
-#ifdef MEASURETIME
-  StopWatch_Stop("Start min/max calculation");
-#endif
+  StopWatch_Measure("Start min/max calculation");
   if (dataObject.size() == 1) {
     T *data = (T *)dataObject[0].cdfVariable->data;
     CDFType type = dataObject[0].cdfVariable->getType();
@@ -139,9 +137,7 @@ template <class T> void Statistics::calcMinMax(size_t size, std::vector<DataObje
     min = (double)_min;
     max = (double)_max;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("Finished min/max calculation");
-#endif
+  StopWatch_Measure("Finished min/max calculation");
 }
 
 MinMax getMinMax(CDF::Variable *var) {

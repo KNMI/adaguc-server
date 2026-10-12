@@ -307,9 +307,7 @@ static void substituteExtraEnvironment(std::string &configFileData, const std::v
 }
 
 int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
   std::string configFileData;
   try {
     configFileData = readFile(pszConfigFile);
@@ -317,43 +315,31 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
     CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile: File contents read.");
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile: File contents read.");
   std::string datasetName = CT::basename(pszConfigFile);
 
   try {
     substituteStandardEnvironment(configFileData);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::parseConfigFile: substituteStandardEnvironment done");
-#endif
+    StopWatch_Measure("CServerParams::parseConfigFile: substituteStandardEnvironment done");
 
     // Environment elements declare extra variables to substitute. Finding them requires parsing the XML first,
     // so this extra pass is only done when the file can contain them.
     if (configFileData.find("Environment") != std::string::npos) {
-#ifdef MEASURETIME
-      StopWatch_Stop("CServerParams::parseConfigFile start extra substitutions");
-#endif
+      StopWatch_Measure("CServerParams::parseConfigFile start extra substitutions");
       CServerConfig environmentConfig;
       if (parseConfig(&environmentConfig, configFileData, datasetName) == 0 && !environmentConfig.Configuration.empty()) {
         substituteExtraEnvironment(configFileData, environmentConfig.Configuration[0].Environment, verbose);
       }
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
-#endif
+    StopWatch_Measure("CServerParams::parseConfigFile: substituteExtraEnvironment done");
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start parseConfig");
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile start parseConfig");
   int status = parseConfig(&configObj, configFileData, datasetName);
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile done parseConfig");
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile done parseConfig");
 
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;

@@ -33,7 +33,6 @@
 #include "CColor.h"
 #include "Types/GeoParameters.h"
 #ifdef ADAGUC_USE_CAIRO
-// #define MEASURETIME
 
 #include <cairo-ft.h>
 #include "CStopWatch.h"

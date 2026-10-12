@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "9.0.2" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "9.0.3" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -107,8 +107,7 @@
 
 #define ADAGUC_USE_CAIRO
 
-// #define CImgWarpBilinear_TIME
-// #define MEASURETIME
+// Timing output (StopWatch_Measure) is switched on/off centrally with STOPWATCH_MEASURETIME in hclasses/CDebugger.h
 
 // Debug settings: each file now defines its own "static const bool ..._DEBUG"
 // at file scope instead of relying on macros defined here.

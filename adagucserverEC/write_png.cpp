@@ -7,7 +7,6 @@
 #include "write_png.h"
 #include "CStopWatch.h"
 
-// #define MEASURETIME
 
 void prepare24Bpp(png_structp png_ptr, png_infop info_ptr, int width, int height) {
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -26,9 +25,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
   png_color palette[256];
   png_byte a[256];
   png_color_16 trans_values[256];
-#ifdef MEASURETIME
-  StopWatch_Stop("Creating octtree for color quantization");
-#endif
+  StopWatch_Measure("Creating octtree for color quantization");
 
   const uint32_t *src32 = reinterpret_cast<const uint32_t *>(ARGBByteBuffer);
   const int totalPixels = width * height;
@@ -105,9 +102,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
 
     InsertTreeCount(&tree, &color, -1, 1);
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("Tree filled, starting reduction");
-#endif
+  StopWatch_Measure("Tree filled, starting reduction");
   if (use8bitpalAlpha) {
     while (TotalLeafNodes() > 255) {
       ReduceTree();
@@ -117,9 +112,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
       ReduceTree();
     }
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("Tree reduction completed");
-#endif
+  StopWatch_Measure("Tree reduction completed");
 
   // Set PNG palette
   int numColors = 0;
@@ -259,9 +252,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
     }
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Before png_write_image");
-#endif
+  StopWatch_Measure("Before png_write_image");
   png_write_image(png_ptr, row_ptrs);
 
   delete[] row_ptrs;
@@ -271,16 +262,12 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
 int writePng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, int bitDepth, bool use8bitpalAlpha) {
   OctreeType *tree = NULL;
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Start writePNG");
-#endif
+  StopWatch_Measure("Start writePNG");
 
   png_structp png_ptr;
   png_infop info_ptr;
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-#ifdef MEASURETIME
-  StopWatch_Stop("png_create_write_struct written");
-#endif
+  StopWatch_Measure("png_create_write_struct written");
   if (!png_ptr) {
     CDBError("png_create_write_struct failed");
     return 1;
@@ -314,24 +301,18 @@ int writePng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, i
   png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
   png_write_info(png_ptr, info_ptr);
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Headers written");
-#endif
+  StopWatch_Measure("Headers written");
 
   if (bitDepth == 24) {
     write24BppPayload(png_ptr, width, height, ARGBByteBuffer);
   } else if (bitDepth == 8) {
     write8BppPayload(png_ptr, tree, width, height, ARGBByteBuffer, use8bitpalAlpha);
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("PNG image written");
-#endif
+  StopWatch_Measure("PNG image written");
 
   png_write_end(png_ptr, NULL);
   png_destroy_write_struct(&png_ptr, &info_ptr);
 
-#ifdef MEASURETIME
-  StopWatch_Stop("End writePNG");
-#endif
+  StopWatch_Measure("End writePNG");
   return 0;
 }

@@ -309,16 +309,14 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   if (CImgWarpBilinear_DEBUG) {
     CDBDebug("Nodata value = %f", fNodataValue);
 
-    StopWatch_Stop("Start Reprojecting all the points");
+    StopWatch_Measure("Start Reprojecting all the points");
     CDBDebug("datatype: %s", CDF::getCDFDataTypeName(sourceImage->getFirstAvailableDataObject()->cdfVariable->getType()).c_str());
     for (int j = 0; j < 4; j++) {
       CDBDebug("dPixelExtent[%d]=%d", j, dPixelExtent[j]);
     }
   }
 
-  if (CImgWarpBilinear_DEBUG) {
-    StopWatch_Stop("Setting data objects");
-  }
+  StopWatch_Measure("Setting data objects");
 
   for (int y = dPixelExtent[1]; y < dPixelExtent[3] + 1; y++) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2] + 1; x++) {
@@ -387,9 +385,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       }
     }
   }
-  if (CImgWarpBilinear_DEBUG) {
-    StopWatch_Stop("reprojection finished");
-  }
+  StopWatch_Measure("reprojection finished");
   bool has_u_v_grid_rel = (sourceImage->getNumDataObjects() >= 3 &&
                            (dObjgetVariableName(*sourceImage->getDataObject(2)) == U_COMPONENT_GRID_ABSOLUTE && dObjgetVariableName(*sourceImage->getDataObject(3)) == V_COMPONENT_GRID_ABSOLUTE));
   bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
@@ -412,13 +408,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     // Set default nodata values
     for (size_t j = 0; j < drawImageSize; j++) valueData[j] = fNodataValue;
 // start drawing triangles
-#ifdef CImgWarpBilinear_TIME
-    StopWatch_Stop("Start triangle generation");
-#else
-    if (CImgWarpBilinear_DEBUG) {
-      StopWatch_Stop("Start triangle generation");
-    }
-#endif
+    StopWatch_Measure("Start triangle generation");
 
     /*
      *
@@ -633,9 +623,7 @@ unsigned short CImgWarpBilinear::checkIfContourRequired(float *val) {
 void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoothWindow, int W, int H) {
 
 // SmootH!
-#ifdef CImgWarpBilinear_TIME
-  StopWatch_Stop("[SmoothData]");
-#endif
+  StopWatch_Measure("[SmoothData]");
   if (smoothWindow == 0) return; // No smoothing.
   size_t drawImageSize = W * H;
   float *valueData2 = new float[W * H];
@@ -686,9 +674,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   }
   delete[] distanceWindow;
   delete[] valueData2;
-#ifdef CImgWarpBilinear_TIME
-  StopWatch_Stop("[/SmoothData]");
-#endif
+  StopWatch_Measure("[/SmoothData]");
 }
 
 int CImgWarpBilinear::set(const char *pszSettings) {
@@ -1082,9 +1068,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
 
      //TODO "pleister" om contourlijnen goed te krijgen.
      if(1==2){
-       #ifdef CImgWarpBilinear_TIME
-       StopWatch_Stop("substracting ival/100");
-       #endif
+       StopWatch_Measure("substracting ival/100");
 
        float substractVal=ival/100;
        for(int y=0;y<dImageHeight;y++){
@@ -1093,9 +1077,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
          }
        }
        fNodataValue-=substractVal;
-       #ifdef CImgWarpBilinear_TIME
-       StopWatch_Stop("finished substracting ival/100");
-       #endif
+       StopWatch_Measure("finished substracting ival/100");
      }*/
 
   if (CImgWarpBilinear_DEBUG) {

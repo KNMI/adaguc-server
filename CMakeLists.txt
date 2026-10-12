@@ -49,6 +49,13 @@ add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
 add_definitions(-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_WEBP)
 
+# Enable timing output (StopWatch_Measure and time statistics in CDBDebug), see hclasses/CDebugger.h
+option(ADAGUC_MEASURETIME "Enable STOPWATCH_MEASURETIME timing output" OFF)
+MESSAGE(STATUS "ADAGUC_MEASURETIME: ${ADAGUC_MEASURETIME}")
+if(ADAGUC_MEASURETIME)
+  add_definitions(-DSTOPWATCH_MEASURETIME)
+endif()
+
 add_subdirectory(hclasses)
 add_subdirectory(CCDFDataModel)
 add_subdirectory(adagucserverEC)

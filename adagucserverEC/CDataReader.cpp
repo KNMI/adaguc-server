@@ -60,7 +60,6 @@
 #include "CTString.h"
 #include "utils/projectionUtils.h"
 
-// #define MEASURETIME
 bool verboseLogging = false;
 
 #define uchar unsigned char
@@ -655,9 +654,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     return 1;
   }
 
-  if (verbose) {
-    StopWatch_Stop("XY dimensions read");
-  }
+  StopWatch_Measure("XY dimensions read");
 
   if (verbose) {
     CDBDebug("PROJ4 = [%s]", dataSource->nativeProj4.c_str());
@@ -941,9 +938,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
-  if (verbose) {
-    StopWatch_Stop("parseDimensions done");
-  }
+  StopWatch_Measure("parseDimensions done");
   if (dataSource->useLonTransformation != -1 && gridExtent == NULL) {
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
       Proc::swapPixelsAtLocation(dataSource, dataSource->getDataObject(varNr)->cdfVariable, 0);
@@ -1014,9 +1009,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("Working on variable %s, %lu/%lu", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
     }
 
-    if (verbose) {
-      StopWatch_Stop("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
-    }
+    StopWatch_Measure("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
 
     // Get Unit
     CDF::Attribute *varUnits = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
@@ -1046,9 +1039,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
     }
 
-    if (verbose) {
-      StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
-    }
+    StopWatch_Measure("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
   }
 
   if (dataSource->enablePostProcessors) {
@@ -1084,9 +1075,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-    if (verbose) {
-      StopWatch_Stop("Reading _FillValue");
-    }
+    StopWatch_Measure("Reading _FillValue");
     CDF::Attribute *fillValue = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("_FillValue");
     if (fillValue != NULL) {
 
@@ -1102,9 +1091,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT");
     }
 
-    if (verbose) {
-      StopWatch_Stop("start reading image data");
-    }
+    StopWatch_Measure("start reading image data");
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
 
       if (dataSource->formatConverterActive == false) {
@@ -1136,9 +1123,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
       }
 
-      if (verbose) {
-        StopWatch_Stop("data read");
-      }
+      StopWatch_Measure("data read");
 
       // Swap X, Y dimensions so that pointer x+y*w works correctly
 
@@ -1297,9 +1282,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
       }
 
-      if (verbose) {
-        StopWatch_Stop("Scale and offset applied");
-      }
+      StopWatch_Measure("Scale and offset applied");
     }
     if (dataSource->enablePostProcessors) {
       getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
@@ -1322,9 +1305,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       styleConfiguration->stretchLegend(min, max);
     }
 
-    if (verbose) {
-      StopWatch_Stop("all read");
-    }
+    StopWatch_Measure("all read");
   }
 
   if (verbose) {
