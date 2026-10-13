@@ -267,7 +267,7 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
     }
   }
 
-  auto drawQuads = [&](GDWState &state) {
+  auto drawQuads = [&]() {
     double avgDX = 0;
     double avgDY = 0;
     double pLengthD = 0;
@@ -343,15 +343,15 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
           }
 
           if (doDraw) {
-            state.sourceIndexX = x + pixelExtentBox.left;
-            state.sourceIndexY = (state.sourceGridHeight - 1 - (y + pixelExtentBox.bottom));
-            T value = ((T *)state.sourceGrid)[state.sourceIndexX + state.sourceIndexY * state.sourceGridWidth];
+            warperState.sourceIndexX = x + pixelExtentBox.left;
+            warperState.sourceIndexY = (warperState.sourceGridHeight - 1 - (y + pixelExtentBox.bottom));
+            T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + warperState.sourceIndexY * warperState.sourceGridWidth];
             const double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
             const double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
             const double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
             const double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
-            gdwDrawTriangle(xCornersA, yCornersA, value, false, state, drawFunction);
-            gdwDrawTriangle(xCornersB, yCornersB, value, true, state, drawFunction);
+            gdwDrawTriangle(xCornersA, yCornersA, value, false, warperState, drawFunction);
+            gdwDrawTriangle(xCornersB, yCornersB, value, true, warperState, drawFunction);
           }
         }
       }
@@ -359,7 +359,7 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
   };
 
   StopWatch_Measure("warpTransformGrid: start drawing %dx%d quads", dataWidth, dataHeight);
-  drawQuads(warperState);
+  drawQuads();
   StopWatch_Measure("warpTransformGrid: done drawing quads");
 
   StopWatch_Measure("[/warpTransformGrid]");
