@@ -6,10 +6,7 @@
 #include "CStopWatch.h"
 #include "CTString.h"
 #include <algorithm>
-#include <chrono>
 #include <cstdlib>
-
-static const bool CImgWarpBilinear_DEBUG = false;
 
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
@@ -46,9 +43,6 @@ struct ContourLineStats {
   size_t numLines = 0;
   size_t numLineSegments = 0;
   size_t numTexts = 0;
-  double traceMs = 0; // Time spent following the lines in the distance field
-  double drawMs = 0;  // Time spent drawing the line segments and texts
-  double textMs = 0;  // Part of drawMs spent on drawing texts
 };
 
 // Fast rounding to the nearest integer (ties to even) without a library call: adding and subtracting 1.5 * 2^23 drops the fraction.
@@ -58,8 +52,6 @@ static inline float fastRoundf(float v) {
   if (std::fabs(v) < 4194304.0f) return (v + magic) - magic;
   return std::nearbyint(v);
 }
-
-static double msSince(const std::chrono::steady_clock::time_point &start) { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count(); }
 
 bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
   for (auto &textLocation: textLocations) {
@@ -95,7 +87,6 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
 
 void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, ContourLineStructure &contourDefinition,
                   DISTANCEFIELDTYPE lineMask, std::vector<i4point> &textLocations, double scaling, const char *fontLocation, ContourLineStats &stats) {
-  auto traceStart = std::chrono::steady_clock::now();
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
   bool foundLine = true;                  /* This function starts at the beginning of a line segment */
   int maxLineDistance = 5;                /* Maximum length of each line segment */
@@ -194,10 +185,8 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  stats.traceMs += msSince(traceStart);
   stats.numLines++;
   stats.numLineSegments += lineSegments.size();
-  auto drawStart = std::chrono::steady_clock::now();
 
   /* Now draw this line */
   drawImage->moveTo(lineSegments[0].x, lineSegments[0].y);
@@ -226,9 +215,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
           int endX = lineSegments[j + spaceForTextNr].x;
           int endY = lineSegments[j + spaceForTextNr].y;
-          auto textStart = std::chrono::steady_clock::now();
           drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, binnedLineSegmentsValue, fontLocation, scaling);
-          stats.textMs += msSince(textStart);
           stats.numTexts++;
           textOn = true;
         } else {
@@ -250,7 +237,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   }
 
   drawImage->endLine(dashes, numDashes);
-  stats.drawMs += msSince(drawStart);
 }
 
 void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
@@ -403,20 +389,12 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
         traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation, stats);
       }
     }
-    StopWatch_Measure("drawContour: done contour definition %d: %zu lines, %zu line segments, %zu texts. Tracing %.1f ms, drawing %.1f ms (of which texts %.1f ms)", contourLineIndex, stats.numLines,
-                      stats.numLineSegments, stats.numTexts, stats.traceMs, stats.drawMs, stats.textMs);
+    StopWatch_Measure("drawContour: done contour definition %d: %zu lines, %zu line segments, %zu texts", contourLineIndex, stats.numLines, stats.numLineSegments, stats.numTexts);
     lineMask = lineMask + lineMask;
     contourLineIndex++;
   }
 
-  if (CImgWarpBilinear_DEBUG) {
-    CDBDebug("Deleting distance[]");
-  }
-
   free(distance);
 
-  if (CImgWarpBilinear_DEBUG) {
-    CDBDebug("Finished drawing lines and text");
-  }
   StopWatch_Measure("[/drawContour]");
 }
