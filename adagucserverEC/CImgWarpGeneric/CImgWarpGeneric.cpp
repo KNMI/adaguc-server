@@ -42,6 +42,7 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "CDrawFunction.h"
+#include "CStopWatch.h"
 
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
@@ -240,6 +241,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
     if (settings.shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
       drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
+      StopWatch_Measure("CImgWarpGeneric: done drawContour");
     }
   }
 

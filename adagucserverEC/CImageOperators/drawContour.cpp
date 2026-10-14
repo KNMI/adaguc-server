@@ -3,9 +3,10 @@
 #include <CDrawImage.h>
 #include <set>
 #include "CDebugger.h"
+#include "CStopWatch.h"
 #include "CTString.h"
-
-static const bool CImgWarpBilinear_DEBUG = false;
+#include <algorithm>
+#include <cstdlib>
 
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
@@ -36,6 +37,14 @@ struct ContourLineStructure {
   double textStrokeWidth = 0.75;
   std::vector<double> dashes;
 };
+
+// Fast rounding to the nearest integer (ties to even) without a library call: adding and subtracting 1.5 * 2^23 drops the fraction.
+// This is exact for |v| < 2^22, larger values fall back to nearbyint.
+static inline float fastRoundf(float v) {
+  constexpr float magic = 12582912.0f;
+  if (std::fabs(v) < 4194304.0f) return (v + magic) - magic;
+  return std::nearbyint(v);
+}
 
 bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
   for (auto &textLocation: textLocations) {
@@ -224,6 +233,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   if (styleConfiguration->contourLines.size() == 0) {
     return;
   }
+  StopWatch_Measure("[drawContour] %d contour definitions", (int)styleConfiguration->contourLines.size());
 
   double scaling = dataSource->getContourScaling();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.location.c_str();
@@ -240,10 +250,13 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   size_t imageSize = (dImageHeight + 0) * (dImageWidth + 1);
 
   // Create a distance field, this is where the line information will be put in.
-  DISTANCEFIELDTYPE *distance = new DISTANCEFIELDTYPE[imageSize];
-
-  // Determine contour lines
-  memset(distance, 0, imageSize * sizeof(DISTANCEFIELDTYPE));
+  // calloc gives zeroed memory, the OS can provide this lazily which is much faster than memset for large images.
+  DISTANCEFIELDTYPE *distance = (DISTANCEFIELDTYPE *)calloc(imageSize, sizeof(DISTANCEFIELDTYPE));
+  if (distance == NULL) {
+    CDBError("drawContour: unable to allocate distance field of %zu elements for %dx%d image", imageSize, dImageWidth, dImageHeight);
+    return;
+  }
+  StopWatch_Measure("drawContour: allocated distance field %dx%d", dImageWidth, dImageHeight);
 
   std::vector<ContourLineStructure> contourlineList;
 
@@ -279,64 +292,101 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
                                .dashes = dashes});
   }
 
+  StopWatch_Measure("drawContour: contour definitions parsed, start filling distance field");
+  // Sorted copies of the classes, so that a binary search can find if a class lies within [min, max) of a pixel.
+  // The order does not matter for that check. The original order is kept in contourlineList, it is used to pick the closest class for the text.
+  std::vector<std::vector<double>> sortedClassesList;
+  // Interval and its inverse in float, so that the interval check in the loop below needs no division
+  std::vector<float> intervals;
+  std::vector<float> inverseIntervals;
+  for (const auto &contourLine: contourlineList) {
+    intervals.push_back(contourLine.interval);
+    inverseIntervals.push_back(contourLine.interval > 0 ? 1.0f / float(contourLine.interval) : 0);
+    std::vector<double> sortedClasses;
+    for (double cc: contourLine.classes) {
+      if (cc == cc) sortedClasses.push_back(cc); // NaN never matches, leave it out so sorting is well defined
+    }
+    std::sort(sortedClasses.begin(), sortedClasses.end());
+    sortedClassesList.push_back(sortedClasses);
+  }
+  size_t numContourLines = contourlineList.size();
+
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  for (int y = 0; y < dImageHeight - 1; y++) {
-    for (int x = 0; x < dImageWidth - 1; x++) {
-      size_t p1 = size_t(x + y * dImageWidth);
-      const double val[4] = {sourceGrid[p1], sourceGrid[p1 + 1], sourceGrid[p1 + dImageWidth], sourceGrid[p1 + dImageWidth + 1]};
-      // Check if all pixels have values...
-      if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
-        int mask = 1;
-        for (auto &contourLine: contourlineList) {
+  // Pixels where at least one contour definition set a bit. The distance field is sparse, so tracing below only
+  // needs to look at these candidates instead of rescanning the full image once per contour definition. No bit is
+  // ever set after this point, only cleared, so this candidate set stays valid for every contour definition.
+  std::vector<i4point> candidatePixels;
+  // Fills the distance field for rows [rowStart, rowEnd).
+  auto fillRows = [&](int rowStart, int rowEnd) {
+    for (int y = rowStart; y < rowEnd; y++) {
+      for (int x = 0; x < dImageWidth - 1; x++) {
+        size_t p1 = size_t(x + y * dImageWidth);
+        const float v0 = sourceGrid[p1], v1 = sourceGrid[p1 + 1], v2 = sourceGrid[p1 + dImageWidth], v3 = sourceGrid[p1 + dImageWidth + 1];
+        // Check if all pixels have values...
+        if (!(v0 != fNodataValue && v1 != fNodataValue && v2 != fNodataValue && v3 != fNodataValue && v0 == v0 && v1 == v1 && v2 == v2 && v3 == v3)) {
+          continue;
+        }
+        float min = std::min(v0, std::min(v1, std::min(v2, v3)));
+        float max = std::max(v0, std::max(v1, std::max(v2, v3)));
+        // A line is drawn where a contour value lies within [min, max). This range is empty when all values are equal.
+        if (min == max) {
+          continue;
+        }
+        DISTANCEFIELDTYPE mask = 1;
+        DISTANCEFIELDTYPE foundLines = 0;
+        for (size_t j = 0; j < numContourLines; j++) {
           // Check for lines at specified classes
-          float min = std::min(val[0], std::min(val[1], std::min(val[2], val[3])));
-          float max = std::max(val[0], std::max(val[1], std::max(val[2], val[3])));
-
-          for (double cc: contourLine.classes) {
-            if (cc >= min && cc < max) {
-              distance[p1] |= mask;
-              break;
+          const auto &sortedClasses = sortedClassesList[j];
+          if (!sortedClasses.empty()) {
+            auto firstClassAboveMin = std::lower_bound(sortedClasses.begin(), sortedClasses.end(), (double)min);
+            if (firstClassAboveMin != sortedClasses.end() && *firstClassAboveMin < max) {
+              foundLines |= mask;
             }
           }
-          if (contourLine.interval > 0) {
+          float interval = intervals[j];
+          if (interval > 0) {
             // Check for lines at continous interval
-            float cc = round(min / contourLine.interval) * contourLine.interval;
+            float cc = fastRoundf(min * inverseIntervals[j]) * interval;
             if (cc >= min && cc < max) {
-              distance[p1] |= mask;
+              foundLines |= mask;
             }
           }
-
           mask = mask + mask;
+        }
+        // Only write when a line was found, untouched parts of the calloc-ed distance field then do not need to be mapped into memory
+        if (foundLines) {
+          distance[p1] |= foundLines;
+          candidatePixels.push_back({.x = x, .y = y});
         }
       }
     }
-  }
+  };
+
+  int numRows = dImageHeight - 1;
+  StopWatch_Measure("drawContour: filling distance field");
+  fillRows(0, numRows);
+
+  StopWatch_Measure("drawContour: done filling distance field");
 
   std::vector<i4point> textLocations;
 
   DISTANCEFIELDTYPE lineMask = 1;
 
+  int contourLineIndex = 0;
   for (auto &contourLine: contourlineList) {
-
-    /* Everywhere */
-    for (int y = 0; y < dImageHeight; y++) {
-      for (int x = 0; x < dImageWidth; x++) {
-        size_t p = x + y * dImageWidth;
-        if (distance[p] & lineMask) {
-          traverseLine(drawImage, distance, sourceGrid, x, y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
-        }
+    StopWatch_Measure("drawContour: start contour definition %d", contourLineIndex);
+    for (const auto &candidate: candidatePixels) {
+      size_t p = candidate.x + candidate.y * dImageWidth;
+      if (distance[p] & lineMask) {
+        traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
       }
     }
+    StopWatch_Measure("drawContour: done contour definition %d", contourLineIndex);
     lineMask = lineMask + lineMask;
+    contourLineIndex++;
   }
 
-  if (CImgWarpBilinear_DEBUG) {
-    CDBDebug("Deleting distance[]");
-  }
+  free(distance);
 
-  delete[] distance;
-
-  if (CImgWarpBilinear_DEBUG) {
-    CDBDebug("Finished drawing lines and text");
-  }
+  StopWatch_Measure("[/drawContour]");
 }
