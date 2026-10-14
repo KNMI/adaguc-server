@@ -131,6 +131,22 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
+    def test_WMSGetMap_testdatanc_webp_small_odd_size(self):
+        """WebP output for an image with an odd width and height, checked byte-for-byte against a known-good baseline"""
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_testdatanc_webp_small_odd_size.webp"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=255&HEIGHT=101&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/webp&TRANSPARENT=TRUE&",
+            env=self.env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data,
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
     def test_WMSGetMap_testdatanc_withplus(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc_plus.png"
