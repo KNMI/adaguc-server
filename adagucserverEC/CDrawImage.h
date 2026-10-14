@@ -157,9 +157,6 @@ public:
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
   void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
-  // Rendered width in pixels of text at the given font/size, drawn horizontally (angle 0) -
-  // used to center a label within a reserved span without exceeding it.
-  int getTextWidth(const char *fontfile, float size, const char *text);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);
@@ -208,7 +205,8 @@ public:
   void setCanvasColorType(int colorType);
 
   /**
-   * Get renderer width of the given text
+   * Rendered width in pixels of text at the given font/size/angle - e.g. used to center a label
+   * within a reserved span without exceeding it (pass angle 0 for horizontal text).
    */
   int getTextWidth(std::string text, const std::string &fontPath, float size, int angle);
 };

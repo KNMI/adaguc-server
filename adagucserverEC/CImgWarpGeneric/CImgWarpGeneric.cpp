@@ -55,10 +55,16 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
     value = smoothingAtLocation(warperState.sourceIndexX, warperState.sourceIndexY, (T *)warperState.sourceGrid, warperState, settings);
   }
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
-  if (settings.drawgrid) {
+  if (settings.paintFieldColors) {
     auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
+    } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
+      // A fully transparent color with non-zero RGB means a ShadeInterval/interval fillcolor was
+      // deliberately set to alpha=0 (as opposed to "no match", which is CColor(0,0,0,0)) - force
+      // it so the pixel is actually erased instead of left untouched underneath whatever was
+      // already drawn there, matching CImgWarpNearestNeighbour's behavior for the same case.
+      settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }
 };
@@ -121,10 +127,14 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
   float bilValue = (1 - dy) * gx1 + dy * gx2;
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
-  if (settings.drawgrid) {
+  if (settings.paintFieldColors) {
     auto colorIndex = memoizedDeterminePixelColorFromValue(bilValue, &settings, memo);
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
+    } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
+      // See warpImageNearestFunction above: a deliberately transparent (alpha=0, non-zero RGB)
+      // interval color must still force-erase the pixel, not leave it untouched.
+      settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }
 };
@@ -228,19 +238,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 #undef RENDER
     }
 
-    // A pure generic style (no legacy bilinear/shaded/contour keyword, e.g. no <RenderMethod>
-    // tag at all) has only one rendering mode, so configuring a ContourLine is enough to draw
-    // it. A legacy style can list several RenderMethod keywords on one style block so that a
-    // single GetMap request can pick a specific subset via STYLES=name/keyword (e.g.
-    // "nearest,bilinear,shadedcontour"); for those, only the "contour" keyword (RM_CONTOUR)
-    // should draw the contour lines - otherwise selecting the "bilinear" subset would always
-    // draw them too, even though "bilinear" was deliberately chosen to leave them out.
-    bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
-    bool shouldDrawContours = styleConfiguration->renderMethod & RM_CONTOUR;
-    if (!isLegacyRenderMethod) {
-      shouldDrawContours = styleConfiguration->contourLines.size() > 0;
-    }
-    if (shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
+    if (settings.shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
       StopWatch_Measure("CImgWarpGeneric: start drawContour");
       drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
       StopWatch_Measure("CImgWarpGeneric: done drawContour");

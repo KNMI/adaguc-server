@@ -984,8 +984,14 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * the grid itself rather than needing a <DataPostProc algorithm="pointsfromgrid"> tag. Keep
    * both working here, at render time, scoped to only the style actually being rendered (not
    * every style variant the layer defines) so this has no effect beyond this one render.
+   *
+   * RM_THIN is deliberately excluded here: old CImgWarpBilinear mapped it to "drawGridVectors",
+   * which was never actually implemented (a dead TODO branch), so a RenderMethod="thin"-only
+   * style drew nothing. Including RM_THIN in this condition would make such a style suddenly
+   * render default vector arrows instead of staying a no-op; it's otherwise harmless/orthogonal
+   * when combined with an actual RM_VECTOR/RM_BARB bit, which already triggers this block.
    */
-  if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB || renderMethod & RM_THIN) && dataSource->hasFieldData) {
+  if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
     if (styleConfiguration != nullptr && styleConfiguration->vectorIntervals.empty()) {
       CServerConfig::XMLE_Vector defaultVector;
       defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";

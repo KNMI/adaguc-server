@@ -50,8 +50,12 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     // <RenderSettings> interpolationmethod/drawgrid attribute below still overrides them - a
     // style can have a <RenderSettings> tag for an unrelated attribute (e.g. just a renderhint)
     // without wanting to give up the always-smooth legacy sampling.
+    //
+    // Only paintFieldColors (not drawgrid) is derived from the render method here: drawgrid also
+    // gates whether CCreateLegend builds a legend at all (see CCreateLegend.cpp), and a
+    // contour-only style still has a meaningful legend even though it paints no raster colors.
     settings.interpolationMethod = InterpolationMethodBilinear;
-    settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
+    settings.paintFieldColors = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
   }
 
   if (styleConfiguration->renderSettings.size() > 0) {
@@ -68,8 +72,10 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     }
     if (renderSettingsAttr.drawgrid == ("false")) {
       settings.drawgrid = false;
+      settings.paintFieldColors = false;
     } else if (renderSettingsAttr.drawgrid == ("true")) {
       settings.drawgrid = true;
+      settings.paintFieldColors = true;
     }
 
     if (renderSettingsAttr.drawgridboxoutline == ("true")) {
@@ -123,6 +129,19 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
         }
       }
     }
+  }
+
+  // A pure generic style (no legacy bilinear/shaded/contour keyword at all, e.g. no
+  // <RenderMethod> tag) has only one rendering mode, so configuring a ContourLine is enough to
+  // draw it. A legacy style can list several RenderMethod keywords on one style block so that a
+  // single GetMap request can pick a specific subset via STYLES=name/keyword (e.g.
+  // "nearest,bilinear,shadedcontour"); for those, only the "contour" keyword (RM_CONTOUR) should
+  // draw the contour lines - otherwise selecting the "bilinear" subset would always draw them
+  // too, even though "bilinear" was deliberately chosen to leave them out.
+  if (isLegacyRenderMethod) {
+    settings.shouldDrawContours = (styleConfiguration->renderMethod & RM_CONTOUR) != 0;
+  } else {
+    settings.shouldDrawContours = styleConfiguration->contourLines.size() > 0;
   }
 
   return settings;
