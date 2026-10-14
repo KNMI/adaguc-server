@@ -188,10 +188,7 @@ class TestWCS:
 
     def test_WCSGetCoverageNetCDF4_int64_dimension_preserves_datatype(self):
         """
-        Companion to test_WCSGetCoverageNetCDF3_int64_dimension: a direct netCDF4/NetCDF4 request
-        for the same int64-dimensioned coverage should keep "gl" as a true 64-bit integer, since
-        the 32-bit narrowing in CDFNetCDFWriter only applies when writing classic (netcdfMode<4)
-        output - it must never kick in here.
+        Companion to test_WCSGetCoverageNetCDF3_int64_dimension: Ensure that datatype is preserved.
         """
         env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent.xml", self.testresultspath, self.expectedoutputsspath)
         update_db(env)
