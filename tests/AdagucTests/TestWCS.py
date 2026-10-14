@@ -175,10 +175,13 @@ class TestWCS:
         """
         Regression test: a variable with a 64-bit integer (CDF_INT64) dimension - here the
         "gl" ground-level dimension of weather_code_gl - used to make GetCoverage with
-        FORMAT=NetCDF3 fail outright, because NC_INT64 is a netCDF-4-only type and nc_def_var
-        rejects it in classic (NetCDF-3) files with NC_EBADTYPE ("Not a valid data type or
-        _FillValue type mismatch"). CDFNetCDFWriter now narrows CDF_INT64/CDF_UINT64 variables
-        to their 32-bit equivalent when writing classic output, so this should succeed instead.
+        FORMAT=NetCDF3 fail with a cryptic, generic netCDF library error ("Unable to define
+        variable gl [NetCDF: Not a valid data type or _FillValue type mismatch]: nc_def_var: -45"),
+        because NC_INT64 is a netCDF-4-only type that classic (NetCDF-3) files cannot represent
+        at all. CNetCDFDataWriter now detects this case up front and reports a clear, specific
+        error naming the offending variable and suggesting FORMAT=NetCDF4, instead of either
+        failing with that cryptic message or silently writing something other than classic
+        NetCDF3 output.
         """
         env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent.xml", self.testresultspath, self.expectedoutputsspath)
         update_db(env)
@@ -188,7 +191,30 @@ class TestWCS:
             env=env,
         )
         assert status == 0
-        assert data[0:3] == b"CDF"
+        assert b"variable 'gl' is a 64-bit integer, which NetCDF3 does not support" in data
+        assert b"nc_def_var" not in data
+
+    def test_WCSGetCoverageNetCDF4_int64_dimension_preserves_datatype(self):
+        """
+        Companion to test_WCSGetCoverageNetCDF3_int64_dimension: a direct netCDF4/NetCDF4 request
+        for the same int64-dimensioned coverage should keep "gl" as a true 64-bit integer, since
+        the 32-bit narrowing in CDFNetCDFWriter only applies when writing classic (netcdfMode<4)
+        output - it must never kick in here.
+        """
+        env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        for format_name in ("netcdf", "NetCDF4"):
+            status, data, _ = AdagucTestTools().runADAGUCServer(
+                "DATASET=adaguc.tests.multi_reftime_temporal_extent&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=weather_code_gl"
+                f"&CRS=EPSG:4326&FORMAT={format_name}&BBOX=0,50,10,55&RESX=0.5&RESY=0.5",
+                env=env,
+            )
+            assert status == 0
+            assert data[0:8] == b"\x89HDF\r\n\x1a\n"
+
+            ds = netCDF4.Dataset("filename.nc", memory=data)
+            assert str(ds.variables["gl"].dtype) == "int64"
+            assert ds.variables["gl"][0] == 0
 
     def test_WCSGetCoverageNetCDF4_testdatanc(self):
         """

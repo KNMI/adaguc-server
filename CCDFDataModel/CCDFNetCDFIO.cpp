@@ -1011,23 +1011,6 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
       // Get the variable names with these dimensions
       CDF::Variable *variable = cdfObject->variables[j];
-
-      // netCDF-3 (classic) has no 64-bit integer type: NC_INT64/NC_UINT64 are netCDF-4-only,
-      // and defining such a variable in classic mode fails nc_def_var with NC_EBADTYPE. Narrow
-      // to the 32-bit equivalent instead, converting any already-read data along with it, so
-      // classic-format output still succeeds (with reduced range) rather than failing outright.
-      if (netcdfMode < 4 && (variable->currentType == CDF_INT64 || variable->currentType == CDF_UINT64)) {
-        CDFType narrowedType = variable->currentType == CDF_INT64 ? CDF_INT : CDF_UINT;
-        if (variable->data != NULL) {
-          void *narrowedData = NULL;
-          CDF::allocateData(narrowedType, &narrowedData, variable->getSize());
-          CDFCopyData(narrowedData, narrowedType, variable->data, variable->currentType, 0, 0, variable->getSize());
-          CDF::freeData(&variable->data);
-          variable->data = narrowedData;
-        }
-        variable->currentType = narrowedType;
-      }
-
       const char *name = variable->name.c_str();
       if (CCDFNETCDFWRITER_DEBUG) {
         if (writeDimsFirst == 0) {
