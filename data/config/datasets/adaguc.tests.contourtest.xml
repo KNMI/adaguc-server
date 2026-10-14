@@ -1,6 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
 
+  <!-- A local copy of the "wow.temperature" legend from geoweb-legends.include.xml (the UK Met
+       Office WOW citizen-weather-station palette), under its own name, so this dataset file
+       stays self-contained (see contourtest_baselayer above for the same reasoning) rather than
+       depending on that include being loaded alongside it. -->
+  <Legend name="wow_temperature_contourtest" type="interval">
+    <palette index="0" color="#2E2E73"/>
+    <!-- -14 0 -->
+    <palette index="9" color="#282898"/>
+    <!-- -12 1 -->
+    <palette index="18" color="#201FBB"/>
+    <!-- -10 2 -->
+    <palette index="27" color="#1A1ADC"/>
+    <!-- -8  3 -->
+    <palette index="36" color="#3654DE"/>
+    <!-- -6  4 -->
+    <palette index="45" color="#548EDC"/>
+    <!-- -4  5 -->
+    <palette index="54" color="#72CADE"/>
+    <!-- -2  6 -->
+    <palette index="63" color="#6DD8DF"/>
+    <!-- 0   7 -->
+    <palette index="72" color="#55CDE2"/>
+    <!-- 2   8 -->
+    <palette index="81" color="#38BBDC"/>
+    <!-- 4   9 -->
+    <palette index="90" color="#20B0DC"/>
+    <!-- 6   10 -->
+    <palette index="99" color="#19BAA6"/>
+    <!-- 8   11 -->
+    <palette index="108" color="#1CCE6A"/>
+    <!-- 10 12 -->
+    <palette index="117" color="#1BDF22"/>
+    <!-- 12 13 -->
+    <palette index="126" color="#82C319"/>
+    <!-- 14 14 -->
+    <palette index="135" color="#DCA819"/>
+    <!-- 16 15 -->
+    <palette index="144" color="#DD921A"/>
+    <!-- 18 16 -->
+    <palette index="153" color="#DE7C1A"/>
+    <!-- 20 17 -->
+    <palette index="162" color="#DF671A"/>
+    <!-- 22 18 -->
+    <palette index="171" color="#DE501A"/>
+    <!-- 24 19 -->
+    <palette index="180" color="#DD3819"/>
+    <!-- 26 20 -->
+    <palette index="189" color="#DD2319"/>
+    <!-- 28 21 -->
+    <palette index="198" color="#D21A1E"/>
+    <!-- 30 22 -->
+    <palette index="207" color="#C31927"/>
+    <!-- 32 23 -->
+    <palette index="216" color="#AD1A30"/>
+    <!-- 34 24 -->
+    <palette index="225" color="#9A1A3B"/>
+    <!-- 36 25 -->
+    <palette index="234" color="#871A44"/>
+    <!-- 38 26 -->
+    <palette index="240" color="#871A44"/>
+    <!--  39,33 -->
+  </Legend>
+
+  <Style name="temperature_wow" title="Filled contours (WOW)" abstract="Air temperature filled with the UK Met Office WOW citizen-weather-station palette, bilinear-smoothed">
+    <Legend fixed="true" tickinterval="2">wow_temperature_contourtest</Legend>
+    <Min>-14</Min>
+    <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <RenderSettings interpolationmethod="bilinear"/>
+    <StandardNames standard_name="air_temperature"/>
+  </Style>
+
+  <!-- Discrete classes with boundaries at 0.1-0.3-1-3-10-30-100 mm/h - the standard logarithmic
+       (half-decade) class spacing used for precipitation - shaded white/gray/red/black instead
+       of the wow.precipitation palette's blue/purple tones. -->
+  <Style name="precipitation_wow" title="Precipitation classes (WOW)" abstract="Total precipitation rate shaded in standard logarithmic classes (1-2-5 per decade), white through gray, red and black, bilinear-smoothed, with contour lines drawn on the same class boundaries">
+    <ShadeInterval min="0.1" max="0.2" fillcolor="#E6E6E6"/>
+    <ShadeInterval min="0.2" max="0.5" fillcolor="#BFBFBF"/>
+    <ShadeInterval min="0.5" max="1" fillcolor="#999999"/>
+    <ShadeInterval min="1" max="2" fillcolor="#6E6D6D"/>
+    <ShadeInterval min="2" max="5" fillcolor="#454344"/>
+    <ShadeInterval min="5" max="10" fillcolor="#E55860"/>
+    <ShadeInterval min="10" max="20" fillcolor="#E0272B"/>
+    <ShadeInterval min="20" max="50" fillcolor="#CC0000"/>
+    <ShadeInterval min="50" max="100" fillcolor="#000000"/>
+
+    <ContourLine width="1.3" linecolor="#707070" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="4" textsize="10" textformatting="" classes="0.1,0.2,0.5,1,2" textdistance="100" />
+    <ContourLine width="1.3" linecolor="#707070" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="1" textsize="10" textformatting="%2.0f" classes="5,10,20,50,100" textdistance="100" />
+    <SmoothingFilter>1</SmoothingFilter>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <StandardNames standard_name="lwe_total_precipitation_rate"/>
+  </Style>
+
   <Style name="temperature_contour" title="Air temperature contours" abstract="Bilinear shaded air temperature with contour lines every 2 degrees">
     <Legend fixed="true" tickinterval="2">multicolor</Legend>
     <Min>-10</Min>
@@ -20,6 +112,34 @@
     <ContourLine width="1.1" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="2" dashing="2,2"/>
     <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
     <StandardNames standard_name="air_temperature"/>
+  </Style>
+
+  <Style name="temperature_contour_outlined" title="Contour lines with outlined labels" abstract="Solid, smoothed, gray contour lines on a transparent background, no fill - same pattern as the production pressure_cwk style used for isobars, with a white textstrokecolor and a widened textdistance so labels stay legible and sparse, like a synoptic chart">
+    <ContourLine width="0.8" linecolor="#707070" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="0.4" textsize="10" textformatting="%2.0f" interval="2" textdistance="150" textsofthalo="true"/>
+    <SmoothingFilter>4</SmoothingFilter>
+    <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
+    <StandardNames standard_name="air_temperature"/>
+  </Style>
+
+  <Style name="pressure_msl_contour_outlined" title="Pressure contour lines with outlined labels" abstract="Solid, smoothed, gray isobars on a transparent background, no fill, every 4 hPa - same pattern as the production pressure_cwk style, with a white textstrokecolor, widened textdistance, and lines drawn through the labels (textgap=false), like a synoptic weather chart">
+    <ContourLine width="1.3" linecolor="#707070" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="4" textsize="12" textformatting="%2.0f" interval="4" textdistance="100" textsofthalo="true" boldvalues="1000" boldwidth="2.8"/>
+    <SmoothingFilter>4</SmoothingFilter>
+    <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
+    <StandardNames standard_name="air_pressure_at_mean_sea_level"/>
+  </Style>
+
+  <Style name="pressure_msl_contour_outlined_extrasmooth" title="Pressure contour lines with outlined labels (extra smoothed)" abstract="Same as pressure_msl_contour_outlined, with a heavier SmoothingFilter of 10 instead of 4, for an even cleaner synoptic-chart look on noisier fields">
+    <ContourLine width="1.3" linecolor="#707070" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="4" textsize="12" textformatting="%2.0f" interval="4" textdistance="100" textsofthalo="true" boldvalues="1000" boldwidth="2.8"/>
+    <SmoothingFilter>10</SmoothingFilter>
+    <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
+    <StandardNames standard_name="air_pressure_at_mean_sea_level"/>
+  </Style>
+
+  <Style name="pressure_msl_contour_blue" title="Blue pressure contour lines" abstract="Solid blue isobars on a transparent background, no fill, every 4 hPa - an alternate marine/shipping-forecast style chart palette (plain blue lines and labels with a white text halo, so labels stay legible over any background)">
+    <ContourLine width="2.3" linecolor="#2040D0" textcolor="#2040D0" textstrokecolor="#FFFFFF" textstrokewidth="2" textsofthalo="true" textformatting="%2.0f" interval="4" textdistance="100" textsize="12"/>
+    <SmoothingFilter>4</SmoothingFilter>
+    <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
+    <StandardNames standard_name="air_pressure_at_mean_sea_level"/>
   </Style>
 
   <Style name="temperature_shaded" title="Air temperature classes" abstract="Air temperature shaded in fixed 4-degree classes from -52 to 48, using a wide-range multicolor palette">
@@ -66,10 +186,76 @@
   <Layer type="database">
     <Name>air_temperature_hagl_contourtest</Name>
     <Title>UWCW HA43 (DINI) 5.5km air temperature, for contour testing</Title>
-    <Abstract>High resolution (575x668) air temperature field used to test contour line tracing</Abstract>
-    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/uwcw-ha-det-dini-5p5km_air_temp_575x668_for_contourtest.nc</FilePath>
+    <Abstract>High resolution (338x282) air temperature field used to test contour line tracing</Abstract>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/uwcw-ha-det-dini-5p5km_air_temperature_hagl.nc</FilePath>
     <Variable>air-temperature-hagl</Variable>
-    <Styles>temperature_contour,temperature_contour_smooth,temperature_contour_dashed,temperature_shaded,temperature_shaded_contour,temperature_shaded_extrasmooth</Styles>
+    <Styles>temperature_wow,temperature_contour,temperature_contour_smooth,temperature_contour_dashed,temperature_contour_outlined,temperature_shaded,temperature_shaded_contour,temperature_shaded_extrasmooth</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>air_pressure_msl_contourtest</Name>
+    <Title>UWCW HA43 (DINI) 5.5km mean sea level pressure, for contour testing</Title>
+    <Abstract>High resolution (300x300) mean sea level pressure field used to test isobar-style contour line rendering</Abstract>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/uwcw-ha-det-dini-5p5km_airpressure-msl.nc</FilePath>
+    <Variable>air-pressure-msl</Variable>
+    <Styles>pressure_msl_contour_outlined,pressure_msl_contour_outlined_extrasmooth,pressure_msl_contour_blue</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>total_precipitation_rate_contourtest</Name>
+    <Title>UWCW HA43 (DINI) 5.5km total precipitation rate, for contour testing</Title>
+    <Abstract>High resolution (338x282) total precipitation rate field, rendered with the WOW precipitation palette</Abstract>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/uwcw-ha-det-dini-5p5km_total_precipitation_rate_gl.nc</FilePath>
+    <Variable>total-precipitation-rate-gl</Variable>
+    <Styles>precipitation_wow</Styles>
+  </Layer>
+
+  <!-- A self-contained equivalent of the "baselayer" Legend normally pulled in via
+       DefaultLayers.include.xml (through adaguc.tests.dataset.xml) - defined locally here, under
+       its own name, so this dataset file also works standalone in configs that don't include that
+       chain (e.g. a local dev config), instead of failing with "Legend baselayer not found". -->
+  <Legend name="contourtest_baselayer" type="interval">
+    <palette min="0" max="240" red="0" green="0" blue="0"/>
+  </Legend>
+
+  <Style name="country_outline_light" title="Light gray country outlines" abstract="Thin, light gray country border polylines, similar weight to the isobars - meant as a synoptic-chart style base map, lighter than the standard black overlay style">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">contourtest_baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>polyline</RenderMethod>
+    <FeatureInterval match=".*" matchid="abbrev" bordercolor="#999999" borderwidth="0.7"/>
+  </Style>
+
+  <Layer>
+    <Name>country_outlines_contourtest</Name>
+    <Title>Light gray country outlines, for use as a synoptic-chart style base map under contour tests</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/countries.geojson</FilePath>
+    <Variable>features</Variable>
+    <Styles>country_outline_light</Styles>
+  </Layer>
+
+  <Style name="country_land_light" title="Light land fill" abstract="Fills country polygons with a pale off-white land color, leaving the sea transparent so a request own BGCOLOR shows through - meant to be drawn under country_outline_light and the isobars, like the land/sea distinction on a synoptic weather chart">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">contourtest_baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#00000000" fillcolor="#FAFAFBFF"/>
+  </Style>
+
+  <Style name="country_land_green" title="Green land fill" abstract="Fills country polygons with a classic map green (the same #CCFFCC used by the production baselayer style), leaving the sea transparent so a request own BGCOLOR shows through - a more traditional-map-looking alternative to country_land_light">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">contourtest_baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#00000000" fillcolor="#CCFFCCFF"/>
+  </Style>
+
+  <Layer>
+    <Name>country_land_contourtest</Name>
+    <Title>Light land fill polygons, for use as a synoptic-chart style base map under contour tests</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/countries.geojson</FilePath>
+    <Variable>features</Variable>
+    <Styles>country_land_light,country_land_green</Styles>
   </Layer>
 
 </Configuration>

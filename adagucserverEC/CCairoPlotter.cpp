@@ -557,12 +557,17 @@ void CCairoPlotter::endLine() {
 }
 
 void CCairoPlotter::endLine(std::span<const double> dashes, bool roundCap) {
-  cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
+  // Round rather than bevel joins, so a traced contour line - built from many short straight
+  // segments approximating a curve - doesn't show a facet at every segment boundary.
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
   if (roundCap) {
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
   }
   cairo_set_dash(cr, dashes.data(), (int)dashes.size(), 0);
+  cairo_antialias_t aa = cairo_get_antialias(cr);
+  cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
   cairo_stroke(cr);
+  cairo_set_antialias(cr, aa);
   cairo_set_dash(cr, 0, 0, 0);
   if (roundCap) {
     // Restore the default cap so unrelated drawing later on this same context isn't affected.
@@ -711,7 +716,7 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
-void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText) {
+void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText, bool softHalo) {
   if (library == NULL) {
     int status = initializeFreeType();
     if (status != 0) {
@@ -742,17 +747,38 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_rotate(cr, angle);
   cairo_text_path(cr, text);
   if (strokeWidth > 0) {
-    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
-    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, .2);
-    cairo_set_line_width(cr, 2.5 + strokeWidth);
-    cairo_stroke_preserve(cr);
+    if (softHalo) {
+      // A soft, blurred-looking halo (like a drop shadow), rather than a single crisp outline:
+      // several progressively narrower, more opaque strokes on top of each other approximate a
+      // gaussian falloff from faint/wide at the edge to solid near the glyph, without the cost of
+      // rendering to an offscreen surface and actually blurring it. Round joins/caps, rather than
+      // cairo's default miter join, so the outline doesn't spike out at the acute-angle corners
+      // that occur in several numeral glyphs (e.g. "4", "7").
+      cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+      cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+      cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+      cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+      const int numPasses = 6;
+      for (int pass = numPasses; pass >= 1; pass--) {
+        double t = double(pass) / numPasses; // 1.0 (outermost, widest) down to 1/numPasses (innermost)
+        cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL,
+                               (1.0 - t) * (1.0 - t) + 0.15);
+        cairo_set_line_width(cr, 1.0 + strokeWidth * 2.2 * t);
+        cairo_stroke_preserve(cr);
+      }
+    } else {
+      cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+      cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+      cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, .2);
+      cairo_set_line_width(cr, 2.5 + strokeWidth);
+      cairo_stroke_preserve(cr);
 
-    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
-    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-    cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
-    cairo_set_line_width(cr, 1.5 + strokeWidth);
-    cairo_stroke_preserve(cr);
+      cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+      cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+      cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
+      cairo_set_line_width(cr, 1.5 + strokeWidth);
+      cairo_stroke_preserve(cr);
+    }
   }
 
   cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);

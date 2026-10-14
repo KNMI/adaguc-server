@@ -360,7 +360,7 @@ struct CServerConfig : CXMLObjectInterface {
 
   struct XMLE_ContourLine : CXMLObjectInterface {
     struct Cattr {
-      std::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
+      std::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth, textdistance, textgap, textsofthalo, boldvalues, boldwidth;
     } attr;
     bool addAttribute(const attribute &attrCfg) {
       if ("width" == attrCfg.name) {
@@ -392,6 +392,21 @@ struct CServerConfig : CXMLObjectInterface {
         return true;
       } else if ("textstrokewidth" == attrCfg.name) {
         attr.textstrokewidth = attrCfg.value;
+        return true;
+      } else if ("textdistance" == attrCfg.name) {
+        attr.textdistance = attrCfg.value;
+        return true;
+      } else if ("textgap" == attrCfg.name) {
+        attr.textgap = attrCfg.value;
+        return true;
+      } else if ("textsofthalo" == attrCfg.name) {
+        attr.textsofthalo = attrCfg.value;
+        return true;
+      } else if ("boldvalues" == attrCfg.name) {
+        attr.boldvalues = attrCfg.value;
+        return true;
+      } else if ("boldwidth" == attrCfg.name) {
+        attr.boldwidth = attrCfg.value;
         return true;
       }
       return false;

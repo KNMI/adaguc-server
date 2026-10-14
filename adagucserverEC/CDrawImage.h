@@ -156,7 +156,7 @@ public:
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
-  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
+  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool softHalo = false);
   // Rendered width in pixels of text at the given font/size, drawn horizontally (angle 0) -
   // used to center a label within a reserved span without exceeding it.
   int getTextWidth(const char *fontfile, float size, const char *text);

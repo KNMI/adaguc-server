@@ -429,11 +429,11 @@ void CDrawImage::setText(const char *text, int x, int y, CColor color) {
   cairo->drawText(x, y + 10, 0, text);
 }
 
-void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
+void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool softHalo) {
   if (bgcolor.a == 0) {
     drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
   } else {
-    cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
+    cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor, false, softHalo);
   }
 }
 

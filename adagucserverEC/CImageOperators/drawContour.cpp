@@ -37,6 +37,11 @@ struct ContourLineStructure {
   double lineWidth = 4;
   double fontSize = 10;
   double textStrokeWidth = 0.75;
+  double textDistance = 60; // Spacing in pixels between repeated labels along one traced line.
+  bool textGap = true;      // Whether the line gaps around labels (its own and other definitions') instead of drawing straight through them.
+  bool textSoftHalo = false; // Whether the label outline is a soft, blurred-looking halo instead of a single crisp stroke.
+  std::vector<double> boldValues;  // Binned values (e.g. the 1000 hPa isobar) drawn at boldWidth instead of lineWidth.
+  double boldWidth = 0;
   std::vector<double> dashes;
 };
 
@@ -82,12 +87,13 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
     // Text runs forward from lineX,lineY towards endX,endY.
     int x = lineX + sin(angleP) * centerOffset + cos(angleP) * (fontSize / 2);
     int y = lineY - cos(angleP) * centerOffset + sin(angleP) * (fontSize / 2);
-    drawImage->setTextStroke(x, y, -angleP + M_PI / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, contourDefinition.textstrokecolor, contourDefinition.textColor);
+    drawImage->setTextStroke(x, y, -angleP + M_PI / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, contourDefinition.textstrokecolor, contourDefinition.textColor,
+                             contourDefinition.textSoftHalo);
   } else {
     // Text runs forward from endX,endY towards lineX,lineY.
     int x = endX - sin(angleP) * centerOffset - cos(angleP) * (fontSize / 2);
     int y = endY + cos(angleP) * centerOffset - sin(angleP) * (fontSize / 2);
-    drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, textStrokeWidth, contourDefinition.textstrokecolor, contourDefinition.textColor);
+    drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, textStrokeWidth, contourDefinition.textstrokecolor, contourDefinition.textColor, contourDefinition.textSoftHalo);
   }
 }
 
@@ -222,11 +228,13 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   bool textSkip = false;
 
-  int drawTextAtEveryNPixels = 60 * int(scaling);
+  int drawTextAtEveryNPixels = int(contourDefinition.textDistance) * int(scaling);
   int startAtStep = 0; // drawTextAtEveryNPixels / 2;
   int spaceForTextNr = 5 * int(scaling) * (contourDefinition.fontSize / 8);
 
-  float scaledLineWidth = contourDefinition.lineWidth * scaling;
+  bool isBoldValue = contourDefinition.boldWidth > 0 &&
+                     std::any_of(contourDefinition.boldValues.begin(), contourDefinition.boldValues.end(), [&](double v) { return fabs(v - binnedLineSegmentsValue) < 1e-6; });
+  float scaledLineWidth = (isBoldValue ? contourDefinition.boldWidth : contourDefinition.lineWidth) * scaling;
   int numLineSegments = (int)lineSegments.size();
 
   // textLocations is shared across every contour definition, so it also holds labels placed
@@ -270,6 +278,15 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
             textLocations.push_back({.x = lineSegment.x + (endX - lineSegment.x) * s / 3, .y = lineSegment.y + (endY - lineSegment.y) * s / 3});
           }
 
+          if (!contourDefinition.textGap) {
+            // With textGap disabled the path isn't flushed/stroked until the very end of the
+            // line, so without this, the line's paint would land on the canvas only after (i.e.
+            // on top of) the text fill below, even though the text is meant to sit on top of the
+            // line. Flushing here paints everything traced so far first; the next drawOrGap()
+            // call already treats a lineTo() after a flush as a fresh moveTo(), so the path
+            // continues seamlessly (round caps hide the break) once text drawing is done.
+            drawImage->endLine(contourDefinition.dashes, true);
+          }
           drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, binnedLineSegmentsValue, fontLocation, scaling);
           stats.numTexts++;
         } else {
@@ -277,12 +294,12 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
         }
       }
       bool ownTextGap = matchModulo <= spaceForTextNr && !textSkip;
-      drawOrGap(lineSegment, ownTextGap || IsTextTooClose(textLocations, lineSegment.x, lineSegment.y));
+      drawOrGap(lineSegment, contourDefinition.textGap && (ownTextGap || IsTextTooClose(textLocations, lineSegment.x, lineSegment.y)));
     }
 
   } else {
     for (auto &lineSegment: lineSegments) {
-      drawOrGap(lineSegment, IsTextTooClose(textLocations, lineSegment.x, lineSegment.y));
+      drawOrGap(lineSegment, contourDefinition.textGap && IsTextTooClose(textLocations, lineSegment.x, lineSegment.y));
     }
   }
 
@@ -303,6 +320,9 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   double defaultLineWidth = 4;
   double defaultStrokeWidth = 0.75;
+  double defaultTextDistance = 60;
+  bool defaultTextGap = true;
+  bool defaultTextSoftHalo = false;
   double defaultFontSize = atof(dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.size.c_str());
   CColor defaultLineColor = CColor(0, 0, 0, 255);
   CColor defaultTextColor = CColor(0, 0, 0, 255);
@@ -339,6 +359,10 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
     for (const auto &dashString: dashesStrings) {
       dashes.push_back(atof(dashString.c_str()));
     }
+    std::vector<double> boldValues;
+    for (const auto &boldValueString: CT::split(attr.boldvalues, ",")) {
+      boldValues.push_back(atof(boldValueString.c_str()));
+    }
 
     // Check for lines at specified classes
 
@@ -351,6 +375,11 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
                                .lineWidth = attr.width.empty() ? defaultLineWidth : atof(attr.width.c_str()),
                                .fontSize = attr.textsize.empty() ? defaultFontSize : atof(attr.textsize.c_str()),
                                .textStrokeWidth = attr.textstrokewidth.empty() ? defaultStrokeWidth : atof(attr.textstrokewidth.c_str()),
+                               .textDistance = attr.textdistance.empty() ? defaultTextDistance : atof(attr.textdistance.c_str()),
+                               .textGap = attr.textgap.empty() ? defaultTextGap : !CT::equalsIgnoreCase(attr.textgap, "false"),
+                               .textSoftHalo = attr.textsofthalo.empty() ? defaultTextSoftHalo : CT::equalsIgnoreCase(attr.textsofthalo, "true"),
+                               .boldValues = boldValues,
+                               .boldWidth = attr.boldwidth.empty() ? 0 : atof(attr.boldwidth.c_str()),
                                .dashes = dashes});
   }
 

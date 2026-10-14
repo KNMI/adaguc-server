@@ -2,11 +2,25 @@
 #include <errno.h>
 #include <string.h>
 #include <cstdint>
+#include <algorithm>
 #include "CDebugger.h"
 #include "COctTreeColorQuantizer.h"
 #include "write_png.h"
 #include "CStopWatch.h"
 
+// Cairo's internal pixel buffer stores premultiplied alpha (stored_byte = true_color * alpha /
+// 255). Undo that here before quantizing to an 8-bit palette, so the palette holds the true,
+// straight-alpha color - otherwise every partially-transparent (antialiased, or alpha-blended)
+// pixel's color is darkened/tinted toward whatever it happened to be rendered over, and that
+// wrongness shows up later whenever the image is composited onto something else. Both the
+// palette-building pass (prepare8Bpp) and the per-pixel index lookup (write8BppPayload) must
+// apply the exact same transform, or a pixel's lookup key won't match its own palette entry.
+static inline void unpremultiply(uint8_t &r, uint8_t &g, uint8_t &b, uint8_t a) {
+  if (a == 0 || a == 255) return;
+  r = (uint8_t)std::min(255, (r * 255 + a / 2) / a);
+  g = (uint8_t)std::min(255, (g * 255 + a / 2) / a);
+  b = (uint8_t)std::min(255, (b * 255 + a / 2) / a);
+}
 
 void prepare24Bpp(png_structp png_ptr, png_infop info_ptr, int width, int height) {
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -42,9 +56,13 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
     if (!use8bitpalAlpha && alpha <= 64) return;
 
     insertedVisiblePixel = true;
-    color.r = (pixel >> 16) & 0xFF;
-    color.g = (pixel >> 8) & 0xFF;
-    color.realblue = pixel & 0xFF;
+    uint8_t r = (pixel >> 16) & 0xFF;
+    uint8_t g = (pixel >> 8) & 0xFF;
+    uint8_t b = pixel & 0xFF;
+    unpremultiply(r, g, b, alpha);
+    color.r = r;
+    color.g = g;
+    color.realblue = b;
     color.realalpha = alpha;
     // if use8bitpalAlpha, store top 3 bits of alpha + bottom 5 bits of blue
     color.b = use8bitpalAlpha ? ((color.realblue >> 3) + ((alpha >> 5) << 5)) : color.realblue;
@@ -223,6 +241,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
         continue;
       }
 
+      unpremultiply(r, g, b, a);
       uint8_t qb = use8bitpalAlpha ? ((b >> 3) + ((a >> 5) << 5)) : b;
       uint32_t key = (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(qb);
 

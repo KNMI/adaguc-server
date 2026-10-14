@@ -10,6 +10,8 @@ Tutorials
 -   [Faster WMS by enabling tiling for large datasets like MeteoSat Third Generation](./FasterWMSWithTilingForLargeDatasetsLikeMeteoSatThirdGeneration.md)
 -   [Styling of vectors derived from GeoJSON feature properties with pointsfromfeature](./Styling_of_vectors_derived_from_GeoJSON_feature_properties_with_pointsfromfeature.md)
 -   [Migrating from CImgWarpBilinear to the generic warper](./Migrating_from_CImgWarpBilinear_to_the_generic_warper.md)
+-   [Configuring synoptic weather chart style contourlines](./Configuring_synoptic_style_contourlines.md)
+-   [Creating a combined synoptic overview map](./Creating_a_combined_synoptic_overview_map.md)
 
 
 <!-- -   [Create a WMS service on a series of files with a time dimension](Create_a_WMS_service_on_a_series_of_files_with_a_time_dimension.md)
