@@ -194,8 +194,6 @@ add_library(
     CImgRenderers/getPointStyle.cpp
     CImgRenderers/getVectorStyle.h
     CImgRenderers/getVectorStyle.cpp
-    CImgWarpBilinear.cpp
-    CImgWarpBilinear.h
     CImgWarpBoolean.cpp
     CImgWarpBoolean.h
     CImgWarpGeneric/CImgWarpGeneric.cpp
