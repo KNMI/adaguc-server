@@ -176,16 +176,6 @@ namespace CT {
     return result;
   }
 
-  // Trim from the start (in place)
-  void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-  }
-
-  // Trim from the end (in place)
-  void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
-  }
-
   std::string trim(std::string_view input) {
     auto isSpace = [](unsigned char ch) { return std::isspace(ch) != 0; };
     size_t start = 0, end = input.size();

@@ -4,6 +4,8 @@
 
 
   <Style name="windbarbs_kts" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs">
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
     <ShadeInterval min="0" max="7" label="0-7 (&lt;3 bft)" fillcolor="#FFFFB4"/>
     <ShadeInterval min="7" max="11" label="7-11 (3 bft)" fillcolor="#FFFF00"/>
     <ShadeInterval min="11" max="16" label="11-16 (4 bft)" fillcolor="#81FF00"/>
@@ -31,6 +33,7 @@
     <Styles>windbarbs_kts</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
     <DataPostProc algorithm="filter_dataobjects" select="speed_component,direction_component,eastward_component,northward_component,xcomponent,ycomponent"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="3"/>
   </Layer>
 
   <!-- End of configuration /-->

@@ -4,18 +4,22 @@ RenderMethod <value>
 Back to [Configuration](./Configuration.md)
 
 Rendermethod defines the way the data is rendered inside the service.
-There are currently seven mechanisms to render an image:
+There are currently six mechanisms to render an image:
 
--   generic - Uses the generic datawarper. This is the default rendermethod and can handle most of the other rendermethods mentioned below.
+-   generic - Uses the generic datawarper. This is the default rendermethod and handles `bilinear`, `shaded`, `contour` and combinations thereof, in class [CImgWarpGeneric](/adagucserverEC/CImgWarpGeneric/CImgWarpGeneric.cpp). `vector`, `barb` and `thin` are drawn separately, from points, in class [CImgRenderPoints](/adagucserverEC/CImgRenderers/CImgRenderPoints.cpp); see [Vector.md](/doc/configuration/Vector.md) and [DataPostProc.md](/doc/configuration/DataPostProc.md)'s `pointsfromgrid`.
 -   nearest (nearest neighbour) in class [CImgWarpNearestNeighbour](/adagucserverEC/CImgWarpNearestNeighbour.cpp)
--   bilinear in class [CImgWarpBilinear](/adagucserverEC/CImgWarpBilinear.cpp)
 -   rgba (truecolor) in class [CImgWarpNearestRGBA](/adagucserverEC/CImgWarpNearestRGBA.cpp)
 -   stippling in class [CImgRenderStippling](/adagucserverEC/CImgRenderStippling.cpp)
--   generic in class [CImgWarpGeneric](/adagucserverEC/CImgWarpGeneric/CImgWarpGeneric.cpp)
 -   polyline / polygon (for geojson) in class [CImgRenderPolylines](/adagucserverEC/CImgRenderPolylines.cpp)
 -   hillshaded (for heightmaps) in class [CImgWarpHillShaded](/adagucserverEC/CImgWarpHillShaded.cpp)
 
 To draw points and vectors, see [Point.md](/doc/configuration/Point.md) and [Vector.md](/doc/configuration/Vector.md). To thin point data, see [Thinning.md](/doc/configuration/Thinning.md).
+
+> `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` used to be rendered by a separate
+> `CImgWarpBilinear` class. That class has been removed; these keywords are now handled as
+> described above. See
+> [Migrating from CImgWarpBilinear to the generic warper](/doc/tutorials/Migrating_from_CImgWarpBilinear_to_the_generic_warper.md)
+> for what changed and when (if ever) a config needs updating.
 
 CImgWarpNearestNeighbour
 ------------------------
@@ -26,15 +30,6 @@ This mechanism renders the data very quickly using nearest neighbour
 rendering. This method is suited to project large images, up to
 5000x5000 pixels in realtime. This is used in http://msgcpp.knmi.nl/
 for rendering the derived products from the MSG satellite.
-
-CImgWarpBilinear
-----------------
-
-Choose with `bilinear,contour,shaded` or combination of these.
-
-This mechanism has more advanced methods of styling and is able to
-draw the data with bilinear interpolation, contourlines and shading.
-It is mainly used to draw model data with shading and contourlines.
 
 CImgWarpNearestRGBA
 -------------------

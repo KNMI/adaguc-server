@@ -352,9 +352,9 @@ void CDrawImage::endLine() {
   cairo->endLine();
 }
 
-void CDrawImage::endLine(const double *dashes, int num_dashes) {
+void CDrawImage::endLine(std::span<const double> dashes, bool roundCap) {
   if (currentLegend == NULL) return;
-  cairo->endLine(dashes, num_dashes);
+  cairo->endLine(dashes, roundCap);
 }
 
 CColor CDrawImage::getColorForIndex(int colorIndex) {

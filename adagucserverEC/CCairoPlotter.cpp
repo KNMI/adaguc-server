@@ -556,11 +556,18 @@ void CCairoPlotter::endLine() {
   cairo_stroke(cr);
 }
 
-void CCairoPlotter::endLine(const double *dashes, int num_dashes) {
+void CCairoPlotter::endLine(std::span<const double> dashes, bool roundCap) {
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
-  cairo_set_dash(cr, dashes, num_dashes, 0);
+  if (roundCap) {
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+  }
+  cairo_set_dash(cr, dashes.data(), (int)dashes.size(), 0);
   cairo_stroke(cr);
   cairo_set_dash(cr, 0, 0, 0);
+  if (roundCap) {
+    // Restore the default cap so unrelated drawing later on this same context isn't affected.
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
+  }
 }
 
 void CCairoPlotter::line(float x1, float y1, float x2, float y2) {

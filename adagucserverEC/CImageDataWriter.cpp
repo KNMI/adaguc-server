@@ -38,8 +38,6 @@
 #include "CStopWatch.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
-#include "CImgWarpBoolean.h"
 #include "CImgRenderers/CImgRenderPoints.h"
 #include "CImgRenderStippling.h"
 #include "CImgRenderPolylines.h"
@@ -52,6 +50,7 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include "CDataPostProcessors/CDataPostProcessor_PointsFromGrid.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
@@ -980,146 +979,44 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   }
 
   /**
-   * Use bilinear renderer
+   * Backwards compatibility for styles written for the now-removed CImgWarpBilinear: it drew a
+   * plain blue barb/vector internally and required no <Vector> style tag, and forward-projected
+   * the grid itself rather than needing a <DataPostProc algorithm="pointsfromgrid"> tag. Keep
+   * both working here, at render time, scoped to only the style actually being rendered (not
+   * every style variant the layer defines) so this has no effect beyond this one render.
+   *
+   * RM_THIN is deliberately excluded here: old CImgWarpBilinear mapped it to "drawGridVectors",
+   * which was never actually implemented (a dead TODO branch), so a RenderMethod="thin"-only
+   * style drew nothing. Including RM_THIN in this condition would make such a style suddenly
+   * render default vector arrows instead of staying a no-op; it's otherwise harmless/orthogonal
+   * when combined with an actual RM_VECTOR/RM_BARB bit, which already triggers this block.
    */
-  if (renderMethod & RM_CONTOUR || renderMethod & RM_BILINEAR || renderMethod & RM_SHADED || renderMethod & RM_VECTOR || renderMethod & RM_BARB || renderMethod & RM_THIN) {
-    if (CIMAGEDATAWRITER_DEBUG) {
-      CDBDebug("Using CImgWarpBilinear");
+  if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
+    if (styleConfiguration != nullptr && styleConfiguration->vectorIntervals.empty()) {
+      CServerConfig::XMLE_Vector defaultVector;
+      defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";
+      defaultVector.attr.linecolor = "#0000FF";
+      defaultVector.attr.outlinewidth = 0;
+      for (const auto &renderSetting: styleConfiguration->renderSettings) {
+        if (renderSetting.attr.rendertextforvectors == "true") {
+          defaultVector.attr.plotvalue = "true";
+        }
+      }
+      styleConfiguration->vectorIntervals.push_back(defaultVector);
     }
-    if (dataSource->hasFieldData && dataSource->getFirstAvailableDataObject()->points.size() == 0) {
-      imageWarperRenderer = new CImgWarpBilinear();
-      std::string bilinearSettings;
-      bool drawMap = false;
-      bool drawContour = false;
-      bool drawVector = false;
-      bool drawBarb = false;
-      bool drawShaded = false;
-      bool drawGridVectors = false;
-
-      if (renderMethod & RM_BILINEAR) drawMap = true;
-      if (renderMethod & RM_CONTOUR) drawContour = true;
-      if (renderMethod & RM_VECTOR) drawVector = true;
-      if (renderMethod & RM_SHADED) drawShaded = true;
-      if (renderMethod & RM_BARB) drawBarb = true;
-      if (renderMethod & RM_THIN) drawGridVectors = true;
-
-      /*
-        Check the if we want to use discrete type with the bilinear rendermethod.
-        The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
-      */
-      if (styleConfiguration != nullptr) {
-        for (const auto &renderSetting: styleConfiguration->renderSettings) {
-          std::string renderHint = renderSetting.attr.renderhint;
-          if (renderHint == RENDERHINT_DISCRETECLASSES) {
-            drawMap = false;   // Don't use continous legends with the bilinear renderer
-            drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
-          }
-        }
-      }
-
-      if (drawMap == true) CT::printfconcat(bilinearSettings, "drawMap=true;");
-      if (drawVector == true) CT::printfconcat(bilinearSettings, "drawVector=true;");
-      if (drawBarb == true) CT::printfconcat(bilinearSettings, "drawBarb=true;");
-      if (drawShaded == true) CT::printfconcat(bilinearSettings, "drawShaded=true;");
-      if (drawContour == true) CT::printfconcat(bilinearSettings, "drawContour=true;");
-      if (drawGridVectors) CT::printfconcat(bilinearSettings, "drawGridVectors=true;");
-      CT::printfconcat(bilinearSettings, "smoothingFilter=%d;", styleConfiguration->smoothingFilter);
-      if (drawShaded == true || drawContour == true) {
-        CT::printfconcat(bilinearSettings, "shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
-                         styleConfiguration->contourIntervalL);
-
-        for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
-          if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
-            CT::printfconcat(bilinearSettings, "shading=min(%g)$max(%g)$", shadeInterval.attr.min, shadeInterval.attr.max);
-            if (shadeInterval.attr.fillcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
-            }
-            if (!shadeInterval.attr.bgcolor.empty()) {
-              CT::printfconcat(bilinearSettings, "$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-        }
-      }
-      if (drawContour == true) {
-
-        for (size_t j = 0; j < styleConfiguration->contourLines.size(); j++) {
-          CServerConfig::XMLE_ContourLine *contourLine = &styleConfiguration->contourLines[j];
-          // Check if we have a interval contour line or a contourline with separate classes
-          if (contourLine->attr.interval.empty() == false) {
-            // ContourLine interval
-            CT::printfconcat(bilinearSettings, "contourline=");
-            if (contourLine->attr.width.empty() == false) {
-              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
-            }
-            if (contourLine->attr.linecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
-            }
-            if (contourLine->attr.textcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
-            }
-            if (contourLine->attr.textsize.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
-            }
-            if (contourLine->attr.textstrokewidth.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-            }
-
-            if (contourLine->attr.textstrokecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-            }
-            if (contourLine->attr.interval.empty() == false) {
-              CT::printfconcat(bilinearSettings, "interval(%s)$", contourLine->attr.interval.c_str());
-            }
-            if (contourLine->attr.textformatting.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
-            }
-            if (contourLine->attr.dashing.empty() == false) {
-              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-          if (contourLine->attr.classes.empty() == false) {
-            // ContourLine classes
-            CT::printfconcat(bilinearSettings, "contourline=");
-            if (contourLine->attr.width.empty() == false) {
-              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
-            }
-            if (contourLine->attr.linecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
-            }
-            if (contourLine->attr.textcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
-            }
-            if (contourLine->attr.classes.empty() == false) {
-              CT::printfconcat(bilinearSettings, "classes(%s)$", contourLine->attr.classes.c_str());
-            }
-            if (contourLine->attr.textsize.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
-            }
-            if (contourLine->attr.textstrokewidth.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-            }
-            if (contourLine->attr.textstrokecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-            }
-            if (contourLine->attr.textformatting.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
-            }
-            if (contourLine->attr.dashing.empty() == false) {
-              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-        }
-      }
-      if (CIMAGEDATAWRITER_DEBUG) {
-        CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
-      }
-      imageWarperRenderer->set(bilinearSettings.c_str());
-      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-      delete imageWarperRenderer;
+    if (styleConfiguration != nullptr && styleConfiguration->thinningList.empty()) {
+      CServerConfig::XMLE_Thinning defaultThinning;
+      defaultThinning.attr.radius = "40";
+      styleConfiguration->thinningList.push_back(defaultThinning);
+    }
+    if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
+      // CImgWarpBilinear always required a grid_eastward_wind/grid_northward_wind pair produced
+      // by convert_uv_components, which also produces the speed_component/direction_component
+      // objects pointsfromgrid needs, so any config that worked with it already has these.
+      CServerConfig::XMLE_DataPostProc pointsFromGridProc;
+      pointsFromGridProc.attr.algorithm = CDATAPOSTPROCESSOR_PointsFromGrid_ID;
+      pointsFromGridProc.attr.select = "speed_component,direction_component";
+      CDPPointsFromGrid().execute(&pointsFromGridProc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }
 
