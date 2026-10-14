@@ -26,6 +26,12 @@ class CDataSource;
 typedef unsigned int RenderMethod;
 std::string getRenderMethodAsString(RenderMethod renderMethod);
 RenderMethod getRenderMethodFromString(std::string renderMethodString);
+
+// A legacy style can list several RenderMethod keywords on one style block (e.g.
+// "nearest,bilinear,shadedcontour") so that a single GetMap request can pick a specific subset
+// via STYLES=name/keyword; "legacy" here means the style uses one of those old keywords at all,
+// as opposed to a pure generic style (no legacy keyword, e.g. no <RenderMethod> tag at all).
+inline bool isLegacyScalarRenderMethod(RenderMethod renderMethod) { return (renderMethod & (RM_BILINEAR | RM_SHADED | RM_CONTOUR)) != 0; }
 struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;
