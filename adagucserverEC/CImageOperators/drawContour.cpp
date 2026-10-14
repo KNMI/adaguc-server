@@ -40,13 +40,6 @@ struct ContourLineStructure {
   std::vector<double> dashes;
 };
 
-// Statistics per contour definition, reported with StopWatch_Measure
-struct ContourLineStats {
-  size_t numLines = 0;
-  size_t numLineSegments = 0;
-  size_t numTexts = 0;
-};
-
 bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
   for (auto &textLocation: textLocations) {
     int dx = x - textLocation.x;
@@ -91,10 +84,8 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
   }
 }
 
-void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int startX, int startY, int dImageWidth, int dImageHeight, ContourLineStructure &contourDefinition,
-                  DISTANCEFIELDTYPE lineMask, std::vector<i4point> &textLocations, double scaling, const char *fontLocation, ContourLineStats &stats) {
-  int lineX = startX;
-  int lineY = startY;
+void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, ContourLineStructure &contourDefinition,
+                  DISTANCEFIELDTYPE lineMask, std::vector<i4point> &textLocations, double scaling, const char *fontLocation) {
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
   if (!(distance[p] & lineMask)) {
     return; // Already traced while following another line that passed through this pixel.
@@ -212,9 +203,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  stats.numLines++;
-  stats.numLineSegments += lineSegments.size();
-
   /* Now draw this line */
   drawImage->moveTo(lineSegments[0].x, lineSegments[0].y);
 
@@ -271,7 +259,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
           }
 
           drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, binnedLineSegmentsValue, fontLocation, scaling);
-          stats.numTexts++;
         } else {
           textSkip = true;
         }
@@ -318,6 +305,10 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   // lazy-zero-page behaviour is kept, while cleanup is still automatic instead of a manual free().
   std::unique_ptr<DISTANCEFIELDTYPE[], void (*)(void *)> distanceStorage(static_cast<DISTANCEFIELDTYPE *>(calloc(imageSize, sizeof(DISTANCEFIELDTYPE))), free);
   DISTANCEFIELDTYPE *distance = distanceStorage.get();
+  if (distance == NULL) {
+    CDBError("drawContour: unable to allocate distance field of %zu elements for %dx%d image", imageSize, dImageWidth, dImageHeight);
+    return;
+  }
   StopWatch_Measure("drawContour: allocated distance field %dx%d", dImageWidth, dImageHeight);
 
   std::vector<ContourLineStructure> contourlineList;
@@ -442,14 +433,13 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   int contourLineIndex = 0;
   for (auto &contourLine: contourlineList) {
     StopWatch_Measure("drawContour: start contour definition %d", contourLineIndex);
-    ContourLineStats stats;
     for (const auto &candidate: candidatePixels) {
       size_t p = candidate.x + candidate.y * dImageWidth;
       if (distance[p] & lineMask) {
-        traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation, stats);
+        traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
       }
     }
-    StopWatch_Measure("drawContour: done contour definition %d: %zu lines, %zu line segments, %zu texts", contourLineIndex, stats.numLines, stats.numLineSegments, stats.numTexts);
+    StopWatch_Measure("drawContour: done contour definition %d", contourLineIndex);
     lineMask = lineMask + lineMask;
     contourLineIndex++;
   }
