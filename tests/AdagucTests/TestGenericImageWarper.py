@@ -1,19 +1,16 @@
-import os
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
     make_adaguc_env,
+    run_adaguc_and_compare_file,
     run_adaguc_and_compare_image,
     update_db,
 )
-
-ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
 class TestGenericImageWarper:
     testresultspath = "testresults/TestGenericImageWarper/"
     expectedoutputsspath = "expectedoutputs/TestGenericImageWarper/"
-    env = {}
     AdagucTestTools().mkdir_p(testresultspath)
 
     @pytest.mark.parametrize(
@@ -87,25 +84,12 @@ class TestGenericImageWarper:
         ],
     )
     def test_GenericImageWarperOnAHNDataset(self, filetocheck: str, layers: str, styles: str):
-        AdagucTestTools().cleanTempDir()
-
-        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml"
-        env = {"ADAGUC_CONFIG": config}
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
-
-        status, data, _ = AdagucTestTools().runADAGUCServer(
+        env = make_adaguc_env("adaguc.tests.ahn_utrechtse_heuvelrug_500m", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_image(
+            env,
+            filetocheck,
             f"LAYERS={layers}&STYLES={styles}&DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=590359.2826213799,6784102.0088095935,707368.84890462,6894816.225400406&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF&SHOWLEGEND=true",
-            env=env,
-            showLog=False,
-        )
-
-        AdagucTestTools().writetofile(self.testresultspath + filetocheck, data)
-
-        assert status == 0
-        assert AdagucTestTools().compareImage(
-            self.expectedoutputsspath + filetocheck,
-            self.testresultspath + filetocheck,
             maxAllowedColorDifference=1,
             maxAllowedColorPercentage=0.02,
         )
@@ -119,24 +103,14 @@ class TestGenericImageWarper:
         ],
     )
     def test_GenericImageWarperOnAHNDataset_large(self, filetocheck: str, styles: str):
-        """Images larger than one megapixel are drawn with multiple threads, also the contour lines (GENERICDATAWARPER_MULTITHREADED). The output should be identical to one thread"""
-        AdagucTestTools().cleanTempDir()
-
-        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml"
-        env = {"ADAGUC_CONFIG": config}
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
-
-        status, data, _ = AdagucTestTools().runADAGUCServer(
+        """Regression test for rendering images larger than one megapixel (bilinear, nearest, and contour-line styles), checked byte-for-byte against a known-good baseline"""
+        env = make_adaguc_env("adaguc.tests.ahn_utrechtse_heuvelrug_500m", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_file(
+            env,
+            filetocheck,
             f"LAYERS=ahn_utrechtseheuvelrug_500m&STYLES={styles}&DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=1200&HEIGHT=1000&CRS=EPSG%3A3857&BBOX=590359.2826213799,6784102.0088095935,707368.84890462,6894816.225400406&FORMAT=image/png&TRANSPARENT=TRUE",
-            env=env,
-            showLog=False,
         )
-
-        AdagucTestTools().writetofile(self.testresultspath + filetocheck, data)
-
-        assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filetocheck)
 
     def test_getmap_latlon_latdecreasing_and_increasing_genericbilinear(self):
         """

@@ -38,13 +38,6 @@ struct ContourLineStructure {
   std::vector<double> dashes;
 };
 
-// Statistics per contour definition, reported with StopWatch_Measure
-struct ContourLineStats {
-  size_t numLines = 0;
-  size_t numLineSegments = 0;
-  size_t numTexts = 0;
-};
-
 // Fast rounding to the nearest integer (ties to even) without a library call: adding and subtracting 1.5 * 2^23 drops the fraction.
 // This is exact for |v| < 2^22, larger values fall back to nearbyint.
 static inline float fastRoundf(float v) {
@@ -86,7 +79,7 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
 }
 
 void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, ContourLineStructure &contourDefinition,
-                  DISTANCEFIELDTYPE lineMask, std::vector<i4point> &textLocations, double scaling, const char *fontLocation, ContourLineStats &stats) {
+                  DISTANCEFIELDTYPE lineMask, std::vector<i4point> &textLocations, double scaling, const char *fontLocation) {
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
   bool foundLine = true;                  /* This function starts at the beginning of a line segment */
   int maxLineDistance = 5;                /* Maximum length of each line segment */
@@ -185,9 +178,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  stats.numLines++;
-  stats.numLineSegments += lineSegments.size();
-
   /* Now draw this line */
   drawImage->moveTo(lineSegments[0].x, lineSegments[0].y);
 
@@ -216,7 +206,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
           int endX = lineSegments[j + spaceForTextNr].x;
           int endY = lineSegments[j + spaceForTextNr].y;
           drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, binnedLineSegmentsValue, fontLocation, scaling);
-          stats.numTexts++;
           textOn = true;
         } else {
           textSkip = true;
@@ -263,6 +252,10 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   // Create a distance field, this is where the line information will be put in.
   // calloc gives zeroed memory, the OS can provide this lazily which is much faster than memset for large images.
   DISTANCEFIELDTYPE *distance = (DISTANCEFIELDTYPE *)calloc(imageSize, sizeof(DISTANCEFIELDTYPE));
+  if (distance == NULL) {
+    CDBError("drawContour: unable to allocate distance field of %zu elements for %dx%d image", imageSize, dImageWidth, dImageHeight);
+    return;
+  }
   StopWatch_Measure("drawContour: allocated distance field %dx%d", dImageWidth, dImageHeight);
 
   std::vector<ContourLineStructure> contourlineList;
@@ -382,14 +375,13 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   int contourLineIndex = 0;
   for (auto &contourLine: contourlineList) {
     StopWatch_Measure("drawContour: start contour definition %d", contourLineIndex);
-    ContourLineStats stats;
     for (const auto &candidate: candidatePixels) {
       size_t p = candidate.x + candidate.y * dImageWidth;
       if (distance[p] & lineMask) {
-        traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation, stats);
+        traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
       }
     }
-    StopWatch_Measure("drawContour: done contour definition %d: %zu lines, %zu line segments, %zu texts", contourLineIndex, stats.numLines, stats.numLineSegments, stats.numTexts);
+    StopWatch_Measure("drawContour: done contour definition %d", contourLineIndex);
     lineMask = lineMask + lineMask;
     contourLineIndex++;
   }
