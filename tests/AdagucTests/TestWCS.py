@@ -173,15 +173,7 @@ class TestWCS:
 
     def test_WCSGetCoverageNetCDF3_int64_dimension(self):
         """
-        Regression test: a variable with a 64-bit integer (CDF_INT64) dimension - here the
-        "gl" ground-level dimension of weather_code_gl - used to make GetCoverage with
-        FORMAT=NetCDF3 fail with a cryptic, generic netCDF library error ("Unable to define
-        variable gl [NetCDF: Not a valid data type or _FillValue type mismatch]: nc_def_var: -45"),
-        because NC_INT64 is a netCDF-4-only type that classic (NetCDF-3) files cannot represent
-        at all. CNetCDFDataWriter now detects this case up front and reports a clear, specific
-        error naming the offending variable and suggesting FORMAT=NetCDF4, instead of either
-        failing with that cryptic message or silently writing something other than classic
-        NetCDF3 output.
+        NetCDF4 file with int64 datatype cannot be written as netcdf3 because int64 is not supported. Don't write file but show error
         """
         env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent.xml", self.testresultspath, self.expectedoutputsspath)
         update_db(env)
