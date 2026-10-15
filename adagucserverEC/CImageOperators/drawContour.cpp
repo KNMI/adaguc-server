@@ -42,12 +42,7 @@ struct ContourLineStructure {
   std::vector<double> dashes;
 };
 
-// Spatial index over placed-label proximity points, replacing what used to be a flat linear scan.
-// Every traced line-segment point queries this (to gap around any label, not just its own), so on
-// a dense multi-contour-definition style with many labels a linear scan would make rendering scale
-// with numLineSegments * numLabelPoints instead of just numLineSegments. Cell size matches the
-// fixed query radius, so a point within that radius of (x,y) always falls in the query cell or one
-// of its 8 neighbors.
+// Spatial hash of placed-label proximity points, so gap lookups don't linear-scan every label.
 class TextLocationIndex {
 public:
   void add(int x, int y) { cells[cellKeyFor(x, y)].push_back({.x = x, .y = y}); }
@@ -89,10 +84,7 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
   double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
 
-  // lineX,lineY..endX,endY is the whole reserved gap. The gap is not always wider than the text -
-  // for some styles/labels it is sized to roughly match it - so the anchor can only be shifted
-  // towards the middle by whatever slack space is actually left over, never past the far edge of
-  // the gap (which would push the text into the line that resumes right after it).
+  // Center the text within the reserved gap, without overflowing it.
   double gapDx = endX - lineX;
   double gapDy = endY - lineY;
   double gapLength = sqrt(gapDx * gapDx + gapDy * gapDy);
@@ -159,10 +151,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   /* Use the distance field and walk the line */
   while (foundLine) {
-    // Recomputed from lineX/lineY rather than reusing the inner loops' p below, which is left
-    // pointing at whatever neighbor was examined last - not necessarily this pixel. Using that
-    // stale p here used to clear an unrelated pixel's bit instead of this one, which could
-    // silently drop a crossing or adjacent contour level's line before it was ever traced.
+    // Recomputed rather than reusing the inner loops' stale p, which pointed at the wrong pixel.
     p = lineX + lineY * dImageWidth;
     distance[p] &= ~lineMask; /* Indicate found, set to false */
     /* Search around using the small search window and find the continuation of this line */
@@ -180,15 +169,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
             nextLineY = ty;
             foundLine = true;
           }
-          // Clear only this contour definition's bit. Zeroing the whole word here would also wipe
-          // out candidate bits belonging to OTHER contour definitions at this neighboring pixel,
-          // which commonly sits right next to a different (e.g. adjacent/nested) contour level -
-          // losing their lines before they ever get traced. A second match beyond the one being
-          // followed is not traced separately: lineMask is shared by every line of this contour
-          // definition (e.g. every 10m interval), so on closely spaced parallel lines (a steep
-          // slope) that second match is usually a pixel of a different, nearby line rather than a
-          // genuine branch of this one; tracing it as its own line would retrace a piece of that
-          // other line as a short, spurious loop.
+          // Clear only this definition's bit, not the whole word, so neighboring contour levels' bits survive.
           distance[p] &= ~lineMask;
         }
       }
@@ -248,17 +229,13 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   size_t numDashes = contourDefinition.dashes.size();
   double *dashes = numDashes > 0 ? &contourDefinition.dashes[0] : nullptr;
 
-  // textLocations is shared across every contour definition, so it also holds labels placed
-  // by OTHER definitions (e.g. a neighboring contour level) that happen to sit on this line's
-  // path. Routing every point through here - not just the points around this line's own
-  // text - means a line gaps around any text it crosses, not only the text it places itself.
+  // textLocations is shared across contour definitions, so a line gaps around any label it
+  // crosses, not just its own.
   bool inTextGap = false;
   auto drawOrGap = [&](const i4point &point, bool gap) {
     if (gap) {
       if (!inTextGap) {
-        // Flush what's accumulated so far so the next lineTo(), once the gap ends, starts a
-        // fresh sub-path (cairo treats a lineTo() with no current point as a moveTo()) instead
-        // of drawing a straight line across the gap.
+        // Flush so the next lineTo(), once the gap ends, starts a fresh sub-path.
         drawImage->endLine(dashes, numDashes);
         inTextGap = true;
       }
@@ -279,12 +256,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
           int endX = lineSegments[j + spaceForTextNr].x;
           int endY = lineSegments[j + spaceForTextNr].y;
-          // isTooClose only tests a fixed radius around a single point. The label itself
-          // runs from (lineSegment.x, y) to (endX, endY) - often at a steep angle, following
-          // the line - so recording only its start leaves its far end unprotected: another
-          // line (or this same line looping back at a sharp turn) can still cross right over
-          // the far half of the rendered glyphs with no gap. Sampling a few points along that
-          // span instead gives every part of the label the same proximity protection.
+          // Sample a few points along the label's span, not just its start, so its far end is protected too.
           for (int s = 0; s <= 3; s++) {
             textLocations.add(lineSegment.x + (endX - lineSegment.x) * s / 3, lineSegment.y + (endY - lineSegment.y) * s / 3);
           }
@@ -330,8 +302,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   // Create a distance field, this is where the line information will be put in.
   // calloc gives zeroed memory, the OS can provide this lazily which is much faster than memset for large images.
-  // Owned through a unique_ptr with a free() deleter (rather than e.g. a vector) so that calloc's
-  // lazy-zero-page behaviour is kept, while cleanup is still automatic instead of a manual free().
   std::unique_ptr<DISTANCEFIELDTYPE[], void (*)(void *)> distanceStorage(static_cast<DISTANCEFIELDTYPE *>(calloc(imageSize, sizeof(DISTANCEFIELDTYPE))), free);
   DISTANCEFIELDTYPE *distance = distanceStorage.get();
   if (distance == NULL) {
@@ -375,10 +345,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   }
 
   StopWatch_Measure("drawContour: contour definitions parsed, start filling distance field");
-  // Sorted copies of the classes, so that a binary search can find if a class lies within [min, max) of a pixel.
-  // The order does not matter for that check. The original order is kept in contourlineList, it is used to pick the closest class for the text.
+  // Sorted copies of classes, for a binary-search range check below.
   std::vector<std::vector<double>> sortedClassesList;
-  // Interval and its inverse in float, so that the interval check in the loop below needs no division
   std::vector<float> intervals;
   std::vector<float> inverseIntervals;
   for (const auto &contourLine: contourlineList) {
@@ -394,11 +362,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   size_t numContourLines = contourlineList.size();
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  // Pixels where at least one contour definition set a bit. The distance field is sparse, so tracing below only
-  // needs to look at these candidates instead of rescanning the full image once per contour definition. No bit is
-  // ever set after this point, only cleared, so this candidate set stays valid for every contour definition.
+  // Pixels where at least one contour definition set a bit, so tracing doesn't rescan the whole image.
   std::vector<i4point> candidatePixels;
-  // Fills the distance field for the whole image, one row at a time.
   auto fillRows = [&]() {
     for (int y = 0; y < dImageHeight - 1; y++) {
       for (int x = 0; x < dImageWidth - 1; x++) {
@@ -427,12 +392,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
           }
           float interval = intervals[j];
           if (interval > 0) {
-            // Check for a line at continuous interval: does any multiple of interval fall within
-            // [min, max)? Using the smallest multiple >= min (rather than the one nearest to min)
-            // matters because a steep gradient can span more than half an interval within a single
-            // destination pixel; rounding to the nearest multiple of min can land below min and
-            // miss the crossing entirely, which silently drops the most tightly packed contour
-            // lines (typically the innermost ones, where the field changes fastest).
+            // Smallest multiple >= min, not nearest: rounding to nearest can land below min on a
+            // steep gradient and silently drop the most tightly packed contour lines.
             float cc = std::ceil(min * inverseIntervals[j]) * interval;
             if (cc >= min && cc < max) {
               foundLines |= mask;
@@ -440,7 +401,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
           }
           mask = mask + mask;
         }
-        // Only write when a line was found, untouched parts of the calloc-ed distance field then do not need to be mapped into memory
+        // Skip the write when nothing was found, so the untouched calloc page stays unmapped.
         if (foundLines) {
           distance[p1] |= foundLines;
           candidatePixels.push_back({.x = x, .y = y});
