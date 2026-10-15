@@ -33,29 +33,13 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
 
-  // A legacy style can list several RenderMethod keywords on one style block (e.g.
-  // "nearest,bilinear,shadedcontour") so that a single GetMap request can pick a specific subset
-  // via STYLES=name/keyword; "legacy" here means the style uses one of those old keywords at all.
+  // Legacy render methods can list several keywords on one style (e.g. "nearest,bilinear,shadedcontour").
   bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
 
   if (isLegacyRenderMethod) {
-    // Legacy render methods (bilinear/shaded/contour), now routed through the generic warper.
-    // CImgWarpBilinear always sampled values with smooth (gouraud) interpolation regardless of
-    // its "nearest"/"bilinear" keyword, and only painted the field's own colors for the
-    // bilinear/shaded render methods, not for contour-only rendering (which just draws lines
-    // over whatever is already on the canvas). This also applies when a vector/barb render
-    // method is combined with shaded/contour on the same style (e.g. "barbshadedcontour") - the
-    // scalar background still needs smoothing and painting, the barbs are drawn separately
-    // through points (see CImageDataWriter.cpp). These are defaults only: an explicit
-    // <RenderSettings> interpolationmethod/drawgrid attribute below still overrides them - a
-    // style can have a <RenderSettings> tag for an unrelated attribute (e.g. just a renderhint)
-    // without wanting to give up the always-smooth legacy sampling.
-    //
-    // Only paintFieldColors (not drawgrid) is derived from the render method here: drawgrid also
-    // gates whether CCreateLegend builds a legend at all (see CCreateLegend.cpp), and a
-    // contour-only style still has a meaningful legend even though it paints no raster colors.
+    // CImgWarpBilinear always sampled smooth, and only painted colors for bilinear/shaded, not contour-only.
     settings.interpolationMethod = InterpolationMethodBilinear;
-    settings.paintFieldColors = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
+    settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
   }
 
   if (styleConfiguration->renderSettings.size() > 0) {
@@ -72,10 +56,8 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     }
     if (renderSettingsAttr.drawgrid == ("false")) {
       settings.drawgrid = false;
-      settings.paintFieldColors = false;
     } else if (renderSettingsAttr.drawgrid == ("true")) {
       settings.drawgrid = true;
-      settings.paintFieldColors = true;
     }
 
     if (renderSettingsAttr.drawgridboxoutline == ("true")) {

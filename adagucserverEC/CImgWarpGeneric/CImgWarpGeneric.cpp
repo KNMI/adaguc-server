@@ -56,7 +56,7 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
     value = smoothingAtLocation(warperState.sourceIndexX, warperState.sourceIndexY, (T *)warperState.sourceGrid, warperState, settings);
   }
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
-  if (settings.paintFieldColors) {
+  if (settings.drawgrid) {
     auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
@@ -128,7 +128,7 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
   float bilValue = (1 - dy) * gx1 + dy * gx2;
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
-  if (settings.paintFieldColors) {
+  if (settings.drawgrid) {
     auto colorIndex = memoizedDeterminePixelColorFromValue(bilValue, &settings, memo);
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
