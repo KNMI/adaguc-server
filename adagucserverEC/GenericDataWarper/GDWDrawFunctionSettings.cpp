@@ -66,7 +66,8 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
   /* Check the if we want to use discrete type */
 
-  // For a legacy style, only the "shaded" keyword should turn shading on.
+  // For the generic renderer and when shadeinterval is set, always apply shading. For a legacy
+  // style, only the "shaded" keyword should turn shading on.
   if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
     if (styleConfiguration->renderMethod & RM_SHADED) {
       settings.isUsingShadeIntervals = true;
