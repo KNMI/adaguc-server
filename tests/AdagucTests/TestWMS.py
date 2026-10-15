@@ -84,7 +84,7 @@ class TestWMS(unittest.TestCase):
         # request, since this layer's DB-cached metadata can otherwise go stale by the time this
         # test runs, deep into a large suite run, and report "no files found" for it.
         regular_env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(regular_env, True)
+        update_db(regular_env, force_update=True)
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.tests.arcus_uwcw&SERVICE=WMS&request=getcapabilities",
             env=regular_env,
@@ -94,7 +94,7 @@ class TestWMS(unittest.TestCase):
 
         # The reverted dataset, snapshot-tested like any other GetCapabilities response.
         env = make_adaguc_env("adaguc.tests.arcus_uwcw.orgprojv1.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         filename = "test_WMSGetCapabilities_arcus_uwcw_orgprojv1.xml"
         run_adaguc_and_compare_getcapabilities(
             env,
