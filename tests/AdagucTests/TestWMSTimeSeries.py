@@ -540,7 +540,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         This checks for correct behavior when passing a non-existing dataset
         """
         env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_adaguc_tests_multi_reftime_temporal_extent_asterisk.json",

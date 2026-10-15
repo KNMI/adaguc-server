@@ -117,7 +117,7 @@ def reset_datasetsloaded():
     DATASETS_LOADED.clear()
 
 
-def update_db(adaguc_env: dict, force_update: bool = False):
+def update_db(adaguc_env: dict, filepath: str | None = None, force_update: bool = False):
     """
     Run `--updatedb` if it has not been run before for the given environment. When executed multiple times
     with the same environment, no additional `--updatedb` calls will be made, unless `force_update` is enabled.
@@ -136,6 +136,8 @@ def update_db(adaguc_env: dict, force_update: bool = False):
     args = ["--updatedb"]
     if adaguc_env:
         args += ["--config", adaguc_config]
+    if filepath:
+        args += ["--path", filepath]
 
     status, *_ = AdagucTestTools().runADAGUCServer(args=args, env=adaguc_env, isCGI=False)
     assert status == 0

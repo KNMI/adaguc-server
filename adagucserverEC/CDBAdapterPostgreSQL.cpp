@@ -30,6 +30,7 @@
 #include "CCDFStore.h"
 #include "CDBStore.h"
 
+#include <algorithm>
 #include <set>
 #include <map>
 #include "CDebugger.h"
@@ -154,6 +155,43 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMin(const char *name, const char *tabl
   StopWatch_Measure(">CDBAdapterPostgreSQL::getMin");
   return maxStore;
 };
+
+CDBStore::Store *CDBAdapterPostgreSQL::getDefaultDimensionValue(CDataSource *dataSource, const std::string &dimension, bool minimum) {
+  CPGSQLDB *DB = getDataBaseConnection();
+  if (DB == nullptr) return nullptr;
+
+  const auto &filePath = dataSource->cfgLayer->FilePath[0];
+  const std::string table = getTableNameForPathFilterAndDimension(filePath.elementValue, filePath.attr.filter, dimension.c_str(), dataSource);
+  std::string query = CT::printf("SELECT %s(d.%s) FROM %s d ", minimum ? "min" : "max", dimension.c_str(), table.c_str());
+  std::string filters = CT::printf("WHERE d.%s IS NOT NULL ", dimension.c_str());
+  size_t index = 0;
+  for (const auto &dim: dataSource->requiredDims) {
+    if (dim.netCDFDimName == dimension || dim.value.empty()) continue;
+    const auto values = CT::split(dim.value, ",");
+    // A wildcard imposes no coordinate restriction, just as in the final file lookup.
+    if (std::find(values.begin(), values.end(), "*") != values.end()) continue;
+
+    const std::string constraintTable = getTableNameForPathFilterAndDimension(filePath.elementValue, filePath.attr.filter, dim.netCDFDimName.c_str(), dataSource);
+    const std::string alias = "c" + std::to_string(index++);
+    CT::printfconcat(query, "INNER JOIN %s %s ON d.path = %s.path ", constraintTable.c_str(), alias.c_str(), alias.c_str());
+    std::string alternatives;
+    for (const auto &value: values) {
+      if (!alternatives.empty()) alternatives += " OR ";
+      const auto bounds = CT::split(value, "/");
+      const std::string lower = CT::replace(bounds[0], "'", "''");
+      if (bounds.size() == 1) {
+        CT::printfconcat(alternatives, "%s.%s = '%s'", alias.c_str(), dim.netCDFDimName.c_str(), lower.c_str());
+      } else {
+        const std::string upper = CT::replace(bounds[1], "'", "''");
+        CT::printfconcat(alternatives, "%s.%s BETWEEN '%s' AND '%s'", alias.c_str(), dim.netCDFDimName.c_str(), lower.c_str(), upper.c_str());
+      }
+    }
+    if (!alternatives.empty()) CT::printfconcat(filters, "AND (%s) ", alternatives.c_str());
+  }
+  // An aggregate normally returns a NULL row for no matches; return zero rows instead.
+  query += filters + "HAVING count(*) > 0";
+  return DB->queryToStore(query.c_str());
+}
 
 CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *max, const char *colname, const char *table, int limit) {
   StopWatch_Measure(">CDBAdapterPostgreSQL::getBetween");

@@ -112,6 +112,10 @@ public:
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
   CDBStore::Store *getMax(const char *name, const char *table);
+  /** Selects a default coordinate from files matching the already resolved dimensions.
+   * Returns an empty store when no compatible value exists. The target dimension is excluded from the filters.
+   */
+  CDBStore::Store *getDefaultDimensionValue(CDataSource *dataSource, const std::string &dimension, bool minimum);
   CDBStore::Store *getBetween(const char *min, const char *max, const char *colname, const char *table, int limit);
   std::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);

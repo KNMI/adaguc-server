@@ -32,7 +32,7 @@ class TestMetadataRequest:
         This checks standard metadata call for arcus uwcw
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_GetMetadataRequest_arcus_uwcw.json",
@@ -45,7 +45,7 @@ class TestMetadataRequest:
         Also note that the maxquerylimit is set to 2 on purpose, to demonstrate that this does have no influence on the metadata result.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query.json",
@@ -57,7 +57,7 @@ class TestMetadataRequest:
         This checks for correct behavior when passing a invalid reference time, a status OK should be returned with empty dims.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime.json",
@@ -71,7 +71,7 @@ class TestMetadataRequest:
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
 
         env2 = make_adaguc_env("blabla", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env2,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_datasets.json",
@@ -84,7 +84,7 @@ class TestMetadataRequest:
         This checks the metadata call for a specific reference time. The time dimension will then advertise the matching dates for the given model run.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw_ml.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_model_runs.json",
