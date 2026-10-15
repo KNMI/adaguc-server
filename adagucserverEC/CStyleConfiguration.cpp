@@ -335,11 +335,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     }
   }
 
-  // Legacy <ContourIntervalL>/<ContourIntervalH> auto-generate two contour-line tiers (a bold
-  // one every contourIntervalH, a thin one every contourIntervalL) whenever shading or contour
-  // rendering is active - the same two tiers the old CImgWarpBilinear renderer generated from
-  // these settings. Without this, a style/layer that configures only these two elements (no
-  // explicit <ContourLine>) would silently render shading with zero contour lines.
+  // Legacy ContourIntervalL/H auto-generate a thin/bold contour-line tier each, as CImgWarpBilinear did.
   if ((this->renderMethod & (RM_SHADED | RM_CONTOUR)) != 0) {
     if (this->contourIntervalH > 0) {
       CServerConfig::XMLE_ContourLine bigInterval;

@@ -61,10 +61,7 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
     } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
-      // A fully transparent color with non-zero RGB means a ShadeInterval/interval fillcolor was
-      // deliberately set to alpha=0 (as opposed to "no match", which is CColor(0,0,0,0)) - force
-      // it so the pixel is actually erased instead of left untouched underneath whatever was
-      // already drawn there, matching CImgWarpNearestNeighbour's behavior for the same case.
+      // Non-zero RGB with alpha=0 means a deliberately transparent interval color - force-erase.
       settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }
@@ -112,10 +109,7 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     values[1][1] = sourceData[x1 + y1 * sourceDataWidth];
   }
 
-  // Reject the whole quad, like CImgWarpBilinear used to, if any of the 4 corners actually being
-  // blended below is nodata/NaN. Checking only the single nearest-sample `val` above isn't
-  // enough: without a SmoothingFilter, blending a nodata sentinel into real neighbors produces
-  // wildly wrong values along every nodata/data edge instead of leaving the pixel untouched.
+  // Reject the whole quad if any corner is nodata/NaN, like CImgWarpBilinear used to.
   for (const auto &row: values) {
     for (const T &cornerValue: row) {
       if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || !(cornerValue == cornerValue)) return;
@@ -133,8 +127,7 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
     } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
-      // See warpImageNearestFunction above: a deliberately transparent (alpha=0, non-zero RGB)
-      // interval color must still force-erase the pixel, not leave it untouched.
+      // See warpImageNearestFunction above.
       settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }

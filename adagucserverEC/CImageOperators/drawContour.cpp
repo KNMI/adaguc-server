@@ -38,8 +38,7 @@ struct ContourLineStructure {
   std::vector<double> dashes;
 };
 
-// Fast rounding to the nearest integer (ties to even) without a library call: adding and subtracting 1.5 * 2^23 drops the fraction.
-// This is exact for |v| < 2^22, larger values fall back to nearbyint.
+// Fast rounding via the add-magic-constant trick, falls back to nearbyint for large values.
 static inline float fastRoundf(float v) {
   constexpr float magic = 12582912.0f;
   if (std::fabs(v) < 4194304.0f) return (v + magic) - magic;
@@ -249,8 +248,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   int dImageHeight = drawImage->geoParams.height;
   size_t imageSize = (dImageHeight + 0) * (dImageWidth + 1);
 
-  // Create a distance field, this is where the line information will be put in.
-  // calloc gives zeroed memory, the OS can provide this lazily which is much faster than memset for large images.
+  // Distance field holding the line info; calloc is faster than memset for large images.
   DISTANCEFIELDTYPE *distance = (DISTANCEFIELDTYPE *)calloc(imageSize, sizeof(DISTANCEFIELDTYPE));
   if (distance == NULL) {
     CDBError("drawContour: unable to allocate distance field of %zu elements for %dx%d image", imageSize, dImageWidth, dImageHeight);
@@ -293,10 +291,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   }
 
   StopWatch_Measure("drawContour: contour definitions parsed, start filling distance field");
-  // Sorted copies of the classes, so that a binary search can find if a class lies within [min, max) of a pixel.
-  // The order does not matter for that check. The original order is kept in contourlineList, it is used to pick the closest class for the text.
+  // Sorted copies of classes, for a binary-search range check below.
   std::vector<std::vector<double>> sortedClassesList;
-  // Interval and its inverse in float, so that the interval check in the loop below needs no division
   std::vector<float> intervals;
   std::vector<float> inverseIntervals;
   for (const auto &contourLine: contourlineList) {
@@ -312,11 +308,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   size_t numContourLines = contourlineList.size();
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  // Pixels where at least one contour definition set a bit. The distance field is sparse, so tracing below only
-  // needs to look at these candidates instead of rescanning the full image once per contour definition. No bit is
-  // ever set after this point, only cleared, so this candidate set stays valid for every contour definition.
+  // Pixels where at least one contour definition set a bit, so tracing doesn't rescan the whole image.
   std::vector<i4point> candidatePixels;
-  // Fills the distance field for rows [rowStart, rowEnd).
   auto fillRows = [&](int rowStart, int rowEnd) {
     for (int y = rowStart; y < rowEnd; y++) {
       for (int x = 0; x < dImageWidth - 1; x++) {
@@ -353,7 +346,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
           }
           mask = mask + mask;
         }
-        // Only write when a line was found, untouched parts of the calloc-ed distance field then do not need to be mapped into memory
+        // Skip the write when nothing was found, so the untouched calloc page stays unmapped.
         if (foundLines) {
           distance[p1] |= foundLines;
           candidatePixels.push_back({.x = x, .y = y});

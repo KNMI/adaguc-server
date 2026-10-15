@@ -1020,9 +1020,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         styleConfiguration->thinningList.push_back(defaultThinning);
       }
       if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
-        // CImgWarpBilinear always required a grid_eastward_wind/grid_northward_wind pair produced
-        // by convert_uv_components, which also produces the speed_component/direction_component
-        // objects pointsfromgrid needs, so any config that worked with it already has these.
+        // CImgWarpBilinear always required speed_component/direction_component from pointsfromgrid.
         CServerConfig::XMLE_DataPostProc pointsFromGridProc;
         pointsFromGridProc.attr.algorithm = CDATAPOSTPROCESSOR_PointsFromGrid_ID;
         pointsFromGridProc.attr.select = "speed_component,direction_component";

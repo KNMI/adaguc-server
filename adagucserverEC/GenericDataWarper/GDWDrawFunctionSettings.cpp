@@ -66,10 +66,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
   /* Check the if we want to use discrete type */
 
-  // For the generic renderer and when shadeinterval is set, always apply shading. For a legacy
-  // style, only the "shaded" keyword (RM_SHADED) should turn shading on - otherwise selecting the
-  // "bilinear" subset of such a style would always draw the shaded classes too, even though
-  // "bilinear" was deliberately chosen to get the plain continuous legend instead.
+  // For a legacy style, only the "shaded" keyword should turn shading on.
   if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
     if (styleConfiguration->renderMethod & RM_SHADED) {
       settings.isUsingShadeIntervals = true;
@@ -111,13 +108,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     }
   }
 
-  // A pure generic style (no legacy bilinear/shaded/contour keyword at all, e.g. no
-  // <RenderMethod> tag) has only one rendering mode, so configuring a ContourLine is enough to
-  // draw it. A legacy style can list several RenderMethod keywords on one style block so that a
-  // single GetMap request can pick a specific subset via STYLES=name/keyword (e.g.
-  // "nearest,bilinear,shadedcontour"); for those, only the "contour" keyword (RM_CONTOUR) should
-  // draw the contour lines - otherwise selecting the "bilinear" subset would always draw them
-  // too, even though "bilinear" was deliberately chosen to leave them out.
+  // For a legacy style, only the "contour" keyword should draw contour lines.
   if (isLegacyRenderMethod) {
     settings.shouldDrawContours = (styleConfiguration->renderMethod & RM_CONTOUR) != 0;
   } else {
