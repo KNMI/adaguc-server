@@ -1295,7 +1295,15 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase == "JSONP") {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
-            srvParam->JSONP = uriValue;
+            // The JSONP value is reflected verbatim into the response body as a JS function call: restrict to a
+            // safe identifier charset so it cannot be used to inject arbitrary script/HTML content.
+            if (checkForValidTokens(uriValue, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$.") == false) {
+              CDBError("ADAGUC Server: JSONP callback name contains invalid characters");
+              dErrorOccured = 1;
+              setExceptionType(ServiceExceptionType::UnprocessableEntity);
+            } else {
+              srvParam->JSONP = uriValue;
+            }
             dFound_JSONP = 1;
           }
         } else {

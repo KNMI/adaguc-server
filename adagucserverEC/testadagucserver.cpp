@@ -12,6 +12,8 @@
 #include "CDataSource.h"
 #include "CProj4ToCF.h"
 #include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "CPGSQLDB.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 
@@ -310,4 +312,68 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
   CHECK(determinePixelColorFromValue(0, &settings).c_str() == CColor(100, 100, 100, 100).c_str());
   CHECK(determinePixelColorFromValue(1, &settings).c_str() == CColor(150, 150, 150, 150).c_str());
   CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
+}
+
+// Regression test for the SQL injection fix in CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions /
+// getReferenceTime: a request-supplied dimension value (e.g. TIME=...) used to be spliced unescaped into a
+// single-quoted SQL literal. CPGSQLDB::escapeString() must now be used at those call sites.
+//
+// This test connects to the same local test database used by the python test suite. If no database is
+// reachable (e.g. when ctest runs during a Docker build stage without a postgres service), the test is
+// skipped rather than failed, since this is an infrastructure limitation, not a code regression.
+TEST(escapeStringPreventsSQLInjection, CPGSQLDB) {
+  CPGSQLDB db;
+  if (db.connect("user=adaguc password=adaguc host=localhost dbname=postgres port=54321") != 0) {
+    CDBDebug("Skipping escapeStringPreventsSQLInjection: no test database reachable");
+    return;
+  }
+
+  // A classic UNION-based SQL injection payload. If this string were interpolated into
+  // `CT::printf("SELECT '%s' as val", payload.c_str())` unescaped, it would terminate the string
+  // literal early and inject a second SELECT, making the query return two rows.
+  std::string payload = "x' UNION SELECT 'pwned";
+
+  // Demonstrate the vulnerability still exists if a value is NOT escaped (the old, fixed code path):
+  // this mirrors exactly how the value used to be interpolated before the fix.
+  std::string unescapedQuery = CT::printf("SELECT '%s' as val", payload.c_str());
+  CDBStore::Store *vulnerableResult = db.queryToStore(unescapedQuery.c_str(), true);
+  CHECK(vulnerableResult != NULL);
+  CHECK(vulnerableResult->records.size() == 2); // proves the UNION injection fired
+  delete vulnerableResult;
+
+  // Now demonstrate the fix: escape the same payload before interpolating it, exactly like
+  // CDBAdapterPostgreSQL.cpp now does via DB->escapeString(...).
+  std::string escapedQuery = CT::printf("SELECT '%s' as val", db.escapeString(payload).c_str());
+  CDBStore::Store *fixedResult = db.queryToStore(escapedQuery.c_str(), true);
+  CHECK(fixedResult != NULL);
+  CHECK(fixedResult->records.size() == 1); // no injection: a single literal value came back
+  CHECK(fixedResult->records[0].values[0] == payload); // and it round-trips to the exact original value
+  delete fixedResult;
+
+  // A benign value must still round-trip unchanged.
+  std::string benign = "2024-01-01T00:00:00Z";
+  std::string benignQuery = CT::printf("SELECT '%s' as val", db.escapeString(benign).c_str());
+  CDBStore::Store *benignResult = db.queryToStore(benignQuery.c_str(), true);
+  CHECK(benignResult != NULL);
+  CHECK(benignResult->records.size() == 1);
+  CHECK(benignResult->records[0].values[0] == benign);
+  delete benignResult;
+}
+
+// Regression test for the unvalidated-JSONP-callback fix in CRequest.cpp: the JSONP query parameter is
+// reflected verbatim into the response body as `<callback>(<data>)`. It must now be restricted to a safe
+// identifier charset before being accepted, using the same checkForValidTokens() helper as here.
+TEST(jsonpCallbackCharsetIsRestricted, CRequest) {
+  const std::string allowedJSONPTokens = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$.";
+
+  // Legitimate callback names must be accepted.
+  CHECK(checkForValidTokens("myCallback", allowedJSONPTokens) == true);
+  CHECK(checkForValidTokens("jQuery123_456", allowedJSONPTokens) == true);
+  CHECK(checkForValidTokens("ns.callback", allowedJSONPTokens) == true);
+
+  // Payloads attempting to break out of the `callback(...)` context must be rejected.
+  CHECK(checkForValidTokens("</script><script>alert(1)</script>", allowedJSONPTokens) == false);
+  CHECK(checkForValidTokens("alert(1)", allowedJSONPTokens) == false);
+  CHECK(checkForValidTokens("a');alert(1);//", allowedJSONPTokens) == false);
+  CHECK(checkForValidTokens("callback;DROP TABLE x", allowedJSONPTokens) == false);
 }
