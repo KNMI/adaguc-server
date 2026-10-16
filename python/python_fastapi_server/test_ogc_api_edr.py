@@ -34,6 +34,7 @@ def setup_test_data():
         "adaguc_tests_uwcwdini_windcomponents.xml",
         "adaguc_tests_solarterminator.xml",
         "adaguc.tests.multi_reftime_temporal_extent.xml",
+        "adaguc.tests.arcus_uwcw_manymodelruns.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -77,6 +78,7 @@ def test_collections(client: TestClient):
     collection_ids = [coll["id"] for coll in colls["collections"]]
     assert collection_ids == [
         "adaguc.tests.arcus_uwcw.hagl_member",
+        "adaguc.tests.arcus_uwcw_manymodelruns.hagl",
         "adaguc.tests.members.mycollection",
         "adaguc.tests.multi_reftime_temporal_extent.gl",
         "adaguc_ewclocalclimateinfo_test",
@@ -86,7 +88,7 @@ def test_collections(client: TestClient):
         "testcollection.testcollection",
     ]
 
-    coll_5d = colls["collections"][6]
+    coll_5d = colls["collections"][7]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(ext_name in coll_5d["extent"] for ext_name in ("spatial", "temporal", "vertical", "custom"))
     assert list(coll_5d["extent"]) == [
@@ -963,6 +965,25 @@ def test_multi_reftime_temporal_extent(client: TestClient):
 
     # ids and urls will be different, but the temporal extent must be the same since it refers to the same specific instance
     assert most_recent_instance["extent"] == covjson["extent"]
+
+
+def test_many_reference_times(client: TestClient):
+    """
+    The reference_time dimension of this dataset is advertised by GetMetadata as an interval
+    (start/end/resolution) instead of a list. EDR must expand it into separate instances.
+    """
+    base_url = "/edr/collections/adaguc.tests.arcus_uwcw_manymodelruns.hagl"
+
+    resp = client.get(base_url)
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "adaguc.tests.arcus_uwcw_manymodelruns.hagl"
+
+    resp = client.get(f"{base_url}/instances")
+    assert resp.status_code == 200
+    instance_ids = [instance["id"] for instance in resp.json()["instances"]]
+    assert len(instance_ids) == 22
+    assert instance_ids[0] == "202610010900"
+    assert instance_ids[-1] == "202609301200"
 
 
 def test_multi_reftime_instanceless_query(client: TestClient):
