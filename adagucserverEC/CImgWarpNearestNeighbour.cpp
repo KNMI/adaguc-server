@@ -144,7 +144,7 @@ void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *des
 
         for (int x = sx; x < ex; x++) {
           double vx = rcxvx * double(x - x1) + vx1;
-          drawImage->setPixelIndexed(x, y, vx);
+          drawImage->setPixelByLegendPaletteIndex(x, y, (int)vx);
           destField[x + y * W] = vx;
         }
       }
@@ -185,7 +185,7 @@ void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *des
 
         for (int x = sx; x < ex; x++) {
           double vx = rcxvx * double(x - x1) + vx1;
-          drawImage->setPixelIndexed(x, y, vx);
+          drawImage->setPixelByLegendPaletteIndex(x, y, (int)vx);
           destField[x + y * W] = vx;
         }
       }
@@ -194,6 +194,7 @@ void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *des
 }
 
 void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP, int *yP, int &value) {
+  CColor color = drawImage->getCColorFromLegendPaletteIndex(value);
   // Sort the vertices in Y direction
   int W = drawImage->geoParams.width;
   int H = drawImage->geoParams.height;
@@ -279,7 +280,9 @@ void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP, int 
         short sx = (x1 < 0) ? 0 : x1;
         short ex = (x2 > W) ? W : x2; //<0?0:x2;
         for (short x = sx; x < ex; x++) {
-          drawImage->setPixelIndexed(x, y, value);
+          if (color.a > 0) {
+            drawImage->setPixel(x, y, color);
+          }
         }
       }
     }
@@ -309,7 +312,9 @@ void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP, int 
         short sx = (x1 < 0) ? 0 : x1;
         short ex = (x2 > W) ? W : x2; //<0?0:x2;
         for (short x = sx; x < ex; x++) {
-          drawImage->setPixelIndexed(x, y, value);
+          if (color.a > 0) {
+            drawImage->setPixel(x, y, color);
+          }
         }
       }
     }
@@ -740,7 +745,7 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
           else if (pcolorind <= 0)
             pcolorind = 0;
 
-          drawImage->setPixelIndexed(x, (drawImage->geoParams.height - 1) - y, pcolorind);
+          drawImage->setPixelByLegendPaletteIndex(x, (drawImage->geoParams.height - 1) - y, pcolorind);
         }
       }
     }

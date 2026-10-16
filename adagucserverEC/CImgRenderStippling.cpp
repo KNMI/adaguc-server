@@ -54,7 +54,7 @@ void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {
       pcolorind = 0;
     CColor c;
     if (color.empty()) {
-      c = drawImage->getColorForIndex(pcolorind);
+      c = drawImage->getCColorFromLegendPaletteIndex(pcolorind);
     } else {
       c.parse(color.c_str());
     }

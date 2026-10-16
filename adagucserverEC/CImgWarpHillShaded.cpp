@@ -168,7 +168,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
           val = 239;
         else if (val < 0)
           val = 0;
-        drawImage->setPixelIndexed(x, y, (unsigned char)val);
+        drawImage->setPixelByLegendPaletteIndex(x, y, (int)val);
       }
     }
   }

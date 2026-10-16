@@ -305,15 +305,10 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
-    drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-  }
-
   if (styleConfiguration != NULL) {
 
     if (styleConfiguration->renderMethod & RM_RGBA) {
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         writerStatus = initialized;
         drawImage.createImage(40, 20);
@@ -326,17 +321,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0].attr.name == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png24")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
       if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/webp")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
       if (dataSource->cfgLayer->WMSFormat[0].attr.quality.empty() == false) {
@@ -1199,9 +1184,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       double gridSize = 10;
       double precision = 0.25;
       double numTestSteps = 5;
-      CColor textColor(0, 0, 0, 128);
+      CColor textColor = standardCColorTranslucentBlack;
       float lineWidth = 0.25;
-      int lineColor = 247;
+      CColor lineColor = standardCColorDarkGray;
 
       if (dataSource->cfgLayer->Grid[0].attr.resolution.empty() == false) {
         gridSize = atof(dataSource->cfgLayer->Grid[0].attr.resolution.c_str());
@@ -2005,10 +1990,5 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage) { return CCreateLegend::createLegend(dataSource, legendImage); }
 
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage, bool rotate) { return CCreateLegend::createLegend(dataSource, legendImage, rotate); }
-
-int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float size, float angle, const char *text, unsigned char colorIndex) {
-  drawImage.drawText(x, y, fontlocation, size, angle, text, colorIndex);
-  return 0;
-}
 
 int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

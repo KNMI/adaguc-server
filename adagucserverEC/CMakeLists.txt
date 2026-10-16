@@ -21,8 +21,6 @@ add_library(
     CAutoConfigure.h
     CAutoResource.cpp
     CAutoResource.h
-    CCairoPlotter.cpp
-    CCairoPlotter.h
     CColor.h
     CColor.cpp
     CConvertADAGUCPoint.cpp

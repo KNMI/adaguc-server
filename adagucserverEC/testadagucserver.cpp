@@ -311,3 +311,60 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
   CHECK(determinePixelColorFromValue(1, &settings).c_str() == CColor(150, 150, 150, 150).c_str());
   CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
 }
+
+TEST(CDrawImage, negativeAlphaIsClampedToZero) {
+  // A configured alpha below 0 (e.g. a stray <palette alpha="-1">) must not wrap around to a large
+  // unsigned value; it's clamped to fully transparent instead.
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testNegativeAlpha";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette p0, p240;
+  p0.attr.index = 0;
+  p0.attr.red = 0;
+  p0.attr.green = 0;
+  p0.attr.blue = 0;
+  p0.attr.alpha = -1;
+  p240.attr.index = 240;
+  p240.attr.red = 0;
+  p240.attr.green = 0;
+  p240.attr.blue = 0;
+  p240.attr.alpha = -1;
+  legend.palette.push_back(p0);
+  legend.palette.push_back(p240);
+
+  CDrawImage image;
+  image.createImage(2, 2);
+  image.createPalette(&legend);
+
+  // Red is bumped from 0 to 1 so copyPalette()'s auto-transparency rule doesn't clobber this entry.
+  CColor resolved = image.getCColorFromLegendPaletteIndex(100);
+  CHECK(resolved.c_str() == CColor(1, 0, 0, 0).c_str());
+
+  // Alpha 0 means skip, so a pixel already drawn must be left untouched.
+  image.setPixelTrueColor(0, 0, 200, 200, 200, 255);
+  if (resolved.a > 0) {
+    image.setPixel(0, 0, resolved);
+  }
+  unsigned char r, g, b, a;
+  image.getPixelTrueColor(0, 0, r, g, b, a);
+  CHECK(r == 200 && g == 200 && b == 200 && a == 255);
+}
+
+TEST(CDrawImage, getCColorFromLegendPaletteIndexOutOfRangeIsTransparent) {
+  // A caller that resolves a color via getCColorFromLegendPaletteIndex() and then gates drawing on alpha>0 (the
+  // standard pattern replacing the old setPixelByLegendPaletteIndex's own bounds check) must see "nothing to
+  // draw" for an out-of-range index - not CColor()'s default opaque black. A real caller
+  // (renderContinuousLegend's ramp fill) hits a genuine negative index on its last row, due to an
+  // existing off-by-one in its own float->int rounding when cbH isn't a whole number.
+  CDrawImage image;
+  image.createImage(2, 2);
+  image.create685Palette();
+
+  CHECK(image.getCColorFromLegendPaletteIndex(-1).a == 0);
+  CHECK(image.getCColorFromLegendPaletteIndex(256).a == 0);
+
+  // No legend at all must behave the same way.
+  CDrawImage noPalette;
+  noPalette.createImage(2, 2);
+  CHECK(noPalette.getCColorFromLegendPaletteIndex(0).a == 0);
+}

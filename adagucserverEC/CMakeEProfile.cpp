@@ -746,9 +746,12 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
             else if (pcolorind <= 0)
               pcolorind = 0;
 
-            for (int y = y1; y < y2; y++) {
-              for (int x = x1; x < x2; x++) {
-                drawImage->setPixelIndexed(x, y, pcolorind);
+            CColor color = drawImage->getCColorFromLegendPaletteIndex(pcolorind);
+            if (color.a > 0) {
+              for (int y = y1; y < y2; y++) {
+                for (int x = x1; x < x2; x++) {
+                  drawImage->setPixel(x, y, color);
+                }
               }
             }
           }

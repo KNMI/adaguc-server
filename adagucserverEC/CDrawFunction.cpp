@@ -25,7 +25,7 @@ template <class T> void drawIndexPixel(int &x, int &y, T &val, GDWDrawFunctionSe
     pcolorind = 239;
   else if (pcolorind <= 0)
     pcolorind = 0;
-  settings.drawImage->setPixelIndexed(x, y, pcolorind);
+  settings.drawImage->setPixelByLegendPaletteIndex(x, y, pcolorind);
 }
 
 template <class T> short determinePixelIndexFromValue(T val, GDWDrawFunctionSettings &settings) {
@@ -64,7 +64,7 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
     if (settings->isUsingShadeIntervals) {
       if (settings->shadeInterval > 0) {
         float f = floor(val / settings->shadeInterval) * settings->shadeInterval;
-        return settings->drawImage->getColorForIndex(determinePixelIndexFromValue(f, *settings));
+        return settings->drawImage->getCColorFromLegendPaletteIndex(determinePixelIndexFromValue(f, *settings));
 
       } else {
         // use binary search to find matching interval
@@ -81,7 +81,7 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
         return settings->bgColor;
       }
     } else {
-      return settings->drawImage->getColorForIndex(determinePixelIndexFromValue(val, *settings));
+      return settings->drawImage->getCColorFromLegendPaletteIndex(determinePixelIndexFromValue(val, *settings));
     }
   }
   return CColor(0, 0, 0, 0);

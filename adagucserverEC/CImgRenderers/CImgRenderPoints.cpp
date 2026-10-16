@@ -323,7 +323,7 @@ CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float v
     return getPixelColorForValue(drawImage, dataSource, value);
   }
   int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
-  return drawImage->getColorForIndex(pointColorIndex);
+  return drawImage->getCColorFromLegendPaletteIndex(pointColorIndex);
 }
 
 void drawSymbolForPoint(CDrawImage *drawImage, std::unordered_map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
@@ -391,7 +391,7 @@ int calculateYForDataobject(CDataSource *dataSource, int station_y, float textRa
 }
 
 void renderSinglePoints(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
-  CColor defaultColor = CColor(0, 0, 0, 255);
+  CColor defaultColor = standardCColorBlack;
   bool drawRadiusAndValue = pointStyle.style == "radiusandvalue";
   bool drawZoomablePoint = pointStyle.style == "zoomablepoint";
 
@@ -724,5 +724,5 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   // If shade interval is set, we have to round the color value down to the lower value of the legend class
   float newValue = styleConfiguration->shadeInterval > 0 ? val = floor(val / styleConfiguration->shadeInterval) * styleConfiguration->shadeInterval : val;
   int pointColorIndex = getPixelIndexForValue(dataSource, newValue); // Use value of dataObject[0] for colour
-  return drawImage->getColorForIndex(pointColorIndex);
+  return drawImage->getCColorFromLegendPaletteIndex(pointColorIndex);
 }
