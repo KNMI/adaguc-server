@@ -208,8 +208,6 @@ add_library(
     CImgWarpNearestRGBA.h
     CImgRenderFieldVectors.h
     CImgRenderFieldVectors.cpp
-    CInspire.cpp
-    CInspire.h
     CLegendRenderers/CCreateLegend.cpp
     CLegendRenderers/CCreateLegend.h
     CLegendRenderers/numericutils.cpp
@@ -232,8 +230,6 @@ add_library(
     CRectangleText.h
     CRequest.cpp
     CRequest.h
-    CSLD.cpp
-    CSLD.h
     CServerError.cpp
     CServerError.h
     CServerParams.cpp

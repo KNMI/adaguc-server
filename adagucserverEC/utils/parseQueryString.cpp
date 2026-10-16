@@ -1,11 +1,8 @@
 #include <cstdlib>
 #include <CTString.h>
 #include <cstddef>
-#include <CSLD.h>
 #include <CServerError.h>
 #include <CAutoResource.h>
-
-static const bool CREQUEST_DEBUG = false;
 
 int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
   const char *pszQueryString = getenv("QUERY_STRING");
@@ -37,27 +34,13 @@ int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
         }
       }
 
-      // Check if parameter name is a SLD parameter AND have file name
-      CSLD csld;
-      if (csld.parameterIsSld(values[0])) {
-        if (CREQUEST_DEBUG) {
-          CDBDebug("Found SLD parameter in query");
-        }
-
-        // Set server params
-        csld.setServerParams(&srvParam);
-
-        // Process the SLD URL
-        if (values[1].empty()) {
-          setExceptionType(ServiceExceptionType::UnprocessableEntity);
-          return 1;
-        }
-        int status = csld.processSLDUrl(values[1]);
-
-        if (status != 0) {
-          CDBError("Processing SLD failed");
-          return status;
-        }
+      // The SLD parameter used to fetch a styling document from an arbitrary,
+      // client-supplied URL. This has been removed: it let a client make the
+      // server issue HTTP requests to any host it chose (SSRF). Reject it
+      // explicitly rather than silently ignoring it.
+      if (value0Cap == "SLD") {
+        setExceptionType(ServiceExceptionType::UnprocessableEntity);
+        return 1;
       }
     }
   }
