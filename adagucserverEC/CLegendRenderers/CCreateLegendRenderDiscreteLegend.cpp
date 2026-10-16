@@ -280,7 +280,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
         if (yBottom <= yTop) continue;
 
-        CColor color = s.attr.fillcolor.empty() ? legendImage->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min)) : CColor(s.attr.fillcolor.c_str());
+        CColor color = s.attr.fillcolor.empty() ? styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min)) : CColor(s.attr.fillcolor.c_str());
 
         // This rectangle is borderless, and the resulting classes have no vertical blank space between them
         legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
@@ -313,7 +313,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         if (s.attr.fillcolor.empty() == false) {
           color = CColor(s.attr.fillcolor.c_str());
         } else {
-          color = legendImage->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min));
+          color = styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min));
         }
         legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 
@@ -423,7 +423,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       classNr += classSizeY;
 
       if (j < iMax) {
-        CColor classColor = legendImage->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, v));
+        CColor classColor = styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, v));
         if (classSizeY > 4) {
           legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, classColor, standardCColorBlack);
         } else {

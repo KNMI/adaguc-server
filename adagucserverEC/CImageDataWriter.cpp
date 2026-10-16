@@ -312,7 +312,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         writerStatus = initialized;
         drawImage.createImage(40, 20);
-        drawImage.create685Palette();
         return 0;
       }
     }
@@ -382,20 +381,11 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
-    // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
-      status = drawImage.create685Palette();
-      if (status != 0) {
-        CDBError("Unable to create standard 6-8-5 palette");
-        return 1;
-      }
-    }
-
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -1114,7 +1104,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;

@@ -1,5 +1,6 @@
 **Version 9.0.3**
 
+- Drawing now goes through Cairo instead of a first-party rasterizer, so rendered pixels at shape edges can differ by a few color units depending on the installed cairo/pixman version - see [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
 - `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
 - Faster rendering with the generic renderer: the per-pixel draw callback is now a template parameter instead of a `std::function`, letting the compiler inline it into the pixel and triangle-fill loops. Speedup grows with image size and contour density - e.g. a 144 megapixel image with shaded contours renders about 8.5% faster. The output is unchanged.
 - Faster WebP encoding: lossy output now imports as YUVA instead of ARGB, which is faster to encode

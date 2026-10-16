@@ -190,7 +190,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
         CColor col = CImageDataWriter::getPixelColorForValue(dataSource, value);
         legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, col, standardCColorBlack);
       } else {
-        CColor col = legendImage->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, value));
+        CColor col = styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, value));
         legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, col, standardCColorBlack);
       }
 

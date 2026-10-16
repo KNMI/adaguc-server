@@ -70,6 +70,12 @@ struct CStyleConfiguration {
   CServerConfig::XMLE_Legend legend;
   CServerConfig::XMLE_LegendGraphic legendGraphic;
 
+  // Empty until createPalette() is called - most styles never resolve to an index-color legend at
+  // all, so there's no point eagerly allocating and filling 256 entries for them. An index lookup
+  // against an empty (or never-reaching-that-index) palette resolves to transparent, not
+  // CColor()'s own default of opaque black - see getCColorFromLegendPaletteIndex().
+  std::vector<CColor> colors;
+
   /**
    * Outputs styleConfiguration as string
    */
@@ -84,5 +90,13 @@ struct CStyleConfiguration {
    * Sets the legend scale and offset based on min/max
    */
   void stretchLegend(double min, double max);
+
+  // Builds the index-color palette from legend config (colorRange/interval/svg types); every
+  // reachable index (0-239) resolves transparent when legend is nullptr.
+  int createPalette(CServerConfig::XMLE_Legend *legend);
+
+  // Looks up colors[index]; transparent for an out-of-range index (which includes every index
+  // when createPalette() was never called, since colors is then empty).
+  CColor getCColorFromLegendPaletteIndex(int index) const;
 };
 #endif

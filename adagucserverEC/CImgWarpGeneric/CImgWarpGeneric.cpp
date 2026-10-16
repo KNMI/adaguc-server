@@ -44,11 +44,8 @@
 #include "CDrawFunction.h"
 #include "CStopWatch.h"
 
-CColor cblack = CColor(0, 0, 0, 255);
-CColor cblue = CColor(0, 0, 255, 255);
-
-MemoizationForDeterminePixelColorFromValue memo;
-template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+template <typename T>
+void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
 
@@ -67,7 +64,8 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
   }
 };
 
-template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+template <typename T>
+void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
@@ -133,8 +131,9 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   }
 };
 
-template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
+template <typename T>
+void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
+  if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
@@ -189,6 +188,10 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+  // Scoped to this render() call - memoizedDeterminePixelColorFromValue() only skips recomputation
+  // for a value repeated within this one pass; it must never survive past it (settings, which it
+  // keys on, is a local that dies when render() returns).
+  MemoizationForDeterminePixelColorFromValue memo;
 
   int destDataWidth = drawImage->geoParams.width;
   int destDataHeight = drawImage->geoParams.height;
@@ -216,7 +219,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       }
       genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings, memo); });
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
@@ -227,7 +230,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       genericDataWarper.useHalfCellOffset = true;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings, memo); });
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
@@ -243,7 +246,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     genericDataWarper.useHalfCellOffset = false;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings, memo); });
     ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
   }

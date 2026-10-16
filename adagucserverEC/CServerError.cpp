@@ -184,7 +184,6 @@ void readyHandleError() {
 
     drawImage.createImage(errImageWidth, errImageHeight);
 
-    drawImage.create685Palette();
     if (cerror_mode == ServiceExceptionMode::ExceptionImage) {
       printerrorImage(&drawImage);
     }

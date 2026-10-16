@@ -296,6 +296,7 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
       .destinationGrid = nullptr,
       .smoothingFiter = 0,
       .smoothingMemo = {},
+      .clegend = {},
   };
   // Test if it returns default color when there are no shadeintervals
   CHECK(determinePixelColorFromValue(0, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
@@ -312,7 +313,7 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
   CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
 }
 
-TEST(CDrawImage, negativeAlphaIsClampedToZero) {
+TEST(CStyleConfiguration, negativeAlphaIsClampedToZero) {
   // A configured alpha below 0 (e.g. a stray <palette alpha="-1">) must not wrap around to a large
   // unsigned value; it's clamped to fully transparent instead.
   CServerConfig::XMLE_Legend legend;
@@ -334,10 +335,11 @@ TEST(CDrawImage, negativeAlphaIsClampedToZero) {
 
   CDrawImage image;
   image.createImage(2, 2);
-  image.createPalette(&legend);
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
 
-  // Red is bumped from 0 to 1 so copyPalette()'s auto-transparency rule doesn't clobber this entry.
-  CColor resolved = image.getCColorFromLegendPaletteIndex(100);
+  // Red is bumped from 0 to 1 so the standard palette's auto-transparency rule doesn't clobber this entry.
+  CColor resolved = styleConfiguration.getCColorFromLegendPaletteIndex(100);
   CHECK(resolved.c_str() == CColor(1, 0, 0, 0).c_str());
 
   // Alpha 0 means skip, so a pixel already drawn must be left untouched.
@@ -350,21 +352,53 @@ TEST(CDrawImage, negativeAlphaIsClampedToZero) {
   CHECK(r == 200 && g == 200 && b == 200 && a == 255);
 }
 
-TEST(CDrawImage, getCColorFromLegendPaletteIndexOutOfRangeIsTransparent) {
+TEST(CStyleConfiguration, createPaletteInterpolatesColorRangeLinearly) {
+  // colorRange legends linearly interpolate between consecutive <palette> stops; a midpoint index
+  // must resolve to the color exactly halfway between its two neighboring stops.
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testColorRangeInterpolation";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette p0, p240;
+  p0.attr.index = 0;
+  p0.attr.red = 0;
+  p0.attr.green = 0;
+  p0.attr.blue = 0;
+  p0.attr.alpha = 255;
+  p240.attr.index = 240;
+  p240.attr.red = 240;
+  p240.attr.green = 240;
+  p240.attr.blue = 240;
+  p240.attr.alpha = 255;
+  legend.palette.push_back(p0);
+  legend.palette.push_back(p240);
+
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+
+  // Red is bumped from 0 to 1 so the auto-transparency rule doesn't clobber this entry.
+  CColor start = styleConfiguration.getCColorFromLegendPaletteIndex(0);
+  CHECK(start.c_str() == CColor(1, 0, 0, 255).c_str());
+
+  CColor midpoint = styleConfiguration.getCColorFromLegendPaletteIndex(120);
+  CHECK(midpoint.c_str() == CColor(120, 120, 120, 255).c_str());
+
+  CColor end = styleConfiguration.getCColorFromLegendPaletteIndex(239);
+  CHECK(end.c_str() == CColor(239, 239, 239, 255).c_str());
+}
+
+TEST(CStyleConfiguration, getCColorFromLegendPaletteIndexOutOfRangeIsTransparent) {
   // A caller that resolves a color via getCColorFromLegendPaletteIndex() and then gates drawing on alpha>0 (the
-  // standard pattern replacing the old setPixelByLegendPaletteIndex's own bounds check) must see "nothing to
+  // standard pattern replacing setPixelByLegendPaletteIndex's own bounds check) must see "nothing to
   // draw" for an out-of-range index - not CColor()'s default opaque black. A real caller
   // (renderContinuousLegend's ramp fill) hits a genuine negative index on its last row, due to an
   // existing off-by-one in its own float->int rounding when cbH isn't a whole number.
-  CDrawImage image;
-  image.createImage(2, 2);
-  image.create685Palette();
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(nullptr);
 
-  CHECK(image.getCColorFromLegendPaletteIndex(-1).a == 0);
-  CHECK(image.getCColorFromLegendPaletteIndex(256).a == 0);
+  CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(-1).a == 0);
+  CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(256).a == 0);
 
-  // No legend at all must behave the same way.
-  CDrawImage noPalette;
-  noPalette.createImage(2, 2);
+  // No palette built at all must behave the same way.
+  CStyleConfiguration noPalette;
   CHECK(noPalette.getCColorFromLegendPaletteIndex(0).a == 0);
 }

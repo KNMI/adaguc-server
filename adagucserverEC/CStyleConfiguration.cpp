@@ -380,3 +380,162 @@ void CStyleConfiguration::stretchLegend(double min, double max) {
     this->legendOffset = 0;
   }
 }
+
+// Every index ever looked up through getCColorFromLegendPaletteIndex() is clamped to 0-239 by its
+// caller, so indices 240-255 are never read - only this 0-239 range needs finishing: any index
+// still pure black here was never set by a <palette> entry, so treat it as "no color"
+// (transparent) rather than opaque black.
+static void markUnsetEntriesTransparent(std::vector<CColor> &colors) {
+  for (int j = 0; j < 240; j++) {
+    CColor &c = colors[j];
+    if (c.r == 0 && c.g == 0 && c.b == 0) {
+      c.a = 0;
+    }
+  }
+}
+
+// Linearly interpolates RGBA across the index range [fromIndex, toIndex], used by both the
+// colorRange and svg legend types (interval has no interpolation - see fillPaletteRange below).
+// The red channel of each written entry is bumped off zero so the auto-transparency rule above
+// doesn't mistake an intentionally-set black for an unset entry; alpha is clamped to zero (not
+// narrowed/wrapped) if interpolation drives it negative, which is why it's carried as a plain int
+// here rather than boxed into CColor's unsigned-char alpha before this clamp runs.
+//
+// Deliberately float, not double: existing <Legend> configs have been rendered and golden-tested
+// against this exact (single-precision) rounding for years, and switching to double measurably
+// shifted individual palette entries by 1 unit wherever a delta/span isn't exactly representable
+// (e.g. -64/6) - a real, if tiny, rendering regression against every existing golden image.
+static void interpolatePaletteRange(std::vector<CColor> &colors, int fromIndex, int fromRed, int fromGreen, int fromBlue, int fromAlpha, int toIndex, int toRed, int toGreen, int toBlue,
+                                     int toAlpha) {
+  float span = toIndex - fromIndex;
+  if (span < 0.5f) span = 1;
+  float redStep = (toRed - fromRed) / span;
+  float greenStep = (toGreen - fromGreen) / span;
+  float blueStep = (toBlue - fromBlue) / span;
+  float alphaStep = (toAlpha - fromAlpha) / span;
+
+  for (int i = fromIndex; i <= toIndex; i++) {
+    if (i < 0 || i >= 240) continue;
+    float step = i - fromIndex;
+    int red = int(redStep * step) + fromRed;
+    int green = int(greenStep * step) + fromGreen;
+    int blue = int(blueStep * step) + fromBlue;
+    int alpha = int(alphaStep * step) + fromAlpha;
+    unsigned char r = (unsigned char)red;
+    if (r == 0) r = 1;
+    colors[i] = CColor(r, (unsigned char)green, (unsigned char)blue, (unsigned char)(alpha < 0 ? 0 : alpha));
+  }
+}
+
+// Flat-fills the index range [fromIndex, toIndex) with a single solid color - used by the
+// "interval" legend type, where each <palette> entry is its own flat step rather than a gradient.
+static void fillPaletteRange(std::vector<CColor> &colors, int fromIndex, int toIndex, int red, int green, int blue, int alpha) {
+  for (int i = fromIndex; i < toIndex; i++) {
+    if (i < 0 || i >= 240) continue;
+    unsigned char r = (unsigned char)red;
+    if (r == 0) r = 1; // avoid the auto-transparency rule above mistaking this for an unset entry
+    colors[i] = CColor(r, (unsigned char)green, (unsigned char)blue, (unsigned char)(alpha < 0 ? 0 : alpha));
+  }
+}
+
+int CStyleConfiguration::createPalette(CServerConfig::XMLE_Legend *legend) {
+  colors.assign(256, CColor(0, 0, 0, 255));
+  if (legend == NULL) {
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  if (legend->attr.type == "colorRange") {
+    for (size_t j = 0; j < legend->palette.size(); j++) {
+      CServerConfig::XMLE_palette *pbegin = &legend->palette[j];
+      CServerConfig::XMLE_palette *pnext = &legend->palette[j];
+      if (j < legend->palette.size() - 1) {
+        pnext = &legend->palette[j + 1];
+      }
+
+      if (pbegin->attr.index > 255) pbegin->attr.index = 255;
+      if (pbegin->attr.index < 0) pbegin->attr.index = 0;
+      if (pnext->attr.index > 255) pnext->attr.index = 255;
+      if (pnext->attr.index < 0) pnext->attr.index = 0;
+
+      interpolatePaletteRange(colors, pbegin->attr.index, pbegin->attr.red, pbegin->attr.green, pbegin->attr.blue, pbegin->attr.alpha, pnext->attr.index, pnext->attr.red, pnext->attr.green,
+                               pnext->attr.blue, pnext->attr.alpha);
+    }
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  if (legend->attr.type == "interval") {
+    for (size_t j = 0; j < legend->palette.size(); j++) {
+      auto &attr = legend->palette[j].attr;
+      if (attr.index != -1) {
+        int stopIndex = 240;
+        if (j < legend->palette.size() - 1) stopIndex = legend->palette[j + 1].attr.index;
+        fillPaletteRange(colors, attr.index, stopIndex, attr.red, attr.green, attr.blue, attr.alpha);
+      } else {
+        fillPaletteRange(colors, attr.min, attr.max + 1, attr.red, attr.green, attr.blue, attr.alpha);
+      }
+    }
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  if (legend->attr.type == "svg") {
+    if (legend->attr.file.empty()) {
+      CDBError("Legend type file has no file attribute specified");
+      return 1;
+    }
+    CDBDebug("Reading file %s", legend->attr.file.c_str());
+
+    CXMLParserElement element;
+
+    try {
+      element.parseFile(legend->attr.file.c_str());
+      auto stops = element.getThrows("svg")->getThrows("g")->getThrows("defs")->getThrows("linearGradient")->getList("stop");
+      unsigned char prevRed = 0, prevGreen = 0, prevBlue = 0, prevAlpha = 0;
+      int prevOffset = 0;
+      for (size_t j = 0; j < stops.size(); j++) {
+        int offset = (int)(std::stof(stops.at(j).getAttrValue("offset")) * 2.4);
+        std::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
+        color.resize(color.length() - 1);
+        auto colorParts = CT::split(color, ",");
+        if (colorParts.size() != 3) {
+          CDBError("Number of specified colors is unequal to three");
+          return 1;
+        }
+        unsigned char red = atoi(colorParts[0].c_str());
+        unsigned char green = atoi(colorParts[1].c_str());
+        unsigned char blue = atoi(colorParts[2].c_str());
+        unsigned char alpha = (unsigned char)(std::stof(stops.at(j).getAttrValue("stop-opacity")) * 255);
+        if (offset > 255)
+          offset = 255;
+        else if (offset < 0)
+          offset = 0;
+
+        if (j > 0) {
+          interpolatePaletteRange(colors, prevOffset, prevRed, prevGreen, prevBlue, prevAlpha, offset, red, green, blue, alpha);
+        }
+        prevRed = red;
+        prevGreen = green;
+        prevBlue = blue;
+        prevAlpha = alpha;
+        prevOffset = offset;
+      }
+
+    } catch (int e) {
+      std::string message = CXMLParser::getErrorMessage(e);
+      CDBError("%s\n", message.c_str());
+      return 1;
+    }
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  return 1;
+}
+
+CColor CStyleConfiguration::getCColorFromLegendPaletteIndex(int colorIndex) const {
+  // Transparent, not CColor()'s default opaque black: callers gate drawing on alpha>0, and an
+  // out-of-range index - which includes every index when createPalette() was never called, since
+  // colors is then empty - must mean "nothing to draw" rather than "draw opaque black".
+  if (colorIndex >= 0 && colorIndex < (int)colors.size()) {
+    return colors[colorIndex];
+  }
+  return CColor(0, 0, 0, 0);
+}

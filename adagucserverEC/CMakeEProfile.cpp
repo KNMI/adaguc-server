@@ -242,7 +242,7 @@ public:
 
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration->legendIndex != -1) {
-      status = drawImage->createPalette(&dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
+      status = styleConfiguration->createPalette(&dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
       if (status != 0) {
         CDBError("Unknown palette type for %s", dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
         return;
@@ -746,7 +746,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
             else if (pcolorind <= 0)
               pcolorind = 0;
 
-            CColor color = drawImage->getCColorFromLegendPaletteIndex(pcolorind);
+            CColor color = styleConfiguration->getCColorFromLegendPaletteIndex(pcolorind);
             if (color.a > 0) {
               for (int y = y1; y < y2; y++) {
                 for (int x = x1; x < x2; x++) {

@@ -32,6 +32,11 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendScale = styleConfiguration->legendScale;
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
+  // styleConfiguration->colors is empty when createPalette() was never called for this style - fill
+  // transparent first so clegend still resolves "no color" rather than CColor()'s opaque black default.
+  std::fill(std::begin(settings.clegend), std::end(settings.clegend), CColor(0, 0, 0, 0));
+  size_t numColorsToCopy = std::min(styleConfiguration->colors.size(), sizeof(settings.clegend) / sizeof(settings.clegend[0]));
+  std::copy(styleConfiguration->colors.begin(), styleConfiguration->colors.begin() + numColorsToCopy, std::begin(settings.clegend));
 
   // Legacy render methods can list several keywords on one style (e.g. "nearest,bilinear,shadedcontour").
   bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);

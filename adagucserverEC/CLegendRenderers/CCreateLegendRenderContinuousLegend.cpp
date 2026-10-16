@@ -84,14 +84,15 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
   int minColor = 239;
   int maxColor = 0;
-  CColor minColorC = legendImage->getCColorFromLegendPaletteIndex(minColor);
-  CColor maxColorC = legendImage->getCColorFromLegendPaletteIndex(maxColor);
+  CColor minColorC = styleConfiguration->getCColorFromLegendPaletteIndex(minColor);
+  CColor maxColorC = styleConfiguration->getCColorFromLegendPaletteIndex(maxColor);
 
   int pLeft = 4;
   int pTop = (int)(legendImage->geoParams.height - legendHeight);
   for (int j = 0; j < cbH; j++) {
     int c = int((float(cbH - (j + 1)) / cbH) * 240.0f + 0.5);
-    CColor rampColor = legendImage->getCColorFromLegendPaletteIndex(c);
+    if (c > 239) c = 239; // rounding can push the top row into the reserved 240-255 standard-palette range
+    CColor rampColor = styleConfiguration->getCColorFromLegendPaletteIndex(c);
     if (rampColor.a > 0) {
       for (int x = pLeft; x < pLeft + ((int)cbW + 1) * scaling; x++) {
         legendImage->setPixel(x, j + 7 + dH + pTop, rampColor);

@@ -44,9 +44,6 @@ static const bool CIMGWARPNEARESTNEIGHBOUR_DEBUG = false;
  */
 class CImgWarpNearestNeighbour : public CImageWarperRenderInterface {
 private:
-  static void drawTriangle(CDrawImage *drawImage, int *xP, int *yP, int &value);
-  static void drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values);
-
   int set(const char *) { return 0; }
   int status;
 
