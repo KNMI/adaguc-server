@@ -1,5 +1,7 @@
-**Version 9.0.3**
+**Version 9.1.0**
 
+- Security fix: removed the WMS `SLD` parameter and the INSPIRE CSW metadata lookup, which let the server be made to issue outbound HTTP requests to arbitrary URLs (SSRF). `CHTTPTools`, `CSLD` and `CInspire` have been removed; the server no longer makes any outbound network calls on its own.
+- Security fix: `AutoResource`'s `enableautoopendap` option (fetching an arbitrary external OPeNDAP/HTTP(S) URL via the `source=` parameter) is removed for the same SSRF reason. `source=` still works for local files via `enablelocalfile`.
 - `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
 - Faster rendering with the generic renderer: the per-pixel draw callback is now a template parameter instead of a `std::function`, letting the compiler inline it into the pixel and triangle-fill loops. Speedup grows with image size and contour density - e.g. a 144 megapixel image with shaded contours renders about 8.5% faster. The output is unchanged.
 - Faster WebP encoding: lossy output now imports as YUVA instead of ARGB, which is faster to encode

@@ -37,7 +37,6 @@ static const bool CREQUEST_DEBUG = false;
 #include "CNetCDFDataWriter.h"
 #include "CConvertGeoJSON.h"
 #include "CCreateScaleBar.h"
-#include "CSLD.h"
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
@@ -1185,7 +1184,7 @@ int CRequest::process_querystring() {
         }
       }
 
-      // Opendap source parameter
+      // Local file source parameter
       if (dFound_autoResourceLocation == 0) {
         if (uriKeyUpperCase == "SOURCE") {
           if (srvParam->autoResourceLocation.empty()) {
@@ -1894,6 +1893,7 @@ int CRequest::process_querystring() {
       return CHandleMetadata().process(srvParam);
     }
   }
+
   // An error occured, stopping..
   if (dErrorOccured == 1) {
     return 1;
