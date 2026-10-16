@@ -26,6 +26,9 @@ class CDataSource;
 typedef unsigned int RenderMethod;
 std::string getRenderMethodAsString(RenderMethod renderMethod);
 RenderMethod getRenderMethodFromString(std::string renderMethodString);
+
+// Whether this style uses a legacy bilinear/shaded/contour keyword.
+inline bool isLegacyScalarRenderMethod(RenderMethod renderMethod) { return (renderMethod & (RM_BILINEAR | RM_SHADED | RM_CONTOUR)) != 0; }
 struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;

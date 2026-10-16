@@ -6,7 +6,11 @@
 #include "CStopWatch.h"
 #include "CTString.h"
 #include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <memory>
+#include <unordered_map>
 
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
@@ -38,24 +42,37 @@ struct ContourLineStructure {
   std::vector<double> dashes;
 };
 
-// Fast rounding to the nearest integer (ties to even) without a library call: adding and subtracting 1.5 * 2^23 drops the fraction.
-// This is exact for |v| < 2^22, larger values fall back to nearbyint.
-static inline float fastRoundf(float v) {
-  constexpr float magic = 12582912.0f;
-  if (std::fabs(v) < 4194304.0f) return (v + magic) - magic;
-  return std::nearbyint(v);
-}
+// Spatial hash of placed-label proximity points, so gap lookups don't linear-scan every label.
+class TextLocationIndex {
+public:
+  void add(int x, int y) { cells[cellKeyFor(x, y)].push_back({.x = x, .y = y}); }
 
-bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
-  for (auto &textLocation: textLocations) {
-    int dx = x - textLocation.x;
-    int dy = y - textLocation.y;
-    if ((dx * dx + dy * dy) < 10 * 10) {
-      return true;
+  bool isTooClose(int x, int y) const {
+    int cx = cellCoord(x);
+    int cy = cellCoord(y);
+    for (int ny = cy - 1; ny <= cy + 1; ny++) {
+      for (int nx = cx - 1; nx <= cx + 1; nx++) {
+        auto it = cells.find(cellKey(nx, ny));
+        if (it == cells.end()) continue;
+        for (const auto &point: it->second) {
+          int dx = x - point.x;
+          int dy = y - point.y;
+          if ((dx * dx + dy * dy) < kRadius * kRadius) return true;
+        }
+      }
     }
+    return false;
   }
-  return false;
-}
+
+private:
+  static constexpr int kCellSize = 10;
+  static constexpr int kRadius = 10;
+  static int cellCoord(int v) { return v >= 0 ? v / kCellSize : (v - kCellSize + 1) / kCellSize; }
+  static int64_t cellKey(int cx, int cy) { return (int64_t(cx) << 32) | uint32_t(cy); }
+  int64_t cellKeyFor(int x, int y) const { return cellKey(cellCoord(x), cellCoord(y)); }
+
+  std::unordered_map<int64_t, std::vector<i4point>> cells;
+};
 
 void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contourDefinition, int lineX, int lineY, int endX, int endY, float value, const char *fontLocation, float scaling) {
 
@@ -67,28 +84,38 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
   double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
 
+  // Center the text within the reserved gap, without overflowing it.
+  double gapDx = endX - lineX;
+  double gapDy = endY - lineY;
+  double gapLength = sqrt(gapDx * gapDx + gapDy * gapDy);
+  int textWidth = drawImage->getTextWidth(text, fontLocation, fontSize, 0);
+  double centerOffset = std::max(0.0, (gapLength - textWidth) / 2.0);
+
   if (angle < -M_PI / 2 || angle > M_PI / 2) {
-    int x = lineX + cos(angleP) * (fontSize / 2);
-    int y = lineY + sin(angleP) * (fontSize / 2);
+    // Text runs forward from lineX,lineY towards endX,endY.
+    int x = lineX + sin(angleP) * centerOffset + cos(angleP) * (fontSize / 2);
+    int y = lineY - cos(angleP) * centerOffset + sin(angleP) * (fontSize / 2);
     drawImage->setTextStroke(x, y, -angleP + M_PI / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, contourDefinition.textstrokecolor, contourDefinition.textColor);
   } else {
-    int x = endX - cos(angleP) * (fontSize / 2);
-    int y = endY - sin(angleP) * (fontSize / 2);
+    // Text runs forward from endX,endY towards lineX,lineY.
+    int x = endX - sin(angleP) * centerOffset - cos(angleP) * (fontSize / 2);
+    int y = endY + cos(angleP) * centerOffset - sin(angleP) * (fontSize / 2);
     drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, textStrokeWidth, contourDefinition.textstrokecolor, contourDefinition.textColor);
   }
 }
 
 void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, ContourLineStructure &contourDefinition,
-                  DISTANCEFIELDTYPE lineMask, std::vector<i4point> &textLocations, double scaling, const char *fontLocation) {
+                  DISTANCEFIELDTYPE lineMask, TextLocationIndex &textLocations, double scaling, const char *fontLocation) {
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
-  bool foundLine = true;                  /* This function starts at the beginning of a line segment */
-  int maxLineDistance = 5;                /* Maximum length of each line segment */
+  if (!(distance[p] & lineMask)) {
+    return; // Already traced while following another line that passed through this pixel.
+  }
+
+  bool foundLine = true;   /* This iteration starts at the beginning of a line segment */
+  int maxLineDistance = 5; /* Maximum length of each line segment */
   int currentLineDistance = maxLineDistance;
   std::vector<i4point> lineSegments;
   lineSegments.reserve(500);
-
-  size_t numDashes = contourDefinition.dashes.size();
-  double *dashes = &contourDefinition.dashes[0];
 
   /* Push the beginning of this line*/
   lineSegments.push_back({.x = lineX, .y = lineY});
@@ -124,6 +151,8 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   /* Use the distance field and walk the line */
   while (foundLine) {
+    // Recomputed rather than reusing the inner loops' stale p, which pointed at the wrong pixel.
+    p = lineX + lineY * dImageWidth;
     distance[p] &= ~lineMask; /* Indicate found, set to false */
     /* Search around using the small search window and find the continuation of this line */
     foundLine = false;
@@ -134,12 +163,15 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
       int ty = lineY + ydir[j];
       if (tx >= 0 && tx < dImageWidth && ty >= 0 && ty < dImageHeight) {
         p = tx + ty * dImageWidth;
-        if (distance[p] & lineMask && !foundLine) {
-          nextLineX = tx;
-          nextLineY = ty;
-          foundLine = true;
+        if (distance[p] & lineMask) {
+          if (!foundLine) {
+            nextLineX = tx;
+            nextLineY = ty;
+            foundLine = true;
+          }
+          // Clear only this definition's bit, not the whole word, so neighboring contour levels' bits survive.
+          distance[p] &= ~lineMask;
         }
-        distance[p] = 0; //&= ~lineMask; /* Indicate found, set to false */
       }
     }
 
@@ -151,12 +183,14 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
         int ty = lineY + ydirOuter[j];
         if (tx >= 0 && tx < dImageWidth && ty >= 0 && ty < dImageHeight) {
           p = tx + ty * dImageWidth;
-          if (distance[p] & lineMask && !foundLine) {
-            nextLineX = tx;
-            nextLineY = ty;
-            foundLine = true;
+          if (distance[p] & lineMask) {
+            if (!foundLine) {
+              nextLineX = tx;
+              nextLineY = ty;
+              foundLine = true;
+            }
+            distance[p] &= ~lineMask;
           }
-          distance[p] = 0; //~lineMask; /* Indicate found, set to false */
         }
       }
     }
@@ -184,7 +218,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   bool doDrawText = !contourDefinition.textformatting.empty();
 
   bool textSkip = false;
-  bool textOn = false;
 
   int drawTextAtEveryNPixels = 60 * int(scaling);
   int startAtStep = 0; // drawTextAtEveryNPixels / 2;
@@ -192,36 +225,54 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
   int numLineSegments = (int)lineSegments.size();
+
+  size_t numDashes = contourDefinition.dashes.size();
+  double *dashes = numDashes > 0 ? &contourDefinition.dashes[0] : nullptr;
+
+  // textLocations is shared across contour definitions, so a line gaps around any label it
+  // crosses, not just its own.
+  bool inTextGap = false;
+  auto drawOrGap = [&](const i4point &point, bool gap) {
+    if (gap) {
+      if (!inTextGap) {
+        // Flush so the next lineTo(), once the gap ends, starts a fresh sub-path.
+        drawImage->endLine(dashes, numDashes);
+        inTextGap = true;
+      }
+    } else {
+      inTextGap = false;
+      drawImage->lineTo(point.x, point.y, scaledLineWidth, contourDefinition.lineColor);
+    }
+  };
+
   if (doDrawText && numLineSegments > 20) {
     for (int j = 0; j < numLineSegments; j++) {
       auto &lineSegment = lineSegments[j];
       int matchModulo = j % drawTextAtEveryNPixels;
       bool startText = matchModulo == startAtStep;
       if (startText && j + spaceForTextNr < numLineSegments) {
-        textOn = false;
-        if (IsTextTooClose(textLocations, lineSegment.x, lineSegment.y) == false && j + spaceForTextNr < numLineSegments) {
+        if (textLocations.isTooClose(lineSegment.x, lineSegment.y) == false) {
           textSkip = false;
-          textLocations.push_back(lineSegment);
 
           int endX = lineSegments[j + spaceForTextNr].x;
           int endY = lineSegments[j + spaceForTextNr].y;
+          // Sample a few points along the label's span, not just its start, so its far end is protected too.
+          for (int s = 0; s <= 3; s++) {
+            textLocations.add(lineSegment.x + (endX - lineSegment.x) * s / 3, lineSegment.y + (endY - lineSegment.y) * s / 3);
+          }
+
           drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, binnedLineSegmentsValue, fontLocation, scaling);
-          textOn = true;
         } else {
           textSkip = true;
         }
       }
-      if (startText && textOn && !textSkip) {
-        drawImage->endLine(dashes, numDashes);
-      }
-      if (matchModulo > spaceForTextNr || textSkip) {
-        drawImage->lineTo(lineSegment.x, lineSegment.y, scaledLineWidth, contourDefinition.lineColor);
-      }
+      bool ownTextGap = matchModulo <= spaceForTextNr && !textSkip;
+      drawOrGap(lineSegment, ownTextGap || textLocations.isTooClose(lineSegment.x, lineSegment.y));
     }
 
   } else {
     for (auto &lineSegment: lineSegments) {
-      drawImage->lineTo(lineSegment.x, lineSegment.y, scaledLineWidth, contourDefinition.lineColor);
+      drawOrGap(lineSegment, textLocations.isTooClose(lineSegment.x, lineSegment.y));
     }
   }
 
@@ -251,7 +302,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   // Create a distance field, this is where the line information will be put in.
   // calloc gives zeroed memory, the OS can provide this lazily which is much faster than memset for large images.
-  DISTANCEFIELDTYPE *distance = (DISTANCEFIELDTYPE *)calloc(imageSize, sizeof(DISTANCEFIELDTYPE));
+  std::unique_ptr<DISTANCEFIELDTYPE[], void (*)(void *)> distanceStorage(static_cast<DISTANCEFIELDTYPE *>(calloc(imageSize, sizeof(DISTANCEFIELDTYPE))), free);
+  DISTANCEFIELDTYPE *distance = distanceStorage.get();
   if (distance == NULL) {
     CDBError("drawContour: unable to allocate distance field of %zu elements for %dx%d image", imageSize, dImageWidth, dImageHeight);
     return;
@@ -293,10 +345,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   }
 
   StopWatch_Measure("drawContour: contour definitions parsed, start filling distance field");
-  // Sorted copies of the classes, so that a binary search can find if a class lies within [min, max) of a pixel.
-  // The order does not matter for that check. The original order is kept in contourlineList, it is used to pick the closest class for the text.
+  // Sorted copies of classes, for a binary-search range check below.
   std::vector<std::vector<double>> sortedClassesList;
-  // Interval and its inverse in float, so that the interval check in the loop below needs no division
   std::vector<float> intervals;
   std::vector<float> inverseIntervals;
   for (const auto &contourLine: contourlineList) {
@@ -312,13 +362,10 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   size_t numContourLines = contourlineList.size();
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  // Pixels where at least one contour definition set a bit. The distance field is sparse, so tracing below only
-  // needs to look at these candidates instead of rescanning the full image once per contour definition. No bit is
-  // ever set after this point, only cleared, so this candidate set stays valid for every contour definition.
+  // Pixels where at least one contour definition set a bit, so tracing doesn't rescan the whole image.
   std::vector<i4point> candidatePixels;
-  // Fills the distance field for rows [rowStart, rowEnd).
-  auto fillRows = [&](int rowStart, int rowEnd) {
-    for (int y = rowStart; y < rowEnd; y++) {
+  auto fillRows = [&]() {
+    for (int y = 0; y < dImageHeight - 1; y++) {
       for (int x = 0; x < dImageWidth - 1; x++) {
         size_t p1 = size_t(x + y * dImageWidth);
         const float v0 = sourceGrid[p1], v1 = sourceGrid[p1 + 1], v2 = sourceGrid[p1 + dImageWidth], v3 = sourceGrid[p1 + dImageWidth + 1];
@@ -345,15 +392,16 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
           }
           float interval = intervals[j];
           if (interval > 0) {
-            // Check for lines at continous interval
-            float cc = fastRoundf(min * inverseIntervals[j]) * interval;
+            // Smallest multiple >= min, not nearest: rounding to nearest can land below min on a
+            // steep gradient and silently drop the most tightly packed contour lines.
+            float cc = std::ceil(min * inverseIntervals[j]) * interval;
             if (cc >= min && cc < max) {
               foundLines |= mask;
             }
           }
           mask = mask + mask;
         }
-        // Only write when a line was found, untouched parts of the calloc-ed distance field then do not need to be mapped into memory
+        // Skip the write when nothing was found, so the untouched calloc page stays unmapped.
         if (foundLines) {
           distance[p1] |= foundLines;
           candidatePixels.push_back({.x = x, .y = y});
@@ -362,13 +410,12 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
     }
   };
 
-  int numRows = dImageHeight - 1;
   StopWatch_Measure("drawContour: filling distance field");
-  fillRows(0, numRows);
+  fillRows();
 
   StopWatch_Measure("drawContour: done filling distance field");
 
-  std::vector<i4point> textLocations;
+  TextLocationIndex textLocations;
 
   DISTANCEFIELDTYPE lineMask = 1;
 
@@ -385,8 +432,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
     lineMask = lineMask + lineMask;
     contourLineIndex++;
   }
-
-  free(distance);
 
   StopWatch_Measure("[/drawContour]");
 }

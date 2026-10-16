@@ -1,5 +1,6 @@
-**Version 9.0.3**
+**Version 9.1.0**
 
+- Added a migration tutorial for the deprecated `contour`/`shaded`/`contourshaded`/`barb` RenderMethod keywords and comma-separated RenderMethod lists: see [Migrating deprecated RenderMethods to generic and IncludeStyle](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md)
 - `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
 - Faster rendering with the generic renderer: the per-pixel draw callback is now a template parameter instead of a `std::function`, letting the compiler inline it into the pixel and triangle-fill loops. Speedup grows with image size and contour density - e.g. a 144 megapixel image with shaded contours renders about 8.5% faster. The output is unchanged.
 - Faster WebP encoding: lossy output now imports as YUVA instead of ARGB, which is faster to encode

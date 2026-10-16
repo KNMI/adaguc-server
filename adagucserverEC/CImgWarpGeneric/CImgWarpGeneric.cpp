@@ -60,6 +60,9 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
     auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
+    } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
+      // Non-zero RGB with alpha=0 means a deliberately transparent interval color - force-erase.
+      settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }
 };
@@ -106,6 +109,13 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     values[1][1] = sourceData[x1 + y1 * sourceDataWidth];
   }
 
+  // Reject the whole quad if any corner is nodata/NaN, like CImgWarpBilinear used to.
+  for (const auto &row: values) {
+    for (const T &cornerValue: row) {
+      if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || !(cornerValue == cornerValue)) return;
+    }
+  }
+
   float dx = warperState.sourceTileDx;
   float dy = warperState.sourceTileDy;
   float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
@@ -116,6 +126,9 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     auto colorIndex = memoizedDeterminePixelColorFromValue(bilValue, &settings, memo);
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
+    } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
+      // See warpImageNearestFunction above.
+      settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }
 };
@@ -219,8 +232,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 #undef RENDER
     }
 
-    if (styleConfiguration->contourLines.size() > 0) {
-      StopWatch_Measure("CImgWarpGeneric: start drawContour");
+    if (settings.shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
       drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
       StopWatch_Measure("CImgWarpGeneric: done drawContour");
     }

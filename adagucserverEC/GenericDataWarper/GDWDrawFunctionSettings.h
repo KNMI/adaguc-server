@@ -33,7 +33,10 @@ struct GDWDrawFunctionSettings {
   CColor bgColor;
   bool hasNodataValue;
   bool drawgridboxoutline = false;
+  // Whether CImgWarpGeneric paints raster colors onto the canvas during GetMap.
   bool drawgrid = true;
+  // Whether CImgWarpGeneric should trace and draw contour lines for this style.
+  bool shouldDrawContours = false;
   InterpolationMethod interpolationMethod = InterpolationMethodNearest;
   std::vector<Interval> intervals;
   CDrawImage *drawImage;
