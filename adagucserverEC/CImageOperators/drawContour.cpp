@@ -226,9 +226,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
   int numLineSegments = (int)lineSegments.size();
 
-  size_t numDashes = contourDefinition.dashes.size();
-  double *dashes = numDashes > 0 ? &contourDefinition.dashes[0] : nullptr;
-
   // textLocations is shared across contour definitions, so a line gaps around any label it
   // crosses, not just its own.
   bool inTextGap = false;
@@ -236,7 +233,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     if (gap) {
       if (!inTextGap) {
         // Flush so the next lineTo(), once the gap ends, starts a fresh sub-path.
-        drawImage->endLine(dashes, numDashes);
+        drawImage->endLine(contourDefinition.dashes);
         inTextGap = true;
       }
     } else {
@@ -276,7 +273,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  drawImage->endLine(dashes, numDashes);
+  drawImage->endLine(contourDefinition.dashes);
 }
 
 void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {

@@ -27,6 +27,7 @@
 #define CDrawImage_H
 
 #include <map>
+#include <span>
 #include <vector>
 #include <iostream>
 #include "CTString.h"
@@ -41,11 +42,6 @@
 #include "CColor.h"
 #include "CRectangleText.h"
 #include "Types/GeoParameters.h"
-
-// Shared with CDrawImage.cpp's own copy of this macro (a redefinition with an identical
-// replacement list is not a redefinition error) - needed here too so the pixel primitives below
-// can be defined inline.
-#define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0
 
 static const CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
 
@@ -88,7 +84,6 @@ private:
   cairo_surface_t *surface = nullptr;
   cairo_t *cr = nullptr;
   int stride = 0;
-  bool isAlphaUsed = false;
   static constexpr cairo_format_t CAIRO_PIXEL_FORMAT = CAIRO_FORMAT_ARGB32;
 
   // Current stroke/fill color state, normalized to Cairo's own [0,1] range, set by
@@ -128,92 +123,49 @@ private:
 
   void _pixel_overwrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
     if (x < 0 || y < 0 || x >= geoParams.width || y >= geoParams.height) return;
-    if (a != 0 && a != 255) {
-      isAlphaUsed = true;
+    uint32_t pixel = _packPremultiplied(r, g, b, a);
+    memcpy(&ARGBByteBuffer[x * 4 + y * stride], &pixel, sizeof(pixel));
+  }
+
+  // Straight (r,g,b,a) in, premultiplied word out - the form the buffer stores.
+  static uint32_t _packPremultiplied(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+    if (a == 255) return _packBGRA(r, g, b, 255);
+    return _packBGRA(premultiplyChannel(r, a), premultiplyChannel(g, a), premultiplyChannel(b, a), a);
+  }
+
+  // Source-over of a premultiplied source word onto the premultiplied pixel at buffer offset p:
+  // dst' = src + dst * (255 - srcAlpha) / 255, for color and alpha alike. Premultiplied compositing
+  // is linear, so this one formula covers an opaque, transparent or semi-transparent destination -
+  // no per-case branches and no division. Sums cannot exceed 255 as long as both inputs honour the
+  // premultiplied invariant (channel <= alpha).
+  void _blendPremultiplied(size_t p, uint32_t src) {
+    uint32_t srcAlpha = src >> 24;
+    if (srcAlpha == 255) {
+      memcpy(&ARGBByteBuffer[p], &src, sizeof(src));
+      return;
     }
-    size_t p = x * 4 + y * stride;
-    uint32_t pixel = _packBGRA(r, g, b, a);
-    memcpy(&ARGBByteBuffer[p], &pixel, sizeof(pixel));
+    if (srcAlpha == 0) return;
+    uint32_t dst;
+    memcpy(&dst, &ARGBByteBuffer[p], sizeof(dst));
+    uint32_t keep = 255 - srcAlpha;
+    uint32_t b = (src & 0xff) + div255((dst & 0xff) * keep);
+    uint32_t g = ((src >> 8) & 0xff) + div255(((dst >> 8) & 0xff) * keep);
+    uint32_t r = ((src >> 16) & 0xff) + div255(((dst >> 16) & 0xff) * keep);
+    uint32_t a = srcAlpha + div255((dst >> 24) * keep);
+    uint32_t out = b | (g << 8) | (r << 16) | (a << 24);
+    memcpy(&ARGBByteBuffer[p], &out, sizeof(out));
   }
 
   void _pixel_blend(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
     if (x < 0 || y < 0 || x >= geoParams.width || y >= geoParams.height) return;
-
-    size_t p = x * 4 + y * stride;
-    // Pixel is transparent
-    if (a != 255) {
-
-      float destBlue = b;
-      float destGreen = g;
-      float destRed = r;
-      float destAlpha = a;
-
-      uint32_t origPixel;
-      memcpy(&origPixel, &ARGBByteBuffer[p], sizeof(origPixel));
-      unsigned char origAlphaC = origPixel >> 24;
-
-      // Background is transparent, combine Background with pixel
-      if (origAlphaC != 255) {
-        float origAlpha = float(origAlphaC);
-
-        float origBlue = (unsigned char)origPixel;
-        float origGreen = (unsigned char)(origPixel >> 8);
-        float origRed = (unsigned char)(origPixel >> 16);
-
-        destBlue = destBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        destGreen = destGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        destRed = destRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        destAlpha = destAlpha * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-
-        origBlue = origBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        origGreen = origGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        origRed = origRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        origAlpha = origAlpha * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-
-        float A1 = origAlpha * (1 - destAlpha);
-        float A2 = (destAlpha + A1);
-
-        float newBlue = (destBlue * destAlpha + origBlue * A1) / A2;
-        float newGreen = (destGreen * destAlpha + origGreen * A1) / A2;
-        float newRed = (destRed * destAlpha + origRed * A1) / A2;
-        float newAlpha = origAlpha + destAlpha * (1 - origAlpha);
-
-        unsigned char aa = newAlpha * 255.;
-        uint32_t newPixel = _packBGRA((unsigned char)(newRed * 255), (unsigned char)(newGreen * 255), (unsigned char)(newBlue * 255), aa);
-        memcpy(&ARGBByteBuffer[p], &newPixel, sizeof(newPixel));
-        if (aa != 255 && aa != 0) {
-          isAlphaUsed = true;
-        }
-      } else {
-        //         Background is not transparent, but pixel is. Alpha can be left to 255, adjust color values
-        float origBlue = (unsigned char)origPixel;
-        float origGreen = (unsigned char)(origPixel >> 8);
-        float origRed = (unsigned char)(origPixel >> 16);
-        destBlue = destBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        destGreen = destGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        destRed = destRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        destAlpha = destAlpha * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        origBlue = origBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        origGreen = origGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        origRed = origRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
-        float A1 = 1 - destAlpha;
-        float newBlue = (destBlue * destAlpha + origBlue * A1);
-        float newGreen = (destGreen * destAlpha + origGreen * A1);
-        float newRed = (destRed * destAlpha + origRed * A1);
-        uint32_t newPixel = _packBGRA((unsigned char)(newRed * 255), (unsigned char)(newGreen * 255), (unsigned char)(newBlue * 255), 255);
-        memcpy(&ARGBByteBuffer[p], &newPixel, sizeof(newPixel));
-      }
-    } else {
-      uint32_t newPixel = _packBGRA(r, g, b, 255);
-      memcpy(&ARGBByteBuffer[p], &newPixel, sizeof(newPixel));
-    }
+    _blendPremultiplied(x * 4 + y * stride, _packPremultiplied(r, g, b, a));
   }
 
   void _rectangle(int x1, int y1, int x2, int y2);
   void _filledRectangle(int x1, int y1, int x2, int y2);
   void _moveTo(float x1, float y1);
   void _lineTo(float x1, float y1, float width);
-  void _endLine(const double *dashes = nullptr, int num_dashes = 0);
+  void _endLine(std::span<const double> dashes, bool roundCap);
   void _line(float x1, float y1, float x2, float y2);
   void _line(float x1, float y1, float x2, float y2, float width);
   void _filledcircle(int x, int y, int r);
@@ -277,17 +229,34 @@ public:
   float getFontSize() const;
 
   // --- Pixel access -----------------------------------------------------------------------------
+  // The canvas is CAIRO_FORMAT_ARGB32, i.e. premultiplied alpha: each stored color channel is already
+  // scaled by alpha/255. Cairo's own drawing keeps that invariant and so do the pixel primitives, so
+  // the buffer is uniform and goes to Cairo's PNG writer as-is. Setters take straight
+  // (non-premultiplied) color and premultiply on the way in; only the exporters whose file format is
+  // straight color (PNG8/PNG24 palette, WebP) un-premultiply on the way out.
+
+  // floor(x / 255) without a division; exact for x <= 255 * 255, which is all the pixel math needs.
+  static uint32_t div255(uint32_t x) { return (x + 1 + (x >> 8)) >> 8; }
+  static unsigned char premultiplyChannel(unsigned char c, unsigned char a) { return div255(uint32_t(c) * a); }
+  static unsigned char unpremultiplyChannel(unsigned char c, unsigned char a) {
+    if (a == 255) return c;
+    if (a == 0) return 0;
+    uint32_t v = (uint32_t(c) * 255 + a / 2) / a;
+    return v > 255 ? 255 : v;
+  }
 
   void setPixel(int x, int y, const CColor &color) { _pixel_blend(x, y, color.r, color.g, color.b, color.a); }
   void setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255) { _pixel_blend(x, y, r, g, b, a); }
   void setPixelTrueColorOverWrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) { _pixel_overwrite(x, y, r, g, b, a); }
-  void getPixelTrueColor(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) { _getPixel(x, y, r, g, b, a); }
 
   // --- Lines and shapes -------------------------------------------------------------------------
 
   void moveTo(float x1, float y1);
   void lineTo(float x1, float y1, float w, const CColor &color);
-  void endLine(const double *dashes = nullptr, int num_dashes = 0);
+  // roundCap: round instead of butt caps. Needed where one logical line is stroked as several
+  // sub-paths (contour lines gap around their labels): with butt caps the antialiased ends of two
+  // sub-paths that meet at an angle leave a seam of half-covered pixels; round caps overlap and blend.
+  void endLine(std::span<const double> dashes = {}, bool roundCap = false);
 
   void line(float x1, float y1, float x2, float y2, const CColor &color);
   void line(float x1, float y1, float x2, float y2, float w, const CColor &color);
@@ -329,7 +298,6 @@ public:
   void crop(int paddingW, int paddingH);
   void crop(int padding);
   void rotate();
-  unsigned char *getCanvasMemory() const;
 
   int printImagePng8(bool useBitAlpha);
   int printImagePng24();

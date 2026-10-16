@@ -35,8 +35,6 @@
 
 static const bool CIMGWARPNEARESTRGBA_DEBUG = false;
 
-#define CIMGWARPNEARESTRGBA_USEDRAWIMAGE
-
 void CDrawTileObjBGRA::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {
   this->dataSource = dataSource;
   this->drawImage = drawImage;
@@ -78,9 +76,6 @@ void CDrawTileObjBGRA::init(CDataSource *dataSource, CDrawImage *drawImage, int 
 
 int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY, bool debug) {
   uint *data = (uint *)dataSource->getDataObject(0)->cdfVariable->data;
-#ifndef CIMGWARPNEARESTRGBA_USEDRAWIMAGE
-  uint *imageData = (uint *)drawImage->getCanvasMemory();
-#endif
   int imageWidth = drawImage->geoParams.width;
   int imageHeight = drawImage->geoParams.height;
   if (CIMGWARPNEARESTRGBA_DEBUG) {
@@ -191,20 +186,7 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
                     }
                   }
 
-#ifdef CIMGWARPNEARESTRGBA_USEDRAWIMAGE
                   drawImage->setPixelTrueColor(dstpixel_x, dstpixel_y, r, g, b, a);
-#else
-                  if (a != 255) {
-                    // For cairo, Alpha is precomputed into components. We need to do this here as well.
-                    unsigned char r1 = float(r) * (float(a) / 256.);
-                    unsigned char g1 = float(g) * (float(a) / 256.);
-                    unsigned char b1 = float(b) * (float(a) / 256.);
-
-                    imageData[dstpixel_x + dstpixel_y * imageWidth] = b1 + g1 * 256 + r1 * 256 * 256 + a * 256 * 256 * 256;
-                  } else {
-                    imageData[dstpixel_x + dstpixel_y * imageWidth] = b + g * 256 + r * 256 * 256 + 4278190080;
-                  }
-#endif
                 }
               }
             }

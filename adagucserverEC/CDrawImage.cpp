@@ -194,7 +194,6 @@ int CDrawImage::createImage(const GeoParameters &_Geo) {
 
   surface = cairo_image_surface_create_for_data(ARGBByteBuffer.data(), CAIRO_PIXEL_FORMAT, geoParams.width, geoParams.height, stride);
   cr = cairo_create(surface);
-  isAlphaUsed = false;
 
   rr = rg = rb = 0;
   ra = 1;
@@ -384,7 +383,7 @@ void CDrawImage::lineTo(float x2, float y2, float w, const CColor &ccolor) {
   _lineTo(x2, y2, w);
 }
 
-void CDrawImage::endLine(const double *dashes, int num_dashes) { _endLine(dashes, num_dashes); }
+void CDrawImage::endLine(std::span<const double> dashes, bool roundCap) { _endLine(dashes, roundCap); }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2, float w, const CColor &ccolor) {
   _setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
@@ -618,7 +617,6 @@ int CDrawImage::setCanvasSize(int x, int y, int width, int height) {
 }
 
 int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, const CDrawImage *simage) {
-  unsigned char r, g, b, a;
   for (int y = 0; y < simage->geoParams.height; y++) {
     for (int x = 0; x < simage->geoParams.width; x++) {
       int sx = x + sourcex;
@@ -626,10 +624,11 @@ int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, const CDraw
       int dx = x + destx;
       int dy = y + desty;
       if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.width && sy < simage->geoParams.height && dx < geoParams.width && dy < geoParams.height) {
-        // Get source r,g,b,a
-        simage->_getPixel(sx, sy, r, g, b, a);
-        // Set r,g,b,a to dest
-        _pixel_blend(dx, dy, r, g, b, a);
+        // Both canvases are premultiplied, so the source word composites directly - no
+        // un-premultiply/re-premultiply round trip.
+        uint32_t src;
+        memcpy(&src, &simage->ARGBByteBuffer[sx * 4 + sy * simage->stride], sizeof(src));
+        _blendPremultiplied(dx * 4 + dy * stride, src);
       }
     }
   }
@@ -637,7 +636,6 @@ int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, const CDraw
 }
 
 int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, const CDrawImage *simage) {
-  unsigned char r, g, b, a;
   for (int y = 0; y < simage->geoParams.height; y++) {
     for (int x = 0; x < simage->geoParams.width; x++) {
       int sx = x + sourcex;
@@ -645,10 +643,11 @@ int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, cons
       int dx = simage->geoParams.height - y - desty;
       int dy = x + destx;
       if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.width && sy < simage->geoParams.height && dx < geoParams.width && dy < geoParams.height) {
-        // Get source r,g,b,a
-        simage->_getPixel(sx, sy, r, g, b, a);
-        // Set r,g,b,a to dest
-        _pixel_blend(dx, dy, r, g, b, a);
+        // Both canvases are premultiplied, so the source word composites directly - no
+        // un-premultiply/re-premultiply round trip.
+        uint32_t src;
+        memcpy(&src, &simage->ARGBByteBuffer[sx * 4 + sy * simage->stride], sizeof(src));
+        _blendPremultiplied(dx * 4 + dy * stride, src);
       }
     }
   }
@@ -716,11 +715,6 @@ void CDrawImage::rotate() {
   temp.destroyImage();
 }
 
-// const because it doesn't change the canvas's size/structure, but callers (e.g. CImgWarpNearestRGBA)
-// write pixels straight through the returned pointer - matches the original raw-pointer member,
-// which was never const-qualified itself regardless of this method's own constness.
-unsigned char *CDrawImage::getCanvasMemory() const { return const_cast<unsigned char *>(ARGBByteBuffer.data()); }
-
 int CDrawImage::getHeight() const { return geoParams.height; }
 
 int CDrawImage::getWidth() const { return geoParams.width; }
@@ -785,14 +779,21 @@ void CDrawImage::_lineTo(float x1, float y1, float width) {
   cairo_line_to(cr, x1 + 0.5, y1 + 0.5);
 }
 
-void CDrawImage::_endLine(const double *dashes, int num_dashes) {
+void CDrawImage::_endLine(std::span<const double> dashes, bool roundCap) {
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
-  if (dashes != nullptr) {
-    cairo_set_dash(cr, dashes, num_dashes, 0);
+  if (roundCap) {
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+  }
+  if (!dashes.empty()) {
+    cairo_set_dash(cr, dashes.data(), (int)dashes.size(), 0);
   }
   cairo_stroke(cr);
-  if (dashes != nullptr) {
+  if (!dashes.empty()) {
     cairo_set_dash(cr, 0, 0, 0);
+  }
+  if (roundCap) {
+    // Restore the default so unrelated strokes on this shared context keep butt caps.
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
   }
 }
 
@@ -921,26 +922,8 @@ void CDrawImage::_writeToPng24Stream(FILE *fp) { writePng(geoParams.width, geoPa
 void CDrawImage::_writeToPng8Stream(FILE *fp, bool use8bitpalAlpha) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.data(), fp, 8, use8bitpalAlpha); }
 
 void CDrawImage::_writeToPng32Stream(FILE *fp, unsigned char alpha) {
-  if (isAlphaUsed) {
-    for (int y = 0; y < geoParams.height; y++) {
-      for (int x = 0; x < geoParams.width; x++) {
-        size_t p = x * 4 + y * stride;
-        uint32_t pixel;
-        memcpy(&pixel, &ARGBByteBuffer[p], sizeof(pixel));
-        unsigned char pa = pixel >> 24;
-        if (pa != 255) {
-          unsigned char origBlue = pixel;
-          unsigned char origGreen = pixel >> 8;
-          unsigned char origRed = pixel >> 16;
-          unsigned char newBlue = (unsigned char)((float(origBlue) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL) * float(pa));
-          unsigned char newGreen = (unsigned char)((float(origGreen) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL) * float(pa));
-          unsigned char newRed = (unsigned char)((float(origRed) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL) * float(pa));
-          uint32_t newPixel = _packBGRA(newRed, newGreen, newBlue, pa);
-          memcpy(&ARGBByteBuffer[p], &newPixel, sizeof(newPixel));
-        }
-      }
-    }
-  }
+  // The canvas is already premultiplied (see CDrawImage.h), which is exactly what Cairo's PNG writer
+  // expects - it un-premultiplies on output itself.
   cairo_set_operator(cr, CAIRO_OPERATOR_DEST_IN);
   if (alpha != 255) {
     cairo_paint_with_alpha(cr, float(alpha) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL);
@@ -988,7 +971,38 @@ void CDrawImage::_writeToWebP32Stream(FILE *fp, int quality) {
   }
 
   StopWatch_Measure("writeToWebP32Stream: start import %dx%d", geoParams.width, geoParams.height);
-  bool importOk = WebPPictureImportBGRA(&picture, ARGBByteBuffer.data(), stride);
+  // libwebp wants straight alpha while the canvas is premultiplied. Premultiplied and straight only
+  // differ for partial alpha, so first check whether any pixel has some; most raster maps have none
+  // and can be imported directly. Otherwise un-premultiply into a scratch copy and leave the canvas
+  // itself intact.
+  auto hasPartialAlpha = [&]() {
+    for (int y = 0; y < geoParams.height; y++) {
+      for (int x = 0; x < geoParams.width; x++) {
+        unsigned char a = ARGBByteBuffer[x * 4 + y * stride + 3];
+        if (a != 255 && a != 0) return true;
+      }
+    }
+    return false;
+  };
+  std::vector<unsigned char> straight;
+  const unsigned char *importSource = ARGBByteBuffer.data();
+  if (hasPartialAlpha()) {
+    straight = ARGBByteBuffer;
+    for (int y = 0; y < geoParams.height; y++) {
+      for (int x = 0; x < geoParams.width; x++) {
+        size_t p = x * 4 + y * stride;
+        uint32_t pixel;
+        memcpy(&pixel, &straight[p], sizeof(pixel));
+        unsigned char a = pixel >> 24;
+        if (a != 255 && a != 0) {
+          uint32_t out = _packBGRA(unpremultiplyChannel(pixel >> 16, a), unpremultiplyChannel(pixel >> 8, a), unpremultiplyChannel(pixel, a), a);
+          memcpy(&straight[p], &out, sizeof(out));
+        }
+      }
+    }
+    importSource = straight.data();
+  }
+  bool importOk = WebPPictureImportBGRA(&picture, importSource, stride);
   if (!importOk) {
     CDBError("Error! Cannot import picture for WebP");
     WebPPictureFree(&picture);

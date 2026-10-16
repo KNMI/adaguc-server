@@ -333,23 +333,13 @@ TEST(CStyleConfiguration, negativeAlphaIsClampedToZero) {
   legend.palette.push_back(p0);
   legend.palette.push_back(p240);
 
-  CDrawImage image;
-  image.createImage(2, 2);
   CStyleConfiguration styleConfiguration;
   styleConfiguration.createPalette(&legend);
 
-  // Red is bumped from 0 to 1 so the standard palette's auto-transparency rule doesn't clobber this entry.
+  // Red is bumped from 0 to 1 so the standard palette's auto-transparency rule doesn't clobber this
+  // entry; alpha 0 is what tells drawing code to skip the pixel.
   CColor resolved = styleConfiguration.getCColorFromLegendPaletteIndex(100);
   CHECK(resolved.c_str() == CColor(1, 0, 0, 0).c_str());
-
-  // Alpha 0 means skip, so a pixel already drawn must be left untouched.
-  image.setPixelTrueColor(0, 0, 200, 200, 200, 255);
-  if (resolved.a > 0) {
-    image.setPixel(0, 0, resolved);
-  }
-  unsigned char r, g, b, a;
-  image.getPixelTrueColor(0, 0, r, g, b, a);
-  CHECK(r == 200 && g == 200 && b == 200 && a == 255);
 }
 
 TEST(CStyleConfiguration, createPaletteInterpolatesColorRangeLinearly) {
