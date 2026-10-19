@@ -117,6 +117,14 @@ def reset_datasetsloaded():
     DATASETS_LOADED.clear()
 
 
+def clean_postgres():
+    """Clears the test database and invalidates cached dataset scans."""
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    reset_datasetsloaded()
+    AdagucTestTools().cleanPostgres()
+
+
 def update_db(adaguc_env: dict, filepath: str | None = None, force_update: bool = False):
     """
     Run `--updatedb` if it has not been run before for the given environment. When executed multiple times

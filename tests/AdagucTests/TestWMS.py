@@ -12,6 +12,7 @@ import datetime
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
 from conftest import (
+    clean_postgres,
     make_adaguc_env,
     run_adaguc_and_compare_getcapabilities,
     run_adaguc_and_compare_image,
@@ -383,7 +384,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBTailPath(self):
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -431,7 +432,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBPath(self):
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -1845,7 +1846,7 @@ class TestWMS(unittest.TestCase):
         This tests if the autofinddataset option correctly finds the file if it is in a subfolder
         """
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         # pylint: disable=unused-variable
 
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
