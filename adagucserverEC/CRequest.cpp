@@ -514,9 +514,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
 
   // Use a short cache lifetime when a non-fixed dimension was resolved to a value different from the request.
-  const bool allNonFixedDimensionsAreAsRequestedInQueryString =
+  const bool hasNonFixedDimensionChanges =
       std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) { return !requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue; });
-  const auto cacheControlOption = allNonFixedDimensionsAreAsRequestedInQueryString ? CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE : CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE;
+  const auto cacheControlOption = hasNonFixedDimensionChanges ? CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE : CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE;
   srvParam->setCacheControlOption(cacheControlOption);
 
   return 0;
