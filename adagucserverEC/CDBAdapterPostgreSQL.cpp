@@ -156,41 +156,76 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMin(const char *name, const char *tabl
   return maxStore;
 };
 
+/**
+ * Select one default value from files that match the other selected coordinates.
+ * For example, choose a height available in the requested forecast run.
+ * @param dataSource Layer settings and requiredDims.
+ * @param dimension NetCDF dimension name of the omitted dimension to fill, for example "height".
+ * @param minimum Select MIN when true, or MAX when false.
+ * @return Returns a new store with one row and one column containing the selected value, or an empty store when no value matches.
+ *         Returns nullptr if the connection or SQL query fails. Selects one value for the whole request.
+ */
 CDBStore::Store *CDBAdapterPostgreSQL::getDefaultDimensionValue(CDataSource *dataSource, const std::string &dimension, bool minimum) {
+  /* Example SQL: height is omitted, but reference time and valid time are supplied. Using readable table names instead of the generated names, the SQL is:
+    SELECT max(d.hagl)
+    FROM height_table d
+    INNER JOIN reference_time_table c0 ON d.path = c0.path
+    INNER JOIN time_table c1 ON d.path = c1.path
+    WHERE d.hagl IS NOT NULL
+      AND (c0.forecast_reference_time = '2026-09-08T12:00:00Z')
+      AND (c1.time = '2026-09-08T13:00:00Z')
+    HAVING count(*) > 0; */
+
+  StopWatch_Measure(">CDBAdapterPostgreSQL::getDefaultDimensionValue");
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == nullptr) return nullptr;
 
+  // Find the table for the dimension we are filling in. Select either the min or max value (comes from default="min" or default="max").
   const auto &filePath = dataSource->cfgLayer->FilePath[0];
   const std::string table = getTableNameForPathFilterAndDimension(filePath.elementValue, filePath.attr.filter, dimension.c_str(), dataSource);
   std::string query = CT::printf("SELECT %s(d.%s) FROM %s d ", minimum ? "min" : "max", dimension.c_str(), table.c_str());
   std::string filters = CT::printf("WHERE d.%s IS NOT NULL ", dimension.c_str());
+
   size_t index = 0;
   for (const auto &dim: dataSource->requiredDims) {
+    // Do not filter the dimension we are selecting, dimensions with no value yet, or values * (it doesn't need filtering.)
     if (dim.netCDFDimName == dimension || dim.value.empty()) continue;
     const auto values = CT::split(dim.value, ",");
-    // A wildcard imposes no coordinate restriction, just as in the final file lookup.
     if (std::find(values.begin(), values.end(), "*") != values.end()) continue;
 
+    // Each dimension has its own table. Joining by file path makes sure the selected default and the other coordinates belong to the same file.
     const std::string constraintTable = getTableNameForPathFilterAndDimension(filePath.elementValue, filePath.attr.filter, dim.netCDFDimName.c_str(), dataSource);
     const std::string alias = "c" + std::to_string(index++);
     CT::printfconcat(query, "INNER JOIN %s %s ON d.path = %s.path ", constraintTable.c_str(), alias.c_str(), alias.c_str());
+
+    // A list such as "10,20" accepts either value, so join its conditions with OR.
     std::string alternatives;
     for (const auto &value: values) {
       if (!alternatives.empty()) alternatives += " OR ";
+      // This is a range on another dimension, such as time=start/end or member=1/10.
+      // It limits the files used for MIN/MAX; it is not a range on the omitted dimension.
+      // Write single quotes twice inside values so they do not end the SQL string.
       const auto bounds = CT::split(value, "/");
       const std::string lower = CT::replace(bounds[0], "'", "''");
       if (bounds.size() == 1) {
         CT::printfconcat(alternatives, "%s.%s = '%s'", alias.c_str(), dim.netCDFDimName.c_str(), lower.c_str());
       } else {
+        // BETWEEN includes both ends of the range, for example a requested time range.
         const std::string upper = CT::replace(bounds[1], "'", "''");
         CT::printfconcat(alternatives, "%s.%s BETWEEN '%s' AND '%s'", alias.c_str(), dim.netCDFDimName.c_str(), lower.c_str(), upper.c_str());
       }
     }
+    // Different dimensions must all match; use AND between their groups of conditions.
     if (!alternatives.empty()) CT::printfconcat(filters, "AND (%s) ", alternatives.c_str());
   }
-  // An aggregate normally returns a NULL row for no matches; return zero rows instead.
+
+  // MIN/MAX normally returns one row containing NULL when no files match. HAVING removes that row, so the caller can detect that no default is available.
   query += filters + "HAVING count(*) > 0";
-  return DB->queryToStore(query.c_str());
+
+  CDBStore::Store *store = DB->queryToStore(query.c_str());
+
+  StopWatch_Measure("<CDBAdapterPostgreSQL::getDefaultDimensionValue");
+  return store;
 }
 
 CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *max, const char *colname, const char *table, int limit) {

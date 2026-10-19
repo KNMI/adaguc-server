@@ -190,8 +190,18 @@ int CRequest::process_wms_gethistogram_request() {
   return process_all_layers();
 }
 
+int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
+  if (CREQUEST_DEBUG) {
+    CDBDebug("setDimValuesForDataSource");
+  }
+  int status = fillDimValuesForDataSource(dataSource, srvParam);
+  if (status != 0) return status;
+
+  return queryDimValuesForDataSource(dataSource, srvParam);
+};
+
 /** Initializes a required dimension's names and visibility from the layer configuration. */
-static COGCDims make_required_dim(const CServerConfig::XMLE_Dimension &dimension) {
+static COGCDims makeRequiredDim(const CServerConfig::XMLE_Dimension &dimension) {
   COGCDims dim;
   dim.name = CT::toLowerCase(dimension.elementValue);
   dim.netCDFDimName = dimension.attr.name;
@@ -200,7 +210,7 @@ static COGCDims make_required_dim(const CServerConfig::XMLE_Dimension &dimension
 }
 
 /** Resolves omitted dimensions using defaults compatible with the selected coordinates. */
-int fill_unspecified_dims(CDataSource *dataSource, CServerParams *srvParam) {
+int fillUnspecifiedDims(CDataSource *dataSource, CServerParams *srvParam) {
   for (const auto &dimension: dataSource->cfgLayer->Dimension) {
     std::string dimName = CT::toLowerCase(dimension.elementValue);
 
@@ -225,17 +235,17 @@ int fill_unspecified_dims(CDataSource *dataSource, CServerParams *srvParam) {
     }
 
     // Add the undefined dims to the srvParams as additional dims
-    dataSource->requiredDims.push_back(make_required_dim(dimension));
+    dataSource->requiredDims.push_back(makeRequiredDim(dimension));
     COGCDims &ogcDim = dataSource->requiredDims.back();
 
     const bool isReferenceTimeDimension = dimension.elementValue == "reference_time";
 
-    CDBStore::Store *maxStore = NULL;
+    CDBStore::Store *defaultStore = NULL;
     if (!isReferenceTimeDimension) {
       // Resolve each omitted coordinate within the files matching the other selected dimensions.
       // Newly resolved defaults constrain subsequent dimensions, keeping the combination compatible.
       const bool minimum = dimension.attr.defaultV == "min";
-      maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getDefaultDimensionValue(dataSource, netCDFDimName, minimum);
+      defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getDefaultDimensionValue(dataSource, netCDFDimName, minimum);
     } else {
       // Try to find a reference time closest to the given time value?
 
@@ -250,7 +260,7 @@ int fill_unspecified_dims(CDataSource *dataSource, CServerParams *srvParam) {
         }
       }
       if (timeValue.empty()) {
-        maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dimension.attr.name.c_str(), tableName.c_str());
+        defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dimension.attr.name.c_str(), tableName.c_str());
       } else {
         // TIME is set! Get
 
@@ -262,34 +272,24 @@ int fill_unspecified_dims(CDataSource *dataSource, CServerParams *srvParam) {
           return 1;
         }
 
-        maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim.netCDFDimName.c_str(), netcdfTimeDimName.c_str(), timeValue.c_str(), timeTableName.c_str(), tableName.c_str());
+        defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim.netCDFDimName.c_str(), netcdfTimeDimName.c_str(), timeValue.c_str(), timeTableName.c_str(), tableName.c_str());
       }
     }
 
-    if (maxStore == NULL || maxStore->records.empty()) {
-      delete maxStore;
+    if (defaultStore == NULL || defaultStore->records.empty()) {
+      delete defaultStore;
       CDBError("No matching dimension values for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
       throw ServiceExceptionType::InvalidDimensionValue;
     }
-    ogcDim.value = maxStore->records[0].get(0);
+    ogcDim.value = defaultStore->records[0].get(0);
 
-    delete maxStore;
+    delete defaultStore;
   }
   return 0;
 }
 
-int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-  if (CREQUEST_DEBUG) {
-    CDBDebug("setDimValuesForDataSource");
-  }
-  int status = fillDimValuesForDataSource(dataSource, srvParam);
-  if (status != 0) return status;
-
-  return queryDimValuesForDataSource(dataSource, srvParam);
-};
-
 /** Normalizes a requested time value and applies configured time quantization. */
-static int normalize_requested_time(COGCDims &ogcDim, const CServerConfig::XMLE_Dimension &dimension, const CDataSource *dataSource) {
+static int normalizeRequestedTime(COGCDims &ogcDim, const CServerConfig::XMLE_Dimension &dimension, const CDataSource *dataSource) {
   // Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
   if (ogcDim.value.length() > 10 && ogcDim.value.at(10) == 'T') {
     if (ogcDim.value.length() == 19) {
@@ -335,7 +335,7 @@ static int normalize_requested_time(COGCDims &ogcDim, const CServerConfig::XMLE_
 }
 
 /** Adds explicitly requested dimensions, normalizes times, and resolves "current" values. */
-static int fill_requested_dims(CDataSource *dataSource, CServerParams *srvParam) {
+static int fillRequestedDims(CDataSource *dataSource, CServerParams *srvParam) {
   /*
    * Get the number of required dims from the given dims
    * Check if all dimensions are given
@@ -360,10 +360,6 @@ static int fill_requested_dims(CDataSource *dataSource, CServerParams *srvParam)
     const bool alreadyAdded = std::ranges::any_of(dataSource->requiredDims, [&dimName](const auto &requiredDim) { return requiredDim.name == dimName; });
     if (alreadyAdded) continue;
 
-    if (CREQUEST_DEBUG) {
-      CDBDebug("alreadyAdded = %d", alreadyAdded);
-    }
-
     const auto requestDimIt = std::ranges::find_if(srvParam->requestDims, [&dimName](const auto &requestDim) { return requestDim.name == dimName; });
     if (requestDimIt == srvParam->requestDims.end()) continue;
     const auto &requestDim = *requestDimIt;
@@ -374,13 +370,13 @@ static int fill_requested_dims(CDataSource *dataSource, CServerParams *srvParam)
 
     // This dimension has been specified in the request, so the dimension has been found:
 
-    dataSource->requiredDims.push_back(make_required_dim(dimension));
+    dataSource->requiredDims.push_back(makeRequiredDim(dimension));
     COGCDims &ogcDim = dataSource->requiredDims.back();
     ogcDim.value = requestDim.value;
     ogcDim.queryValue = requestDim.value;
 
     if (ogcDim.name == "time" || ogcDim.name == "reference_time") {
-      const int status = normalize_requested_time(ogcDim, dimension, dataSource);
+      const int status = normalizeRequestedTime(ogcDim, dimension, dataSource);
       if (status != 0) return status;
     }
 
@@ -397,13 +393,13 @@ static int fill_requested_dims(CDataSource *dataSource, CServerParams *srvParam)
 
     // Models use the time closest to the system clock; other cases use the maximum coordinate.
     const bool useNearestTime = hasReferenceTimeDimension && dimension.elementValue == "time";
-    CDBStore::Store *maxStore = NULL;
+    CDBStore::Store *defaultStore = NULL;
     if (useNearestTime) {
-      maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
+      defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
     } else {
-      maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
+      defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
     }
-    if (maxStore == NULL) {
+    if (defaultStore == NULL) {
       // Preserve the existing distinction between observation and model errors.
       if (!hasReferenceTimeDimension) {
         CDBError("Unable to get max dimension value");
@@ -412,8 +408,8 @@ static int fill_requested_dims(CDataSource *dataSource, CServerParams *srvParam)
       CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
       throw ServiceExceptionType::InvalidDimensionValue;
     }
-    ogcDim.value = maxStore->records[0].get(0);
-    delete maxStore;
+    ogcDim.value = defaultStore->records[0].get(0);
+    delete defaultStore;
     if (useNearestTime) {
       CDBDebug("%s %s", ogcDim.netCDFDimName.c_str(), ogcDim.value.c_str());
     }
@@ -425,7 +421,7 @@ static int fill_requested_dims(CDataSource *dataSource, CServerParams *srvParam)
 }
 
 /** Applies configured fixed coordinates before resolving defaults for omitted dimensions. */
-static void apply_fixed_dims(CDataSource *dataSource) {
+static void applyFixedDims(CDataSource *dataSource) {
   // Apply all fixed coordinates before resolving defaults that depend on them.
   // Add omitted fixed dimensions here as well, regardless of configuration order.
   for (const auto &cfgDim: dataSource->cfgLayer->Dimension) {
@@ -433,7 +429,7 @@ static void apply_fixed_dims(CDataSource *dataSource) {
     const std::string dimName = CT::toLowerCase(cfgDim.elementValue);
     auto requiredDim = std::ranges::find_if(dataSource->requiredDims, [&dimName](const auto &dim) { return dim.name == dimName; });
     if (requiredDim == dataSource->requiredDims.end()) {
-      dataSource->requiredDims.push_back(make_required_dim(cfgDim));
+      dataSource->requiredDims.push_back(makeRequiredDim(cfgDim));
       requiredDim = dataSource->requiredDims.end() - 1;
     }
     CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), cfgDim.attr.fixvalue.c_str());
@@ -459,13 +455,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
 
     dataSource->timeSteps.clear();
-    status = fill_requested_dims(dataSource, srvParam);
+    status = fillRequestedDims(dataSource, srvParam);
     if (status != 0) return status;
 
-    apply_fixed_dims(dataSource);
+    applyFixedDims(dataSource);
 
     /* Fill in the undefined dims */
-    int status = fill_unspecified_dims(dataSource, srvParam);
+    int status = fillUnspecifiedDims(dataSource, srvParam);
     if (status != 0) return status;
 
     if (CREQUEST_DEBUG) {
