@@ -383,7 +383,7 @@ TEST(jsonpCallbackCharsetIsRestricted, CRequest) {
 }
 // Draws a mesh of skewed quads like CGenericDataWarper does (two triangles per quad) and counts how often every pixel is written.
 // Neighbouring triangles must partition the pixels: a pixel written twice makes translucent colors stipple, a pixel not written leaves holes.
-static void drawSkewedMeshAndCountWrites(int cellsX, int cellsY, double cellSize, double skew, double jitter, std::vector<int> &writes, int W, int H, double originX, double originY, int &dxOutOfRange) {
+static void drawSkewedMeshAndCountWrites(int cellsX, int cellsY, double cellSize, double skew, double jitter, std::vector<int> &writes, int W, int H, double originX, double originY, int &dxOutOfRange, bool useTriangles = false) {
   GDWState state = {};
   state.destGridWidth = W;
   state.destGridHeight = H;
@@ -412,10 +412,14 @@ static void drawSkewedMeshAndCountWrites(int cellsX, int cellsY, double cellSize
       int n00 = i + j * (cellsX + 1), n10 = n00 + 1, n01 = n00 + (cellsX + 1), n11 = n01 + 1;
       const double qx[4] = {nodeX[n00], nodeX[n10], nodeX[n11], nodeX[n01]};
       const double qy[4] = {nodeY[n00], nodeY[n10], nodeY[n11], nodeY[n01]};
-      const double ax[3] = {qx[0], qx[1], qx[2]}, ay[3] = {qy[0], qy[1], qy[2]};
-      const double bx[3] = {qx[2], qx[0], qx[3]}, by[3] = {qy[2], qy[0], qy[3]};
-      gdwDrawTriangle(ax, ay, 0.0f, false, state, drawFunction);
-      gdwDrawTriangle(bx, by, 0.0f, true, state, drawFunction);
+      if (useTriangles) {
+        const double ax[3] = {qx[0], qx[1], qx[2]}, ay[3] = {qy[0], qy[1], qy[2]};
+        const double bx[3] = {qx[2], qx[0], qx[3]}, by[3] = {qy[2], qy[0], qy[3]};
+        gdwDrawTriangle(ax, ay, 0.0f, false, state, drawFunction);
+        gdwDrawTriangle(bx, by, 0.0f, true, state, drawFunction);
+      } else {
+        gdwDrawQuad(qx, qy, 0.0f, state, drawFunction);
+      }
     }
   }
 }
@@ -505,10 +509,8 @@ static void benchmarkTriangleMesh(const char *name, int cells, double destSize, 
     for (int j = 0; j < cells; j++) {
       for (int i = 0; i < cells; i++) {
         int n00 = i + j * N, n10 = n00 + 1, n01 = n00 + N, n11 = n01 + 1;
-        const double ax[3] = {nodeX[n00], nodeX[n10], nodeX[n11]}, ay[3] = {nodeY[n00], nodeY[n10], nodeY[n11]};
-        const double bx[3] = {nodeX[n11], nodeX[n00], nodeX[n01]}, by[3] = {nodeY[n11], nodeY[n00], nodeY[n01]};
-        gdwDrawTriangle(ax, ay, 0.0f, false, state, drawFunction);
-        gdwDrawTriangle(bx, by, 0.0f, true, state, drawFunction);
+        const double qx[4] = {nodeX[n00], nodeX[n10], nodeX[n11], nodeX[n01]}, qy[4] = {nodeY[n00], nodeY[n10], nodeY[n11], nodeY[n01]};
+        gdwDrawQuad(qx, qy, 0.0f, state, drawFunction);
       }
     }
     double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
@@ -525,4 +527,14 @@ TEST(gdwDrawTriangleBenchmark, GenericDataWarper) {
   benchmarkTriangleMesh("coarse grid, big triangles", 100, 1024, 0.3);
   benchmarkTriangleMesh("very coarse grid, huge tris", 20, 2048, 0.3);
   CHECK(true);
+}
+
+// The quad entry point rounds and culls once per quad, the triangle entry point once per triangle: both must draw exactly the same pixels with the same weights.
+TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
+  const int W = 120, H = 120;
+  std::vector<int> writesQuad, writesTriangles;
+  int outOfRange = 0;
+  drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesQuad, W, H, -9.4, -7.2, outOfRange, false);
+  drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesTriangles, W, H, -9.4, -7.2, outOfRange, true);
+  CHECK(writesQuad == writesTriangles);
 }
