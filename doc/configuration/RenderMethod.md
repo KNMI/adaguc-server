@@ -17,7 +17,9 @@ There are currently six mechanisms to render an image:
 
 To draw points and vectors, see [Point.md](/doc/configuration/Point.md) and [Vector.md](/doc/configuration/Vector.md). To thin point data, see [Thinning.md](/doc/configuration/Thinning.md).
 
-Good practice is one keyword per style, for example `generic`, `nearest`, `rgba`, `polyline` or `point`. A style with only `generic` is advertised in GetCapabilities under its own name; a style with another single keyword is advertised as `<stylename>/<keyword>`, for example `temperature/nearest`. Listing several keywords, separated by commas, is deprecated: each one is then advertised as `<stylename>/<keyword>` and selected with `STYLES=<stylename>/<keyword>`, the first keyword being the default.
+Use one keyword per style, for example `generic`, `nearest`, `rgba`, `polyline` or `point`.
+A style with only `generic` is advertised in GetCapabilities under its own name. Another single keyword gives `<stylename>/<keyword>`.
+A comma-separated list of keywords is deprecated: it gives one style per keyword, selected with `STYLES=<stylename>/<keyword>`.
 
 CImgWarpGeneric
 ---------------
@@ -40,7 +42,8 @@ The generic warper draws whatever the style defines: the legend colors of the fi
 </Style>
 ```
 
-A style with only `generic` is advertised in the GetCapabilities document under its own name, `temperature` in this example. Listing several keywords, for example `<RenderMethod>nearest,generic</RenderMethod>`, advertises one style per keyword as `temperature/nearest` and `temperature/generic`; this is deprecated and reported by the configuration lint. For a style that should only draw contour lines, or only symbols, add `<RenderSettings drawgrid="false"/>` so the field itself is not painted. Barbs and vectors on a grid are drawn with a `Vector` element plus a `pointsfromgrid` `DataPostProc`, see [Vector.md](/doc/configuration/Vector.md) and the migration tutorial below.
+Contour lines only, or symbols only: add `<RenderSettings drawgrid="false"/>` so the field is not painted.
+Barbs and vectors on a grid: a `Vector` element plus a `pointsfromgrid` `DataPostProc`, see [Vector.md](/doc/configuration/Vector.md).
 
 CImgWarpNearestNeighbour
 ------------------------
@@ -107,4 +110,6 @@ Choose with `hillshaded`.
 Deprecated keywords: bilinear, shaded, contour, vector, barb, thin
 -------------------------------------------------------------------
 
-These keywords, and combinations such as `shadedcontour`, `nearestcontour`, `barbshaded` or `barbshadedcontour`, selected the removed `CImgWarpBilinear` renderer. They are still accepted: the generic warper emulates them (`bilinear`/`shaded` paint the field, `shaded` applies the `ShadeInterval` classes, `contour` draws the `ContourLine` elements, `vector`/`barb` draw default blue symbols from the grid), so old configurations keep rendering. New configurations should use `generic` with `RenderSettings`, `ShadeInterval`, `ContourLine` and `Vector` instead; see [Migrating from CImgWarpBilinear to the generic warper](/doc/tutorials/Migrating_from_CImgWarpBilinear_to_the_generic_warper.md). The emulation is covered by `tests/AdagucTests/TestsForLegacyBilinearRender.py`.
+These keywords and their combinations (`shadedcontour`, `barbshaded`, ...) selected the removed `CImgWarpBilinear`.
+The generic warper emulates them, so old configs keep working. New configs use `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md).
+The emulation is pinned by `tests/AdagucTests/TestsForLegacyBilinearRender.py`.
