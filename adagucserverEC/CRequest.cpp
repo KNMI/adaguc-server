@@ -438,6 +438,34 @@ static void applyFixedDims(CDataSource *dataSource) {
   }
 }
 
+/** Normalizes selected timestamps and validates each value in time dimensions. */
+static void normalizeAndValidateTimeDims(CDataSource *dataSource) {
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Fix found time values");
+  }
+
+  for (auto &dim: dataSource->requiredDims) {
+    if (dim.name == "time" || dim.name.ends_with("reference_time")) {
+      dim.isATimeDimension = true;
+      // Database timestamps may use a space and omit the trailing Z.
+      if (dim.value.length() > 12) {
+        if (dim.value.at(10) == ' ') dim.value[10] = 'T';
+        if (dim.value.at(10) == 'T' && dim.value.length() == 19) dim.value += 'Z';
+      }
+    }
+    // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
+    if (!dim.isATimeDimension) continue;
+
+    const auto dimValues = CT::split(dim.value, ",");
+    for (const auto &dimValue: dimValues) {
+      if (!checkTimeFormat(dimValue)) {
+        CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
+        throw ServiceExceptionType::InvalidDimensionValue;
+      }
+    }
+  }
+}
+
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
   StopWatch_Measure("### [fillDimValuesForDataSource]");
@@ -464,38 +492,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     int status = fillUnspecifiedDims(dataSource, srvParam);
     if (status != 0) return status;
 
-    if (CREQUEST_DEBUG) {
-      CDBDebug("Fix found time values:");
-    }
-    // Fix found time values which are retrieved from the database
-    for (auto &requiredDim: dataSource->requiredDims) {
-      if (requiredDim.name == "time" || requiredDim.name.ends_with("reference_time")) {
-        requiredDim.isATimeDimension = true;
-        if (requiredDim.value.length() > 12) {
-          if (requiredDim.value.at(10) == ' ') {
-            requiredDim.value[10] = 'T';
-          }
-          if (requiredDim.value.at(10) == 'T') {
-            if (requiredDim.value.length() == 19) {
-              requiredDim.value += 'Z';
-            }
-          }
-        }
-      }
-    }
-    // Check if requested time dimensions use valid characters
-    for (auto &dim: dataSource->requiredDims) {
-      // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
-      if (!dim.isATimeDimension) continue;
-
-      auto dimValues = CT::split(dim.value, ",");
-      for (auto &dimValue: dimValues) {
-        if (!checkTimeFormat(dimValue)) {
-          CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
-          throw ServiceExceptionType::InvalidDimensionValue;
-        }
-      }
-    }
+    normalizeAndValidateTimeDims(dataSource);
 
     // STOP NOW
   } catch (int i) {
@@ -516,6 +513,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     CDBDebug("### [</fillDimValuesForDataSource>]");
   }
 
+  // Use a short cache lifetime when a non-fixed dimension was resolved to a value different from the request.
   const bool allNonFixedDimensionsAreAsRequestedInQueryString =
       std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) { return !requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue; });
   const auto cacheControlOption = allNonFixedDimensionsAreAsRequestedInQueryString ? CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE : CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE;
