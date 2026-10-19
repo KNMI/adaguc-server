@@ -287,11 +287,13 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   StopWatch_Measure("[drawContour] %d contour definitions", (int)styleConfiguration->contourLines.size());
 
   double scaling = dataSource->getContourScaling();
-  const char *fontLocation = dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.location.c_str();
+  // getContourFont tolerates a configuration without WMS or ContourFont elements, e.g. when the config could not be fully loaded
+  auto [contourFontSize, contourFontLocation] = dataSource->srvParams->getContourFont();
+  const char *fontLocation = contourFontLocation.c_str();
 
   double defaultLineWidth = 4;
   double defaultStrokeWidth = 0.75;
-  double defaultFontSize = atof(dataSource->srvParams->cfg->WMS[0].ContourFont[0].attr.size.c_str());
+  double defaultFontSize = contourFontSize;
   CColor defaultLineColor = CColor(0, 0, 0, 255);
   CColor defaultTextColor = CColor(0, 0, 0, 255);
   CColor defaultTextStrokeColor = CColor(0, 0, 0, 0);

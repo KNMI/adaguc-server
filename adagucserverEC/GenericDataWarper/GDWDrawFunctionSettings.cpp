@@ -34,7 +34,11 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.drawImage = drawImage;
 
   // Legacy render methods can list several keywords on one style (e.g. "nearest,bilinear,shadedcontour").
-  bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
+  // The vector/barb/thin keywords belonged to the same removed renderer: on their own they drew only
+  // the symbols, never the field or its contour lines, so they take the same keyword-driven defaults
+  // below instead of the generic renderer's paint-everything defaults.
+  RenderMethod renderMethod = styleConfiguration->renderMethod;
+  bool isLegacyRenderMethod = isLegacyScalarRenderMethod(renderMethod) || ((renderMethod & (RM_VECTOR | RM_BARB | RM_THIN)) != 0 && (renderMethod & RM_GENERIC) == 0);
 
   if (isLegacyRenderMethod) {
     // CImgWarpBilinear always sampled smooth, and only painted colors for bilinear/shaded, not contour-only.

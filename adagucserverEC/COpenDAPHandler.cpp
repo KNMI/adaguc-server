@@ -555,7 +555,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       }
     }
 
-    // Check if AUTORESOURCE is enabled
+    // Check if AUTORESOURCE (local file) is enabled
     if (hasFoundDataSetOrAutoResource == false) {
       srvParam->datasetLocation = "";
       resetErrors();

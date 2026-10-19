@@ -671,7 +671,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=true",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=true",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -697,7 +697,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours/contour&FORMAT=image/png&TRANSPARENT=FALSE&",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours&FORMAT=image/png&TRANSPARENT=FALSE&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.manycontours.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -727,7 +727,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=false",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=false",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -753,7 +753,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
             showLog=False,
         )
@@ -780,7 +780,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png32&TRANSPARENT=FALSE&showlegend=testdata",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png32&TRANSPARENT=FALSE&showlegend=testdata",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -803,7 +803,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=geojsonbaselayer,testdata",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=geojsonbaselayer,testdata",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1748,7 +1748,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         filename = "test_WMSGetMap_dashed_contour_lines.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours%2Fcontour&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours&FORMAT=image/png32&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1776,7 +1776,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         filename = "test_WMSGetMap_dashed_contour_lines_arial.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours%2Fcontour&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours&FORMAT=image/png32&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1895,7 +1895,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbs/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbs&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1926,7 +1926,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbwithnumbers/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbwithnumbers&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1956,7 +1956,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=windbarbs_kts/barbshaded&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=windbarbs_kts&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1987,7 +1987,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc_tests_xycomponents_all_north&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3575&BBOX=-4094182.3312461236,-6387609.657566892,3335917.464195122,23694.56643311167&STYLES=windbarbs_kts%2Fbarbshaded&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A52Z",
+            "DATASET=adaguc_tests_xycomponents_all_north&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3575&BBOX=-4094182.3312461236,-6387609.657566892,3335917.464195122,23694.56643311167&STYLES=windbarbs_kts&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A52Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -2018,7 +2018,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc_tests_xycomponents_all_north&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-9704794.415410386,1643015.5210643038,11614624.422801377,20039172.20990392&STYLES=windbarbs_kts%2Fbarbshaded&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A52Z",
+            "DATASET=adaguc_tests_xycomponents_all_north&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-9704794.415410386,1643015.5210643038,11614624.422801377,20039172.20990392&STYLES=windbarbs_kts&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A52Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)

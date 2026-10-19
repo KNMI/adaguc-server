@@ -216,8 +216,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfRefere
   if (DB == NULL) {
     return NULL;
   }
+  // timeValue originates from the client-supplied TIME dimension value in the query string: escape before use in SQL.
   std::string query = CT::printf("select max(forecast_reference_time) from (select %s,%s as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path )a0",
-                                 netcdfReferenceTimeDimName, netcdfTimeDimName, referenceTimeTableName, timeTableName, netcdfTimeDimName, timeValue);
+                                 netcdfReferenceTimeDimName, netcdfTimeDimName, referenceTimeTableName, timeTableName, netcdfTimeDimName, DB->escapeString(timeValue).c_str());
 
   StopWatch_Measure("<CDBAdapterPostgreSQL::getReferenceTime");
   return DB->queryToStore(query.c_str());
@@ -412,11 +413,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       }
 
       std::vector<std::string> dimVals = CT::split(requestedDimVals[i], "/");
+      // dimVals come from the client-supplied dimension value in the query string: escape before use in SQL.
       if (dimVals.size() == 1) {
-        CT::printfconcat(whereStatement, "%s = '%s'", dimName, dimVals[0].c_str());
+        CT::printfconcat(whereStatement, "%s = '%s'", dimName, DB->escapeString(dimVals[0]).c_str());
       } else {
         // Find value within range of dimVals[0] and dimVals[1] using between statement.
-        CT::printfconcat(whereStatement, "%s BETWEEN '%s' AND '%s' ", dimName, dimVals[0].c_str(), dimVals[1].c_str());
+        CT::printfconcat(whereStatement, "%s BETWEEN '%s' AND '%s' ", dimName, DB->escapeString(dimVals[0]).c_str(), DB->escapeString(dimVals[1]).c_str());
       }
     }
     if (!whereStatement.empty()) {

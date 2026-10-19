@@ -228,7 +228,8 @@ images with NO2 colors">
 tickround="1">no2</Legend>
 <Min>0.0</Min>
 <Max>3500</Max>
-<RenderMethod>nearest,bilinear</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 </Style>
 
 <!-- Layer configuration -->

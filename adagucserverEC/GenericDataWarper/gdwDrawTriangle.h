@@ -73,7 +73,6 @@ int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoord
   double yv2 = yP[1];
   double yv3 = yP[2];
 
-  double screenW = W;
   double screenH = H;
 
   double xlength = X3 - X1;
@@ -113,14 +112,29 @@ int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoord
     double ex = y < Y2 ? (r_upper * (y - Y1) + X1) : (r_lower * (y - Y2) + X2);
     double minx = sx > ex ? ex : sx;
     double maxx = sx > ex ? sx : ex;
-    double startX = minx < 0 ? 0 : minx;
-    double endX = maxx > screenW ? screenW : maxx;
+    // A pixel belongs to this row span when its center lies in [minx, maxx). Two triangles that share an edge compute the same
+    // minx/maxx for that edge, so they get complementary, non overlapping pixel ranges. Starting at a fractional x and stepping
+    // by one, as was done before, could make both triangles claim the pixel at the edge, which blends translucent colors twice.
+    // The small bias keeps both triangles on the same side when an edge runs exactly through a pixel center.
+    constexpr double centerBias = 0.5 + 1e-7;
+    int startPixel = (int)std::floor(minx + centerBias);
+    int endPixel = (int)std::floor(maxx + centerBias);
+    if (startPixel < 0) startPixel = 0;
+    if (endPixel > W) endPixel = W;
+    if (startPixel >= endPixel) continue;
+    // The weights are sampled at the same position within the pixel as before this change: the fractional part of the span start,
+    // so that the interpolated values of the pixels that were already drawn do not change. Pixels that now start one position
+    // further to the right can sample up to half a pixel outside the triangle, so the weights are clamped below.
+    const double fractionOfSpanStart = minx < 0 ? 0 : minx - std::floor(minx);
+    const double startX = startPixel + fractionOfSpanStart;
     double WV1 = ((yv2 - yv3) * (startX - xv3) + (xv3 - xv2) * (y - yv3)) * invDn;
     double WV2 = ((yv3 - yv1) * (startX - xv3) + (xv1 - xv3) * (y - yv3)) * invDn;
-    for (double x = startX; x < endX; x++, WV1 += dWV1dx, WV2 += dWV2dx) {
+    for (int x = startPixel; x < endPixel; x++, WV1 += dWV1dx, WV2 += dWV2dx) {
       // WV3 = 1 - WV1 - WV2. For the upper triangle, dx is WV1 and dy is WV2. For the lower triangle, dx is WV2 + WV3 and dy is WV1 + WV2.
-      warperState.sourceTileDx = tUp ? WV1 : 1 - WV1;
-      warperState.sourceTileDy = tUp ? WV2 : WV1 + WV2;
+      const double tileDx = tUp ? WV1 : 1 - WV1;
+      const double tileDy = tUp ? WV2 : WV1 + WV2;
+      warperState.sourceTileDx = tileDx < 0 ? 0 : (tileDx > 1 ? 1 : tileDx);
+      warperState.sourceTileDy = tileDy < 0 ? 0 : (tileDy > 1 ? 1 : tileDy);
       warperState.destIndexX = x;
       warperState.destIndexY = y;
       drawFunction(x, y, value, warperState);

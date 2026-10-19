@@ -12,8 +12,14 @@
 #include "CDataSource.h"
 #include "CProj4ToCF.h"
 #include "CServerConfig_CPPXSD.h"
+#include "CServerParams.h"
+#include "CPGSQLDB.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
+#include "GenericDataWarper/gdwDrawTriangle.h"
+#include <vector>
+#include <chrono>
+#include <cstdint>
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -310,4 +316,213 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
   CHECK(determinePixelColorFromValue(0, &settings).c_str() == CColor(100, 100, 100, 100).c_str());
   CHECK(determinePixelColorFromValue(1, &settings).c_str() == CColor(150, 150, 150, 150).c_str());
   CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
+}
+
+// Regression test for the SQL injection fix in CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions /
+// getReferenceTime: a request-supplied dimension value (e.g. TIME=...) used to be spliced unescaped into a
+// single-quoted SQL literal. CPGSQLDB::escapeString() must now be used at those call sites.
+//
+// This test connects to the same local test database used by the python test suite. If no database is
+// reachable (e.g. when ctest runs during a Docker build stage without a postgres service), the test is
+// skipped rather than failed, since this is an infrastructure limitation, not a code regression.
+TEST(escapeStringPreventsSQLInjection, CPGSQLDB) {
+  CPGSQLDB db;
+  if (db.connect("user=adaguc password=adaguc host=localhost dbname=postgres port=54321") != 0) {
+    CDBDebug("Skipping escapeStringPreventsSQLInjection: no test database reachable");
+    return;
+  }
+
+  // A classic UNION-based SQL injection payload. If this string were interpolated into
+  // `CT::printf("SELECT '%s' as val", payload.c_str())` unescaped, it would terminate the string
+  // literal early and inject a second SELECT, making the query return two rows.
+  std::string payload = "x' UNION SELECT 'pwned";
+
+  // Demonstrate the vulnerability still exists if a value is NOT escaped (the old, fixed code path):
+  // this mirrors exactly how the value used to be interpolated before the fix.
+  std::string unescapedQuery = CT::printf("SELECT '%s' as val", payload.c_str());
+  CDBStore::Store *vulnerableResult = db.queryToStore(unescapedQuery.c_str(), true);
+  CHECK(vulnerableResult != NULL);
+  CHECK(vulnerableResult->records.size() == 2); // proves the UNION injection fired
+  delete vulnerableResult;
+
+  // Now demonstrate the fix: escape the same payload before interpolating it, exactly like
+  // CDBAdapterPostgreSQL.cpp now does via DB->escapeString(...).
+  std::string escapedQuery = CT::printf("SELECT '%s' as val", db.escapeString(payload).c_str());
+  CDBStore::Store *fixedResult = db.queryToStore(escapedQuery.c_str(), true);
+  CHECK(fixedResult != NULL);
+  CHECK(fixedResult->records.size() == 1); // no injection: a single literal value came back
+  CHECK(fixedResult->records[0].values[0] == payload); // and it round-trips to the exact original value
+  delete fixedResult;
+
+  // A benign value must still round-trip unchanged.
+  std::string benign = "2024-01-01T00:00:00Z";
+  std::string benignQuery = CT::printf("SELECT '%s' as val", db.escapeString(benign).c_str());
+  CDBStore::Store *benignResult = db.queryToStore(benignQuery.c_str(), true);
+  CHECK(benignResult != NULL);
+  CHECK(benignResult->records.size() == 1);
+  CHECK(benignResult->records[0].values[0] == benign);
+  delete benignResult;
+}
+
+// Regression test for the unvalidated-JSONP-callback fix in CRequest.cpp: the JSONP query parameter is
+// reflected verbatim into the response body as `<callback>(<data>)`. It must now be restricted to a safe
+// identifier charset before being accepted, using the same checkForValidTokens() helper as here.
+TEST(jsonpCallbackCharsetIsRestricted, CRequest) {
+  const std::string allowedJSONPTokens = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$.";
+
+  // Legitimate callback names must be accepted.
+  CHECK(checkForValidTokens("myCallback", allowedJSONPTokens) == true);
+  CHECK(checkForValidTokens("jQuery123_456", allowedJSONPTokens) == true);
+  CHECK(checkForValidTokens("ns.callback", allowedJSONPTokens) == true);
+
+  // Payloads attempting to break out of the `callback(...)` context must be rejected.
+  CHECK(checkForValidTokens("</script><script>alert(1)</script>", allowedJSONPTokens) == false);
+  CHECK(checkForValidTokens("alert(1)", allowedJSONPTokens) == false);
+  CHECK(checkForValidTokens("a');alert(1);//", allowedJSONPTokens) == false);
+  CHECK(checkForValidTokens("callback;DROP TABLE x", allowedJSONPTokens) == false);
+}
+// Draws a mesh of skewed quads like CGenericDataWarper does (two triangles per quad) and counts how often every pixel is written.
+// Neighbouring triangles must partition the pixels: a pixel written twice makes translucent colors stipple, a pixel not written leaves holes.
+static void drawSkewedMeshAndCountWrites(int cellsX, int cellsY, double cellSize, double skew, double jitter, std::vector<int> &writes, int W, int H, double originX, double originY, int &dxOutOfRange) {
+  GDWState state = {};
+  state.destGridWidth = W;
+  state.destGridHeight = H;
+  writes.assign(W * H, 0);
+  dxOutOfRange = 0;
+  // Deterministic pseudo random jitter of the mesh nodes
+  unsigned int seed = 12345;
+  auto rnd = [&seed]() {
+    seed = seed * 1664525u + 1013904223u;
+    return ((seed >> 8) & 0xFFFF) / 65535.0 * 2 - 1;
+  };
+  std::vector<double> nodeX((cellsX + 1) * (cellsY + 1)), nodeY((cellsX + 1) * (cellsY + 1));
+  for (int j = 0; j <= cellsY; j++) {
+    for (int i = 0; i <= cellsX; i++) {
+      nodeX[i + j * (cellsX + 1)] = originX + i * cellSize + j * skew + rnd() * jitter;
+      nodeY[i + j * (cellsX + 1)] = originY + j * cellSize + i * skew * 0.5 + rnd() * jitter;
+    }
+  }
+  auto drawFunction = [&](int x, int y, float, GDWState &s) {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    writes[x + y * W]++;
+    if (s.sourceTileDx < -1e-6 || s.sourceTileDx > 1 + 1e-6 || s.sourceTileDy < -1e-6 || s.sourceTileDy > 1 + 1e-6) dxOutOfRange++;
+  };
+  for (int j = 0; j < cellsY; j++) {
+    for (int i = 0; i < cellsX; i++) {
+      int n00 = i + j * (cellsX + 1), n10 = n00 + 1, n01 = n00 + (cellsX + 1), n11 = n01 + 1;
+      const double qx[4] = {nodeX[n00], nodeX[n10], nodeX[n11], nodeX[n01]};
+      const double qy[4] = {nodeY[n00], nodeY[n10], nodeY[n11], nodeY[n01]};
+      const double ax[3] = {qx[0], qx[1], qx[2]}, ay[3] = {qy[0], qy[1], qy[2]};
+      const double bx[3] = {qx[2], qx[0], qx[3]}, by[3] = {qy[2], qy[0], qy[3]};
+      gdwDrawTriangle(ax, ay, 0.0f, false, state, drawFunction);
+      gdwDrawTriangle(bx, by, 0.0f, true, state, drawFunction);
+    }
+  }
+}
+
+TEST(gdwDrawTriangleNeverWritesAPixelTwice, GenericDataWarper) {
+  const int W = 120, H = 120;
+  struct Config {
+    double cellSize, skew, jitter;
+  };
+  // Cells of several sizes with skew and jitter so that edges run at arbitrary slopes and fractional offsets. The jitter is kept small enough
+  // that every quad stays convex after its vertices are rounded to whole pixels. A reflex quad has two overlapping triangles, which is a real overlap.
+  const Config configs[] = {{6.0, 0.0, 0.0}, {6.3, 1.7, 0.8}, {4.4, 2.3, 0.4}, {9.7, 3.1, 1.5}, {3.3, 0.9, 0.3}, {12.5, 5.5, 2.5}};
+  for (const auto &c: configs) {
+    std::vector<int> writes;
+    int outOfRange = 0;
+    int cells = (int)(80 / c.cellSize);
+    drawSkewedMeshAndCountWrites(cells, cells, c.cellSize, c.skew, c.jitter, writes, W, H, 10.3, 10.7, outOfRange);
+    int twice = 0, total = 0;
+    for (int v: writes) {
+      if (v > 1) twice++;
+      if (v > 0) total++;
+    }
+    CHECK(twice == 0);
+    CHECK(total > 0);
+  }
+}
+
+TEST(gdwDrawTriangleLeavesNoHolesInsideTheMesh, GenericDataWarper) {
+  const int W = 120, H = 120;
+  struct Config {
+    double cellSize, skew, jitter;
+  };
+  const Config configs[] = {{6.0, 0.0, 0.0}, {6.3, 1.7, 0.8}, {4.4, 2.3, 0.4}, {9.7, 3.1, 1.5}};
+  for (const auto &c: configs) {
+    std::vector<int> writes;
+    int outOfRange = 0;
+    int cells = (int)(60 / c.cellSize);
+    drawSkewedMeshAndCountWrites(cells, cells, c.cellSize, c.skew, c.jitter, writes, W, H, 10.3, 10.7, outOfRange);
+    // Without skew and jitter every pixel in the inner part of the mesh is covered. With skew the mesh is a parallelogram, so only check a margin-reduced box at the middle row band.
+    double margin = c.skew * cells + 2 * c.jitter + 3;
+    int holes = 0;
+    for (int y = (int)(10.7 + c.skew * 0.5 * cells + 3 * c.jitter + 2); y < (int)(10.7 + cells * c.cellSize - c.skew * 0.5 * cells - 3 * c.jitter - 2); y++) {
+      for (int x = (int)(10.3 + margin); x < (int)(10.3 + cells * c.cellSize - margin); x++) {
+        if (writes[x + y * W] == 0) holes++;
+      }
+    }
+    CHECK(holes == 0);
+  }
+}
+
+TEST(gdwDrawTriangleKeepsBarycentricWeightsInRange, GenericDataWarper) {
+  const int W = 120, H = 120;
+  std::vector<int> writes;
+  int outOfRange = 0;
+  drawSkewedMeshAndCountWrites(12, 12, 6.3, 1.7, 0.8, writes, W, H, 10.3, 10.7, outOfRange);
+  CHECK(outOfRange == 0);
+}
+
+// Benchmark of gdwDrawTriangle, only runs when ADAGUC_BENCH is set, e.g.: ADAGUC_BENCH=1 ./adagucserverEC/testadagucserver
+// The checksum covers every written pixel with its interpolation weights, an optimization must keep it identical.
+static void benchmarkTriangleMesh(const char *name, int cells, double destSize, double rotation) {
+  const int W = (int)destSize, H = (int)destSize;
+  GDWState state = {};
+  state.destGridWidth = W;
+  state.destGridHeight = H;
+  const int N = cells + 1;
+  std::vector<double> nodeX(N * N), nodeY(N * N);
+  const double step = destSize / cells * 0.95, c = cos(rotation), s = sin(rotation);
+  for (int j = 0; j < N; j++) {
+    for (int i = 0; i < N; i++) {
+      // A rotated, slightly curved grid, like a reprojected source grid
+      double u = i * step, v = j * step + 0.002 * destSize * sin(i * 0.05);
+      nodeX[i + j * N] = destSize * 0.02 + u * c - v * s;
+      nodeY[i + j * N] = destSize * 0.30 + u * s + v * c;
+    }
+  }
+  uint64_t checksum = 0, writes = 0;
+  auto drawFunction = [&](int x, int y, float, GDWState &st) {
+    writes++;
+    checksum += (uint64_t)(x * 31 + y * 17) + (uint64_t)(st.sourceTileDx * 1000) * 7 + (uint64_t)(st.sourceTileDy * 1000) * 13;
+  };
+  double best = 1e30;
+  for (int run = 0; run < 5; run++) {
+    checksum = 0;
+    writes = 0;
+    auto t0 = std::chrono::steady_clock::now();
+    for (int j = 0; j < cells; j++) {
+      for (int i = 0; i < cells; i++) {
+        int n00 = i + j * N, n10 = n00 + 1, n01 = n00 + N, n11 = n01 + 1;
+        const double ax[3] = {nodeX[n00], nodeX[n10], nodeX[n11]}, ay[3] = {nodeY[n00], nodeY[n10], nodeY[n11]};
+        const double bx[3] = {nodeX[n11], nodeX[n00], nodeX[n01]}, by[3] = {nodeY[n11], nodeY[n00], nodeY[n01]};
+        gdwDrawTriangle(ax, ay, 0.0f, false, state, drawFunction);
+        gdwDrawTriangle(bx, by, 0.0f, true, state, drawFunction);
+      }
+    }
+    double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+    if (ms < best) best = ms;
+  }
+  printf("BENCH %-28s %5d x %-5d cells -> %dx%d: %8.2f ms  (%.1f Mtriangles/s, %llu pixel writes, checksum %llu)\n", name, cells, cells, W, H, best, 2.0 * cells * cells / best / 1000.0,
+         (unsigned long long)writes, (unsigned long long)checksum);
+}
+
+TEST(gdwDrawTriangleBenchmark, GenericDataWarper) {
+  if (getenv("ADAGUC_BENCH") == nullptr) return;
+  benchmarkTriangleMesh("huge grid, subpixel triangles", 1500, 1024, 0.3);
+  benchmarkTriangleMesh("huge grid, large destination", 1500, 4096, 0.3);
+  benchmarkTriangleMesh("coarse grid, big triangles", 100, 1024, 0.3);
+  benchmarkTriangleMesh("very coarse grid, huge tris", 20, 2048, 0.3);
+  CHECK(true);
 }

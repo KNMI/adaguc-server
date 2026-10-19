@@ -37,7 +37,6 @@ static const bool CREQUEST_DEBUG = false;
 #include "CNetCDFDataWriter.h"
 #include "CConvertGeoJSON.h"
 #include "CCreateScaleBar.h"
-#include "CSLD.h"
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
@@ -1185,7 +1184,7 @@ int CRequest::process_querystring() {
         }
       }
 
-      // Opendap source parameter
+      // Local file source parameter
       if (dFound_autoResourceLocation == 0) {
         if (uriKeyUpperCase == "SOURCE") {
           if (srvParam->autoResourceLocation.empty()) {
@@ -1296,7 +1295,15 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase == "JSONP") {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
-            srvParam->JSONP = uriValue;
+            // The JSONP value is reflected verbatim into the response body as a JS function call: restrict to a
+            // safe identifier charset so it cannot be used to inject arbitrary script/HTML content.
+            if (checkForValidTokens(uriValue, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$.") == false) {
+              CDBError("ADAGUC Server: JSONP callback name contains invalid characters");
+              dErrorOccured = 1;
+              setExceptionType(ServiceExceptionType::UnprocessableEntity);
+            } else {
+              srvParam->JSONP = uriValue;
+            }
             dFound_JSONP = 1;
           }
         } else {
@@ -1894,6 +1901,7 @@ int CRequest::process_querystring() {
       return CHandleMetadata().process(srvParam);
     }
   }
+
   // An error occured, stopping..
   if (dErrorOccured == 1) {
     return 1;
