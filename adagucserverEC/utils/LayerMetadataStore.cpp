@@ -106,11 +106,31 @@ int getStyleListMetadataAsJson(MetadataLayer *metadataLayer, json &styleListJson
 }
 
 int storemetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer) {
-  storeLayerMetadataStructIntoMetadataDb(metadataLayer);
-  storeLayerDimensionListIntoMetadataDb(metadataLayer);
-  storeLayerProjectionAndExtentListIntoMetadataDb(metadataLayer);
-  storeLayerStyleListIntoMetadataDb(metadataLayer);
-  return 0;
+  try {
+    const auto &datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
+    if (datasetName.empty()) {
+      CDBDebug("Not a dataset");
+      return 1;
+    }
+
+    json layerMetadataItem, projsettings, styleListJson;
+    if (getLayerBaseMetadataAsJson(metadataLayer, layerMetadataItem) != 0 || getProjectionListAsJson(metadataLayer, projsettings) != 0 ||
+        getStyleListMetadataAsJson(metadataLayer, styleListJson) != 0) {
+      return 1;
+    }
+    const std::map<std::string, std::string> metadata = {{"layermetadata", layerMetadataItem.dump()},
+                                                     {"dimensionlist", getDimensionListAsJson(metadataLayer->layerMetadata.dimList).dump()},
+                                                     {"projected_extents", projsettings.dump()},
+                                                     {"stylelist", styleListJson.dump()}};
+    auto dbAdapter = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg);
+    if (dbAdapter == nullptr) return 1;
+    return dbAdapter->storeLayerMetadataBatch(datasetName.c_str(), metadataLayer->dataSource->getLayerName(), metadata);
+  } catch (json::exception &e) {
+    CDBWarning("Unable to build metadata json structure");
+    return 1;
+  } catch (int e) {
+    return e;
+  }
 }
 
 std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, std::string metadataKey) {

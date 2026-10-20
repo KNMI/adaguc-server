@@ -65,7 +65,7 @@ private:
   static void handleFileFromDBIsMissing(std::string a);
 
 public:
-  static int scanFile(std::string fileToScan, CDataSource *dataSource, int scanFlags);
+  static int scanFile(std::string &fileToScan, CDataSource *dataSource, int scanFlags);
   static int DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> &fileList, int scanFlags);
   static bool isTableAlreadyScanned(const std::string &tableName);
   static void markTableDirty(const std::string &tableName);
@@ -77,7 +77,7 @@ public:
    * @param tailPath: The path under the root path to be scanned.
    * @returns dirReader: An initialised dirReader or NULL on error
    */
-  static std::vector<std::string> searchFileNames(const char *path, std::string expr, const char *tailPath);
+  static std::vector<std::string> searchFileNames(const char *path, const std::string &expr, const char *tailPath);
 
   /**
    * Updates the database for a specified dataSource
@@ -89,7 +89,7 @@ public:
    * updated always.
    * @param scanFlags Scan flags parameters, e.g. CDBFILESCANNER_RESCAN can be set as flag.
    */
-  static int updatedb(CDataSource *dataSource, std::string tailPath, std::string _layerPathToScan, int scanFlags);
+  static int updatedb(CDataSource *dataSource, const std::string &tailPath, const std::string &_layerPathToScan, int scanFlags);
 
   /**
    *

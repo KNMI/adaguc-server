@@ -103,10 +103,10 @@ public:
    * @return Tablename on succes, throws integer exception on failure.
    */
   std::string getTableNameForPathFilterAndDimension(const std::string &path, const std::string &filter, const char *dimension, CDataSource *dataSource);
-  std::map<std::string, DimInfo> getTableNamesForPathFilterAndDimensions(const std::string &path, const std::string &filter, std::vector<std::string> dimensions, CDataSource *dataSource);
+  std::map<std::string, DimInfo> getTableNamesForPathFilterAndDimensions(const std::string &path, const std::string &filter, const std::vector<std::string> &dimensions, CDataSource *dataSource);
 
   void assertLookupTableExists();
-  void addToLookupTable(const std::string &path, const std::string &filter, std::string dimensionName, std::string tableName);
+  void addToLookupTable(const std::string &path, const std::string &filter, const std::string &dimensionName, const std::string &tableName);
   std::string generateRandomTableName();
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
@@ -116,6 +116,7 @@ public:
    * Returns an empty store when no compatible value exists. The target dimension is excluded from the filters.
    */
   CDBStore::Store *getDefaultDimensionValue(CDataSource *dataSource, const std::string &dimension, bool minimum);
+  CDBStore::Store *getMinMax(const char *name, const char *table);
   CDBStore::Store *getBetween(const char *min, const char *max, const char *colname, const char *table, int limit);
   std::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
@@ -146,6 +147,7 @@ public:
   int setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int addFilesToDataBase();
   int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
+  int storeLayerMetadataBatch(const char *datasetName, const char *layerName, const std::map<std::string, std::string> &metadata);
   CDBStore::Store *getLayerMetadataStore(const char *datasetName);
   int dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName);
   bool tryAdvisoryLock(size_t);
