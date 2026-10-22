@@ -1,3 +1,7 @@
+**Version 9.2.0**
+
+- Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
+
 **Version 9.1.0**
 
 - Security fix: removed the WMS `SLD` parameter and the INSPIRE CSW metadata lookup, which let the server be made to issue outbound HTTP requests to arbitrary URLs (SSRF). `CHTTPTools`, `CSLD` and `CInspire` have been removed; the server no longer makes any outbound network calls on its own.

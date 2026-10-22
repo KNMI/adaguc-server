@@ -140,7 +140,7 @@
         <AdditionalLayer replace="false" style="filledcountries/nearest">filledcountries</AdditionalLayer>
         <AdditionalLayer replace="false" style="filledcountries/nearest">overlaymask</AdditionalLayer>
         <AdditionalLayer replace="false" style="countryborders/polyline">countryborders</AdditionalLayer>
-        <Dimension name="time" units="ISO8601" interval="P1Y" default="min">time</Dimension>
+        <Dimension name="time" units="ISO8601" interval="P1Y" default="max">time</Dimension>
         <Dimension name="seasonyear" hidden="true">seasonyear</Dimension>
         <Dimension name="scenario">scenario</Dimension>
     </Layer>

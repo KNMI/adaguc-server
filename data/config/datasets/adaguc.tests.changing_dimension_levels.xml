@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<Configuration>
+  <Layer type="database">
+    <Group collection="hagl"/>
+    <Name>wind_speed_min</Name>
+    <Title>Wind speed at the lowest available height</Title>
+    <Variable>wind-speed-hagl</Variable>
+    <FilePath maxquerylimit="2048" filter=".*[.]nc$">{ADAGUC_PATH}/data/datasets/windspeed_changing_levels/</FilePath>
+    <Styles>auto</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min" type="time">time</Dimension>
+    <Dimension name="hagl" units="m" default="min" type="vertical">height_above_ground_level_in_m</Dimension>
+  </Layer>
+
+  <Layer type="database">
+    <Group collection="hagl"/>
+    <Name>wind_speed_max</Name>
+    <Title>Wind speed at the highest available height</Title>
+    <Variable>wind-speed-hagl</Variable>
+    <FilePath maxquerylimit="2048" filter=".*[.]nc$">{ADAGUC_PATH}/data/datasets/windspeed_changing_levels/</FilePath>
+    <Styles>auto</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min" type="time">time</Dimension>
+    <Dimension name="hagl" units="m" default="max" type="vertical">height_above_ground_level_in_m</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="hagl"/>
+    <Name>wind_speed_fixed_run</Name>
+    <Title>Wind speed for a fixed forecast run</Title>
+    <Variable>wind-speed-hagl</Variable>
+    <FilePath maxquerylimit="2048" filter=".*[.]nc$">{ADAGUC_PATH}/data/datasets/windspeed_changing_levels/</FilePath>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601" default="min" type="time">time</Dimension>
+    <Dimension name="hagl" units="m" default="min" type="vertical">height_above_ground_level_in_m</Dimension>
+    <!-- Fixed coordinates must constrain defaults even when configured after them. -->
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time" fixvalue="2026-09-09T12:00:00Z">reference_time</Dimension>
+  </Layer>
+</Configuration>
