@@ -18,7 +18,6 @@
   </Legend>
   
   <Legend name="highcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#E6E6FF"/>
     <palette min="60" max="119" color="#B3B3FF"/>
     <palette min="120" max="179" color="#8080FF"/>
@@ -26,7 +25,6 @@
   </Legend>
   
   <Legend name="midcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#B3E6B3"/>
     <palette min="60" max="119" color="#99FF99"/>
     <palette min="120" max="179" color="#4CE64C"/>
@@ -34,7 +32,6 @@
   </Legend>
   
   <Legend name="lowcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#FFE6E6"/>
     <palette min="60" max="119" color="#FFB3B3"/>
     <palette min="120" max="179" color="#FF8080"/>
@@ -42,7 +39,6 @@
   </Legend>
   
   <Legend name="totalcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#D9D9D9"/>
     <palette min="60" max="119" color="#A6A6A6"/>
     <palette min="120" max="179" color="#737373"/>
@@ -650,7 +646,6 @@
     <ShadeInterval min="10" max="20"    label="10-20"    fillcolor="#FF0000"/>
     <ShadeInterval min="20" max="40"    label="20-40"    fillcolor="#FFFF00"/>
     <ShadeInterval min="40" max="100"    label="40-100"    fillcolor="#FF8000"/>
-    <!--    <RenderMethod>bilinear,nearest,shaded</RenderMethod>-->
     <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="snowfall,cumsnowfall,snowfall_03h,snowfall_06h,snowfall_24h"/>
   </Style>
@@ -824,7 +819,6 @@
     <ShadeInterval min="48" max="56"    label="48-56 (10)"    fillcolor="#FF8000"/>
     <ShadeInterval min="56" max="64"    label="56-64 (11)"    fillcolor="#FF0000"/>
     <ShadeInterval min="64" max="200"    label="64-200 (12)"    fillcolor="#FFFF00"/>
-    <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
     <RenderMethod>generic</RenderMethod>
     <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
     <Thinning radius="40"/>
@@ -847,7 +841,6 @@
     <ShadeInterval min="24.4" max="28.4"    label="24.4-28.4 (10)"    fillcolor="#FF8000"/>
     <ShadeInterval min="28.4" max="32.6"    label="28.4-32.6 (11)"    fillcolor="#FF0000"/>
     <ShadeInterval min="32.6" max="200"    label=">32.6 (12)"    fillcolor="#FFFF00"/>
-    <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
     <RenderMethod>generic</RenderMethod>
     <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
     <Thinning radius="40"/>
