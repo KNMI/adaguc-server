@@ -42,7 +42,7 @@ struct ContourLineStructure {
   std::vector<double> dashes;
 };
 
-// Spatial hash of placed-label proximity points, so gap lookups don't linear-scan every label.
+// Spatial hash of placed-label points, for fast proximity lookups.
 class TextLocationIndex {
 public:
   void add(int x, int y) { cells[cellKeyFor(x, y)].push_back({.x = x, .y = y}); }
@@ -151,8 +151,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   /* Use the distance field and walk the line */
   while (foundLine) {
-    // Recomputed rather than reusing the inner loops' stale p, which pointed at the wrong pixel.
-    p = lineX + lineY * dImageWidth;
+    p = lineX + lineY * dImageWidth; // Recomputed: inner loops left p stale.
     distance[p] &= ~lineMask; /* Indicate found, set to false */
     /* Search around using the small search window and find the continuation of this line */
     foundLine = false;
@@ -169,8 +168,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
             nextLineY = ty;
             foundLine = true;
           }
-          // Clear only this definition's bit, not the whole word, so neighboring contour levels' bits survive.
-          distance[p] &= ~lineMask;
+          distance[p] &= ~lineMask; // Clear only this definition's bit.
         }
       }
     }
@@ -229,8 +227,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   size_t numDashes = contourDefinition.dashes.size();
   double *dashes = numDashes > 0 ? &contourDefinition.dashes[0] : nullptr;
 
-  // textLocations is shared across contour definitions, so a line gaps around any label it
-  // crosses, not just its own.
+  // textLocations is shared across contour definitions: gaps around any label, not just this one's.
   bool inTextGap = false;
   auto drawOrGap = [&](const i4point &point, bool gap) {
     if (gap) {
@@ -256,7 +253,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
           int endX = lineSegments[j + spaceForTextNr].x;
           int endY = lineSegments[j + spaceForTextNr].y;
-          // Sample a few points along the label's span, not just its start, so its far end is protected too.
+          // Protect the label's far end too, not just its start.
           for (int s = 0; s <= 3; s++) {
             textLocations.add(lineSegment.x + (endX - lineSegment.x) * s / 3, lineSegment.y + (endY - lineSegment.y) * s / 3);
           }
@@ -287,7 +284,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   StopWatch_Measure("[drawContour] %d contour definitions", (int)styleConfiguration->contourLines.size());
 
   double scaling = dataSource->getContourScaling();
-  // getContourFont tolerates a configuration without WMS or ContourFont elements, e.g. when the config could not be fully loaded
+  // getContourFont tolerates a config with no WMS/ContourFont element.
   auto [contourFontSize, contourFontLocation] = dataSource->srvParams->getContourFont();
   const char *fontLocation = contourFontLocation.c_str();
 
@@ -364,7 +361,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   size_t numContourLines = contourlineList.size();
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  // Pixels where at least one contour definition set a bit, so tracing doesn't rescan the whole image.
+  // Pixels with at least one contour bit set; avoids rescanning the whole image when tracing.
   std::vector<i4point> candidatePixels;
   auto fillRows = [&]() {
     for (int y = 0; y < dImageHeight - 1; y++) {
@@ -394,8 +391,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
           }
           float interval = intervals[j];
           if (interval > 0) {
-            // Smallest multiple >= min, not nearest: rounding to nearest can land below min on a
-            // steep gradient and silently drop the most tightly packed contour lines.
+            // Smallest multiple >= min, not nearest (nearest can round below min and drop a line).
             float cc = std::ceil(min * inverseIntervals[j]) * interval;
             if (cc >= min && cc < max) {
               foundLines |= mask;
@@ -403,8 +399,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
           }
           mask = mask + mask;
         }
-        // Skip the write when nothing was found, so the untouched calloc page stays unmapped.
-        if (foundLines) {
+        if (foundLines) { // Skip writing when empty: keeps the untouched calloc page unmapped.
           distance[p1] |= foundLines;
           candidatePixels.push_back({.x = x, .y = y});
         }

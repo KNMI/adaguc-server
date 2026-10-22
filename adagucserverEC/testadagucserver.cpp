@@ -381,8 +381,8 @@ TEST(jsonpCallbackCharsetIsRestricted, CRequest) {
   CHECK(checkForValidTokens("a');alert(1);//", allowedJSONPTokens) == false);
   CHECK(checkForValidTokens("callback;DROP TABLE x", allowedJSONPTokens) == false);
 }
-// Draws a mesh of skewed quads like CGenericDataWarper does (two triangles per quad) and counts how often every pixel is written.
-// Neighbouring triangles must partition the pixels: a pixel written twice makes translucent colors stipple, a pixel not written leaves holes.
+// Draws a mesh of skewed quads (two triangles each, like CGenericDataWarper) and counts pixel writes.
+// Must partition pixels exactly: double-written stipples, un-written leaves holes.
 static void drawSkewedMeshAndCountWrites(int cellsX, int cellsY, double cellSize, double skew, double jitter, std::vector<int> &writes, int W, int H, double originX, double originY, int &dxOutOfRange, bool useTriangles = false) {
   GDWState state = {};
   state.destGridWidth = W;
@@ -429,8 +429,7 @@ TEST(gdwDrawTriangleNeverWritesAPixelTwice, GenericDataWarper) {
   struct Config {
     double cellSize, skew, jitter;
   };
-  // Cells of several sizes with skew and jitter so that edges run at arbitrary slopes and fractional offsets. The jitter is kept small enough
-  // that every quad stays convex after its vertices are rounded to whole pixels. A reflex quad has two overlapping triangles, which is a real overlap.
+  // Skew/jitter varies edge slope and fractional offset; jitter stays small enough that rounded quads stay convex (a reflex quad self-overlaps).
   const Config configs[] = {{6.0, 0.0, 0.0}, {6.3, 1.7, 0.8}, {4.4, 2.3, 0.4}, {9.7, 3.1, 1.5}, {3.3, 0.9, 0.3}, {12.5, 5.5, 2.5}};
   for (const auto &c: configs) {
     std::vector<int> writes;
@@ -458,7 +457,7 @@ TEST(gdwDrawTriangleLeavesNoHolesInsideTheMesh, GenericDataWarper) {
     int outOfRange = 0;
     int cells = (int)(60 / c.cellSize);
     drawSkewedMeshAndCountWrites(cells, cells, c.cellSize, c.skew, c.jitter, writes, W, H, 10.3, 10.7, outOfRange);
-    // Without skew and jitter every pixel in the inner part of the mesh is covered. With skew the mesh is a parallelogram, so only check a margin-reduced box at the middle row band.
+    // Skew turns the mesh into a parallelogram, so only check a margin-reduced interior box.
     double margin = c.skew * cells + 2 * c.jitter + 3;
     int holes = 0;
     for (int y = (int)(10.7 + c.skew * 0.5 * cells + 3 * c.jitter + 2); y < (int)(10.7 + cells * c.cellSize - c.skew * 0.5 * cells - 3 * c.jitter - 2); y++) {
@@ -479,7 +478,7 @@ TEST(gdwDrawTriangleKeepsBarycentricWeightsInRange, GenericDataWarper) {
 }
 
 // Benchmark of gdwDrawTriangle, only runs when ADAGUC_BENCH is set, e.g.: ADAGUC_BENCH=1 ./adagucserverEC/testadagucserver
-// The checksum covers every written pixel with its interpolation weights, an optimization must keep it identical.
+// Checksum covers every written pixel and its weights; an optimization must not change it.
 static void benchmarkTriangleMesh(const char *name, int cells, double destSize, double rotation) {
   const int W = (int)destSize, H = (int)destSize;
   GDWState state = {};
@@ -529,7 +528,7 @@ TEST(gdwDrawTriangleBenchmark, GenericDataWarper) {
   CHECK(true);
 }
 
-// The quad entry point rounds and culls once per quad, the triangle entry point once per triangle: both must draw exactly the same pixels with the same weights.
+// Quad rounds/culls once per quad, triangle once per triangle: must draw identical pixels and weights.
 TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
   const int W = 120, H = 120;
   std::vector<int> writesQuad, writesTriangles;

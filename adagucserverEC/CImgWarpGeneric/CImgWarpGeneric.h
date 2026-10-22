@@ -31,8 +31,6 @@
 #include "CDataSource.h"
 #include "CDrawImage.h"
 
-static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
-
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 public:
   CImgWarpGeneric() = default;

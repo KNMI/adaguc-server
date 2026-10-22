@@ -61,7 +61,7 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
     if (colorIndex.a > 0) {
       settings.drawImage->setPixel(x, y, colorIndex);
     } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
-      // Non-zero RGB with alpha=0 means a deliberately transparent interval color - force-erase.
+      // Deliberately transparent interval color (RGB set, alpha=0): force-erase.
       settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
     }
   }
@@ -92,10 +92,10 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
 
   T values[2][2] = {{0, 0}, {0, 0}};
 
-  auto x0 = nfast_mod(sourceDataPX + 0, sourceDataWidth);
-  auto x1 = nfast_mod(sourceDataPX + 1, sourceDataWidth);
-  auto y0 = nfast_mod(sourceDataPY + 0, sourceDataHeight);
-  auto y1 = nfast_mod(sourceDataPY + 1, sourceDataHeight);
+  const auto x0 = sourceDataPX;
+  const auto x1 = sourceDataPX + 1 == sourceDataWidth ? size_t{0} : sourceDataPX + 1;
+  const auto y0 = sourceDataPY;
+  const auto y1 = sourceDataPY + 1;
 
   if (settings.smoothingFiter > 0) {
     values[0][0] = smoothingAtLocation(x0, y0, sourceData, warperState, settings);

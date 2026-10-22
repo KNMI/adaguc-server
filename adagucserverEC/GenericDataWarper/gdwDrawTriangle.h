@@ -5,42 +5,35 @@
 #include <cmath>
 #include "GenericDataWarper/GDWState.h"
 
-// Rounds half away from zero like std::round, but without a library call (the server is not built with SSE4.1, so std::round and std::floor are function calls).
-// The input is clamped to a range that fits comfortably in an int64; vertices that far outside the image do not matter for the visible part.
+// Round half away from zero without a libm call (no SSE4.1 in this build).
 static inline double gdwRoundHalfAwayFromZero(double v) {
   constexpr double limit = 1e15;
   v = std::min(limit, std::max(-limit, v));
   return (double)(long long)(v + std::copysign(0.5, v));
 }
 
-// Floor for non negative values (the pixel centre positions are clipped to the image first).
+// Floor for already non-negative values.
 static inline int gdwFloorNonNegative(double v) { return (int)v; }
 
-// Header only, so that drawFunction (any callable with signature void(int x, int y, T value, GDWState &warperState)) can be inlined in the pixel loop.
-//
-// Neighbouring triangles of a mesh partition the pixels: a pixel belongs to a row span when its centre lies in [minx, maxx), so that a pixel at a
-// shared edge is drawn by exactly one of the triangles. Drawing it twice would blend translucent colors twice and shows as stippling.
-//
-// Use gdwDrawQuad for a grid cell. gdwDrawTriangle takes unrounded corners. gdwDrawTriangleRounded takes corners that were rounded to whole pixels with
-// gdwRoundHalfAwayFromZero, so that a corner shared by several triangles has to be rounded only once.
+// Header only, so drawFunction (void(int x, int y, T value, GDWState&)) can be inlined in the pixel loop.
+// Pixel ownership: a pixel belongs to a row span iff its center is in [minx, maxx), so shared edges don't double-draw (avoids stippling on translucent colors).
+// gdwDrawQuad takes unrounded corners and rounds each one once; gdwDrawTriangleRounded takes pre-rounded corners.
 
-// Draws a triangle of which the corners are already rounded to whole pixels. tUp tells which half of a quad this is.
+// tUp: which half of a quad this triangle is.
 template <typename T, typename DrawFn>
 int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &value, bool tUp, GDWState &warperState, const DrawFn &drawFunction) {
   const int W = warperState.destGridWidth;
   const int H = warperState.destGridHeight;
 
-  // The triangle is less than a pixel height, it has no area so ignore. Most triangles of a grid that is much bigger than the image end up here, so check it first.
+  // Sub-pixel height: no area, skip (most triangles of an oversized grid end up here).
   if (std::max(yP[0], std::max(yP[1], yP[2])) - std::min(yP[0], std::min(yP[1], yP[2])) < 1) return 0;
 
-  // The barycentric weights are defined by the corners in the original order.
   const double xv1 = xP[0], xv2 = xP[1], xv3 = xP[2];
   const double yv1 = yP[0], yv2 = yP[1], yv3 = yP[2];
   const double dn = (yv2 - yv3) * (xv1 - xv3) + (xv3 - xv2) * (yv1 - yv3);
-  // All corners on one line, the triangle has no area. This would otherwise give a division by zero for the barycentric weights.
-  if (dn == 0) return 0;
+  if (dn == 0) return 0; // Degenerate (collinear) triangle.
 
-  // Sort the corners in Y direction: lower is the lowest, middle the middle and upper the upper corner.
+  // Sort corners by Y: lower, middle, upper.
   int lower, middle, upper;
   if (yP[0] < yP[1]) {
     if (yP[0] < yP[2]) {
@@ -81,7 +74,6 @@ int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &valu
   const double ylength_A = Y2 - Y1;
   const double ylength_B = Y3 - Y2;
   const double r_longside = (X3 - X1) / (Y3 - Y1);
-  // If triangle partA has no length, directly go to second part.
   const double r_upper = ylength_A == 0 ? 0 : (X2 - X1) / ylength_A;
   const double r_lower = ylength_B > 0 ? (X3 - X2) / ylength_B : 0;
 
@@ -91,10 +83,9 @@ int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &valu
 
   /* https://codeplea.com/triangular-interpolation */
   const double invDn = 1.0 / dn;
-  // The barycentric weights WV1 and WV2 are linear in x, so along a row they change with a constant step per pixel.
+  // WV1/WV2 are linear in x: constant per-pixel step along a row.
   const double dWV1dx = (yv2 - yv3) * invDn;
   const double dWV2dx = (yv3 - yv1) * invDn;
-  // For the upper triangle, dx is WV1 and dy is WV2. For the lower triangle, dx is 1 - WV1 and dy is WV1 + WV2.
   const double dDxPerPixel = tUp ? dWV1dx : -dWV1dx;
   const double dDyPerPixel = tUp ? dWV2dx : dWV1dx + dWV2dx;
 
@@ -103,9 +94,7 @@ int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &valu
     const double x_other = y < Y2 ? (r_upper * (y - Y1) + X1) : (r_lower * (y - Y2) + X2);
     const double minx = std::min(x_longside, x_other);
     const double maxx = std::max(x_longside, x_other);
-    // A pixel belongs to this row span when its center lies in [minx, maxx). Two triangles that share an edge compute the same
-    // minx/maxx for that edge, so they get complementary, non overlapping pixel ranges. The small bias keeps both triangles on
-    // the same side when an edge runs exactly through a pixel center. Clip to the image before converting to int.
+    // Bias keeps both triangles on the same side when an edge runs exactly through a pixel center.
     constexpr double centerBias = 0.5 + 1e-7;
     const double startD = minx + centerBias;
     const double endD = maxx + centerBias;
@@ -113,8 +102,7 @@ int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &valu
     const int startPixel = startD < 0 ? 0 : (startD >= W ? W : gdwFloorNonNegative(startD));
     const int endPixel = endD >= W ? W : gdwFloorNonNegative(endD);
     if (startPixel >= endPixel) continue;
-    // The weights are sampled at the fractional position of the span start inside the pixel, so the interpolated values stay the same
-    // as when the span was stepped from its start. A pixel can sample up to half a pixel outside the triangle, so they are clamped.
+    // Sampled at the fractional span-start position; clamped below since this can land up to half a pixel outside the triangle.
     const double startX = startPixel + (minx < 0 ? 0 : minx - (double)gdwFloorNonNegative(minx));
     const double WV1 = ((yv2 - yv3) * (startX - xv3) + (xv3 - xv2) * (y - yv3)) * invDn;
     const double WV2 = ((yv3 - yv1) * (startX - xv3) + (xv1 - xv3) * (y - yv3)) * invDn;
@@ -129,7 +117,7 @@ int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &valu
   return 0;
 }
 
-// Draws a triangle with corners in destination pixel coordinates that are not rounded yet.
+// Triangle with unrounded destination pixel coordinates.
 template <typename T, typename DrawFn>
 int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoords[3], const T &value, bool tUp, GDWState &warperState, const DrawFn &drawFunction) {
   const int W = warperState.destGridWidth;
@@ -143,12 +131,7 @@ int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoord
   return gdwDrawTriangleRounded(xP, yP, value, tUp, warperState, drawFunction);
 }
 
-// Draws a quad as two triangles. The corners are in destination pixel coordinates, ordered as:
-//  q[0] -- q[1]
-//   |        |
-//  q[3] -- q[2]
-// Grids are often much bigger than the image, so most quads are tiny: they are rejected as early as possible and every corner is rounded only once,
-// instead of once per triangle that uses it.
+// Quad as two triangles, corners ordered q[0] q[1] / q[3] q[2]. Rejects early and rounds each corner once (not once per triangle).
 template <typename T, typename DrawFn> void gdwDrawQuad(const double quadX[4], const double quadY[4], const T &value, GDWState &warperState, const DrawFn &drawFunction) {
   const int W = warperState.destGridWidth;
   const int H = warperState.destGridHeight;
@@ -158,7 +141,7 @@ template <typename T, typename DrawFn> void gdwDrawQuad(const double quadX[4], c
   if (quadY[0] >= H && quadY[1] >= H && quadY[2] >= H && quadY[3] >= H) return;
 
   const double yP[4] = {gdwRoundHalfAwayFromZero(quadY[0]), gdwRoundHalfAwayFromZero(quadY[1]), gdwRoundHalfAwayFromZero(quadY[2]), gdwRoundHalfAwayFromZero(quadY[3])};
-  // When the whole quad is less than a pixel high, both of its triangles are too and neither draws anything.
+  // Sub-pixel height quad: both triangles would be too, skip.
   if (std::max(std::max(yP[0], yP[1]), std::max(yP[2], yP[3])) - std::min(std::min(yP[0], yP[1]), std::min(yP[2], yP[3])) < 1) return;
   const double xP[4] = {gdwRoundHalfAwayFromZero(quadX[0]), gdwRoundHalfAwayFromZero(quadX[1]), gdwRoundHalfAwayFromZero(quadX[2]), gdwRoundHalfAwayFromZero(quadX[3])};
 

@@ -979,28 +979,10 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
   }
 
-  /**
-   * Use the generic renderer. This also serves legacy RenderMethod keywords
-   * (bilinear/shaded/contour/vector/barb) previously handled by the now-removed
-   * CImgWarpBilinear: getDrawFunctionSettings() derives the right interpolation method,
-   * raster-painting and contour-drawing behavior for those keywords, and drawContour()
-   * already reads styleConfiguration->contourLines/shadeIntervals directly, so no translation
-   * layer is needed here for shading/contouring.
-   */
+  // Generic renderer; also serves legacy bilinear/shaded/contour/vector/barb keywords via getDrawFunctionSettings()/drawContour().
   if (renderMethod & (RM_CONTOUR | RM_BILINEAR | RM_SHADED | RM_VECTOR | RM_BARB | RM_GENERIC)) {
-    /**
-     * Backwards compatibility for styles written for the now-removed CImgWarpBilinear: it drew a
-     * plain blue barb/vector internally and required no <Vector> style tag, and forward-projected
-     * the grid itself rather than needing a <DataPostProc algorithm="pointsfromgrid"> tag. Keep
-     * both working here, at render time, scoped to only the style actually being rendered (not
-     * every style variant the layer defines) so this has no effect beyond this one render.
-     *
-     * RM_THIN is deliberately excluded here: old CImgWarpBilinear mapped it to "drawGridVectors",
-     * which was never actually implemented (a dead TODO branch), so a RenderMethod="thin"-only
-     * style drew nothing. Including RM_THIN in this condition would make such a style suddenly
-     * render default vector arrows instead of staying a no-op; it's otherwise harmless/orthogonal
-     * when combined with an actual RM_VECTOR/RM_BARB bit, which already triggers this block.
-     */
+    // Backfill a default <Vector>/<Thinning>/pointsfromgrid for old barb/vector styles that relied on CImgWarpBilinear's built-in defaults.
+    // RM_THIN alone is excluded: CImgWarpBilinear's "thin" was a dead no-op, so keep that style a no-op too.
     if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
       if (styleConfiguration != nullptr && styleConfiguration->vectorIntervals.empty()) {
         CServerConfig::XMLE_Vector defaultVector;

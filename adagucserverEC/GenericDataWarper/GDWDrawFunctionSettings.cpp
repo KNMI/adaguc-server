@@ -33,15 +33,12 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
 
-  // Legacy render methods can list several keywords on one style (e.g. "nearest,bilinear,shadedcontour").
-  // The vector/barb/thin keywords belonged to the same removed renderer: on their own they drew only
-  // the symbols, never the field or its contour lines, so they take the same keyword-driven defaults
-  // below instead of the generic renderer's paint-everything defaults.
+  // vector/barb/thin used to belong to the removed renderer too: symbols-only, no field/contours.
   RenderMethod renderMethod = styleConfiguration->renderMethod;
   bool isLegacyRenderMethod = isLegacyScalarRenderMethod(renderMethod) || ((renderMethod & (RM_VECTOR | RM_BARB | RM_THIN)) != 0 && (renderMethod & RM_GENERIC) == 0);
 
   if (isLegacyRenderMethod) {
-    // CImgWarpBilinear always sampled smooth, and only painted colors for bilinear/shaded, not contour-only.
+    // CImgWarpBilinear always sampled smooth; painted colors only for bilinear/shaded.
     settings.interpolationMethod = InterpolationMethodBilinear;
     settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
   }
@@ -70,8 +67,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
   /* Check the if we want to use discrete type */
 
-  // For the generic renderer and when shadeinterval is set, always apply shading. For a legacy
-  // style, only the "shaded" keyword should turn shading on.
+  // Generic renderer applies shading whenever ShadeInterval is set; legacy only if "shaded" is set.
   if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
     if (styleConfiguration->renderMethod & RM_SHADED) {
       settings.isUsingShadeIntervals = true;

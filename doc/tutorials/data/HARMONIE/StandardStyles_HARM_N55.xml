@@ -583,9 +583,6 @@
     <Legend fixed="true" tickinterval=".1">cloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval>5</ShadeInterval> -->
-    <!-- <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
@@ -607,11 +604,6 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1" >highcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#E6E6FF"/> -->
-    <!-- <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#B3B3FF"/> -->
-    <!-- <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#8080FF"/> -->
-    <!-- <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4CFF"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="high_cloud_cover,high_type_cloud_area_fraction"/>
@@ -621,11 +613,6 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">midcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#B3F6B3"/> -->
-    <!-- <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#99FF99"/> -->
-    <!-- <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#4CE64C"/> -->
-    <!-- <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#00FF00"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="medium_cloud_cover,medium_type_cloud_area_fraction"/>
@@ -635,11 +622,6 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">lowcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#FFE6E6"/> -->
-    <!-- <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#FFB3B3"/> -->
-    <!-- <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#FF8080"/> -->
-    <!-- <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#FF4C4C"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="low_cloud_cover,low_type_cloud_area_fraction"/>
@@ -649,11 +631,6 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">totalcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#D9D9D9"/> -->
-    <!-- <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#A6A6A6"/> -->
-    <!-- <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#737373"/> -->
-    <!-- <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4C4C"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="total_cloud_cover,totalcloudcover,cloud_area_fraction,convective_type_cloud_area_fraction"/>
@@ -764,8 +741,6 @@
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "contour" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval>2.5</ShadeInterval> -->
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="1.0"/>
     <RenderMethod>generic</RenderMethod>
@@ -777,8 +752,6 @@
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "contour" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval>2.5</ShadeInterval> -->
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
     <RenderMethod>generic</RenderMethod>
@@ -790,8 +763,6 @@
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "contour" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval>5</ShadeInterval> -->
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="5"/>
     <RenderMethod>generic</RenderMethod>
@@ -854,8 +825,6 @@
     <ShadeInterval min="56" max="64"    label="56-64 (11)"    fillcolor="#FF0000"/>
     <ShadeInterval min="64" max="200"    label="64-200 (12)"    fillcolor="#FFFF00"/>
     <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
-    <!-- The commented-out elements below were not drawn by the deprecated "barbshaded" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/> -->
     <RenderMethod>generic</RenderMethod>
     <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
     <Thinning radius="40"/>
@@ -879,8 +848,6 @@
     <ShadeInterval min="28.4" max="32.6"    label="28.4-32.6 (11)"    fillcolor="#FF0000"/>
     <ShadeInterval min="32.6" max="200"    label=">32.6 (12)"    fillcolor="#FFFF00"/>
     <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
-    <!-- The commented-out elements below were not drawn by the deprecated "barbshaded" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/> -->
     <RenderMethod>generic</RenderMethod>
     <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
     <Thinning radius="40"/>
@@ -933,8 +900,6 @@
     <Legend fixed="true" tickinterval="50">not_used</Legend>
     <Min>0.1</Min>
     <Max>2000</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "contour" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval>10</ShadeInterval> -->
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%3.0f" interval="10"/>
     <ContourLine width="1.3" linecolor="#FF0000" textcolor="#FF0000" textformatting="%3.0f" interval="100"/>
     <RenderMethod>generic</RenderMethod>
@@ -983,9 +948,6 @@
     <Legend fixed="true" tickinterval="10">fraction</Legend>
     <Min>0</Min>
     <Max>100</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval>10</ShadeInterval> -->
-    <!-- <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="WindspeedCumul,BeaufortWindCumul,TemperatureCumul,TemperatureUnderCumul,Temperature_2mCumul,Temperature_2mUnderCumul,WindgustCumul,PrecipCumul,Precip03hCumul,Precip06hCumul,Precip12hCumul,Precip24hCumul,CumSnowFallCumul,SnowFall03hCumul,SnowFall06hCumul,SnowFall12hCumul,SnowFall24hCumul,RelHumCumul,RelHumUnderCumul,TCCCumul,TCCUnderCumul"/>
@@ -995,16 +957,6 @@
     <Legend fixed="true" tickinterval="10">relhum</Legend>
     <Min>0</Min>
     <Max>100</Max>
-    <!-- The commented-out elements below were not drawn by the deprecated "bilinear" keyword; uncomment them to draw them with the generic renderer -->
-    <!-- <ShadeInterval min="0" max="50"    label="0-50"    fillcolor="#FFFFB2"/> -->
-    <!-- <ShadeInterval min="50" max="70"    label="50-70"    fillcolor="#FFFF00"/> -->
-    <!-- <ShadeInterval min="70" max="90"    label="70-90"    fillcolor="#7FFF00"/> -->
-    <!-- <ShadeInterval min="90" max="95"    label="90-95"    fillcolor="#FF7F00"/> -->
-    <!-- <ShadeInterval min="95" max="99"    label="95-99"    fillcolor="#FF0000"/> -->
-    <!-- <ShadeInterval min="99" max="110"    label=">99"    fillcolor="#000000"/> -->
-    <!-- <ShadeInterval>10</ShadeInterval> -->
-    <!-- <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/> -->
-    <!-- <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="50,70,90,95,99,100"/> -->
     <RenderMethod>generic</RenderMethod>
     <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="relative_humidity"/>
