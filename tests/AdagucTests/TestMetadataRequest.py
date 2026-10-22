@@ -111,7 +111,7 @@ class TestMetadataRequest:
         This checks that many reference times are returned as an interval in the GetMetadata response.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw_manymodelruns", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         filename = "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes.json"
         run_adaguc_and_compare_json(
             env,
