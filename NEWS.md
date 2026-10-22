@@ -3,8 +3,9 @@
 - `CImgWarpBilinear` is removed. The keywords `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` still work: the generic warper emulates them. New configs use `RenderMethod` `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md). Test datasets and docs are migrated, with one style per name in GetCapabilities. Legacy output is pinned by `TestsForLegacyBilinearRender`.
 - Fixed legacy `barb`/`vector`/`thin`-only styles painting the whole field under the symbols. They now draw only the symbols.
 - Fixed a crash when drawing contour lines without a `WMS`/`ContourFont` configuration. Contour labels now use the same font lookup as legends, so a `ContourFont` in a dataset is honoured.
-- Fixed stippling: translucent colors were blended twice at the shared edges of grid cells. Pixels now belong to exactly one triangle.
+- Fixed triangle drawing issue: translucent colors were blended twice at the shared edges of grid cells. Pixels now belong to exactly one triangle.
 - Faster warping of large grids: quads are culled and rounded once, and tiny quads are skipped early.
+- Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
 
 **Version 9.1.0**
 
