@@ -885,6 +885,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if (styleConfiguration == nullptr) {
+    CDBError("Unable to get style for layer %s", dataSource->layerName.c_str());
+    reader.close();
+    return 1;
+  }
   auto renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
@@ -984,7 +989,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     // Backfill a default <Vector>/<Thinning>/pointsfromgrid for old barb/vector styles that relied on CImgWarpBilinear's built-in defaults.
     // RM_THIN alone is excluded: CImgWarpBilinear's "thin" was a dead no-op, so keep that style a no-op too.
     if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
-      if (styleConfiguration != nullptr && styleConfiguration->vectorIntervals.empty()) {
+      if (styleConfiguration->vectorIntervals.empty()) {
         CServerConfig::XMLE_Vector defaultVector;
         defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";
         defaultVector.attr.linecolor = "#0000FF";
@@ -996,7 +1001,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         }
         styleConfiguration->vectorIntervals.push_back(defaultVector);
       }
-      if (styleConfiguration != nullptr && styleConfiguration->thinningList.empty()) {
+      if (styleConfiguration->thinningList.empty()) {
         CServerConfig::XMLE_Thinning defaultThinning;
         defaultThinning.attr.radius = "40";
         styleConfiguration->thinningList.push_back(defaultThinning);

@@ -33,11 +33,9 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
 
-  // vector/barb/thin used to belong to the removed renderer too: symbols-only, no field/contours.
-  RenderMethod renderMethod = styleConfiguration->renderMethod;
-  bool isLegacyRenderMethod = isLegacyScalarRenderMethod(renderMethod) || ((renderMethod & (RM_VECTOR | RM_BARB | RM_THIN)) != 0 && (renderMethod & RM_GENERIC) == 0);
+  const bool isLegacyStyle = isLegacyRenderMethod(styleConfiguration->renderMethod);
 
-  if (isLegacyRenderMethod) {
+  if (isLegacyStyle) {
     // CImgWarpBilinear always sampled smooth; painted colors only for bilinear/shaded.
     settings.interpolationMethod = InterpolationMethodBilinear;
     settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
@@ -68,12 +66,9 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   /* Check the if we want to use discrete type */
 
   // Generic renderer applies shading whenever ShadeInterval is set; legacy only if "shaded" is set.
-  if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
-    if (styleConfiguration->renderMethod & RM_SHADED) {
-      settings.isUsingShadeIntervals = true;
-    } else if (styleConfiguration->renderMethod == RM_GENERIC) {
-      settings.isUsingShadeIntervals = true;
-    }
+  if (!settings.isUsingShadeIntervals && styleConfiguration->shadeIntervals.size() > 0) {
+    const bool isGeneric = (styleConfiguration->renderMethod & RM_GENERIC) != 0 && !isLegacyStyle;
+    settings.isUsingShadeIntervals = (styleConfiguration->renderMethod & RM_SHADED) != 0 || isGeneric;
   }
 
   // Smoothingfilter:
@@ -110,7 +105,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
 
   // For a legacy style, only the "contour" keyword should draw contour lines.
-  if (isLegacyRenderMethod) {
+  if (isLegacyStyle) {
     settings.shouldDrawContours = (styleConfiguration->renderMethod & RM_CONTOUR) != 0;
   } else {
     settings.shouldDrawContours = styleConfiguration->contourLines.size() > 0;
