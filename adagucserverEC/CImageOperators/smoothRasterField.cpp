@@ -16,10 +16,8 @@
 
 #define MEMO_NODATAVALUE -99999999999999.f
 
+// Callers only invoke this when settings.smoothingFiter > 0.
 template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (settings.smoothingFiter == 0) {
-    return (T)settings.dfNodataValue;
-  }
   if (sourceX < 0 || sourceY < 0 || sourceX >= warperState.sourceGridWidth || sourceY >= warperState.sourceGridHeight) return (T)settings.dfNodataValue;
 
   size_t p = sourceX + sourceY * warperState.sourceGridWidth;

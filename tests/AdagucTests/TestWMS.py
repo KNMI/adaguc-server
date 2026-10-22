@@ -1788,12 +1788,7 @@ class TestWMS(unittest.TestCase):
                 30,
                 0.02,
             )
-        )  # Allowed pixel difference is huge, but only for very small number of pixels. Raised from
-        # 4 to 30: the Arial Bold glyph edges in this test's text labels anti-alias very slightly
-        # differently between x86_64 and arm64 (different Cairo/FreeType SIMD/codegen paths), which
-        # on arm64 CI produced one pixel a bit over the old ceiling even though only ~0.01% of
-        # pixels differ at all - nowhere near the percentage ceiling below. Not a logic regression:
-        # the checked-in font file is identical bytes on every architecture.
+        )
 
     def test_WMSGetMap_allow_encoded_proj4_params_attribute(self):
         ### This tests the rotated_pole projection ###

@@ -416,18 +416,16 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   DISTANCEFIELDTYPE lineMask = 1;
 
-  int contourLineIndex = 0;
   for (auto &contourLine: contourlineList) {
-    StopWatch_Measure("drawContour: start contour definition %d", contourLineIndex);
+    StopWatch_Measure("drawContour: start contour definition");
     for (const auto &candidate: candidatePixels) {
       size_t p = candidate.x + candidate.y * dImageWidth;
       if (distance[p] & lineMask) {
         traverseLine(drawImage, distance, sourceGrid, candidate.x, candidate.y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
       }
     }
-    StopWatch_Measure("drawContour: done contour definition %d", contourLineIndex);
+    StopWatch_Measure("drawContour: done contour definition");
     lineMask = lineMask + lineMask;
-    contourLineIndex++;
   }
 
   StopWatch_Measure("[/drawContour]");
