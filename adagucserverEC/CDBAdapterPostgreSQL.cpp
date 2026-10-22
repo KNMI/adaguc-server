@@ -201,17 +201,20 @@ CDBStore::Store *CDBAdapterPostgreSQL::getDefaultDimensionValue(CDataSource *dat
     // A list such as "10,20" accepts either value, so join its conditions with OR.
     std::string alternatives;
     for (const auto &value: values) {
-      if (!alternatives.empty()) alternatives += " OR ";
       // This is a range on another dimension, such as time=start/end or member=1/10.
       // It limits the files used for MIN/MAX; it is not a range on the omitted dimension.
-      // Write single quotes twice inside values so they do not end the SQL string.
       const auto bounds = CT::split(value, "/");
-      const std::string lower = CT::replace(bounds[0], "'", "''");
+      if (bounds.empty()) continue;
+
+      if (!alternatives.empty()) alternatives += " OR ";
+
+      // Escape coordinate values before inserting them into quoted SQL strings.
+      const std::string lower = DB->escapeString(bounds[0]);
       if (bounds.size() == 1) {
         CT::printfconcat(alternatives, "%s.%s = '%s'", alias.c_str(), dim.netCDFDimName.c_str(), lower.c_str());
       } else {
         // BETWEEN includes both ends of the range, for example a requested time range.
-        const std::string upper = CT::replace(bounds[1], "'", "''");
+        const std::string upper = DB->escapeString(bounds[1]);
         CT::printfconcat(alternatives, "%s.%s BETWEEN '%s' AND '%s'", alias.c_str(), dim.netCDFDimName.c_str(), lower.c_str(), upper.c_str());
       }
     }
