@@ -4,7 +4,6 @@
 #include "CIBaseDataWriterInterface.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
 #include "CStyleConfiguration.h"
 #include "CXMLParser.h"

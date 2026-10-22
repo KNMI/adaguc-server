@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 8.0.0, of Jul  6 2026 15:55:12 </Keyword>
+            <Keyword>ADAGUCServer version 9.0.3, of Oct 19 2026 11:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  AutoResource nc_5D_20170101000000-20170101001000.nc</Title>
 <CRS>CRS:84</CRS>
@@ -131,75 +130,21 @@
 <Dimension name="member" units="member number" default="member1" multipleValues="1" nearestValue="0" >member6,member5,member4,member3,member2,member1</Dimension>
 <Dimension name="elevation" units="meters" default="9000" multipleValues="1" nearestValue="0" >1000,2000,3000,4000,5000,6000,7000,8000,9000</Dimension>
    <Style>
-    <Name>testdata_style_1/nearest</Name>
+    <Name>testdata_style_1</Name>
     <Title>Rainbow colors</Title>
     <Abstract>Drawing with rainbow colors</Abstract>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_1/nearest"/>
+       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_1"/>
     </LegendURL>
   </Style>
    <Style>
-    <Name>testdata_style_1/bilinear</Name>
+    <Name>testdata_style_2</Name>
     <Title>Rainbow colors</Title>
     <Abstract>Drawing with rainbow colors</Abstract>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_1/bilinear"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata_style_1/nearestcontour</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_1/nearestcontour"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata_style_1/shadedcontour</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_1/shadedcontour"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata_style_2/nearest</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_2/nearest"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata_style_2/bilinear</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_2/bilinear"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata_style_2/nearestcontour</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_2/nearestcontour"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata_style_2/shadedcontour</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_2/shadedcontour"/>
+       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata_style_2"/>
     </LegendURL>
   </Style>
    <Style>
@@ -239,11 +184,11 @@
     </LegendURL>
   </Style>
    <Style>
-    <Name>autobilinear_deprecated/bilinear</Name>
-    <Title>autobilinear_deprecated/bilinear</Title>
+    <Name>autobilinear_deprecated</Name>
+    <Title>autobilinear_deprecated</Title>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>
+       <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=autobilinear_deprecated"/>
     </LegendURL>
   </Style>
 </Layer>

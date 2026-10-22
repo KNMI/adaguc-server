@@ -156,8 +156,6 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
           if (sjx >= 0 && sjy >= 0 && sjx < warperState.destGridWidth && sjy < warperState.destGridHeight) {
             warperState.sourceTileDy = yDirPositive ? (sjy - sy1) / h : ((sy2 - sjy) / h);
             warperState.sourceTileDx = xDirPositive ? (sjx - sx1) / w : (sx2 - sjx) / w;
-            warperState.destIndexX = sjx;
-            warperState.destIndexY = sjy;
             drawFunction(sjx, sjy, value, warperState);
           }
         }
@@ -346,12 +344,7 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, b
             warperState.sourceIndexX = x + pixelExtentBox.left;
             warperState.sourceIndexY = (warperState.sourceGridHeight - 1 - (y + pixelExtentBox.bottom));
             T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + warperState.sourceIndexY * warperState.sourceGridWidth];
-            const double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
-            const double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
-            const double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
-            const double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
-            gdwDrawTriangle(xCornersA, yCornersA, value, false, warperState, drawFunction);
-            gdwDrawTriangle(xCornersB, yCornersB, value, true, warperState, drawFunction);
+            gdwDrawQuad(quadX, quadY, value, warperState, drawFunction);
           }
         }
       }
@@ -381,9 +374,7 @@ template <typename T, typename DrawFn> int GenericDataWarper::render(CImageWarpe
                           .destGridWidth = destGeoParams.width,       // The width of the destination grid
                           .destGridHeight = destGeoParams.height,     // The height of the destination grid
                           .sourceTileDx = 0,                          // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
-                          .sourceTileDy = 0,                          // The relative y sample position
-                          .destIndexX = 0,                            // The target X index in the target grid
-                          .destIndexY = 0};                           // The target Y index in the target grid.
+                          .sourceTileDy = 0};                         // The relative y sample position
 
   sourceGeoParams.bbox = reprojBBox(sourceGeoParams, warper);
 

@@ -31,7 +31,8 @@ This is the style for cloudcover
   <ShadeInterval min="2" max="4" label="2-4" fillcolor="#B3B3FF"/>
   <ShadeInterval min="4" max="6" label="4-6" fillcolor="#8080FF"/>
   <ShadeInterval min="6" max="8" label=">6" fillcolor="#4C4CFF"/>
-  <RenderMethod>nearest,bilinear,contour,contourbilinear,shaded</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
+  <RenderSettings interpolationmethod="bilinear"/>
 </Style>
 ```
 

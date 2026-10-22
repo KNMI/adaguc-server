@@ -16,6 +16,10 @@
 #include "CPGSQLDB.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
+#include "GenericDataWarper/gdwDrawTriangle.h"
+#include <vector>
+#include <chrono>
+#include <cstdint>
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -376,4 +380,160 @@ TEST(jsonpCallbackCharsetIsRestricted, CRequest) {
   CHECK(checkForValidTokens("alert(1)", allowedJSONPTokens) == false);
   CHECK(checkForValidTokens("a');alert(1);//", allowedJSONPTokens) == false);
   CHECK(checkForValidTokens("callback;DROP TABLE x", allowedJSONPTokens) == false);
+}
+// Draws a mesh of skewed quads (two triangles each, like CGenericDataWarper) and counts pixel writes.
+// Must partition pixels exactly: double-written stipples, un-written leaves holes.
+static void drawSkewedMeshAndCountWrites(int cellsX, int cellsY, double cellSize, double skew, double jitter, std::vector<int> &writes, int W, int H, double originX, double originY, int &dxOutOfRange, bool useTriangles = false) {
+  GDWState state = {};
+  state.destGridWidth = W;
+  state.destGridHeight = H;
+  writes.assign(W * H, 0);
+  dxOutOfRange = 0;
+  // Deterministic pseudo random jitter of the mesh nodes
+  unsigned int seed = 12345;
+  auto rnd = [&seed]() {
+    seed = seed * 1664525u + 1013904223u;
+    return ((seed >> 8) & 0xFFFF) / 65535.0 * 2 - 1;
+  };
+  std::vector<double> nodeX((cellsX + 1) * (cellsY + 1)), nodeY((cellsX + 1) * (cellsY + 1));
+  for (int j = 0; j <= cellsY; j++) {
+    for (int i = 0; i <= cellsX; i++) {
+      nodeX[i + j * (cellsX + 1)] = originX + i * cellSize + j * skew + rnd() * jitter;
+      nodeY[i + j * (cellsX + 1)] = originY + j * cellSize + i * skew * 0.5 + rnd() * jitter;
+    }
+  }
+  auto drawFunction = [&](int x, int y, float, GDWState &s) {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    writes[x + y * W]++;
+    if (s.sourceTileDx < -1e-6 || s.sourceTileDx > 1 + 1e-6 || s.sourceTileDy < -1e-6 || s.sourceTileDy > 1 + 1e-6) dxOutOfRange++;
+  };
+  for (int j = 0; j < cellsY; j++) {
+    for (int i = 0; i < cellsX; i++) {
+      int n00 = i + j * (cellsX + 1), n10 = n00 + 1, n01 = n00 + (cellsX + 1), n11 = n01 + 1;
+      const double qx[4] = {nodeX[n00], nodeX[n10], nodeX[n11], nodeX[n01]};
+      const double qy[4] = {nodeY[n00], nodeY[n10], nodeY[n11], nodeY[n01]};
+      if (useTriangles) {
+        const double ax[3] = {qx[0], qx[1], qx[2]}, ay[3] = {qy[0], qy[1], qy[2]};
+        const double bx[3] = {qx[2], qx[0], qx[3]}, by[3] = {qy[2], qy[0], qy[3]};
+        gdwDrawTriangle(ax, ay, 0.0f, false, state, drawFunction);
+        gdwDrawTriangle(bx, by, 0.0f, true, state, drawFunction);
+      } else {
+        gdwDrawQuad(qx, qy, 0.0f, state, drawFunction);
+      }
+    }
+  }
+}
+
+TEST(gdwDrawTriangleNeverWritesAPixelTwice, GenericDataWarper) {
+  const int W = 120, H = 120;
+  struct Config {
+    double cellSize, skew, jitter;
+  };
+  // Skew/jitter varies edge slope and fractional offset; jitter stays small enough that rounded quads stay convex (a reflex quad self-overlaps).
+  const Config configs[] = {{6.0, 0.0, 0.0}, {6.3, 1.7, 0.8}, {4.4, 2.3, 0.4}, {9.7, 3.1, 1.5}, {3.3, 0.9, 0.3}, {12.5, 5.5, 2.5}};
+  for (const auto &c: configs) {
+    std::vector<int> writes;
+    int outOfRange = 0;
+    int cells = (int)(80 / c.cellSize);
+    drawSkewedMeshAndCountWrites(cells, cells, c.cellSize, c.skew, c.jitter, writes, W, H, 10.3, 10.7, outOfRange);
+    int twice = 0, total = 0;
+    for (int v: writes) {
+      if (v > 1) twice++;
+      if (v > 0) total++;
+    }
+    CHECK(twice == 0);
+    CHECK(total > 0);
+  }
+}
+
+TEST(gdwDrawTriangleLeavesNoHolesInsideTheMesh, GenericDataWarper) {
+  const int W = 120, H = 120;
+  struct Config {
+    double cellSize, skew, jitter;
+  };
+  const Config configs[] = {{6.0, 0.0, 0.0}, {6.3, 1.7, 0.8}, {4.4, 2.3, 0.4}, {9.7, 3.1, 1.5}};
+  for (const auto &c: configs) {
+    std::vector<int> writes;
+    int outOfRange = 0;
+    int cells = (int)(60 / c.cellSize);
+    drawSkewedMeshAndCountWrites(cells, cells, c.cellSize, c.skew, c.jitter, writes, W, H, 10.3, 10.7, outOfRange);
+    // Skew turns the mesh into a parallelogram, so only check a margin-reduced interior box.
+    double margin = c.skew * cells + 2 * c.jitter + 3;
+    int holes = 0;
+    for (int y = (int)(10.7 + c.skew * 0.5 * cells + 3 * c.jitter + 2); y < (int)(10.7 + cells * c.cellSize - c.skew * 0.5 * cells - 3 * c.jitter - 2); y++) {
+      for (int x = (int)(10.3 + margin); x < (int)(10.3 + cells * c.cellSize - margin); x++) {
+        if (writes[x + y * W] == 0) holes++;
+      }
+    }
+    CHECK(holes == 0);
+  }
+}
+
+TEST(gdwDrawTriangleKeepsBarycentricWeightsInRange, GenericDataWarper) {
+  const int W = 120, H = 120;
+  std::vector<int> writes;
+  int outOfRange = 0;
+  drawSkewedMeshAndCountWrites(12, 12, 6.3, 1.7, 0.8, writes, W, H, 10.3, 10.7, outOfRange);
+  CHECK(outOfRange == 0);
+}
+
+// Benchmark of gdwDrawTriangle, only runs when ADAGUC_BENCH is set, e.g.: ADAGUC_BENCH=1 ./adagucserverEC/testadagucserver
+// Checksum covers every written pixel and its weights; an optimization must not change it.
+static void benchmarkTriangleMesh(const char *name, int cells, double destSize, double rotation) {
+  const int W = (int)destSize, H = (int)destSize;
+  GDWState state = {};
+  state.destGridWidth = W;
+  state.destGridHeight = H;
+  const int N = cells + 1;
+  std::vector<double> nodeX(N * N), nodeY(N * N);
+  const double step = destSize / cells * 0.95, c = cos(rotation), s = sin(rotation);
+  for (int j = 0; j < N; j++) {
+    for (int i = 0; i < N; i++) {
+      // A rotated, slightly curved grid, like a reprojected source grid
+      double u = i * step, v = j * step + 0.002 * destSize * sin(i * 0.05);
+      nodeX[i + j * N] = destSize * 0.02 + u * c - v * s;
+      nodeY[i + j * N] = destSize * 0.30 + u * s + v * c;
+    }
+  }
+  uint64_t checksum = 0, writes = 0;
+  auto drawFunction = [&](int x, int y, float, GDWState &st) {
+    writes++;
+    checksum += (uint64_t)(x * 31 + y * 17) + (uint64_t)(st.sourceTileDx * 1000) * 7 + (uint64_t)(st.sourceTileDy * 1000) * 13;
+  };
+  double best = 1e30;
+  for (int run = 0; run < 5; run++) {
+    checksum = 0;
+    writes = 0;
+    auto t0 = std::chrono::steady_clock::now();
+    for (int j = 0; j < cells; j++) {
+      for (int i = 0; i < cells; i++) {
+        int n00 = i + j * N, n10 = n00 + 1, n01 = n00 + N, n11 = n01 + 1;
+        const double qx[4] = {nodeX[n00], nodeX[n10], nodeX[n11], nodeX[n01]}, qy[4] = {nodeY[n00], nodeY[n10], nodeY[n11], nodeY[n01]};
+        gdwDrawQuad(qx, qy, 0.0f, state, drawFunction);
+      }
+    }
+    double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+    if (ms < best) best = ms;
+  }
+  printf("BENCH %-28s %5d x %-5d cells -> %dx%d: %8.2f ms  (%.1f Mtriangles/s, %llu pixel writes, checksum %llu)\n", name, cells, cells, W, H, best, 2.0 * cells * cells / best / 1000.0,
+         (unsigned long long)writes, (unsigned long long)checksum);
+}
+
+TEST(gdwDrawTriangleBenchmark, GenericDataWarper) {
+  if (getenv("ADAGUC_BENCH") == nullptr) return;
+  benchmarkTriangleMesh("huge grid, subpixel triangles", 1500, 1024, 0.3);
+  benchmarkTriangleMesh("huge grid, large destination", 1500, 4096, 0.3);
+  benchmarkTriangleMesh("coarse grid, big triangles", 100, 1024, 0.3);
+  benchmarkTriangleMesh("very coarse grid, huge tris", 20, 2048, 0.3);
+  CHECK(true);
+}
+
+// Quad rounds/culls once per quad, triangle once per triangle: must draw identical pixels and weights.
+TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
+  const int W = 120, H = 120;
+  std::vector<int> writesQuad, writesTriangles;
+  int outOfRange = 0;
+  drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesQuad, W, H, -9.4, -7.2, outOfRange, false);
+  drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesTriangles, W, H, -9.4, -7.2, outOfRange, true);
+  CHECK(writesQuad == writesTriangles);
 }
