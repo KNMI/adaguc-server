@@ -91,7 +91,7 @@ numpy==2.4.6
     #   netcdf4
 owslib==0.29.3
     # via -r requirements.in
-pillow==12.3.0
+pillow==13.0.0
     # via -r requirements.in
 pydantic==2.13.5
     # via
