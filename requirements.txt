@@ -20,7 +20,7 @@ asgi-logger==0.1.0
     # via -r requirements.in
 asgiref==3.12.1
     # via asgi-logger
-brotli==1.2.0
+brotli==1.2.1
     # via
     #   -r requirements.in
     #   brotli-asgi

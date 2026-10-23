@@ -5,7 +5,7 @@
 
 aiocache~=0.12.3
 APScheduler~=3.11.2
-Brotli~=1.2.0
+Brotli~=1.2.1
 Jinja2~=3.1.6
 OWSLib~=0.29.2
 Pillow~=12.3.0
