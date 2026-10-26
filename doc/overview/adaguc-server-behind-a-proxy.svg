@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 600" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#1b2338" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrowSlate" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1120" height="600" fill="#f6f7fb"/>
+  <circle cx="60" cy="560" r="170" fill="#eef2ff" opacity="0.5"/>
+  <circle cx="1080" cy="40" r="200" fill="#eafaf2" opacity="0.5"/>
+
+  <text x="40" y="34" font-size="11.5" letter-spacing="1.5" font-weight="600" fill="#94a3b8">ADAGUC-SERVER &#8226; REQUEST FLOW</text>
+
+  <!-- ===== Client card ===== -->
+  <g filter="url(#cardShadow)">
+    <rect x="40" y="230" width="180" height="160" rx="16" fill="#ffffff" stroke="#dbe4ff" stroke-width="1.5"/>
+  </g>
+  <circle cx="130" cy="274" r="24" fill="#eef2ff"/>
+  <g transform="translate(118,262)" stroke="#3652c9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="0" y="2" width="24" height="18" rx="3"/>
+    <line x1="0" y1="7.5" x2="24" y2="7.5"/>
+    <circle cx="3.6" cy="4.7" r="0.8" fill="#3652c9" stroke="none"/>
+    <circle cx="6.6" cy="4.7" r="0.8" fill="#3652c9" stroke="none"/>
+    <circle cx="9.6" cy="4.7" r="0.8" fill="#3652c9" stroke="none"/>
+  </g>
+  <text x="130" y="330" text-anchor="middle" font-size="17" font-weight="700" fill="#1e2433">Client</text>
+  <text x="130" y="351" text-anchor="middle" font-size="12" fill="#8992a6">browser / viewer</text>
+
+  <!-- ===== Reverse proxy card ===== -->
+  <g filter="url(#cardShadow)">
+    <rect x="320" y="150" width="280" height="340" rx="16" fill="#ffffff" stroke="#f6e4bd" stroke-width="1.5"/>
+  </g>
+  <circle cx="460" cy="196" r="24" fill="#fff6e6"/>
+  <g transform="translate(448,184)" stroke="#9a6b18" stroke-width="1.6" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M12 1 L21 4.4 V11 C21 16.4 17 20.3 12 23 C7 20.3 3 16.4 3 11 V4.4 Z"/>
+    <path d="M8.3 12.1 L10.8 14.6 L15.8 9.2"/>
+  </g>
+  <text x="460" y="252" text-anchor="middle" font-size="17" font-weight="700" fill="#1e2433">Reverse proxy</text>
+  <text x="460" y="273" text-anchor="middle" font-size="12" fill="#8992a6">nginx &#183; traefik &#183; Tyk &#183; ingress</text>
+
+  <line x1="344" y1="294" x2="576" y2="294" stroke="#f1e5c6" stroke-width="1.5"/>
+  <text x="344" y="316" font-size="11.5" font-weight="600" fill="#9a6b18">SETS REQUEST HEADERS</text>
+
+  <!-- header chips, single column so the longest label (X-Forwarded-Prefix) has room -->
+  <g font-family="'SFMono-Regular', Consolas, monospace" font-size="12.5" fill="#7a5410">
+    <rect x="344" y="328" width="232" height="30" rx="8" fill="#fffaf0" stroke="#f1dca1" stroke-width="1.2"/>
+    <text x="460" y="348" text-anchor="middle">X-Forwarded-Host</text>
+
+    <rect x="344" y="366" width="232" height="30" rx="8" fill="#fffaf0" stroke="#f1dca1" stroke-width="1.2"/>
+    <text x="460" y="386" text-anchor="middle">X-Forwarded-Proto</text>
+
+    <rect x="344" y="404" width="232" height="30" rx="8" fill="#fffaf0" stroke="#f1dca1" stroke-width="1.2"/>
+    <text x="460" y="424" text-anchor="middle">X-Forwarded-Port</text>
+
+    <rect x="344" y="442" width="232" height="30" rx="8" fill="#fffaf0" stroke="#f1dca1" stroke-width="1.2"/>
+    <text x="460" y="462" text-anchor="middle">X-Forwarded-Prefix</text>
+  </g>
+
+  <!-- ===== adaguc-server card ===== -->
+  <g filter="url(#cardShadow)">
+    <rect x="700" y="40" width="380" height="520" rx="16" fill="#ffffff" stroke="#c9ecd9" stroke-width="1.5"/>
+  </g>
+  <circle cx="890" cy="86" r="24" fill="#eafaf2"/>
+  <g transform="translate(878,74)" stroke="#1f7a52" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="1" width="20" height="6" rx="1.6"/>
+    <circle cx="17.3" cy="4" r="0.9" fill="#1f7a52" stroke="none"/>
+    <rect x="2" y="9" width="20" height="6" rx="1.6"/>
+    <circle cx="17.3" cy="12" r="0.9" fill="#1f7a52" stroke="none"/>
+    <rect x="2" y="17" width="20" height="6" rx="1.6"/>
+    <circle cx="17.3" cy="20" r="0.9" fill="#1f7a52" stroke="none"/>
+  </g>
+  <text x="890" y="142" text-anchor="middle" font-size="18" font-weight="700" fill="#1e2433">adaguc-server</text>
+  <text x="890" y="163" text-anchor="middle" font-size="12" fill="#8992a6">python_fastapi_server/main.py (uvicorn)</text>
+  <line x1="724" y1="184" x2="1056" y2="184" stroke="#dcf2e6" stroke-width="1.5"/>
+
+  <!-- step connectors -->
+  <line x1="740" y1="325" x2="740" y2="345" stroke="#bfe6d2" stroke-width="2"/>
+  <line x1="740" y1="435" x2="740" y2="455" stroke="#bfe6d2" stroke-width="2"/>
+
+  <!-- step 1 -->
+  <g filter="url(#cardShadow)">
+    <rect x="724" y="205" width="332" height="120" rx="12" fill="#fbfffd" stroke="#dcf2e6" stroke-width="1.3"/>
+  </g>
+  <rect x="724" y="205" width="5" height="120" rx="2.5" fill="#1f7a52"/>
+  <circle cx="752" cy="231" r="15" fill="#1f7a52"/>
+  <text x="752" y="236" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">1</text>
+  <text x="776" y="236" font-size="13.5" font-weight="700" fill="#1e2433">ForwardedHostAndPrefixMiddleware</text>
+  <text x="752" y="266" font-size="11.8" fill="#525a6c">Is the proxy IP trusted?</text>
+  <text x="752" y="284" font-size="11.8" fill="#525a6c" font-family="monospace">ADAGUC_TRUSTED_PROXIES</text>
+  <text x="752" y="308" font-size="11.8" fill="#525a6c">Rewrites Host from the X-Forwarded-* headers</text>
+
+  <!-- step 2 -->
+  <g filter="url(#cardShadow)">
+    <rect x="724" y="345" width="332" height="90" rx="12" fill="#fbfffd" stroke="#dcf2e6" stroke-width="1.3"/>
+  </g>
+  <rect x="724" y="345" width="5" height="90" rx="2.5" fill="#1f7a52"/>
+  <circle cx="752" cy="371" r="15" fill="#1f7a52"/>
+  <text x="752" y="376" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">2</text>
+  <text x="776" y="376" font-size="13.5" font-weight="700" fill="#1e2433">TrustedHostMiddleware</text>
+  <text x="752" y="406" font-size="11.8" fill="#525a6c">Is the resulting Host allowed?</text>
+  <text x="752" y="424" font-size="11.8" fill="#525a6c" font-family="monospace">ADAGUC_TRUSTED_HOSTS</text>
+
+  <!-- step 3 -->
+  <g filter="url(#cardShadow)">
+    <rect x="724" y="455" width="332" height="90" rx="12" fill="#fbfffd" stroke="#dcf2e6" stroke-width="1.3"/>
+  </g>
+  <rect x="724" y="455" width="5" height="90" rx="2.5" fill="#1f7a52"/>
+  <circle cx="752" cy="481" r="15" fill="#1f7a52"/>
+  <text x="752" y="486" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">3</text>
+  <text x="776" y="486" font-size="13.5" font-weight="700" fill="#1e2433">GetCapabilities &#183; EDR &#183; Features</text>
+  <text x="752" y="516" font-size="11.8" fill="#525a6c">Writes the Host into every</text>
+  <text x="752" y="534" font-size="11.8" fill="#525a6c">OnlineResource URL it returns</text>
+
+  <!-- ===== connecting arrows ===== -->
+  <line x1="220" y1="312" x2="314" y2="312" stroke="#64748b" stroke-width="2" marker-end="url(#arrowSlate)"/>
+  <rect x="226" y="294" width="82" height="20" rx="10" fill="#eef1f7"/>
+  <text x="267" y="308" text-anchor="middle" font-size="10.5" fill="#4b5568" font-family="monospace">/wms (https)</text>
+
+  <line x1="600" y1="312" x2="694" y2="312" stroke="#64748b" stroke-width="2" marker-end="url(#arrowSlate)"/>
+  <rect x="604" y="294" width="86" height="20" rx="10" fill="#eef1f7"/>
+  <text x="647" y="308" text-anchor="middle" font-size="10.5" fill="#4b5568" font-family="monospace">:8080/wms</text>
+
+  <!-- ===== EXTERNALADDRESS bypass note ===== -->
+  <g filter="url(#cardShadow)">
+    <rect x="40" y="498" width="560" height="86" rx="14" fill="#fff5f5" stroke="#f3c2c2" stroke-width="1.5" stroke-dasharray="5,4"/>
+  </g>
+  <circle cx="76" cy="541" r="18" fill="#ffe7e7"/>
+  <path d="M69 528 L61 544 L70 544 L66 558 L78 540 L69 540 Z" fill="#b23b3b" transform="translate(0,-2)"/>
+  <text x="104" y="531" font-size="13" font-weight="700" fill="#8a2323">EXTERNALADDRESS set?</text>
+  <text x="104" y="551" font-size="11.5" fill="#8a3d3d">Then none of the above runs &#8212; the fixed value is always used as-is</text>
+  <text x="104" y="568" font-size="11.5" fill="#8a3d3d">for the OnlineResource, and the X-Forwarded-* headers are ignored.</text>
+</svg>
