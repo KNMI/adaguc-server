@@ -335,6 +335,26 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     }
   }
 
+  // Legacy ContourIntervalL/H auto-generate a thin/bold contour-line tier each, as CImgWarpBilinear did.
+  if ((this->renderMethod & (RM_SHADED | RM_CONTOUR)) != 0) {
+    if (this->contourIntervalH > 0) {
+      CServerConfig::XMLE_ContourLine bigInterval;
+      bigInterval.attr.width = "1.4";
+      bigInterval.attr.linecolor = "#000000";
+      bigInterval.attr.textcolor = "#000000";
+      bigInterval.attr.interval = CT::printf("%0.12f", this->contourIntervalH);
+      this->contourLines.push_back(bigInterval);
+    }
+    if (this->contourIntervalL > 0) {
+      CServerConfig::XMLE_ContourLine smallInterval;
+      smallInterval.attr.width = "0.35";
+      smallInterval.attr.linecolor = "#000000";
+      smallInterval.attr.textcolor = "#000000";
+      smallInterval.attr.interval = CT::printf("%0.12f", this->contourIntervalL);
+      this->contourLines.push_back(smallInterval);
+    }
+  }
+
   return 0;
 }
 

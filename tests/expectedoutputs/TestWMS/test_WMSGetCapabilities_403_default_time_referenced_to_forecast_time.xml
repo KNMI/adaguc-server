@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.tests.403_default_time_referenced_to_forecast_time</Title>
 <CRS>CRS:84</CRS>

@@ -1,5 +1,10 @@
 **Version 9.2.0**
 
+- `CImgWarpBilinear` is removed. The keywords `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` still work: the generic warper emulates them. New configs use `RenderMethod` `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md). Test datasets and docs are migrated, with one style per name in GetCapabilities. Legacy output is pinned by `TestsForLegacyBilinearRender`.
+- Fixed legacy `barb`/`vector`/`thin`-only styles painting the whole field under the symbols. They now draw only the symbols.
+- Fixed a crash when drawing contour lines without a `WMS`/`ContourFont` configuration. Contour labels now use the same font lookup as legends, so a `ContourFont` in a dataset is honoured.
+- Fixed triangle drawing issue: translucent colors were blended twice at the shared edges of grid cells. Pixels now belong to exactly one triangle.
+- Faster warping of large grids: quads are culled and rounded once, and tiny quads are skipped early.
 - Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
 
 **Version 9.1.0**
@@ -7,6 +12,7 @@
 - Security fix: removed the WMS `SLD` parameter and the INSPIRE CSW metadata lookup, which let the server be made to issue outbound HTTP requests to arbitrary URLs (SSRF). `CHTTPTools`, `CSLD` and `CInspire` have been removed; the server no longer makes any outbound network calls on its own.
 - Security fix: `AutoResource`'s `enableautoopendap` option (fetching an arbitrary external OPeNDAP/HTTP(S) URL via the `source=` parameter) is removed for the same SSRF reason. `source=` still works for local files via `enablelocalfile`.
 - Security fix: dimension values (e.g. `TIME=`) are now escaped before being used in SQL queries, closing a SQL injection; the `JSONP=` callback parameter is now restricted to a safe identifier charset.
+- Added a migration tutorial for deprecated `RenderMethod` keywords and keyword lists: [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md)
 - `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
 - Faster rendering with the generic renderer: the per-pixel draw callback is now a template parameter instead of a `std::function`, letting the compiler inline it into the pixel and triangle-fill loops. Speedup grows with image size and contour density - e.g. a 144 megapixel image with shaded contours renders about 8.5% faster. The output is unchanged.
 - Faster WebP encoding: lossy output now imports as YUVA instead of ARGB, which is faster to encode

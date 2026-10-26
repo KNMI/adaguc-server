@@ -4,7 +4,7 @@
 #include <CServerError.h>
 #include <CAutoResource.h>
 
-int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
+int getDatasetFromQueryString(CServerParams &srvParam) {
   const char *pszQueryString = getenv("QUERY_STRING");
   if (pszQueryString != nullptr) {
     std::string queryString(pszQueryString);
@@ -34,14 +34,6 @@ int getDatasetAndSldFromQueryString(CServerParams &srvParam) {
         }
       }
 
-      // The SLD parameter used to fetch a styling document from an arbitrary,
-      // client-supplied URL. This has been removed: it let a client make the
-      // server issue HTTP requests to any host it chose (SSRF). Reject it
-      // explicitly rather than silently ignoring it.
-      if (value0Cap == "SLD") {
-        setExceptionType(ServiceExceptionType::UnprocessableEntity);
-        return 1;
-      }
     }
   }
   return 0;
