@@ -30,11 +30,31 @@ RUN apt-get -q -y update \
     udunits-bin \
     g++ \
     m4 \
-    netcdf-bin \
-    libnetcdf-dev \
     libhdf5-dev \
     libproj-dev \
     libgdal-dev \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Debian's packaged netcdf-c (trixie ships >=4.9.1) reads the ENTIRE file on every
+# nc_open(), even just to check the magic number, for any file < 4MB. Rebuild the
+# Debian package with a one-line fix for this, reported upstream. See
+# Docker/patches/netcdf-c-fix-readfileF-overread.patch for details.
+COPY Docker/patches/netcdf-c-fix-readfileF-overread.patch /tmp/
+RUN sed -i '1s/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -q -y update \
+    && apt-get -q -y install --no-install-recommends dpkg-dev quilt \
+    && apt-get -q -y build-dep netcdf \
+    && mkdir -p /tmp/netcdf-build && cd /tmp/netcdf-build \
+    && apt-get -q source netcdf \
+    && cd netcdf-*/ \
+    && patch -p1 < /tmp/netcdf-c-fix-readfileF-overread.patch \
+    && dpkg-buildpackage -us -uc -b -j"$(nproc)" \
+    && mkdir -p /adaguc/netcdf-debs \
+    && cp /tmp/netcdf-build/*.deb /adaguc/netcdf-debs/ \
+    && cd / && rm -rf /tmp/netcdf-build /tmp/netcdf-c-fix-readfileF-overread.patch \
+    && apt-get -q -y install --allow-downgrades /adaguc/netcdf-debs/libnetcdf22_*.deb /adaguc/netcdf-debs/libnetcdf-dev_*.deb /adaguc/netcdf-debs/netcdf-bin_*.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -67,7 +87,6 @@ RUN apt-get -q -y update \
     && apt-get -q -y install \
     postgresql-client \
     udunits-bin \
-    netcdf-bin \
     libcairo2 \
     libgdal-dev \
     libcurl4-openssl-dev \
@@ -79,6 +98,14 @@ RUN apt-get -q -y update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install the netcdf-c build patched against the full-file-read-on-open regression
+# (see build stage above and Docker/patches/netcdf-c-fix-readfileF-overread.patch).
+COPY --from=build /adaguc/netcdf-debs /tmp/netcdf-debs
+RUN apt-get -q -y update \
+    && apt-get -q -y install --allow-downgrades /tmp/netcdf-debs/libnetcdf22_*.deb /tmp/netcdf-debs/netcdf-bin_*.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/netcdf-debs
 
 WORKDIR /adaguc/adaguc-server-master
 
