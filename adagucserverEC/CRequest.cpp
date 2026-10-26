@@ -37,7 +37,6 @@ static const bool CREQUEST_DEBUG = false;
 #include "CNetCDFDataWriter.h"
 #include "CConvertGeoJSON.h"
 #include "CCreateScaleBar.h"
-#include "CSLD.h"
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
@@ -201,6 +200,272 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
   return queryDimValuesForDataSource(dataSource, srvParam);
 };
 
+/** Initializes a required dimension's names and visibility from the layer configuration. */
+static COGCDims makeRequiredDim(const CServerConfig::XMLE_Dimension &dimension) {
+  COGCDims dim;
+  dim.name = CT::toLowerCase(dimension.elementValue);
+  dim.netCDFDimName = dimension.attr.name;
+  dim.hidden = dimension.attr.hidden;
+  return dim;
+}
+
+/** Resolves omitted dimensions using defaults compatible with the selected coordinates. */
+int fillUnspecifiedDims(CDataSource *dataSource, CServerParams *srvParam) {
+  for (const auto &dimension: dataSource->cfgLayer->Dimension) {
+    std::string dimName = CT::toLowerCase(dimension.elementValue);
+
+    const bool alreadyAdded = std::any_of(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [&dimName](const auto &requiredDim) { return requiredDim.name == dimName; });
+    if (alreadyAdded) continue;
+
+    std::string netCDFDimName(dimension.attr.name);
+    if (netCDFDimName == "none") {
+      continue;
+    }
+    /* A dimension where the default value is set to filetimedate should not be queried from the db */
+    if (dimension.attr.defaultV == "filetimedate") {
+      continue;
+    }
+    std::string tableName;
+    const auto &filepath = dataSource->cfgLayer->FilePath[0];
+    try {
+      tableName = CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(filepath.elementValue, filepath.attr.filter, netCDFDimName.c_str(), dataSource);
+    } catch (int e) {
+      CDBError("Unable to create tableName from '%s' '%s' '%s'", filepath.elementValue.c_str(), filepath.attr.filter.c_str(), netCDFDimName.c_str());
+      return 1;
+    }
+
+    // Add the undefined dims to the srvParams as additional dims
+    dataSource->requiredDims.push_back(makeRequiredDim(dimension));
+    COGCDims &ogcDim = dataSource->requiredDims.back();
+
+    const bool isReferenceTimeDimension = dimension.elementValue == "reference_time";
+
+    CDBStore::Store *defaultStore = NULL;
+    if (!isReferenceTimeDimension) {
+      // Resolve each omitted coordinate within the files matching the other selected dimensions.
+      // Newly resolved defaults constrain subsequent dimensions, keeping the combination compatible.
+      const bool minimum = dimension.attr.defaultV == "min";
+      defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getDefaultDimensionValue(dataSource, netCDFDimName, minimum);
+    } else {
+      // Try to find a reference time closest to the given time value?
+
+      // The current time is:
+      std::string timeValue;
+      std::string netcdfTimeDimName;
+      for (const auto &requiredDim: dataSource->requiredDims) {
+        if (requiredDim.name == "time") {
+          timeValue = requiredDim.value;
+          netcdfTimeDimName = requiredDim.netCDFDimName;
+          break;
+        }
+      }
+      if (timeValue.empty()) {
+        defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dimension.attr.name.c_str(), tableName.c_str());
+      } else {
+        // TIME is set! Get
+
+        std::string timeTableName;
+        try {
+          timeTableName = CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(filepath.elementValue, filepath.attr.filter, netcdfTimeDimName.c_str(), dataSource);
+        } catch (int e) {
+          CDBError("Unable to create tableName from '%s' '%s' '%s'", filepath.elementValue.c_str(), filepath.attr.filter.c_str(), netcdfTimeDimName.c_str());
+          return 1;
+        }
+
+        defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim.netCDFDimName.c_str(), netcdfTimeDimName.c_str(), timeValue.c_str(), timeTableName.c_str(), tableName.c_str());
+      }
+    }
+
+    if (defaultStore == NULL || defaultStore->records.empty()) {
+      delete defaultStore;
+      CDBError("No matching dimension values for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
+      throw ServiceExceptionType::InvalidDimensionValue;
+    }
+    ogcDim.value = defaultStore->records[0].get(0);
+
+    delete defaultStore;
+  }
+  return 0;
+}
+
+/** Normalizes a requested time value and applies configured time quantization. */
+static int normalizeRequestedTime(COGCDims &ogcDim, const CServerConfig::XMLE_Dimension &dimension, const CDataSource *dataSource) {
+  // Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
+  if (ogcDim.value.length() > 10 && ogcDim.value.at(10) == 'T') {
+    if (ogcDim.value.length() == 19) {
+      ogcDim.value += 'Z';
+    }
+
+    /* Try to make sense of other timestrings as well */
+    if (CT::indexOf(ogcDim.value, "/") == -1 && CT::indexOf(ogcDim.value, ",") == -1) {
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
+      }
+
+      try {
+        CTime *ctime = CTime::GetCTimeEpochInstance();
+        if (ctime == nullptr) {
+          CDBError("Unable to get time instance");
+          return 1;
+        }
+        double currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim.value.c_str()));
+        auto currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
+        ogcDim.value = currentDateConverted;
+      } catch (int e) {
+        CDBDebug("Unable to convert '%s' to epoch", ogcDim.value.c_str());
+        return 1;
+      }
+      if (CREQUEST_DEBUG) {
+        CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
+      }
+    }
+  }
+  // If we have a dimension value quantizer adjust the value accordingly
+  if (!dimension.attr.quantizeperiod.empty()) {
+    CDBDebug("For dataSource %s found quantizeperiod %s", dataSource->layerName.c_str(), dimension.attr.quantizeperiod.c_str());
+    std::string quantizemethod = "round";
+    std::string quantizeperiod = dimension.attr.quantizeperiod;
+    if (!dimension.attr.quantizemethod.empty()) {
+      quantizemethod = dimension.attr.quantizemethod;
+    }
+    // Start time quantization with quantizeperiod and quantizemethod
+    ogcDim.value = CTime::quantizeTimeToISO8601(ogcDim.value, quantizeperiod, quantizemethod);
+  }
+  return 0;
+}
+
+/** Adds explicitly requested dimensions, normalizes times, and resolves "current" values. */
+static int fillRequestedDims(CDataSource *dataSource, CServerParams *srvParam) {
+  /*
+   * Get the number of required dims from the given dims
+   * Check if all dimensions are given
+   */
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Get DIMS from query string");
+  }
+  for (auto &requestDim: srvParam->requestDims) requestDim.name = CT::toLowerCase(requestDim.name);
+
+  const bool hasReferenceTimeDimension = std::ranges::any_of(dataSource->cfgLayer->Dimension, [](const auto &a) { return a.elementValue == "reference_time"; });
+
+  for (auto &dimension: dataSource->cfgLayer->Dimension) {
+    std::string dimName(dimension.elementValue);
+    dimName = CT::toLowerCase(dimName);
+    if (CREQUEST_DEBUG) {
+      CDBDebug("dimName \"%s\"", dimName.c_str());
+    }
+    /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+    if (dimension.attr.defaultV == "filetimedate") continue;
+
+    // Check if this dim is not already added
+    const bool alreadyAdded = std::ranges::any_of(dataSource->requiredDims, [&dimName](const auto &requiredDim) { return requiredDim.name == dimName; });
+    if (alreadyAdded) continue;
+
+    const auto requestDimIt = std::ranges::find_if(srvParam->requestDims, [&dimName](const auto &requestDim) { return requestDim.name == dimName; });
+    if (requestDimIt == srvParam->requestDims.end()) continue;
+    const auto &requestDim = *requestDimIt;
+
+    if (CREQUEST_DEBUG) {
+      CDBDebug("DIM COMPARE: %s==%s", requestDim.name.c_str(), dimName.c_str());
+    }
+
+    // This dimension has been specified in the request, so the dimension has been found:
+
+    dataSource->requiredDims.push_back(makeRequiredDim(dimension));
+    COGCDims &ogcDim = dataSource->requiredDims.back();
+    ogcDim.value = requestDim.value;
+    ogcDim.queryValue = requestDim.value;
+
+    if (ogcDim.name == "time" || ogcDim.name == "reference_time") {
+      const int status = normalizeRequestedTime(ogcDim, dimension, dataSource);
+      if (status != 0) return status;
+    }
+
+    if (ogcDim.value != "current") continue;
+
+    std::string tableName;
+    const auto &filepath = dataSource->cfgLayer->FilePath[0];
+    try {
+      tableName = CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(filepath.elementValue, filepath.attr.filter, ogcDim.netCDFDimName.c_str(), dataSource);
+    } catch (int e) {
+      CDBError("Unable to create tableName from '%s' '%s' '%s'", filepath.elementValue.c_str(), filepath.attr.filter.c_str(), ogcDim.netCDFDimName.c_str());
+      return 1;
+    }
+
+    // Models use the time closest to the system clock; other cases use the maximum coordinate.
+    const bool useNearestTime = hasReferenceTimeDimension && dimension.elementValue == "time";
+    CDBStore::Store *defaultStore = NULL;
+    if (useNearestTime) {
+      defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
+    } else {
+      defaultStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
+    }
+    if (defaultStore == NULL) {
+      // Preserve the existing distinction between observation and model errors.
+      if (!hasReferenceTimeDimension) {
+        CDBError("Unable to get max dimension value");
+        return 1;
+      }
+      CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
+      throw ServiceExceptionType::InvalidDimensionValue;
+    }
+    ogcDim.value = defaultStore->records[0].get(0);
+    delete defaultStore;
+    if (useNearestTime) {
+      CDBDebug("%s %s", ogcDim.netCDFDimName.c_str(), ogcDim.value.c_str());
+    }
+  }
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Get DIMS from query string ready");
+  }
+  return 0;
+}
+
+/** Applies configured fixed coordinates before resolving defaults for omitted dimensions. */
+static void applyFixedDims(CDataSource *dataSource) {
+  // Apply all fixed coordinates before resolving defaults that depend on them.
+  // Add omitted fixed dimensions here as well, regardless of configuration order.
+  for (const auto &cfgDim: dataSource->cfgLayer->Dimension) {
+    if (cfgDim.attr.fixvalue.empty() || cfgDim.attr.name == "none" || cfgDim.attr.defaultV == "filetimedate") continue;
+    const std::string dimName = CT::toLowerCase(cfgDim.elementValue);
+    auto requiredDim = std::ranges::find_if(dataSource->requiredDims, [&dimName](const auto &dim) { return dim.name == dimName; });
+    if (requiredDim == dataSource->requiredDims.end()) {
+      dataSource->requiredDims.push_back(makeRequiredDim(cfgDim));
+      requiredDim = dataSource->requiredDims.end() - 1;
+    }
+    CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), cfgDim.attr.fixvalue.c_str());
+    requiredDim->value = cfgDim.attr.fixvalue;
+    requiredDim->hasFixedValue = true;
+  }
+}
+
+/** Normalizes selected timestamps and validates each value in time dimensions. */
+static void normalizeAndValidateTimeDims(CDataSource *dataSource) {
+  if (CREQUEST_DEBUG) {
+    CDBDebug("Fix found time values");
+  }
+
+  for (auto &dim: dataSource->requiredDims) {
+    if (dim.name == "time" || dim.name.ends_with("reference_time")) {
+      dim.isATimeDimension = true;
+      // Database timestamps may use a space and omit the trailing Z.
+      if (dim.value.length() > 12) {
+        if (dim.value.at(10) == ' ') dim.value[10] = 'T';
+        if (dim.value.at(10) == 'T' && dim.value.length() == 19) dim.value += 'Z';
+      }
+    }
+    // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
+    if (!dim.isATimeDimension) continue;
+
+    const auto dimValues = CT::split(dim.value, ",");
+    for (const auto &dimValue: dimValues) {
+      if (!checkTimeFormat(dimValue)) {
+        CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
+        throw ServiceExceptionType::InvalidDimensionValue;
+      }
+    }
+  }
+}
+
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
   StopWatch_Measure("### [fillDimValuesForDataSource]");
@@ -218,307 +483,16 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
 
     dataSource->timeSteps.clear();
-    /*
-     * Get the number of required dims from the given dims
-     * Check if all dimensions are given
-     */
-    if (CREQUEST_DEBUG) {
-      CDBDebug("Get DIMS from query string");
-    }
-    for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k].name = CT::toLowerCase(srvParam->requestDims[k].name);
+    status = fillRequestedDims(dataSource, srvParam);
+    if (status != 0) return status;
 
-    bool hasReferenceTimeDimension = false;
-    auto it = std::find_if(dataSource->cfgLayer->Dimension.begin(), dataSource->cfgLayer->Dimension.end(), [](const auto a) { return "reference_time" == a.elementValue; });
-    if (it != dataSource->cfgLayer->Dimension.end()) {
-      hasReferenceTimeDimension = true;
-    }
-
-    for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      std::string dimName(dataSource->cfgLayer->Dimension[i].elementValue);
-      dimName = CT::toLowerCase(dimName);
-      if (CREQUEST_DEBUG) {
-        CDBDebug("dimName \"%s\"", dimName.c_str());
-      }
-      // Check if this dim is not already added
-      bool alreadyAdded = false;
-
-      /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
-      if (dataSource->cfgLayer->Dimension[i].attr.defaultV == "filetimedate") {
-        alreadyAdded = true;
-      }
-
-      for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
-        if (dataSource->requiredDims[l].name == dimName.c_str()) {
-          alreadyAdded = true;
-          break;
-        }
-      }
-
-      if (CREQUEST_DEBUG) {
-        CDBDebug("alreadyAdded = %d", alreadyAdded);
-      }
-      if (alreadyAdded == false) {
-        for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
-          if (srvParam->requestDims[k].name == dimName.c_str()) {
-            if (CREQUEST_DEBUG) {
-              CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k].name.c_str(), dimName.c_str());
-            }
-
-            // This dimension has been specified in the request, so the dimension has been found:
-
-            dataSource->requiredDims.push_back(COGCDims());
-            COGCDims &ogcDim = dataSource->requiredDims.back();
-            ogcDim.name = dimName;
-            ogcDim.value = srvParam->requestDims[k].value;
-            ogcDim.queryValue = srvParam->requestDims[k].value;
-            ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[i].attr.name;
-            ogcDim.hidden = dataSource->cfgLayer->Dimension[i].attr.hidden;
-
-            if (ogcDim.name == "time" || ogcDim.name == "reference_time") {
-              // Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
-              if (ogcDim.value.length() > 10 && ogcDim.value.at(10) == 'T') {
-                if (ogcDim.value.length() == 19) {
-                  ogcDim.value += "Z";
-                }
-
-                /* Try to make sense of other timestrings as well */
-                if (CT::indexOf(ogcDim.value, "/") == -1 && CT::indexOf(ogcDim.value, ",") == -1) {
-                  if (CREQUEST_DEBUG) {
-                    CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
-                  }
-
-                  try {
-                    CTime *ctime = CTime::GetCTimeEpochInstance();
-                    if (ctime == nullptr) {
-                      CDBError("Unable to get time instance");
-                      return 1;
-                    }
-                    double currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim.value.c_str()));
-                    auto currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
-                    ogcDim.value = currentDateConverted;
-                  } catch (int e) {
-                    CDBDebug("Unable to convert '%s' to epoch", ogcDim.value.c_str());
-                    return 1;
-                  }
-                  if (CREQUEST_DEBUG) {
-                    CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
-                  }
-                }
-              }
-              // If we have a dimension value quantizer adjust the value accordingly
-              if (!dataSource->cfgLayer->Dimension[i].attr.quantizeperiod.empty()) {
-                CDBDebug("For dataSource %s found quantizeperiod %s", dataSource->layerName.c_str(), dataSource->cfgLayer->Dimension[i].attr.quantizeperiod.c_str());
-                std::string quantizemethod = "round";
-                std::string quantizeperiod = dataSource->cfgLayer->Dimension[i].attr.quantizeperiod;
-                if (!dataSource->cfgLayer->Dimension[i].attr.quantizemethod.empty()) {
-                  quantizemethod = dataSource->cfgLayer->Dimension[i].attr.quantizemethod;
-                }
-                // Start time quantization with quantizeperiod and quantizemethod
-                ogcDim.value = CTime::quantizeTimeToISO8601(ogcDim.value, quantizeperiod, quantizemethod);
-              }
-            }
-
-            // If we have value 'current', give the dim a special status
-            if (ogcDim.value == "current") {
-              std::string tableName;
-
-              try {
-                tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                                ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, ogcDim.netCDFDimName.c_str(),
-                                                                        dataSource);
-              } catch (int e) {
-                CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter.c_str(),
-                         ogcDim.netCDFDimName.c_str());
-                return 1;
-              }
-
-              if (hasReferenceTimeDimension == false) {
-
-                // For observations, take the latest:
-                CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
-                if (maxStore == NULL) {
-                  CDBError("Unable to get max dimension value");
-                  return 1;
-                }
-                ogcDim.value = maxStore->records[0].get(0);
-                delete maxStore;
-              } else {
-                // For models with a reference_time, select the nearest time to current system clock
-
-                // For time:
-                if (dataSource->cfgLayer->Dimension[i].elementValue == ("time")) {
-                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
-
-                  if (maxStore == NULL) {
-                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
-                    throw ServiceExceptionType::InvalidDimensionValue;
-                  }
-                  ogcDim.value = maxStore->records[0].get(0);
-
-                  delete maxStore;
-                  CDBDebug("%s %s", ogcDim.netCDFDimName.c_str(), ogcDim.value.c_str());
-                } else {
-                  // For other dimensions than time take the latest
-                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
-                  if (maxStore == NULL) {
-                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
-                    throw ServiceExceptionType::InvalidDimensionValue;
-                  }
-                  ogcDim.value = maxStore->records[0].get(0);
-                  delete maxStore;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    if (CREQUEST_DEBUG) {
-      CDBDebug("Get DIMS from query string ready");
-    }
+    applyFixedDims(dataSource);
 
     /* Fill in the undefined dims */
+    int status = fillUnspecifiedDims(dataSource, srvParam);
+    if (status != 0) return status;
 
-    for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      std::string dimName(dataSource->cfgLayer->Dimension[i].elementValue);
-      dimName = CT::toLowerCase(dimName);
-      bool alreadyAdded = false;
-
-      for (size_t k = 0; k < dataSource->requiredDims.size(); k++) {
-        if (dataSource->requiredDims[k].name == dimName.c_str()) {
-          alreadyAdded = true;
-          break;
-        }
-      }
-      if (alreadyAdded == false) {
-        std::string netCDFDimName(dataSource->cfgLayer->Dimension[i].attr.name);
-        if (netCDFDimName == "none") {
-          continue;
-        }
-        /* A dimension where the default value is set to filetimedate should not be queried from the db */
-        if (dataSource->cfgLayer->Dimension[i].attr.defaultV == "filetimedate") {
-          continue;
-        }
-        std::string tableName;
-        try {
-          tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, netCDFDimName.c_str(), dataSource);
-        } catch (int e) {
-          CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter.c_str(),
-                   netCDFDimName.c_str());
-          return 1;
-        }
-
-        // Add the undefined dims to the srvParams as additional dims
-        dataSource->requiredDims.push_back(COGCDims());
-        COGCDims &ogcDim = dataSource->requiredDims.back();
-        ogcDim.name = dimName;
-        ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[i].attr.name;
-        ogcDim.hidden = dataSource->cfgLayer->Dimension[i].attr.hidden;
-
-        bool isReferenceTimeDimension = false;
-        if (dataSource->cfgLayer->Dimension[i].elementValue == ("reference_time")) {
-          isReferenceTimeDimension = true;
-        }
-
-        CDBStore::Store *maxStore = NULL;
-        if (!isReferenceTimeDimension) {
-          // Try to find the max value for this dim name from the database
-          maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dataSource->cfgLayer->Dimension[i].attr.name.c_str(), tableName.c_str());
-        } else {
-          // Try to find a reference time closest to the given time value?
-
-          // The current time is:
-          std::string timeValue;
-          std::string netcdfTimeDimName;
-          for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-            if (dataSource->requiredDims[j].name == "time") {
-              timeValue = dataSource->requiredDims[j].value;
-              netcdfTimeDimName = dataSource->requiredDims[j].netCDFDimName;
-              break;
-            }
-          }
-          if (timeValue.empty()) {
-            maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dataSource->cfgLayer->Dimension[i].attr.name.c_str(), tableName.c_str());
-          } else {
-            // TIME is set! Get
-
-            std::string timeTableName;
-            try {
-              timeTableName =
-                  CDBFactory::getDBAdapter(srvParam->cfg)
-                      ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, netcdfTimeDimName.c_str(), dataSource);
-            } catch (int e) {
-              CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), dataSource->cfgLayer->FilePath[0].attr.filter.c_str(),
-                       netcdfTimeDimName.c_str());
-              return 1;
-            }
-
-            maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim.netCDFDimName.c_str(), netcdfTimeDimName.c_str(), timeValue.c_str(), timeTableName.c_str(), tableName.c_str());
-
-            //
-          }
-        }
-
-        if (maxStore == NULL) {
-          CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0].elementValue.c_str());
-          throw ServiceExceptionType::InvalidDimensionValue;
-        }
-        ogcDim.value = maxStore->records[0].get(0);
-
-        delete maxStore;
-      }
-    }
-
-    if (CREQUEST_DEBUG) {
-      CDBDebug("Fix found time values:");
-    }
-    // Fix found time values which are retrieved from the database
-    for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-      if (dataSource->requiredDims[i].name == "time" || dataSource->requiredDims[i].name.ends_with("reference_time")) {
-        dataSource->requiredDims[i].isATimeDimension = true;
-        if (dataSource->requiredDims[i].value.length() > 12) {
-          if (dataSource->requiredDims[i].value.at(10) == ' ') {
-            dataSource->requiredDims[i].value[10] = 'T';
-          }
-          if (dataSource->requiredDims[i].value.at(10) == 'T') {
-            if (dataSource->requiredDims[i].value.length() == 19) {
-              dataSource->requiredDims[i].value += "Z";
-            }
-          }
-        }
-      }
-    }
-    // Check and set value when the value is forced in the layer dimension configuration
-    for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
-      if (!dataSource->cfgLayer->Dimension[i].attr.fixvalue.empty()) {
-        std::string dimName(dataSource->cfgLayer->Dimension[i].elementValue);
-        std::string fixedValue = dataSource->cfgLayer->Dimension[i].attr.fixvalue;
-        dimName = CT::toLowerCase(dimName);
-        for (auto &requiredDim: dataSource->requiredDims) {
-          if (requiredDim.name == dimName.c_str()) {
-            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim.value.c_str(), fixedValue.c_str());
-            requiredDim.value = fixedValue;
-            requiredDim.hasFixedValue = true;
-            break;
-          }
-        }
-      }
-    }
-
-    // Check if requested time dimensions use valid characters
-    for (auto &dim: dataSource->requiredDims) {
-      // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
-      if (!dim.isATimeDimension) continue;
-
-      auto dimValues = CT::split(dim.value, ",");
-      for (auto &dimValue: dimValues) {
-        if (!checkTimeFormat(dimValue)) {
-          CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
-          throw ServiceExceptionType::InvalidDimensionValue;
-        }
-      }
-    }
+    normalizeAndValidateTimeDims(dataSource);
 
     // STOP NOW
   } catch (int i) {
@@ -538,21 +512,16 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
     CDBDebug("### [</fillDimValuesForDataSource>]");
   }
-  bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
-  for (const auto &requiredDim: dataSource->requiredDims) {
-    if (!requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue) {
-      allNonFixedDimensionsAreAsRequestedInQueryString = false;
-    }
-  }
 
-  if (allNonFixedDimensionsAreAsRequestedInQueryString) {
-    srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
-  } else {
-    srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
-  }
+  // Use a short cache lifetime when a non-fixed dimension was resolved to a value different from the request.
+  const bool hasNonFixedDimensionChanges =
+      std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) { return !requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue; });
+  const auto cacheControlOption = hasNonFixedDimensionChanges ? CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE : CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE;
+  srvParam->setCacheControlOption(cacheControlOption);
 
   return 0;
 }
+
 int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
   try {
@@ -1185,7 +1154,7 @@ int CRequest::process_querystring() {
         }
       }
 
-      // Opendap source parameter
+      // Local file source parameter
       if (dFound_autoResourceLocation == 0) {
         if (uriKeyUpperCase == "SOURCE") {
           if (srvParam->autoResourceLocation.empty()) {
@@ -1296,7 +1265,15 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase == "JSONP") {
         if (dFound_JSONP == 0) {
           if (uriValue.length() > 1) {
-            srvParam->JSONP = uriValue;
+            // The JSONP value is reflected verbatim into the response body as a JS function call: restrict to a
+            // safe identifier charset so it cannot be used to inject arbitrary script/HTML content.
+            if (checkForValidTokens(uriValue, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$.") == false) {
+              CDBError("ADAGUC Server: JSONP callback name contains invalid characters");
+              dErrorOccured = 1;
+              setExceptionType(ServiceExceptionType::UnprocessableEntity);
+            } else {
+              srvParam->JSONP = uriValue;
+            }
             dFound_JSONP = 1;
           }
         } else {
@@ -1892,6 +1869,7 @@ int CRequest::process_querystring() {
       return CHandleMetadata().process(srvParam);
     }
   }
+
   // An error occured, stopping..
   if (dErrorOccured == 1) {
     return 1;

@@ -26,7 +26,8 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
     <ShadeInterval min="102.00" max="108.00" label="Astronomical Twilight (102–108°)" fillcolor="#333333"/>
     <ShadeInterval min="108.00" max="180.00" label="Night (108–180°)" fillcolor="#000000"/>
 
-    <RenderMethod>shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
 
   </Style>
 

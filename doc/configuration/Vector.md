@@ -149,7 +149,9 @@ For discs the options are currently limited to linewidth, textcolor and fontsize
     <Min>0</Min>
     <Max>10000</Max>
     <Thinning radius="40"/>
-    <RenderMethod>barb,barbthin</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings drawgrid="false"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
     <Point pointstyle="point" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#00000060" discradius="20" dot="true" fontsize="10" textformat="%1.0f"/>
     <Vector vectorstyle="disc" linewidth="1.0" linecolor="#00FF00FF"/>
  </Style>

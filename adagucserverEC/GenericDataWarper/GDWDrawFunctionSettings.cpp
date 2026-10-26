@@ -38,11 +38,10 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   size_t numColorsToCopy = std::min(styleConfiguration->colors.size(), sizeof(settings.clegend) / sizeof(settings.clegend[0]));
   std::copy(styleConfiguration->colors.begin(), styleConfiguration->colors.begin() + numColorsToCopy, std::begin(settings.clegend));
 
-  // Legacy render methods can list several keywords on one style (e.g. "nearest,bilinear,shadedcontour").
-  bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
+  const bool isLegacyStyle = isLegacyRenderMethod(styleConfiguration->renderMethod);
 
-  if (isLegacyRenderMethod) {
-    // CImgWarpBilinear always sampled smooth, and only painted colors for bilinear/shaded, not contour-only.
+  if (isLegacyStyle) {
+    // CImgWarpBilinear always sampled smooth; painted colors only for bilinear/shaded.
     settings.interpolationMethod = InterpolationMethodBilinear;
     settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
   }
@@ -71,14 +70,10 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
   /* Check the if we want to use discrete type */
 
-  // For the generic renderer and when shadeinterval is set, always apply shading. For a legacy
-  // style, only the "shaded" keyword should turn shading on.
-  if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
-    if (styleConfiguration->renderMethod & RM_SHADED) {
-      settings.isUsingShadeIntervals = true;
-    } else if (styleConfiguration->renderMethod == RM_GENERIC) {
-      settings.isUsingShadeIntervals = true;
-    }
+  // Generic renderer applies shading whenever ShadeInterval is set; legacy only if "shaded" is set.
+  if (!settings.isUsingShadeIntervals && styleConfiguration->shadeIntervals.size() > 0) {
+    const bool isGeneric = (styleConfiguration->renderMethod & RM_GENERIC) != 0 && !isLegacyStyle;
+    settings.isUsingShadeIntervals = (styleConfiguration->renderMethod & RM_SHADED) != 0 || isGeneric;
   }
 
   // Smoothingfilter:
@@ -115,7 +110,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
 
   // For a legacy style, only the "contour" keyword should draw contour lines.
-  if (isLegacyRenderMethod) {
+  if (isLegacyStyle) {
     settings.shouldDrawContours = (styleConfiguration->renderMethod & RM_CONTOUR) != 0;
   } else {
     settings.shouldDrawContours = styleConfiguration->contourLines.size() > 0;

@@ -82,7 +82,7 @@ This requires us to set the `QUERY_STRING` environment variable, so we can profi
 You can use [adaguc-viewer](https://adaguc.knmi.nl/adaguc-viewer/index.html), open your browser's developer tools network tab, perform the request you want to profile, and copy the URL parameters of your request. Set the `QUERY_STRING` to these URL parameters. For example:
 
 ```bash
-export QUERY_STRING="DATASET=mydataset&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=air-temperature-hagl&WIDTH=1008&HEIGHT=995&CRS=EPSG%3a3857&BBOX=-7470893.149487414,703507.8780614401,-5525657.400627586,2623656.26111256&STYLES=temperature%2fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&time=2023-01-26T00%3a00%3a00Z&DIM_forecast_reference_time=2023-01-24T00%3a00%3a00Z&DIM_temp_at_hagl=2"
+export QUERY_STRING="DATASET=mydataset&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=air-temperature-hagl&WIDTH=1008&HEIGHT=995&CRS=EPSG%3a3857&BBOX=-7470893.149487414,703507.8780614401,-5525657.400627586,2623656.26111256&STYLES=temperature%2fgeneric&FORMAT=image/png&TRANSPARENT=TRUE&time=2023-01-26T00%3a00%3a00Z&DIM_forecast_reference_time=2023-01-24T00%3a00%3a00Z&DIM_temp_at_hagl=2"
 ```
 
 If you execute `adagucserver` manually, it will write the (binary) response to the terminal. You can use this to verify if this is the request you want.
