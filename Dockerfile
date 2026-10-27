@@ -37,27 +37,20 @@ RUN apt-get -q -y update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Debian's packaged netcdf-c (trixie ships >=4.9.1) reads the ENTIRE file on every
-# nc_open(), even just to check the magic number, for any file < 4MB. Rebuild the
-# Debian package with a one-line fix for this, reported upstream. See
-# Docker/patches/netcdf-c-fix-readfileF-overread.patch for details.
-COPY Docker/patches/netcdf-c-fix-readfileF-overread.patch /tmp/
-RUN sed -i '1s/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources \
-    && apt-get -q -y update \
-    && apt-get -q -y install --no-install-recommends dpkg-dev quilt \
-    && apt-get -q -y build-dep netcdf \
-    && mkdir -p /tmp/netcdf-build && cd /tmp/netcdf-build \
-    && apt-get -q source netcdf \
-    && cd netcdf-*/ \
-    && patch -p1 < /tmp/netcdf-c-fix-readfileF-overread.patch \
-    && dpkg-buildpackage -us -uc -b -j"$(nproc)" \
-    && mkdir -p /adaguc/netcdf-debs \
-    && cp /tmp/netcdf-build/*.deb /adaguc/netcdf-debs/ \
-    && cd / && rm -rf /tmp/netcdf-build /tmp/netcdf-c-fix-readfileF-overread.patch \
-    && apt-get -q -y install --allow-downgrades /adaguc/netcdf-debs/libnetcdf22_*.deb /adaguc/netcdf-debs/libnetcdf-dev_*.deb /adaguc/netcdf-debs/netcdf-bin_*.deb \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Debian's packaged netcdf-c (trixie ships >=4.9.1) reads the ENTIRE file on every nc_open(),
+# for this, not yet released upstream: https://github.com/Unidata/netcdf-c/pull/3471
+RUN mkdir -p /tmp/netcdf-c \
+    && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/maartenplieger/netcdf-c/archive/refs/heads/3469-fix-nc_open-reads-entire-file.tar.gz', '/tmp/netcdf-c.tar.gz')" \
+    && tar xzf /tmp/netcdf-c.tar.gz -C /tmp/netcdf-c --strip-components=1 \
+    && rm /tmp/netcdf-c.tar.gz \
+    && cmake -S /tmp/netcdf-c -B /tmp/netcdf-c-build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+    -DCMAKE_INSTALL_PREFIX=/opt/netcdf-c \
+    && cmake --build /tmp/netcdf-c-build --parallel "$(nproc)" \
+    && cmake --install /tmp/netcdf-c-build \
+    && rm -rf /tmp/netcdf-c /tmp/netcdf-c-build \
+    && echo /opt/netcdf-c/lib > /etc/ld.so.conf.d/netcdf-c.conf \
+    && ldconfig
+ENV CMAKE_PREFIX_PATH=/opt/netcdf-c
 
 # Install adaguc-server files need for compilation from context
 COPY adagucserverEC /adaguc/adaguc-server-master/adagucserverEC
@@ -99,13 +92,11 @@ RUN apt-get -q -y update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install the netcdf-c build patched against the full-file-read-on-open regression
-# (see build stage above and Docker/patches/netcdf-c-fix-readfileF-overread.patch).
-COPY --from=build /adaguc/netcdf-debs /tmp/netcdf-debs
-RUN apt-get -q -y update \
-    && apt-get -q -y install --allow-downgrades /tmp/netcdf-debs/libnetcdf22_*.deb /tmp/netcdf-debs/netcdf-bin_*.deb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/netcdf-debs
+# Install the netcdf-c build with the full-file-read-on-open fix (see build
+# stage above), registering it with the dynamic linker the same way.
+COPY --from=build /opt/netcdf-c /opt/netcdf-c
+RUN echo /opt/netcdf-c/lib > /etc/ld.so.conf.d/netcdf-c.conf \
+    && ldconfig
 
 WORKDIR /adaguc/adaguc-server-master
 

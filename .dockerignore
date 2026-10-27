@@ -7,7 +7,6 @@
 !Docker/start.sh
 !Docker/adaguc-server-*.sh
 !Docker/baselayers.xml
-!Docker/patches/
 !Docker/run_supervisord.sh
 !Docker/start_autosync.sh
 !Docker/pgbouncer/
