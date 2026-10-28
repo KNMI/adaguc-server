@@ -6,6 +6,8 @@
 - Fixed triangle drawing issue: translucent colors were blended twice at the shared edges of grid cells. Pixels now belong to exactly one triangle.
 - Faster warping of large grids: quads are culled and rounded once, and tiny quads are skipped early.
 - Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
+- Fallback to NetCDF version 4.9.0 because of https://github.com/KNMI/adaguc-server/issues/812
+- New python library versions, bumped Pillow and brotli
 
 **Version 9.1.0**
 
