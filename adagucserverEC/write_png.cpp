@@ -8,8 +8,14 @@
 #include "CStopWatch.h"
 #include "CDrawImage.h"
 
-// Unpremultiplies three channels against the same alpha in one call.
+// Unpremultiplies three channels against the same alpha; alpha 0 and 255 pass through (premultiplied channels are 0 at alpha 0).
 static inline void unpremultiplyRGB(unsigned char c0, unsigned char c1, unsigned char c2, unsigned char a, unsigned char &out0, unsigned char &out1, unsigned char &out2) {
+  if (a == 0 || a == 255) {
+    out0 = c0;
+    out1 = c1;
+    out2 = c2;
+    return;
+  }
   out0 = CDrawImage::unpremultiplyChannel(c0, a);
   out1 = CDrawImage::unpremultiplyChannel(c1, a);
   out2 = CDrawImage::unpremultiplyChannel(c2, a);
@@ -218,14 +224,29 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
     row_ptrs[y] = imageBuffer + (y * width);
   }
 
+  // Runs of identical pixels (e.g. transparent background) reuse the previous index.
+  bool hasPrevious = false;
+  uint32_t previousPixel = 0;
+  unsigned char previousIndex = 0;
+
   for (int y = 0; y < height; y++) {
     unsigned char *dst = row_ptrs[y];
     unsigned char *src = ARGBByteBuffer + (y * stride);
 
     for (int x = 0; x < width; x++, src += 4) {
+      uint32_t pixel;
+      memcpy(&pixel, src, sizeof(pixel));
+      if (hasPrevious && pixel == previousPixel) {
+        *dst++ = previousIndex;
+        continue;
+      }
+      hasPrevious = true;
+      previousPixel = pixel;
+
       uint8_t a = src[3];
 
       if (!use8bitpalAlpha && a <= 64) {
+        previousIndex = 0;
         *dst++ = 0;
         continue;
       }
@@ -240,6 +261,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       // Most images contain many repeated colors, making octree traversal not needed.
       auto &entry = color_lookup[key & 4095];
       if (entry.valid && entry.key == key) {
+        previousIndex = entry.index;
         *dst++ = entry.index;
         continue;
       }
@@ -259,6 +281,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       entry.key = key;
       entry.index = idx;
 
+      previousIndex = idx;
       *dst++ = idx;
     }
   }

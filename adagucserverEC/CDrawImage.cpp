@@ -119,8 +119,7 @@ void CDrawImage::destroyImage() {
     cairo_surface_destroy(surface);
     surface = nullptr;
   }
-  ARGBByteBuffer.clear();
-  ARGBByteBuffer.shrink_to_fit();
+  ARGBByteBuffer.reset();
 }
 
 void CDrawImage::_closeFontFaceCache() {
@@ -180,14 +179,14 @@ int CDrawImage::createImage(const GeoParameters &_Geo) {
 
   stride = cairo_format_stride_for_width(CAIRO_PIXEL_FORMAT, geoParams.width);
   size_t bufferSize = size_t(geoParams.height) * stride;
-  ARGBByteBuffer.resize(bufferSize);
+  ARGBByteBuffer = std::make_unique_for_overwrite<unsigned char[]>(bufferSize);
 
   // Write per 32-bit pixel, faster than per channel.
   uint32_t pixel = (uint32_t(initA) << 24) | (uint32_t(initR) << 16) | (uint32_t(initG) << 8) | uint32_t(initB);
-  auto *quadBuffer = reinterpret_cast<uint32_t *>(ARGBByteBuffer.data());
+  auto *quadBuffer = reinterpret_cast<uint32_t *>(ARGBByteBuffer.get());
   std::fill_n(quadBuffer, bufferSize / 4, pixel);
 
-  surface = cairo_image_surface_create_for_data(ARGBByteBuffer.data(), CAIRO_PIXEL_FORMAT, geoParams.width, geoParams.height, stride);
+  surface = cairo_image_surface_create_for_data(ARGBByteBuffer.get(), CAIRO_PIXEL_FORMAT, geoParams.width, geoParams.height, stride);
   cr = cairo_create(surface);
 
   rr = rg = rb = 0;
@@ -897,9 +896,9 @@ void CDrawImage::_poly(float x[], float y[], int n, float lineWidth, bool closeP
   cairo_set_antialias(cr, aa);
 }
 
-void CDrawImage::_writeToPng24Stream(FILE *fp) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.data(), fp, 24, false); }
+void CDrawImage::_writeToPng24Stream(FILE *fp) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.get(), fp, 24, false); }
 
-void CDrawImage::_writeToPng8Stream(FILE *fp, bool use8bitpalAlpha) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.data(), fp, 8, use8bitpalAlpha); }
+void CDrawImage::_writeToPng8Stream(FILE *fp, bool use8bitpalAlpha) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.get(), fp, 8, use8bitpalAlpha); }
 
 void CDrawImage::_writeToPng32Stream(FILE *fp, unsigned char alpha) {
   // Canvas is already premultiplied, as Cairo's PNG writer expects.
@@ -959,9 +958,9 @@ void CDrawImage::_writeToWebP32Stream(FILE *fp, int quality) {
     return false;
   };
   std::vector<unsigned char> straight;
-  const unsigned char *importSource = ARGBByteBuffer.data();
+  const unsigned char *importSource = ARGBByteBuffer.get();
   if (hasPartialAlpha()) {
-    straight = ARGBByteBuffer;
+    straight.assign(importSource, importSource + size_t(geoParams.height) * stride);
     for (int y = 0; y < geoParams.height; y++) {
       for (int x = 0; x < geoParams.width; x++) {
         size_t p = x * 4 + y * stride;
@@ -1109,6 +1108,7 @@ void CDrawImage::_drawBarb(int x, int y, double uncorrectedDirection, double vie
   // End end restore
   cairo_close_path(cr);
   cairo_restore(cr);
+  cairo_new_path(cr); // cairo_restore() keeps our path and current point; a later arc would connect to it
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
@@ -1215,6 +1215,7 @@ int CDrawImage::_drawText(int x, int y, double angle, const char *text, const CC
   cairo_show_text(cr, text);
 
   cairo_restore(cr);
+  cairo_new_path(cr); // cairo_restore() keeps our path and current point; a later arc would connect to it
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
   return 0;
@@ -1241,6 +1242,7 @@ int CDrawImage::_drawCenteredText(int x, int y, float angle, const char *text, c
   cairo_show_text(cr, text);
 
   cairo_restore(cr);
+  cairo_new_path(cr); // cairo_restore() keeps our path and current point; a later arc would connect to it
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
   return 0;
@@ -1269,6 +1271,7 @@ int CDrawImage::_drawFilledText(int x, int y, float angle, const char *text, con
   cairo_show_text(cr, text);
 
   cairo_restore(cr);
+  cairo_new_path(cr); // cairo_restore() keeps our path and current point; a later arc would connect to it
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
   return 0;

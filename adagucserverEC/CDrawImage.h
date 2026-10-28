@@ -27,6 +27,7 @@
 #define CDrawImage_H
 
 #include <map>
+#include <memory>
 #include <span>
 #include <vector>
 #include <iostream>
@@ -71,7 +72,7 @@ private:
   float TTFFontSize;
 
   // One shared Cairo surface/context per image; text drawing swaps in a cairo_font_face_t on it.
-  std::vector<unsigned char> ARGBByteBuffer;
+  std::unique_ptr<unsigned char[]> ARGBByteBuffer; // not a vector: resize() would zero-fill before the background fill
   cairo_surface_t *surface = nullptr;
   cairo_t *cr = nullptr;
   int stride = 0;
