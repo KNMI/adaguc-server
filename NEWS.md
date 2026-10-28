@@ -7,6 +7,8 @@
 - Drawing now goes through Cairo instead of a first-party rasterizer, so rendered pixels at shape edges can differ by a few color units depending on the installed cairo/pixman version - see [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
 - Faster warping of large grids: quads are culled and rounded once, and tiny quads are skipped early.
 - Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
+- Fallback to NetCDF version 4.9.0 because of https://github.com/KNMI/adaguc-server/issues/812
+- New python library versions, bumped Pillow and brotli
 
 **Version 9.1.0**
 
