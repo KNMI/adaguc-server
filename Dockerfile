@@ -37,14 +37,17 @@ RUN apt-get -q -y update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Debian's packaged netcdf-c (trixie ships >=4.9.1) reads the ENTIRE file on every nc_open(),
-# for this, not yet released upstream: https://github.com/Unidata/netcdf-c/pull/3471
+# Debian trixie 13 ships netcdf  >=4.9.1 with two issues:
+# - nc_open reads 4MB regardless of file size:  https://github.com/Unidata/netcdf-c/issues/3469
+# - Memory leak in SIZE_MAX allocation when getxattr() is used - issue to be openend
+# Therefore we fallback to v4.9.0 which does not have these issues
+# Note, gdal still uses the stock one shipped by trixie, but this does not seem to cause harm.
 RUN mkdir -p /tmp/netcdf-c \
-    && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/maartenplieger/netcdf-c/archive/refs/heads/3469-fix-nc_open-reads-entire-file.tar.gz', '/tmp/netcdf-c.tar.gz')" \
+    && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.9.0.tar.gz', '/tmp/netcdf-c.tar.gz')" \
     && tar xzf /tmp/netcdf-c.tar.gz -C /tmp/netcdf-c --strip-components=1 \
     && rm /tmp/netcdf-c.tar.gz \
     && cmake -S /tmp/netcdf-c -B /tmp/netcdf-c-build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-    -DCMAKE_INSTALL_PREFIX=/opt/netcdf-c \
+    -DCMAKE_INSTALL_PREFIX=/opt/netcdf-c -DCMAKE_C_FLAGS="-Wno-error=incompatible-pointer-types" \
     && cmake --build /tmp/netcdf-c-build --parallel "$(nproc)" \
     && cmake --install /tmp/netcdf-c-build \
     && rm -rf /tmp/netcdf-c /tmp/netcdf-c-build \
