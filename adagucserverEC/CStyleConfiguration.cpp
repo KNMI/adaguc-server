@@ -393,7 +393,7 @@ static void markUnsetEntriesTransparent(std::vector<CColor> &colors) {
 }
 
 // Negative alpha means overwrite, magnitude -(alpha+1); shared by interpolate/fillPaletteRange.
-static void writePaletteEntry(std::vector<CColor> &colors, std::vector<bool> &overwrite, int i, int red, int green, int blue, int alpha) {
+static void writePaletteEntry(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int i, int red, int green, int blue, int alpha) {
   if (i < 0 || i >= 240) return;
   unsigned char r = (unsigned char)red;
   if (r == 0) r = 1;
@@ -406,7 +406,7 @@ static void writePaletteEntry(std::vector<CColor> &colors, std::vector<bool> &ov
 }
 
 // Linearly interpolates RGBA across [fromIndex, toIndex]; float, not double - matches golden images.
-static void interpolatePaletteRange(std::vector<CColor> &colors, std::vector<bool> &overwrite, int fromIndex, int fromRed, int fromGreen, int fromBlue, int fromAlpha, int toIndex, int toRed,
+static void interpolatePaletteRange(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int fromIndex, int fromRed, int fromGreen, int fromBlue, int fromAlpha, int toIndex, int toRed,
                                      int toGreen, int toBlue, int toAlpha) {
   float span = toIndex - fromIndex;
   if (span < 0.5f) span = 1;
@@ -426,7 +426,7 @@ static void interpolatePaletteRange(std::vector<CColor> &colors, std::vector<boo
 }
 
 // Flat-fills [fromIndex, toIndex) with one color - used by the "interval" legend type.
-static void fillPaletteRange(std::vector<CColor> &colors, std::vector<bool> &overwrite, int fromIndex, int toIndex, int red, int green, int blue, int alpha) {
+static void fillPaletteRange(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int fromIndex, int toIndex, int red, int green, int blue, int alpha) {
   for (int i = fromIndex; i < toIndex; i++) {
     writePaletteEntry(colors, overwrite, i, red, green, blue, alpha);
   }
@@ -525,26 +525,3 @@ int CStyleConfiguration::createPalette(CServerConfig::XMLE_Legend *legend) {
   return 1;
 }
 
-CColor CStyleConfiguration::getCColorFromLegendPaletteIndex(int colorIndex) const {
-  // Transparent, not CColor()'s opaque-black default: out-of-range must mean "nothing to draw".
-  if (colorIndex >= 0 && colorIndex < (int)colors.size()) {
-    return colors[colorIndex];
-  }
-  return CColor(0, 0, 0, 0);
-}
-
-bool CStyleConfiguration::isLegendPaletteIndexOverwrite(int colorIndex) const {
-  if (colorIndex >= 0 && colorIndex < (int)overwrite.size()) {
-    return overwrite[colorIndex];
-  }
-  return false;
-}
-
-void CStyleConfiguration::drawPixelFromPaletteIndex(CDrawImage *drawImage, int x, int y, int colorIndex) const {
-  CColor c = getCColorFromLegendPaletteIndex(colorIndex);
-  if (isLegendPaletteIndexOverwrite(colorIndex)) {
-    drawImage->setPixelTrueColorOverWrite(x, y, c.r, c.g, c.b, c.a); // erase, even at alpha 0
-  } else if (c.a > 0) {
-    drawImage->setPixel(x, y, c);
-  }
-}
