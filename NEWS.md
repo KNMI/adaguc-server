@@ -1,4 +1,8 @@
-**Version 9.2.0**
+**Version 9.2.1**
+
+- Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
+
+**Version 9.2.0 - 2026-10-28**
 
 - `CImgWarpBilinear` is removed. The keywords `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` still work: the generic warper emulates them. New configs use `RenderMethod` `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md). Test datasets and docs are migrated, with one style per name in GetCapabilities. Legacy output is pinned by `TestsForLegacyBilinearRender`.
 - Fixed legacy `barb`/`vector`/`thin`-only styles painting the whole field under the symbols. They now draw only the symbols.
