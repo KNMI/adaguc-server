@@ -39,8 +39,8 @@ RUN apt-get -q -y update \
 
 # Debian trixie 13 ships netcdf  >=4.9.1 with two issues:
 # - nc_open reads 4MB regardless of file size:  https://github.com/Unidata/netcdf-c/issues/3469
-# - Memory leak in SIZE_MAX allocation when getxattr() is used - issue to be openend
-# Therefore we fallback to v4.9.0 which does not have these issues
+# - Memory leak in SIZE_MAX allocation when getxattr() is used - https://github.com/Unidata/netcdf-c/issues/3474
+# Therefore we fallback to v4.9.0 which does not have these issues - https://github.com/KNMI/adaguc-server/issues/812
 # Note, gdal still uses the stock one shipped by trixie, but this does not seem to cause harm.
 RUN mkdir -p /tmp/netcdf-c \
     && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.9.0.tar.gz', '/tmp/netcdf-c.tar.gz')" \
