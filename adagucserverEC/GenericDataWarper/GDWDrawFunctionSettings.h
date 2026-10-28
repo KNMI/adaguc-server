@@ -45,30 +45,10 @@ struct GDWDrawFunctionSettings {
   double smoothingFiter = 0;
   std::vector<double> smoothingMemo;
 
-  // Flattened copy of the style's 256-entry index-color palette, same as legendScale/legendOffset
-  // above - avoids chasing a CStyleConfiguration pointer for every pixel of a hot warp loop.
-  CColor clegend[256];
+  const CStyleConfiguration *styleConfiguration = nullptr; // avoids copying the 256-entry palette
 
-  // Looks up clegend[index]; transparent for an out-of-range index.
-  // Defined inline (not in GDWDrawFunctionSettings.cpp) so it inlines straight into the generic
-  // renderer's per-pixel call chain, same rationale as CDrawFunction.h.
-  CColor getCColorFromLegendPaletteIndex(int index) const {
-    if (index >= 0 && index < 256) {
-      return clegend[index];
-    }
-    return CColor(0, 0, 0, 0);
-  }
-
-  // Looks up and blends in one call - skips the blend entirely when the resolved color is
-  // transparent, cheaper than getCColorFromLegendPaletteIndex() plus a separate alpha check.
-  void setPixelByLegendPaletteIndex(int x, int y, int colorIndex) const {
-    if (colorIndex >= 0 && colorIndex < 256) {
-      const CColor &c = clegend[colorIndex];
-      if (c.a > 0) {
-        drawImage->setPixel(x, y, c);
-      }
-    }
-  }
+  CColor getCColorFromLegendPaletteIndex(int index) const { return styleConfiguration->getCColorFromLegendPaletteIndex(index); }
+  void setPixelByLegendPaletteIndex(int x, int y, int colorIndex) const { styleConfiguration->drawPixelFromPaletteIndex(drawImage, x, y, colorIndex); }
 };
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

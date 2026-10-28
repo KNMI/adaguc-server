@@ -469,10 +469,7 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
           else if (pcolorind <= 0)
             pcolorind = 0;
 
-          CColor c = styleConfiguration->getCColorFromLegendPaletteIndex(pcolorind);
-          if (c.a > 0) {
-            drawImage->setPixel(x, (drawImage->geoParams.height - 1) - y, c);
-          }
+          styleConfiguration->drawPixelFromPaletteIndex(drawImage, x, (drawImage->geoParams.height - 1) - y, pcolorind);
         }
       }
     }

@@ -135,11 +135,7 @@ void CDrawImage::_closeFontFaceCache() {
 
 CDrawImage::~CDrawImage() {
   destroyImage();
-  // The font-face cache outlives destroyImage() (see createImage(CDrawImage*,...)/setCanvasSize,
-  // which destroy and recreate the Cairo surface on the same CDrawImage): a cairo_font_face_t has
-  // no dependency on the pixel buffer, so it stays valid across that cycle and is only torn down
-  // here.
-  _closeFontFaceCache();
+  _closeFontFaceCache(); // outlives destroyImage(); torn down only here
 }
 
 int CDrawImage::createImage(const char *fn) {
@@ -186,8 +182,7 @@ int CDrawImage::createImage(const GeoParameters &_Geo) {
   size_t bufferSize = size_t(geoParams.height) * stride;
   ARGBByteBuffer.resize(bufferSize);
 
-  // Fill ARGBByteBuffer with the desired background color. It's faster to write per 32-bit pixel
-  // instead of per 8-bit color channel.
+  // Write per 32-bit pixel, faster than per channel.
   uint32_t pixel = (uint32_t(initA) << 24) | (uint32_t(initR) << 16) | (uint32_t(initG) << 8) | uint32_t(initB);
   auto *quadBuffer = reinterpret_cast<uint32_t *>(ARGBByteBuffer.data());
   std::fill_n(quadBuffer, bufferSize / 4, pixel);
@@ -327,9 +322,7 @@ void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrecti
   double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
   double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
 
-  // Barb text, like setTextStroke's bgcolor!=0 branch, always uses the default font face - only
-  // fontSize (rendered size) is configurable per call, not the typeface.
-  currentFace = _getFontFace(TTFFontLocation);
+  currentFace = _getFontFace(TTFFontLocation); // always default typeface, only fontSize varies
   _drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
 }
 
@@ -400,9 +393,7 @@ void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, cons
   if (bgcolor.a == 0) {
     drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
   } else {
-    // Pre-existing behavior: this branch always uses the default font face (fontFile is only
-    // honored by the plain-drawText path above) - fontSize here only scales the rendered glyphs.
-    currentFace = _getFontFace(TTFFontLocation);
+    currentFace = _getFontFace(TTFFontLocation); // fontFile only honored by plain drawText() above
     _drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
   }
 }
@@ -463,8 +454,7 @@ void CDrawImage::setEllipse(int x, int y, float discRadiusX, float discRadiusY, 
   _filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
 }
 
-// Also serves callers with an integer radius: int -> float is a lossless implicit conversion, and
-// _filledcircle() truncates to int either way.
+// Also covers integer-radius callers via implicit int->float conversion.
 void CDrawImage::setDisc(int x, int y, float discRadius, const CColor &fillColor, const CColor &lineColor) {
   _setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
   _setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
@@ -624,9 +614,7 @@ int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, const CDraw
       int dx = x + destx;
       int dy = y + desty;
       if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.width && sy < simage->geoParams.height && dx < geoParams.width && dy < geoParams.height) {
-        // Both canvases are premultiplied, so the source word composites directly - no
-        // un-premultiply/re-premultiply round trip.
-        uint32_t src;
+        uint32_t src; // both canvases premultiplied; composites directly
         memcpy(&src, &simage->ARGBByteBuffer[sx * 4 + sy * simage->stride], sizeof(src));
         _blendPremultiplied(dx * 4 + dy * stride, src);
       }
@@ -643,9 +631,7 @@ int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, cons
       int dx = simage->geoParams.height - y - desty;
       int dy = x + destx;
       if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.width && sy < simage->geoParams.height && dx < geoParams.width && dy < geoParams.height) {
-        // Both canvases are premultiplied, so the source word composites directly - no
-        // un-premultiply/re-premultiply round trip.
-        uint32_t src;
+        uint32_t src; // both canvases premultiplied; composites directly
         memcpy(&src, &simage->ARGBByteBuffer[sx * 4 + sy * simage->stride], sizeof(src));
         _blendPremultiplied(dx * 4 + dy * stride, src);
       }
@@ -731,12 +717,7 @@ int CDrawImage::getTextWidth(const std::string &text, const std::string &fontfil
   return w;
 }
 
-/* -------------------------------------------------------------------------------------------- *
- * Cairo/FreeType primitives below. These used to live in a separate CCairoPlotter class that
- * CDrawImage merely delegated to; folded in directly since every instance shared the same single
- * pixel buffer anyway (the one allocated in createImage() above) - see CDrawImage.h for why
- * alternate fonts only need a swapped-in cairo_font_face_t now, not a whole second Cairo context.
- * -------------------------------------------------------------------------------------------- */
+// --- Cairo/FreeType primitives below; folded in from the former CCairoPlotter class. ---
 
 void CDrawImage::_setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
   rr = r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
@@ -792,8 +773,7 @@ void CDrawImage::_endLine(std::span<const double> dashes, bool roundCap) {
     cairo_set_dash(cr, 0, 0, 0);
   }
   if (roundCap) {
-    // Restore the default so unrelated strokes on this shared context keep butt caps.
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT); // restore default for other strokes
   }
 }
 
@@ -922,8 +902,7 @@ void CDrawImage::_writeToPng24Stream(FILE *fp) { writePng(geoParams.width, geoPa
 void CDrawImage::_writeToPng8Stream(FILE *fp, bool use8bitpalAlpha) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.data(), fp, 8, use8bitpalAlpha); }
 
 void CDrawImage::_writeToPng32Stream(FILE *fp, unsigned char alpha) {
-  // The canvas is already premultiplied (see CDrawImage.h), which is exactly what Cairo's PNG writer
-  // expects - it un-premultiplies on output itself.
+  // Canvas is already premultiplied, as Cairo's PNG writer expects.
   cairo_set_operator(cr, CAIRO_OPERATOR_DEST_IN);
   if (alpha != 255) {
     cairo_paint_with_alpha(cr, float(alpha) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL);
@@ -956,8 +935,6 @@ void CDrawImage::_writeToWebP32Stream(FILE *fp, int quality) {
   config.preprocessing = 0;                 // preprocessing filter (0=none, 1=segment-smooth)
   config.partitions = 0;                    // log2(number of token partitions) in [0..3] Default is set to 0 for easier progressive decoding.
   config.partition_limit = 100;             // quality degradation allowed to fit the 512k limit on prediction modes coding (0: no degradation, 100: maximum possible degradation).
-  // Lossless needs ARGB input. For lossy, YUVA input is faster: the RGB to YUV conversion is then done during import.
-  // The encoded result is the same for both.
   picture.use_argb = config.lossless ? 1 : 0; // To select between ARGB and YUVA input.
   config.thread_level = 1; // ~20-30% faster encoding, same output size (benchmarked on 1200x1000-3600x3000 lossy encodes).
   picture.width = geoParams.width;
@@ -971,10 +948,7 @@ void CDrawImage::_writeToWebP32Stream(FILE *fp, int quality) {
   }
 
   StopWatch_Measure("writeToWebP32Stream: start import %dx%d", geoParams.width, geoParams.height);
-  // libwebp wants straight alpha while the canvas is premultiplied. Premultiplied and straight only
-  // differ for partial alpha, so first check whether any pixel has some; most raster maps have none
-  // and can be imported directly. Otherwise un-premultiply into a scratch copy and leave the canvas
-  // itself intact.
+  // libwebp wants straight alpha; only unpremultiply (into a scratch copy) if any pixel needs it.
   auto hasPartialAlpha = [&]() {
     for (int y = 0; y < geoParams.height; y++) {
       for (int x = 0; x < geoParams.width; x++) {
@@ -1054,8 +1028,7 @@ void CDrawImage::_drawBarb(int x, int y, double uncorrectedDirection, double vie
   int halfBarbLengthWithFlip = int(-halfBarbLength * flipFactor);
 
   if (strengthInKnotsRoundedToFive <= 2) {
-    // https://www.weather.gov/hfo/windbarbinfo
-    // When wind speeds are 2 kts or less, a small open circle is used.
+    // <=2kts: small open circle, see https://www.weather.gov/hfo/windbarbinfo
     cairo_arc(cr, x, y, 6, 0, 2 * M_PI);
   } else {
 
@@ -1170,8 +1143,7 @@ cairo_font_face_t *CDrawImage::_getFontFace(const std::string &fontfile) {
     return it->second;
   }
 
-  // Build the font face straight from the file path via fontconfig, so cairo's FreeType backend
-  // owns loading and lifetime - this class never touches FT_Library/FT_Face itself.
+  // Built via fontconfig so cairo's FreeType backend owns loading/lifetime.
   FcPattern *pattern = FcPatternCreate();
   FcPatternAddString(pattern, FC_FILE, (const FcChar8 *)fontfile.c_str());
   FcPatternAddInteger(pattern, FC_INDEX, 0);
@@ -1191,9 +1163,7 @@ cairo_font_face_t *CDrawImage::_getFontFace(const std::string &fontfile) {
 
 void CDrawImage::_setCairoFont() {
   cairo_set_font_face(cr, currentFace);
-  // cairo_set_font_size() takes plain user-space (pixel) units, with no DPI scaling - unlike the
-  // old FT_Set_Char_Size(..., 100, 100) convention this class used to size glyphs with. Apply the
-  // same 100dpi scale here so a given fontSize value keeps rendering at its historical pixel size.
+  // 100dpi scale keeps fontSize rendering at its historical pixel size.
   cairo_set_font_size(cr, currentFontSize * (100.0 / 72.0));
 }
 
@@ -1217,8 +1187,7 @@ int CDrawImage::_getTextSize(int &w, int &h, float angle, const char *text) {
   cairo_text_extents(cr, text, &te);
   cairo_restore(cr);
 
-  // Angle matters here: callers use (w,h) as a screen-space occupancy box (rotated tick labels,
-  // overlap checks for angled point labels), not just the along-baseline text length.
+  // (w,h) is a screen-space occupancy box, not just the along-baseline text length.
   if (angle == 0.0f) {
     w = (int)lround(te.x_advance);
     h = (int)lround(te.height);
@@ -1239,11 +1208,7 @@ int CDrawImage::_drawText(int x, int y, double angle, const char *text, const CC
   cairo_new_path(cr);
 
   cairo_move_to(cr, x, y);
-  // Negated: the old manual FreeType glyph walk rotated in FreeType's native Y-up space, which is
-  // the mirror image of Cairo's Y-down rotation for the same angle value. Every external caller of
-  // the plain drawText()/setText() family was tuned against that FreeType handedness (see e.g.
-  // setTextStroke(), which negates the angle only on its Cairo-native _drawStrokedText() branch).
-  cairo_rotate(cr, -angle);
+  cairo_rotate(cr, -angle); // negated: callers are tuned to FreeType's opposite rotation handedness
   cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
   cairo_set_source_rgba(cr, color.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, color.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, color.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL,
                         color.a * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL);

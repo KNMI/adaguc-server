@@ -184,10 +184,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
-  // Scoped to this render() call - memoizedDeterminePixelColorFromValue() only skips recomputation
-  // for a value repeated within this one pass; it must never survive past it (settings, which it
-  // keys on, is a local that dies when render() returns).
-  MemoizationForDeterminePixelColorFromValue memo;
+  MemoizationForDeterminePixelColorFromValue memo; // scoped to this render() call only
 
   int destDataWidth = drawImage->geoParams.width;
   int destDataHeight = drawImage->geoParams.height;

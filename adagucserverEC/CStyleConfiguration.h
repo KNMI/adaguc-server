@@ -22,6 +22,7 @@
 #include "CServerConfig_CPPXSD.h"
 
 class CDataSource;
+class CDrawImage;
 
 typedef unsigned int RenderMethod;
 std::string getRenderMethodAsString(RenderMethod renderMethod);
@@ -73,11 +74,12 @@ struct CStyleConfiguration {
   CServerConfig::XMLE_Legend legend;
   CServerConfig::XMLE_LegendGraphic legendGraphic;
 
-  // Empty until createPalette() is called - most styles never resolve to an index-color legend at
-  // all, so there's no point eagerly allocating and filling 256 entries for them. An index lookup
-  // against an empty (or never-reaching-that-index) palette resolves to transparent, not
-  // CColor()'s own default of opaque black - see getCColorFromLegendPaletteIndex().
+  // Empty until createPalette() is called; an index lookup then resolves transparent, not opaque black.
   std::vector<CColor> colors;
+
+  // Parallel to colors: true if the <palette> entry had a negative alpha, meaning overwrite the
+  // pixel (CDrawImage::setPixelTrueColorOverWrite) instead of blending; magnitude -(alpha+1) is in colors[index].a.
+  std::vector<bool> overwrite;
 
   /**
    * Outputs styleConfiguration as string
@@ -94,12 +96,16 @@ struct CStyleConfiguration {
    */
   void stretchLegend(double min, double max);
 
-  // Builds the index-color palette from legend config (colorRange/interval/svg types); every
-  // reachable index (0-239) resolves transparent when legend is nullptr.
+  // Builds the index-color palette (colorRange/interval/svg); transparent everywhere if legend is nullptr.
   int createPalette(CServerConfig::XMLE_Legend *legend);
 
-  // Looks up colors[index]; transparent for an out-of-range index (which includes every index
-  // when createPalette() was never called, since colors is then empty).
+  // Looks up colors[index]; transparent for an out-of-range index.
   CColor getCColorFromLegendPaletteIndex(int index) const;
+
+  // Whether index should overwrite rather than blend - see `overwrite` above.
+  bool isLegendPaletteIndexOverwrite(int index) const;
+
+  // Draws via overwrite or blend as appropriate; overwrite still draws at alpha 0 (an erase).
+  void drawPixelFromPaletteIndex(CDrawImage *drawImage, int x, int y, int colorIndex) const;
 };
 #endif

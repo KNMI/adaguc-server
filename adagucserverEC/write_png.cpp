@@ -8,6 +8,12 @@
 #include "CStopWatch.h"
 #include "CDrawImage.h"
 
+// Unpremultiplies three channels against the same alpha in one call.
+static inline void unpremultiplyRGB(unsigned char c0, unsigned char c1, unsigned char c2, unsigned char a, unsigned char &out0, unsigned char &out1, unsigned char &out2) {
+  out0 = CDrawImage::unpremultiplyChannel(c0, a);
+  out1 = CDrawImage::unpremultiplyChannel(c1, a);
+  out2 = CDrawImage::unpremultiplyChannel(c2, a);
+}
 
 void prepare24Bpp(png_structp png_ptr, png_infop info_ptr, int width, int height) {
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -44,9 +50,7 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
 
     insertedVisiblePixel = true;
     // The canvas is premultiplied; the palette wants straight color.
-    color.r = CDrawImage::unpremultiplyChannel((pixel >> 16) & 0xFF, alpha);
-    color.g = CDrawImage::unpremultiplyChannel((pixel >> 8) & 0xFF, alpha);
-    color.realblue = CDrawImage::unpremultiplyChannel(pixel & 0xFF, alpha);
+    unpremultiplyRGB((pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF, pixel & 0xFF, alpha, color.r, color.g, color.realblue);
     color.realalpha = alpha;
     // if use8bitpalAlpha, store top 3 bits of alpha + bottom 5 bits of blue
     color.b = use8bitpalAlpha ? ((color.realblue >> 3) + ((alpha >> 5) << 5)) : color.realblue;
@@ -172,9 +176,8 @@ void write24BppPayload(png_structp png_ptr, int width, int height, unsigned char
       unsigned char a = ARGBByteBuffer[3 + x];
       if (a > 127) {
         // Premultiplied in the canvas, straight in the file.
-        unsigned char r = CDrawImage::unpremultiplyChannel(ARGBByteBuffer[2 + x], a);
-        unsigned char g = CDrawImage::unpremultiplyChannel(ARGBByteBuffer[1 + x], a);
-        unsigned char b = CDrawImage::unpremultiplyChannel(ARGBByteBuffer[0 + x], a);
+        unsigned char r, g, b;
+        unpremultiplyRGB(ARGBByteBuffer[2 + x], ARGBByteBuffer[1 + x], ARGBByteBuffer[0 + x], a, r, g, b);
         if (r == 0 && g == 0 && b == 0) {
           RGBRow[p++] = 1;
           RGBRow[p++] = 0;
@@ -228,9 +231,8 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       }
 
       // Premultiplied in the canvas, straight for the palette lookup.
-      uint8_t b = CDrawImage::unpremultiplyChannel(src[0], a);
-      uint8_t g = CDrawImage::unpremultiplyChannel(src[1], a);
-      uint8_t r = CDrawImage::unpremultiplyChannel(src[2], a);
+      uint8_t b, g, r;
+      unpremultiplyRGB(src[0], src[1], src[2], a, b, g, r);
 
       uint8_t qb = use8bitpalAlpha ? ((b >> 3) + ((a >> 5) << 5)) : b;
       uint32_t key = (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(qb);

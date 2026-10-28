@@ -45,11 +45,7 @@
 
 static const CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
 
-// Named colors reused across call sites instead of each hand-rolling its own RGBA literal.
-// Several correspond to entries of a legacy 240-255 "standard" index palette that used to live at
-// these fixed indices in CStyleConfiguration's color table; that index range is unreachable now
-// (every lookup clamps its index to 0-239), so these are plain named colors with no live link to
-// an index anymore.
+// Named colors; some match the old 240-255 "standard" palette indices, now unreachable.
 static const CColor standardCColorBlack = CColor(0, 0, 0, 255);
 static const CColor standardCColorDarkGray = CColor(32, 32, 32, 255);
 static const CColor standardCColorLightBlue = CColor(64, 64, 255, 255);
@@ -62,8 +58,6 @@ class CDrawImage {
 private:
   int dImageCreated;
 
-  // Only ever reached through crop()/rotate() - nothing outside this class resizes a canvas
-  // without going through one of those, so these stay implementation details.
   int setCanvasSize(int x, int y, int width, int height);
   int drawrotated(int destx, int desty, int sourcex, int sourcey, const CDrawImage *simage);
   bool isPixelTransparent(int x, int y) const;
@@ -76,28 +70,21 @@ private:
   std::string TTFFontLocation;
   float TTFFontSize;
 
-  // --- Cairo canvas: a single shared surface/context for the whole image. Every drawing method
-  // (including text, via a swapped-in cairo_font_face_t - see _getFontFace()) operates on this
-  // same cr, so there is exactly one pixel buffer and one Cairo context per CDrawImage, not one
-  // per font.
+  // One shared Cairo surface/context per image; text drawing swaps in a cairo_font_face_t on it.
   std::vector<unsigned char> ARGBByteBuffer;
   cairo_surface_t *surface = nullptr;
   cairo_t *cr = nullptr;
   int stride = 0;
   static constexpr cairo_format_t CAIRO_PIXEL_FORMAT = CAIRO_FORMAT_ARGB32;
 
-  // Current stroke/fill color state, normalized to Cairo's own [0,1] range, set by
-  // _setColor()/_setFillColor() before each primitive - mirrors how Cairo itself keeps "current
-  // color" as context state rather than a draw argument.
+  // Current stroke/fill color, Cairo's [0,1] range, set by _setColor()/_setFillColor().
   float rr = 0, rg = 0, rb = 0, ra = 1;
   float rfr = 0, rfg = 0, rfb = 0, rfa = 0;
 
   void _setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
   void _setFillColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
-  // Defined inline (not in CDrawImage.cpp) so these inline straight into the generic renderer's
-  // per-pixel call chain - see CDrawFunction.h and GDWDrawFunctionSettings.h, which this closes out;
-  // a separate-TU call here was the last link that chain couldn't reach.
+  // Inline so this inlines into the generic renderer's per-pixel call chain.
   void _getPixel(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const {
     if (x < 0 || y < 0 || x >= geoParams.width || y >= geoParams.height) {
       r = 0;
@@ -115,10 +102,7 @@ private:
     a = pixel >> 24;
   }
 
-  // Packs bytes in the same B,G,R,A order the buffer stores them in (CAIRO_FORMAT_ARGB32 is a
-  // native-endian 0xAARRGGBB word, which on every host this project targets - x86_64, arm64, both
-  // little-endian - puts B in the lowest byte), so storing this uint32_t is bit-for-bit identical to
-  // writing the 4 bytes individually.
+  // Packs B,G,R,A into the native-endian 0xAARRGGBB word CAIRO_FORMAT_ARGB32 stores.
   static uint32_t _packBGRA(unsigned char r, unsigned char g, unsigned char b, unsigned char a) { return uint32_t(b) | (uint32_t(g) << 8) | (uint32_t(r) << 16) | (uint32_t(a) << 24); }
 
   void _pixel_overwrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -133,11 +117,7 @@ private:
     return _packBGRA(premultiplyChannel(r, a), premultiplyChannel(g, a), premultiplyChannel(b, a), a);
   }
 
-  // Source-over of a premultiplied source word onto the premultiplied pixel at buffer offset p:
-  // dst' = src + dst * (255 - srcAlpha) / 255, for color and alpha alike. Premultiplied compositing
-  // is linear, so this one formula covers an opaque, transparent or semi-transparent destination -
-  // no per-case branches and no division. Sums cannot exceed 255 as long as both inputs honour the
-  // premultiplied invariant (channel <= alpha).
+  // Source-over blend: dst' = src + dst * (255 - srcAlpha) / 255, per channel.
   void _blendPremultiplied(size_t p, uint32_t src) {
     uint32_t srcAlpha = src >> 24;
     if (srcAlpha == 255) {
@@ -183,11 +163,7 @@ private:
   void _writeToWebP32Stream(FILE *fp, int quality);
   void _setToSurface(cairo_surface_t *png);
 
-  // --- Text rendering: one cairo_font_face_t cached per font file, built directly from a
-  // fontconfig pattern (FC_FILE) via cairo's FreeType backend - cairo owns the FreeType loading
-  // and lifetime internally, so this class never touches FT_Library/FT_Face itself. Drawing and
-  // measuring both go through Cairo's own text API (cairo_show_text/cairo_text_extents), so
-  // swapping fonts only means swapping currentFace - never a new rendering context.
+  // --- Text: one cairo_font_face_t cached per font file, loaded via cairo's FreeType backend.
   std::map<std::string, cairo_font_face_t *> fontFaceCache;
   cairo_font_face_t *currentFace = nullptr;
   float currentFontSize = 0;
@@ -229,13 +205,10 @@ public:
   float getFontSize() const;
 
   // --- Pixel access -----------------------------------------------------------------------------
-  // The canvas is CAIRO_FORMAT_ARGB32, i.e. premultiplied alpha: each stored color channel is already
-  // scaled by alpha/255. Cairo's own drawing keeps that invariant and so do the pixel primitives, so
-  // the buffer is uniform and goes to Cairo's PNG writer as-is. Setters take straight
-  // (non-premultiplied) color and premultiply on the way in; only the exporters whose file format is
-  // straight color (PNG8/PNG24 palette, WebP) un-premultiply on the way out.
+  // Canvas is premultiplied-alpha (CAIRO_FORMAT_ARGB32); setters premultiply on the way in, and
+  // only the straight-color exporters (PNG8/24, WebP) unpremultiply on the way out.
 
-  // floor(x / 255) without a division; exact for x <= 255 * 255, which is all the pixel math needs.
+  // floor(x / 255) without a division.
   static uint32_t div255(uint32_t x) { return (x + 1 + (x >> 8)) >> 8; }
   static unsigned char premultiplyChannel(unsigned char c, unsigned char a) { return div255(uint32_t(c) * a); }
   static unsigned char unpremultiplyChannel(unsigned char c, unsigned char a) {
@@ -253,9 +226,7 @@ public:
 
   void moveTo(float x1, float y1);
   void lineTo(float x1, float y1, float w, const CColor &color);
-  // roundCap: round instead of butt caps. Needed where one logical line is stroked as several
-  // sub-paths (contour lines gap around their labels): with butt caps the antialiased ends of two
-  // sub-paths that meet at an angle leave a seam of half-covered pixels; round caps overlap and blend.
+  // roundCap: avoids a seam where contour sub-paths meet at an angle around label gaps.
   void endLine(std::span<const double> dashes = {}, bool roundCap = false);
 
   void line(float x1, float y1, float x2, float y2, const CColor &color);

@@ -21,8 +21,7 @@ int fieldWidthAsPixels(const std::vector<std::string> &column, int dashWidth, in
 
 std::vector<std::string> extractColumn(size_t drawIntervals, int minInterval, const std::vector<CServerConfig::XMLE_ShadeInterval> &shadeIntervals, bool isMin);
 
-// Rounds val down to the start of its enclosing [n*interval, (n+1)*interval) bucket - used to find
-// the shade class a legend value falls into.
+// Rounds val down to the start of its shade-class bucket.
 float convertValueToClass(float val, float interval);
 
 #endif

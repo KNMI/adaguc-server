@@ -302,7 +302,6 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
       .destinationGrid = nullptr,
       .smoothingFiter = 0,
       .smoothingMemo = {},
-      .clegend = {},
   };
   // Test if it returns default color when there are no shadeintervals
   CHECK(determinePixelColorFromValue(0, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
@@ -319,9 +318,8 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
   CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
 }
 
-TEST(CStyleConfiguration, negativeAlphaIsClampedToZero) {
-  // A configured alpha below 0 (e.g. a stray <palette alpha="-1">) must not wrap around to a large
-  // unsigned value; it's clamped to fully transparent instead.
+TEST(CStyleConfiguration, negativeAlphaMeansOverwriteNotClampedBlend) {
+  // Negative alpha (e.g. -1) -> magnitude -(alpha+1), marked overwrite, not blend.
   CServerConfig::XMLE_Legend legend;
   legend.attr.name = "testNegativeAlpha";
   legend.attr.type = "colorRange";
@@ -342,15 +340,38 @@ TEST(CStyleConfiguration, negativeAlphaIsClampedToZero) {
   CStyleConfiguration styleConfiguration;
   styleConfiguration.createPalette(&legend);
 
-  // Red is bumped from 0 to 1 so the standard palette's auto-transparency rule doesn't clobber this
-  // entry; alpha 0 is what tells drawing code to skip the pixel.
   CColor resolved = styleConfiguration.getCColorFromLegendPaletteIndex(100);
-  CHECK(resolved.c_str() == CColor(1, 0, 0, 0).c_str());
+  CHECK(resolved.c_str() == CColor(1, 0, 0, 0).c_str()); // red bumped 0->1, avoids auto-transparency
+  CHECK(styleConfiguration.isLegendPaletteIndexOverwrite(100) == true);
+}
+
+TEST(CStyleConfiguration, positiveAlphaIsNotOverwrite) {
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testPositiveAlpha";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette p0, p240;
+  p0.attr.index = 0;
+  p0.attr.red = 10;
+  p0.attr.green = 20;
+  p0.attr.blue = 30;
+  p0.attr.alpha = 128;
+  p240.attr.index = 240;
+  p240.attr.red = 10;
+  p240.attr.green = 20;
+  p240.attr.blue = 30;
+  p240.attr.alpha = 128;
+  legend.palette.push_back(p0);
+  legend.palette.push_back(p240);
+
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+
+  CColor resolved = styleConfiguration.getCColorFromLegendPaletteIndex(100);
+  CHECK(resolved.c_str() == CColor(10, 20, 30, 128).c_str());
+  CHECK(styleConfiguration.isLegendPaletteIndexOverwrite(100) == false);
 }
 
 TEST(CStyleConfiguration, createPaletteInterpolatesColorRangeLinearly) {
-  // colorRange legends linearly interpolate between consecutive <palette> stops; a midpoint index
-  // must resolve to the color exactly halfway between its two neighboring stops.
   CServerConfig::XMLE_Legend legend;
   legend.attr.name = "testColorRangeInterpolation";
   legend.attr.type = "colorRange";
@@ -371,9 +392,8 @@ TEST(CStyleConfiguration, createPaletteInterpolatesColorRangeLinearly) {
   CStyleConfiguration styleConfiguration;
   styleConfiguration.createPalette(&legend);
 
-  // Red is bumped from 0 to 1 so the auto-transparency rule doesn't clobber this entry.
   CColor start = styleConfiguration.getCColorFromLegendPaletteIndex(0);
-  CHECK(start.c_str() == CColor(1, 0, 0, 255).c_str());
+  CHECK(start.c_str() == CColor(1, 0, 0, 255).c_str()); // red bumped 0->1
 
   CColor midpoint = styleConfiguration.getCColorFromLegendPaletteIndex(120);
   CHECK(midpoint.c_str() == CColor(120, 120, 120, 255).c_str());
@@ -383,19 +403,14 @@ TEST(CStyleConfiguration, createPaletteInterpolatesColorRangeLinearly) {
 }
 
 TEST(CStyleConfiguration, getCColorFromLegendPaletteIndexOutOfRangeIsTransparent) {
-  // A caller that resolves a color via getCColorFromLegendPaletteIndex() and then gates drawing on alpha>0 (the
-  // standard pattern replacing setPixelByLegendPaletteIndex's own bounds check) must see "nothing to
-  // draw" for an out-of-range index - not CColor()'s default opaque black. A real caller
-  // (renderContinuousLegend's ramp fill) hits a genuine negative index on its last row, due to an
-  // existing off-by-one in its own float->int rounding when cbH isn't a whole number.
+  // renderContinuousLegend's ramp fill hits a genuine negative index on its last row.
   CStyleConfiguration styleConfiguration;
   styleConfiguration.createPalette(nullptr);
 
   CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(-1).a == 0);
   CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(256).a == 0);
 
-  // No palette built at all must behave the same way.
-  CStyleConfiguration noPalette;
+  CStyleConfiguration noPalette; // no palette built at all behaves the same way
   CHECK(noPalette.getCColorFromLegendPaletteIndex(0).a == 0);
 }
 

@@ -13,11 +13,7 @@ struct MemoizationForDeterminePixelColorFromValue {
   CColor color;
 };
 
-// Defined here (not in CDrawFunction.cpp) so these inline into the generic-renderer's per-pixel
-// lambda call sites (CImgWarpNearestNeighbour.cpp, CAreaMapper.cpp) the same way gdwDrawTriangle.h's
-// drawFunction does - a separate-TU call here would otherwise be the one link in that pixel-loop
-// chain the compiler could never inline away, no matter how aggressively the warp loop itself is optimized.
-
+// Header-only so these inline into the per-pixel warp loop call sites.
 template <class T> void drawIndexPixel(int &x, int &y, T &val, GDWDrawFunctionSettings &settings) {
   if (settings.legendLog != 0) {
     if (val > 0) {
