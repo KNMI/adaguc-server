@@ -17,6 +17,7 @@ from adaguc.CGIRunner import (
 )
 import psycopg2
 from adaguc.AdagucTestTools import AdagucTestTools
+from conftest import clean_postgres
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -34,7 +35,7 @@ class TestFileScanner(unittest.TestCase):
 
     def test_FileScanner_MultiVarCleanup(self):
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
         # Copy the test file (it will be removed)
         filetocopy = os.path.join(
@@ -91,7 +92,7 @@ class TestFileScanner(unittest.TestCase):
     def test_FileScanner_MultiVarCleanupFiledate(self):
 
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
         # Copy the test file (it will be removed)
         filetocopy = os.path.join(

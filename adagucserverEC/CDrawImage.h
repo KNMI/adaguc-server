@@ -200,7 +200,8 @@ public:
   void setCanvasColorType(int colorType);
 
   /**
-   * Get renderer width of the given text
+   * Rendered width in pixels of text at the given font/size/angle - e.g. used to center a label
+   * within a reserved span without exceeding it (pass angle 0 for horizontal text).
    */
   int getTextWidth(std::string text, const std::string &fontPath, float size, int angle);
 };

@@ -4,17 +4,24 @@
   <Style name="Windbarbs" title="Wind barbs" abstract="Rendered with barbs">
     <Scale>1</Scale>
     <Offset>0</Offset>
-    <RenderMethod>barb</RenderMethod>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
+    <RenderSettings drawgrid="false"/>
+    <RenderMethod>generic</RenderMethod>
   </Style>
 
   <Style name="Windbarbwithnumbers" title="Wind barbs with number" abstract="Rendered with barbs and windspeed number">
     <Scale>1</Scale>
     <Offset>0</Offset>
-    <RenderMethod>barb</RenderMethod>
-    <RenderSettings rendertextforvectors="true" />
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0" plotvalue="true"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
+    <RenderSettings drawgrid="false"/>
+    <RenderMethod>generic</RenderMethod>
   </Style>
 
-  <Style name="windbarbs_kts" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs">
+  <Style name="wind_colors_from_kts">
     <ShadeInterval min="0" max="7" label="0-7 (&lt;3 bft)" fillcolor="#FFFFB4"/>
     <ShadeInterval min="7" max="11" label="7-11 (3 bft)" fillcolor="#FFFF00"/>
     <ShadeInterval min="11" max="16" label="11-16 (4 bft)" fillcolor="#81FF00"/>
@@ -29,8 +36,26 @@
     <ShadeInterval min="74" max="84" label="74-84 (sshws 1)" fillcolor="#C0C0C0"/>
     <ShadeInterval min="84" max="100" label="84-100 (sshws 2)" fillcolor="#818181"/>
     <ShadeInterval min="100" max="200" label="100-200 (sshws 3-5)" fillcolor="#3E3E3E"/>
+  </Style>
+
+  <Style name="windbarbs_kts" title="Wind barbs + filled wind speed" abstract="Rendered with barbs over shaded wind speed">
+    <IncludeStyle name="wind_colors_from_kts"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <RenderMethod>generic</RenderMethod>
+    <StandardNames standard_name="x_wind,y_wind"/>
+  </Style>
+
+  <Style name="windbarbs_kts_contours" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs over shaded wind speed with contour lines">
+    <IncludeStyle name="wind_colors_from_kts"/>
     <ContourLine width="1" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,74,84,100,200"/>
-    <RenderMethod>barbshaded,barbshadedcontour,vectorshaded,vectorshadedcontour,barb</RenderMethod>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="x_wind,y_wind"/>
   </Style>
 
@@ -40,7 +65,7 @@
     <Variable>x-wind-hagl</Variable>
     <Variable>y-wind-hagl</Variable>
     <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
-    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts,windbarbs_kts_contours</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
 
@@ -51,7 +76,7 @@
     <Variable>x-wind-hagl</Variable>
     <Variable>y-wind-hagl</Variable>
     <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
-    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts,windbarbs_kts_contours</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
     <DataPostProc algorithm="filter_dataobjects" select="speed_component"/>
   </Layer>
@@ -63,7 +88,7 @@
     <Variable>x-wind-hagl</Variable>
     <Variable>y-wind-hagl</Variable>
     <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
-    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts,windbarbs_kts_contours</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
     <DataPostProc algorithm="filter_dataobjects" select="direction_component"/>
   </Layer>

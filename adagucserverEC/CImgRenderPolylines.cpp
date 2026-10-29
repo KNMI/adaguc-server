@@ -39,9 +39,9 @@
 #include "CDrawImage.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"
+#include "CStopWatch.h"
 #include "Types/GeoParameters.h"
 
-//   #define MEASURETIME
 
 #define POLY_NODATA -32000
 const char *fontLoc = getenv("ADAGUC_FONT");
@@ -285,9 +285,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           drawImage->poly(polyPoints, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, false, featureStyle.hasFill);
         }
 
-#ifdef MEASURETIME
-        StopWatch_Stop("Feature drawn %d", featureIndex);
-#endif
+        StopWatch_Measure("Feature drawn %d", featureIndex);
       }
       // Draw polygon labels here, so they end up on top
       for (const CRectangleText &rect: rects) {

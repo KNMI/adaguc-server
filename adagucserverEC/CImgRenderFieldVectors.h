@@ -15,8 +15,4 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8po
 
 int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, int *dPixelExtent, float *uValues, float *vValues);
 
-std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponents(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage, bool enableShade, bool enableContour,
-                                                                                   bool enableBarb, bool drawMap, bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData,
-                                                                                   float *vValueData, int *dpDestX, int *dpDestY);
-
 #endif

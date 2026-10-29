@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.testCSVReader_reference_time</Title>
 <CRS>CRS:84</CRS>

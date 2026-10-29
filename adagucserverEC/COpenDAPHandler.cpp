@@ -4,7 +4,6 @@
 #include "CIBaseDataWriterInterface.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
 #include "CStyleConfiguration.h"
 #include "CXMLParser.h"
@@ -556,7 +555,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       }
     }
 
-    // Check if AUTORESOURCE is enabled
+    // Check if AUTORESOURCE (local file) is enabled
     if (hasFoundDataSetOrAutoResource == false) {
       srvParam->datasetLocation = "";
       resetErrors();

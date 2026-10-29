@@ -5,7 +5,6 @@
 #include "CImageWarper.h"
 #include "CTString.h"
 #include "CXMLParser.h"
-#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 static const bool CIMAGEDATAWRITER_DEBUG = false;
 
@@ -28,8 +27,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration != NULL) {
 
-      auto drawSettings = getDrawFunctionSettings(dataSource, legendImage, styleConfiguration);
-      if (drawSettings.drawgrid == false) {
+      // Only an explicit drawgrid="false" skips the legend, not an auto-derived one.
+      if (styleConfiguration->renderSettings.size() > 0 && styleConfiguration->renderSettings.back().attr.drawgrid == ("false")) {
         legendImage->crop(4);
         return 0;
       }

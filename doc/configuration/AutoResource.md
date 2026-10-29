@@ -4,12 +4,13 @@ AutoResource (enableautoopendap, enablelocalfile)
 Back to [Configuration](./Configuration.md)
 
 AutoResource enables the creation of WMS services on the fly from
-opendap resources and local files. This can be useful to quicklook an
-opendap data resource, or to create WMS services on the fly on a bunch
-of files residing in a directory.
+local files. This can be useful to create WMS services on the fly on a
+bunch of files residing in a directory.
 
--   enableautoopendap - Set to "true" to allow external opendap
-    connections
+-   enableautoopendap - No longer supported and always ignored: letting
+    the server fetch an arbitrary external OPeNDAP/HTTP(S) URL given by
+    a client was a server-side request forgery (SSRF) risk and has been
+    removed.
 -   enablelocalfile - Set to true to allow the server to read local
     files, in this case additional [Dir](Dir.md) elements must be
     configured.

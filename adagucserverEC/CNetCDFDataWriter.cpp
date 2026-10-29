@@ -1054,6 +1054,16 @@ int CNetCDFDataWriter::end() {
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
 
   if (CT::equalsIgnoreCase(srvParam->Format, "NetCDF3")) {
+    // NetCDF-3 (classic) has no 64-bit integer type, so a variable of that type can't be
+    // written as classic output at all. Report this clearly up front instead of letting it
+    // fail deep inside the netCDF library with a cryptic, generic NC_EBADTYPE message.
+    for (CDF::Variable *variable: destCDFObject->variables) {
+      if (variable->currentType == CDF_INT64 || variable->currentType == CDF_UINT64) {
+        CDBError("Unable to write NetCDF3 (classic) output: variable '%s' is a 64-bit integer, which NetCDF3 does not support. Use FORMAT=NetCDF4 instead.", variable->name.c_str());
+        delete netCDFWriter;
+        return 1;
+      }
+    }
     netCDFWriter->setNetCDFMode(3);
   } else {
     netCDFWriter->setNetCDFMode(4);

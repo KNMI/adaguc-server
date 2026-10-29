@@ -9,8 +9,6 @@
 #include "CStopWatch.h"
 #include "CTString.h"
 
-static const bool measureTime = false;
-
 json getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList) {
   json dimListJson;
 
@@ -128,16 +126,12 @@ std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, std::string met
   auto &records = layerMetaDataStore->records;
   for (const auto &record: records) {
     if (record.get("layername") == layerName && record.get("metadatakey") == metadataKey) {
-      if (measureTime) {
-        StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
-      }
+      StopWatch_Measure("<CDBAdapterPostgreSQL::getLayerMetadata");
       return record.get("blob");
     }
   }
 
-  if (measureTime) {
-    StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
-  }
+  StopWatch_Measure("<CDBAdapterPostgreSQL::getLayerMetadata");
   CDBDebug("No metadata entry found for %s %s %s", datasetName.c_str(), layerName.c_str(), metadataKey.c_str());
   throw __LINE__;
 }

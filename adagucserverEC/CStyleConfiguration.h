@@ -26,6 +26,12 @@ class CDataSource;
 typedef unsigned int RenderMethod;
 std::string getRenderMethodAsString(RenderMethod renderMethod);
 RenderMethod getRenderMethodFromString(std::string renderMethodString);
+
+// Whether this style uses a keyword of the removed CImgWarpBilinear renderer (bilinear/shaded/contour/
+// vector/barb/thin), unless "generic" is also explicitly listed - an explicit "generic" always wins.
+inline bool isLegacyRenderMethod(RenderMethod renderMethod) {
+  return (renderMethod & (RM_BILINEAR | RM_SHADED | RM_CONTOUR | RM_VECTOR | RM_BARB | RM_THIN)) != 0 && (renderMethod & RM_GENERIC) == 0;
+}
 struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;

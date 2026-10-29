@@ -87,9 +87,7 @@ int run_adaguc_once(int argc, char **argv, char **envp) {
 
   proj_clear_cache();
   BBOXProjectionClearCache();
-#ifdef MEASURETIME
-  StopWatch_Stop("Finished");
-#endif
+  StopWatch_Measure("Finished");
   varCacheClear();
   // Free libxml2's global state once at exit. Calling this after every parse would make libxml2 re-initialize for each document.
   xmlCleanupParser();

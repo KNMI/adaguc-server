@@ -449,7 +449,7 @@ bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
+  if (!isATimeDimension(cfgDim)) {
     return timeStampList;
   }
   // Get the tablename
@@ -495,7 +495,7 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
         CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
       }
       // Only time dimensions can get an auto calculated interval
-      const std::string interval = cfgDim->attr.name == "time" ? makeIntervalFromTimeList(dimValues) : "";
+      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;
@@ -542,9 +542,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     GeoParameters geo;
     geo.crs = (srvParam->cfg->Projection[p].attr.id);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start initreproj %s", geo.crs.c_str());
-#endif
+    StopWatch_Measure("start initreproj %s", geo.crs.c_str());
     CImageWarper warper;
     int status = warper.initreproj(metadataLayer->dataSource, geo, &srvParam->cfg->Projection);
     if (status != 0) {
@@ -552,9 +550,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       return 1;
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("finished initreproj");
-#endif
+    StopWatch_Measure("finished initreproj");
 
     if (CXMLGEN_DEBUG) {
       if (status != 0) {
@@ -563,16 +559,12 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       }
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start findExtent");
-#endif
+    StopWatch_Measure("start findExtent");
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
     metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs, bboxToFind));
 
-#ifdef MEASURETIME
-    StopWatch_Stop("finished findExtent");
-#endif
+    StopWatch_Measure("finished findExtent");
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX

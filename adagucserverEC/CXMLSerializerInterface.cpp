@@ -71,26 +71,18 @@ int parseConfig(CXMLObjectInterface *object, const std::string &xmlData, const s
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Start xmlReadMemory");
-#endif
+  StopWatch_Measure("Start xmlReadMemory");
   doc = xmlReadMemory(xmlData.c_str(), xmlData.length(), nullptr, nullptr, 0);
-#ifdef MEASURETIME
-  StopWatch_Stop("Done xmlReadMemory");
-#endif
+  StopWatch_Measure("Done xmlReadMemory");
   if (doc == NULL) {
     CDBError("error: could not parse xmldata %s", xmlData.c_str());
     xmlFreeDoc(doc);
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
-#ifdef MEASURETIME
-  StopWatch_Stop("start parse_element_names");
-#endif
+  StopWatch_Measure("start parse_element_names");
   parse_element_names(root_element, object, datasetName);
-#ifdef MEASURETIME
-  StopWatch_Stop("done parse_element_names");
-#endif
+  StopWatch_Measure("done parse_element_names");
   xmlFreeDoc(doc);
   return 0;
 }

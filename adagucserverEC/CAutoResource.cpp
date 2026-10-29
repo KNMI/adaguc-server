@@ -5,6 +5,7 @@
 #include "CDFObjectStore.h"
 #include "CReporter.h"
 #include "CServerParams.h"
+#include "CStopWatch.h"
 #include <sys/stat.h>
 
 int CAutoResource::configure(CServerParams *srvParam, bool plain) {
@@ -149,7 +150,7 @@ int CAutoResource::setServerTitle(CServerParams *srvParam, std::string serverTit
 }
 
 int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
-  // Configure the server automically based on an OpenDAP resource
+  // Configure the server automatically based on a local file resource (given via the KVP key source=<value>).
   // This method does nothing if srvParam->autoResourceLocation is empty.
   if (srvParam->autoResourceLocation.empty() == false) {
     srvParam->internalAutoResourceLocation = srvParam->autoResourceLocation;
@@ -159,34 +160,30 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
       return 1;
     }
 
+    // Remote OpenDAP/HTTP(S) resources are intentionally not supported here (removed: SSRF risk).
+    // Only local files, jailed to the configured <AutoResource><Dir> entries, are allowed.
     bool isValidResource = false;
-    // TODO should be placed in a a more generic place
-    if (srvParam->isAutoOpenDAPResourceEnabled()) {
-      if (CT::startsWith(srvParam->autoResourceLocation, "http://")) isValidResource = true;
-      if (CT::startsWith(srvParam->autoResourceLocation, "https://")) isValidResource = true;
-      if (CT::startsWith(srvParam->autoResourceLocation, "dodsc://")) isValidResource = true;
-      if (CT::startsWith(srvParam->autoResourceLocation, "dods://")) isValidResource = true;
-      if (CT::startsWith(srvParam->autoResourceLocation, "ncdods://")) isValidResource = true;
-    }
-
-    // Error messages should be the same for different 'dir' attempts, otherwise someone can find out directory structures
-    if (isValidResource == false) {
-      if (srvParam->isAutoLocalFileResourceEnabled()) {
-        if (checkIfPathHasValidTokens(srvParam->autoResourceLocation) == false) {
-          CDBError("Invalid token(s), unable to read file %s", srvParam->autoResourceLocation.c_str());
-          return 1;
-        }
-        if (srvParam->checkResolvePath(srvParam->autoResourceLocation, srvParam->internalAutoResourceLocation) == false) {
-          CDBDebug("Unable to resolve path for autoresource file %s", srvParam->autoResourceLocation.c_str());
-          CDBDebug("Please note that only absolute paths without symbolic links can be used");
-          return 1;
-        }
-        isValidResource = true;
+    if (srvParam->isAutoLocalFileResourceEnabled()) {
+      if (checkIfPathHasValidTokens(srvParam->autoResourceLocation) == false) {
+        CDBError("Invalid token(s), unable to read file %s", srvParam->autoResourceLocation.c_str());
+        return 1;
       }
+      if (CT::startsWith(srvParam->autoResourceLocation, "http://") || CT::startsWith(srvParam->autoResourceLocation, "https://") ||
+          CT::startsWith(srvParam->autoResourceLocation, "dods://") || CT::startsWith(srvParam->autoResourceLocation, "dodsc://") ||
+          CT::startsWith(srvParam->autoResourceLocation, "ncdods://")) {
+        CDBError("Remote resources are not supported, only local files");
+        return 1;
+      }
+      if (srvParam->checkResolvePath(srvParam->autoResourceLocation, srvParam->internalAutoResourceLocation) == false) {
+        CDBDebug("Unable to resolve path for autoresource file %s", srvParam->autoResourceLocation.c_str());
+        CDBDebug("Please note that only absolute paths without symbolic links can be used");
+        return 1;
+      }
+      isValidResource = true;
     }
 
     if (isValidResource == false) {
-      CDBError("Invalid OpenDAP URL");
+      CDBError("Invalid resource location");
       readyHandleError();
       return 1;
     }
@@ -238,9 +235,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
 // Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
 // Open the opendap resource
-#ifdef MEASURETIME
-    StopWatch_Stop("Opening data file [%s]", srvParam->internalAutoResourceLocation.c_str());
-#endif
+    StopWatch_Measure("Opening data file [%s]", srvParam->internalAutoResourceLocation.c_str());
     CDFObject *cdfObject = NULL;
     if (plain == false) {
       cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, srvParam->internalAutoResourceLocation.c_str());
@@ -251,9 +246,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
       CDBError("Unable to open resource %s", srvParam->autoResourceLocation.c_str());
       return 1;
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("File opened");
-#endif
+    StopWatch_Measure("File opened");
     std::string serverTitle = "";
     try {
       serverTitle = cdfObject->getAttributeThrows("title")->toString();
@@ -436,9 +429,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     onlineResource += stringToAdd;
     srvParam->setOnlineResource(onlineResource);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("Auto opendap configured");
-#endif
+    StopWatch_Measure("Auto opendap configured");
   }
   return 0;
 };
