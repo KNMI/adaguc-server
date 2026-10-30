@@ -28,11 +28,11 @@ done
 export ADAGUC_PATH=/adaguc/adaguc-server-master/ && \
 export ADAGUC_TMP=/tmp && \
 env -u ADAGUC_FORK_ENABLE /adaguc/adaguc-server-master/bin/adagucserver --updatedb \
-  --config /adaguc/adaguc-server-config.xml,/adaguc/adaguc-datasets-internal/baselayers.xml
+  --config /adaguc/adaguc-server-config.xml,baselayers.xml
 
 if [ $? -ne 0 ]
 then
-  echo "Unable to update internal baselayers with adaguc-server --updatedb"
+  echo "Unable to update baselayers with adaguc-server --updatedb"
   exit 1
 fi
 
