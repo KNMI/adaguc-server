@@ -6,7 +6,20 @@
 #include "COctTreeColorQuantizer.h"
 #include "write_png.h"
 #include "CStopWatch.h"
+#include "CDrawImage.h"
 
+// Unpremultiplies three channels against the same alpha; alpha 0 and 255 pass through (premultiplied channels are 0 at alpha 0).
+static inline void unpremultiplyRGB(unsigned char c0, unsigned char c1, unsigned char c2, unsigned char a, unsigned char &out0, unsigned char &out1, unsigned char &out2) {
+  if (a == 0 || a == 255) {
+    out0 = c0;
+    out1 = c1;
+    out2 = c2;
+    return;
+  }
+  out0 = CDrawImage::unpremultiplyChannel(c0, a);
+  out1 = CDrawImage::unpremultiplyChannel(c1, a);
+  out2 = CDrawImage::unpremultiplyChannel(c2, a);
+}
 
 void prepare24Bpp(png_structp png_ptr, png_infop info_ptr, int width, int height) {
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -42,9 +55,8 @@ void prepare8Bpp(OctreeType **outTree, unsigned char *ARGBByteBuffer, png_struct
     if (!use8bitpalAlpha && alpha <= 64) return;
 
     insertedVisiblePixel = true;
-    color.r = (pixel >> 16) & 0xFF;
-    color.g = (pixel >> 8) & 0xFF;
-    color.realblue = pixel & 0xFF;
+    // The canvas is premultiplied; the palette wants straight color.
+    unpremultiplyRGB((pixel >> 16) & 0xFF, (pixel >> 8) & 0xFF, pixel & 0xFF, alpha, color.r, color.g, color.realblue);
     color.realalpha = alpha;
     // if use8bitpalAlpha, store top 3 bits of alpha + bottom 5 bits of blue
     color.b = use8bitpalAlpha ? ((color.realblue >> 3) + ((alpha >> 5) << 5)) : color.realblue;
@@ -167,15 +179,19 @@ void write24BppPayload(png_structp png_ptr, int width, int height, unsigned char
     int start = i * s;
     int stop = start + s;
     for (int x = start; x < stop; x += 4) {
-      if (ARGBByteBuffer[3 + x] > 127) {
-        if (ARGBByteBuffer[2 + x] == 0 && ARGBByteBuffer[1 + x] == 0 && ARGBByteBuffer[0 + x] == 0) {
+      unsigned char a = ARGBByteBuffer[3 + x];
+      if (a > 127) {
+        // Premultiplied in the canvas, straight in the file.
+        unsigned char r, g, b;
+        unpremultiplyRGB(ARGBByteBuffer[2 + x], ARGBByteBuffer[1 + x], ARGBByteBuffer[0 + x], a, r, g, b);
+        if (r == 0 && g == 0 && b == 0) {
           RGBRow[p++] = 1;
           RGBRow[p++] = 0;
           RGBRow[p++] = 0;
         } else {
-          RGBRow[p++] = ARGBByteBuffer[2 + x];
-          RGBRow[p++] = ARGBByteBuffer[1 + x];
-          RGBRow[p++] = ARGBByteBuffer[0 + x];
+          RGBRow[p++] = r;
+          RGBRow[p++] = g;
+          RGBRow[p++] = b;
         }
       } else {
         RGBRow[p++] = 0;
@@ -208,20 +224,36 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
     row_ptrs[y] = imageBuffer + (y * width);
   }
 
+  // Runs of identical pixels (e.g. transparent background) reuse the previous index.
+  bool hasPrevious = false;
+  uint32_t previousPixel = 0;
+  unsigned char previousIndex = 0;
+
   for (int y = 0; y < height; y++) {
     unsigned char *dst = row_ptrs[y];
     unsigned char *src = ARGBByteBuffer + (y * stride);
 
     for (int x = 0; x < width; x++, src += 4) {
-      uint8_t b = src[0];
-      uint8_t g = src[1];
-      uint8_t r = src[2];
+      uint32_t pixel;
+      memcpy(&pixel, src, sizeof(pixel));
+      if (hasPrevious && pixel == previousPixel) {
+        *dst++ = previousIndex;
+        continue;
+      }
+      hasPrevious = true;
+      previousPixel = pixel;
+
       uint8_t a = src[3];
 
       if (!use8bitpalAlpha && a <= 64) {
+        previousIndex = 0;
         *dst++ = 0;
         continue;
       }
+
+      // Premultiplied in the canvas, straight for the palette lookup.
+      uint8_t b, g, r;
+      unpremultiplyRGB(src[0], src[1], src[2], a, b, g, r);
 
       uint8_t qb = use8bitpalAlpha ? ((b >> 3) + ((a >> 5) << 5)) : b;
       uint32_t key = (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(qb);
@@ -229,6 +261,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       // Most images contain many repeated colors, making octree traversal not needed.
       auto &entry = color_lookup[key & 4095];
       if (entry.valid && entry.key == key) {
+        previousIndex = entry.index;
         *dst++ = entry.index;
         continue;
       }
@@ -248,6 +281,7 @@ void write8BppPayload(png_structp png_ptr, OctreeType *tree, int width, int heig
       entry.key = key;
       entry.index = idx;
 
+      previousIndex = idx;
       *dst++ = idx;
     }
   }

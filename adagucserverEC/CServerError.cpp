@@ -83,7 +83,7 @@ void printerrorImage(void *_drawImage) {
   CDrawImage *drawImage = (CDrawImage *)_drawImage;
 
   const char *exceptionText = "OGC inimage Exception";
-  drawImage->setText(exceptionText, 12, 5, 241);
+  drawImage->setText(exceptionText, 12, 5, standardCColorDarkGray);
 
   int y = 1;
   size_t w = drawImage->geoParams.width / 6, characters = 0;
@@ -95,21 +95,21 @@ void printerrorImage(void *_drawImage) {
         concat += sp[k] + " ";
         characters = concat.length();
       } else {
-        drawImage->setText(concat.c_str(), 12, 5 + y * 15, 240);
+        drawImage->setText(concat.c_str(), 12, 5 + y * 15, standardCColorBlack);
         y++;
         concat = sp[k] + " ";
         characters = concat.length();
       }
     }
-    drawImage->setText(concat.c_str(), 12, 5 + y * 15, 240);
+    drawImage->setText(concat.c_str(), 12, 5 + y * 15, standardCColorBlack);
     y++;
   }
   y = (y - 1) * 15 + 26;
 
-  drawImage->line(3, 3, errImageWidth - 1, 3, 254);
-  drawImage->line(3, 3, 3, y, 254);
-  drawImage->line(3, y, errImageWidth - 1, y, 251);
-  drawImage->line(errImageWidth - 1, 3, errImageWidth - 1, y, 251);
+  drawImage->line(3, 3, errImageWidth - 1, 3, standardCColorPaleGray);
+  drawImage->line(3, 3, 3, y, standardCColorPaleGray);
+  drawImage->line(3, y, errImageWidth - 1, y, standardCColorLightGray);
+  drawImage->line(errImageWidth - 1, 3, errImageWidth - 1, y, standardCColorLightGray);
 }
 
 bool errorsOccured() {
@@ -184,7 +184,6 @@ void readyHandleError() {
 
     drawImage.createImage(errImageWidth, errImageHeight);
 
-    drawImage.create685Palette();
     if (cerror_mode == ServiceExceptionMode::ExceptionImage) {
       printerrorImage(&drawImage);
     }

@@ -33,8 +33,8 @@ struct ContourLineStructure {
   std::vector<double> classes;
   double interval = 0;
   std::string textformatting = "%0.1f";
-  CColor lineColor = CColor(0, 0, 0, 255);
-  CColor textColor = CColor(0, 0, 0, 255);
+  CColor lineColor = standardCColorBlack;
+  CColor textColor = standardCColorBlack;
   CColor textstrokecolor = CColor(0, 0, 0, 0);
   double lineWidth = 4;
   double fontSize = 10;
@@ -224,16 +224,13 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
   int numLineSegments = (int)lineSegments.size();
 
-  size_t numDashes = contourDefinition.dashes.size();
-  double *dashes = numDashes > 0 ? &contourDefinition.dashes[0] : nullptr;
-
   // textLocations is shared across contour definitions: gaps around any label, not just this one's.
   bool inTextGap = false;
   auto drawOrGap = [&](const i4point &point, bool gap) {
     if (gap) {
       if (!inTextGap) {
         // Flush so the next lineTo(), once the gap ends, starts a fresh sub-path.
-        drawImage->endLine(dashes, numDashes);
+        drawImage->endLine(contourDefinition.dashes);
         inTextGap = true;
       }
     } else {
@@ -273,7 +270,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  drawImage->endLine(dashes, numDashes);
+  drawImage->endLine(contourDefinition.dashes);
 }
 
 void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
@@ -291,8 +288,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   double defaultLineWidth = 4;
   double defaultStrokeWidth = 0.75;
   double defaultFontSize = contourFontSize;
-  CColor defaultLineColor = CColor(0, 0, 0, 255);
-  CColor defaultTextColor = CColor(0, 0, 0, 255);
+  CColor defaultLineColor = standardCColorBlack;
+  CColor defaultTextColor = standardCColorBlack;
   CColor defaultTextStrokeColor = CColor(0, 0, 0, 0);
 
   int dImageWidth = drawImage->geoParams.width;

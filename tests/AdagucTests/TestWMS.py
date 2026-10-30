@@ -2476,3 +2476,20 @@ class TestWMS(unittest.TestCase):
             "test_wms_getmap_symbolinterval_northseastations.png",
             "DATASET=adaguc.tests.symbolinterval&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=helicopter&WIDTH=300&HEIGHT=400&CRS=EPSG%3A3857&BBOX=119648.22240617475,6471500.3895983845,902354.9593630233,7715343.987244269&STYLES=helicopter%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE",
         )
+
+    def test_wms_getmap_palette_overwrite_erases_background(self):
+        """
+        A <palette alpha="-1"> entry must unconditionally overwrite the destination pixel (even to
+        fully transparent) instead of being skipped like an ordinary alpha=0 blend would be. With
+        TRANSPARENT=FALSE the canvas starts filled with the opaque BGCOLOR; every in-range testdata
+        pixel must come out black (the 24bpp writer's encoding for alpha=0 - see write_png.cpp),
+        not left as the red background. Regression test for the "overwrite" convention documented
+        on CStyleConfiguration::drawPixelFromPaletteIndex.
+        """
+        env = make_adaguc_env("adaguc.tests.palette_overwrite", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_image(
+            env,
+            "test_wms_getmap_palette_overwrite_erases_background.png",
+            "DATASET=adaguc.tests.palette_overwrite&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=overwrite_erase%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFF0000",
+        )

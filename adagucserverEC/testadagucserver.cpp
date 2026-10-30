@@ -318,6 +318,102 @@ TEST(CDrawFunction, determinePixelColorFromValue) {
   CHECK(determinePixelColorFromValue(2, &settings).c_str() == CColor(0, 0, 0, 0).c_str());
 }
 
+TEST(CStyleConfiguration, negativeAlphaMeansOverwriteNotClampedBlend) {
+  // Negative alpha (e.g. -1) -> magnitude -(alpha+1), marked overwrite, not blend.
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testNegativeAlpha";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette p0, p240;
+  p0.attr.index = 0;
+  p0.attr.red = 0;
+  p0.attr.green = 0;
+  p0.attr.blue = 0;
+  p0.attr.alpha = -1;
+  p240.attr.index = 240;
+  p240.attr.red = 0;
+  p240.attr.green = 0;
+  p240.attr.blue = 0;
+  p240.attr.alpha = -1;
+  legend.palette.push_back(p0);
+  legend.palette.push_back(p240);
+
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+
+  CColor resolved = styleConfiguration.getCColorFromLegendPaletteIndex(100);
+  CHECK(resolved.c_str() == CColor(1, 0, 0, 0).c_str()); // red bumped 0->1, avoids auto-transparency
+  CHECK(styleConfiguration.isLegendPaletteIndexOverwrite(100) == true);
+}
+
+TEST(CStyleConfiguration, positiveAlphaIsNotOverwrite) {
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testPositiveAlpha";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette p0, p240;
+  p0.attr.index = 0;
+  p0.attr.red = 10;
+  p0.attr.green = 20;
+  p0.attr.blue = 30;
+  p0.attr.alpha = 128;
+  p240.attr.index = 240;
+  p240.attr.red = 10;
+  p240.attr.green = 20;
+  p240.attr.blue = 30;
+  p240.attr.alpha = 128;
+  legend.palette.push_back(p0);
+  legend.palette.push_back(p240);
+
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+
+  CColor resolved = styleConfiguration.getCColorFromLegendPaletteIndex(100);
+  CHECK(resolved.c_str() == CColor(10, 20, 30, 128).c_str());
+  CHECK(styleConfiguration.isLegendPaletteIndexOverwrite(100) == false);
+}
+
+TEST(CStyleConfiguration, createPaletteInterpolatesColorRangeLinearly) {
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testColorRangeInterpolation";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette p0, p240;
+  p0.attr.index = 0;
+  p0.attr.red = 0;
+  p0.attr.green = 0;
+  p0.attr.blue = 0;
+  p0.attr.alpha = 255;
+  p240.attr.index = 240;
+  p240.attr.red = 240;
+  p240.attr.green = 240;
+  p240.attr.blue = 240;
+  p240.attr.alpha = 255;
+  legend.palette.push_back(p0);
+  legend.palette.push_back(p240);
+
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+
+  CColor start = styleConfiguration.getCColorFromLegendPaletteIndex(0);
+  CHECK(start.c_str() == CColor(1, 0, 0, 255).c_str()); // red bumped 0->1
+
+  CColor midpoint = styleConfiguration.getCColorFromLegendPaletteIndex(120);
+  CHECK(midpoint.c_str() == CColor(120, 120, 120, 255).c_str());
+
+  CColor end = styleConfiguration.getCColorFromLegendPaletteIndex(239);
+  CHECK(end.c_str() == CColor(239, 239, 239, 255).c_str());
+}
+
+TEST(CStyleConfiguration, getCColorFromLegendPaletteIndexOutOfRangeIsTransparent) {
+  // renderContinuousLegend's ramp fill hits a genuine negative index on its last row.
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(nullptr);
+
+  CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(-1).a == 0);
+  CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(256).a == 0);
+
+  CStyleConfiguration noPalette; // no palette built at all behaves the same way
+  CHECK(noPalette.getCColorFromLegendPaletteIndex(0).a == 0);
+}
+
 // Regression test for the SQL injection fix in CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions /
 // getReferenceTime: a request-supplied dimension value (e.g. TIME=...) used to be spliced unescaped into a
 // single-quoted SQL literal. CPGSQLDB::escapeString() must now be used at those call sites.

@@ -20,6 +20,7 @@
 #define RM_POLYGON 32768
 
 #include "CServerConfig_CPPXSD.h"
+#include "CDrawImage.h"
 
 class CDataSource;
 
@@ -73,6 +74,13 @@ struct CStyleConfiguration {
   CServerConfig::XMLE_Legend legend;
   CServerConfig::XMLE_LegendGraphic legendGraphic;
 
+  // Empty until createPalette() is called; an index lookup then resolves transparent, not opaque black.
+  std::vector<CColor> colors;
+
+  // Parallel to colors: true if the <palette> entry had a negative alpha, meaning overwrite the
+  // pixel (CDrawImage::setPixelTrueColorOverWrite) instead of blending; magnitude -(alpha+1) is in colors[index].a.
+  std::vector<uint8_t> overwrite;
+
   /**
    * Outputs styleConfiguration as string
    */
@@ -87,5 +95,38 @@ struct CStyleConfiguration {
    * Sets the legend scale and offset based on min/max
    */
   void stretchLegend(double min, double max);
+
+  // Builds the index-color palette (colorRange/interval/svg); transparent everywhere if legend is nullptr.
+  int createPalette(CServerConfig::XMLE_Legend *legend);
+
+  // Inline: these inline into the per-pixel warp loop call chain, same as CDrawFunction.h.
+
+  // Looks up colors[index]; transparent for an out-of-range index.
+  CColor getCColorFromLegendPaletteIndex(int colorIndex) const {
+    if (colorIndex >= 0 && colorIndex < (int)colors.size()) {
+      return colors[colorIndex];
+    }
+    return CColor(0, 0, 0, 0);
+  }
+
+  // Whether index should overwrite rather than blend - see `overwrite` above.
+  bool isLegendPaletteIndexOverwrite(int colorIndex) const {
+    if (colorIndex >= 0 && colorIndex < (int)overwrite.size()) {
+      return overwrite[colorIndex];
+    }
+    return false;
+  }
+
+  // Draws via overwrite or blend as appropriate; overwrite still draws at alpha 0 (an erase).
+  // One bounds check (colors and overwrite are always the same size), not two.
+  void drawPixelFromPaletteIndex(CDrawImage *drawImage, int x, int y, int colorIndex) const {
+    if (colorIndex < 0 || colorIndex >= (int)colors.size()) return;
+    const CColor &c = colors[colorIndex];
+    if (overwrite[colorIndex]) {
+      drawImage->setPixelTrueColorOverWrite(x, y, c.r, c.g, c.b, c.a);
+    } else if (c.a > 0) {
+      drawImage->setPixel(x, y, c);
+    }
+  }
 };
 #endif

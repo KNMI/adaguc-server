@@ -32,6 +32,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendScale = styleConfiguration->legendScale;
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
+  settings.styleConfiguration = styleConfiguration;
 
   const bool isLegacyStyle = isLegacyRenderMethod(styleConfiguration->renderMethod);
 

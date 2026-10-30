@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Regression dataset for the <palette alpha="-1"> "overwrite" convention: a negative config
+       alpha means unconditionally erase the destination pixel (even to fully transparent), not
+       blend - see CStyleConfiguration::drawPixelFromPaletteIndex. Mirrors the "black"/"Masked"
+       legend in data/config/adaguc.tiled.xml, which relies on exactly this. -->
+  <Legend name="overwrite_erase" type="colorRange">
+    <palette index="0" red="0" green="0" blue="0" alpha="-1"/>
+    <palette index="240" red="0" green="0" blue="0" alpha="-1"/>
+  </Legend>
+
+  <Style name="overwrite_erase" title="Overwrite erase" abstract="Every in-range value overwrites the destination pixel fully transparent">
+    <Legend fixedclasses="true">overwrite_erase</Legend>
+    <Min>0.0</Min>
+    <Max>0.5</Max>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+
+  <!-- Layers -->
+  <Layer type="database">
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+    <Styles>overwrite_erase</Styles>
+  </Layer>
+</Configuration>
