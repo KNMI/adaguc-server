@@ -13,7 +13,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="9.2.0"
+LABEL version="9.2.1"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -159,7 +159,7 @@ RUN useradd -m adaguc -u 1000 && \
 COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
-COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
+COPY ./Docker/adaguc-internal-baselayers.xml /adaguc/adaguc-datasets-internal/adaguc-internal-baselayers.xml
 COPY scripts /adaguc/adaguc-server-master/scripts
 COPY ./scripts/*.sh /adaguc/
 
@@ -176,6 +176,9 @@ RUN  chmod +x /adaguc/*.sh && \
     ln -s /adaguc/scan.sh /bin/scan.sh && ln -s /adaguc/scan.sh /bin/scan  && ln -s /adaguc/adaguc-server-chkconfig.sh /bin/adaguc-server-chkconfig.sh
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
+
+# Use the same config for serving requests as start.sh and the scan scripts use for --updatedb
+ENV ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 
