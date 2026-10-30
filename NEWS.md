@@ -1,3 +1,7 @@
+**Version 9.2.1**
+
+- Fixed a `baselayers.xml` in your own dataset directory clashing with the internal baselayers dataset of the Docker image. The internal dataset is now named `adaguc-internal-baselayers`.
+
 **Version 9.2.0**
 
 - `CImgWarpBilinear` is removed. The keywords `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` still work: the generic warper emulates them. New configs use `RenderMethod` `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md). Test datasets and docs are migrated, with one style per name in GetCapabilities. Legacy output is pinned by `TestsForLegacyBilinearRender`.
