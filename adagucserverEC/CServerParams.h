@@ -95,8 +95,8 @@ public:
   std::string responceCrs;
   std::string Styles;
   std::string Style;
-  std::string styleSheet;        // STYLESHEET KVP value, decoded
-  int styleSheetStyleIndex = -1; // Index in cfg->Style of the Style posted in STYLESHEET, used for the (single) layer regardless of STYLES
+  std::string styleSheet;           // STYLESHEET KVP value, decoded
+  int styleSheetStyleIndex = -1;    // Index in cfg->Style of the Style posted in STYLESHEET, used for the (single) layer regardless of STYLES
   std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
   std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter
@@ -175,7 +175,7 @@ public:
    * Adds the Style and Legend elements of a STYLESHEET to the configuration, for this request only.
    * The posted Style (at most one) is used for the layer, regardless of its name and of STYLES; see styleSheetStyleIndex.
    * A request with a STYLESHEET may only have one layer, CRequest::process_querystring enforces this.
-   * A posted Legend replaces the configured one with the same name, other names are added.
+   * A posted Legend replaces the configured one with the same name, otherwise it is added with the provided name.
    * The xml may be bare elements or wrapped in <Configuration>. Any other element, and any attribute
    * that references a local file (name contains "file", or "symbol"/"location"), is refused.
    * returns zero on success
