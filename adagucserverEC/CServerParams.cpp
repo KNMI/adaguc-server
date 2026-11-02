@@ -33,6 +33,8 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
@@ -329,6 +331,85 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
   }
   CDBError("Invalid XML file %s", pszConfigFile.c_str());
   return 1;
+}
+
+// Attributes which make the server read a local file are refused in a STYLESHEET.
+static bool isAllowedStyleSheetAttribute(std::string_view name) { return name.find("file") == std::string_view::npos && name != "symbol" && name != "location"; }
+
+static bool hasOnlyAllowedStyleSheetAttributes(xmlNode *node) {
+  for (; node != nullptr; node = node->next) {
+    if (node->type != XML_ELEMENT_NODE) continue;
+    for (xmlAttr *attribute = node->properties; attribute != nullptr; attribute = attribute->next) {
+      if (!isAllowedStyleSheetAttribute((const char *)attribute->name)) {
+        CDBError("STYLESHEET: attribute [%s] in [%s] is not allowed", (const char *)attribute->name, (const char *)node->name);
+        return false;
+      }
+    }
+    if (!hasOnlyAllowedStyleSheetAttributes(node->children)) return false;
+  }
+  return true;
+}
+
+// Only Style and Legend elements may appear at the top level of a STYLESHEET.
+static bool isValidStyleSheet(const std::string &xml) {
+  xmlDoc *doc = xmlReadMemory(xml.c_str(), xml.length(), nullptr, nullptr, XML_PARSE_NONET);
+  if (doc == nullptr) {
+    CDBError("STYLESHEET is not valid XML");
+    return false;
+  }
+  xmlNode *root = xmlDocGetRootElement(doc);
+  bool valid = root != nullptr && std::string_view((const char *)root->name) == "Configuration";
+  for (xmlNode *node = valid ? root->children : nullptr; node != nullptr && valid; node = node->next) {
+    if (node->type != XML_ELEMENT_NODE) continue;
+    std::string_view name = (const char *)node->name;
+    if (name != "Style" && name != "Legend") {
+      CDBError("STYLESHEET: element [%s] is not allowed, only Style and Legend", (const char *)node->name);
+      valid = false;
+    }
+  }
+  valid = valid && hasOnlyAllowedStyleSheetAttributes(root->children);
+  xmlFreeDoc(doc);
+  return valid;
+}
+
+int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
+  if (cfg == nullptr) return 1;
+  std::string xml = CT::trim(styleSheetXml);
+  if (xml.starts_with("<?xml")) {
+    size_t declarationEnd = xml.find("?>");
+    xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));
+  }
+  if (!xml.starts_with("<Configuration")) {
+    xml = "<Configuration>" + xml + "</Configuration>";
+  }
+  if (!isValidStyleSheet(xml)) return 1;
+
+  CServerConfig styleSheetConfig;
+  if (parseConfig(&styleSheetConfig, xml, "STYLESHEET") != 0 || styleSheetConfig.Configuration.size() != 1) {
+    CDBError("Unable to parse STYLESHEET");
+    return 1;
+  }
+  const auto &posted = styleSheetConfig.Configuration[0];
+  if (posted.Style.size() > 1) {
+    CDBError("STYLESHEET may contain at most one Style, got %zu", posted.Style.size());
+    return 1;
+  }
+
+  // Replace in place, so indices into cfg->Legend stay valid
+  for (const auto &postedLegend: posted.Legend) {
+    auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), [&postedLegend](const auto &legend) { return legend.attr.name == postedLegend.attr.name; });
+    if (it != cfg->Legend.end()) {
+      *it = postedLegend;
+    } else {
+      cfg->Legend.push_back(postedLegend);
+    }
+  }
+  // Appended, not looked up by name: CDataSource::getStyle uses it for every layer
+  if (posted.Style.size() == 1) {
+    cfg->Style.push_back(posted.Style[0]);
+    styleSheetStyleIndex = cfg->Style.size() - 1;
+  }
+  return 0;
 }
 
 std::string CServerParams::getResponseHeaders(int mode) {

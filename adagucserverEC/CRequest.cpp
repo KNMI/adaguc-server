@@ -1306,6 +1306,19 @@ int CRequest::process_querystring() {
   }
   StopWatch_Measure("query string processed");
 
+  if (!srvParam->styleSheet.empty()) {
+    // The posted style applies to every layer, so only one layer is allowed
+    if (srvParam->requestedLayerNames.size() > 1) {
+      CDBError("ADAGUC Server: STYLESHEET can only be used with one layer, got %zu", srvParam->requestedLayerNames.size());
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (srvParam->applyStyleSheet(srvParam->styleSheet) != 0) {
+      CDBError("ADAGUC Server: Invalid STYLESHEET");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    }
+  }
+
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
     dErrorOccured = 1;

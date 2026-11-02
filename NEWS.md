@@ -1,3 +1,11 @@
+**Version 9.3.0**
+
+- WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.
+- New `STYLESHEET` parameter: post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only. Only one layer and one `Style` are allowed; other elements and attributes referencing local files are refused with 422.
+- Query string parameters are now split before URL-decoding, so an encoded `&` (`%26`) inside a value no longer splits it into an extra parameter.
+- Fork server: maximum request size raised from 2048 to 8192 bytes, and the request is read until the client finishes sending.
+- Image encoders moved out of `CDrawImage` into `write_png32` and `write_webp`. WebP is now always required (`ADAGUC_USE_WEBP` removed) and FreeType is no longer linked directly.
+
 **Version 9.2.1**
 
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.

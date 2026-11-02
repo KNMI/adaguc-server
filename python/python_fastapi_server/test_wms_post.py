@@ -12,8 +12,9 @@ import pytest
 
 GET_MAP_QUERY = "source=testdata.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE"
 EXPECTED_GET_MAP = os.path.join(os.environ["ADAGUC_PATH"], "tests", "expectedoutputs", "TestWMS", "test_WMSGetMap_testdatanc.png")
-# Contains characters that would break naive query string handling: &, =, %, + and a newline
-STYLESHEET = '<Style name="x">\n  <Legend>a&amp;b</Legend>&WIDTH=1 100%+</Style>'
+# Valid stylesheet xml with characters that would break naive query string handling: &, =, %, + and a newline.
+# Only a Legend that no style uses, so the image does not change.
+STYLESHEET = '<Legend name="x a&amp;b">\n  &amp;WIDTH=1 100%+</Legend>'
 
 
 @pytest.fixture(autouse=True)
