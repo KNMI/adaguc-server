@@ -34,25 +34,12 @@
 #include <cairo-ft.h>
 #include <fontconfig/fontconfig.h>
 #include "write_png.h"
+#include "write_png32.h"
+#include "write_webp.h"
 #include <cstdint>
 #include <algorithm>
 
-#ifdef ADAGUC_USE_WEBP
-#include "webp/encode.h"
-#include "webp/decode.h"
-#include "webp/types.h"
-#endif
-
 #define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0
-
-static cairo_status_t pngWriterFunc(void *closure, const unsigned char *data, unsigned int length) {
-  FILE *fp = (FILE *)closure;
-  int nrec = fwrite(data, length, 1, fp);
-  if (nrec == 1) {
-    return CAIRO_STATUS_SUCCESS;
-  }
-  return CAIRO_STATUS_WRITE_ERROR;
-}
 
 static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double direction, double shaftLength, double barbLengthWithFlip, int nrPos) {
   int pos = 0;
@@ -81,13 +68,6 @@ static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double dir
   }
   return pos;
 }
-
-#ifdef ADAGUC_USE_WEBP
-static int webPWriter(const uint8_t *data, size_t data_size, const WebPPicture *const pic) {
-  FILE *const out = (FILE *)pic->custom_ptr;
-  return data_size ? (fwrite(data, data_size, 1, out) == 1) : 1;
-}
-#endif
 
 CDrawImage::CDrawImage() {
   dImageCreated = 0;
@@ -206,7 +186,7 @@ int CDrawImage::printImagePng8(bool useBitAlpha) {
     return 1;
   }
 
-  _writeToPng8Stream(stdout, useBitAlpha);
+  writePng(geoParams.width, geoParams.height, ARGBByteBuffer.get(), stdout, 8, useBitAlpha);
   return 0;
 }
 
@@ -216,7 +196,7 @@ int CDrawImage::printImagePng24() {
     return 1;
   }
 
-  _writeToPng24Stream(stdout);
+  writePng(geoParams.width, geoParams.height, ARGBByteBuffer.get(), stdout, 24, false);
   return 0;
 }
 
@@ -226,7 +206,12 @@ int CDrawImage::printImagePng32() {
     return 1;
   }
 
-  _writeToPng32Stream(stdout, backgroundAlpha);
+  // Canvas is already premultiplied, as Cairo's PNG writer expects.
+  cairo_set_operator(cr, CAIRO_OPERATOR_DEST_IN);
+  if (backgroundAlpha != 255) {
+    cairo_paint_with_alpha(cr, float(backgroundAlpha) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL);
+  }
+  writePng32(surface, stdout);
   return 0;
 }
 int CDrawImage::printImageWebP32(int quality) {
@@ -235,7 +220,7 @@ int CDrawImage::printImageWebP32(int quality) {
     return 1;
   }
 
-  _writeToWebP32Stream(stdout, quality);
+  writeWebP(geoParams.width, geoParams.height, ARGBByteBuffer.get(), stdout, quality);
   return 0;
 }
 
@@ -896,102 +881,9 @@ void CDrawImage::_poly(float x[], float y[], int n, float lineWidth, bool closeP
   cairo_set_antialias(cr, aa);
 }
 
-void CDrawImage::_writeToPng24Stream(FILE *fp) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.get(), fp, 24, false); }
-
-void CDrawImage::_writeToPng8Stream(FILE *fp, bool use8bitpalAlpha) { writePng(geoParams.width, geoParams.height, ARGBByteBuffer.get(), fp, 8, use8bitpalAlpha); }
-
-void CDrawImage::_writeToPng32Stream(FILE *fp, unsigned char alpha) {
-  // Canvas is already premultiplied, as Cairo's PNG writer expects.
-  cairo_set_operator(cr, CAIRO_OPERATOR_DEST_IN);
-  if (alpha != 255) {
-    cairo_paint_with_alpha(cr, float(alpha) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL);
-  }
-  cairo_surface_flush(surface);
-  cairo_surface_write_to_png_stream(surface, pngWriterFunc, (void *)fp);
-}
-
 void CDrawImage::_setToSurface(cairo_surface_t *png) {
   cairo_set_source_surface(this->cr, png, 0, 0);
   cairo_paint(this->cr);
-}
-
-void CDrawImage::_writeToWebP32Stream(FILE *fp, int quality) {
-#ifdef ADAGUC_USE_WEBP
-  // https://developers.google.com/speed/webp/docs/api
-
-  WebPConfig config;
-  WebPPicture picture;
-  if (!WebPPictureInit(&picture) || !WebPConfigInit(&config)) {
-    CDBError("Error! WEBP Version mismatch!\n");
-    return;
-  }
-
-  config.lossless = quality == 100 ? 1 : 0; // Lossless encoding (0=lossy(default), 1=lossless).
-  config.quality = quality;                 // between 0 and 100. For lossy, 0 gives the smallest
-  config.method = 0;                        // quality/speed trade-off (0=fast, 6=slower-better)
-  config.alpha_quality = 100;               // Between 0 (smallest size) and 100 (lossless). Default is 100.
-  config.pass = 1;                          // number of entropy-analysis passes (in [1..10]).
-  config.preprocessing = 0;                 // preprocessing filter (0=none, 1=segment-smooth)
-  config.partitions = 0;                    // log2(number of token partitions) in [0..3] Default is set to 0 for easier progressive decoding.
-  config.partition_limit = 100;             // quality degradation allowed to fit the 512k limit on prediction modes coding (0: no degradation, 100: maximum possible degradation).
-  picture.use_argb = config.lossless ? 1 : 0; // To select between ARGB and YUVA input.
-  config.thread_level = 1; // ~20-30% faster encoding, same output size (benchmarked on 1200x1000-3600x3000 lossy encodes).
-  picture.width = geoParams.width;
-  picture.height = geoParams.height;
-  picture.writer = webPWriter;
-  picture.custom_ptr = (void *)fp;
-
-  if (!WebPValidateConfig(&config)) {
-    CDBError("Error! Invalid configuration.");
-    return;
-  }
-
-  StopWatch_Measure("writeToWebP32Stream: start import %dx%d", geoParams.width, geoParams.height);
-  // libwebp wants straight alpha; only unpremultiply (into a scratch copy) if any pixel needs it.
-  auto hasPartialAlpha = [&]() {
-    for (int y = 0; y < geoParams.height; y++) {
-      for (int x = 0; x < geoParams.width; x++) {
-        unsigned char a = ARGBByteBuffer[x * 4 + y * stride + 3];
-        if (a != 255 && a != 0) return true;
-      }
-    }
-    return false;
-  };
-  std::vector<unsigned char> straight;
-  const unsigned char *importSource = ARGBByteBuffer.get();
-  if (hasPartialAlpha()) {
-    straight.assign(importSource, importSource + size_t(geoParams.height) * stride);
-    for (int y = 0; y < geoParams.height; y++) {
-      for (int x = 0; x < geoParams.width; x++) {
-        size_t p = x * 4 + y * stride;
-        uint32_t pixel;
-        memcpy(&pixel, &straight[p], sizeof(pixel));
-        unsigned char a = pixel >> 24;
-        if (a != 255 && a != 0) {
-          uint32_t out = _packBGRA(unpremultiplyChannel(pixel >> 16, a), unpremultiplyChannel(pixel >> 8, a), unpremultiplyChannel(pixel, a), a);
-          memcpy(&straight[p], &out, sizeof(out));
-        }
-      }
-    }
-    importSource = straight.data();
-  }
-  bool importOk = WebPPictureImportBGRA(&picture, importSource, stride);
-  if (!importOk) {
-    CDBError("Error! Cannot import picture for WebP");
-    WebPPictureFree(&picture);
-    return;
-  }
-  StopWatch_Measure("writeToWebP32Stream: done import, start encode");
-
-  if (!WebPEncode(&config, &picture)) {
-    CDBError("Error!  Cannot encode picture as WebP");
-  }
-  StopWatch_Measure("writeToWebP32Stream: done encode");
-  WebPPictureFree(&picture);
-
-#else
-  CDBError("-DADAGUC_USE_WEBP not enabled");
-#endif
 }
 
 void CDrawImage::_drawBarb(int x, int y, double uncorrectedDirection, double viewDirCorrection, double strength, const CColor &barbColor, const CColor &outlineColor, float lineWidth, bool toKnots, bool flip,

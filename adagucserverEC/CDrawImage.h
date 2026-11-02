@@ -158,10 +158,6 @@ private:
   void _drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, const CColor &color, const CColor &outlineColor, float lineWidth, bool toKnots, bool flip, bool drawText,
                  double fontSize, const CColor &textColor, double outlineWidth);
 
-  void _writeToPng8Stream(FILE *fp, bool use8bitpalAlpha);
-  void _writeToPng24Stream(FILE *fp);
-  void _writeToPng32Stream(FILE *fp, unsigned char alpha);
-  void _writeToWebP32Stream(FILE *fp, int quality);
   void _setToSurface(cairo_surface_t *png);
 
   // --- Text: one cairo_font_face_t cached per font file, loaded via cairo's FreeType backend.

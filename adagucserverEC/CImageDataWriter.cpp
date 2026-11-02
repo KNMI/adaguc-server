@@ -1081,10 +1081,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Drawingnormal legend");
       }
       if (j != 0) {
-        /*
-         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
-         * For j==0, the legend is already initialized previously
-         */
         if (CIMAGEDATAWRITER_DEBUG) {
           CDBDebug("REINITLEGEND");
         }
