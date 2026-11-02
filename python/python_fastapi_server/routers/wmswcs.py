@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+from urllib.parse import parse_qsl, quote
 from adaguc.CGIRunner import HTTP_STATUSCODE_400_BAD_REQUEST
 from adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 from adaguc.CGIRunner import HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY
@@ -18,14 +19,42 @@ wmsWcsRouter = APIRouter(responses={404: {"description": "Not found"}})
 logger = logging.getLogger(__name__)
 
 
-@wmsWcsRouter.get("/wms")
-@wmsWcsRouter.get("/wcs")
-@wmsWcsRouter.get("/adagucserver")
-@wmsWcsRouter.get("/adaguc-server")
+def build_query_string(params) -> str:
+    """
+    Builds the QUERY_STRING for adaguc-server from already decoded (key, value) pairs
+    """
+    query_string = ""
+    for k, query_param in params:
+        param_parts = k.split("=")
+        # Hack for urlencode dataset= parametwer (i.e. dataset%03DHARM_N25)
+        if len(param_parts) == 2 and param_parts[0].upper() == "DATASET":
+            query_string += f"&{param_parts[0]}={param_parts[1]}"
+        elif k.upper() == "STYLESHEET":
+            # Fully encoded: may contain &, % and newlines, adaguc-server decodes it per parameter
+            query_string += f"&{k}={quote(query_param, safe='')}"
+        else:
+            query_param = query_param.replace("+", "%2B")
+            query_string += f"&{k}={query_param}"
+    return query_string
+
+
+@wmsWcsRouter.api_route("/wms", methods=["GET", "POST"])
+@wmsWcsRouter.api_route("/wcs", methods=["GET", "POST"])
+@wmsWcsRouter.api_route("/adagucserver", methods=["GET", "POST"])
+@wmsWcsRouter.api_route("/adaguc-server", methods=["GET", "POST"])
 async def handle_wms(req: Request):
     """
-    Handle /wms endpoint
+    Handle /wms endpoint. POST accepts the same parameters form url encoded in the body.
     """
+    params = list(req.query_params.items())
+    if req.method == "POST":
+        content_type = req.headers.get("content-type", "").split(";")[0].strip().lower()
+        if content_type != "application/x-www-form-urlencoded":
+            return Response(content="POST requires Content-Type application/x-www-form-urlencoded", status_code=415)
+        body = (await req.body()).decode("utf-8", errors="replace")
+        # Last value wins for repeated keys, same as for query parameters
+        params += list(dict(parse_qsl(body, keep_blank_values=True)).items())
+
     adaguc_instance = setup_adaguc()
 
     adagucenv = {}
@@ -35,16 +64,7 @@ async def handle_wms(req: Request):
     adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
-    query_string = ""
-    for k in req.query_params:
-        param_parts = k.split("=")
-        # Hack for urlencode dataset= parametwer (i.e. dataset%03DHARM_N25)
-        if len(param_parts) == 2 and param_parts[0].upper() == "DATASET":
-            query_string += f"&{param_parts[0]}={param_parts[1]}"
-        else:
-            query_param = req.query_params[k]
-            query_param = query_param.replace("+", "%2B")
-            query_string += f"&{k}={query_param}"
+    query_string = build_query_string(params)
 
     # Run adaguc-server
     status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False, showLog=False)

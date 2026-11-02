@@ -29,6 +29,9 @@ const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
 // Default for ADAGUC_MAX_PROC_TIMEOUT, matches the python default.
 const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 60;
 
+// Maximum size of a request message, matches MAX_FORK_REQUEST_BYTES in python/lib/adaguc/fork_settings.py.
+const size_t MAX_FORK_REQUEST_BYTES = 8192;
+
 typedef std::chrono::steady_clock steady_clock;
 
 typedef struct {
@@ -154,6 +157,7 @@ bool child_set_env_from_request(const std::string_view &request) {
  * The child's stdout is redirected to the client socket so that output is sent directly back to the client.
  *
  * If the message is "PING", a "PONG\n" response is sent and the process exits.
+ * Any other request is read until the client shuts down its write side, and may be at most MAX_FORK_REQUEST_BYTES.
  *
  * @param child_socket_fd The file descriptor of the connected client socket.
  * @param run_adaguc_once Pointer to the function that processes the request.
@@ -164,9 +168,25 @@ bool child_set_env_from_request(const std::string_view &request) {
 void child_handle_client(int child_socket_fd, int (*run_adaguc_once)(int, char **, char **), int argc, char **argv, char **envp) {
   setLoggerPid();
 
-  std::vector<char> recv_buf(2048);
-  int data_recv = recv(child_socket_fd, recv_buf.data(), recv_buf.size(), 0);
-  if (data_recv <= 0) {
+  // One extra byte, to detect an oversized request
+  std::vector<char> recv_buf(MAX_FORK_REQUEST_BYTES + 1);
+  size_t data_recv = 0;
+  while (data_recv < recv_buf.size()) {
+    ssize_t n = recv(child_socket_fd, recv_buf.data() + data_recv, recv_buf.size() - data_recv, 0);
+    if (n < 0) {
+      if (errno == EINTR) continue;
+      _exit(1);
+    }
+    if (n == 0) break; // Client shut down its write side: request complete
+    data_recv += n;
+    // PING keeps the write side open, answer it as soon as it is complete
+    if (std::string_view(recv_buf.data(), data_recv).starts_with("PING")) break;
+  }
+  if (data_recv == 0) {
+    _exit(1);
+  }
+  if (data_recv > MAX_FORK_REQUEST_BYTES) {
+    CDBError("Fork server request exceeds %zu bytes", MAX_FORK_REQUEST_BYTES);
     _exit(1);
   }
 

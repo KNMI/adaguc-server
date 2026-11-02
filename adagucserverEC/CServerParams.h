@@ -95,6 +95,7 @@ public:
   std::string responceCrs;
   std::string Styles;
   std::string Style;
+  std::string styleSheet; // STYLESHEET KVP value, decoded; accepted but not interpreted yet
   std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
   std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter

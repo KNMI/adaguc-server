@@ -88,6 +88,8 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     try:
         writer.write(message_bytes)
         await writer.drain()
+        # Signals the end of the request, the fork server reads until this end of stream
+        writer.write_eof()
 
         process_output = await reader.read()
     finally:

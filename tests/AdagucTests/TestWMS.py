@@ -116,6 +116,26 @@ class TestWMS(unittest.TestCase):
             else:
                 self.assertEqual(reverted_bbox, regular_bbox, f"{crs} should be unchanged")
 
+    def test_WMSGetMap_testdatanc_stylesheet_with_encoded_ampersand(self):
+        """
+        An encoded STYLESHEET value must stay one parameter: its %26WIDTH%3D1 must not override WIDTH.
+        """
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_testdatanc.png"
+        # Encoded '<Style a="1">\n&WIDTH=1</Style>'
+        stylesheet = "%3CStyle%20a%3D%221%22%3E%0A%26WIDTH%3D1%3C%2FStyle%3E"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&STYLESHEET="
+            + stylesheet,
+            env=self.env,
+        )
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data,
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc.png"

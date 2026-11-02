@@ -120,6 +120,31 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypat
 
 
 @pytest.mark.asyncio
+async def test_fork_server_reads_large_request_completely(fork_server):
+    # A request well above a single small recv must arrive complete. STYLESHEET goes first, so a
+    # truncated read would lose the GetMap parameters instead of only some padding.
+    query = "STYLESHEET=" + "x" * 7000 + "&" + GET_MAP_QUERY
+    status, headers, process_error, body = await CGIRunner().run([str(ADAGUC_BINARY)], query)
+
+    assert status == 0
+    assert process_error == b""
+    assert "Content-Type:image/png" in headers
+    assert body == EXPECTED_GET_MAP.read_bytes()
+
+
+@pytest.mark.asyncio
+async def test_fork_server_rejects_oversized_request(fork_server, fork_connection):
+    # Bypass the client side size check: the child itself must refuse more than MAX_FORK_REQUEST_BYTES.
+    # Exactly one byte too many, so no unread data is left (which would reset the connection instead).
+    prefix = b"QUERY_STRING="
+    async with fork_connection() as (reader, writer):
+        writer.write(prefix + b"x" * (cgi_runner_module.MAX_FORK_REQUEST_BYTES + 1 - len(prefix)))
+        await writer.drain()
+        writer.write_eof()
+        assert await reader.read() == (1).to_bytes(4, sys.byteorder, signed=True)
+
+
+@pytest.mark.asyncio
 async def test_command_invocation_bypasses_fork_server(fork_server):
     # Verify command-style invocations use a separate subprocess without disrupting the fork server.
     mother_pid = fork_server.process.pid

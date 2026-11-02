@@ -8,9 +8,10 @@ int getDatasetFromQueryString(CServerParams &srvParam) {
   const char *pszQueryString = getenv("QUERY_STRING");
   if (pszQueryString != nullptr) {
     std::string queryString(pszQueryString);
-    queryString = CT::decodeURL(queryString);
+    // Split before decoding, same as CRequest::process_querystring
     auto parameters = CT::split(queryString, "&");
     for (size_t j = 0; j < parameters.size(); j++) {
+      parameters[j] = CT::decodeURL(parameters[j]);
       std::string value0Cap;
       std::string values[2];
       int equalPos = CT::indexOf(parameters[j], "="); // split("=");

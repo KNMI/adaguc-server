@@ -896,8 +896,11 @@ int CRequest::process_querystring() {
     CGI = 1;
   }
 
-  queryString = CT::decodeURL(queryString);
+  // Split before decoding, so an encoded '&' (%26) inside a value (e.g. STYLESHEET xml) stays part of that value
   auto parameters = CT::split(queryString, "&");
+  for (auto &parameter: parameters) {
+    parameter = CT::decodeURL(parameter);
+  }
 
   if (CREQUEST_DEBUG) {
     CDBDebug("Parsing query string parameters");
@@ -941,6 +944,10 @@ int CRequest::process_querystring() {
         CDBError("ADAGUC Server: Style already defined");
         dErrorOccured = 1;
       }
+    }
+    // Stylesheet parameter, for now only stored; will carry encoded style xml
+    if (uriKeyUpperCase == "STYLESHEET") {
+      srvParam->styleSheet = uriValue;
     }
     if (!uriValue.empty()) {
       // BBOX Parameters
