@@ -242,7 +242,7 @@ public:
 
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration->legendIndex != -1) {
-      status = drawImage->createPalette(&dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
+      status = styleConfiguration->createPalette(&dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
       if (status != 0) {
         CDBError("Unknown palette type for %s", dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
         return;
@@ -748,7 +748,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
 
             for (int y = y1; y < y2; y++) {
               for (int x = x1; x < x2; x++) {
-                drawImage->setPixelIndexed(x, y, pcolorind);
+                styleConfiguration->drawPixelFromPaletteIndex(drawImage, x, y, pcolorind);
               }
             }
           }

@@ -13,18 +13,18 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, GeoParameters &ge
   int scaleBarHeight = int(23.0f * scaling);
 
   // Draw horizontal base, thick line
-  scaleBarImage->line(offsetX - 0.5, scaleBarHeight - 2.0f * scaling, p.width * 2.0f + offsetX + 0.5, scaleBarHeight - int(2.0f * scaling), scaling * 2, 240);
+  scaleBarImage->line(offsetX - 0.5, scaleBarHeight - 2.0f * scaling, p.width * 2.0f + offsetX + 0.5, scaleBarHeight - int(2.0f * scaling), scaling * 2, standardCColorBlack);
 
   // Draw four horizontal smaller subdivisions
   float subDivXW = p.width / 5.0f;
   for (int j = 1; j < 5; j++) {
-    scaleBarImage->line(offsetX + subDivXW * float(j), scaleBarHeight - 2.0f * scaling, offsetX + subDivXW * float(j), scaleBarHeight - (5.0f * scaling), scaling * .5, 240);
+    scaleBarImage->line(offsetX + subDivXW * float(j), scaleBarHeight - 2.0f * scaling, offsetX + subDivXW * float(j), scaleBarHeight - (5.0f * scaling), scaling * .5, standardCColorBlack);
   }
 
   // Draw three bigger divisions
-  scaleBarImage->line(offsetX, scaleBarHeight - 1.0f * scaling, offsetX, scaleBarHeight - 9.0f * scaling, scaling * 1, 240);
-  scaleBarImage->line(offsetX + p.width * 1.0f, scaleBarHeight - 2.0f * scaling, offsetX + p.width * 1.0f, scaleBarHeight - 9.0f * scaling, scaling * 1, 240);
-  scaleBarImage->line(offsetX + p.width * 2.0f, scaleBarHeight - 1.0f * scaling, offsetX + p.width * 2.0f, scaleBarHeight - 9.0f * scaling, scaling * 1, 240);
+  scaleBarImage->line(offsetX, scaleBarHeight - 1.0f * scaling, offsetX, scaleBarHeight - 9.0f * scaling, scaling * 1, standardCColorBlack);
+  scaleBarImage->line(offsetX + p.width * 1.0f, scaleBarHeight - 2.0f * scaling, offsetX + p.width * 1.0f, scaleBarHeight - 9.0f * scaling, scaling * 1, standardCColorBlack);
+  scaleBarImage->line(offsetX + p.width * 2.0f, scaleBarHeight - 1.0f * scaling, offsetX + p.width * 2.0f, scaleBarHeight - 9.0f * scaling, scaling * 1, standardCColorBlack);
 
   // Draw text
   std::string units = "";
@@ -50,15 +50,15 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, GeoParameters &ge
   std::string fontFile = scaleBarImage->getFontLocation();
 
   float fontSize = scaleBarImage->getFontSize() * scaling;
-  scaleBarImage->drawText(offsetX - 2.5 * scaling, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, "0", 240);
+  scaleBarImage->drawText(offsetX - 2.5 * scaling, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, "0", standardCColorBlack);
 
   valueStr = CT::printf("%g", (p.mapunits));
-  scaleBarImage->drawText(offsetX + p.width * 1.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, valueStr.c_str(), 240);
+  scaleBarImage->drawText(offsetX + p.width * 1.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, valueStr.c_str(), standardCColorBlack);
 
   valueStr = CT::printf("%g", (p.mapunits * 2));
-  scaleBarImage->drawText(offsetX + p.width * 2.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, valueStr.c_str(), 240);
+  scaleBarImage->drawText(offsetX + p.width * 2.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, valueStr.c_str(), standardCColorBlack);
 
-  scaleBarImage->drawText(offsetX + p.width * 2.0f + 10, scaleBarHeight - (3.0f * scaling), fontFile.c_str(), fontSize * .7, 0, units.c_str(), 240);
+  scaleBarImage->drawText(offsetX + p.width * 2.0f + 10, scaleBarHeight - (3.0f * scaling), fontFile.c_str(), fontSize * .7, 0, units.c_str(), standardCColorBlack);
   scaleBarImage->crop(4 * scaling);
   return 0;
 }

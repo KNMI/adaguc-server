@@ -139,7 +139,6 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   image->enableTransparency(true);
   image->setTrueColor(true);
   image->createImage(srvParam->geoParams);
-  image->create685Palette();
   image->rectangle(0, 0, srvParam->geoParams.width, srvParam->geoParams.height, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
   std::string fontFile = image->getFontLocation();
   std::string timeValue = "No time dimension specified";

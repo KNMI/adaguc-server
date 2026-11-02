@@ -49,6 +49,10 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     CDBDebug("INIT");
   }
   srvParam = _srvParam;
+  if (_NrOfBands < 0) {
+    CDBError("Invalid number of bands: %d", _NrOfBands);
+    return 1;
+  }
   NrOfBands = _NrOfBands;
   int status;
   _dataSource = dataSource;
