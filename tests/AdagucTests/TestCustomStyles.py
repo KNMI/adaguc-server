@@ -148,6 +148,28 @@ class TestCustomStyles(unittest.TestCase):
         """
         self.compare_image(self.post_getmap(symbol_style), "test_CustomStyles_symbol_from_symbol_dir.png")
 
+    def test_CustomStyles_symbol_from_dataset_dir(self):
+        """A SymbolInterval may use a .png from ADAGUC_DATASET_DIR, including its subdirectories"""
+        symbol_style = """
+          <Style name="symbols">
+            <Legend>rainbow</Legend>
+            <Min>0.0</Min>
+            <Max>0.5</Max>
+            <DataPostProc algorithm="pointsfromgrid" a="40" select="testdata"/>
+            <SymbolInterval file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_3.svg.png"/>
+            <Point pointstyle="symbol" discradius="0" textradius="0" dot="false" fontsize="8" textformat=" "/>
+          </Style>
+        """
+        self.compare_image(self.post_getmap(symbol_style), "test_CustomStyles_symbol_from_dataset_dir.png")
+
+    def test_CustomStyles_symbol_in_dataset_dir_root(self):
+        """A .png directly in ADAGUC_DATASET_DIR is accepted as well"""
+        response = self.post_getmap(
+            '<Style name="s"><SymbolInterval file="{ADAGUC_DATASET_DIR}/csv_radiusandvalue_legend.png"/><Point pointstyle="symbol"/></Style>'
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.headers["content-type"], "image/png")
+
     def test_CustomStyles_rejects_symbol_outside_symbol_dirs(self):
         """Symbol files outside the symbol directories, or not .png, are refused"""
         for file in [
@@ -155,6 +177,8 @@ class TestCustomStyles(unittest.TestCase):
             "{ADAGUC_PATH}data/symbols/../../../../../etc/passwd",
             "{ADAGUC_PATH}data/resources/locations/global_edr_locations.geojson",
             "{ADAGUC_PATH}data/symbols/does_not_exist.png",
+            "{ADAGUC_DATASET_DIR}/adaguc.tests.customstyles.xml",
+            "{ADAGUC_DATASET_DIR}/../adaguc.tests.dataset.xml",
         ]:
             response = self.post_getmap(f'<Style name="s"><SymbolInterval file="{file}"/><Point pointstyle="symbol"/></Style>')
             self.assertEqual(response.status_code, 422, file)

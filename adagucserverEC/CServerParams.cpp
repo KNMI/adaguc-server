@@ -365,7 +365,7 @@ static std::string realDirectory(const std::string &path) {
 }
 
 // Resolves a SymbolInterval file from a STYLESHEET to its real path. Only existing .png files in the
-// symbol directories are allowed: {ADAGUC_PATH}data/symbols, {ADAGUC_PATH}data/resources and {ADAGUC_DATASET_DIR}/resources.
+// symbol directories (or below) are allowed: {ADAGUC_PATH}data/symbols, {ADAGUC_PATH}data/resources and {ADAGUC_DATASET_DIR}.
 // The error is the same for every refusal, so it does not tell whether a file exists.
 static bool resolveStyleSheetSymbolFile(std::string &file) {
   std::vector<std::string> symbolDirs;
@@ -374,7 +374,7 @@ static bool resolveStyleSheetSymbolFile(std::string &file) {
     symbolDirs.push_back(realDirectory(std::string(adagucPath) + "/data/resources"));
   }
   if (const char *datasetDir = getenv("ADAGUC_DATASET_DIR")) {
-    symbolDirs.push_back(realDirectory(std::string(datasetDir) + "/resources"));
+    symbolDirs.push_back(realDirectory(datasetDir));
   }
   std::string path = file;
   substituteStandardEnvironment(path);
