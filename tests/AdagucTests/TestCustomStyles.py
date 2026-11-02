@@ -133,3 +133,32 @@ class TestCustomStyles(unittest.TestCase):
     def test_CustomStyles_rejects_invalid_xml(self):
         response = self.post_getmap("<Style name=")
         self.assertEqual(response.status_code, 422)
+
+    def test_CustomStyles_symbol_from_symbol_dir(self):
+        """A SymbolInterval may use a .png from the server's symbol directories"""
+        symbol_style = """
+          <Style name="symbols">
+            <Legend>rainbow</Legend>
+            <Min>0.0</Min>
+            <Max>0.5</Max>
+            <DataPostProc algorithm="pointsfromgrid" a="40" select="testdata"/>
+            <SymbolInterval file="{ADAGUC_PATH}data/resources/icons/helicopter.png"/>
+            <Point pointstyle="symbol" discradius="0" textradius="0" dot="false" fontsize="8" textformat=" "/>
+          </Style>
+        """
+        self.compare_image(self.post_getmap(symbol_style), "test_CustomStyles_symbol_from_symbol_dir.png")
+
+    def test_CustomStyles_rejects_symbol_outside_symbol_dirs(self):
+        """Symbol files outside the symbol directories, or not .png, are refused"""
+        for file in [
+            "/etc/passwd",
+            "{ADAGUC_PATH}data/symbols/../../../../../etc/passwd",
+            "{ADAGUC_PATH}data/resources/locations/global_edr_locations.geojson",
+            "{ADAGUC_PATH}data/symbols/does_not_exist.png",
+        ]:
+            response = self.post_getmap(f'<Style name="s"><SymbolInterval file="{file}"/><Point pointstyle="symbol"/></Style>')
+            self.assertEqual(response.status_code, 422, file)
+
+    def test_CustomStyles_rejects_file_attribute_outside_symbolinterval(self):
+        response = self.post_getmap('<Style name="s"><Point file="{ADAGUC_PATH}data/symbols/marker.png"/></Style>')
+        self.assertEqual(response.status_code, 422)
