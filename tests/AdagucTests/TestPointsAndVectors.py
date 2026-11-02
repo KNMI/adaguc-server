@@ -46,10 +46,6 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        # This layer stacks several semi-transparent, partially-canvas-clipped disc/arrow markers,
-        # which is exactly where antialiasing coverage is most sensitive to the installed
-        # cairo/pixman version (see doc/developing/antialiasing-differences.md) - a higher tolerance
-        # than the usual default absorbs that without hiding real rendering regressions.
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
@@ -262,7 +258,6 @@ class TestPointsAndVectors:
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
 
-
     def test_warning_vectors_per_feature_thumbnail(self):
         AdagucTestTools().cleanTempDir()
         env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.tests.featurerendering.xml")
@@ -277,7 +272,6 @@ class TestPointsAndVectors:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
         assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
-
 
     def test_WMSGetMap_warning_points_and_features(self):
         AdagucTestTools().cleanTempDir()
