@@ -65,7 +65,7 @@ private:
   static void handleFileFromDBIsMissing(std::string a);
 
 public:
-  static int scanFile(std::string &fileToScan, CDataSource *dataSource, int scanFlags);
+  static int scanFile(const std::string &fileToScan, CDataSource *dataSource, int scanFlags);
   static int DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> &fileList, int scanFlags);
   static bool isTableAlreadyScanned(const std::string &tableName);
   static void markTableDirty(const std::string &tableName);

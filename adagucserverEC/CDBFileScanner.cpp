@@ -1082,7 +1082,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, const
   throw(__LINE__);
 }
 
-int CDBFileScanner::scanFile(std::string &fileToScan, CDataSource *dataSource, int scanFlags) {
+int CDBFileScanner::scanFile(const std::string &fileToScan, CDataSource *dataSource, int scanFlags) {
   std::vector<std::string> fileList = {fileToScan};
   auto dataSourceToScan = *dataSource;
   int status = CDBFileScanner::DBLoopFiles(&dataSourceToScan, 0, fileList, scanFlags);
