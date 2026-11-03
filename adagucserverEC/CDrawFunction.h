@@ -6,6 +6,7 @@
 #include <float.h>
 #include <pthread.h>
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "utils/NodataUtils.h"
 #include "CColor.h"
 struct MemoizationForDeterminePixelColorFromValue {
   double value = 0;
@@ -45,23 +46,7 @@ template <class T> short determinePixelIndexFromValue(T val, GDWDrawFunctionSett
 }
 
 template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSettings *settings) {
-  bool isNodata = false;
-
-  if (settings->hasNodataValue) {
-    /*
-     * Casting the double dfNodataValue back to the precision of the data itself,
-     * to do a correct comparison to check if this value is a nodatavalue.
-     */
-    T noDataValue = (T)settings->dfNodataValue;
-    if (val == noDataValue) isNodata = true;
-  }
-
-  if (std::isnan(val)) return CColor(0, 0, 0, 0);
-
-  if (!isNodata)
-    if (settings->legendValueRange)
-      if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
-  if (!isNodata) {
+  if (!isNodataValue(val, *settings)) {
     if (settings->isUsingShadeIntervals) {
       if (settings->shadeInterval > 0) {
         float f = floor(val / settings->shadeInterval) * settings->shadeInterval;
@@ -99,23 +84,7 @@ template <class T> CColor memoizedDeterminePixelColorFromValue(T val, GDWDrawFun
 }
 
 template <class T> void setPixelInDrawImage(int x, int y, T val, GDWDrawFunctionSettings *settings) {
-  bool isNodata = false;
-
-  if (settings->hasNodataValue) {
-    /*
-     * Casting the double dfNodataValue back to the precision of the data itself,
-     * to do a correct comparison to check if this value is a nodatavalue.
-     */
-    T noDataValue = (T)settings->dfNodataValue;
-    if (val == noDataValue) isNodata = true;
-  }
-
-  if (std::isnan(val)) return;
-
-  if (!isNodata)
-    if (settings->legendValueRange)
-      if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
-  if (!isNodata) {
+  if (!isNodataValue(val, *settings)) {
     if (settings->isUsingShadeIntervals) {
       bool pixelSet = false; // Remember if a pixel was set. If not set and bgColorDefined is defined, draw the background color.
       if (settings->shadeInterval > 0) {
