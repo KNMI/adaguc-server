@@ -35,7 +35,7 @@ template <typename T> void computeSmoothedGrid(T *sourceGrid, GDWState &warperSt
   // compiler can't easily prove that through the reference capture, so computing this once avoids
   // redoing the cast on every one of the width*height pixels visited.
   double nodataAsDouble = settings.hasNodataValue ? (double)(T)settings.dfNodataValue : 0.0;
-  auto isValid = [&](double value) { return !((settings.hasNodataValue && value == nodataAsDouble) || !(value == value)); };
+  auto isValid = [&](double value) { return !((settings.hasNodataValue && value == nodataAsDouble) || std::isnan(value)); };
 
   // Horizontal pass: for each row, the sum and count of valid values within [x-r, x+r].
   // Counts only ever need integer range (max (2r+1)^2), so int32_t instead of double halves the
@@ -83,10 +83,8 @@ template <typename T> void computeSmoothedGrid(T *sourceGrid, GDWState &warperSt
   }
 }
 
+// Callers only invoke this when settings.smoothingFiter > 0.
 template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (settings.smoothingFiter == 0) {
-    return (T)settings.dfNodataValue;
-  }
   if (sourceX < 0 || sourceY < 0 || sourceX >= warperState.sourceGridWidth || sourceY >= warperState.sourceGridHeight) return (T)settings.dfNodataValue;
 
   if (settings.smoothingMemo.empty()) {

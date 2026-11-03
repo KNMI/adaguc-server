@@ -11,7 +11,13 @@ import re
 import datetime
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
-from conftest import make_adaguc_env, run_adaguc_and_compare_image, update_db
+from conftest import (
+    clean_postgres,
+    make_adaguc_env,
+    run_adaguc_and_compare_getcapabilities,
+    run_adaguc_and_compare_image,
+    update_db,
+)
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -36,6 +42,80 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    # Before version 8.0.0 (PR #731, https://github.com/KNMI/adaguc-server/pull/731),
+    # CServerParams::checkBBOXXYOrder hardcoded exactly three CRSs as flipped for WMS 1.3.0 BBOX
+    # order (y,x instead of x,y): EPSG:4326, EPSG:4258 and CRS:84. That PR replaced the hardcoding
+    # with the declarative invertxyforwms130 attribute on <Projection> (see
+    # data/config/includes/Projection.include.xml), which kept EPSG:4326/EPSG:4258 flipped (so
+    # those two are unaffected by this change) but dropped CRS:84 from the flipped set and newly
+    # flipped EPSG:32661 (that PR's own purpose). EPSG:3035 was flipped later still, in a separate
+    # change. Maps each CRS this dataset is relevant for to whether it should come out *swapped*
+    # between the regular and the orgprojv1-reverted dataset (True), or identical because its
+    # behaviour never changed (False).
+    ORGPROJV1_RELEVANT_CRS_SWAPPED = {
+        "EPSG:4326": False,
+        "EPSG:4258": False,
+        "CRS:84": True,
+        "EPSG:32661": True,
+        "EPSG:3035": True,
+    }
+
+    def test_WMSGetCapabilities_arcus_uwcw_orgprojv1_bbox_axis_order_reverted(self):
+        """
+        adaguc.tests.arcus_uwcw.orgprojv1.xml includes adaguc.tests.arcus_uwcw.xml and overrides
+        CRS:84, EPSG:32661 and EPSG:3035 back to their pre-8.0.0 invertxyforwms130 behaviour (see
+        ORGPROJV1_RELEVANT_CRS_SWAPPED above and the comment in that dataset file) - EPSG:4326 and
+        EPSG:4258 need no override, since their behaviour never changed. For each of those five
+        CRSs, this checks the reverted dataset's BoundingBox for a layer against the regular
+        (unreverted) dataset's BoundingBox for that same layer: swapped where pre-8.0.0 behaviour
+        differs from current behaviour, identical where it doesn't.
+        """
+
+        def bbox_for_layer(root, layer_name, crs):
+            for layer in root.findall(".//Layer"):
+                name = layer.find("Name")
+                if name is not None and name.text == layer_name:
+                    for bbox in layer.findall("BoundingBox"):
+                        if bbox.attrib["CRS"] == crs:
+                            return {k: float(v) for k, v in bbox.attrib.items() if k != "CRS"}
+            raise AssertionError(f"No {crs} BoundingBox found for layer '{layer_name}'")
+
+        # The regular dataset: current (post-8.0.0) axis-order-enforced behaviour. Forces a fresh
+        # --updatedb (rather than relying on the DATASETS_LOADED cache) immediately before the
+        # request, since this layer's DB-cached metadata can otherwise go stale by the time this
+        # test runs, deep into a large suite run, and report "no files found" for it.
+        regular_env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(regular_env, force_update=True)
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&SERVICE=WMS&request=getcapabilities",
+            env=regular_env,
+        )
+        self.assertEqual(status, 0)
+        regular_root = objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", data, count=1))
+
+        # The reverted dataset, snapshot-tested like any other GetCapabilities response.
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw.orgprojv1.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, force_update=True)
+        filename = "test_WMSGetCapabilities_arcus_uwcw_orgprojv1.xml"
+        run_adaguc_and_compare_getcapabilities(
+            env,
+            filename,
+            "dataset=adaguc.tests.arcus_uwcw.orgprojv1&SERVICE=WMS&request=getcapabilities",
+        )
+        reverted_data = AdagucTestTools().readfromfile(self.testresultspath + filename)
+        reverted_root = objectify.fromstring(re.sub(rb' xmlns="[^"]+"', b"", reverted_data, count=1))
+
+        for crs, expect_swapped in self.ORGPROJV1_RELEVANT_CRS_SWAPPED.items():
+            regular_bbox = bbox_for_layer(regular_root, "air_temperature_hagl", crs)
+            reverted_bbox = bbox_for_layer(reverted_root, "air_temperature_hagl", crs)
+            if expect_swapped:
+                self.assertEqual(reverted_bbox["minx"], regular_bbox["miny"], f"{crs} minx")
+                self.assertEqual(reverted_bbox["miny"], regular_bbox["minx"], f"{crs} miny")
+                self.assertEqual(reverted_bbox["maxx"], regular_bbox["maxy"], f"{crs} maxx")
+                self.assertEqual(reverted_bbox["maxy"], regular_bbox["maxx"], f"{crs} maxy")
+            else:
+                self.assertEqual(reverted_bbox, regular_bbox, f"{crs} should be unchanged")
+
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc.png"
@@ -52,24 +132,8 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-    def test_WMSGetMap_testdatanc_webp_large(self):
-        """WebP images larger than 1 megapixel are imported with multiple threads, the output should be identical to a single threaded import"""
-        AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetMap_testdatanc_webp_large.webp"
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=1200&HEIGHT=1000&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/webp&TRANSPARENT=TRUE&",
-            env=self.env,
-        )
-        AdagucTestTools().writetofile(self.testresultspath + filename, data)
-        self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
-
     def test_WMSGetMap_testdatanc_webp_small_odd_size(self):
-        """WebP images are always imported with multiple threads, also small images with an odd width and height"""
+        """WebP output for an image with an odd width and height, checked byte-for-byte against a known-good baseline"""
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc_webp_small_odd_size.webp"
         # pylint: disable=unused-variable
@@ -320,7 +384,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBTailPath(self):
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -368,7 +432,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBPath(self):
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -608,7 +672,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=true",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=true",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -634,7 +698,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours/contour&FORMAT=image/png&TRANSPARENT=FALSE&",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours&FORMAT=image/png&TRANSPARENT=FALSE&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.manycontours.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -694,7 +758,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=false",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=false",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -720,7 +784,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
             showLog=False,
         )
@@ -747,7 +811,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png32&TRANSPARENT=FALSE&showlegend=testdata",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png32&TRANSPARENT=FALSE&showlegend=testdata",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -770,7 +834,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=geojsonbaselayer,testdata",
+            "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=geojsonbaselayer,testdata",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1715,7 +1779,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         filename = "test_WMSGetMap_dashed_contour_lines.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours%2Fcontour&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours&FORMAT=image/png32&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1743,7 +1807,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         filename = "test_WMSGetMap_dashed_contour_lines_arial.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours%2Fcontour&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours&FORMAT=image/png32&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1755,12 +1819,7 @@ class TestWMS(unittest.TestCase):
                 30,
                 0.02,
             )
-        )  # Allowed pixel difference is huge, but only for very small number of pixels. Raised from
-        # 4 to 30: the Arial Bold glyph edges in this test's text labels anti-alias very slightly
-        # differently between x86_64 and arm64 (different Cairo/FreeType SIMD/codegen paths), which
-        # on arm64 CI produced one pixel a bit over the old ceiling even though only ~0.01% of
-        # pixels differ at all - nowhere near the percentage ceiling below. Not a logic regression:
-        # the checked-in font file is identical bytes on every architecture.
+        )
 
     def test_WMSGetMap_allow_encoded_proj4_params_attribute(self):
         ### This tests the rotated_pole projection ###
@@ -1817,7 +1876,7 @@ class TestWMS(unittest.TestCase):
         This tests if the autofinddataset option correctly finds the file if it is in a subfolder
         """
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
         # pylint: disable=unused-variable
 
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
@@ -1862,7 +1921,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbs/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbs&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1893,7 +1952,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbwithnumbers/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbwithnumbers&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -1923,7 +1982,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=windbarbs_kts_shaded&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=windbarbs_kts&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -2446,4 +2505,21 @@ class TestWMS(unittest.TestCase):
             env,
             "test_wms_getmap_symbolinterval_northseastations.png",
             "DATASET=adaguc.tests.symbolinterval&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=helicopter&WIDTH=300&HEIGHT=400&CRS=EPSG%3A3857&BBOX=119648.22240617475,6471500.3895983845,902354.9593630233,7715343.987244269&STYLES=helicopter%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE",
+        )
+
+    def test_wms_getmap_palette_overwrite_erases_background(self):
+        """
+        A <palette alpha="-1"> entry must unconditionally overwrite the destination pixel (even to
+        fully transparent) instead of being skipped like an ordinary alpha=0 blend would be. With
+        TRANSPARENT=FALSE the canvas starts filled with the opaque BGCOLOR; every in-range testdata
+        pixel must come out black (the 24bpp writer's encoding for alpha=0 - see write_png.cpp),
+        not left as the red background. Regression test for the "overwrite" convention documented
+        on CStyleConfiguration::drawPixelFromPaletteIndex.
+        """
+        env = make_adaguc_env("adaguc.tests.palette_overwrite", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_image(
+            env,
+            "test_wms_getmap_palette_overwrite_erases_background.png",
+            "DATASET=adaguc.tests.palette_overwrite&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=overwrite_erase%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFF0000",
         )

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<Configuration>
+
+
+  <Layer type="database">
+    <Group collection="hagl"/>
+    <Name>air_temperature</Name>
+    <Title>Air temperature</Title>
+    <Variable>air-temperature-hagl</Variable>
+    <FilePath filter="^uwcw\-ha\-det\-dini\-.*\.nc$">{ADAGUC_PATH}data/datasets/arcustest_uwcw_manymodelruns/</FilePath>
+    <Styles>auto</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="hagl" units=" " default="min" type="vertical" hidden="false">hagl</Dimension>
+  </Layer>
+
+
+</Configuration>

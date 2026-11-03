@@ -61,20 +61,6 @@ bool CServerParams::isDebugLoggingEnabled() const {
   return true;
 }
 
-bool CServerParams::isAutoOpenDAPResourceEnabled() {
-  if (this->datasetLocation.empty() == false) {
-    return false;
-  }
-  if (autoOpenDAPEnabled == -1) {
-    autoOpenDAPEnabled = 0;
-    if (cfg->AutoResource.size() > 0) {
-      if (cfg->AutoResource[0].attr.enableautoopendap == ("true")) autoOpenDAPEnabled = 1;
-    }
-  }
-  if (autoOpenDAPEnabled == 1) return true;
-  return false;
-}
-
 bool CServerParams::isAutoLocalFileResourceEnabled() {
   /* When a dataset is configured, autoscan should be disabled */
   if (this->datasetLocation.empty() == false) {
@@ -90,10 +76,7 @@ bool CServerParams::isAutoLocalFileResourceEnabled() {
   return false;
 }
 
-bool CServerParams::isAutoResourceEnabled() {
-  if (isAutoOpenDAPResourceEnabled() || isAutoLocalFileResourceEnabled()) return true;
-  return false;
-}
+bool CServerParams::isAutoResourceEnabled() { return isAutoLocalFileResourceEnabled(); }
 
 bool checkIfPathHasValidTokens(const std::string &path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
 

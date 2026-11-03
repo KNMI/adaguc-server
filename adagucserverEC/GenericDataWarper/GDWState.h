@@ -14,8 +14,6 @@ struct GDWState {
   int destGridHeight;               // The height of the destination grid
   double sourceTileDx;              // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
   double sourceTileDy;              // The relative y sample position
-  int destIndexX;                   // The target X index in the target grid
-  int destIndexY;                   // The target Y index in the target grid.
   bool hasSharedBoundaryLR = false; // Left is connected to the right
 };
 

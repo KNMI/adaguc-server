@@ -32,13 +32,11 @@ int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource 
       void *d = dataSource->getDataObject(varNr)->cdfVariable->data;
       double fa = 0, fb = 0;
       if (proc->attr.a.empty() == false) {
-        std::string a;
-        a = (proc->attr.a.c_str());
+        std::string a = proc->attr.a;
         fa = CT::toDouble(a);
       }
       if (proc->attr.b.empty() == false) {
-        std::string b;
-        b = (proc->attr.b.c_str());
+        std::string b = proc->attr.b;
         fb = CT::toDouble(b);
       }
       switch (dataSource->getDataObject(0)->cdfVariable->getType()) {

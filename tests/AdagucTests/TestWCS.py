@@ -12,6 +12,7 @@ import re
 import netCDF4
 from netCDF4 import Dataset
 from adaguc.AdagucTestTools import AdagucTestTools
+from conftest import make_adaguc_env, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -169,6 +170,40 @@ class TestWCS:
         )
         assert status == 0
         assert data[0:10] == b"CDF\x02\x00\x00\x00\x00\x00\x00"
+
+    def test_WCSGetCoverageNetCDF3_int64_dimension(self):
+        """
+        NetCDF4 file with int64 datatype cannot be written as netcdf3 because int64 is not supported. Don't write file but show error
+        """
+        env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.multi_reftime_temporal_extent&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=weather_code_gl"
+            "&CRS=EPSG:4326&FORMAT=NetCDF3&BBOX=0,50,10,55&RESX=0.5&RESY=0.5",
+            env=env,
+        )
+        assert status == 0
+        assert b"variable 'gl' is a 64-bit integer, which NetCDF3 does not support" in data
+        assert b"nc_def_var" not in data
+
+    def test_WCSGetCoverageNetCDF4_int64_dimension_preserves_datatype(self):
+        """
+        Companion to test_WCSGetCoverageNetCDF3_int64_dimension: Ensure that datatype is preserved.
+        """
+        env = make_adaguc_env("adaguc.tests.multi_reftime_temporal_extent.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        for format_name in ("netcdf", "NetCDF4"):
+            status, data, _ = AdagucTestTools().runADAGUCServer(
+                "DATASET=adaguc.tests.multi_reftime_temporal_extent&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=weather_code_gl"
+                f"&CRS=EPSG:4326&FORMAT={format_name}&BBOX=0,50,10,55&RESX=0.5&RESY=0.5",
+                env=env,
+            )
+            assert status == 0
+            assert data[0:8] == b"\x89HDF\r\n\x1a\n"
+
+            ds = netCDF4.Dataset("filename.nc", memory=data)
+            assert str(ds.variables["gl"].dtype) == "int64"
+            assert ds.variables["gl"][0] == 0
 
     def test_WCSGetCoverageNetCDF4_testdatanc(self):
         """

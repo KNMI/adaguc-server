@@ -121,6 +121,22 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
   return 2;
 }
 
+std::string CPGSQLDB::escapeString(const std::string &input) {
+  if (dConnected == 0) {
+    CDBError("escapeString: Not connected to DB");
+    throw CDB_CONNECTION_ERROR;
+  }
+  std::string escaped(input.length() * 2 + 1, '\0');
+  int error = 0;
+  size_t escapedLength = PQescapeStringConn(connection, escaped.data(), input.c_str(), input.length(), &error);
+  if (error != 0) {
+    CDBError("escapeString: %s", PQerrorMessage(connection));
+    throw CDB_QUERYFAILED;
+  }
+  escaped.resize(escapedLength);
+  return escaped;
+}
+
 int CPGSQLDB::query(const char *pszQuery) {
   LastErrorMsg = "";
   if (dConnected == 0) {

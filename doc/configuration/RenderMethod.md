@@ -4,22 +4,46 @@ RenderMethod <value>
 Back to [Configuration](./Configuration.md)
 
 Rendermethod defines the way the data is rendered inside the service.
+
 There are currently six mechanisms to render an image:
 
--   generic - Uses the generic datawarper. This is the default rendermethod and handles `bilinear`, `shaded`, `contour` and combinations thereof, in class [CImgWarpGeneric](/adagucserverEC/CImgWarpGeneric/CImgWarpGeneric.cpp). `vector`, `barb` and `thin` are drawn separately, from points, in class [CImgRenderPoints](/adagucserverEC/CImgRenderers/CImgRenderPoints.cpp); see [Vector.md](/doc/configuration/Vector.md) and [DataPostProc.md](/doc/configuration/DataPostProc.md)'s `pointsfromgrid`.
+-   generic - Uses the generic datawarper. This is the default rendermethod and can handle most of the other rendermethods mentioned below.
 -   nearest (nearest neighbour) in class [CImgWarpNearestNeighbour](/adagucserverEC/CImgWarpNearestNeighbour.cpp)
 -   rgba (truecolor) in class [CImgWarpNearestRGBA](/adagucserverEC/CImgWarpNearestRGBA.cpp)
 -   stippling in class [CImgRenderStippling](/adagucserverEC/CImgRenderStippling.cpp)
+-   generic in class [CImgWarpGeneric](/adagucserverEC/CImgWarpGeneric/CImgWarpGeneric.cpp)
 -   polyline / polygon (for geojson) in class [CImgRenderPolylines](/adagucserverEC/CImgRenderPolylines.cpp)
 -   hillshaded (for heightmaps) in class [CImgWarpHillShaded](/adagucserverEC/CImgWarpHillShaded.cpp)
 
 To draw points and vectors, see [Point.md](/doc/configuration/Point.md) and [Vector.md](/doc/configuration/Vector.md). To thin point data, see [Thinning.md](/doc/configuration/Thinning.md).
 
-> `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` used to be rendered by a separate
-> `CImgWarpBilinear` class. That class has been removed; these keywords are now handled as
-> described above. See
-> [Migrating from CImgWarpBilinear to the generic warper](/doc/tutorials/Migrating_from_CImgWarpBilinear_to_the_generic_warper.md)
-> for what changed and when (if ever) a config needs updating.
+Use one keyword per style, for example `generic`, `nearest`, `rgba`, `polyline` or `point`.
+A style with only `generic` is advertised in GetCapabilities under its own name. Another single keyword gives `<stylename>/<keyword>`.
+A comma-separated list of keywords is deprecated: it gives one style per keyword, selected with `STYLES=<stylename>/<keyword>`.
+
+CImgWarpGeneric
+---------------
+
+Choose with `generic`. This is the default when a style has no `RenderMethod` at all.
+
+The generic warper draws whatever the style defines: the legend colors of the field (unless switched off with `drawgrid="false"`), filled `ShadeInterval` classes when present, and `ContourLine` elements when present. Interpolation and the other knobs are set with [RenderSettings](RenderSettings.md):
+
+```xml
+<Style name="temperature" title="Temperature, shaded with contour lines">
+    <Legend fixedclasses="true" tickinterval="2">temperature</Legend>
+    <Min>-10</Min>
+    <Max>40</Max>
+    <ShadeInterval min="-10" max="0" label="&lt; 0" fillcolor="#E6E6FF"/>
+    <ShadeInterval min="0" max="10" label="0 - 10" fillcolor="#B3B3FF"/>
+    <ShadeInterval min="10" max="40" label="&gt; 10" fillcolor="#FF0040"/>
+    <ContourLine width="1.8" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="2"/>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <RenderMethod>generic</RenderMethod>
+</Style>
+```
+
+Contour lines only, or symbols only: add `<RenderSettings drawgrid="false"/>` so the field is not painted.
+Barbs and vectors on a grid: a `Vector` element plus a `pointsfromgrid` `DataPostProc`, see [Vector.md](/doc/configuration/Vector.md).
 
 CImgWarpNearestNeighbour
 ------------------------
@@ -71,13 +95,6 @@ Stippling distance and disc radius can be specified in [Stippling](Stippling.md)
 </Style>
 ```
 
-CImgWarpGeneric
----------------
-
-Choose with `generic`.
-
-...
-
 CImgRenderPolyLines
 -------------------
 
@@ -90,4 +107,9 @@ CImgWarpHillShaded
 
 Choose with `hillshaded`.
 
-...
+Deprecated keywords: bilinear, shaded, contour, vector, barb, thin
+-------------------------------------------------------------------
+
+These keywords and their combinations (`shadedcontour`, `barbshaded`, ...) selected the removed `CImgWarpBilinear`.
+The generic warper emulates them, so old configs keep working. New configs use `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md).
+The emulation is pinned by `tests/AdagucTests/TestsForLegacyBilinearRender.py`.

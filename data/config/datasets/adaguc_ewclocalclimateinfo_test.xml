@@ -58,7 +58,8 @@
         <Point fontsize="{ADAGUCENV_POINTTEXTSIZE}" textformatting="%2.0f" discradius="{ADAGUCENV_POINTDISCRADIUS}" pointstyle="point" textcolor="{ADAGUCENV_POINTTEXTCOLOR}"
             textradius="{ADAGUCENV_POINTTEXTRADIUS}" />
         <ContourLine width="0.8" linecolor="#444444" textcolor="#222222" textformatting="%2.1f" interval="0.3" />
-        <RenderMethod>shadedcontour</RenderMethod>
+        <RenderMethod>generic</RenderMethod>
+        <RenderSettings interpolationmethod="bilinear"/>
         <Min>0</Min>
         <Max>24</Max>
     </Style>
@@ -140,7 +141,7 @@
         <AdditionalLayer replace="false" style="filledcountries/nearest">filledcountries</AdditionalLayer>
         <AdditionalLayer replace="false" style="filledcountries/nearest">overlaymask</AdditionalLayer>
         <AdditionalLayer replace="false" style="countryborders/polyline">countryborders</AdditionalLayer>
-        <Dimension name="time" units="ISO8601" interval="P1Y" default="min">time</Dimension>
+        <Dimension name="time" units="ISO8601" interval="P1Y" default="max">time</Dimension>
         <Dimension name="seasonyear" hidden="true">seasonyear</Dimension>
         <Dimension name="scenario">scenario</Dimension>
     </Layer>

@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 8.0.0, of Jul  6 2026 15:55:12 </Keyword>
+            <Keyword>ADAGUCServer version 9.0.3, of Oct 19 2026 11:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=test%2Fceilonet%2Fceilonet_chm15k_backsct_la1_t12s_v1%2E0_06310_A20231202_extracted_small%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  CHM15k Nimbus</Title>
 <CRS>CRS:84</CRS>
@@ -163,11 +162,11 @@ with P_raw = sum(P_raw_hr) * range_gate_hr / range_gate (beta_raw)</Title>
     </LegendURL>
   </Style>
    <Style>
-    <Name>autobilinear_deprecated/bilinear</Name>
-    <Title>autobilinear_deprecated/bilinear</Title>
+    <Name>autobilinear_deprecated</Name>
+    <Title>autobilinear_deprecated</Title>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fceilonet%2Fceilonet_chm15k_backsct_la1_t12s_v1%2E0_06310_A20231202_extracted_small%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>
+       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fceilonet%2Fceilonet_chm15k_backsct_la1_t12s_v1%2E0_06310_A20231202_extracted_small%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=autobilinear_deprecated"/>
     </LegendURL>
   </Style>
 </Layer>

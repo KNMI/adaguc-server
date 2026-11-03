@@ -94,7 +94,8 @@
     <ShadeInterval min="0.30" max="0.35"    label="0.30-0.35"    fillcolor="#8080FF"/>
     <ShadeInterval min="0.35" max="1.00"    label="0.35-1.00"    fillcolor="#FF0040"/>
 
-    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="test_data"/>
     <StandardNames standard_name="data"/>
   </Style>
@@ -110,7 +111,8 @@
     <ShadeInterval min="0.30" max="0.35"    label="0.30-0.35"    fillcolor="#8080FF"/>
     <ShadeInterval min="0.35" max="1.00"    label="0.35-1.00"    fillcolor="#FF0040"/>
 
-    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="test_data"/>
     <StandardNames standard_name="data"/>
   </Style>

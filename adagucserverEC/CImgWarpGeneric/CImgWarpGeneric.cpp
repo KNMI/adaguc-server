@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include "CImgWarpGeneric.h"
+#include <cmath>
+#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 #include <CImageOperators/drawContour.h>
@@ -43,35 +45,41 @@
 #include "CDrawFunction.h"
 #include "CStopWatch.h"
 
-CColor cblack = CColor(0, 0, 0, 255);
-CColor cblue = CColor(0, 0, 255, 255);
+// Stores the sampled value in the destination grid and, unless drawgrid is off, paints its legend color.
+// Shared by the nearest and bilinear draw functions below, which only differ in how they sample value.
+template <typename V>
+void writeDestinationPixel(int x, int y, V value, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
+  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
+  if (!settings.drawgrid) return;
+  auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
+  if (colorIndex.a > 0) {
+    settings.drawImage->setPixel(x, y, colorIndex);
+  } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
+    // Deliberately transparent interval color (RGB set, alpha=0): force-erase.
+    settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
+  }
+}
 
-MemoizationForDeterminePixelColorFromValue memo;
-template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+template <typename T>
+void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
-  if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
+  if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || std::isnan(value)) return;
 
   if (settings.smoothingFiter > 0) {
     value = smoothingAtLocation(warperState.sourceIndexX, warperState.sourceIndexY, (T *)warperState.sourceGrid, warperState, settings);
   }
-  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
-  if (settings.drawgrid) {
-    auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
-    if (colorIndex.a > 0) {
-      settings.drawImage->setPixel(x, y, colorIndex);
-    }
-  }
+  writeDestinationPixel(x, y, value, warperState, settings, memo);
 };
 
-template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+template <typename T>
+void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
   }
 
-  // Check for NaN
-  if (!(val == val)) return;
+  if (std::isnan(val)) return;
 
   T *sourceData = (T *)warperState.sourceGrid;
 
@@ -88,10 +96,10 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
 
   T values[2][2] = {{0, 0}, {0, 0}};
 
-  auto x0 = nfast_mod(sourceDataPX + 0, sourceDataWidth);
-  auto x1 = nfast_mod(sourceDataPX + 1, sourceDataWidth);
-  auto y0 = nfast_mod(sourceDataPY + 0, sourceDataHeight);
-  auto y1 = nfast_mod(sourceDataPY + 1, sourceDataHeight);
+  const auto x0 = sourceDataPX;
+  const auto x1 = sourceDataPX + 1 == sourceDataWidth ? size_t{0} : sourceDataPX + 1;
+  const auto y0 = sourceDataPY;
+  const auto y1 = sourceDataPY + 1;
 
   if (settings.smoothingFiter > 0) {
     values[0][0] = smoothingAtLocation(x0, y0, sourceData, warperState, settings);
@@ -105,13 +113,10 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     values[1][1] = sourceData[x1 + y1 * sourceDataWidth];
   }
 
-  // Reject the whole quad, like CImgWarpBilinear used to, if any of the 4 corners actually being
-  // blended below is nodata/NaN. Checking only the single nearest-sample `val` above isn't
-  // enough: without a SmoothingFilter, blending a nodata sentinel into real neighbors produces
-  // wildly wrong values along every nodata/data edge instead of leaving the pixel untouched.
+  // Reject the whole quad if any corner is nodata/NaN, like CImgWarpBilinear used to.
   for (const auto &row: values) {
     for (const T &cornerValue: row) {
-      if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || !(cornerValue == cornerValue)) return;
+      if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || std::isnan(cornerValue)) return;
     }
   }
 
@@ -120,24 +125,18 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
   float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
   float bilValue = (1 - dy) * gx1 + dy * gx2;
-  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
-  if (settings.drawgrid) {
-    auto colorIndex = memoizedDeterminePixelColorFromValue(bilValue, &settings, memo);
-    if (colorIndex.a > 0) {
-      settings.drawImage->setPixel(x, y, colorIndex);
-    }
-  }
+  writeDestinationPixel(x, y, bilValue, warperState, settings, memo);
 };
 
-template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
+template <typename T>
+void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
+  if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
   }
 
-  // Check for NaN
-  if (!(val == val)) return;
+  if (std::isnan(val)) return;
 
   size_t sourceDataPX = warperState.sourceIndexX;
   size_t sourceDataPY = warperState.sourceIndexY;
@@ -185,6 +184,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+  MemoizationForDeterminePixelColorFromValue memo; // scoped to this render() call only
 
   int destDataWidth = drawImage->geoParams.width;
   int destDataHeight = drawImage->geoParams.height;
@@ -212,7 +212,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       }
       genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings, memo); });
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
@@ -223,25 +223,12 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       genericDataWarper.useHalfCellOffset = true;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings, memo); });
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
 
-    // A pure generic style (no legacy bilinear/shaded/contour keyword, e.g. no <RenderMethod>
-    // tag at all) has only one rendering mode, so configuring a ContourLine is enough to draw
-    // it. A legacy style can list several RenderMethod keywords on one style block so that a
-    // single GetMap request can pick a specific subset via STYLES=name/keyword (e.g.
-    // "nearest,bilinear,shadedcontour"); for those, only the "contour" keyword (RM_CONTOUR)
-    // should draw the contour lines - otherwise selecting the "bilinear" subset would always
-    // draw them too, even though "bilinear" was deliberately chosen to leave them out.
-    bool isLegacyRenderMethod = isLegacyScalarRenderMethod(styleConfiguration->renderMethod);
-    bool shouldDrawContours = styleConfiguration->renderMethod & RM_CONTOUR;
-    if (!isLegacyRenderMethod) {
-      shouldDrawContours = styleConfiguration->contourLines.size() > 0;
-    }
-    if (shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
-      StopWatch_Measure("CImgWarpGeneric: start drawContour");
+    if (settings.shouldDrawContours && styleConfiguration->contourLines.size() > 0) {
       drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
       StopWatch_Measure("CImgWarpGeneric: done drawContour");
     }
@@ -252,7 +239,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     genericDataWarper.useHalfCellOffset = false;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings, memo); });
     ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
   }

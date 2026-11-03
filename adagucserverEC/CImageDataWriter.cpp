@@ -38,6 +38,7 @@
 #include "CStopWatch.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
+#include "CImgWarpBoolean.h"
 #include "CImgRenderers/CImgRenderPoints.h"
 #include "CImgRenderStippling.h"
 #include "CImgRenderPolylines.h"
@@ -304,19 +305,13 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
-    drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-  }
-
   if (styleConfiguration != NULL) {
 
     if (styleConfiguration->renderMethod & RM_RGBA) {
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         writerStatus = initialized;
         drawImage.createImage(40, 20);
-        drawImage.create685Palette();
         return 0;
       }
     }
@@ -325,17 +320,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0].attr.name == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png24")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
       if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/webp")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
       if (dataSource->cfgLayer->WMSFormat[0].attr.quality.empty() == false) {
@@ -396,20 +381,11 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
-    // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
-      status = drawImage.create685Palette();
-      if (status != 0) {
-        CDBError("Unable to create standard 6-8-5 palette");
-        return 1;
-      }
-    }
-
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -707,8 +683,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                   if (dataSource->getDataObject(o)->hasStatusFlag) {
                     // Add status flag
-                    std::string flagMeaning;
-                    flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
                     element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
                     element.units = "";
                   } else {
@@ -884,6 +859,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if (styleConfiguration == nullptr) {
+    CDBError("Unable to get style for layer %s", dataSource->layerName.c_str());
+    reader.close();
+    return 1;
+  }
   auto renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
@@ -978,39 +958,44 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
   }
 
-  /**
-   * Backwards compatibility for styles written for the now-removed CImgWarpBilinear: it drew a
-   * plain blue barb/vector internally and required no <Vector> style tag, and forward-projected
-   * the grid itself rather than needing a <DataPostProc algorithm="pointsfromgrid"> tag. Keep
-   * both working here, at render time, scoped to only the style actually being rendered (not
-   * every style variant the layer defines) so this has no effect beyond this one render.
-   */
-  if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB || renderMethod & RM_THIN) && dataSource->hasFieldData) {
-    if (styleConfiguration != nullptr && styleConfiguration->vectorIntervals.empty()) {
-      CServerConfig::XMLE_Vector defaultVector;
-      defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";
-      defaultVector.attr.linecolor = "#0000FF";
-      defaultVector.attr.outlinewidth = 0;
-      for (const auto &renderSetting: styleConfiguration->renderSettings) {
-        if (renderSetting.attr.rendertextforvectors == "true") {
-          defaultVector.attr.plotvalue = "true";
+  // Generic renderer; also serves legacy bilinear/shaded/contour/vector/barb keywords via getDrawFunctionSettings()/drawContour().
+  if (renderMethod & (RM_CONTOUR | RM_BILINEAR | RM_SHADED | RM_VECTOR | RM_BARB | RM_GENERIC)) {
+    // Backfill a default <Vector>/<Thinning>/pointsfromgrid for old barb/vector styles that relied on CImgWarpBilinear's built-in defaults.
+    // RM_THIN alone is excluded: CImgWarpBilinear's "thin" was a dead no-op, so keep that style a no-op too.
+    if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
+      if (styleConfiguration->vectorIntervals.empty()) {
+        CServerConfig::XMLE_Vector defaultVector;
+        defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";
+        defaultVector.attr.linecolor = "#0000FF";
+        defaultVector.attr.outlinewidth = 0;
+        for (const auto &renderSetting: styleConfiguration->renderSettings) {
+          if (renderSetting.attr.rendertextforvectors == "true") {
+            defaultVector.attr.plotvalue = "true";
+          }
         }
+        styleConfiguration->vectorIntervals.push_back(defaultVector);
       }
-      styleConfiguration->vectorIntervals.push_back(defaultVector);
+      if (styleConfiguration->thinningList.empty()) {
+        CServerConfig::XMLE_Thinning defaultThinning;
+        defaultThinning.attr.radius = "40";
+        styleConfiguration->thinningList.push_back(defaultThinning);
+      }
+      if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
+        // CImgWarpBilinear always required speed_component/direction_component from pointsfromgrid.
+        CServerConfig::XMLE_DataPostProc pointsFromGridProc;
+        pointsFromGridProc.attr.algorithm = CDATAPOSTPROCESSOR_PointsFromGrid_ID;
+        pointsFromGridProc.attr.select = "speed_component,direction_component";
+        CDPPointsFromGrid().execute(&pointsFromGridProc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+      }
     }
-    if (styleConfiguration != nullptr && styleConfiguration->thinningList.empty()) {
-      CServerConfig::XMLE_Thinning defaultThinning;
-      defaultThinning.attr.radius = "40";
-      styleConfiguration->thinningList.push_back(defaultThinning);
+
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpGeneric");
     }
-    if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
-      // CImgWarpBilinear always required a grid_eastward_wind/grid_northward_wind pair produced
-      // by convert_uv_components, which also produces the speed_component/direction_component
-      // objects pointsfromgrid needs, so any config that worked with it already has these.
-      CServerConfig::XMLE_DataPostProc pointsFromGridProc;
-      pointsFromGridProc.attr.algorithm = CDATAPOSTPROCESSOR_PointsFromGrid_ID;
-      pointsFromGridProc.attr.select = "speed_component,direction_component";
-      CDPPointsFromGrid().execute(&pointsFromGridProc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpGeneric();
+      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
+      delete imageWarperRenderer;
     }
   }
 
@@ -1023,20 +1008,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpHillShaded();
-      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-      delete imageWarperRenderer;
-    }
-  }
-
-  /**
-   * Use New bilinear renderer
-   */
-  if (renderMethod & RM_GENERIC) {
-    if (CIMAGEDATAWRITER_DEBUG) {
-      CDBDebug("Using CImgWarpGeneric");
-    }
-    if (dataSource->hasFieldData) {
-      imageWarperRenderer = new CImgWarpGeneric();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1109,17 +1080,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Drawingnormal legend");
       }
       if (j != 0) {
-        /*
-         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
-         * For j==0, the legend is already initialized previously
-         */
         if (CIMAGEDATAWRITER_DEBUG) {
           CDBDebug("REINITLEGEND");
         }
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -1189,9 +1156,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       double gridSize = 10;
       double precision = 0.25;
       double numTestSteps = 5;
-      CColor textColor(0, 0, 0, 128);
+      CColor textColor = standardCColorTranslucentBlack;
       float lineWidth = 0.25;
-      int lineColor = 247;
+      CColor lineColor = standardCColorDarkGray;
 
       if (dataSource->cfgLayer->Grid[0].attr.resolution.empty() == false) {
         gridSize = atof(dataSource->cfgLayer->Grid[0].attr.resolution.c_str());
@@ -1995,10 +1962,5 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage) { return CCreateLegend::createLegend(dataSource, legendImage); }
 
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage, bool rotate) { return CCreateLegend::createLegend(dataSource, legendImage, rotate); }
-
-int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float size, float angle, const char *text, unsigned char colorIndex) {
-  drawImage.drawText(x, y, fontlocation, size, angle, text, colorIndex);
-  return 0;
-}
 
 int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

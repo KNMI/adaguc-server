@@ -26,10 +26,25 @@ Back to [Configuration](./Configuration.md)
 
 ## Default value
 
-- The default value of the dimension can be specified as datestring in [ISO8601](ISO8601.md) format
-- Can be "min" or "max" to select the first or latest
-- Can be set to "forecast_reference_time" to reference the default value of the forecast_reference_time dimension.
-- Can be set to "forecast_reference_time+PT1H" to reference the default value of the forecast_reference_time dimension, and it will add a ISO8601 Period to the derived value. See test [data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml](../../data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml) for details. Can also be set to "forecast_reference_time+PT0H" to just reference the model run.
+Sets the default advertised in metadata and GetCapabilities.
+
+- Can be a specific value, including a date string in [ISO8601](ISO8601.md) format.
+- Can be `min` or `max` to select the first or last advertised value. Defaults to `max`.
+- For time, `forecast_reference_time+PT1H` uses the default reference time plus an ISO8601 period.
+  Use `forecast_reference_time+PT0H` for no offset. See the
+  [example configuration](../../data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml).
+- `filetimedate` uses the file modification time as the time coordinate.
+
+When a request omits an ordinary database dimension:
+
+- `min` selects the lowest available value; `max` or an absent default selects the highest.
+- Selection is limited to files matching the other selected coordinates, such as the requested forecast run.
+- One value is selected for the whole request, not separately for each timestep. Some requested times may have no data.
+- Explicit values, lists, ranges, or `*` bypass default selection. Fixed coordinates are applied before selecting defaults.
+
+Literal defaults (e.g. `default="10"`) and reference-time expressions are currently advertised, but not applied when the dimension is omitted in a request.
+In that case, the maximum is used. Omitted reference time has separate handling: it selects the latest run matching a selected single valid time, or the
+latest run overall if no valid time is selected. It does not apply `default="min"`.
 
 
 ## Time quantization
