@@ -8,6 +8,7 @@ from adaguc.CGIRunner import HTTP_STATUSCODE_400_BAD_REQUEST
 from adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 from adaguc.CGIRunner import HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY
 from adaguc.CGIRunner import HTTP_STATUSCODE_500_TIMEOUT
+from adaguc.fork_settings import MAX_FORK_REQUEST_BYTES
 
 from fastapi import APIRouter, Request, Response
 
@@ -38,6 +39,22 @@ def build_query_string(params) -> str:
     return query_string
 
 
+async def read_limited_body(req: Request, limit: int) -> bytes | None:
+    """
+    Returns the request body, or None when it is larger than limit. Stops reading as soon as the limit is exceeded,
+    so a huge body is never held in memory.
+    """
+    content_length = req.headers.get("content-length", "")
+    if content_length.isdigit() and int(content_length) > limit:
+        return None
+    body = bytearray()
+    async for chunk in req.stream():
+        body += chunk
+        if len(body) > limit:
+            return None
+    return bytes(body)
+
+
 @wmsWcsRouter.api_route("/wms", methods=["GET", "POST"])
 @wmsWcsRouter.api_route("/wcs", methods=["GET", "POST"])
 @wmsWcsRouter.api_route("/adagucserver", methods=["GET", "POST"])
@@ -51,7 +68,11 @@ async def handle_wms(req: Request):
         content_type = req.headers.get("content-type", "").split(";")[0].strip().lower()
         if content_type != "application/x-www-form-urlencoded":
             return Response(content="POST requires Content-Type application/x-www-form-urlencoded", status_code=415)
-        body = (await req.body()).decode("utf-8", errors="replace")
+        # The parameters must fit in a fork server request anyway
+        body = await read_limited_body(req, MAX_FORK_REQUEST_BYTES)
+        if body is None:
+            return Response(content=f"Request body too large, maximum is {MAX_FORK_REQUEST_BYTES} bytes", status_code=413)
+        body = body.decode("utf-8", errors="replace")
         # Last value wins for repeated keys, same as for query parameters
         params += list(dict(parse_qsl(body, keep_blank_values=True)).items())
 

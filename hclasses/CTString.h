@@ -67,6 +67,17 @@ namespace CT {
   std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
 
   /**
+   * True when format can safely be given one double: plain text and %%, plus at most one
+   * %f/%e/%g/%a conversion (any case) with flags, width and precision of at most 2 digits.
+   */
+  bool isSafeFloatFormat(std::string_view format);
+
+  /**
+   * Formats value with a printf format from configuration or a request. An unsafe format (see isSafeFloatFormat) uses %g.
+   */
+  std::string formatFloat(const std::string &format, double value);
+
+  /**
    * Like printf, but concatenates the string and returns a stdstring
    * @param a The string to print
    * @returns std::string

@@ -30,7 +30,7 @@ const int DEFAULT_NUM_PARALLEL_PROCESSES = 4;
 const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 60;
 
 // Maximum size of a request message, matches MAX_FORK_REQUEST_BYTES in python/lib/adaguc/fork_settings.py.
-const size_t MAX_FORK_REQUEST_BYTES = 8192;
+const size_t MAX_FORK_REQUEST_BYTES = 65536;
 
 typedef std::chrono::steady_clock steady_clock;
 

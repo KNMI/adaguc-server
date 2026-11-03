@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "CStyleConfiguration.h"
 #include "CXMLParser.h"
 #include "CDebugger.h"
@@ -113,6 +114,12 @@ std::string CStyleConfiguration::dump() {
 void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, int styleIndex, int depth) {
   // Get info from style
   CServerConfig::XMLE_Style *style = &dataSource->cfg->Style[styleIndex];
+
+  // A style including itself (directly or via others) would recurse until the stack overflows
+  if (depth > 10) {
+    CDBError("IncludeStyle nested too deep in style [%s]", style->attr.name.c_str());
+    return;
+  }
 
   //  INCLUDE other styles
   for (const auto &includeStyle: style->IncludeStyle) {
@@ -415,7 +422,8 @@ static void interpolatePaletteRange(std::vector<CColor> &colors, std::vector<uin
   float blueStep = (toBlue - fromBlue) / span;
   float alphaStep = (toAlpha - fromAlpha) / span;
 
-  for (int i = fromIndex; i <= toIndex; i++) {
+  // Only indices 0-239 are written, so the loop is bounded to those as well
+  for (int i = std::max(fromIndex, 0); i <= std::min(toIndex, 239); i++) {
     float step = i - fromIndex;
     int red = int(redStep * step) + fromRed;
     int green = int(greenStep * step) + fromGreen;
@@ -427,7 +435,7 @@ static void interpolatePaletteRange(std::vector<CColor> &colors, std::vector<uin
 
 // Flat-fills [fromIndex, toIndex) with one color - used by the "interval" legend type.
 static void fillPaletteRange(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int fromIndex, int toIndex, int red, int green, int blue, int alpha) {
-  for (int i = fromIndex; i < toIndex; i++) {
+  for (int i = std::max(fromIndex, 0); i < std::min(toIndex, 240); i++) {
     writePaletteEntry(colors, overwrite, i, red, green, blue, alpha);
   }
 }

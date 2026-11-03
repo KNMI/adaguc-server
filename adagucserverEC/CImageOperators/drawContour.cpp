@@ -78,7 +78,7 @@ void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contou
 
   /* Draw text */
   std::string text;
-  text = contourDefinition.textformatting.empty() ? CT::printf("%g", value) : CT::printf(contourDefinition.textformatting.c_str(), value);
+  text = contourDefinition.textformatting.empty() ? CT::printf("%g", value) : CT::formatFloat(contourDefinition.textformatting, value);
   float fontSize = contourDefinition.fontSize * scaling;
   float textStrokeWidth = contourDefinition.textStrokeWidth * scaling;
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;

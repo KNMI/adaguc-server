@@ -123,7 +123,7 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypat
 async def test_fork_server_reads_large_request_completely(fork_server):
     # A request well above a single small recv must arrive complete. STYLESHEET goes first, so a
     # truncated read would lose the GetMap parameters instead of only some padding.
-    query = "STYLESHEET=" + "x" * 7000 + "&" + GET_MAP_QUERY
+    query = "STYLESHEET=" + "x" * 50000 + "&" + GET_MAP_QUERY
     status, headers, process_error, body = await CGIRunner().run([str(ADAGUC_BINARY)], query)
 
     assert status == 0

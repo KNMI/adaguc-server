@@ -74,6 +74,33 @@ namespace CT {
     return buf;
   }
 
+  bool isSafeFloatFormat(std::string_view format) {
+    if (format.size() > 64) return false;
+    auto skipDigits = [&format](size_t &j) {
+      size_t start = j;
+      while (j < format.size() && std::isdigit((unsigned char)format[j])) j++;
+      return j - start <= 2;
+    };
+    int conversions = 0;
+    for (size_t j = 0; j < format.size(); j++) {
+      if (format[j] != '%') continue;
+      j++;
+      if (j < format.size() && format[j] == '%') continue; // Literal %
+      while (j < format.size() && std::string_view("-+ #0").find(format[j]) != std::string_view::npos) j++;
+      if (!skipDigits(j)) return false;
+      if (j < format.size() && format[j] == '.') {
+        j++;
+        if (!skipDigits(j)) return false;
+      }
+      // No length modifiers, *, $, %n, %s, %p or integer conversions
+      if (j >= format.size() || std::string_view("fFeEgGaA").find(format[j]) == std::string_view::npos) return false;
+      conversions++;
+    }
+    return conversions <= 1;
+  }
+
+  std::string formatFloat(const std::string &format, double value) { return printf(isSafeFloatFormat(format) ? format.c_str() : "%g", value); }
+
   void printfconcat(std::string &appendString, const char *a, ...) {
     std::string buf(CT_STRING_PRINT_BUFFER_SIZE + 1, '\0');
     va_list ap;

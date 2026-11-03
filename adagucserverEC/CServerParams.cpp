@@ -33,8 +33,7 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+#include "utils/StyleSheetValidation.h"
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
@@ -333,28 +332,6 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
   return 1;
 }
 
-// Attributes which make the server read a local file are refused in a STYLESHEET.
-// Exception is Style/SymbolInterval file, which is checked by resolveStyleSheetSymbolFile.
-static bool isAllowedStyleSheetAttribute(std::string_view parent, std::string_view element, std::string_view name) {
-  if (parent == "Style" && element == "SymbolInterval" && name == "file") return true;
-  return name.find("file") == std::string_view::npos && name != "symbol" && name != "location";
-}
-
-static bool hasOnlyAllowedStyleSheetAttributes(xmlNode *node) {
-  for (; node != nullptr; node = node->next) {
-    if (node->type != XML_ELEMENT_NODE) continue;
-    std::string_view parent = node->parent != nullptr && node->parent->name != nullptr ? (const char *)node->parent->name : "";
-    for (xmlAttr *attribute = node->properties; attribute != nullptr; attribute = attribute->next) {
-      if (!isAllowedStyleSheetAttribute(parent, (const char *)node->name, (const char *)attribute->name)) {
-        CDBError("STYLESHEET: attribute [%s] in [%s] is not allowed", (const char *)attribute->name, (const char *)node->name);
-        return false;
-      }
-    }
-    if (!hasOnlyAllowedStyleSheetAttributes(node->children)) return false;
-  }
-  return true;
-}
-
 // Returns the real path of a directory with a trailing slash, or empty when it does not exist
 static std::string realDirectory(const std::string &path) {
   char *resolved = realpath(path.c_str(), nullptr);
@@ -364,10 +341,10 @@ static std::string realDirectory(const std::string &path) {
   return directory;
 }
 
-// Resolves a SymbolInterval file from a STYLESHEET to its real path. Only existing .png files in the
+// Resolves a png file from a STYLESHEET (SymbolInterval file, LegendGraphic value) to its real path. Only existing .png files in the
 // symbol directories (or below) are allowed: {ADAGUC_PATH}data/symbols, {ADAGUC_PATH}data/resources and {ADAGUC_DATASET_DIR}.
 // The error is the same for every refusal, so it does not tell whether a file exists.
-static bool resolveStyleSheetSymbolFile(std::string &file) {
+static bool resolveStyleSheetPngFile(std::string &file) {
   std::vector<std::string> symbolDirs;
   if (const char *adagucPath = getenv("ADAGUC_PATH")) {
     symbolDirs.push_back(realDirectory(std::string(adagucPath) + "/data/symbols"));
@@ -383,33 +360,11 @@ static bool resolveStyleSheetSymbolFile(std::string &file) {
   free(resolved);
   bool inSymbolDir = std::any_of(symbolDirs.begin(), symbolDirs.end(), [&](const std::string &dir) { return !dir.empty() && resolvedPath.starts_with(dir); });
   if (!inSymbolDir || !resolvedPath.ends_with(".png")) {
-    CDBError("STYLESHEET: symbol file [%s] is not a .png in a symbol directory", file.c_str());
+    CDBError("STYLESHEET: file [%s] is not a .png in a symbol directory", file.c_str());
     return false;
   }
   file = resolvedPath;
   return true;
-}
-
-// Only Style and Legend elements may appear at the top level of a STYLESHEET.
-static bool isValidStyleSheet(const std::string &xml) {
-  xmlDoc *doc = xmlReadMemory(xml.c_str(), xml.length(), nullptr, nullptr, XML_PARSE_NONET);
-  if (doc == nullptr) {
-    CDBError("STYLESHEET is not valid XML");
-    return false;
-  }
-  xmlNode *root = xmlDocGetRootElement(doc);
-  bool valid = root != nullptr && std::string_view((const char *)root->name) == "Configuration";
-  for (xmlNode *node = valid ? root->children : nullptr; node != nullptr && valid; node = node->next) {
-    if (node->type != XML_ELEMENT_NODE) continue;
-    std::string_view name = (const char *)node->name;
-    if (name != "Style" && name != "Legend") {
-      CDBError("STYLESHEET: element [%s] is not allowed, only Style and Legend", (const char *)node->name);
-      valid = false;
-    }
-  }
-  valid = valid && hasOnlyAllowedStyleSheetAttributes(root->children);
-  xmlFreeDoc(doc);
-  return valid;
 }
 
 int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
@@ -422,7 +377,7 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   if (!xml.starts_with("<Configuration")) {
     xml = "<Configuration>" + xml + "</Configuration>";
   }
-  if (!isValidStyleSheet(xml)) return 1;
+  if (!isAllowedStyleSheet(xml)) return 1;
 
   CServerConfig styleSheetConfig;
   if (parseConfig(&styleSheetConfig, xml, "STYLESHEET") != 0 || styleSheetConfig.Configuration.size() != 1) {
@@ -436,7 +391,11 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   }
   for (auto &style: posted.Style) {
     for (auto &symbolInterval: style.SymbolInterval) {
-      if (!resolveStyleSheetSymbolFile(symbolInterval.attr.file)) return 1;
+      if (!resolveStyleSheetPngFile(symbolInterval.attr.file)) return 1;
+    }
+    // The LegendGraphic value is read as an image by CCreateLegend
+    for (auto &legendGraphic: style.LegendGraphic) {
+      if (!legendGraphic.attr.value.empty() && !resolveStyleSheetPngFile(legendGraphic.attr.value)) return 1;
     }
   }
 

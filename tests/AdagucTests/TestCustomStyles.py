@@ -186,3 +186,92 @@ class TestCustomStyles(unittest.TestCase):
     def test_CustomStyles_rejects_file_attribute_outside_symbolinterval(self):
         response = self.post_getmap('<Style name="s"><Point file="{ADAGUC_PATH}data/symbols/marker.png"/></Style>')
         self.assertEqual(response.status_code, 422)
+
+    def test_CustomStyles_legendgraphic_from_symbol_dir(self):
+        """A LegendGraphic may use a .png from the server's symbol directories"""
+        response = self.post_getmap('<Style name="s"><LegendGraphic value="{ADAGUC_PATH}data/symbols/marker.png"/></Style>')
+        self.assertEqual(response.status_code, 200, response.text)
+
+    def test_CustomStyles_rejects_legendgraphic_outside_symbol_dirs(self):
+        """A LegendGraphic is read as a local file, so the same rules as for symbols apply"""
+        for value in ["/etc/passwd", "{ADAGUC_PATH}data/symbols/../../../../../etc/passwd", "/"]:
+            response = self.post_getmap(f'<Style name="s"><LegendGraphic value="{value}"/></Style>')
+            self.assertEqual(response.status_code, 422, value)
+
+    def test_CustomStyles_large_stylesheet(self):
+        """A stylesheet larger than the old 8192 byte fork server limit is accepted"""
+        intervals = "".join(f'<ShadeInterval min="{i / 1000}" max="{(i + 1) / 1000}" fillcolor="#{i % 256:02x}0000"/>' for i in range(200))
+        stylesheet = f'<Style name="large"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max><RenderMethod>shaded</RenderMethod>{intervals}</Style>'
+        self.assertGreater(len(stylesheet), 8192)
+        response = self.post_getmap(stylesheet)
+        self.assertEqual(response.status_code, 200, response.text)
+
+    def contour_style(self, textformatting):
+        return f'<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max><ContourLine linecolor="#000000" textcolor="#000000" textformatting="{textformatting}" interval="0.05"/></Style>'
+
+    def test_CustomStyles_rejects_unsafe_formats(self):
+        """printf formats get a double: anything but one float conversion could crash or leak memory"""
+        for fmt in ["%s", "%s%s%s%s", "%p %p", "%n", "%d", "%x", "%*f", "%1$f", "%Lf", "%f %f", "%123f", "%"]:
+            for stylesheet in [
+                self.contour_style(fmt),
+                f'<Legend name="l" type="colorRange" textformatting="{fmt}"/>',
+                f'<Style name="s"><Legend textformatting="{fmt}">rainbow</Legend></Style>',
+                f'<Style name="s"><Point textformat="{fmt}"/></Style>',
+                f'<Style name="s"><Vector textformat="{fmt}"/></Style>',
+            ]:
+                with self.subTest(stylesheet=stylesheet):
+                    self.assertEqual(self.post_getmap(stylesheet).status_code, 422)
+
+    def test_CustomStyles_accepts_safe_formats(self):
+        for fmt in ["%2.2f", "%.1f degC", "%g", "%e", "%+08.3f", "100%%", " ", ""]:
+            with self.subTest(fmt=fmt):
+                response = self.post_getmap(self.contour_style(fmt))
+                self.assertEqual(response.status_code, 200, response.text)
+
+    def test_CustomStyles_rejects_disallowed_content(self):
+        """Only allowlisted elements and attributes with valid values may be posted"""
+        for stylesheet in [
+            # File access and other layers
+            '<Style name="s"><DataPostProc algorithm="addfeatures" a="/etc/passwd"/></Style>',
+            '<Style name="s"><DataPostProc algorithm="include_layer" name="testdata"/></Style>',
+            '<Style name="s"><DataPostProc algorithm="pointsfromgrid" name="x"/></Style>',
+            '<Style name="s"><Point fontfile="/etc/passwd"/></Style>',
+            '<Style name="s"><Point symbol="/etc/passwd"/></Style>',
+            '<Style name="s"><FeatureInterval labelfontfile="/etc/passwd"/></Style>',
+            '<Legend name="l" type="svg" file="/etc/passwd"/>',
+            # Applied to strings and integers too, so no safe format exists
+            '<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>',
+            # Unbounded recursion
+            '<Style name="s"><IncludeStyle name="s"/></Style>',
+            # Unknown elements, attributes and markup
+            '<Style name="s"><Foo/></Style>',
+            '<Style name="s"><ContourLine foo="1"/></Style>',
+            '<Style name="s"><?php echo 1; ?></Style>',
+            '<Configuration foo="1"><Style name="s"/></Configuration>',
+            '<?xml version="1.0"?><!DOCTYPE Configuration [<!ENTITY x "y">]><Configuration><Style name="&x;"/></Configuration>',
+            # Regex with back references
+            '<Style name="s"><FeatureInterval match="\\(a*\\)*\\1"/></Style>',
+            # Values that make loops endless or huge
+            '<Style name="s"><Stippling distancex="-5"/></Style>',
+            '<Style name="s"><SmoothingFilter>1000</SmoothingFilter></Style>',
+            '<Style name="s"><RenderSettings striding="0"/></Style>',
+            '<Style name="s"><ContourLine interval="0"/></Style>',
+            '<Style name="s"><ContourLine interval="-1"/></Style>',
+            '<Style name="s"><ContourLine width="1e9"/></Style>',
+            '<Legend name="l" type="colorRange"><palette index="2000000000" red="0" green="0" blue="0"/></Legend>',
+            '<Legend name="l" type="interval"><palette min="0" max="2000000000" red="0" green="0" blue="0"/></Legend>',
+            # Malformed values
+            '<Style name="s"><ContourLine linecolor="red"/></Style>',
+            '<Style name="s"><Min>abc</Min></Style>',
+            '<Style name="s"><Min>nan</Min></Style>',
+            '<Style name="s"><Max>inf</Max></Style>',
+            '<Style name="s"><ContourLine classes="0.1,abc"/></Style>',
+            f'<Style name="{"x" * 2000}"/>',
+        ]:
+            with self.subTest(stylesheet=stylesheet[:120]):
+                self.assertEqual(self.post_getmap(stylesheet).status_code, 422)
+
+    def test_CustomStyles_rejects_too_large_body(self):
+        """The POST body is limited, it is refused before it is read completely"""
+        response = self.post_getmap("<!--" + "x" * 70000 + "-->")
+        self.assertEqual(response.status_code, 413)

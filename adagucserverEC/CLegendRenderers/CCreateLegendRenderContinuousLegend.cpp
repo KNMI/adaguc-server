@@ -26,7 +26,7 @@ double CCreateLegend::nextTick(double prev) {
 
 std::string CCreateLegend::formatTickLabel(const std::string &textformatting, double tick, double min, double max, int tickRound) {
   if (textformatting.empty() == false) {
-    return CT::printf(textformatting.c_str(), tick);
+    return CT::formatFloat(textformatting, tick);
   }
   if (tickRound == 0) {
     return floatToString(min, max, tick);
@@ -257,7 +257,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
       std::string label;
       if (!textformatting.empty()) {
-        label = CT::printf(textformatting.c_str(), v);
+        label = CT::formatFloat(textformatting, v);
       } else if (tickRound == 0) {
         label = floatToString(decimals, v);
       } else {
