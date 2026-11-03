@@ -739,7 +739,7 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
 
 void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
 
-  if (dataSource->formatConverterActive) {
+  if (dataSource->formatConverterActive || dataSource->srvParams->isTrajectory) {
     dataSource->stride2DMap = 1;
     return;
   }

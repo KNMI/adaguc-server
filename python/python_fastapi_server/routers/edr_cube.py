@@ -30,6 +30,7 @@ from .utils.edr_utils import (
     get_ttl_from_adaguc_headers,
     get_vertical,
     instance_to_iso,
+    native_query,
     get_metadata,
 )
 
@@ -135,22 +136,23 @@ async def get_coll_inst_cube(
     for parameter_name in parameter_names:
         _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
 
-        urlrequest = "&".join(
-            [
-                f"dataset={dataset_name}",
-                "service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326",
-                f"coverage={parameter_name}",
-                f"bbox={bbox}",
-                f"time={datetime_arg}",
-                f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
-                *custom_dims,
-                f"{vertical_dim}" if len(vertical_dim) > 0 else "",
-                *res_queryterm,
-            ]
-        )
+        query = {
+            "dataset": dataset_name,
+            "service": "wcs",
+            "version": "1.1.1",
+            "request": "getcoverage",
+            "format": "NetCDF4",
+            "crs": "EPSG:4326",
+            "coverage": parameter_name,
+            "bbox": bbox,
+            "time": datetime_arg,
+        }
+        if instance:
+            query["dim_reference_time"] = instance_to_iso(instance)
+        urlrequest = native_query(query, [*custom_dims, *res_queryterm], [vertical_dim])
 
         start = time.time()
-        status, wcs_response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+        status, wcs_response, headers = await call_adaguc(url=urlrequest)
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)

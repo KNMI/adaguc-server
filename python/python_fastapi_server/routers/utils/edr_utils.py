@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from urllib.parse import urlencode
 from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
@@ -318,6 +319,15 @@ def get_collectioninfo_from_md(
         title="Cube query",
         variables=cube_variables,
     )
+    trajectory_link = EDRQueryLink(
+        href=f"{base_url}/trajectory",
+        rel="data",
+        hreflang="en",
+        title="Trajectory query (2D LINESTRING on regular grids)",
+        variables=position_variables.model_copy(update={"query_type": "trajectory"}),
+    )
+    # A collection needs at least one parameter capable of producing a Section.
+    trajectory_query = EDRQuery(link=trajectory_link) if any(supports_section(layer) for layer in metadata.values()) else None
     locations_link = None
     if len(location_list) > 0:
         locations_variables = Variables(
@@ -352,6 +362,7 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
                 instances=EDRQuery(link=instances_query_link),
                 locations=EDRQuery(link=locations_link),
             )
@@ -359,6 +370,7 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
                 instances=EDRQuery(link=instances_query_link),
             )
     else:
@@ -366,12 +378,14 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
                 locations=EDRQuery(link=locations_link),
             )
         else:
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
             )
 
     parameter_info = get_params_for_dataset(metadata, collection_name, primary_extent)
@@ -853,21 +867,53 @@ def get_parameters(metadata: dict, collection_name: str, parameter_name_par: str
     return parameters
 
 
-def get_vertical(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> tuple[str, str]:
-    vertical_name = None
-    vertical_dim = ""
-    for param_dim in metadata[collection_name][requested_param]["dims"].values():
-        if not param_dim["hidden"]:
-            if param_dim["type"] == "dimtype_vertical":
-                vertical_name = param_dim["serviceName"]
-                break
+def vertical_dimension(metadata):
+    """Find the vertical coordinate; prefer explicit dimension typing over names."""
+    dims = metadata.get("dims") or {}
+    candidates = sorted(dims.items(), key=lambda item: item[1].get("hidden", False))
+    for name, dim in candidates:
+        if dim.get("type") == "dimtype_vertical":
+            return name
+    for name, dim in candidates:
+        if dim.get("serviceName") in ("height", "elevation", "height_above_ground_level_in_m"):
+            return name
+    return None
 
-    if z_par:
-        if vertical_name is not None:
-            vertical_dim = f"DIM_{vertical_name}={z_par}"
-    elif vertical_name is not None:
-        vertical_dim = f"DIM_{vertical_name}=*"
-    return (vertical_name, vertical_dim)
+
+def supports_section(metadata):
+    """Metadata eligibility only; native grid compatibility is checked when reading."""
+    dims = metadata.get("dims") or {}
+    return vertical_dimension(metadata) is not None and "time" in dims
+
+
+def get_vertical(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> tuple[str, str]:
+    layer = metadata[collection_name][requested_param]
+    name = vertical_dimension(layer)
+    if name is None or layer["dims"][name].get("hidden", False):
+        # Hidden coordinates retain their configured selection, also when z is supplied.
+        return (None, "")
+    vertical_name = layer["dims"][name]["serviceName"]
+    return (vertical_name, f"DIM_{vertical_name}={z_par or '*'}")
+
+
+def native_query(query: dict, custom_dims=(), vertical_dims=()) -> bytes:
+    """Encode native parameters once; dimension helpers currently return key=value terms."""
+    query = dict(query)
+    for term in [*custom_dims, *vertical_dims]:
+        if term:
+            key, value = term.split("=", 1)
+            query[key] = value
+    return urlencode(query).encode("utf-8")
+
+
+def propagate_data_headers(response, headers):
+    """Append trace headers so callers making several native requests retain each trace."""
+    ttl = get_ttl_from_adaguc_headers(headers)
+    if ttl is not None:
+        response.headers["cache-control"] = generate_max_age(ttl)
+    trace = get_trace_timings_from_adaguc_headers(headers)
+    if trace is not None:
+        response.headers.append("X-Trace-Timings", trace)
 
 
 def get_custom(

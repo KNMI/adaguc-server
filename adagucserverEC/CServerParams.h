@@ -87,6 +87,8 @@ public:
   double dfResY = 0;
   double dX = 0;
   double dY = 0;
+  bool isTrajectory = false;
+  std::string trajectoryCoords;
   std::string Format;
   std::string InfoFormat;
   std::string BGColor;

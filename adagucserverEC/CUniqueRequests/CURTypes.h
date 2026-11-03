@@ -37,6 +37,7 @@ struct CURResult {
 };
 
 struct CURFileInfo {
+  int step = 0;
   std::vector<std::vector<CURAggregatedDimension>> requests;
   std::map<std::string, CURDimInfo> dimInfoMap; // AggregatedDimension name is key
 };

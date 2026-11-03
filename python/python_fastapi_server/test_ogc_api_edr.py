@@ -167,6 +167,7 @@ def test_hrefs(client: TestClient):
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances",
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/locations",
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/position",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/trajectory",
     ]
 
     for url in urls:
@@ -1032,3 +1033,391 @@ def test_wildcard_query(client: TestClient):
     filename = "multi_reftime_instanceless_cube_wildcard.json"
     AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+@pytest.mark.parametrize("z,levels", [(None, [10, 20, 30, 40]), ("*", [10, 20, 30, 40]), ("10", [10]), ("20,40", [20, 40])])
+def test_trajectory_section(client, z, levels, monkeypatch):
+    monkeypatch.setenv("ADAGUC_TRACE_TIMINGS", "TRUE")
+    params = {
+        "coords": "LINESTRING(5.1 52.1,8.1 52.1)",
+        "parameter-name": "testdata",
+        "datetime": "2024-06-01T01:00:00Z/2024-06-01T02:00:00Z",
+    }
+    if z is not None:
+        params["z"] = z
+    resp = client.get("/edr/collections/testcollection.testcollection/instances/202406010000/trajectory", params=params)
+    assert resp.status_code == 200, resp.text
+    result = resp.json()
+    assert result["domain"]["domainType"] == "Section"
+    axes = result["domain"]["axes"]
+    assert axes["z"]["values"] == levels
+    assert axes["composite"]["coordinates"] == ["t", "x", "y"]
+    assert axes["composite"]["dataType"] == "tuple"
+    expected_coords = [[lon, 52] for lon in range(5, 9)]
+    assert axes["composite"]["values"] == [
+        [time, *coord] for time in ["2024-06-01T01:00:00Z", "2024-06-01T02:00:00Z"] for coord in expected_coords
+    ]
+    values = result["ranges"]["testdata"]
+    assert values["axisNames"] == ["z", "composite"]
+    assert values["shape"] == [len(levels), 8]
+    assert values["values"] == [10000 * (level - 10) + time * 10000 + x * 100 for level in levels for time in range(2) for x in range(4)]
+    assert len(resp.headers.get_list("x-trace-timings-metadata")) == 1
+    assert len(resp.headers.get_list("x-trace-timings")) == 1
+    import re
+
+    assert re.search(r"\[FSNCOPEN [^/]+/1/0\]", resp.headers["x-trace-timings"])
+
+
+def test_trajectory_revisits_and_defaults(client):
+    base = "/edr/collections/testcollection.testcollection"
+    resp = client.get(base + "/trajectory", params={"coords": "LINESTRING(5 52,8 52,5 52)", "parameter-name": "testdata", "z": "10"})
+    assert resp.status_code == 200, resp.text
+    section = resp.json()
+    tuples = section["domain"]["axes"]["composite"]["values"]
+    assert [point[1] for point in tuples] == [5, 6, 7, 8, 7, 6, 5]
+    point = client.get(base + "/position", params={"coords": "POINT(5 52)", "parameter-name": "testdata", "z": "10"})
+    assert point.status_code == 200
+    assert {v[0] for v in tuples} == set(point.json()["domain"]["axes"]["t"]["values"])
+    assert section["ranges"]["testdata"]["values"][0] == point.json()["ranges"]["testdata"]["values"][0]
+
+
+@pytest.mark.parametrize(
+    "coords",
+    [None, "POINT(5 52)", "LINESTRING(5 52)", "LINESTRING(5 52 10,6 53 10)", "LINESTRING(nan 52,6 53)", "LINESTRING(5.152.1,8 52)"],
+)
+def test_trajectory_invalid_coords(client, coords):
+    params = {} if coords is None else {"coords": coords}
+    resp = client.get("/edr/collections/testcollection.testcollection/trajectory", params=params)
+    assert resp.status_code == 400, resp.text
+
+
+def test_trajectory_multiple_parameters_one_file(client, monkeypatch):
+    monkeypatch.setenv("ADAGUC_TRACE_TIMINGS", "TRUE")
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/trajectory",
+        params={"coords": "LINESTRING(5 52,7 53)", "parameter-name": "testdata,testdata2", "z": "*"},
+    )
+    assert resp.status_code == 200, resp.text
+    result = resp.json()
+    assert result["type"] == "CoverageCollection"
+    assert len(result["coverages"]) == 2
+    assert [len(c["domain"]["axes"]["z"]["values"]) for c in result["coverages"]] == [4, 3]
+    import re
+
+    assert re.search(r"\[FSNCOPEN [^/]+/1/0\]", resp.headers["x-trace-timings"])
+
+
+@pytest.mark.parametrize("z", [None, "2", "3"])
+def test_trajectory_hidden_default_height(client, z):
+    resp = client.get(
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances/202405230000/trajectory",
+        params={"coords": "LINESTRING(3.4 52.5,7.9 52.5)", "parameter-name": "air_temperature_hagl", **({"z": z} if z else {})},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["domain"]["axes"]["z"]["values"] == [2]
+
+
+def test_trajectory_outside_and_resolution(client):
+    base = "/edr/collections/testcollection.testcollection/trajectory"
+    resp = client.get(base, params={"coords": "LINESTRING(-20 -20,-19 -19)", "parameter-name": "testdata"})
+    assert resp.status_code == 404, resp.text
+    resp = client.get(base, params={"coords": "LINESTRING(5 52,7 53)", "resolution_x": "1"})
+    assert resp.status_code == 400
+
+
+def test_trajectory_rotated_grid_and_multiple_files(client, monkeypatch):
+    import re
+    from routers.trajectory_covjson import sections_from_response
+    from routers.utils.edr_utils import handle_metadata
+
+    service = "adaguc.tests.trajectory"
+    status, *_ = AdagucTestTools().runADAGUCServer(
+        args=["--updatedb", "--config", os.environ["ADAGUC_CONFIG"] + f",{service}.xml"], isCGI=False
+    )
+    assert status == 0
+    monkeypatch.setenv("ADAGUC_TRACE_TIMINGS", "TRUE")
+    base = f"/edr/collections/{service}.pressure/instances/202407110500"
+    query = {"coords": "LINESTRING(0 50,10 55)", "parameter-name": "temperature", "datetime": "2024-07-11T06:00:00Z", "z": "*"}
+    response = client.get(base + "/trajectory", params=query)
+    assert response.status_code == 200, response.text
+    section = response.json()
+    assert section["domain"]["axes"]["z"]["values"] == [500, 700, 850, 925]
+    points = section["domain"]["axes"]["composite"]["values"]
+    assert len(points) > 2
+    assert re.search(r"\[FSNCOPEN [^/]+/1/0\]", response.headers["x-trace-timings"])
+    strided = client.get(base + "/trajectory", params={**query, "parameter-name": "temperature_strided"})
+    assert strided.status_code == 200, strided.text
+    assert strided.json()["domain"] == section["domain"]
+    assert strided.json()["ranges"]["temperature_strided"] == section["ranges"]["temperature"]
+    for i, (time, lon, lat) in enumerate(points):
+        position = client.get(
+            base + "/position", params={"coords": f"POINT({lon} {lat})", "parameter-name": "temperature", "datetime": time, "z": "500"}
+        )
+        assert position.status_code == 200, position.text
+        assert section["ranges"]["temperature"]["values"][i] == position.json()["ranges"]["temperature"]["values"][0]
+
+    # All four model runs are separate files. Test the native operation directly
+    # because EDR's instance selection intentionally selects a single model run.
+    native_query = (
+        f"dataset={service}&service=wms&version=1.3.0&request=GetTrajectory&info_format=application/json&crs=EPSG:4326"
+        "&query_layers=temperature&coords=LINESTRING(0 50,10 55)&time=2024-07-11T06:00:00Z&dim_reference_time=*&dim_pressure_level_in_hpa=*"
+    )
+    status, body, headers = AdagucTestTools().runADAGUCServer(native_query)
+    assert status == 0
+    assert any(re.search(r"\[FSNCOPEN [^/]+/4/0\]", header) for header in headers)
+    status, md, _ = AdagucTestTools().runADAGUCServer(
+        f"dataset={service}&service=wms&version=1.3.0&request=GetMetadata&format=application/json"
+    )
+    assert status == 0
+    metadata = handle_metadata(json.loads(md))[f"{service}.pressure"]
+    result = sections_from_response(json.loads(body), metadata, f"{service}.pressure").model_dump(mode="json", exclude_none=True)
+    assert len(result["coverages"]) == 4
+    assert len({c["domain"]["custom:reference_time"] for c in result["coverages"]}) == 4
+    latest = next(c for c in result["coverages"] if c["domain"]["custom:reference_time"] == "2024-07-11T05:00:00Z")
+    assert latest["ranges"] == section["ranges"]
+
+
+def test_trajectory_zero_missing_and_ordering():
+    from routers.trajectory_covjson import sections_from_response
+
+    metadata = {
+        "p": {
+            "dims": {"height": {"type": "dimtype_vertical", "serviceName": "height"}},
+            "layer": {"layername": "p", "title": "Temperature", "abstract": "", "variables": [{"units": "K", "label": "Temperature"}]},
+        }
+    }
+    t1, t2 = "2024-01-01T00:00:00Z", "2024-01-01T01:00:00Z"
+    samples = [
+        {"layername": "p", "point": {"coords": "5,52"}, "dims": ["height", "time"], "data": {"10": {t2: "0", t1: "nodata"}}},
+        {"layername": "p", "point": {"coords": "6,52"}, "dims": ["height", "time"], "data": {"10": {t2: "nan", t1: "2"}}},
+    ]
+    result = sections_from_response(samples, metadata, "dataset.collection").model_dump(mode="json", exclude_none=True)
+    assert result["domain"]["axes"]["composite"]["values"] == [[t1, 5, 52], [t1, 6, 52], [t2, 5, 52], [t2, 6, 52]]
+    assert result["ranges"]["p"]["values"] == [None, 2, 0, None]
+
+
+def test_trajectory_custom_dimension(client):
+    base = "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances/202405230000"
+    response = client.get(
+        base + "/trajectory",
+        params={
+            "coords": "LINESTRING(3.4 52.5,7.9 52.5)",
+            "parameter-name": "air_temperature_hagl",
+            "member": "*",
+        },
+    )
+    assert response.status_code == 200, response.text
+    coverages = response.json()["coverages"]
+    assert len(coverages) == 5
+    assert len({coverage["domain"]["custom:member"] for coverage in coverages}) == 5
+    for coverage in coverages:
+        time, lon, lat = coverage["domain"]["axes"]["composite"]["values"][0]
+        point = client.get(
+            base + "/position",
+            params={
+                "coords": f"POINT({lon} {lat})",
+                "parameter-name": "air_temperature_hagl",
+                "datetime": time,
+                "member": f"{coverage['domain']['custom:member']:g}",
+            },
+        )
+        assert point.status_code == 200, point.text
+        assert coverage["ranges"]["air_temperature_hagl"]["values"][0] == point.json()["ranges"]["air_temperature_hagl"]["values"][0]
+
+
+def test_trajectory_scalar_postprocessing(client):
+    base = "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances/202406050300"
+    response = client.get(
+        base + "/trajectory",
+        params={
+            "coords": "LINESTRING(3.4 52.5,7.9 53.9)",
+            "parameter-name": "wind_speed_hagl_ms",
+        },
+    )
+    assert response.status_code == 200, response.text
+    coverage = response.json()
+    for i, (time, lon, lat) in enumerate(coverage["domain"]["axes"]["composite"]["values"]):
+        point = client.get(
+            base + "/position",
+            params={
+                "coords": f"POINT({lon} {lat})",
+                "parameter-name": "wind_speed_hagl_ms",
+                "datetime": time,
+            },
+        )
+        assert point.status_code == 200, point.text
+        assert coverage["ranges"]["wind_speed_hagl_ms"]["values"][i] == point.json()["ranges"]["wind_speed_hagl_ms"]["values"][0]
+
+
+@pytest.mark.parametrize(
+    "status,body",
+    [
+        (0, b""),
+        (0, b"<ServiceExceptionReport>Native failure</ServiceExceptionReport>"),
+        (0, b'{"error":"UnprocessableEntity"}'),
+        (0, b"\xff"),
+        (1, b"Native failure"),
+    ],
+)
+def test_trajectory_invalid_native_response(client, monkeypatch, status, body):
+    from unittest.mock import AsyncMock
+    from routers import edr_trajectory
+
+    monkeypatch.setattr(edr_trajectory, "call_adaguc", AsyncMock(return_value=(status, body, [])))
+    response = client.get(
+        "/edr/collections/testcollection.testcollection/trajectory",
+        params={
+            "coords": "LINESTRING(5 52,7 53)",
+            "parameter-name": "testdata",
+        },
+    )
+    assert response.status_code == 500, response.text
+    assert response.json()["description"].startswith("Trajectory data request")
+
+
+@pytest.mark.parametrize("dimension_order", [("time", "ml", "y", "x"), ("ml", "time", "x", "y"), ("y", "time", "x", "ml")])
+def test_trajectory_float32_axes_and_native_failure(client, tmp_path, monkeypatch, dimension_order):
+    import numpy as np
+    from netCDF4 import Dataset
+
+    # Match the soundings grid's float32 rounding over 676 x 564 coordinates.
+    path = tmp_path / "rounded.nc"
+    with Dataset(path, "w") as nc:
+        for name, size in [("x", 676), ("y", 564), ("time", 1), ("ml", 2), ("forecast_reference_time", 1)]:
+            nc.createDimension(name, size)
+        nc.createVariable("x", "f4", ("x",))[:] = -13.5 + np.arange(676) * 0.05
+        nc.createVariable("y", "f4", ("y",))[:] = -13.6 + np.arange(564) * 0.05
+        for name, value in [("time", 1), ("forecast_reference_time", 0)]:
+            variable = nc.createVariable(name, "f8", (name,))
+            variable[:] = [value]
+            variable.standard_name = name
+            variable.units = "hours since 2026-09-28 00:00:00"
+        level = nc.createVariable("ml", "f4", ("ml",))
+        level[:] = [1, 2]
+        level.standard_name = "model_level"
+        crs = nc.createVariable("crs", "i4")
+        crs.setncatts(
+            {"grid_mapping_name": "rotated_latitude_longitude", "grid_north_pole_latitude": 35.0, "grid_north_pole_longitude": 172.0}
+        )
+        temperature = nc.createVariable("temperature", "f4", dimension_order)
+        temperature.grid_mapping = "crs"
+        temperature.standard_name = "air_temperature"
+        temperature.units = "K"
+        values = np.arange(564 * 676, dtype=np.float32).reshape(564, 676)
+        source = np.stack([values, values + 1000000])[np.newaxis, ...]
+        temperature[:] = source.transpose([("time", "ml", "y", "x").index(dim) for dim in dimension_order])
+    config = tmp_path / "rounded.xml"
+    config.write_text(f"""<Configuration>
+      <Layer type="database">
+        <Group collection="ml"/><Name>air_temperature_ml</Name><Title>Float32 grid regression</Title>
+        <Variable>temperature</Variable><FilePath>{path}</FilePath><Styles>auto</Styles>
+        <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+        <Dimension name="time" units="ISO8601" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+        <Dimension name="ml" units=" " type="vertical">model_level</Dimension>
+      </Layer>
+    </Configuration>""")
+    monkeypatch.setenv("ADAGUC_DATASET_DIR", str(tmp_path))
+    monkeypatch.setenv("ADAGUC_TRACE_TIMINGS", "TRUE")
+    status, *_ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", os.environ["ADAGUC_CONFIG"] + f",{config}"], isCGI=False)
+    assert status == 0
+    base = "/edr/collections/rounded.ml/instances/202609280000"
+    coords = "LINESTRING(4.219 51.534,6.532 52.902)"
+    response = client.get(base + "/trajectory", params={"coords": coords, "parameter-name": "air_temperature_ml"})
+    if dimension_order[-1] == "ml":
+        # The legacy header reader cannot identify this layout; do not report empty data.
+        assert response.status_code == 422, response.text
+        return
+    assert response.status_code == 200, response.text
+    section = response.json()
+    assert section["domain"]["domainType"] == "Section"
+    assert section["domain"]["axes"]["z"]["values"] == [1, 2]
+    points = section["domain"]["axes"]["composite"]["values"]
+    assert len(points) > 2
+    for index in (0, len(points) - 1):
+        time, lon, lat = points[index]
+        position = client.get(
+            base + "/position",
+            params={
+                "coords": f"POINT({lon} {lat})",
+                "parameter-name": "air_temperature_ml",
+                "datetime": time,
+                "z": "1",
+            },
+        )
+        assert position.status_code == 200, position.text
+        assert section["ranges"]["air_temperature_ml"]["values"][index] == position.json()["ranges"]["air_temperature_ml"]["values"][0]
+    import re
+
+    assert re.search(r"\[FSNCOPEN [^/]+/1/0\]", response.headers["x-trace-timings"])
+
+    # A genuinely irregular axis must still fail, with a native failure status
+    # and a handled EDR response rather than a JSONDecodeError.
+    with Dataset(path, "a") as nc:
+        nc["x"][100] += 0.01
+    response = client.get(base + "/trajectory", params={"coords": coords, "parameter-name": "air_temperature_ml"})
+    assert response.status_code == 422, response.text
+    assert "unsupported for the selected data" in response.json()["description"]
+    status, body, _ = AdagucTestTools().runADAGUCServer(
+        f"dataset=rounded&service=wms&version=1.3.0&request=GetTrajectory&info_format=application/json&crs=EPSG:4326"
+        f"&query_layers=air_temperature_ml&coords={coords}&dim_reference_time=2026-09-28T00:00:00Z&dim_model_level=*"
+    )
+    assert status == 422  # AdagucTestTools translates the native exit code 33.
+    assert b"Trajectory requires regularly spaced grid axes" in body
+
+
+@pytest.mark.parametrize("status,expected", [(32, 404), (33, 422), (35, 400), (34, 500), (1, 500)])
+def test_trajectory_native_failure_categories(client, monkeypatch, status, expected):
+    from unittest.mock import AsyncMock
+    from routers import edr_trajectory
+
+    monkeypatch.setattr(edr_trajectory, "call_adaguc", AsyncMock(return_value=(status, b"native failure", [])))
+    response = client.get(
+        "/edr/collections/testcollection.testcollection/trajectory",
+        params={
+            "coords": "LINESTRING(5 52,7 53)",
+            "parameter-name": "testdata",
+        },
+    )
+    assert response.status_code == expected
+
+
+def test_trajectory_discovery_requires_section_dimensions(client, monkeypatch):
+    from copy import deepcopy
+    from unittest.mock import AsyncMock
+    from routers import edr
+    from routers.utils.edr_utils import get_metadata
+    import asyncio
+
+    collection = "testcollection.testcollection"
+    metadata = asyncio.run(get_metadata(collection))
+    without_vertical = deepcopy(metadata)
+    for layer in without_vertical[collection].values():
+        layer["dims"] = {name: dim for name, dim in layer["dims"].items() if dim["type"] != "dimtype_vertical"}
+    monkeypatch.setattr(edr, "get_metadata", AsyncMock(return_value=without_vertical))
+    response = client.get(f"/edr/collections/{collection}")
+    assert response.status_code == 200, response.text
+    assert "trajectory" not in response.json()["data_queries"]
+    monkeypatch.setattr(edr, "get_metadata", AsyncMock(return_value=metadata))
+    response = client.get(f"/edr/collections/{collection}")
+    assert "trajectory" in response.json()["data_queries"]
+
+
+def test_shared_vertical_selection_and_query_encoding():
+    from urllib.parse import parse_qs
+    from routers.utils.edr_utils import get_vertical, native_query, vertical_dimension
+
+    layer = {
+        "dims": {
+            "surface": {"serviceName": "height", "hidden": True, "type": "dimtype_none"},
+            "levels": {"serviceName": "model_level", "hidden": False, "type": "dimtype_vertical"},
+        }
+    }
+    assert vertical_dimension(layer) == "levels"
+    metadata = {"c": {"p": layer}}
+    assert get_vertical(metadata, "c", "p", None) == ("model_level", "DIM_model_level=*")
+    assert get_vertical(metadata, "c", "p", "3") == ("model_level", "DIM_model_level=3")
+    del layer["dims"]["levels"]
+    assert vertical_dimension(layer) == "surface"
+    assert get_vertical(metadata, "c", "p", "3") == (None, "")
+    query = native_query({"dataset": "a&b", "coords": "LINESTRING(+5 52,6 53)"}, ["DIM_member=a+b"])
+    assert parse_qs(query.decode()) == {"dataset": ["a&b"], "coords": ["LINESTRING(+5 52,6 53)"], "DIM_member": ["a+b"]}

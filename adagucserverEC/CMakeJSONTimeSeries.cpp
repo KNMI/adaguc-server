@@ -6,7 +6,9 @@
 #include "CDrawImage.h"
 #include "CDebugger.h"
 #include "CUniqueRequests/CURUniqueRequests.h"
+#include "CUniqueRequests/trajectory.h"
 #include "CImageWarper.h"
+#include "CServerError.h"
 
 static const bool CMakeJSONTimeSeries_DEBUG = false;
 
@@ -37,6 +39,7 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
   /* Find all individual files. uniqueRequest will group all files to single objects, and collect all the needed entries for those files*/
   for (int step = 0; step < numberOfSteps; step++) {
     dataSource->setTimeStep(step);
+    if (dataSource->srvParams->isTrajectory) fileInfoMap[dataSource->getFileName()].step = step;
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       auto &ogcDim = dataSource->requiredDims[dimnr];
       fileInfoMap[dataSource->getFileName()].dimInfoMap[ogcDim.netCDFDimName].dimValuesMap[dataSource->getDimensionIndex(dimnr)] = dataSource->getDimensionValue(dimnr);
@@ -49,6 +52,13 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
   } catch (int e) {
     CDBError("Error in makeRequests at line %d", e);
     throw(__LINE__);
+  } catch (const trajectory::UnsupportedRequest &e) {
+    CDBError("%s", e.what());
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    return 1;
+  } catch (const std::exception &e) {
+    CDBError("%s", e.what());
+    return 1;
   }
 
   return 0;

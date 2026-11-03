@@ -63,3 +63,25 @@ def exc_invalid_point(coords: str) -> EdrException:
         code=400,
         description=f"Could not parse WKT POINT, received coords={coords}",
     )
+
+
+def native_json_response(status, body, operation):
+    """Distinguish native request rejection from execution and response failures."""
+    import json
+
+    # CGIRunner returns process codes; test/native HTTP wrappers may translate them.
+    if status in (32, 404):
+        raise EdrException(404, f"{operation} data request found no matching data")
+    if status in (33, 422):
+        raise EdrException(422, f"{operation} data request is unsupported for the selected data or exceeds its limits")
+    if status in (35, 400):
+        raise EdrException(400, f"{operation} data request is invalid")
+    if status != 0:
+        raise EdrException(500, f"{operation} data request failed")
+    try:
+        data = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError, TypeError) as exc:
+        raise EdrException(500, f"{operation} data request returned an invalid JSON response") from exc
+    if not isinstance(data, list):
+        raise EdrException(500, f"{operation} data request returned an invalid data response")
+    return data

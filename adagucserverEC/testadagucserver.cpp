@@ -15,6 +15,7 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
+#include "CUniqueRequests/trajectory.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
@@ -33,6 +34,64 @@ int main() {
     return 1;
   }
   return 0;
+}
+
+TEST(crossedCells, Trajectory) {
+  std::vector<trajectory::Cell> cells;
+  trajectory::traverse({0.2, 1.2}, {3.2, 1.2}, 4, 3, cells);
+  CHECK((cells == std::vector<trajectory::Cell>{{0, 1}, {1, 1}, {2, 1}, {3, 1}}));
+  cells.clear();
+  trajectory::traverse({3.2, 1.2}, {0.2, 1.2}, 4, 3, cells);
+  CHECK((cells == std::vector<trajectory::Cell>{{3, 1}, {2, 1}, {1, 1}, {0, 1}}));
+}
+
+TEST(clippingAndCorners, Trajectory) {
+  std::vector<trajectory::Cell> cells;
+  trajectory::traverse({-10, 0.5}, {10, 0.5}, 3, 3, cells);
+  CHECK((cells == std::vector<trajectory::Cell>{{0, 0}, {1, 0}, {2, 0}}));
+  cells.clear();
+  trajectory::traverse({0.2, 0.2}, {2.8, 2.8}, 3, 3, cells);
+  CHECK((cells == std::vector<trajectory::Cell>{{0, 0}, {1, 1}, {2, 2}}));
+  cells.clear();
+  trajectory::traverse({-5, -5}, {-1, -1}, 3, 3, cells);
+  CHECK(cells.empty());
+  trajectory::traverse({1.2, 1.2}, {1.2, 1.2}, 3, 3, cells);
+  CHECK((cells == std::vector<trajectory::Cell>{{1, 1}}));
+}
+
+TEST(boundariesAndRevisits, Trajectory) {
+  std::vector<trajectory::Cell> cells;
+  trajectory::traverse({0.2, 1}, {2.8, 1}, 3, 3, cells);
+  trajectory::traverse({2.8, 1}, {0.2, 1}, 3, 3, cells);
+  CHECK((cells == std::vector<trajectory::Cell>{{0, 1}, {1, 1}, {2, 1}, {1, 1}, {0, 1}}));
+}
+
+TEST(subdivisionAtCorners, Trajectory) {
+  std::vector<trajectory::Cell> whole, subdivided;
+  trajectory::traverse({0.2, 2.8}, {2.8, 0.2}, 3, 3, whole);
+  trajectory::traverse({0.2, 2.8}, {1, 2}, 3, 3, subdivided);
+  trajectory::traverse({1, 2}, {2, 1}, 3, 3, subdivided);
+  trajectory::traverse({2, 1}, {2.8, 0.2}, 3, 3, subdivided);
+  CHECK((whole == std::vector<trajectory::Cell>{{0, 2}, {1, 1}, {2, 0}}));
+  CHECK(whole == subdivided);
+}
+
+TEST(float32GridSpacing, Trajectory) {
+  for (const auto &[origin, count, direction]: std::vector<std::tuple<double, size_t, double>>{{-13.5, 676, 1}, {-13.6, 564, 1}, {14.55, 564, -1}}) {
+    std::vector<double> values(count);
+    for (size_t i = 0; i < count; ++i) values[i] = float(origin + i * 0.05 * direction);
+    const auto [first, step] = trajectory::regularAxis(values.data(), values.size());
+    CHECK(first == values.front());
+    CHECK(std::abs(step - 0.05 * direction) < 1e-8);
+    values[count / 2] += 0.01;
+    bool rejected = false;
+    try {
+      trajectory::regularAxis(values.data(), values.size());
+    } catch (const std::runtime_error &) {
+      rejected = true;
+    }
+    CHECK(rejected);
+  }
 }
 
 TEST(alreadyMeter, CImageWarper) {

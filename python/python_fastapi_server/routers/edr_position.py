@@ -8,7 +8,6 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-import json
 from typing import Union
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -18,19 +17,18 @@ from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .edr_covjson import covjson_from_resp
-from .utils.edr_exception import EdrException, exc_invalid_point
+from .utils.edr_exception import EdrException, exc_invalid_point, native_json_response
 from .utils.edr_utils import (
     call_adaguc,
-    generate_max_age,
     get_custom,
     get_dataset_from_collection,
     get_instance,
     get_metadata,
     get_parameters,
-    get_trace_timings_from_adaguc_headers,
-    get_ttl_from_adaguc_headers,
     get_vertical,
     instance_to_iso,
+    native_query,
+    propagate_data_headers,
 )
 
 router = APIRouter()
@@ -146,13 +144,8 @@ async def handle_coll_inst_position(
         custom_dims,
     )
     if resp:
-        dat = json.loads(resp)
-        ttl = get_ttl_from_adaguc_headers(headers)
-        if ttl is not None:
-            response.headers["cache-control"] = generate_max_age(ttl)
-        trace_timing = get_trace_timings_from_adaguc_headers(headers)
-        if trace_timing is not None:
-            response.headers.append("X-Trace-Timings", trace_timing)
+        dat = native_json_response(0, resp, "Position")
+        propagate_data_headers(response, headers)
         return covjson_from_resp(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
@@ -169,21 +162,24 @@ async def get_point_value(
 ) -> tuple[bytes, list[str]]:
     """Returns information in EDR format for a given collection and position"""
     custom_dims = [] if custom_dims is None else custom_dims
-    urlrequest = "&".join(
-        [
-            f"dataset={dataset_name}",
-            "service=wms&version=1.3.0&request=GetPointValue&info_format=application/json&crs=EPSG:4326",
-            f"query_layers={','.join(parameters)}",
-            f"X={coords[0]}",
-            f"Y={coords[1]}",
-            f"time={datetime_par}" if datetime_par else "",
-            f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
-            *custom_dims,
-            f"{vertical_dim}" if len(vertical_dim) > 0 else "",
-        ]
-    )
+    query = {
+        "dataset": dataset_name,
+        "service": "wms",
+        "version": "1.3.0",
+        "request": "GetPointValue",
+        "info_format": "application/json",
+        "crs": "EPSG:4326",
+        "query_layers": ",".join(parameters),
+        "X": coords[0],
+        "Y": coords[1],
+    }
+    if datetime_par:
+        query["time"] = datetime_par
+    if instance:
+        query["dim_reference_time"] = instance_to_iso(instance)
+    urlrequest = native_query(query, custom_dims, [vertical_dim])
 
-    status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+    status, response, headers = await call_adaguc(url=urlrequest)
     if status == 0:
         return response, headers
-    return None, None
+    native_json_response(status, response, "Position")
