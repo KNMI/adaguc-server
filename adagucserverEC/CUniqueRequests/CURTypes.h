@@ -37,7 +37,7 @@ struct CURResult {
 };
 
 struct CURFileInfo {
-  int step = 0;
+  int representativeStep = 0; // DataSource selection index for this file, not a NetCDF time index.
   std::vector<std::vector<CURAggregatedDimension>> requests;
   std::map<std::string, CURDimInfo> dimInfoMap; // AggregatedDimension name is key
 };

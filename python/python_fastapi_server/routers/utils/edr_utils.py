@@ -26,6 +26,7 @@ from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
 from fastapi import Request, Response
 from fastapi.datastructures import QueryParams
+from geomet import wkt
 
 # TODO; this import should be possible!
 # from python.lib.adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
@@ -33,6 +34,8 @@ HTTP_STATUSCODE_404_NOT_FOUND = 32
 
 from .edr_exception import (
     AdagucErrorCode,
+    EdrException,
+    exc_invalid_point,
     exc_failed_call,
     exc_unknown_collection,
     exc_incorrect_instance,
@@ -865,6 +868,28 @@ def get_parameters(metadata: dict, collection_name: str, parameter_name_par: str
     if len(parameters) == 0:
         raise exc_unknown_parameter(collection_name, parameter_name_par)
     return parameters
+
+
+def parse_coordinates(coords, geometry_type):
+    """Validate EDR's supported 2D WKT and return longitude/latitude pairs."""
+    kind = geometry_type.upper()
+    try:
+        number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+        pair = rf"{number}\s+{number}"
+        vertices = pair if kind == "POINT" else rf"{pair}(?:\s*,\s*{pair})+"
+        # geomet accepts malformed numeric separators and ignores trailing text.
+        if coords is None or re.fullmatch(rf"\s*{kind}\s*\(\s*{vertices}\s*\)\s*", coords, re.IGNORECASE) is None:
+            raise ValueError
+        # geomet's tokenizer handles minus signs but not leading plus signs.
+        geometry = wkt.loads(coords.upper().replace("+", ""))
+        points = [geometry["coordinates"]] if kind == "POINT" else geometry["coordinates"]
+        if any(not (-180 <= lon <= 180 and -90 <= lat <= 90) for lon, lat in points):
+            raise ValueError
+        return points
+    except (TypeError, ValueError, StopIteration) as exc:
+        if kind == "POINT":
+            raise exc_invalid_point(coords) from exc
+        raise EdrException(400, "coords must be a 2D WKT LINESTRING with at least two finite longitude/latitude coordinates") from exc
 
 
 def vertical_dimension(metadata):

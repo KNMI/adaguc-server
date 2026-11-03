@@ -40,6 +40,8 @@ static const bool CREQUEST_DEBUG = false;
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include <CReadFile.h>
+#include <cmath>
+#include <stdexcept>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
 #include <json_adaguc.h>
@@ -819,7 +821,7 @@ int CRequest::process_querystring() {
   }
 
   setErrorMode(ServiceExceptionMode::ExceptionPlainText);
-  std::string SERVICE, REQUEST;
+  std::string SERVICE, REQUEST, trajectoryCoords;
 
   int dFound_Width = 0;
   int dFound_Height = 0;
@@ -940,7 +942,7 @@ int CRequest::process_querystring() {
       }
     }
     if (!uriValue.empty()) {
-      if (uriKeyUpperCase == "COORDS") srvParam->trajectoryCoords = uriValue;
+      if (uriKeyUpperCase == "COORDS") trajectoryCoords = uriValue;
       // BBOX Parameters
       if (uriKeyUpperCase == "BBOX") {
         auto bboxvalues = CT::split(CT::replace(uriValue, "%2C", ","), ",");
@@ -1539,9 +1541,18 @@ int CRequest::process_querystring() {
       }
 
       if (srvParam->isTrajectory) {
-        if (srvParam->trajectoryCoords.empty()) {
-          CDBError("Trajectory requires COORDS");
-          setExceptionType(ServiceExceptionType::InvalidDimensionValue);
+        // Python validates WKT and geographic bounds; here we only decode safe coordinate pairs.
+        const auto fields = CT::split(trajectoryCoords, ",");
+        try {
+          if (fields.size() < 4 || fields.size() > 200000 || fields.size() % 2 != 0) throw std::invalid_argument("Invalid coordinate count");
+          for (size_t i = 0; i < fields.size(); i += 2) {
+            const double x = std::stod(fields[i]), y = std::stod(fields[i + 1]);
+            if (!std::isfinite(x) || !std::isfinite(y)) throw std::invalid_argument("Invalid coordinate pair");
+            srvParam->trajectoryCoords.emplace_back(x, y);
+          }
+        } catch (const std::exception &) {
+          CDBError("Trajectory COORDS must contain 2 to 100000 finite longitude/latitude pairs: x,y,x,y,...");
+          setExceptionType(ServiceExceptionType::UnprocessableEntity);
           return 1;
         }
         // The writer still needs an image context. Sampling uses COORDS, never this extent.

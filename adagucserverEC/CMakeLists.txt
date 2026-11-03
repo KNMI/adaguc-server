@@ -237,7 +237,9 @@ add_library(
     CUniqueRequests/requestUtils.cpp
     CUniqueRequests/CURUniqueRequests.h
     CUniqueRequests/CURUniqueRequests.cpp
+    CUniqueRequests/trajectory.cpp
     CUniqueRequests/trajectory.h
+    CUniqueRequests/trajectorySampling.cpp
     CUniqueRequests/trajectorySampling.h
     CXMLGen.cpp
     CXMLGen.h

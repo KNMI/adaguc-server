@@ -1,15 +1,13 @@
 """EDR 2D trajectories sampled in one native ADAGUC data request."""
 
-import math
-import re
+import json
 
 from fastapi import APIRouter, Query, Request
-from geomet import wkt
 from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .trajectory_covjson import SectionCoverage, SectionCoverageCollection, sections_from_response
-from .utils.edr_exception import EdrException, native_json_response
+from .utils.edr_exception import EdrException, exc_failed_call
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -20,30 +18,12 @@ from .utils.edr_utils import (
     get_vertical,
     instance_to_iso,
     native_query,
+    parse_coordinates,
     propagate_data_headers,
     supports_section,
 )
 
 router = APIRouter()
-
-
-def validate_coords(coords):
-    """Reject unsupported WKT forms before invoking the native sampler."""
-    try:
-        number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
-        pair = rf"{number}\s+{number}"
-        if coords is None or re.fullmatch(rf"\s*LINESTRING\s*\(\s*{pair}(?:\s*,\s*{pair})+\s*\)\s*", coords, re.IGNORECASE) is None:
-            raise ValueError
-        geometry = wkt.loads(coords)
-        points = geometry["coordinates"]
-        if geometry["type"] != "LineString" or len(points) < 2 or len(points) > 100000:
-            raise ValueError
-        if any(len(point) != 2 or not all(math.isfinite(v) for v in point) for point in points):
-            raise ValueError
-        if any(not (-180 <= lon <= 180 and -90 <= lat <= 90) for lon, lat in points):
-            raise ValueError
-    except (TypeError, ValueError, KeyError, IndexError, StopIteration, AttributeError) as exc:
-        raise EdrException(400, "coords must be a 2D WKT LINESTRING with at least two finite longitude/latitude coordinates") from exc
 
 
 @router.get(
@@ -70,7 +50,9 @@ async def get_trajectory(
     crs: str = "EPSG:4326",
     f: str = "CoverageJSON",
 ):
-    validate_coords(coords)
+    points = parse_coordinates(coords, "LineString")
+    if len(points) > 100000:
+        raise EdrException(400, "Trajectory supports at most 100000 vertices")
     if crs != "EPSG:4326":
         raise EdrException(400, "Trajectory currently supports crs=EPSG:4326")
     if f not in ("CoverageJSON", "application/prs.coverage+json"):
@@ -99,7 +81,7 @@ async def get_trajectory(
         "request": "GetTrajectory",
         "info_format": "application/json",
         "crs": "EPSG:4326",
-        "coords": coords,
+        "coords": ",".join(str(value) for point in points for value in point),
         "query_layers": ",".join(parameters),
     }
     if datetime_par:
@@ -107,6 +89,13 @@ async def get_trajectory(
     if instance:
         query["dim_reference_time"] = instance_to_iso(instance)
     status, body, headers = await call_adaguc(url=native_query(query, custom_dims, sorted(vertical_dims)))
-    data = native_json_response(status, body, "Trajectory")
+    if status != 0:
+        raise exc_failed_call("Trajectory call failed")
+    try:
+        data = json.loads(body)
+        if not isinstance(data, list):
+            raise ValueError
+    except (ValueError, TypeError) as exc:
+        raise exc_failed_call("Trajectory call returned invalid data") from exc
     propagate_data_headers(response, headers)
     return sections_from_response(data, metadata[collection_name], collection_name)

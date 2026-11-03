@@ -95,60 +95,27 @@ See:
 
 ## Trajectory queries
 
-The collection and instance endpoints also support `/trajectory` with a simple
-2D WKT `LINESTRING`, for example:
+Use `/trajectory` on a collection or instance with a 2D WKT `LINESTRING`:
 
 ```text
-/edr/collections/edr.mycollection/trajectory?coords=LINESTRING(4.7%2052.1,5.5%2052.5,6.0%2053.0)&parameter-name=my_temperature&z=*
+/edr/collections/edr.mycollection/trajectory?coords=LINESTRING(4.7%2052.1,5.5%2052.5)&parameter-name=my_temperature&z=*
 ```
 
-Trajectory selects the native grid cells crossed by the line, in path order,
-without interpolating values. Returned coordinates are the cell centres,
-expressed as longitude and latitude. Consecutive duplicate cells are suppressed;
-later revisits are retained. Cells use half-open boundaries: an exact edge belongs
-to its positive native-index side, and corner-only touches do not add extra cells.
-Parts outside the grid are clipped; a path with no samples returns HTTP 404.
+The response is a CoverageJSON Section with selected levels in `z` and
+`[time, longitude, latitude]` tuples along the path. It returns native cell centres
+and values without interpolation. Consecutive duplicate cells are suppressed;
+later revisits remain. Omitted `z` selects all visible levels; hidden heights keep
+their configured selection and are reported in `z`. Omitted `datetime` uses the
+configured default, as for position. A path outside the grid returns HTTP 404.
 
-The initial implementation supports numeric parameters on regular grids with
-one-dimensional, uniformly spaced axes, including rotated-pole grids. Each axis
-must contain at least two cells. The legacy reader requires spatial dimensions
-in the final two NetCDF variable positions, in either x/y order. Point, curvilinear and unstructured datasets,
-and layers requiring multiple source variables or per-layer variable renaming
-with `orgname`, are not supported. Source files
-for a parameter must share the same spatial grid. Only plain 2D `LINESTRING`
-coordinates in `EPSG:4326` are supported. Segments are straight in the input
-coordinate system and are subdivided for transformation to the native grid.
-Rendering stride settings are ignored so trajectory always selects native cells.
+Supported: numeric parameters with time and an identifiable vertical coordinate,
+on regular grids with matching one-dimensional axes across source files,
+including rotated-pole grids. Each axis needs at least two cells; spatial
+dimensions must be the final two variable dimensions. Layers requiring multiple
+source variables or `orgname` renaming are unsupported.
 
-The response has CoverageJSON `domainType: "Section"`. Its `composite` axis
-contains `[time, longitude, latitude]` tuples, ordered by time and then path order.
-Its `z` axis contains the selected levels. `z=*` selects all levels of a visible
-vertical dimension; `z=10` selects a single level. Omitted `z` uses the same helper
-as position and cube, which selects all visible vertical levels. A hidden height
-retains its configured selection and is included in the Section domain when its
-meaning is known. For example, a hidden height fixed at 2 m still returns `z: [2]`
-when the request specifies `z=3`; the response always reports the selected height.
-Parameters without a selected time or identifiable vertical coordinate are
-rejected, rather than assigned an artificial height.
-
-Instance selection, parameter selection and custom dimension selection follow
-the existing endpoints. Omitted `datetime` follows position's configured default;
-cube currently differs by explicitly requesting all times. Multiple selected
-times repeat the path at each time. Each parameter and custom dimension selection
-has its own coverage, as in the existing converters. Missing values are `null`.
-
-Trajectory makes one metadata request and one native `GetTrajectory` data request
-for all parameters. Native reads combine contiguous selected cells into row runs
-and reuse each source file's open handle within the request. The data request is
-limited to the file store's capacity (currently 500 files), 100,000 path samples,
-and 10 million sample/dimension combinations per layer.
-
-The cube extensions `resolution_x` and `resolution_y` do not apply to trajectory:
-there is no output raster to resize. Passing them returns HTTP 400. Supporting a
-coarser path selection would require a separate sampling policy.
-
-Trajectory is advertised for collections with at least one parameter having time
-and an identifiable vertical coordinate. The native reader checks grid support
-when a request is executed. Unsupported grids or request limits return HTTP 422;
-execution failures or malformed native responses return HTTP 500. Invalid
-endpoint options remain HTTP 400, and an empty path result is HTTP 404.
+Only `EPSG:4326` and CoverageJSON are supported. `resolution_x` and `resolution_y`
+are rejected; rendering stride is ignored. Requests are limited to 100,000 vertices,
+100,000 path samples, 10 million sample/dimension combinations per layer, and the
+file store's open-file capacity. Failed trajectory data calls return HTTP 400,
+following the existing EDR failed-call response.

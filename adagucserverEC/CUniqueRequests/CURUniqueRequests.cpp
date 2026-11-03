@@ -113,7 +113,7 @@ void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result
 }
 
 void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
-                     CXMLParser::XMLElement *gfiStructure, const std::vector<int> &dimOrdering, const trajectory::Point *sample = nullptr, bool includeHiddenDimensions = false) {
+                     CXMLParser::XMLElement *gfiStructure, const std::vector<int> &dimOrdering, const TrajectoryPoint *sample = nullptr) {
 
   size_t numberOfDims = dataSource->requiredDims.size();
 
@@ -128,25 +128,24 @@ void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDr
   layerStructure.add(CXMLParser::XMLElement("standard_name", standardName));
   layerStructure.add(CXMLParser::XMLElement("units", dObjgetUnits(*dataObject)));
 
-  CImageDataWriter::ProjCacheInfo projCacheInfo{};
-  if (sample == nullptr) {
-    auto ckey = CT::printf("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
-    projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);
+  std::string coord;
+  if (sample != nullptr) {
+    coord = CT::printf("%.15g,%.15g", sample->first, sample->second);
   } else {
-    projCacheInfo.lonX = sample->first;
-    projCacheInfo.lonY = sample->second;
+    auto ckey = CT::printf("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
+    const auto projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);
+    coord = CT::printf("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY);
   }
   CXMLParser::XMLElement point("point");
   point.add(CXMLParser::XMLElement("SRS", "EPSG:4326"));
-  auto coord = sample == nullptr ? CT::printf("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY) : CT::printf("%.15g,%.15g", projCacheInfo.lonX, projCacheInfo.lonY);
   point.add(CXMLParser::XMLElement("coords", coord));
   layerStructure.add(point);
 
-  // Hidden coordinates are needed by Section output, independently of point coordinates.
+  // Sections need the actual hidden height in native JSON; Python omits hidden custom properties.
   std::vector<int> dimIndicesToSkip;
   for (size_t i = 0; i < numberOfDims; i++) {
     COGCDims &ogcDim = dataSource->requiredDims[dimOrdering[i]];
-    if (ogcDim.hidden && !includeHiddenDimensions) {
+    if (ogcDim.hidden && !dataSource->srvParams->isTrajectory) {
       dimIndicesToSkip.push_back(i);
     }
   }
@@ -217,32 +216,24 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     CDBDebug("===================== iterating data objects ==================");
   }
   const bool isTrajectory = dataSource->srvParams->isTrajectory;
-  trajectory::Sampling sampling;
-  trajectory::Grid samplingGrid;
-  CImageDataWriter::ProjCacheInfo projCacheInfo{};
+  TrajectorySampling sampling;
+  bool outsideGrid = false;
   if (isTrajectory) {
-    sampling = trajectory::sampleGrid(dataSource, imageWarper);
-    samplingGrid = trajectory::grid(dataSource);
+    sampling = sampleTrajectoryGrid(dataSource, imageWarper);
     if (sampling.samples.empty()) return;
-    if (sampling.samples.size() > size_t(10000000) / std::max(1, dataSource->getNumTimeSteps()))
-      throw trajectory::UnsupportedRequest("Trajectory selects too many values");
-    projCacheInfo.isOutsideBBOX = false;
   } else {
     auto ckey = CT::printf("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
-    projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);
+    const auto projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);
+    outsideGrid = projCacheInfo.isOutsideBBOX;
     sampling.runs.push_back({projCacheInfo.imx, projCacheInfo.imy, 1});
   }
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
     const auto dataObject = dataSource->getDataObject(dataObjectNr);
-    std::map<trajectory::Cell, std::vector<CURResult>> spatialResults;
+    std::map<TrajectoryCell, std::vector<CURResult>> spatialResults;
     std::string variableName = dataObject->cdfVariable->name;
     for (const auto &[dimName, fileInfo]: fileInfoMap) {
-      if (projCacheInfo.isOutsideBBOX == false) {
-        if (isTrajectory) {
-          dataSource->setTimeStep(fileInfo.step);
-          if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) throw std::runtime_error("Could not read trajectory grid");
-          if (!(trajectory::grid(dataSource) == samplingGrid)) throw trajectory::UnsupportedRequest("Trajectory requires a consistent spatial grid across source files");
-        }
+      if (!outsideGrid) {
+        if (isTrajectory) prepareTrajectoryFile(reader, dataSource, fileInfo.representativeStep, sampling);
         CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dimName.c_str());
 
         if (enableLogUnique) {
@@ -262,13 +253,15 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
         std::vector<size_t> start(numberOfDims), count(numberOfDims);
         std::vector<ptrdiff_t> stride(numberOfDims);
 
+        // Position has one cell run; trajectory adds unique contiguous row runs.
         for (const auto &run: sampling.runs) {
-          for (auto request: fileInfo.requests) {
+          for (const auto &dimensionRequest: fileInfo.requests) {
 
             if (enableLogUnique) {
               CDBDebug("Reading file %s  for variable %s", dimName.c_str(), variable->name.c_str());
             }
 
+            // readData() otherwise reuses the previous array buffer, even for a different slice.
             variable->freeData();
 
             for (size_t j = 0; j < numberOfDims; j++) {
@@ -288,7 +281,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
             start[(size_t)dataSource->dimYIndex] = run.y;
             count[(size_t)dataSource->dimXIndex] = run.count;
 
-            for (const auto &request: request) {
+            for (const auto &request: dimensionRequest) {
               int netcdfDimIndex = -1;
               CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request.name);
               if (dtype != CDataReader::dtype_reference_time) {
@@ -356,119 +349,117 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                 CDBDebug("Orig Data value %lu is \t %f", j, ((double *)variable->data)[j]);
               }
             }
-            if (status == 0) {
-              if (isTrajectory) dataObject->dfNodataValue = originalNodata;
-              /**
-               * DataPostProc: Here our datapostprocessor comes into action!
-               */
-              for (const auto &proc: dataSource->cfgLayer->DataPostProc) {
-                // Algorithm ax+b:
-                if (proc.attr.algorithm == ("ax+b")) {
-                  auto dfadd_offset = atof(proc.attr.b.c_str());
-                  auto dfscale_factor = atof(proc.attr.a.c_str());
-                  double *_data = (double *)variable->data;
-                  for (size_t j = 0; j < variable->getSize(); j++) {
-                    _data[j] = _data[j] * dfscale_factor + dfadd_offset;
-                  }
-                  // Convert the nodata type
-                  dataSource->getDataObject(dataObjectNr)->dfNodataValue = dataSource->getDataObject(dataObjectNr)->dfNodataValue * dfscale_factor + dfadd_offset;
-                }
-                // Apply units:
-                if (proc.attr.units.empty() == false) {
-                  dataSource->getDataObject(dataObjectNr)->overruledUnits = proc.attr.units;
-                }
-              }
-              if (readDataAsCDFDouble) {
-                getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
-              }
-              /* End of data postproc */
-              if (enableLogUnique) {
-                CDBDebug("Read %lu elements", variable->getSize());
-
+            if (isTrajectory) dataObject->dfNodataValue = originalNodata;
+            /**
+             * DataPostProc: Here our datapostprocessor comes into action!
+             */
+            for (const auto &proc: dataSource->cfgLayer->DataPostProc) {
+              // Algorithm ax+b:
+              if (proc.attr.algorithm == ("ax+b")) {
+                auto dfadd_offset = atof(proc.attr.b.c_str());
+                auto dfscale_factor = atof(proc.attr.a.c_str());
+                double *_data = (double *)variable->data;
                 for (size_t j = 0; j < variable->getSize(); j++) {
-                  CDBDebug("New Data value %lu is \t %f", j, ((float *)variable->data)[j]);
+                  _data[j] = _data[j] * dfscale_factor + dfadd_offset;
                 }
+                // Convert the nodata type
+                dataSource->getDataObject(dataObjectNr)->dfNodataValue = dataSource->getDataObject(dataObjectNr)->dfNodataValue * dfscale_factor + dfadd_offset;
               }
-              try {
-                std::vector<int> multiplies(variable->dimensionlinks.size());
-                for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
-                  int m = 1;
+              // Apply units:
+              if (proc.attr.units.empty() == false) {
+                dataSource->getDataObject(dataObjectNr)->overruledUnits = proc.attr.units;
+              }
+            }
+            if (readDataAsCDFDouble) {
+              getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
+            }
+            /* End of data postproc */
+            if (enableLogUnique) {
+              CDBDebug("Read %lu elements", variable->getSize());
 
-                  for (size_t j = 0; j < variable->dimensionlinks.size() - (d + 1); j += 1) {
-                    int index = variable->dimensionlinks.size() - 1 - j;
-                    m *= count[index];
-                  }
-                  multiplies[d] = m;
+              for (size_t j = 0; j < variable->getSize(); j++) {
+                CDBDebug("New Data value %lu is \t %f", j, ((float *)variable->data)[j]);
+              }
+            }
+            try {
+              std::vector<int> multiplies(variable->dimensionlinks.size());
+              for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
+                int m = 1;
+
+                for (size_t j = 0; j < variable->dimensionlinks.size() - (d + 1); j += 1) {
+                  int index = variable->dimensionlinks.size() - 1 - j;
+                  m *= count[index];
                 }
-                // Assign keys
-                for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
-                  CURResult currentResultForIndex;
-                  // currentResultForIndex.parent = this;
-                  currentResultForIndex.numDims = numberOfDataSourceDims;
-                  currentResultForIndex.dimensionKeys.resize(dataSource->requiredDims.size());
+                multiplies[d] = m;
+              }
+              // Assign keys
+              for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
+                CURResult currentResultForIndex;
+                // currentResultForIndex.parent = this;
+                currentResultForIndex.numDims = numberOfDataSourceDims;
+                currentResultForIndex.dimensionKeys.resize(dataSource->requiredDims.size());
 
-                  // Fill in the dimension keys
-                  for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
-                    std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex].netCDFDimName;
-                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = isTrajectory ? dataSource->getDimensionValue(dataSourceDimIndex) : dataSource->requiredDims[dataSourceDimIndex].value;
-                    auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind);
-                    if (dimVariable != nullptr) {
-                      auto isTime = dataSource->requiredDims[dataSourceDimIndex].isATimeDimension;
-                      currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
-                      currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(dimVariable->getType());
-                    }
-
-                    // Spatial dimensions need not be the final two NetCDF dimensions.
-                    int variableDimIndex = -1;
-                    for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
-                      if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
-                        variableDimIndex = d;
-                      }
-                    }
-                    if (variableDimIndex != -1) {
-
-                      int requestDimIndex = -1;
-                      for (size_t i = 0; i < request.size(); i++) {
-                        if (request[i].name == requestDimNameToFind) {
-                          requestDimIndex = i;
-                        }
-                      }
-                      if (requestDimIndex == -1) {
-                        CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
-                        throw(__LINE__);
-                      }
-                      auto values = request[requestDimIndex].values;
-                      size_t numValues = values.size();
-                      size_t multiplyIndex = multiplies[variableDimIndex];
-                      currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplyIndex) % numValues];
-                    }
+                // Fill in the dimension keys
+                for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
+                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex].netCDFDimName;
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = isTrajectory ? dataSource->getDimensionValue(dataSourceDimIndex) : dataSource->requiredDims[dataSourceDimIndex].value;
+                  auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind);
+                  if (dimVariable != nullptr) {
+                    auto isTime = dataSource->requiredDims[dataSourceDimIndex].isATimeDimension;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(dimVariable->getType());
                   }
 
-                  double pixelValueAtIndex = CImageDataWriter::convertValue(variable->getType(), variable->data, indexInVariable);
-                  std::string pixelValueAsString = "nodata";
-                  if ((pixelValueAtIndex != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixelValueAtIndex == pixelValueAtIndex) || dataObject->hasNodataValue == false) {
-                    if (dataObject->hasStatusFlag) {
-                      std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, pixelValueAtIndex);
-                      pixelValueAsString = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixelValueAtIndex);
-                    } else {
-                      pixelValueAsString = CT::printf("%f", pixelValueAtIndex);
+                  // Spatial dimensions need not be the final two NetCDF dimensions.
+                  int variableDimIndex = -1;
+                  for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
+                    if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
+                      variableDimIndex = d;
                     }
                   }
+                  if (variableDimIndex != -1) {
 
-                  // Set the value
-                  currentResultForIndex.value = pixelValueAsString;
-                  currentResultForIndex.dimOrdering = &dimOrdering;
-                  if (isTrajectory) {
-                    const int x = run.x + (indexInVariable / multiplies[dataSource->dimXIndex]) % run.count;
-                    spatialResults[{x, run.y}].push_back(std::move(currentResultForIndex));
+                    int requestDimIndex = -1;
+                    for (size_t i = 0; i < dimensionRequest.size(); i++) {
+                      if (dimensionRequest[i].name == requestDimNameToFind) {
+                        requestDimIndex = i;
+                      }
+                    }
+                    if (requestDimIndex == -1) {
+                      CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
+                      throw(__LINE__);
+                    }
+                    auto values = dimensionRequest[requestDimIndex].values;
+                    size_t numValues = values.size();
+                    size_t multiplyIndex = multiplies[variableDimIndex];
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplyIndex) % numValues];
+                  }
+                }
+
+                double pixelValueAtIndex = CImageDataWriter::convertValue(variable->getType(), variable->data, indexInVariable);
+                std::string pixelValueAsString = "nodata";
+                if ((pixelValueAtIndex != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixelValueAtIndex == pixelValueAtIndex) || dataObject->hasNodataValue == false) {
+                  if (dataObject->hasStatusFlag) {
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, pixelValueAtIndex);
+                    pixelValueAsString = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixelValueAtIndex);
                   } else {
-                    results.push_back(std::move(currentResultForIndex));
+                    pixelValueAsString = CT::printf("%f", pixelValueAtIndex);
                   }
                 }
-              } catch (int e) {
-                CDBError("Error in expandData at line %d", e);
-                throw(__LINE__);
+
+                // Set the value
+                currentResultForIndex.value = pixelValueAsString;
+                currentResultForIndex.dimOrdering = &dimOrdering;
+                if (isTrajectory) {
+                  const int x = run.x + (indexInVariable / multiplies[dataSource->dimXIndex]) % run.count;
+                  spatialResults[{x, run.y}].push_back(std::move(currentResultForIndex));
+                } else {
+                  results.push_back(std::move(currentResultForIndex));
+                }
               }
+            } catch (int e) {
+              CDBError("Error in expandData at line %d", e);
+              throw(__LINE__);
             }
           }
         }
@@ -481,8 +472,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
         CDBDebug("dataObjectNr: %lu", dataObjectNr);
       }
       if (isTrajectory) {
-        for (const auto &sample: sampling.samples)
-          createStructure(spatialResults.at(sample.cell), dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure, dimOrdering, &sample.lonlat, true);
+        for (const auto &sample: sampling.samples) createStructure(spatialResults.at(sample.cell), dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure, dimOrdering, &sample.lonlat);
       } else {
         createStructure(results, dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure, dimOrdering);
       }

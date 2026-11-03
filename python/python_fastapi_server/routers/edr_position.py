@@ -8,16 +8,16 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
+import json
 from typing import Union
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import APIRouter, Query, Request
-from geomet import wkt
 from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .edr_covjson import covjson_from_resp
-from .utils.edr_exception import EdrException, exc_invalid_point, native_json_response
+from .utils.edr_exception import EdrException
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -28,6 +28,7 @@ from .utils.edr_utils import (
     get_vertical,
     instance_to_iso,
     native_query,
+    parse_coordinates,
     propagate_data_headers,
 )
 
@@ -123,28 +124,19 @@ async def handle_coll_inst_position(
 
     _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
 
-    try:
-        latlons = wkt.loads(coords)
-    except StopIteration as exc:
-        raise exc_invalid_point(coords) from exc
-
-    # TODO: for now only support POINT and not MULTIPOINT
-    if len(latlons.get("coordinates", [])) != 2:
-        raise exc_invalid_point(coords)
-
-    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+    point = parse_coordinates(coords, "Point")[0]
 
     resp, headers = await get_point_value(
         dataset_name,
         instance,
-        [coord["lon"], coord["lat"]],
+        point,
         parameter_names,
         datetime_par,
         vertical_dim,
         custom_dims,
     )
     if resp:
-        dat = native_json_response(0, resp, "Position")
+        dat = json.loads(resp)
         propagate_data_headers(response, headers)
         return covjson_from_resp(dat, metadata[collection_name], collection_name)
 
@@ -182,4 +174,4 @@ async def get_point_value(
     status, response, headers = await call_adaguc(url=urlrequest)
     if status == 0:
         return response, headers
-    native_json_response(status, response, "Position")
+    return None, None
