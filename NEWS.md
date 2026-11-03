@@ -1,6 +1,7 @@
 **Version 9.2.1**
 
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
+- EDR position queries on layers that return several variables (for example `convert_uv_components`, which returns speed, direction and the wind components) now label each coverage with its own parameter id (`<layer>.<variable>`), unit and observed property. Previously all coverages used the layer name and the unit of the first variable, so wind direction was reported in `kts`. Layers that return a single variable are unchanged.
 
 **Version 9.2.0 - 2026-10-28**
 

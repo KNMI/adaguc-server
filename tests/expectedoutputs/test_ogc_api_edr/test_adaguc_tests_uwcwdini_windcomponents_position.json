@@ -56,11 +56,11 @@
         "custom:reference_time": "2024-09-05T00:00:00Z"
       },
       "parameters": {
-        "wind-hagl": {
+        "wind-hagl.speed_component": {
           "type": "Parameter",
-          "id": "wind-hagl",
+          "id": "wind-hagl.speed_component",
           "label": {
-            "en:": "Wind 10m flags"
+            "en:": "Wind 10m flags (speed_component)"
           },
           "observedProperty": {
             "id": "https://vocab.nerc.ac.uk/standard_name/wind_speed",
@@ -77,7 +77,7 @@
         }
       },
       "ranges": {
-        "wind-hagl": {
+        "wind-hagl.speed_component": {
           "type": "NdArray",
           "dataType": "float",
           "axisNames": [
@@ -154,28 +154,28 @@
         "custom:reference_time": "2024-09-05T00:00:00Z"
       },
       "parameters": {
-        "wind-hagl": {
+        "wind-hagl.direction_component": {
           "type": "Parameter",
-          "id": "wind-hagl",
+          "id": "wind-hagl.direction_component",
           "label": {
-            "en:": "Wind 10m flags"
+            "en:": "Wind 10m flags (direction_component)"
           },
           "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/wind_speed",
+            "id": "https://vocab.nerc.ac.uk/standard_name/wind_direction",
             "label": {
-              "en": "Wind speed"
+              "en": "Wind direction"
             }
           },
           "unit": {
             "symbol": {
-              "value": "kts",
+              "value": "degrees",
               "type": "http://www.opengis.net/def/uom/UCUM"
             }
           }
         }
       },
       "ranges": {
-        "wind-hagl": {
+        "wind-hagl.direction_component": {
           "type": "NdArray",
           "dataType": "float",
           "axisNames": [
@@ -252,16 +252,16 @@
         "custom:reference_time": "2024-09-05T00:00:00Z"
       },
       "parameters": {
-        "wind-hagl": {
+        "wind-hagl.eastward_component": {
           "type": "Parameter",
-          "id": "wind-hagl",
+          "id": "wind-hagl.eastward_component",
           "label": {
-            "en:": "Wind 10m flags"
+            "en:": "Wind 10m flags (eastward_component)"
           },
           "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/wind_speed",
+            "id": "https://vocab.nerc.ac.uk/standard_name/eastward_wind",
             "label": {
-              "en": "Wind speed"
+              "en": "Eastward wind"
             }
           },
           "unit": {
@@ -273,7 +273,7 @@
         }
       },
       "ranges": {
-        "wind-hagl": {
+        "wind-hagl.eastward_component": {
           "type": "NdArray",
           "dataType": "float",
           "axisNames": [
@@ -350,16 +350,16 @@
         "custom:reference_time": "2024-09-05T00:00:00Z"
       },
       "parameters": {
-        "wind-hagl": {
+        "wind-hagl.northward_component": {
           "type": "Parameter",
-          "id": "wind-hagl",
+          "id": "wind-hagl.northward_component",
           "label": {
-            "en:": "Wind 10m flags"
+            "en:": "Wind 10m flags (northward_component)"
           },
           "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/wind_speed",
+            "id": "https://vocab.nerc.ac.uk/standard_name/northward_wind",
             "label": {
-              "en": "Wind speed"
+              "en": "Northward wind"
             }
           },
           "unit": {
@@ -371,7 +371,7 @@
         }
       },
       "ranges": {
-        "wind-hagl": {
+        "wind-hagl.northward_component": {
           "type": "NdArray",
           "dataType": "float",
           "axisNames": [
@@ -448,16 +448,16 @@
         "custom:reference_time": "2024-09-05T00:00:00Z"
       },
       "parameters": {
-        "wind-hagl": {
+        "wind-hagl.x-wind-hagl": {
           "type": "Parameter",
-          "id": "wind-hagl",
+          "id": "wind-hagl.x-wind-hagl",
           "label": {
-            "en:": "Wind 10m flags"
+            "en:": "Wind 10m flags (x-wind-hagl)"
           },
           "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/wind_speed",
+            "id": "https://vocab.nerc.ac.uk/standard_name/x_wind",
             "label": {
-              "en": "Wind speed"
+              "en": "X wind"
             }
           },
           "unit": {
@@ -469,7 +469,7 @@
         }
       },
       "ranges": {
-        "wind-hagl": {
+        "wind-hagl.x-wind-hagl": {
           "type": "NdArray",
           "dataType": "float",
           "axisNames": [
@@ -546,16 +546,16 @@
         "custom:reference_time": "2024-09-05T00:00:00Z"
       },
       "parameters": {
-        "wind-hagl": {
+        "wind-hagl.y-wind-hagl": {
           "type": "Parameter",
-          "id": "wind-hagl",
+          "id": "wind-hagl.y-wind-hagl",
           "label": {
-            "en:": "Wind 10m flags"
+            "en:": "Wind 10m flags (y-wind-hagl)"
           },
           "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/wind_speed",
+            "id": "https://vocab.nerc.ac.uk/standard_name/y_wind",
             "label": {
-              "en": "Wind speed"
+              "en": "Y wind"
             }
           },
           "unit": {
@@ -567,7 +567,7 @@
         }
       },
       "ranges": {
-        "wind-hagl": {
+        "wind-hagl.y-wind-hagl": {
           "type": "NdArray",
           "dataType": "float",
           "axisNames": [
