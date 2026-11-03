@@ -258,11 +258,12 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   bool textSkip = false;
 
   int drawTextAtEveryNPixels = 60 * int(scaling);
-  int startAtStep = 0; // drawTextAtEveryNPixels / 2;
   int spaceForTextNr = 5 * int(scaling) * (contourDefinition.fontSize / 8);
 
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
   int numLineSegments = (int)lineSegments.size();
+  // First label halfway the label interval, or halfway a shorter line, so labels stay away from where a line starts and ends.
+  int startAtStep = std::min(drawTextAtEveryNPixels / 2, std::max(0, (numLineSegments - spaceForTextNr) / 2));
 
   // textLocations is shared across contour definitions: gaps around any label, not just this one's.
   bool inTextGap = false;
@@ -282,8 +283,9 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   if (doDrawText && numLineSegments > 20) {
     for (int j = 0; j < numLineSegments; j++) {
       auto &lineSegment = lineSegments[j];
-      int matchModulo = j % drawTextAtEveryNPixels;
-      bool startText = matchModulo == startAtStep;
+      // Steps since the last label position; labels and their gaps both count from startAtStep.
+      int matchModulo = j < startAtStep ? -1 : (j - startAtStep) % drawTextAtEveryNPixels;
+      bool startText = matchModulo == 0;
       if (startText && j + spaceForTextNr < numLineSegments) {
         if (textLocations.isTooClose(lineSegment.x, lineSegment.y) == false) {
           textSkip = false;
@@ -299,8 +301,10 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
         } else {
           textSkip = true;
         }
+      } else if (startText) {
+        textSkip = true; // No room left for the label, so no gap for it either.
       }
-      bool ownTextGap = matchModulo <= spaceForTextNr && !textSkip;
+      bool ownTextGap = matchModulo >= 0 && matchModulo <= spaceForTextNr && !textSkip;
       drawOrGap(lineSegment, ownTextGap || textLocations.isTooClose(lineSegment.x, lineSegment.y));
     }
 
