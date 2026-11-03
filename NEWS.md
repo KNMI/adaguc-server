@@ -1,6 +1,7 @@
 **Version 9.2.1**
 
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
+- Fixed wind direction in GetFeatureInfo and EDR point queries for grid-relative wind (`uvcomponents`). The bounding box of the queried cell had X and Y swapped, so the rotation to true north was computed about two cells too far east. Directions and eastward/northward components can change by several degrees on coarse grids; speed is unchanged.
 
 **Version 9.2.0 - 2026-10-28**
 
