@@ -318,11 +318,9 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     polygonIndexVar->dimensionlinks.push_back(elevationDim);
   }
   if (refTimeDim != NULL) {
-    CDBDebug("Adding reftime dim");
     polygonIndexVar->dimensionlinks.push_back(refTimeDim);
   }
   if (timeDim != NULL) {
-    CDBDebug("Adding time dim");
     polygonIndexVar->dimensionlinks.push_back(timeDim);
   }
   polygonIndexVar->dimensionlinks.push_back(dimY);
@@ -363,6 +361,9 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     if (elevationDim != NULL) {
       featureIdVar->dimensionlinks.push_back(elevationDim);
     }
+    if (refTimeDim != NULL) {
+      featureIdVar->dimensionlinks.push_back(refTimeDim);
+    }
     if (timeDim != NULL) {
       featureIdVar->dimensionlinks.push_back(timeDim);
     }
@@ -388,6 +389,66 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   }
 }
 
+/**
+ * Adds a size-1 time-like dimension and its variable to the cdfObject.
+ * The value is read from the "value" field of the GeoJSON dimension object and can be a date string, a double or an integer (seconds since 1970-1-1).
+ */
+static void addTimeDimension(CDFObject *cdfObject, json_value &dim, const char *dimName, const char *standardName) {
+  std::string timeVal;
+  double dTimeVal = -9999;
+  int iTimeVal = -9999;
+  if (dim.type == json_object) {
+    for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
+      json_object_entry fldObject = dim.u.object.values[fldCnt];
+      std::string fldName(fldObject.name);
+      json_value fldValue = *fldObject.value;
+      if (fldName != "value") {
+        continue;
+      }
+      if (fldValue.type == json_string) {
+        timeVal = fldValue.u.string.ptr;
+      } else if (fldValue.type == json_double) {
+        dTimeVal = fldValue.u.dbl;
+      } else if (fldValue.type == json_integer) {
+        iTimeVal = fldValue.u.integer;
+      }
+    }
+  }
+
+  CDF::Variable timeVarHelper;
+  timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
+  CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
+  if (timeHelper == nullptr) {
+    CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
+    throw __LINE__;
+  }
+  double timeOffset;
+  if (timeVal.length() > 0) {
+    timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
+  } else if (dTimeVal > 0) {
+    timeOffset = dTimeVal;
+  } else if (iTimeVal > 0) {
+    timeOffset = iTimeVal;
+  } else {
+    timeOffset = 0.0;
+    CDBDebug("CConvertGeoJSON::getDimensions: WARNING: %s offset set to 0.0", dimName);
+  }
+  CDF::Dimension *timeDim = new CDF::Dimension();
+  timeDim->name = dimName;
+  timeDim->setSize(1);
+  cdfObject->addDimension(timeDim);
+  CDF::Variable *timeVar = new CDF::Variable();
+  timeVar->setType(CDF_DOUBLE);
+  timeVar->name = dimName;
+  timeVar->isDimension = true;
+  timeVar->setAttributeText("units", "seconds since 1970-1-1");
+  timeVar->setAttributeText("standard_name", standardName);
+  timeVar->dimensionlinks.push_back(timeDim);
+  cdfObject->addVariable(timeVar);
+  timeVar->allocateData(timeDim->length);
+  ((double *)timeVar->data)[0] = timeOffset;
+}
+
 void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool) {
   if (json.type == json_object) {
     std::string type;
@@ -399,16 +460,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
       if (CCONVERTGEOJSON_DEBUG) {
         CDBDebug("type: %s\n", type.c_str());
       }
-      std::string timeVal;
-      double dTimeVal = -9999;
-      int iTimeVal = -9999;
-      std::string timeUnits;
-
-      std::string refTimeVal;
-      double drefTimeVal = -9999;
-      int irefTimeVal = -9999;
-      std::string refTimeUnits;
-
       if (type == "FeatureCollection") {
         json_value dimensions = json["dimensions"];
         if (dimensions.type == json_object) {
@@ -416,128 +467,13 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
             json_object_entry dimObject = dimensions.u.object.values[dimCnt];
             std::string dimName(dimObject.name);
             json_value dim = *dimObject.value;
-            CDBDebug("DIMNAME: %s", dimName.c_str());
+            if (CCONVERTGEOJSON_DEBUG) {
+              CDBDebug("Found dimension %s", dimName.c_str());
+            }
             if (dimName == "time") {
-
-              if (dim.type == json_object) {
-                for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
-                  json_object_entry fldObject = dim.u.object.values[fldCnt];
-                  std::string fldName(fldObject.name);
-                  json_value fldValue = *fldObject.value;
-                  if (fldValue.type == json_string) {
-                    std::string value(fldValue.u.string.ptr);
-                    if (fldName == "units") {
-                      timeUnits = value.c_str();
-                    } else if (fldName == "value") {
-                      timeVal = value.c_str();
-                    }
-                  }
-                  if (fldValue.type == json_double) {
-                    if (fldName == "value") {
-                      dTimeVal = fldValue.u.dbl;
-                    }
-                  }
-                  if (fldValue.type == json_integer) {
-                    if (fldName == "value") {
-                      iTimeVal = fldValue.u.integer;
-                    }
-                  }
-                }
-              }
-
-              CDF::Variable timeVarHelper;
-              timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
-              if (timeHelper == nullptr) {
-                CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
-                throw __LINE__;
-              }
-              double timeOffset;
-              if (timeVal.length() > 0) {
-                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
-              } else if (dTimeVal > 0) {
-                timeOffset = dTimeVal;
-              } else if (iTimeVal > 0) {
-                timeOffset = iTimeVal;
-              } else {
-                timeOffset = 0.0;
-                CDBDebug("CConvertGeoJSON::getDimensions: WARNING: timeOffset set to 0.0");
-              }
-              CDF::Dimension *timeDim = new CDF::Dimension();
-              timeDim->name = "time";
-              timeDim->setSize(1);
-              cdfObject->addDimension(timeDim);
-              CDF::Variable *timeVar = new CDF::Variable();
-              timeVar->setType(CDF_DOUBLE);
-              timeVar->name = ("time");
-              timeVar->isDimension = true;
-              timeVar->setAttributeText("units", "seconds since 1970-1-1");
-              timeVar->setAttributeText("standard_name", "time");
-              timeVar->dimensionlinks.push_back(timeDim);
-              cdfObject->addVariable(timeVar);
-              timeVar->setType(CDF_DOUBLE);
-              timeVar->allocateData(timeDim->length);
-              ((double *)timeVar->data)[0] = timeOffset;
+              addTimeDimension(cdfObject, dim, "time", "time");
             } else if (dimName == "reference_time") {
-              if (dim.type == json_object) {
-                for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
-                  json_object_entry fldObject = dim.u.object.values[fldCnt];
-                  std::string fldName(fldObject.name);
-                  json_value fldValue = *fldObject.value;
-                  if (fldValue.type == json_string) {
-                    std::string value(fldValue.u.string.ptr);
-                    if (fldName == "units") {
-                      refTimeUnits = value.c_str();
-                    } else if (fldName == "value") {
-                      refTimeVal = value.c_str();
-                    }
-                  }
-                  if (fldValue.type == json_double) {
-                    if (fldName == "value") {
-                      drefTimeVal = fldValue.u.dbl;
-                    }
-                  }
-                  if (fldValue.type == json_integer) {
-                    if (fldName == "value") {
-                      irefTimeVal = fldValue.u.integer;
-                    }
-                  }
-                }
-              }
-
-              CDF::Variable refTimeVarHelper;
-              refTimeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime *refTimeHelper = CTime::GetCTimeInstance(&refTimeVarHelper);
-              if (refTimeHelper == nullptr) {
-                CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
-                throw __LINE__;
-              }
-              double refTimeOffset;
-              if (refTimeVal.length() > 0) {
-                refTimeOffset = refTimeHelper->dateToOffset(refTimeHelper->freeDateStringToDate(refTimeVal.c_str()));
-              } else if (drefTimeVal > 0) {
-                refTimeOffset = drefTimeVal;
-              } else if (irefTimeVal > 0) {
-                refTimeOffset = irefTimeVal;
-              } else {
-                refTimeOffset = 0.0;
-                CDBDebug("CConvertGeoJSON::getDimensions: WARNING: timeOffset set to 0.0");
-              }
-              CDF::Dimension *refTimeDim = new CDF::Dimension();
-              refTimeDim->name = "reference_time";
-              refTimeDim->setSize(1);
-              cdfObject->addDimension(refTimeDim);
-              CDF::Variable *refTimeVar = new CDF::Variable();
-              refTimeVar->setType(CDF_DOUBLE);
-              refTimeVar->name = ("reference_time");
-              refTimeVar->isDimension = true;
-              refTimeVar->setAttributeText("units", "seconds since 1970-1-1");
-              refTimeVar->setAttributeText("standard_name", "forecast_reference_time");
-              refTimeVar->dimensionlinks.push_back(refTimeDim);
-              cdfObject->addVariable(refTimeVar);
-              refTimeVar->setType(CDF_DOUBLE);
-              refTimeVar->allocateData(refTimeDim->length);
-              ((double *)refTimeVar->data)[0] = refTimeOffset;
+              addTimeDimension(cdfObject, dim, "reference_time", "forecast_reference_time");
             } else {
               std::string dimUnits;
               std::string dimVal;
@@ -561,6 +497,11 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                       dDimVal = fldValue.u.dbl;
                     }
                   }
+                  if (fldValue.type == json_integer) {
+                    if (fldName == "value") {
+                      dDimVal = fldValue.u.integer;
+                    }
+                  }
                 }
               }
 
@@ -579,37 +520,6 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               dimVar->setType(CDF_DOUBLE);
               dimVar->allocateData(dim->length);
               ((double *)dimVar->data)[0] = dDimVal;
-
-#ifdef USETHIS
-              CDF::Variable timeVarHelper;
-              timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
-
-              double timeOffset;
-              if (timeVal.length() > 0) {
-                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
-              } else if (dTimeVal > 0) {
-                timeOffset = dTimeVal;
-              } else if (iTimeVal > 0) {
-                timeOffset = iTimeVal;
-              }
-              CDBDebug("timeOffset=%f", timeOffset);
-              CDF::Dimension *timeDim = new CDF::Dimension();
-              timeDim->name = "time";
-              timeDim->setSize(1);
-              cdfObject->addDimension(timeDim);
-              CDF::Variable *timeVar = new CDF::Variable();
-              timeVar->setType(CDF_DOUBLE);
-              timeVar->name = ("time");
-              timeVar->isDimension = true;
-              timeVar->setAttributeText("units", "seconds since 1970-1-1");
-              timeVar->setAttributeText("standard_name", "time");
-              timeVar->dimensionlinks.push_back(timeDim);
-              cdfObject->addVariable(timeVar);
-              timeVar->allocateData(timeDim->length);
-              timeVar->setType(CDF_DOUBLE);
-              ((double *)timeVar->data)[0] = timeOffset;
-#endif
             }
           }
         }
@@ -868,10 +778,11 @@ std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
   std::vector<CDF::Dimension *> dims;
 
   for (CDF::Dimension *dim: cdfObject->dimensions) {
-    CDataReader::DimensionType dtyp = CDataReader::dtype_normal;
+    CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
     switch (dtyp) {
     case CDataReader::dtype_reference_time:
     case CDataReader::dtype_time:
+    case CDataReader::dtype_elevation:
       dims.push_back(dim);
       break;
     default:
@@ -898,6 +809,7 @@ size_t getDimensionSize(CDFObject *cdfObject) {
     switch (dtyp) {
     case CDataReader::dtype_reference_time:
     case CDataReader::dtype_time:
+    case CDataReader::dtype_elevation:
       size = size * dim->length;
       break;
     default:
