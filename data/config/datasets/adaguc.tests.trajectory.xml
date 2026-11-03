@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <Style name="trajectory_striding">
+    <RenderMethod>nearest</RenderMethod>
+    <RenderSettings striding="2"/>
+  </Style>
+  <Layer type="database">
+    <Group collection="pressure"/>
+    <Name>temperature</Name>
+    <Title>Rotated pole temperature for trajectory tests</Title>
+    <Variable>air-temperature-pl</Variable>
+    <FilePath filter="^uwcw_ha43_dini_5p5km_air-temperature-pl_geoweb_nc_20240711T0.*_TEST_10x8\.nc$">{ADAGUC_PATH}/data/datasets/ha43_dini/</FilePath>
+    <Styles>auto</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min" type="time">time</Dimension>
+    <Dimension name="temp_at_pl" units="hPa" default="max" type="vertical">pressure_level_in_hpa</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="pressure"/>
+    <Name>temperature_strided</Name>
+    <Title>Trajectory ignores rendering stride</Title>
+    <Variable>air-temperature-pl</Variable>
+    <FilePath filter="^uwcw_ha43_dini_5p5km_air-temperature-pl_geoweb_nc_20240711T0.*_TEST_10x8\.nc$">{ADAGUC_PATH}/data/datasets/ha43_dini/</FilePath>
+    <Styles>trajectory_striding</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min" type="time">time</Dimension>
+    <Dimension name="temp_at_pl" units="hPa" default="max" type="vertical">pressure_level_in_hpa</Dimension>
+  </Layer>
+</Configuration>
