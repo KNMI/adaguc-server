@@ -369,7 +369,6 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
   double legendLowerRange = styleConfiguration->legendLowerRange;
   double legendUpperRange = styleConfiguration->legendUpperRange;
   bool hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
-  T nodataValue = (T)dfNodataValue;
   float legendLog = styleConfiguration->legendLog;
   float legendLogAsLog;
   if (legendLog > 0) {
@@ -414,14 +413,7 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
       for (int x = 0; x < drawImage->geoParams.width; x++) {
         T val = data[x + y * drawImage->geoParams.width];
         bool drawnPixel = false;
-        bool isNodata = false;
-        if (hasNodataValue) {
-          if (val == nodataValue) isNodata = true;
-        }
-        if (!(val == val)) isNodata = true;
-        if (!isNodata)
-          if (legendValueRange)
-            if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
+        const bool isNodata = isNodataValue(val, hasNodataValue, dfNodataValue, legendValueRange, legendLowerRange, legendUpperRange);
         if (!isNodata) {
           for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
             if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
@@ -450,14 +442,7 @@ template <class T> void CImgWarpNearestNeighbour::_plot(CImageWarper *, CDataSou
       for (int x = 0; x < drawImage->geoParams.width; x++) {
         T val = data[x + y * drawImage->geoParams.width];
 
-        bool isNodata = false;
-        if (hasNodataValue) {
-          if (val == nodataValue) isNodata = true;
-        }
-        if (!(val == val)) isNodata = true;
-        if (!isNodata)
-          if (legendValueRange)
-            if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
+        const bool isNodata = isNodataValue(val, hasNodataValue, dfNodataValue, legendValueRange, legendLowerRange, legendUpperRange);
         if (!isNodata) {
           if (legendLog != 0) {
             if (val > 0) {
