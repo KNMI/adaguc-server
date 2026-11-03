@@ -17,9 +17,11 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
+#include "CImageOperators/smoothRasterField.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
+#include <cmath>
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -632,4 +634,63 @@ TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
   drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesQuad, W, H, -9.4, -7.2, outOfRange, false);
   drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesTriangles, W, H, -9.4, -7.2, outOfRange, true);
   CHECK(writesQuad == writesTriangles);
+}
+
+// Smooths a width x height grid with radius r and returns the smoothed value of every cell.
+static std::vector<float> smoothGrid(std::vector<float> grid, int width, int height, int r, double nodataValue = -9999) {
+  GDWState state = {};
+  state.sourceGridWidth = width;
+  state.sourceGridHeight = height;
+  GDWDrawFunctionSettings settings{};
+  settings.smoothingFiter = r;
+  settings.hasNodataValue = true;
+  settings.dfNodataValue = nodataValue;
+  std::vector<float> result(grid.size());
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      result[x + y * width] = smoothingAtLocation<float>(x, y, grid.data(), state, settings);
+    }
+  }
+  return result;
+}
+
+TEST(smoothRasterField, averagesWindowClippedAtEdges) {
+  // 1 2 3 / 4 5 6 / 7 8 9 with radius 1: corners average 4 cells, edges 6 and the center 9.
+  std::vector<float> expected = {3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7};
+  CHECK(smoothGrid({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3, 1) == expected);
+}
+
+TEST(smoothRasterField, skipsNodataAndNaN) {
+  std::vector<float> expected = {1, 1, 3, 4, 4};
+  CHECK(smoothGrid({1, NAN, -9999, 3, 5}, 5, 1, 1) == expected);
+}
+
+TEST(smoothRasterField, nodataWhenWindowHasNoValues) {
+  std::vector<float> expected = {-9999, -9999, -9999, 7, 7};
+  CHECK(smoothGrid({-9999, -9999, -9999, -9999, 7}, 5, 1, 1) == expected);
+}
+
+TEST(smoothRasterField, radiusLargerThanGridAveragesEverything) {
+  std::vector<float> expected(9, 5);
+  CHECK(smoothGrid({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3, 40) == expected);
+}
+
+TEST(smoothRasterField, linearFieldUnchangedInInterior) {
+  // A symmetric window averages a linear field to its center value. Integer values keep every sum exact,
+  // so long rows (large prefix sums) must still give exactly the original value away from the edges.
+  const int width = 300, height = 200, r = 12;
+  std::vector<float> grid(width * height);
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      grid[x + y * width] = x + 1000 * y;
+    }
+  }
+  auto smoothed = smoothGrid(grid, width, height, r);
+  int differences = 0;
+  for (int y = r; y < height - r; y++) {
+    for (int x = r; x < width - r; x++) {
+      if (smoothed[x + y * width] != grid[x + y * width]) differences++;
+    }
+  }
+  CHECK(differences == 0);
 }
