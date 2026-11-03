@@ -666,8 +666,7 @@ void CDBAdapterPostgreSQL::addToLookupTable(const std::string &path, const std::
 }
 
 std::string CDBAdapterPostgreSQL::generateRandomTableName() {
-  std::string tableName;
-  tableName = CT::printf("t%s_%s", CTime::currentDateTime().c_str(), CT::randomString(20).c_str());
+  std::string tableName = CT::printf("t%s_%s", CTime::currentDateTime().c_str(), CT::randomString(20).c_str());
 
   tableName = CT::replace(tableName, ".", "");
   tableName = CT::replace(tableName, ":", "");
