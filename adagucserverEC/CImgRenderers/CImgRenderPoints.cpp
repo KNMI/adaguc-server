@@ -318,12 +318,12 @@ bool shouldDrawSymbol(CServerConfig::XMLE_SymbolInterval *symbolInterval, float 
   return false;
 }
 
-CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float value) {
+CColor getDrawPointColor(CDataSource *dataSource, float value) {
   if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals.size() > 0)) {
-    return getPixelColorForValue(drawImage, dataSource, value);
+    return getPixelColorForValue(dataSource, value);
   }
   int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
-  return drawImage->getColorForIndex(pointColorIndex);
+  return dataSource->getStyle()->getCColorFromLegendPaletteIndex(pointColorIndex);
 }
 
 void drawSymbolForPoint(CDrawImage *drawImage, std::unordered_map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
@@ -391,7 +391,7 @@ int calculateYForDataobject(CDataSource *dataSource, int station_y, float textRa
 }
 
 void renderSinglePoints(const std::vector<size_t> &thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
-  CColor defaultColor = CColor(0, 0, 0, 255);
+  CColor defaultColor = standardCColorBlack;
   bool drawRadiusAndValue = pointStyle.style == "radiusandvalue";
   bool drawZoomablePoint = pointStyle.style == "zoomablepoint";
 
@@ -479,13 +479,13 @@ void renderSinglePoints(const std::vector<size_t> &thinnedPointIndexList, CDataS
       bool drawText = pointStyle.textFormat.length() >= 2;
       if (!pointStyle.useTextColor) {
         // Only calculate color for 1st dataObject, rest gets defaultColor
-        pointStyle.textColor = dataObjectIndex == 0 ? getDrawPointColor(dataSource, drawImage, value) : defaultColor;
+        pointStyle.textColor = dataObjectIndex == 0 ? getDrawPointColor(dataSource, value) : defaultColor;
       }
       if (pointStyle.discRadius == 0) {
         drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
       } else { // Text and disc
         if (!pointStyle.useFillColor) {
-          pointStyle.fillColor = getDrawPointColor(dataSource, drawImage, value);
+          pointStyle.fillColor = getDrawPointColor(dataSource, value);
         }
         if (drawRadiusAndValue) {
           if (dataObjectIndex == 0) {
@@ -604,11 +604,11 @@ void renderSingleDiscs(const std::vector<size_t> &thinnedPointIndexList, CDataSo
       int x = pointValue->x;
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
       if (!pointStyle.useTextColor) {
-        pointStyle.textColor = getDrawPointColor(dataSource, drawImage, value);
+        pointStyle.textColor = getDrawPointColor(dataSource, value);
       }
 
       std::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
-      CColor col = pointStyle.useFillColor ? pointStyle.fillColor : getDrawPointColor(dataSource, drawImage, value);
+      CColor col = pointStyle.useFillColor ? pointStyle.fillColor : getDrawPointColor(dataSource, value);
       drawImage->setTextDisc(x, y, pointStyle.discRadius, text.c_str(), pointStyle.fontFile.c_str(), pointStyle.fontSize, pointStyle.textColor, col, pointStyle.lineColor);
     }
   }
@@ -703,7 +703,7 @@ int getPixelIndexForValue(CDataSource *dataSource, float val) {
   return 0;
 }
 
-CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val) {
+CColor getPixelColorForValue(CDataSource *dataSource, float val) {
   bool isNodata = false;
 
   CColor color;
@@ -724,5 +724,5 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   // If shade interval is set, we have to round the color value down to the lower value of the legend class
   float newValue = styleConfiguration->shadeInterval > 0 ? val = floor(val / styleConfiguration->shadeInterval) * styleConfiguration->shadeInterval : val;
   int pointColorIndex = getPixelIndexForValue(dataSource, newValue); // Use value of dataObject[0] for colour
-  return drawImage->getColorForIndex(pointColorIndex);
+  return styleConfiguration->getCColorFromLegendPaletteIndex(pointColorIndex);
 }

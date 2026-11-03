@@ -238,8 +238,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     adagucwcsdestgrid = CT::printf("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->geoParams.width, srvParam->geoParams.height, rx, ry, dfDstBBOX[0], dfDstBBOX[1],
                                    dfDstBBOX[2], dfDstBBOX[3], CT::trim(srvParam->geoParams.crs).c_str());
 
-    std::string newHistoryText;
-    newHistoryText = CT::printf("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
+    std::string newHistoryText = CT::printf("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
     destCDFObject->setAttributeText("history", newHistoryText.c_str());
 
     // Write dest grid attribute
@@ -273,8 +272,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     destCDFObject->removeAttribute("geospatial_lon_min");
     destCDFObject->removeAttribute("domain");
-    std::string software;
-    software = CT::printf("ADAGUC WCS Server version %s", ADAGUCSERVER_VERSION);
+    std::string software = CT::printf("ADAGUC WCS Server version %s", ADAGUCSERVER_VERSION);
     destCDFObject->setAttributeText("software", software.c_str());
     destCDFObject->removeAttribute("software_platform");
     destCDFObject->removeAttribute("time_coverage_end");
@@ -1079,8 +1077,7 @@ int CNetCDFDataWriter::end() {
     return 1;
   }
 
-  std::string humanReadableString;
-  humanReadableString = (srvParam->Format.c_str());
+  std::string humanReadableString = srvParam->Format;
   humanReadableString += "_";
   humanReadableString += dObjgetVariableName(*baseDataSource->getDataObject(0));
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {

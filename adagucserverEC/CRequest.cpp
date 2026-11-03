@@ -1679,7 +1679,6 @@ int CRequest::process_querystring() {
 
       CDrawImage drawImage;
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       drawImage.enableTransparency(true);
 
       // Set font location
@@ -1696,7 +1695,6 @@ int CRequest::process_querystring() {
         }
       }
       drawImage.createImage(300, 30);
-      drawImage.create685Palette();
       try {
         CCreateScaleBar::createScaleBar(&drawImage, srvParam->geoParams, 1);
       } catch (int e) {
@@ -2370,7 +2368,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
             CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
             if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
-              legendImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+              styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
             }
 
             status = imageDataWriter.createLegend(dataSources[d], &legendImage);
