@@ -2,6 +2,7 @@
 
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
 - Fixed wind direction in GetFeatureInfo and EDR point queries for grid-relative wind (`uvcomponents`). The bounding box of the queried cell had X and Y swapped, so the rotation to true north was computed about two cells too far east. Directions and eastward/northward components can change by several degrees on coarse grids; speed is unchanged.
+- Grid-relative wind (`uvcomponents`) is now rotated to true north using the grid-north direction at the grid point itself, where the value is defined and where barbs and vectors are drawn. Previously the rotation was evaluated at a cell corner and over a full-cell step. Barb, vector and direction output change by a few degrees on coarse grids; on fine grids the change is hardly visible.
 
 **Version 9.2.0 - 2026-10-28**
 

@@ -120,13 +120,13 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.x, -5.920456, 0.001);
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 56.432904, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, false);
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -174,13 +174,13 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.x, 1.15, 0.001);
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 1.45, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, false);
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -218,7 +218,7 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
   f8point gridCoordURtoLatLon = gridCoordUR;
   warper.reprojModelToLatLon(gridCoordURtoLatLon);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   return compGridRel;
 }
 

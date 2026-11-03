@@ -12,20 +12,33 @@
 
 bool verboseLog = false;
 
-f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8point gridCoordUR, CImageWarper *warper, bool gridRelative) {
+/**
+ * Rotates a grid-relative wind vector (u along the grid's x axis, v along its y axis) to eastward/northward components.
+ *
+ * The rotation angle is the angle between grid north (the grid's +y direction) and true north at gridPoint. Grid north is
+ * found by reprojecting gridPoint and a second point gridYStep further along the grid's y axis. The grid is assumed to be
+ * conformal (grid x perpendicular to grid y on the earth), so a single angle describes the whole transformation.
+ *
+ * @param speedVector The u/v components in grid space
+ * @param gridPoint Location in model (grid) coordinates where the angle is evaluated, normally the grid point of the value
+ * @param gridYStep Positive step along the grid's y axis in model coordinates, used to determine grid north. A small fraction of a cell.
+ * @param warper Warper initialised with the model projection
+ * @param gridRelative If false, the vector is already east/north and is returned unchanged
+ */
+f8component jacobianTransform(f8component speedVector, f8point gridPoint, double gridYStep, CImageWarper *warper, bool gridRelative) {
   if (gridRelative) {
-    f8point pnt0 = {.x = gridCoordLL.x, .y = gridCoordLL.y};
+    f8point pnt0 = gridPoint;
     warper->reprojModelToLatLon(pnt0);
     f8point pntRad0 = pnt0.rad();
-    f8point pntN = {.x = gridCoordLL.x, .y = gridCoordUR.y};
+    f8point pntN = {.x = gridPoint.x, .y = gridPoint.y + gridYStep};
     warper->reprojModelToLatLon(pntN);
     f8point pntRadN = pntN.rad();
 
-    // (lon_pntNorth, lat_pntNorth)
+    // pntN = gridPoint moved gridYStep along the grid's y axis (grid north)
     //     ^
-    //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
     //     |
-    // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
+    //     |
+    // pnt0 = gridPoint, where we have (u,v)
     // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
     // The vector towards north pole at this location will be (0,1,0)
     // The tangent plane at this location is XY wil a normal (0, 0, 1)
@@ -104,12 +117,14 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
   // Use Jacobians for rotating u and v
   // After calculations
   bool gridRelative = isGridRelative(dataSource);
+  // Step along the grid's y axis used to determine grid north: a small fraction of a cell, so the angle is that at the grid point itself.
+  const double gridYStep = 0.01 * fabs(dataSource->dfCellSizeY);
   for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
       size_t p = size_t(x - dPixelExtent[0]) + ((y - dPixelExtent[1]) * gridWidth);
-      f8point gridCoordLL = {.x = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3]};
-      f8point gridCoordUR = {.x = gridCoordLL.x + fabs(dataSource->dfCellSizeX), .y = gridCoordLL.y + fabs(dataSource->dfCellSizeY)};
-      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordLL, gridCoordUR, warper, gridRelative);
+      // Evaluate the rotation at the grid point (the cell centre), where the u/v value is defined and where barbs are drawn.
+      f8point gridPoint = {.x = dataSource->dfCellSizeX * (x + 0.5) + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * (y + 0.5) + dataSource->dfBBOX[3]};
+      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridPoint, gridYStep, warper, gridRelative);
       uValues[p] = newSpeed.u;
       vValues[p] = newSpeed.v;
     }
