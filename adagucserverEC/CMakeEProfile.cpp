@@ -421,8 +421,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
 int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject *cdfObject, const char *varName, CColor c, size_t NrOfDates, double startGraphTime, double startGraphRange,
                                                 double graphWidth, double graphHeight, int timeWidth) {
 
-  std::string newVarName;
-  newVarName = CT::printf("%s", varName);
+  std::string newVarName = CT::printf("%s", varName);
   CDF::Variable *plotHeightRetrievalVariable = cdfObject->getVariableNE(newVarName.c_str());
   if (plotHeightRetrievalVariable != NULL) {
     int status = plotHeightRetrievalVariable->readData(CDF_SHORT);

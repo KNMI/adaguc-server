@@ -433,8 +433,7 @@ int CGDALDataWriter::end() {
             CDBError("Exception code %d", e);
             throw e;
           }
-          std::string dimDef;
-          dimDef = CT::printf("{%zu,%d}", _dataSource->requiredDims[d].uniqueValues.size(), CDFNetCDFWriter::NCtypeConversion(cdf_type));
+          std::string dimDef = CT::printf("{%zu,%d}", _dataSource->requiredDims[d].uniqueValues.size(), CDFNetCDFWriter::NCtypeConversion(cdf_type));
           std::string key;
           try {
             key = CT::printf("NETCDF_DIM_%s_DEF", dimName.c_str());
@@ -599,8 +598,7 @@ int CGDALDataWriter::end() {
 }
 
 std::string CGDALDataWriter::generateGetCoverageFileName() {
-  std::string humanReadableString;
-  humanReadableString = (srvParam->Format.c_str());
+  std::string humanReadableString = srvParam->Format;
   humanReadableString += "_";
   humanReadableString += dObjgetVariableName(*_dataSource->getDataObject(0));
 
@@ -612,8 +610,7 @@ std::string CGDALDataWriter::generateGetCoverageFileName() {
   CT::replaceSelf(humanReadableString, ".", "_");
 
   std::string extension = ".bin";
-  std::string formatUpperCase;
-  formatUpperCase = CT::toUpperCase(srvParam->Format);
+  std::string formatUpperCase = CT::toUpperCase(srvParam->Format);
   if (formatUpperCase == "AAIGRID") {
     extension = ".asc";
   }
