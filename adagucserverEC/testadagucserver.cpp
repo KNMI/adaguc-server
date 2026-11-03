@@ -694,3 +694,44 @@ TEST(smoothRasterField, linearFieldUnchangedInInterior) {
   }
   CHECK(differences == 0);
 }
+
+TEST(CT, isSafeFloatFormat) {
+  for (const char *safe: {"", " ", "%f", "%2.2f", "%.1f", "%0.0f", "%+08.3e", "%g", "%G", "%a", "%.1f degC", "100%%", "%% %5.1f %%"}) {
+    CHECK(CT::isSafeFloatFormat(safe));
+  }
+  for (const char *unsafe: {"%s", "%p", "%n", "%d", "%x", "%c", "%*f", "%.*f", "%1$f", "%Lf", "%lf", "%f %f", "%123f", "%.123f", "%", "abc%"}) {
+    CHECK(!CT::isSafeFloatFormat(unsafe));
+  }
+}
+
+TEST(CT, formatFloatFallsBackForUnsafeFormats) {
+  CHECK(CT::formatFloat("%.1f", 1.25) == "1.2");
+  CHECK(CT::formatFloat("%s", 1.5) == "1.5");
+  CHECK(CT::formatFloat("%p %p", 2) == "2");
+}
+
+TEST(CStyleConfiguration, paletteLoopIsBoundedToPaletteIndices) {
+  // Indices far outside 0-239 used to loop over every index in between (billions of iterations)
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testHugeIndexRange";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette pFrom, pTo;
+  pFrom.attr.index = -2000000000;
+  pFrom.attr.red = 0;
+  pFrom.attr.green = 0;
+  pFrom.attr.blue = 0;
+  pFrom.attr.alpha = 255;
+  pTo.attr.index = 2000000000;
+  pTo.attr.red = 255;
+  pTo.attr.green = 255;
+  pTo.attr.blue = 255;
+  pTo.attr.alpha = 255;
+  legend.palette.push_back(pFrom);
+  legend.palette.push_back(pTo);
+
+  auto start = std::chrono::steady_clock::now();
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+  CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(1));
+  CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(120).a == 255);
+}

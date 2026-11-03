@@ -355,6 +355,11 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
      * Discrete blocks based on continous interval
      */
 
+    // A negative or tiny interval would never end the class loops below (float j += legendInterval)
+    if (!(legendInterval > 0) || (iMax - iMin) / legendInterval > 1000) {
+      CDBError("Invalid legendInterval %f for range %f - %f", legendInterval, iMin, iMax);
+      return 1;
+    }
     numClasses = int((iMax - iMin) / legendInterval);
 
     int classSizeY = ((legendHeight - 24) / (numClasses));
@@ -396,12 +401,12 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     std::string minText, maxText;
     for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
       // Look for the max width for the min value in this interval
-      minText = CT::printf(floatFormat.c_str(), j);
+      minText = CT::formatFloat(floatFormat, j);
       int widthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
       if (widthMin > maxWidthMin) maxWidthMin = widthMin;
 
       // Look for the max width for the max value in this interval
-      maxText = CT::printf(floatFormat.c_str(), j + legendInterval);
+      maxText = CT::formatFloat(floatFormat, j + legendInterval);
       int widthMax = legendImage->getTextWidth(maxText, fontLocation, fontSize, 0);
       if (widthMax > maxWidthMax) maxWidthMax = widthMax;
     }
@@ -431,8 +436,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         }
         // Prepare alignment
         std::string minText, maxText;
-        minText = CT::printf(floatFormat.c_str(), v);
-        maxText = CT::printf(floatFormat.c_str(), v + legendInterval);
+        minText = CT::formatFloat(floatFormat, v);
+        maxText = CT::formatFloat(floatFormat, v + legendInterval);
         int currentWidthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
         int currentWidthMax = legendImage->getTextWidth(maxText, fontLocation, fontSize, 0);
 

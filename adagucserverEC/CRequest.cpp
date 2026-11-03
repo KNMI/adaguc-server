@@ -896,8 +896,11 @@ int CRequest::process_querystring() {
     CGI = 1;
   }
 
-  queryString = CT::decodeURL(queryString);
+  // Split before decoding, so an encoded '&' (%26) inside a value (e.g. STYLESHEET xml) stays part of that value
   auto parameters = CT::split(queryString, "&");
+  for (auto &parameter: parameters) {
+    parameter = CT::decodeURL(parameter);
+  }
 
   if (CREQUEST_DEBUG) {
     CDBDebug("Parsing query string parameters");
@@ -941,6 +944,10 @@ int CRequest::process_querystring() {
         CDBError("ADAGUC Server: Style already defined");
         dErrorOccured = 1;
       }
+    }
+    // Stylesheet parameter, for now only stored; will carry encoded style xml
+    if (uriKeyUpperCase == "STYLESHEET") {
+      srvParam->styleSheet = uriValue;
     }
     if (!uriValue.empty()) {
       // BBOX Parameters
@@ -1298,6 +1305,24 @@ int CRequest::process_querystring() {
     CDBDebug("Finished parsing query string parameters");
   }
   StopWatch_Measure("query string processed");
+
+  if (!srvParam->styleSheet.empty()) {
+    const char *styleSheetEnable = getenv("ADAGUC_STYLESHEET_ENABLE");
+    if (styleSheetEnable == nullptr || std::string_view(styleSheetEnable) != "TRUE") {
+      CDBError("ADAGUC Server: STYLESHEET is not enabled on this server");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (srvParam->requestedLayerNames.size() > 1) {
+      // The posted style applies to every layer, so only one layer is allowed
+      CDBError("ADAGUC Server: STYLESHEET can only be used with one layer, got %zu", srvParam->requestedLayerNames.size());
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (srvParam->applyStyleSheet(srvParam->styleSheet) != 0) {
+      CDBError("ADAGUC Server: Invalid STYLESHEET");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    }
+  }
 
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");

@@ -81,13 +81,16 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     message = "\n".join(data)
     message_bytes = message.encode()
     if len(message_bytes) > MAX_FORK_REQUEST_BYTES:
-        return AdagucResponse(status_code=HTTP_STATUSCODE_400_BAD_REQUEST, process_output=None, process_error=b"")
+        process_error = f"Request too large: {len(message_bytes)} bytes, maximum is {MAX_FORK_REQUEST_BYTES}".encode()
+        return AdagucResponse(status_code=HTTP_STATUSCODE_400_BAD_REQUEST, process_output=None, process_error=process_error)
 
     reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
 
     try:
         writer.write(message_bytes)
         await writer.drain()
+        # Signals the end of the request, the fork server reads until this end of stream
+        writer.write_eof()
 
         process_output = await reader.read()
     finally:
@@ -182,7 +185,7 @@ class CGIRunner:
             if response.status_code == HTTP_STATUSCODE_500_TIMEOUT:
                 return HTTP_STATUSCODE_500_TIMEOUT, [], None, b"Adaguc server processs timed out"
             elif response.status_code == HTTP_STATUSCODE_400_BAD_REQUEST:
-                return HTTP_STATUSCODE_400_BAD_REQUEST, [], None, b"Adaguc server processs could not handle request"
+                return HTTP_STATUSCODE_400_BAD_REQUEST, [], None, response.process_error or b"Adaguc server processs could not handle request"
 
         process_output = response.process_output
         process_error = response.process_error

@@ -82,7 +82,7 @@ private:
 void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contourDefinition, int lineX, int lineY, int endX, int endY, float value, const char *fontLocation, float scaling) {
 
   /* Draw text */
-  std::string text = contourDefinition.textformatting.empty() ? CT::printf("%g", value) : CT::printf(contourDefinition.textformatting.c_str(), value);
+  std::string text = contourDefinition.textformatting.empty() ? CT::printf("%g", value) : CT::formatFloat(contourDefinition.textformatting, value);
   float fontSize = contourDefinition.fontSize * scaling;
   float textStrokeWidth = contourDefinition.textStrokeWidth * scaling;
   double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
@@ -263,7 +263,8 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   bool textSkip = false;
 
-  int drawTextAtEveryNPixels = int(contourDefinition.textDistance) * int(scaling);
+  // At least 1: it is used as a modulo below, so a textdistance of 0 would divide by zero.
+  int drawTextAtEveryNPixels = std::max(1, int(contourDefinition.textDistance) * int(scaling));
   int spaceForTextNr = 5 * int(scaling) * (contourDefinition.fontSize / 8);
 
   bool isBoldValue = contourDefinition.boldWidth > 0 &&

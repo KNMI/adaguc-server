@@ -95,6 +95,8 @@ public:
   std::string responceCrs;
   std::string Styles;
   std::string Style;
+  std::string styleSheet;           // STYLESHEET KVP value, decoded
+  int styleSheetStyleIndex = -1;    // Index in cfg->Style of the Style posted in STYLESHEET, used for the (single) layer regardless of STYLES
   std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
   std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter
@@ -168,6 +170,17 @@ public:
    * returns zero on success       *
    */
   int parseConfigFile(const std::string &pszConfigFile);
+
+  /**
+   * Adds the Style and Legend elements of a STYLESHEET to the configuration, for this request only.
+   * The posted Style (at most one) is used for the layer, regardless of its name and of STYLES; see styleSheetStyleIndex.
+   * A request with a STYLESHEET may only have one layer, CRequest::process_querystring enforces this.
+   * A posted Legend replaces the configured one with the same name, otherwise it is added with the provided name.
+   * The xml may be bare elements or wrapped in <Configuration>. It must pass the allowlist in isAllowedStyleSheet
+   * (utils/StyleSheetValidation.h); png files (SymbolInterval file, LegendGraphic value) must be in a symbol directory.
+   * returns zero on success
+   */
+  int applyStyleSheet(const std::string &styleSheetXml);
 
   /**
    * Returns cache control header

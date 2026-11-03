@@ -70,7 +70,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, const Ve
   if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
     if (!vectorStyle.drawDiscs) {
       int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
-      std::string textValue = CT::printf(vectorStyle.drawVectorTextFormat.c_str(), strength);
+      std::string textValue = CT::formatFloat(vectorStyle.drawVectorTextFormat, strength);
       drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textColor);
     }
   }
@@ -189,7 +189,7 @@ void renderVectorPoints(const std::vector<size_t> &thinnedPointIndexList, CImage
         // Draw a disc with the speed value in text and the dir. value as an arrow
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
-        textValue = CT::printf(vectorStyle.drawVectorTextFormat.c_str(), strength);
+        textValue = CT::formatFloat(vectorStyle.drawVectorTextFormat, strength);
         drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor,
                                vectorStyle.lineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
@@ -374,7 +374,7 @@ std::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float v
   if (dataSource->getDataObject(dataObjectIndex) != nullptr && dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
     return CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
   }
-  return CT::printf(drawPointTextFormat.c_str(), value);
+  return CT::formatFloat(drawPointTextFormat, value);
 }
 
 int calculateYForDataobject(CDataSource *dataSource, int station_y, float textRadius, int dataObjectIndex) {
