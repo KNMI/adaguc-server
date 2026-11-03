@@ -305,19 +305,13 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
-    drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-  }
-
   if (styleConfiguration != NULL) {
 
     if (styleConfiguration->renderMethod & RM_RGBA) {
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         writerStatus = initialized;
         drawImage.createImage(40, 20);
-        drawImage.create685Palette();
         return 0;
       }
     }
@@ -326,17 +320,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0].attr.name == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png24")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
       if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/webp")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
       if (dataSource->cfgLayer->WMSFormat[0].attr.quality.empty() == false) {
@@ -397,20 +381,11 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
-    // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
-      status = drawImage.create685Palette();
-      if (status != 0) {
-        CDBError("Unable to create standard 6-8-5 palette");
-        return 1;
-      }
-    }
-
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -708,8 +683,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                   if (dataSource->getDataObject(o)->hasStatusFlag) {
                     // Add status flag
-                    std::string flagMeaning;
-                    flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
                     element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
                     element.units = "";
                   } else {
@@ -1106,17 +1080,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Drawingnormal legend");
       }
       if (j != 0) {
-        /*
-         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
-         * For j==0, the legend is already initialized previously
-         */
         if (CIMAGEDATAWRITER_DEBUG) {
           CDBDebug("REINITLEGEND");
         }
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -1186,9 +1156,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       double gridSize = 10;
       double precision = 0.25;
       double numTestSteps = 5;
-      CColor textColor(0, 0, 0, 128);
+      CColor textColor = standardCColorTranslucentBlack;
       float lineWidth = 0.25;
-      int lineColor = 247;
+      CColor lineColor = standardCColorDarkGray;
 
       if (dataSource->cfgLayer->Grid[0].attr.resolution.empty() == false) {
         gridSize = atof(dataSource->cfgLayer->Grid[0].attr.resolution.c_str());
@@ -1992,10 +1962,5 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage) { return CCreateLegend::createLegend(dataSource, legendImage); }
 
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage, bool rotate) { return CCreateLegend::createLegend(dataSource, legendImage, rotate); }
-
-int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float size, float angle, const char *text, unsigned char colorIndex) {
-  drawImage.drawText(x, y, fontlocation, size, angle, text, colorIndex);
-  return 0;
-}
 
 int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

@@ -39,7 +39,7 @@ void CRectangleText::init(int llx, int lly, int urx, int ury, float angle, int p
   this->color = color;
 }
 
-bool CRectangleText::overlaps(CRectangleText &r2) {
+bool CRectangleText::overlaps(const CRectangleText &r2) const {
   if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;
   if ((this->urx + padding < r2.llx) || (this->llx - padding > r2.urx)) return false;
   return true;

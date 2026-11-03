@@ -506,8 +506,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
   }
 
   if (variableNames.size() == 2) {
-    std::string newName;
-    newName = CT::printf("%s + %s", variableNames[0].c_str(), variableNames[1].c_str());
+    std::string newName = CT::printf("%s + %s", variableNames[0].c_str(), variableNames[1].c_str());
 
     CServerConfig::XMLE_Title *xmleTitle = addXmlObj(xmleLayer.Title);
     xmleTitle->elementValue = newName;

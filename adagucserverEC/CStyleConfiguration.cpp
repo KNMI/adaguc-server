@@ -2,6 +2,7 @@
 #include "CXMLParser.h"
 #include "CDebugger.h"
 #include "CDataSource.h"
+#include "CDrawImage.h"
 #include "CTString.h"
 
 static const bool CDATASOURCE_DEBUG = false;
@@ -380,3 +381,147 @@ void CStyleConfiguration::stretchLegend(double min, double max) {
     this->legendOffset = 0;
   }
 }
+
+// An index still pure black here was never set by a <palette> entry; treat it as transparent.
+static void markUnsetEntriesTransparent(std::vector<CColor> &colors) {
+  for (int j = 0; j < 240; j++) {
+    CColor &c = colors[j];
+    if (c.r == 0 && c.g == 0 && c.b == 0) {
+      c.a = 0;
+    }
+  }
+}
+
+// Negative alpha means overwrite, magnitude -(alpha+1); shared by interpolate/fillPaletteRange.
+static void writePaletteEntry(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int i, int red, int green, int blue, int alpha) {
+  if (i < 0 || i >= 240) return;
+  unsigned char r = (unsigned char)red;
+  if (r == 0) r = 1;
+  bool isOverwrite = alpha < 0;
+  int magnitude = isOverwrite ? -(alpha + 1) : alpha;
+  if (magnitude < 0) magnitude = 0;
+  if (magnitude > 255) magnitude = 255;
+  colors[i] = CColor(r, (unsigned char)green, (unsigned char)blue, (unsigned char)magnitude);
+  overwrite[i] = isOverwrite;
+}
+
+// Linearly interpolates RGBA across [fromIndex, toIndex]; float, not double - matches golden images.
+static void interpolatePaletteRange(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int fromIndex, int fromRed, int fromGreen, int fromBlue, int fromAlpha, int toIndex, int toRed,
+                                     int toGreen, int toBlue, int toAlpha) {
+  float span = toIndex - fromIndex;
+  if (span < 0.5f) span = 1;
+  float redStep = (toRed - fromRed) / span;
+  float greenStep = (toGreen - fromGreen) / span;
+  float blueStep = (toBlue - fromBlue) / span;
+  float alphaStep = (toAlpha - fromAlpha) / span;
+
+  for (int i = fromIndex; i <= toIndex; i++) {
+    float step = i - fromIndex;
+    int red = int(redStep * step) + fromRed;
+    int green = int(greenStep * step) + fromGreen;
+    int blue = int(blueStep * step) + fromBlue;
+    int alpha = int(alphaStep * step) + fromAlpha;
+    writePaletteEntry(colors, overwrite, i, red, green, blue, alpha);
+  }
+}
+
+// Flat-fills [fromIndex, toIndex) with one color - used by the "interval" legend type.
+static void fillPaletteRange(std::vector<CColor> &colors, std::vector<uint8_t> &overwrite, int fromIndex, int toIndex, int red, int green, int blue, int alpha) {
+  for (int i = fromIndex; i < toIndex; i++) {
+    writePaletteEntry(colors, overwrite, i, red, green, blue, alpha);
+  }
+}
+
+int CStyleConfiguration::createPalette(CServerConfig::XMLE_Legend *legend) {
+  colors.assign(256, CColor(0, 0, 0, 255));
+  overwrite.assign(256, false);
+  if (legend == NULL) {
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  if (legend->attr.type == "colorRange") {
+    for (size_t j = 0; j < legend->palette.size(); j++) {
+      CServerConfig::XMLE_palette *pbegin = &legend->palette[j];
+      CServerConfig::XMLE_palette *pnext = &legend->palette[j];
+      if (j < legend->palette.size() - 1) {
+        pnext = &legend->palette[j + 1];
+      }
+
+      if (pbegin->attr.index > 255) pbegin->attr.index = 255;
+      if (pbegin->attr.index < 0) pbegin->attr.index = 0;
+      if (pnext->attr.index > 255) pnext->attr.index = 255;
+      if (pnext->attr.index < 0) pnext->attr.index = 0;
+
+      interpolatePaletteRange(colors, overwrite, pbegin->attr.index, pbegin->attr.red, pbegin->attr.green, pbegin->attr.blue, pbegin->attr.alpha, pnext->attr.index, pnext->attr.red,
+                               pnext->attr.green, pnext->attr.blue, pnext->attr.alpha);
+    }
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  if (legend->attr.type == "interval") {
+    for (size_t j = 0; j < legend->palette.size(); j++) {
+      auto &attr = legend->palette[j].attr;
+      if (attr.index != -1) {
+        int stopIndex = 240;
+        if (j < legend->palette.size() - 1) stopIndex = legend->palette[j + 1].attr.index;
+        fillPaletteRange(colors, overwrite, attr.index, stopIndex, attr.red, attr.green, attr.blue, attr.alpha);
+      } else {
+        fillPaletteRange(colors, overwrite, attr.min, attr.max + 1, attr.red, attr.green, attr.blue, attr.alpha);
+      }
+    }
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  if (legend->attr.type == "svg") {
+    if (legend->attr.file.empty()) {
+      CDBError("Legend type file has no file attribute specified");
+      return 1;
+    }
+    CDBDebug("Reading file %s", legend->attr.file.c_str());
+
+    CXMLParserElement element;
+
+    try {
+      element.parseFile(legend->attr.file.c_str());
+      auto stops = element.getThrows("svg")->getThrows("g")->getThrows("defs")->getThrows("linearGradient")->getList("stop");
+      unsigned char prevRed = 0, prevGreen = 0, prevBlue = 0, prevAlpha = 0;
+      int prevOffset = 0;
+      for (size_t j = 0; j < stops.size(); j++) {
+        int offset = (int)(std::stof(stops.at(j).getAttrValue("offset")) * 2.4);
+        std::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
+        color.resize(color.length() - 1);
+        auto colorParts = CT::split(color, ",");
+        if (colorParts.size() != 3) {
+          CDBError("Number of specified colors is unequal to three");
+          return 1;
+        }
+        unsigned char red = atoi(colorParts[0].c_str());
+        unsigned char green = atoi(colorParts[1].c_str());
+        unsigned char blue = atoi(colorParts[2].c_str());
+        unsigned char alpha = (unsigned char)(std::stof(stops.at(j).getAttrValue("stop-opacity")) * 255);
+        if (offset > 255)
+          offset = 255;
+        else if (offset < 0)
+          offset = 0;
+
+        if (j > 0) {
+          interpolatePaletteRange(colors, overwrite, prevOffset, prevRed, prevGreen, prevBlue, prevAlpha, offset, red, green, blue, alpha);
+        }
+        prevRed = red;
+        prevGreen = green;
+        prevBlue = blue;
+        prevAlpha = alpha;
+        prevOffset = offset;
+      }
+
+    } catch (int e) {
+      std::string message = CXMLParser::getErrorMessage(e);
+      CDBError("%s\n", message.c_str());
+      return 1;
+    }
+    markUnsetEntriesTransparent(colors);
+    return 0;
+  }
+  return 1;
+}
+

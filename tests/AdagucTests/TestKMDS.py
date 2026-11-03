@@ -53,6 +53,25 @@ class TestKMDS:
             self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2
         )
 
+    def test_kmds_alle_stations_10001_labels_do_not_connect_to_next_circle(self):
+        """A label's text end point must not leak into the next circle's path as a stray line."""
+        AdagucTestTools().cleanTempDir()
+        filename = "test_kmds_alle_stations_10001_labels_do_not_connect_to_next_circle.png"
+
+        env = make_adaguc_env("adaguc.test.kmds_alle_stations_10001.xml")
+        update_db(env)
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.test.kmds_alle_stations_10001&&LAYERS=10M/hc&WIDTH=280&HEIGHT=280&SERVICE=WMS&request=GETMAP&format=image/png&CRS=EPSG:4326",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+
+        assert status == 0
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2
+        )
+
     @pytest.mark.parametrize(
         ("filename", "layers", "units"),
         [
