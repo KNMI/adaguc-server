@@ -18,7 +18,6 @@
   </Legend>
   
   <Legend name="highcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#E6E6FF"/>
     <palette min="60" max="119" color="#B3B3FF"/>
     <palette min="120" max="179" color="#8080FF"/>
@@ -26,7 +25,6 @@
   </Legend>
   
   <Legend name="midcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#B3E6B3"/>
     <palette min="60" max="119" color="#99FF99"/>
     <palette min="120" max="179" color="#4CE64C"/>
@@ -34,7 +32,6 @@
   </Legend>
   
   <Legend name="lowcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#FFE6E6"/>
     <palette min="60" max="119" color="#FFB3B3"/>
     <palette min="120" max="179" color="#FF8080"/>
@@ -42,7 +39,6 @@
   </Legend>
   
   <Legend name="totalcloudcover" type="interval">
-    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
     <palette min="12" max="59" color="#D9D9D9"/>
     <palette min="60" max="119" color="#A6A6A6"/>
     <palette min="120" max="179" color="#737373"/>
@@ -434,7 +430,8 @@
   <Style name="auto" title="Automatic minimum and maximum" abstract="Automatic min/max rendered with nearest neighbour interpolation">
     <Legend>isoluminant</Legend>
     <Scale>0</Scale>
-    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
   </Style>
   
   <Style name="temperature-wow" title="Temperature (wow) shaded + contours" abstract="Contours with shaded background">
@@ -444,7 +441,7 @@
     <ShadeInterval>2</ShadeInterval>
     <ContourLine width="0.8" linecolor="#1a1a1a" textcolor="#1a1a1a" textformatting="%2.0f" interval="10"/>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
-    <RenderMethod>shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
@@ -529,7 +526,7 @@
     <ShadeInterval min="38" max="39" label="38-39" fillcolor="#B12B2B"/>
     <ShadeInterval min="39" max="40" label="39-40" fillcolor="#990E0E"/>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="1"/>
-    <RenderMethod>shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
@@ -541,7 +538,7 @@
   <Max>40</Max>
   <ShadeInterval>2</ShadeInterval>
   <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
-  <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
   <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   -->
@@ -552,7 +549,7 @@
     <Max>44</Max>
     <ShadeInterval>2</ShadeInterval>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
-    <RenderMethod>shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   
@@ -562,7 +559,7 @@
   <Max>32</Max>
   <ShadeInterval>2</ShadeInterval>
   <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
-  <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
   <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   -->
@@ -573,7 +570,7 @@
     <Max>100</Max>
     <ShadeInterval>5</ShadeInterval>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="10,25,50,100,150"/>
-    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="cape"/>
     <ValueRange min="10" max="1000000"/>
   </Style>
@@ -582,9 +579,8 @@
     <Legend fixed="true" tickinterval=".1">cloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <ShadeInterval>5</ShadeInterval>
-    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/>
-    <RenderMethod>bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
   </Style>
   
@@ -595,7 +591,8 @@
   <Max>1</Max>
   <ShadeInterval>5</ShadeInterval>
   <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/>
-  <RenderMethod>bilinear,nearest</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
+  <RenderSettings interpolationmethod="bilinear"/>
   <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
   </Style>
   -->
@@ -603,11 +600,8 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1" >highcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#E6E6FF"/>
-    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#B3B3FF"/>
-    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#8080FF"/>
-    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4CFF"/>
-    <RenderMethod>bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="high_cloud_cover,high_type_cloud_area_fraction"/>
   </Style>
   
@@ -615,11 +609,8 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">midcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#B3F6B3"/>
-    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#99FF99"/>
-    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#4CE64C"/>
-    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#00FF00"/>
-    <RenderMethod>bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="medium_cloud_cover,medium_type_cloud_area_fraction"/>
   </Style>
   
@@ -627,11 +618,8 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">lowcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#FFE6E6"/>
-    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#FFB3B3"/>
-    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#FF8080"/>
-    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#FF4C4C"/>
-    <RenderMethod>bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="low_cloud_cover,low_type_cloud_area_fraction"/>
   </Style>
   
@@ -639,11 +627,8 @@
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">totalcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#D9D9D9"/>
-    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#A6A6A6"/>
-    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#737373"/>
-    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4C4C"/>
-    <RenderMethod>bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="total_cloud_cover,totalcloudcover,cloud_area_fraction,convective_type_cloud_area_fraction"/>
   </Style>
   
@@ -661,8 +646,7 @@
     <ShadeInterval min="10" max="20"    label="10-20"    fillcolor="#FF0000"/>
     <ShadeInterval min="20" max="40"    label="20-40"    fillcolor="#FFFF00"/>
     <ShadeInterval min="40" max="100"    label="40-100"    fillcolor="#FF8000"/>
-    <!--    <RenderMethod>bilinear,nearest,shaded</RenderMethod>-->
-    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="snowfall,cumsnowfall,snowfall_03h,snowfall_06h,snowfall_24h"/>
   </Style>
   
@@ -682,7 +666,7 @@
     <ShadeInterval min="40" max="60" label="40-60" fillcolor="#86008D"/>
     <ShadeInterval min="60" max="100" label="60-100" fillcolor="#610066"/>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.1f" classes="0.1,0.3,0.5,1,3,5,10,20,40,60,100"/>
-    <RenderMethod>shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,cumprecip,precipitation_03h,cumsnowfall,snowfall_03h,precipitation_flux,graupel_flux,snowfall_flux"/>
   </Style>
@@ -703,7 +687,7 @@
     <ShadeInterval min="40" max="100" label="40-100" fillcolor="#FF8000"/>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.1f" classes="0.1,0.3,0.5,1,3,5,10,20,40,100"/>
     
-    <RenderMethod>shadedcontour,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,cumprecip,precipitation_03h,cumsnowfall,snowfall_03h,precipitation_flux,graupel_flux,snowfall_flux"/>
@@ -723,7 +707,7 @@
     <ShadeInterval min="40" max="100" label="40-100" fillcolor="#FF8000"/> 
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="0.5,1,3,5,10,20,40,100"/>
     
-    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="precipitation_06h,snowfall_06h"/>
   </Style>
@@ -743,7 +727,7 @@
     <ShadeInterval min="100" max="200" label="100-200" fillcolor="#80FF00"/> 
     <ShadeInterval min="200" max="400" label="200-400" fillcolor="#00FF00"/> 
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="0.5,1,3,5,10,20,40,100,200,400,1000"/>
-    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="precipitation_24h,snowfall_24h"/>
   </Style>
@@ -752,10 +736,10 @@
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
-    <ShadeInterval>2.5</ShadeInterval>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="1.0"/>
-    <RenderMethod>contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings drawgrid="false"/>
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   
@@ -763,10 +747,10 @@
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
-    <ShadeInterval>2.5</ShadeInterval>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
-    <RenderMethod>contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings drawgrid="false"/>
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   
@@ -774,10 +758,10 @@
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
-    <ShadeInterval>5</ShadeInterval>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="5"/>
-    <RenderMethod>contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings drawgrid="false"/>
 
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
@@ -790,7 +774,7 @@
   <ShadeInterval>2.5</ShadeInterval>
   <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
-  <RenderMethod>shadedcontour,nearestcontour,bilinear,contour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
   <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   -->
@@ -803,7 +787,7 @@
     <ShadeInterval>2.5</ShadeInterval>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
-    <RenderMethod>shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
@@ -812,7 +796,11 @@
     <Legend fixed="true">windspeed_cwk</Legend>
     <Scale>1</Scale>
     <Offset>0</Offset>
-    <RenderMethod>barb</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings drawgrid="false"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
     <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind"/>
   </Style>
   
@@ -831,9 +819,10 @@
     <ShadeInterval min="48" max="56"    label="48-56 (10)"    fillcolor="#FF8000"/>
     <ShadeInterval min="56" max="64"    label="56-64 (11)"    fillcolor="#FF0000"/>
     <ShadeInterval min="64" max="200"    label="64-200 (12)"    fillcolor="#FFFF00"/>
-    <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
-    <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
-    <RenderMethod>barbshaded</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
     <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="xyz"/>
   </Style>
   
@@ -852,9 +841,10 @@
     <ShadeInterval min="24.4" max="28.4"    label="24.4-28.4 (10)"    fillcolor="#FF8000"/>
     <ShadeInterval min="28.4" max="32.6"    label="28.4-32.6 (11)"    fillcolor="#FF0000"/>
     <ShadeInterval min="32.6" max="200"    label=">32.6 (12)"    fillcolor="#FFFF00"/>
-    <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
-    <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
-    <RenderMethod>barbshaded</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <Vector vectorstyle="barb" linecolor="#0000FF" outlinewidth="0"/>
+    <Thinning radius="40"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
     <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="m/s"/>
   </Style>
   
@@ -875,7 +865,7 @@
     <ShadeInterval min="64" max="200"    label="64-200 (12)"    fillcolor="#FFFF00"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/>
     <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
-    <RenderMethod>contour,nearest,shaded,bilinear,nearestcontour,shadedcontour,bilinearcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="windspeed,x_wind,y_wind,Windgusts,x_gust,y_gust,wind_speed_of_gust" units="kts"/>
   </Style>
   
@@ -894,7 +884,7 @@
   <ShadeInterval min="110" max="125"    label="110-125"    fillcolor="#FFB3B3"/>
   <ShadeInterval min="125" max="300"    label="125-300"    fillcolor="#FF7F7F"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="30,40,50,60,70,80,90,100,110,125,300"/>
-  <RenderMethod>shadedcontour,bilinearcontour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
   <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="m/s"/>
   </Style>
   -->
@@ -903,10 +893,10 @@
     <Legend fixed="true" tickinterval="50">not_used</Legend>
     <Min>0.1</Min>
     <Max>2000</Max>
-    <ShadeInterval>10</ShadeInterval>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%3.0f" interval="10"/>
     <ContourLine width="1.3" linecolor="#FF0000" textcolor="#FF0000" textformatting="%3.0f" interval="100"/>
-    <RenderMethod>contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings drawgrid="false"/>
     <StandardNames standard_name="geopotential"/>
   </Style>
   
@@ -918,7 +908,8 @@
   <ShadeInterval>40</ShadeInterval>
   <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
-  <RenderMethod>contour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
+  <RenderSettings drawgrid="false"/>
   <StandardNames standard_name="geopotential,z850,height"/>
   </Style>
   
@@ -929,7 +920,8 @@
   <ShadeInterval>40</ShadeInterval>
   <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
-  <RenderMethod>contour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
+  <RenderSettings drawgrid="false"/>
   <StandardNames standard_name="geopotential,z500,height"/>
   </Style>
   
@@ -940,7 +932,8 @@
   <ShadeInterval>40</ShadeInterval>
   <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
-  <RenderMethod>contour</RenderMethod>
+  <RenderMethod>generic</RenderMethod>
+  <RenderSettings drawgrid="false"/>
   <StandardNames standard_name="geopotential,z300,height"/>
   </Style>
   -->
@@ -948,9 +941,8 @@
     <Legend fixed="true" tickinterval="10">fraction</Legend>
     <Min>0</Min>
     <Max>100</Max>
-    <ShadeInterval>10</ShadeInterval>
-    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
-    <RenderMethod>bilinear,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="WindspeedCumul,BeaufortWindCumul,TemperatureCumul,TemperatureUnderCumul,Temperature_2mCumul,Temperature_2mUnderCumul,WindgustCumul,PrecipCumul,Precip03hCumul,Precip06hCumul,Precip12hCumul,Precip24hCumul,CumSnowFallCumul,SnowFall03hCumul,SnowFall06hCumul,SnowFall12hCumul,SnowFall24hCumul,RelHumCumul,RelHumUnderCumul,TCCCumul,TCCUnderCumul"/>
   </Style>
   
@@ -958,16 +950,8 @@
     <Legend fixed="true" tickinterval="10">relhum</Legend>
     <Min>0</Min>
     <Max>100</Max>
-    <ShadeInterval min="0" max="50"    label="0-50"    fillcolor="#FFFFB2"/>
-    <ShadeInterval min="50" max="70"    label="50-70"    fillcolor="#FFFF00"/>
-    <ShadeInterval min="70" max="90"    label="70-90"    fillcolor="#7FFF00"/>
-    <ShadeInterval min="90" max="95"    label="90-95"    fillcolor="#FF7F00"/>
-    <ShadeInterval min="95" max="99"    label="95-99"    fillcolor="#FF0000"/>
-    <ShadeInterval min="99" max="110"    label=">99"    fillcolor="#000000"/>
-    <ShadeInterval>10</ShadeInterval>
-    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
-    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="50,70,90,95,99,100"/>
-    <RenderMethod>bilinear,contour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     <StandardNames standard_name="relative_humidity"/>
   </Style>
   

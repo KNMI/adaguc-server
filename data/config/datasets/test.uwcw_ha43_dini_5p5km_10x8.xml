@@ -302,7 +302,7 @@
     <Styles>temperature,temperature_clip,temperature_wow,temperature_less_items</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="temp_at_pl" units="hPa" default="max" hidden="false">pressure_level_in_hpa</Dimension>
-    <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="max">time</Dimension>
   </Layer>
 
 </Configuration>

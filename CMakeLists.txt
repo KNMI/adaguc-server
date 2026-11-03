@@ -47,7 +47,7 @@ MESSAGE(STATUS "CMAKE_CXX_FLAGS_SANITIZE: ${CMAKE_CXX_FLAGS_SANITIZE}")
 string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
 add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
-add_definitions(-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_WEBP)
+add_definitions(-DENABLE_CURL -DADAGUC_USE_GDAL)
 
 # Enable timing output (StopWatch_Measure and time statistics in CDBDebug), see hclasses/CDebugger.h
 option(ADAGUC_MEASURETIME "Enable STOPWATCH_MEASURETIME timing output" OFF)

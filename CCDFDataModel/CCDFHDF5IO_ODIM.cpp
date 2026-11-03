@@ -229,8 +229,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       if (startTimeAttr == nullptr) startTimeAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "time");
       if (startDateAttr != nullptr && startTimeAttr != nullptr) {
         /* Compose the timestring based on date and time from the HDF5 ODIM file */
-        std::string timeString;
-        timeString = CT::printf("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
+        std::string timeString = CT::printf("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
 
         /* Add the time dimension and timevariable */
         auto *timeDim = new CDF::Dimension("time", 1);

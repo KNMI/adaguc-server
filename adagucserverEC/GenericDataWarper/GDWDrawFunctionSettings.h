@@ -3,13 +3,11 @@
 #ifndef GDW_DRAWFUNCTION_UTILS_H
 #define GDW_DRAWFUNCTION_UTILS_H
 
-#include <vector>
+#include "CGenericDataWarper.h"
 #include "CCDFTypes.h"
 #include "CColor.h"
-
-class CDataSource;
-class CDrawImage;
-class CStyleConfiguration;
+#include "CDataSource.h"
+#include "CDrawImage.h"
 
 enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
@@ -35,17 +33,9 @@ struct GDWDrawFunctionSettings {
   CColor bgColor;
   bool hasNodataValue;
   bool drawgridboxoutline = false;
-  // Whether CCreateLegend should bother building a legend at all for this style - distinct from
-  // paintFieldColors below, which only controls whether GetMap itself paints raster pixel colors.
-  // A contour-only legacy style paints no raster colors but can still have a meaningful legend.
+  // Whether CImgWarpGeneric paints raster colors onto the canvas during GetMap.
   bool drawgrid = true;
-  // Whether the generic warper paints the field's own (interpolated/shaded) colors onto the
-  // canvas during GetMap. Kept separate from drawgrid (see above) so that disabling raster
-  // painting for a legacy contour-only style doesn't also blank its legend.
-  bool paintFieldColors = true;
-  // Whether CImgWarpGeneric should trace and draw contour lines for this style. Resolved once
-  // here (alongside the analogous isUsingShadeIntervals decision above) rather than re-derived
-  // independently wherever it's consumed.
+  // Whether CImgWarpGeneric should trace and draw contour lines for this style.
   bool shouldDrawContours = false;
   InterpolationMethod interpolationMethod = InterpolationMethodNearest;
   std::vector<Interval> intervals;
@@ -54,6 +44,11 @@ struct GDWDrawFunctionSettings {
   void *destinationGrid = nullptr;
   double smoothingFiter = 0;
   std::vector<double> smoothingMemo;
+
+  const CStyleConfiguration *styleConfiguration = nullptr; // avoids copying the 256-entry palette
+
+  CColor getCColorFromLegendPaletteIndex(int index) const { return styleConfiguration->getCColorFromLegendPaletteIndex(index); }
+  void setPixelByLegendPaletteIndex(int x, int y, int colorIndex) const { styleConfiguration->drawPixelFromPaletteIndex(drawImage, x, y, colorIndex); }
 };
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

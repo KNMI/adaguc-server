@@ -93,7 +93,8 @@ mimetype="Content-Type:text/plain"/>
 <Legend>rainbow</Legend>
 <Scale>0</Scale>
 <Offset>0</Offset>
-<RenderMethod>nearest,bilinear,nearestpoint</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 </Style>
 
 <!-- Layer configuration -->

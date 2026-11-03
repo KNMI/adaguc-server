@@ -6,8 +6,8 @@
     <Variable>mydata</Variable>
     <FilePath filter="">{ADAGUC_PATH}/data/datasets/members.nc</FilePath>
     <Styles>auto</Styles>
-    <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="max" type="time">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
-    <Dimension name="member" units="" default="min" hidden="false" type="custom">member</Dimension>
+    <Dimension name="member" units="" default="max" hidden="false" type="custom">member</Dimension>
   </Layer>
 </Configuration>

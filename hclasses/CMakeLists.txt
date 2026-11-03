@@ -6,7 +6,6 @@ CTString.h
     CDebugger.h
     CDirReader.h
     CStopWatch.h
-    CHTTPTools.h
     CReadFile.h
     CReporter.h
     CReportMessage.h
@@ -18,7 +17,6 @@ CTString.h
     CDebugger.cpp
     CDirReader.cpp
     CStopWatch.cpp
-    CHTTPTools.cpp
     CReadFile.cpp
     CReporter.cpp
     CReportMessage.cpp

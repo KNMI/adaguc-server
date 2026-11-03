@@ -4,12 +4,12 @@
 # pip-sync requirements.txt requirements-dev.txt
 
 -c requirements.txt
-black~=26.5.1
-deepdiff~=9.1.0
-isort~=8.0.1
-pre-commit~=4.6.0
-psutil~=7.2.2
-pylint~=4.0.5
-pytest~=9.0.3
-pytest-asyncio~=1.4.0
-psycopg2~=2.9.12
+black~=26.5
+deepdiff~=9.1
+isort~=8.0
+pre-commit~=4.6
+psutil~=7.2
+pylint~=4.0
+pytest~=9.0
+pytest-asyncio~=1.4
+psycopg2~=2.9

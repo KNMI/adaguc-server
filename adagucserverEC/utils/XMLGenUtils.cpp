@@ -449,7 +449,7 @@ bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
+  if (!isATimeDimension(cfgDim)) {
     return timeStampList;
   }
   // Get the tablename
@@ -495,7 +495,7 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
         CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
       }
       // Only time dimensions can get an auto calculated interval
-      const std::string interval = cfgDim->attr.name == "time" ? makeIntervalFromTimeList(dimValues) : "";
+      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;

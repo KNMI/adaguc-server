@@ -79,13 +79,11 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     float fa = 72, fb = 75;
     if (proc->attr.b.empty() == false) {
-      std::string b;
-      b = (proc->attr.b.c_str());
+      std::string b = proc->attr.b;
       fb = CT::toDouble(b);
     }
     if (proc->attr.a.empty() == false) {
-      std::string a;
-      a = (proc->attr.a.c_str());
+      std::string a = proc->attr.a;
       fa = CT::toDouble(a);
     }
     for (size_t j = 0; j < l; j++) {
@@ -323,8 +321,7 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     newDataObject.cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     newDataObject.cdfObject->addVariable(newDataObject.cdfVariable);
     newDataObject.cdfVariable->setName("masked");
-    std::string text;
-    text = CT::printf("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", "masked", this->getId());
+    std::string text = CT::printf("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", "masked", this->getId());
     newDataObject.cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
     newDataObject.cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
     newDataObject.cdfVariable->setType(dataSource->getDataObject(1)->cdfVariable->getType());
@@ -359,18 +356,15 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     double fa = 0, fb = 1; // More or equal to a and less than b
     double fc = 0;
     if (proc->attr.a.empty() == false) {
-      std::string a;
-      a = (proc->attr.a.c_str());
+      std::string a = proc->attr.a;
       fa = CT::toDouble(a);
     }
     if (proc->attr.b.empty() == false) {
-      std::string b;
-      b = (proc->attr.b.c_str());
+      std::string b = proc->attr.b;
       fb = CT::toDouble(b);
     }
     if (proc->attr.c.empty() == false) {
-      std::string c;
-      c = (proc->attr.c.c_str());
+      std::string c = proc->attr.c;
       fc = CT::toDouble(c);
     }
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;

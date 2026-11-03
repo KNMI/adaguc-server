@@ -85,7 +85,18 @@ def get_ref_times_for_coll(metadata) -> list[str]:
         if not ref_time_values:
             continue
 
-        ref_times.update(ref_time_values.split(","))
+        for ref_time_term in ref_time_values.split(","):
+            if "/" in ref_time_term:
+                # Slash separated start/end/period
+                try:
+                    start, end, period = ref_time_term.split("/", 2)
+                    ref_times.update(expand_time_range(start, end, period))
+                except Exception:
+                    error_msg = "Could not parse reference times from metadata"
+                    logger.exception(error_msg)
+                    raise exc_failed_call(error_msg)
+            else:
+                ref_times.add(ref_time_term)
 
     try:
         return [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in sorted(list(ref_times))]
@@ -93,6 +104,28 @@ def get_ref_times_for_coll(metadata) -> list[str]:
         error_msg = "Could not parse reference times from metadata"
         logger.exception(error_msg)
         raise exc_failed_call(error_msg)
+
+
+def expand_time_range(start: str, end: str, period: str) -> list[str]:
+    """
+    Expands a start/end/period range into a list of ISO8601 time strings
+
+    For example:
+        "2023-01-01T00:00:00Z", "2023-01-01T02:00:00Z", "PT1H" into
+        ["2023-01-01T00:00:00Z", "2023-01-01T01:00:00Z", "2023-01-01T02:00:00Z"]
+    """
+    iso_start = parse_iso(start)
+    iso_end = parse_iso(end)
+    delta = parse_period_string(period)
+    if iso_start is None or iso_end is None or delta is None:
+        raise ValueError(f"Could not expand time range {start}/{end}/{period}")
+
+    times = []
+    step_time = iso_start
+    while step_time <= iso_end:
+        times.append(step_time.strftime(DATETIME_ISO8601_FMT))
+        step_time = step_time + delta
+    return times
 
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"

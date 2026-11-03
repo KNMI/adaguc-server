@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+    Dataset for TestsForLegacyBilinearRender: pins the rendering of the legacy RenderMethod
+    keywords of the removed CImgWarpBilinear renderer (bilinear, shaded, contour and their
+    combinations, plus the barb/vector variants), which the generic warper now emulates. Nothing
+    else in the test suite should rely on these keywords anymore; the modern equivalent is
+    <RenderMethod>generic</RenderMethod> with RenderSettings / ShadeInterval / ContourLine / Vector.
+  -->
+
+  <Style name="legacy_scalar" title="Legacy scalar keywords" abstract="One style advertising every legacy scalar keyword combination">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.0</Min>
+    <Max>0.5</Max>
+    <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
+    <ContourLine width="3" linecolor="#0000FF" textcolor="#0000FF" textformatting="%2.2f" classes="0.35"/>
+    <ShadeInterval min="0.05" max="0.15" label="0.05-0.15" fillcolor="#E6E6FF"/>
+    <ShadeInterval min="0.20" max="0.30" label="0.20-0.30" fillcolor="#B3B3FF"/>
+    <ShadeInterval min="0.30" max="0.35" label="0.30-0.35" fillcolor="#8080FF"/>
+    <ShadeInterval min="0.35" max="1.00" label="0.35-1.00" fillcolor="#FF0040"/>
+    <RenderMethod>nearest,bilinear,shaded,contour,nearestcontour,shadedcontour</RenderMethod>
+  </Style>
+
+  <!--
+    Same as legacy_scalar, but the first shade interval is translucent. Neighbouring triangles of the warper must not blend
+    such a color twice at their shared edges, which showed up as stippling (pixels of a higher alpha).
+  -->
+  <Style name="legacy_scalar_translucent" title="Legacy scalar keywords, translucent fill" abstract="Shaded legacy keywords with a translucent shade interval">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.0</Min>
+    <Max>0.5</Max>
+    <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
+    <ContourLine width="3" linecolor="#0000FF" textcolor="#0000FF" textformatting="%2.2f" classes="0.35"/>
+    <ShadeInterval min="0.05" max="0.15" label="0.05-0.15" fillcolor="#E6E6FFA0"/>
+    <ShadeInterval min="0.20" max="0.30" label="0.20-0.30" fillcolor="#B3B3FFA0"/>
+    <ShadeInterval min="0.30" max="0.35" label="0.30-0.35" fillcolor="#8080FF"/>
+    <ShadeInterval min="0.35" max="1.00" label="0.35-1.00" fillcolor="#FF0040"/>
+    <RenderMethod>shaded,shadedcontour</RenderMethod>
+  </Style>
+
+  <Layer type="database">
+    <Name>testdata</Name>
+    <Title>Legacy scalar rendering</Title>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+    <Styles>legacy_scalar,legacy_scalar_translucent</Styles>
+  </Layer>
+
+  <Style name="legacy_windbarbs_kts" title="Legacy wind keywords" abstract="One style advertising every legacy barb/vector keyword combination">
+    <ShadeInterval min="0" max="7" label="0-7 (&lt;3 bft)" fillcolor="#FFFFB4"/>
+    <ShadeInterval min="7" max="11" label="7-11 (3 bft)" fillcolor="#FFFF00"/>
+    <ShadeInterval min="11" max="16" label="11-16 (4 bft)" fillcolor="#81FF00"/>
+    <ShadeInterval min="16" max="21" label="16-21 (5 bft)" fillcolor="#008D2C"/>
+    <ShadeInterval min="21" max="27" label="21-27 (6 bft)" fillcolor="#00FFFF"/>
+    <ShadeInterval min="27" max="34" label="27-34 (7 bft)" fillcolor="#74A3FF"/>
+    <ShadeInterval min="34" max="41" label="34-41 (8 bft)" fillcolor="#0000FF"/>
+    <ShadeInterval min="41" max="48" label="41-48 (9 bft)" fillcolor="#FF30FF"/>
+    <ShadeInterval min="48" max="56" label="48-56 (10 bft)" fillcolor="#FF8100"/>
+    <ShadeInterval min="56" max="64" label="56-64 (11 bft)" fillcolor="#FF0000"/>
+    <ShadeInterval min="64" max="74" label="64-74 (12 bft / sshws 1)" fillcolor="#FFFF00"/>
+    <ShadeInterval min="74" max="84" label="74-84 (sshws 1)" fillcolor="#C0C0C0"/>
+    <ShadeInterval min="84" max="100" label="84-100 (sshws 2)" fillcolor="#818181"/>
+    <ShadeInterval min="100" max="200" label="100-200 (sshws 3-5)" fillcolor="#3E3E3E"/>
+    <ContourLine width="1" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,74,84,100,200"/>
+    <RenderMethod>barb,vector,barbshaded,barbshadedcontour,vectorshaded,vectorshadedcontour</RenderMethod>
+  </Style>
+
+  <!-- The DINI wind field has speeds spanning several shade/contour classes, so every keyword leaves a visible mark. -->
+  <Layer type="database">
+    <Name>wind-hagl</Name>
+    <Title>Legacy wind rendering</Title>
+    <Variable>x-wind-hagl</Variable>
+    <Variable>y-wind-hagl</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
+    <Styles>legacy_windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
+  </Layer>
+
+</Configuration>

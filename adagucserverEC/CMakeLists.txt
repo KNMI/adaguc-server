@@ -1,6 +1,7 @@
 find_package(LibXml2 REQUIRED)
 find_package(Cairo REQUIRED)
 find_package(Freetype REQUIRED)
+find_package(Fontconfig REQUIRED)
 find_package(NetCDF REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PNG REQUIRED)
@@ -21,8 +22,6 @@ add_library(
     CAutoConfigure.h
     CAutoResource.cpp
     CAutoResource.h
-    CCairoPlotter.cpp
-    CCairoPlotter.h
     CColor.h
     CColor.cpp
     CConvertADAGUCPoint.cpp
@@ -166,7 +165,6 @@ add_library(
     CDataReader.h
     CDataSource.cpp
     CDataSource.h
-    CDrawFunction.cpp
     CDrawFunction.h
     CDrawImage.cpp
     CDrawImage.h
@@ -206,8 +204,6 @@ add_library(
     CImgWarpNearestRGBA.h
     CImgRenderFieldVectors.h
     CImgRenderFieldVectors.cpp
-    CInspire.cpp
-    CInspire.h
     CLegendRenderers/CCreateLegend.cpp
     CLegendRenderers/CCreateLegend.h
     CLegendRenderers/numericutils.cpp
@@ -230,8 +226,6 @@ add_library(
     CRectangleText.h
     CRequest.cpp
     CRequest.h
-    CSLD.cpp
-    CSLD.h
     CServerError.cpp
     CServerError.h
     CServerParams.cpp
@@ -265,12 +259,16 @@ add_library(
     CImageOperators/drawContour.cpp
     write_png.cpp
     write_png.h
+    write_png32.cpp
+    write_png32.h
+    write_webp.cpp
+    write_webp.h
     fork_server.h
     fork_server.cpp
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
-target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
+target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)

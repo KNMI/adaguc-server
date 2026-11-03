@@ -65,7 +65,6 @@ public:
 class CServerParams {
 
 private:
-  int autoOpenDAPEnabled = -1;
   int autoLocalFileResourceEnabled = -1;
   int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
   std::string _onlineResource;
@@ -96,9 +95,9 @@ public:
   std::string responceCrs;
   std::string Styles;
   std::string Style;
-  std::string autoResourceLocation; // given location by the KVP key source=<value> parameter
+  std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
-  std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
+  std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter
   std::string autoResourceVariable;         // autoResourceVariable is given by the KVP key variable=<value> parameter.
   std::string mapTitle;
   std::string mapSubTitle;
@@ -121,25 +120,17 @@ public:
 
   /**
    * Function which can be used to check whether automatic resources have been enabled or not
-   * The resource can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL/FILE"
+   * The resource can be provided to the ADAGUC service via the KVP parameter "SOURCE=<local file path>"
+   * Remote (OpenDAP/HTTP) resources are intentionally not supported (removed: SSRF risk).
    * The function read the config file once, for consecutive checks the value is stored in a variable
    *
-   * @return true: AutoResource is enabled
+   * @return true: AutoResource (local file) is enabled
    */
   bool isAutoResourceEnabled();
 
   /**
-   * Function which can be used to check whether automatic OPeNDAP URL reading has been enabled or not
-   * The OPeNDAP URL can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL"
-   * The function read the config file once, for consecutive checks the value is stored in a variable
-   *
-   * @return true: OPeNDAP URL's are supported
-   */
-  bool isAutoOpenDAPResourceEnabled();
-
-  /**
    * Function which can be used to check whether automatic local file reading has been enabled or not
-   * The OPeNDAP URL can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL"
+   * The local file path can be provided to the ADAGUC service via the KVP parameter "SOURCE=<path>"
    * The function read the config file once, for consecutive checks the value is stored in a variable
    *
    * @return true: File locations are supported

@@ -25,7 +25,8 @@ data with automatically detected min/max values.
 <Legend>Tg_woltnhoff</Legend>
 <Scale>0</Scale>
 <Offset>0</Offset>
-<RenderMethod>nearest,bilinear,point</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 </Style>
 
 <Style name="examplestyle1" title="Temperature 0-10"
@@ -49,7 +50,8 @@ fillcolor="#FFFFFF">0</ShadeInterval>
 <ShadeInterval min="9" max="10" label="9 - 10" />
 <ShadeInterval min="10" max="10000" label=">10"
 fillcolor="#FF00AF"/>
-<RenderMethod>nearest,nearestcontour,bilinearcontour,shadedcontour,bilinear</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 <SmoothingFilter>0</SmoothingFilter>
 <StandardNames standard_name="air_temperature"
 units="Celsius"/>
@@ -80,7 +82,8 @@ fillcolor="#B3B3FF"/>
 fillcolor="#8080FF"/>
 <ShadeInterval min="0.75" max="1.00" label="0.75-1.00"
 fillcolor="#4C4CFF"/>
-<RenderMethod>bilinear,nearest,shaded</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 <StandardNames standard_name="high_cloud_cover"/>
 </Style>
 ```

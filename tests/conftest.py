@@ -117,13 +117,22 @@ def reset_datasetsloaded():
     DATASETS_LOADED.clear()
 
 
-def update_db(adaguc_env: dict, force_update: bool = False):
+def clean_postgres():
+    """Clears the test database and invalidates cached dataset scans."""
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    reset_datasetsloaded()
+    AdagucTestTools().cleanPostgres()
+
+
+def update_db(adaguc_env: dict, *, filepath: str | None = None, force_update: bool = False):
     """
     Run `--updatedb` if it has not been run before for the given environment. When executed multiple times
     with the same environment, no additional `--updatedb` calls will be made, unless `force_update` is enabled.
 
     - `adaguc_env`: Environment configuration with `ADAGUC_CONFIG` as key.
-    - `force_update`: Always execute `force_update`, even if it has run before.
+    - `filepath`: Keyword only. Only update this file or directory (`--path`), instead of everything in the dataset.
+    - `force_update`: Keyword only. Always execute `--updatedb`, even if it has run before.
     """
 
     adaguc_config = adaguc_env.get("ADAGUC_CONFIG")
@@ -136,6 +145,8 @@ def update_db(adaguc_env: dict, force_update: bool = False):
     args = ["--updatedb"]
     if adaguc_env:
         args += ["--config", adaguc_config]
+    if filepath:
+        args += ["--path", filepath]
 
     status, *_ = AdagucTestTools().runADAGUCServer(args=args, env=adaguc_env, isCGI=False)
     assert status == 0

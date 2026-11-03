@@ -29,7 +29,6 @@
 #include <string>
 #include "CXMLGen.h"
 #include "CServerParams.h"
-#include "CInspire.h"
 #include "CImageDataWriter.h"
 #include "CServerError.h"
 #include "CDataReader.h"
@@ -298,164 +297,13 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   CT::replaceSelf(XMLDoc, "[SERVICEONLINERESOURCE]", onlineResource.c_str());
   CT::replaceSelf(XMLDoc, "[SERVICEINFO]", serviceInfo.c_str());
 
-  int useINSPIREScenario = 0; //{ 0 == default WMS service, 1 == extended inspire capabilities scenario 1, 2 == extended inspire capabilities scenario 2}
-
-  bool inspireMetadataIsAvailable = false;
-  std::string datasetCSWURL;
-  std::string viewServiceCSWURL;
-#ifdef ENABLE_INSPIRE
-  CInspire::InspireMetadataFromCSW inspireMetadata;
-
-  if (srvParam->cfg->WMS[0].Inspire.size() == 1) {
-    if (srvParam->cfg->WMS[0].Inspire[0].ViewServiceCSW.size() == 1) {
-      if (srvParam->cfg->WMS[0].Inspire[0].ViewServiceCSW[0].elementValue.empty() == false) {
-        viewServiceCSWURL = srvParam->cfg->WMS[0].Inspire[0].ViewServiceCSW[0].elementValue.c_str();
-        CT::replaceSelf(viewServiceCSWURL, "&", "&amp;");
-      }
-    }
-    if (srvParam->cfg->WMS[0].Inspire[0].DatasetCSW.size() == 1) {
-      if (srvParam->cfg->WMS[0].Inspire[0].DatasetCSW[0].elementValue.empty() == false) {
-        datasetCSWURL = srvParam->cfg->WMS[0].Inspire[0].DatasetCSW[0].elementValue.c_str();
-        CT::replaceSelf(datasetCSWURL, "&", "&amp;");
-      }
-    }
-  }
-
-  if (viewServiceCSWURL.length() > 0 && datasetCSWURL.length() > 0) {
-    useINSPIREScenario = 1;
-  }
-
-#endif
-  // Use inspire scenario 1.
-  if (useINSPIREScenario > 0) {
-#ifdef ENABLE_INSPIRE
-    // *** Enable INSPIRE ***
-    inspireMetadataIsAvailable = true;
-
-    // Download CSW information
-
-    try {
-      std::string URL = datasetCSWURL;
-      CT::replaceSelf(URL, "&amp;", "&");
-      inspireMetadata = CInspire::readInspireMetadataFromCSW(URL.c_str());
-    } catch (int a) {
-      std::string URL = datasetCSWURL;
-
-      CT::replaceSelf(URL, "&", "&amp;");
-      CDBError("Unable to read from catalog service: %s, Inspire CSW Service : \"%s\"", CInspire::getErrorMessage(a).c_str(), URL.c_str());
-      return 1;
-    }
-
-    /*Scenario 1*/
-    if (useINSPIREScenario == 1) {
-      std::string inspirexsi = "xmlns:inspire_common=\"http://inspire.ec.europa.eu/schemas/common/1.0\"\n"
-                               "xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"\n"
-                               "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
-
-      CT::printfconcat(XMLDoc, "<inspire_vs:ExtendedCapabilities %s>\n", inspirexsi.c_str());
-      XMLDoc += "  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n";
-      CT::printfconcat(XMLDoc, "    <inspire_common:URL>%s</inspire_common:URL>\n", viewServiceCSWURL.c_str());
-      XMLDoc += "    <inspire_common:MediaType>application/vnd.iso.19139+xml</inspire_common:MediaType>\n";
-
-      XMLDoc += "  </inspire_common:MetadataUrl>\n";
-      XMLDoc += "  <inspire_common:SupportedLanguages xsi:type=\"inspire_common:supportedLanguagesType\">\n";
-      XMLDoc += "    <inspire_common:DefaultLanguage>\n";
-      XMLDoc += "      <inspire_common:Language>eng</inspire_common:Language>\n";
-      XMLDoc += "    </inspire_common:DefaultLanguage>\n";
-      XMLDoc += "    <inspire_common:SupportedLanguage>\n";
-      XMLDoc += "      <inspire_common:Language>eng</inspire_common:Language>\n";
-      XMLDoc += "    </inspire_common:SupportedLanguage>\n";
-      XMLDoc += "  </inspire_common:SupportedLanguages>\n";
-      XMLDoc += "  <inspire_common:ResponseLanguage>\n";
-      XMLDoc += "    <inspire_common:Language>eng</inspire_common:Language>\n";
-      XMLDoc += "  </inspire_common:ResponseLanguage>\n";
-      XMLDoc += "</inspire_vs:ExtendedCapabilities>\n";
-    }
-
-    /*Scenario 2*/
-    if (useINSPIREScenario == 2) {
-      XMLDoc += "<inspire_vs:ExtendedCapabilities>\n";
-      XMLDoc += "  <inspire_common:ResourceLocator>\n";
-      XMLDoc += "    <inspire_common:URL></inspire_common:URL>\n";
-      XMLDoc += "  </inspire_common:ResourceLocator>\n";
-      XMLDoc += "  <inspire_common:ResourceType>service</inspire_common:ResourceType>\n";
-      XMLDoc += "  <inspire_common:TemporalReference>\n";
-      XMLDoc += "  </inspire_common:TemporalReference>\n";
-      XMLDoc += "\n";
-      XMLDoc += "  <inspire_common:Conformity>\n";
-      XMLDoc += "    <inspire_common:Specification>\n";
-      XMLDoc += "      <inspire_common:Title>D2.8.III.13-14 Data Specification on Atmospheric Conditions – Guidelines</inspire_common:Title>\n";
-      XMLDoc += "      <inspire_common:DateOfPublication>2012-04-20</inspire_common:DateOfPublication>\n";
-      XMLDoc += "    </inspire_common:Specification>\n";
-      XMLDoc += "    <inspire_common:Degree>conformant</inspire_common:Degree>\n";
-      XMLDoc += "  </inspire_common:Conformity>\n";
-      XMLDoc += "\n";
-      XMLDoc += "  <inspire_common:MetadataPointOfContact>\n";
-      XMLDoc += "    <inspire_common:OrganisationName>KNMI</inspire_common:OrganisationName>\n";
-      XMLDoc += "    <inspire_common:EmailAddress>adaguc@knmi.nl</inspire_common:EmailAddress>\n";
-      XMLDoc += "  </inspire_common:MetadataPointOfContact>\n";
-      XMLDoc += "\n";
-      XMLDoc += "  <inspire_common:MetadataDate>2015-01-01</inspire_common:MetadataDate>\n";
-      XMLDoc += "  <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n";
-      XMLDoc += "  <inspire_common:MandatoryKeyword>\n";
-      XMLDoc += "    <inspire_common:KeywordValue>infoMapAccessService</inspire_common:KeywordValue>\n";
-      XMLDoc += "  </inspire_common:MandatoryKeyword>\n";
-      XMLDoc += "\n";
-      XMLDoc += "  <inspire_common:Keyword>\n";
-      XMLDoc += "    <inspire_common:OriginatingControlledVocabulary>\n";
-      XMLDoc += "      <inspire_common:Title>AC-MF Data Type</inspire_common:Title>\n";
-      XMLDoc += "      <inspire_common:DateOfCreation>2012-04-20</inspire_common:DateOfCreation>\n";
-      XMLDoc += "      <inspire_common:URI>urn:x-inspire:specification:DS-AC-MF:dataType</inspire_common:URI>\n";
-      XMLDoc += "      <inspire_common:ResourceLocator>\n";
-      XMLDoc += "        <inspire_common:URL></inspire_common:URL>\n";
-      XMLDoc += "      </inspire_common:ResourceLocator>\n";
-      XMLDoc += "    </inspire_common:OriginatingControlledVocabulary>\n";
-      XMLDoc += "    <inspire_common:KeywordValue>prediction</inspire_common:KeywordValue>\n";
-      XMLDoc += "  </inspire_common:Keyword>\n";
-      XMLDoc += "\n";
-      XMLDoc += "  <inspire_common:SupportedLanguages>\n";
-      XMLDoc += "    <inspire_common:DefaultLanguage>\n";
-      XMLDoc += "      <inspire_common:Language>eng</inspire_common:Language>\n";
-      XMLDoc += "    </inspire_common:DefaultLanguage>\n";
-      XMLDoc += "    <inspire_common:SupportedLanguage>\n";
-      XMLDoc += "      <inspire_common:Language>dut</inspire_common:Language>\n";
-      XMLDoc += "    </inspire_common:SupportedLanguage>\n";
-      XMLDoc += "  </inspire_common:SupportedLanguages>\n";
-      XMLDoc += "  <inspire_common:ResponseLanguage>\n";
-      XMLDoc += "    <inspire_common:Language>eng</inspire_common:Language>\n";
-      XMLDoc += "  </inspire_common:ResponseLanguage>\n";
-      XMLDoc += "</inspire_vs:ExtendedCapabilities>\n";
-    }
-
-    // Set INSPIRE SCHEMA
-    /*std::string inspirexsi=
-      "xmlns:inspire_common=\"http://inspire.ec.europa.eu/schemas/common/1.0\"\n"
-      "xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"\n"
-      "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
-    CT::replaceSelf(XMLDoc, "[SCHEMADEFINITION]",inspirexsi.c_str());*/
-
-    std::string wms130xsi = "xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
-    CT::replaceSelf(XMLDoc, "[SCHEMADEFINITION]", wms130xsi.c_str());
-
-    // Set INSPIRE contact information
-    std::string contactInformation = "";
-    CT::printfconcat(contactInformation, "    <ContactPersonPrimary>");
-    CT::printfconcat(contactInformation, "      <ContactPerson>%s</ContactPerson>", inspireMetadata.pointOfContact.c_str());
-    CT::printfconcat(contactInformation, "      <ContactOrganization>%s</ContactOrganization>", inspireMetadata.organisationName.c_str());
-    CT::printfconcat(contactInformation, "    </ContactPersonPrimary>");
-    CT::printfconcat(contactInformation, "    <ContactVoiceTelephone>%s</ContactVoiceTelephone>", inspireMetadata.voiceTelephone.c_str());
-    CT::printfconcat(contactInformation, "    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>", inspireMetadata.email.c_str());
-
-    CT::replaceSelf(XMLDoc, "[CONTACTINFORMATION]", contactInformation.c_str());
-
-    CT::replaceSelf(XMLDoc, "[INSPIRE::ABSTRACT]", inspireMetadata.abstract.c_str());
-#endif
-  } else {
-    // Default WMS 1.3.0 service
-    std::string wms130xsi = "xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
-    CT::replaceSelf(XMLDoc, "[SCHEMADEFINITION]", wms130xsi.c_str());
-    CT::replaceSelf(XMLDoc, "[CONTACTINFORMATION]", "");
-  }
+  // The extended INSPIRE capabilities scenario used to fetch metadata (title,
+  // abstract, contact info) from an admin-configured CSW URL over HTTP via
+  // CHTTPTools/CInspire. That fetch has been removed, so GetCapabilities now
+  // always returns the default WMS 1.3.0 service capabilities.
+  std::string wms130xsi = "xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
+  CT::replaceSelf(XMLDoc, "[SCHEMADEFINITION]", wms130xsi.c_str());
+  CT::replaceSelf(XMLDoc, "[CONTACTINFORMATION]", "");
 
   XMLDoc += "<Layer>\n";
   CT::printfconcat(XMLDoc, "<Title>%s</Title>\n", srvParam->cfg->WMS[0].RootLayer[0].Title[0].elementValue.c_str());
@@ -480,17 +328,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
       }
     }
 
-#ifdef ENABLE_INSPIRE
-
-    if (inspireMetadataIsAvailable) {
-      CT::replaceSelf(XMLDoc, "[INSPIRE::TITLE]", inspireMetadata.title.c_str());
-      XMLDoc += "  <MetadataURL type=\"ISO19115:2005\">\n";
-      XMLDoc += "     <Format>application/gml+xml; version=3.2</Format>\n";
-      CT::printfconcat(XMLDoc, "     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>", datasetCSWURL.c_str());
-      XMLDoc += "  </MetadataURL>\n";
-    }
-
-#endif
     // Make a unique list of all groups
     std::vector<std::string> groupKeys;
     for (size_t lnr = 0; lnr < metadataLayerList.size(); lnr++) {
@@ -580,16 +417,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
               XMLDoc += CT::encodeXml(layer->layerMetadata.abstract).c_str();
               XMLDoc += "</Abstract>\n";
             }
-#ifdef ENABLE_INSPIRE
-            if (inspireMetadataIsAvailable) {
-              // Set INSPIRE layer keywords
-              XMLDoc += "<KeywordList>\n";
-              for (size_t j = 0; j < inspireMetadata.keywords.size(); j++) {
-                CT::printfconcat(XMLDoc, "<Keyword>%s</Keyword>\n", inspireMetadata.keywords[j].c_str()); // TODO
-              }
-              XMLDoc += "</KeywordList>\n";
-            }
-#endif
 
             /*if(layer->layerMetadata.cfgLayer->MetadataURL.size()>0){
                 XMLDoc += "  <KeywordList><Keyword>precipitation_amount</Keyword></KeywordList>\n";
@@ -634,25 +461,6 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
               }
               XMLDoc += dim.values.c_str();
               XMLDoc += "</Dimension>\n";
-            }
-            if (inspireMetadataIsAvailable) {
-              std::string authorityName = "unknown";
-              std::string authorityOnlineResource = "unknown";
-              std::string identifierAuthority = "unknown";
-              std::string identifierId = "unknown";
-              if (srvParam->cfg->WMS[0].Inspire.size() == 1) {
-                if (srvParam->cfg->WMS[0].Inspire[0].AuthorityURL.size() == 1) {
-                  if (!srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.name.empty()) authorityName = srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.name.c_str();
-                  if (!srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.onlineresource.empty())
-                    authorityOnlineResource = srvParam->cfg->WMS[0].Inspire[0].AuthorityURL[0].attr.onlineresource.c_str();
-                }
-                if (srvParam->cfg->WMS[0].Inspire[0].Identifier.size() == 1) {
-                  if (!srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.authority.empty()) identifierAuthority = srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.authority.c_str();
-                  if (!srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.id.empty()) identifierId = srvParam->cfg->WMS[0].Inspire[0].Identifier[0].attr.id.c_str();
-                }
-              }
-              CT::printfconcat(XMLDoc, " <AuthorityURL name=\"%s\"><OnlineResource xlink:href=\"%s\" /></AuthorityURL>\n", authorityName.c_str(), authorityOnlineResource.c_str());
-              CT::printfconcat(XMLDoc, " <Identifier authority=\"%s\">%s</Identifier>\n", identifierAuthority.c_str(), layer->layerMetadata.name.c_str());
             }
             // Styles
             for (const auto &style: layer->layerMetadata.styleList) {

@@ -177,13 +177,11 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, std::stri
   srvParam->geoParams.height = atoi(tileSettings.attr.tileheightpx.c_str());
 
   int index = 0;
-  std::string suffix;
-  suffix = CT::printf("_tmp%d", getpid());
+  std::string suffix = CT::printf("_tmp%d", getpid());
   for (auto destGrid: tileSet) {
     CDataSource tmpDataSource = *dataSourceToTile;
     index++;
-    std::string destFileName;
-    destFileName = CT::printf("%s/%s-%.3d_%.3d_%.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
+    std::string destFileName = CT::printf("%s/%s-%.3d_%.3d_%.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
     std::string tmpFile = destFileName;
     tmpFile += suffix;
     // Only write if the file is not there already

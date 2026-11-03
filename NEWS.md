@@ -1,10 +1,29 @@
+**Version 9.2.1**
+
+- Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
+
+**Version 9.2.0 - 2026-10-28**
+
+- `CImgWarpBilinear` is removed. The keywords `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` still work: the generic warper emulates them. New configs use `RenderMethod` `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md). Test datasets and docs are migrated, with one style per name in GetCapabilities. Legacy output is pinned by `TestsForLegacyBilinearRender`.
+- Fixed legacy `barb`/`vector`/`thin`-only styles painting the whole field under the symbols. They now draw only the symbols.
+- Fixed a crash when drawing contour lines without a `WMS`/`ContourFont` configuration. Contour labels now use the same font lookup as legends, so a `ContourFont` in a dataset is honoured.
+- Fixed triangle drawing issue: translucent colors were blended twice at the shared edges of grid cells. Pixels now belong to exactly one triangle.
+- Drawing now goes through Cairo instead of a first-party rasterizer, so rendered pixels at shape edges can differ by a few color units depending on the installed cairo/pixman version - see [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
+- Faster warping of large grids: quads are culled and rounded once, and tiny quads are skipped early.
+- Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
+- Fallback to NetCDF version 4.9.0 because of https://github.com/KNMI/adaguc-server/issues/812
+- New python library versions, bumped Pillow and brotli
+
 **Version 9.1.0**
 
-- `CImgWarpBilinear` has been removed. The `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` `RenderMethod` keywords are now all drawn by the generic warper, rendering equivalent output. See [Migrating_from_CImgWarpBilinear_to_the_generic_warper.md](/doc/tutorials/Migrating_from_CImgWarpBilinear_to_the_generic_warper.md) for the handful of known rendering differences.
-- `SmoothingFilter` no longer re-sums the full `(2*radius+1)^2` window for every pixel: it now uses a separable sliding-window pass, so its cost no longer grows with the smoothing radius. A `SmoothingFilter` of 32 is now about 12x faster, with unchanged output.
-- Rewrote contour line tracing in the generic warper to avoid gaps on realistic, noisy data.
-- Combined shaded + smoothed + contour styles now render about 30% faster than the old `CImgWarpBilinear`.
+- Security fix: removed the WMS `SLD` parameter and the INSPIRE CSW metadata lookup, which let the server be made to issue outbound HTTP requests to arbitrary URLs (SSRF). `CHTTPTools`, `CSLD` and `CInspire` have been removed; the server no longer makes any outbound network calls on its own.
+- Security fix: `AutoResource`'s `enableautoopendap` option (fetching an arbitrary external OPeNDAP/HTTP(S) URL via the `source=` parameter) is removed for the same SSRF reason. `source=` still works for local files via `enablelocalfile`.
+- Security fix: dimension values (e.g. `TIME=`) are now escaped before being used in SQL queries, closing a SQL injection; the `JSONP=` callback parameter is now restricted to a safe identifier charset.
+- Added a migration tutorial for deprecated `RenderMethod` keywords and keyword lists: [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md)
 - `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
+- Faster rendering with the generic renderer: the per-pixel draw callback is now a template parameter instead of a `std::function`, letting the compiler inline it into the pixel and triangle-fill loops. Speedup grows with image size and contour density - e.g. a 144 megapixel image with shaded contours renders about 8.5% faster. The output is unchanged.
+- Faster WebP encoding: lossy output now imports as YUVA instead of ARGB, which is faster to encode
+- Faster contour line calculation and triangle drawing in the generic data warper
 - Fixed autowms path check failing when the configured data directory contains double slashes
 
 **Version 9.0.2**

@@ -107,8 +107,8 @@ Contents of the `RAD_NL25_PCP_CM.xml` file:
     <ShadeInterval min="55" max="60" fillcolor="#800000" />
     <ShadeInterval min="60" max="65" fillcolor="#ff00ff" />
     <ShadeInterval min="65" max="10000" fillcolor="#800080" label="> 65" />
-    <RenderMethod>nearest,bilinear</RenderMethod>
-    <RenderSettings renderhint="discreteclasses" settings="fast" />
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear" renderhint="discreteclasses" settings="fast" />
     <SmoothingFilter>8</SmoothingFilter>
   </Style>
 
