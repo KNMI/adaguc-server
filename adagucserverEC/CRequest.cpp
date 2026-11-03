@@ -1307,8 +1307,13 @@ int CRequest::process_querystring() {
   StopWatch_Measure("query string processed");
 
   if (!srvParam->styleSheet.empty()) {
-    // The posted style applies to every layer, so only one layer is allowed
-    if (srvParam->requestedLayerNames.size() > 1) {
+    const char *styleSheetEnable = getenv("ADAGUC_STYLESHEET_ENABLE");
+    if (styleSheetEnable == nullptr || std::string_view(styleSheetEnable) != "TRUE") {
+      CDBError("ADAGUC Server: STYLESHEET is not enabled on this server");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (srvParam->requestedLayerNames.size() > 1) {
+      // The posted style applies to every layer, so only one layer is allowed
       CDBError("ADAGUC Server: STYLESHEET can only be used with one layer, got %zu", srvParam->requestedLayerNames.size());
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);

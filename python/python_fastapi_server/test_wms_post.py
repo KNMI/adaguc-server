@@ -28,6 +28,7 @@ def isolate_environment():
 def fixture_client():
     """Testclient with the autoresource configuration"""
     os.environ["ADAGUC_CONFIG"] = os.path.join(os.environ["ADAGUC_PATH"], "data", "config", "adaguc.autoresource.xml")
+    os.environ["ADAGUC_STYLESHEET_ENABLE"] = "TRUE"
     reload(main)
     return TestClient(main.app)
 

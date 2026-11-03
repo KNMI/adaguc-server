@@ -43,6 +43,7 @@ The following exit codes are supported:
 | `ADAGUC_NUMPARALLELPROCESSES` | Number of parallel worker processes used by the adaguc-server. | `4` |
 | `ADAGUC_ONLINERESOURCE`   | Optional override for the [OnlineResource](configuration/OnlineResource.md) URL used by the CGI service. Can also be configured in the XML configuration file. | -|
 | `ADAGUC_PATH`             | Root directory of the adaguc-server code base. Available as`{ADAGUC_PATH}` substitution in configuration files. | Current working directory (`pwd`) |
+| `ADAGUC_STYLESHEET_ENABLE` | Allows clients to post their own style with the `STYLESHEET` parameter when set to `TRUE`. The posted XML is checked against an allowlist; still put a rate or concurrency limit in front of a public server, because a valid style can be expensive to render. | `FALSE` |
 | `ADAGUC_TMP`              | Directory used for temporary files. Available as `{ADAGUC_TMP}` substitution in configuration files. | -|
 | `ADAGUC_TRACE_TIMINGS`    | Enables timing measurements for internal operations such as database queries, file access, and image generation.<br>Results are returned in the `x-trace-timings` HTTP header. | `FALSE` |
 | `ADAGUCENV_ENABLECLEANUP` | Enables or disables automatic cleanup of files based on the retention period.<br>See also [environment.md](/doc/configuration/Environment.md). | -|

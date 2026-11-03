@@ -62,7 +62,7 @@ class TestCustomStyles(unittest.TestCase):
     def setUp(self):
         self.env = make_adaguc_env(DATASET, self.testresultspath, self.expectedoutputsspath)
         update_db(self.env)
-        patcher = patch.dict(os.environ, {"ADAGUC_CONFIG": self.env["ADAGUC_CONFIG"]})
+        patcher = patch.dict(os.environ, {"ADAGUC_CONFIG": self.env["ADAGUC_CONFIG"], "ADAGUC_STYLESHEET_ENABLE": "TRUE"})
         patcher.start()
         self.addCleanup(patcher.stop)
         reload(main)
@@ -101,6 +101,18 @@ class TestCustomStyles(unittest.TestCase):
         for styles in ["", "default", "testdata_style_manycontours/nearest", "does_not_exist"]:
             with self.subTest(styles=styles):
                 self.compare_image(self.post_getmap(VARIANT_STYLE, styles=styles), "test_CustomStyles_post_variant_style.png")
+
+    def test_CustomStyles_disabled_by_default(self):
+        """STYLESHEET is refused unless ADAGUC_STYLESHEET_ENABLE is TRUE"""
+        for value in [None, "FALSE", "true"]:
+            with self.subTest(ADAGUC_STYLESHEET_ENABLE=value):
+                with patch.dict(os.environ):
+                    os.environ.pop("ADAGUC_STYLESHEET_ENABLE", None)
+                    if value is not None:
+                        os.environ["ADAGUC_STYLESHEET_ENABLE"] = value
+                    response = self.post_getmap(VARIANT_STYLE)
+                self.assertEqual(response.status_code, 422)
+                self.assertIn("STYLESHEET is not enabled", response.text)
 
     def test_CustomStyles_variant_is_per_request(self):
         """A posted style only applies to its own request"""

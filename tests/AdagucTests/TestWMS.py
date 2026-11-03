@@ -128,7 +128,7 @@ class TestWMS(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&STYLESHEET="
             + stylesheet,
-            env=self.env,
+            env={**self.env, "ADAGUC_STYLESHEET_ENABLE": "TRUE"},
         )
         self.assertEqual(status, 0)
         self.assertEqual(
