@@ -21,5 +21,19 @@
     <Styles>testdata_style_manycontours</Styles>
   </Layer>
 
+  <!-- Style settings in the layer override its configured style, but not a style posted in STYLESHEET -->
+  <Layer type="database">
+    <Name>testdata_layer_overrides</Name>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Title>Awesome with layer style settings</Title>
+    <Variable>testdata</Variable>
+    <Styles>testdata_style_manycontours</Styles>
+    <RenderMethod>nearest</RenderMethod>
+    <Legend>rainbow</Legend>
+    <Min>0.2</Min>
+    <Max>0.3</Max>
+    <ContourLine width="3" linecolor="#FF00FF" interval="0.01"/>
+  </Layer>
+
   <!-- End of configuration /-->
 </Configuration>

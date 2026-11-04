@@ -232,7 +232,7 @@ The server answers with:
 | Status | Reason |
 |---|---|
 | 422 | `STYLESHEET` is not enabled, the XML is invalid or not allowed, or more than one layer is requested. The body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. |
-| 413 | The POST body is larger than 64 KB. |
+| 413 | The POST body, or the parameters after url encoding, are larger than 64 KB. Encoding makes characters like `<`, `>`, `"` and spaces three bytes, so keep a stylesheet below about 20 KB. |
 | 415 | The POST body is not `application/x-www-form-urlencoded`. |
 
 ## 11. Notes for server administrators

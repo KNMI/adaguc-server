@@ -20,6 +20,7 @@ import main  # pylint: disable=wrong-import-position
 
 DATASET = "adaguc.tests.customstyles"
 GET_MAP_QUERY = "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours&FORMAT=image/png&TRANSPARENT=FALSE"
+GET_LEGEND_GRAPHIC_QUERY = "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=testdata&FORMAT=image/png"
 
 # Same as the dataset's style, without StandardNames
 SAME_STYLE = """
@@ -68,12 +69,19 @@ class TestCustomStyles(unittest.TestCase):
         reload(main)
         self.client = TestClient(main.app)
 
-    def post_getmap(self, stylesheet=None, styles=None):
+    def post_getmap(self, stylesheet=None, styles=None, layers=None):
         params = dict(parse_qsl(GET_MAP_QUERY))
         if styles is not None:
             params["STYLES"] = styles
+        if layers is not None:
+            params["LAYERS"] = layers
         if stylesheet is not None:
             params["STYLESHEET"] = stylesheet
+        return self.client.post("/wms", data=params)
+
+    def post_getlegendgraphic(self, stylesheet):
+        params = dict(parse_qsl(GET_LEGEND_GRAPHIC_QUERY))
+        params["STYLESHEET"] = stylesheet
         return self.client.post("/wms", data=params)
 
     def compare_image(self, response, filename):
@@ -284,6 +292,18 @@ class TestCustomStyles(unittest.TestCase):
             '<Style name="s"><Max>inf</Max></Style>',
             '<Style name="s"><ContourLine classes="0.1,abc"/></Style>',
             f'<Style name="{"x" * 2000}"/>',
+            '<Style name="s"><ShadeInterval>inf</ShadeInterval></Style>',
+            '<Style name="s"><ShadeInterval>-1</ShadeInterval></Style>',
+            '<Style name="s"><Log>-10</Log></Style>',
+            # drawContour has one bit per ContourLine
+            '<Style name="s">' + '<ContourLine interval="0.1"/>' * 33 + "</Style>",
+            # A legend that is neither configured nor posted
+            '<Style name="s"><Legend>does_not_exist</Legend></Style>',
+            # Only the text before a comment is read as value, so it must be the text that is checked
+            '<Style name="s"><SmoothingFilter>100000<!---->e-4</SmoothingFilter></Style>',
+            '<Style name="s"><ContourIntervalL>-1<!---->e-999</ContourIntervalL></Style>',
+            # Every IncludeStyle adds the included elements again
+            '<Style name="s">' + '<IncludeStyle name="testdata_style_manycontours"/>' * 5 + "</Style>",
         ]:
             with self.subTest(stylesheet=stylesheet[:120]):
                 self.assertEqual(self.post_getmap(stylesheet).status_code, 422)
@@ -292,6 +312,52 @@ class TestCustomStyles(unittest.TestCase):
         """The POST body is limited, it is refused before it is read completely"""
         response = self.post_getmap("<!--" + "x" * 70000 + "-->")
         self.assertEqual(response.status_code, 413)
+
+    def test_CustomStyles_rejects_too_large_query_string(self):
+        """The forwarded query string is encoded again: a space in the body becomes three bytes"""
+        response = self.post_getmap("<!--" + " " * 30000 + "-->")
+        self.assertEqual(response.status_code, 413)
+
+    def test_CustomStyles_point_cells_stay_in_bounds(self):
+        """The point cell matrix is indexed at the text position, which can be far outside the image"""
+        for point in [
+            '<Point textradius="1000" maxpointspercell="1" maxpointcellsize="1000"/>',
+            '<Point maxpointcellsize="0" maxpointspercell="1"/>',
+        ]:
+            with self.subTest(point=point):
+                response = self.post_getmap(f'<Style name="s"><DataPostProc algorithm="pointsfromgrid" a="40" select="testdata"/>{point}</Style>')
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.headers["content-type"], "image/png")
+
+    def test_CustomStyles_accepts_32_contourlines(self):
+        response = self.post_getmap('<Style name="s"><Legend>rainbow</Legend>' + '<ContourLine interval="0.1"/>' * 32 + "</Style>")
+        self.assertEqual(response.status_code, 200, response.text)
+
+    def test_CustomStyles_layer_settings_do_not_override_posted_style(self):
+        """Style settings in the layer (RenderMethod, Legend, Min, Max, ContourLine) apply to configured styles only"""
+        self.assertNotEqual(self.post_getmap(layers="testdata_layer_overrides").content, self.post_getmap().content)
+        self.compare_image(self.post_getmap(VARIANT_STYLE, layers="testdata_layer_overrides"), "test_CustomStyles_post_variant_style.png")
+
+    def test_CustomStyles_legend_with_many_classes(self):
+        """A discrete legend with thousands of classes draws the first ones, like for a configured style"""
+        response = self.post_getlegendgraphic(
+            '<Style name="s"><Legend fixedclasses="true">rainbow</Legend><RenderMethod>shaded</RenderMethod><Min>0</Min><Max>0.5</Max><ShadeInterval>0.0001</ShadeInterval></Style>'
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.headers["content-type"], "image/png")
+
+    def test_CustomStyles_legend_loops_end(self):
+        """Values that used to make the legend loops endless give an error instead of a timeout"""
+        for stylesheet in [
+            # 1e9f + 1 == 1e9f, the class loop would not advance
+            '<Style name="s"><Legend fixedclasses="true">rainbow</Legend><RenderMethod>shaded</RenderMethod><Min>1e9</Min><Max>1000000240</Max><ContourIntervalL>1</ContourIntervalL></Style>',
+            # The smallest value of the log legend underflows to 0
+            '<Style name="s"><Legend>rainbow</Legend><Log>10</Log><Scale>1</Scale><Offset>1000</Offset></Style>',
+        ]:
+            with self.subTest(stylesheet=stylesheet):
+                response = self.post_getlegendgraphic(stylesheet)
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertIn("GetLegendGraphic Request failed", response.text)
 
     def test_CustomStyles_include_configured_style(self):
         """A posted style can include a configured style, also when it has the same name"""

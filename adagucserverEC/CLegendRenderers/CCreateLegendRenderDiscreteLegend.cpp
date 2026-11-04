@@ -2,6 +2,7 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 #include "numericutils.h"
+#include <algorithm>
 #include <cstring>
 #include <cmath>
 
@@ -355,12 +356,12 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
      * Discrete blocks based on continous interval
      */
 
-    // A negative or tiny interval would never end the class loops below (float j += legendInterval)
-    if (!(legendInterval > 0) || (iMax - iMin) / legendInterval > 1000) {
+    // An interval that does not change iMin (float j += legendInterval) would only repeat the first class
+    if (!(legendInterval > 0) || !std::isfinite(iMin) || !std::isfinite(iMax) || iMin + legendInterval == iMin) {
       CDBError("Invalid legendInterval %f for range %f - %f", legendInterval, iMin, iMax);
       return 1;
     }
-    numClasses = int((iMax - iMin) / legendInterval);
+    numClasses = int(std::clamp(double(iMax - iMin) / legendInterval, 1.0, 1e6));
 
     int classSizeY = ((legendHeight - 24) / (numClasses));
     if (classSizeY > 12) classSizeY = 12;
@@ -399,7 +400,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
 
     std::string minText, maxText;
-    for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
+    for (float j = iMin; j < iMax + legendInterval && currentIteration < maxIterations; j = j + legendInterval) {
+      currentIteration++;
       // Look for the max width for the min value in this interval
       minText = CT::formatFloat(floatFormat, j);
       int widthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
@@ -412,6 +414,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
 
     int classNr = 0;
+    currentIteration = 0;
     for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
       currentIteration++;
       if (currentIteration > maxIterations) break;

@@ -184,6 +184,11 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     std::vector<std::string> logLabels;
     std::vector<double> tickValues;
 
+    // nextTick multiplies, so starting at 0 (for example when min underflows) the ticks would never reach max
+    if (!(min > 0)) {
+      CDBError("Log legend needs a minimum above 0, got %g", min);
+      return 1;
+    }
     double tick = min;
     while (tick < max) {
       logLabels.push_back(formatTickLabel(textformatting, tick, min, max, tickRound));

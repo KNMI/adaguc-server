@@ -108,7 +108,7 @@ std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, boo
   for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
     filteredPointIndices.push_back(pointIndex);
   }
-  if (!doThinning) {
+  if (!doThinning || filteredPointIndices.empty()) {
     // Use all indices instead
     return filteredPointIndices;
   }
@@ -164,6 +164,7 @@ void renderVectorPoints(const std::vector<size_t> &thinnedPointIndexList, CImage
   }
 
   for (auto pointIndex: thinnedPointIndexList) {
+    if (pointIndex >= p1->size() || pointIndex >= p2->size()) continue;
     auto pointStrength = &(*p1)[pointIndex];
     auto pointDirection = &(*p2)[pointIndex];
     auto strength = pointStrength->v;
@@ -409,7 +410,7 @@ void renderSinglePoints(const std::vector<size_t> &thinnedPointIndexList, CDataS
   int doneMatrixW = 2;
   int doneMatrixMaxPerSector = -1;
 
-  if (pointStyle.maxPointCellSize != -1) {
+  if (pointStyle.maxPointCellSize > 0) {
     doneMatrixH = pointStyle.maxPointCellSize;
     doneMatrixW = pointStyle.maxPointCellSize;
   }
@@ -463,8 +464,9 @@ void renderSinglePoints(const std::vector<size_t> &thinnedPointIndexList, CDataS
 
       if (!drawZoomablePoint) {
         size_t doneMatrixPointer = 0;
-        if (x >= 0 && station_y >= 0 && x < drawImage->geoParams.width && station_y < drawImage->geoParams.height) {
-          doneMatrixPointer = int((float(x) / float(drawImage->geoParams.width)) * float(doneMatrixW)) + int((float(y) / float(drawImage->geoParams.height)) * float(doneMatrixH)) * doneMatrixH;
+        // The cell is taken at the text position y, which can be outside the image when station_y is not
+        if (x >= 0 && station_y >= 0 && y >= 0 && x < drawImage->geoParams.width && station_y < drawImage->geoParams.height && y < drawImage->geoParams.height) {
+          doneMatrixPointer = int((float(x) / float(drawImage->geoParams.width)) * float(doneMatrixW)) + int((float(y) / float(drawImage->geoParams.height)) * float(doneMatrixH)) * doneMatrixW;
           if (int(doneMatrix[doneMatrixPointer]) < 200) {
             doneMatrix[doneMatrixPointer]++;
           }
@@ -534,6 +536,7 @@ void renderSingleVolumes(const std::vector<size_t> &thinnedPointIndexList, CData
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     for (auto pointIndex: thinnedPointIndexList) {
+      if (pointIndex >= pts->size()) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -562,6 +565,7 @@ void renderSingleSymbols(const std::vector<size_t> &thinnedPointIndexList, CData
     auto dataType = pointTypeAttr != nullptr ? pointTypeAttr->getDataAt<int>(0) : CDF_FLOAT;
 
     for (auto pointIndex: thinnedPointIndexList) {
+      if (pointIndex >= pts->size()) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (dataType != CDF_STRING && shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -597,6 +601,7 @@ void renderSingleDiscs(const std::vector<size_t> &thinnedPointIndexList, CDataSo
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     for (auto pointIndex: thinnedPointIndexList) {
+      if (pointIndex >= pts->size()) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -623,6 +628,7 @@ void renderSingleDot(const std::vector<size_t> &thinnedPointIndexList, CDataSour
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     for (auto pointIndex: thinnedPointIndexList) {
+      if (pointIndex >= pts->size()) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;

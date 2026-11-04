@@ -22,21 +22,29 @@ logger = logging.getLogger(__name__)
 
 def build_query_string(params) -> str:
     """
-    Builds the QUERY_STRING for adaguc-server from already decoded (key, value) pairs
+    Builds the QUERY_STRING for adaguc-server from already decoded (key, value) pairs.
+    Keys and values are encoded again: they may contain &, =, %, + and newlines, adaguc-server decodes them per parameter.
     """
     query_string = ""
     for k, query_param in params:
         param_parts = k.split("=")
         # Hack for urlencode dataset= parametwer (i.e. dataset%03DHARM_N25)
         if len(param_parts) == 2 and param_parts[0].upper() == "DATASET":
-            query_string += f"&{param_parts[0]}={param_parts[1]}"
-        elif k.upper() == "STYLESHEET":
-            # Fully encoded: may contain &, % and newlines, adaguc-server decodes it per parameter
-            query_string += f"&{k}={quote(query_param, safe='')}"
+            query_string += f"&{quote(param_parts[0], safe='')}={quote(param_parts[1], safe='')}"
         else:
-            query_param = query_param.replace("+", "%2B")
-            query_string += f"&{k}={query_param}"
+            query_string += f"&{quote(k, safe='')}={quote(query_param, safe='')}"
     return query_string
+
+
+def merge_params(query_params, body_params):
+    """
+    Merges POST body parameters over the query parameters. Keys are case insensitive for adaguc-server,
+    so a key in the body replaces the same key in any case from the query.
+    """
+    merged = {}
+    for k, v in list(query_params) + list(body_params):
+        merged[k.upper()] = (k, v)
+    return list(merged.values())
 
 
 async def read_limited_body(req: Request, limit: int) -> bytes | None:
@@ -73,8 +81,8 @@ async def handle_wms(req: Request):
         if body is None:
             return Response(content=f"Request body too large, maximum is {MAX_FORK_REQUEST_BYTES} bytes", status_code=413)
         body = body.decode("utf-8", errors="replace")
-        # Last value wins for repeated keys, same as for query parameters
-        params += list(dict(parse_qsl(body, keep_blank_values=True)).items())
+        # Last value wins for repeated keys, also across query and body
+        params = merge_params(params, parse_qsl(body, keep_blank_values=True))
 
     adaguc_instance = setup_adaguc()
 
@@ -86,6 +94,10 @@ async def handle_wms(req: Request):
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     query_string = build_query_string(params)
+    # Encoding can make the query string up to three times as long as the body. It must fit in a fork server request,
+    # and without fork server in one environment variable of the subprocess (128 KiB on Linux).
+    if len(query_string) > MAX_FORK_REQUEST_BYTES:
+        return Response(content=f"Request parameters too large, maximum is {MAX_FORK_REQUEST_BYTES} bytes encoded", status_code=413)
 
     # Run adaguc-server
     status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False, showLog=False)

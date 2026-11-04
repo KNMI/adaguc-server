@@ -394,6 +394,16 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
     return 1;
   }
   for (auto &style: posted.Style) {
+    // Every IncludeStyle adds the elements of the included style again
+    if (style.IncludeStyle.size() > 4) {
+      CDBError("STYLESHEET may contain at most 4 IncludeStyle elements, got %zu", style.IncludeStyle.size());
+      return 1;
+    }
+    // drawContour has one bit per contour line
+    if (style.ContourLine.size() > 32) {
+      CDBError("STYLESHEET may contain at most 32 ContourLine elements, got %zu", style.ContourLine.size());
+      return 1;
+    }
     for (auto &symbolInterval: style.SymbolInterval) {
       if (!resolveStyleSheetPngFile(symbolInterval.attr.file)) return 1;
     }
@@ -418,6 +428,15 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
       *it = postedLegend;
     } else {
       cfg->Legend.push_back(postedLegend);
+    }
+  }
+  // A Legend of the posted style must be configured or posted
+  for (const auto &style: posted.Style) {
+    for (const auto &legend: style.Legend) {
+      if (!legend.elementValue.empty() && getServerLegendIndexByName(legend.elementValue) < 0) {
+        CDBError("STYLESHEET: Legend [%s] is not configured or posted", legend.elementValue.c_str());
+        return 1;
+      }
     }
   }
   // Appended, not looked up by name: CDataSource::getStyle uses it for every layer

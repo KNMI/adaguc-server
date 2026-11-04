@@ -110,13 +110,14 @@ namespace {
         {"Offset", {.text = NUMBER}},
         {"Min", {.text = NUMBER}},
         {"Max", {.text = NUMBER}},
-        {"Log", {.text = NUMBER}},
+        {"Log", {.text = range(0, LARGE)}},
         {"ContourIntervalL", {.text = range(0, LARGE)}},
         {"ContourIntervalH", {.text = range(0, LARGE)}},
         {"SmoothingFilter", {.text = range(0, 20)}},
         {"RenderMethod", {.text = TEXT}},
         {"ValueRange", {.attributes = {{"min", NUMBER}, {"max", NUMBER}}}},
-        {"ShadeInterval", {.attributes = {{"min", NUMBER}, {"max", NUMBER}, {"label", TEXT}, {"fillcolor", COLOR}, {"bgcolor", COLOR}, {"showinlegend", TEXT}}}},
+        // The element text is the interval of a discrete legend
+        {"ShadeInterval", {.attributes = {{"min", NUMBER}, {"max", NUMBER}, {"label", TEXT}, {"fillcolor", COLOR}, {"bgcolor", COLOR}, {"showinlegend", TEXT}}, .text = range(0, LARGE)}},
         {"SymbolInterval",
          {.attributes = {{"min", NUMBER}, {"max", NUMBER}, {"file", PNG_FILE}, {"binary_and", range(0, 2147483647)}, {"offset_x", range(-1000, 1000)}, {"offset_y", range(-1000, 1000)}}}},
         {"ContourLine",
@@ -178,12 +179,11 @@ namespace {
     return end == trimmed.c_str() + trimmed.size() && !std::isnan(value);
   }
 
+  // The text as parseConfig reads it (CXMLSerializerInterface.cpp): only a first child that is text. Text after a comment
+  // or CDATA is not read, so it must not be validated either: <Max>1<!---->e9</Max> would pass as 1e9 and be used as 1.
   std::string textContent(xmlNode *node) {
-    std::string text;
-    for (xmlNode *child = node->children; child != nullptr; child = child->next) {
-      if ((child->type == XML_TEXT_NODE || child->type == XML_CDATA_SECTION_NODE) && child->content != nullptr) text += (const char *)child->content;
-    }
-    return text;
+    xmlNode *child = node->children;
+    return child != nullptr && child->type == XML_TEXT_NODE && child->content != nullptr ? (const char *)child->content : "";
   }
 
   // Walks the Style and Legend elements. A posted STYLESHEET is untrusted: everything must be allowed, and the walk stops at the first issue.
