@@ -1133,11 +1133,11 @@ int CDBAdapterPostgreSQL::storeLayerMetadataBatch(const char *datasetName, const
   const auto updateTime = dataBaseConnection->escapeString(CTime::currentDateTime());
   std::string query = "INSERT INTO layermetadata (datasetname, layername, metadatakey, updatetime, blob) VALUES ";
   bool first = true;
-  for (const auto &entry: metadata) {
+  for (const auto &[metadata_key, metadata_blob]: metadata) {
     if (!first) query += ',';
     first = false;
-    CT::printfconcat(query, "('%s','%s','%s','%s','%s')", escapedDatasetName.c_str(), escapedLayerName.c_str(), dataBaseConnection->escapeString(entry.first).c_str(), updateTime.c_str(),
-                     dataBaseConnection->escapeString(entry.second).c_str());
+    CT::printfconcat(query, "('%s','%s','%s','%s','%s')", escapedDatasetName.c_str(), escapedLayerName.c_str(), dataBaseConnection->escapeString(metadata_key).c_str(), updateTime.c_str(),
+                     dataBaseConnection->escapeString(metadata_blob).c_str());
   }
   query += " ON CONFLICT (datasetname, layername, metadatakey) DO UPDATE SET blob = excluded.blob, updatetime = excluded.updatetime;";
 
