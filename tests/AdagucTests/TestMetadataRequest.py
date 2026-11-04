@@ -6,6 +6,7 @@ import json
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
+    clean_postgres,
     make_adaguc_env,
     run_adaguc_and_compare_json,
     update_db,
@@ -26,6 +27,30 @@ class TestMetadataRequest:
 
     reset_datasetsloaded()
     AdagucTestTools().mkdir_p(testresultspath)
+
+    def test_metadata_layer_title_with_apostrophe(self):
+        """A layer title containing an apostrophe is stored and returned intact."""
+        clean_postgres()
+        env = make_adaguc_env("adaguc.testmetadata_quoted_title", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, force_update=True)
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_layer_title_with_apostrophe.json",
+            "dataset=adaguc.testmetadata_quoted_title&service=WMS&request=GetMetadata&format=application/json&layer=data",
+        )
+
+    def test_metadata_refresh_after_single_file_scans(self):
+        """Metadata reflects the available times after each file is ingested."""
+        clean_postgres()
+        env = make_adaguc_env("adaguc.testtimeseriescached", self.testresultspath, self.expectedoutputsspath)
+        query = "dataset=adaguc.testtimeseriescached&service=WMS&request=GetMetadata&format=application/json"
+        basepath = ADAGUC_PATH + "/data/datasets/netcdf_5dims/"
+
+        update_db(env, filepath=basepath + "netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc", force_update=True)
+        run_adaguc_and_compare_json(env, "test_metadata_refresh_after_first_file.json", query)
+
+        update_db(env, filepath=basepath + "netcdf_5dims_seq2/nc_5D_20170101001500-20170101002500.nc", force_update=True)
+        run_adaguc_and_compare_json(env, "test_metadata_refresh_after_second_file.json", query)
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl(self):
         """
