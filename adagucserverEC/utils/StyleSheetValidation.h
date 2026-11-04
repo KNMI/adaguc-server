@@ -7,7 +7,8 @@
  * Checks a STYLESHEET, wrapped in <Configuration>, against the allowlist of what a client may post:
  * only known Style/Legend elements and attributes, each with a typed and bounded value.
  * Refused are, amongst others: file paths (except png files, which applyStyleSheet resolves), fonts,
- * unsafe printf formats, IncludeStyle, DataPostProc other than pointsfromgrid/beaufort/clipminmax, and DOCTYPEs.
+ * DataPostProc other than pointsfromgrid/beaufort/clipminmax, and DOCTYPEs. printf formats are accepted,
+ * the renderers print them with CT::formatFloat, which falls back to %g for unsafe formats.
  * Logs the reason with CDBError.
  * @return true when the stylesheet may be applied
  */

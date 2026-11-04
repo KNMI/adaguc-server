@@ -18,7 +18,7 @@ namespace {
     Number,      // Finite number within [min, max]
     NumberList,  // Comma separated Numbers
     Color,       // #RRGGBB or #RRGGBBAA
-    FloatFormat, // printf format, see CT::isSafeFloatFormat
+    FloatFormat, // printf format, length limited. Every renderer prints it with CT::formatFloat, which falls back to %g for unsafe formats
     PngFile,     // Checked and resolved by CServerParams::applyStyleSheet
     Pattern,     // FeatureInterval regex, without backslashes (no back references or bounds)
     Algorithm,   // DataPostProc algorithm without file or layer access
@@ -49,7 +49,8 @@ namespace {
   ValueRule range(double min, double max) { return {ValueType::Number, min, max}; }
 
   // Every element and attribute a client may post. Missing on purpose: file and font attributes, symbol,
-  // labelpropertyformat (applied to strings and integers too), IncludeStyle and most DataPostProc attributes.
+  // labelpropertyformat (applied to strings and integers too) and most DataPostProc attributes.
+  // IncludeStyle may only name a configured style, see CServerParams::applyStyleSheet.
   const std::map<std::string, ElementRule, std::less<>> &elementRules() {
     static const std::map<std::string, ElementRule, std::less<>> rules = {
         {"Configuration", {.children = {"Style", "Legend"}}},
@@ -57,7 +58,7 @@ namespace {
          {.attributes = {{"name", TEXT}, {"title", TEXT}, {"abstract", TEXT}},
           .children = {"Thinning", "Point", "Vector", "FilterPoints", "Legend", "Scale", "Offset", "Min", "Max", "ContourIntervalL", "ContourIntervalH", "Log", "ValueRange", "RenderMethod",
                        "ShadeInterval", "SymbolInterval", "ContourLine", "NameMapping", "SmoothingFilter", "StandardNames", "LegendGraphic", "FeatureInterval", "Stippling", "RenderSettings",
-                       "DataPostProc"}}},
+                       "DataPostProc", "IncludeStyle"}}},
         {"Legend",
          {.attributes = {{"name", TEXT}, {"type", TEXT}, {"tickround", NUMBER}, {"tickinterval", range(0, LARGE)}, {"fixedclasses", TEXT}, {"fixed", TEXT}, {"textformatting", FORMAT}},
           .text = TEXT,
@@ -163,6 +164,7 @@ namespace {
                          {"interpolationmethod", TEXT},
                          {"drawgridboxoutline", TEXT},
                          {"drawgrid", TEXT}}}},
+        {"IncludeStyle", {.attributes = {{"name", TEXT}}}},
         {"DataPostProc", {.attributes = {{"algorithm", {ValueType::Algorithm}}, {"a", NUMBER}, {"b", NUMBER}, {"select", TEXT}, {"units", TEXT}}}},
     };
     return rules;
@@ -197,7 +199,7 @@ namespace {
     case ValueType::Color:
       return (value.size() == 7 || value.size() == 9) && value[0] == '#' && value.find_first_not_of("0123456789abcdefABCDEF", 1) == std::string_view::npos;
     case ValueType::FloatFormat:
-      return CT::isSafeFloatFormat(value);
+      return value.size() <= 64;
     case ValueType::Pattern:
       return value.size() <= 256 && value.find('\\') == std::string_view::npos;
     case ValueType::Algorithm:
