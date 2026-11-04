@@ -1,6 +1,7 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
+#include "Definitions.h"
 #include "numericutils.h"
 #include <algorithm>
 #include <cstring>
@@ -361,7 +362,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       CDBError("Invalid legendInterval %f for range %f - %f", legendInterval, iMin, iMax);
       return 1;
     }
-    numClasses = int(std::clamp(double(iMax - iMin) / legendInterval, 1.0, 1e6));
+    // More classes than the legend is high all get a height of 0, the clamp keeps the conversion to int defined
+    numClasses = int(std::clamp(double(iMax - iMin) / legendInterval, 1.0, double(MAX_IMAGE_HEIGHT)));
 
     int classSizeY = ((legendHeight - 24) / (numClasses));
     if (classSizeY > 12) classSizeY = 12;

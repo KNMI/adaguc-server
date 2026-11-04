@@ -185,7 +185,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     std::vector<double> tickValues;
 
     // nextTick multiplies, so starting at 0 (for example when min underflows) the ticks would never reach max
-    if (!(min > 0)) {
+    if (min <= 0 || std::isnan(min)) {
       CDBError("Log legend needs a minimum above 0, got %g", min);
       return 1;
     }

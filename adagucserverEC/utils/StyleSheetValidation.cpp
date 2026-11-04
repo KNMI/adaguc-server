@@ -51,6 +51,7 @@ namespace {
   // Every element and attribute a client may post. Missing on purpose: file and font attributes, symbol,
   // labelpropertyformat (applied to strings and integers too) and most DataPostProc attributes.
   // IncludeStyle may only name a configured style, see CServerParams::applyStyleSheet.
+  // Element and attribute names follow CServerConfig_CPPXSD.h. An attribute added there is refused for STYLESHEET until it is added here.
   const std::map<std::string, ElementRule, std::less<>> &elementRules() {
     static const std::map<std::string, ElementRule, std::less<>> rules = {
         {"Configuration", {.children = {"Style", "Legend"}}},
