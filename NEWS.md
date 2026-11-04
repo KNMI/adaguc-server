@@ -1,8 +1,8 @@
 **Version 9.3.0**
 
 - WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.
-- New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only. Only one layer and one `Style` are allowed. The XML is checked against an allowlist of elements and attributes with typed, bounded values (see `utils/StyleSheetValidation.cpp`); anything else is refused with 422. Not allowed are, amongst others, fonts, `labelpropertyformat` and `DataPostProc` other than `pointsfromgrid`, `beaufort` and `clipminmax`. `IncludeStyle` may only name a configured style. printf formats like `textformat` are accepted; an unsafe format is printed with `%g`. `SymbolInterval file` and `LegendGraphic value` must be an existing `.png` in `{ADAGUC_PATH}data/symbols`, `{ADAGUC_PATH}data/resources` or `{ADAGUC_DATASET_DIR}`. A `POST` body is limited to 64 KB (413).
-- `adagucserver --lint` now also checks the values in configured `Style` and `Legend` elements with the `STYLESHEET` rules (numbers, ranges, colors, number lists), and reports printf formats that are printed with `%g`. Files, fonts and all `DataPostProc` algorithms remain allowed in configuration files.
+- New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only.
+- `adagucserver --lint` now also checks the values in configured `Style` and `Legend` elements with the `STYLESHEET` rules .
 
 
 **Version 9.2.1**
