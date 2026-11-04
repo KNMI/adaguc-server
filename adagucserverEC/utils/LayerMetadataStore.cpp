@@ -40,15 +40,15 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["hidden"] = metadataLayer->layerMetadata.hidden;
     layerMetadataItem["enable_edr"] = metadataLayer->layerMetadata.enable_edr;
     json latlonbox;
-    for (double &j: metadataLayer->layerMetadata.dfLatLonBBOX) {
-      latlonbox.push_back(j);
+    for (double &bboxItemValue: metadataLayer->layerMetadata.dfLatLonBBOX) {
+      latlonbox.push_back(bboxItemValue);
     }
     layerMetadataItem["latlonbox"] = latlonbox;
 
     json gridspec;
     json bbox;
-    for (double &j: metadataLayer->layerMetadata.dfBBOX) {
-      bbox.push_back(j);
+    for (double &bboxitemValue: metadataLayer->layerMetadata.dfBBOX) {
+      bbox.push_back(bboxitemValue);
     }
     gridspec["bbox"] = bbox;
     gridspec["width"] = metadataLayer->layerMetadata.width;

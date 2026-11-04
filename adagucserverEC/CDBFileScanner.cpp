@@ -795,9 +795,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
             filesToDeleteFromDB.clear();
             CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
             CDBDebug("The database contains %lu files, found %lu files in DB which are missing on filesystem.", values->records.size(), filesToDeleteFromDB.size());
-            for (const auto &j: filesToDeleteFromDB) {
-              CDBDebug("Deleting file %s from db", j.c_str());
-              CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), j.c_str());
+            for (const auto &filename: filesToDeleteFromDB) {
+              CDBDebug("Deleting file %s from db", filename.c_str());
+              CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), filename.c_str());
             }
           }
 
