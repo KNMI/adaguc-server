@@ -10,6 +10,7 @@
 #include "CDFObjectStore.h"
 #include "CTString.h"
 #include "CTime.h"
+#include <unistd.h>
 
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {
