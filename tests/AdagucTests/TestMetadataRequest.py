@@ -28,6 +28,17 @@ class TestMetadataRequest:
     reset_datasetsloaded()
     AdagucTestTools().mkdir_p(testresultspath)
 
+    def test_metadata_layer_title_with_apostrophe(self):
+        """A layer title containing an apostrophe is stored and returned intact."""
+        clean_postgres()
+        env = make_adaguc_env("adaguc.testmetadata_quoted_title", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, force_update=True)
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_layer_title_with_apostrophe.json",
+            "dataset=adaguc.testmetadata_quoted_title&service=WMS&request=GetMetadata&format=application/json&layer=data",
+        )
+
     def test_metadata_refresh_after_single_file_scans(self):
         """Metadata reflects the available times after each file is ingested."""
         clean_postgres()
