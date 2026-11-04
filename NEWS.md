@@ -1,4 +1,4 @@
-**Version 9.3.0**
+**Version X.Y.Z**
 
 - WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.
 - New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only.
