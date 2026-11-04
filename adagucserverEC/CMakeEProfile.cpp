@@ -5,6 +5,7 @@
 #include "CStopWatch.h"
 #include "CXMLParser.h"
 #include "CDataSource.h"
+#include "utils/NodataUtils.h"
 #include "CDrawImage.h"
 #include "CDebugger.h"
 #include "CImageDataWriter.h"
@@ -421,8 +422,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
 int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject *cdfObject, const char *varName, CColor c, size_t NrOfDates, double startGraphTime, double startGraphRange,
                                                 double graphWidth, double graphHeight, int timeWidth) {
 
-  std::string newVarName;
-  newVarName = CT::printf("%s", varName);
+  std::string newVarName = CT::printf("%s", varName);
   CDF::Variable *plotHeightRetrievalVariable = cdfObject->getVariableNE(newVarName.c_str());
   if (plotHeightRetrievalVariable != NULL) {
     int status = plotHeightRetrievalVariable->readData(CDF_SHORT);
@@ -672,7 +672,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   double dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  float nodataValue = (float)dfNodataValue;
   float legendValueRange = styleConfiguration->hasLegendValueRange;
   float legendLowerRange = styleConfiguration->legendLowerRange;
   float legendUpperRange = styleConfiguration->legendUpperRange;
@@ -724,14 +723,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
           size_t p = range + time * count[1];
           float val = data[p];
 
-          bool isNodata = false;
-          if (hasNodataValue) {
-            if (val == nodataValue) isNodata = true;
-          }
-          if (!(val == val)) isNodata = true;
-          if (!isNodata)
-            if (legendValueRange)
-              if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
+          const bool isNodata = isNodataValue(val, hasNodataValue, dfNodataValue, legendValueRange, legendLowerRange, legendUpperRange);
           if (!isNodata) {
             if (legendLog != 0) {
               if (val > 0) {

@@ -683,8 +683,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                   if (dataSource->getDataObject(o)->hasStatusFlag) {
                     // Add status flag
-                    std::string flagMeaning;
-                    flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
                     element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
                     element.units = "";
                   } else {

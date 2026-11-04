@@ -881,8 +881,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (x != -1 && y != -1) {
     singleCellMode = true;
   }
-  std::string dataSourceFilename;
-  dataSourceFilename = (dataSource->getFileName());
+  std::string dataSourceFilename = dataSource->getFileName();
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   // Use autoscale of legendcolors when the legendscale factor has been set to zero.
@@ -1252,12 +1251,12 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_FLOAT) {
           // Preserve the original nodata value, so it remains a nice short rounded number.
-          float fNoData = (float)dataSource->getDataObject(varNr)->dfNodataValue;
-          float fscale_factor = (float)dfscale_factor;
-          float fadd_offset = (float)dfadd_offset;
+          auto fNoData = (float)dataSource->getDataObject(varNr)->dfNodataValue;
+          auto fscale_factor = (float)dfscale_factor;
+          auto fadd_offset = (float)dfadd_offset;
           // packed data to be unpacked to FLOAT:
           if (fscale_factor != 1.0f || fadd_offset != 0.0f) {
-            float *_data = (float *)dataSource->getDataObject(varNr)->cdfVariable->data;
+            auto  _data = (float *)dataSource->getDataObject(varNr)->cdfVariable->data;
             size_t l = dataSource->getDataObject(varNr)->cdfVariable->getSize();
             for (size_t j = 0; j < l; j++) {
               _data[j] = _data[j] * fscale_factor + fadd_offset;

@@ -1009,16 +1009,14 @@ void CDrawImage::_drawBarb(int x, int y, double uncorrectedDirection, double vie
     bool showDirection = false;
     bool drawOutline = outlineWidth > .01;
     if (showDirection == false) {
-      std::string text;
-      text = CT::printf("%d", strengthInKnots);
+      std::string text = CT::printf("%d", strengthInKnots);
 
       // If speed is really low, draw the text below the circle
       double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
       this->_drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), fontSize, 1 * drawOutline, outlineColor, barbTextColor);
     } else {
       double degrees = fmod(((270 - ((uncorrectedDirection) * (180 / M_PI)))), 360);
-      std::string text;
-      text = CT::printf("%02d %03d°", strengthInKnots, int(round(degrees)));
+      std::string text = CT::printf("%02d %03d°", strengthInKnots, int(round(degrees)));
 
       // If speed is really low, draw the text below the circle
       double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;

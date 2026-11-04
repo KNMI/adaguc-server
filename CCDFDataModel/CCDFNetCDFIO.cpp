@@ -765,8 +765,7 @@ nc_type CDFNetCDFWriter::NCtypeConversion(CDFType type) {
 }
 
 std::string CDFNetCDFWriter::NCtypeConversionToString(CDFType type) {
-  std::string r;
-  r = "NC_DOUBLE";
+  std::string r = "NC_DOUBLE";
   if (type == CDF_BYTE) r = "NC_BYTE";
   if (type == CDF_UBYTE) r = "NC_UBYTE";
   if (type == CDF_CHAR) r = "NC_CHAR";
