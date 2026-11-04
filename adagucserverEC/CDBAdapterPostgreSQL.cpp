@@ -1112,10 +1112,6 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   return 0;
 }
 
-int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadataBlob) {
-  return storeLayerMetadataBatch(datasetName, layerName, {{metadataKey, metadataBlob}});
-}
-
 int CDBAdapterPostgreSQL::storeLayerMetadataBatch(const char *datasetName, const char *layerName, const std::map<std::string, std::string> &metadata) {
   if (metadata.empty()) return 0;
   StopWatch_Measure(">CDBAdapterPostgreSQL::storeLayerMetadataBatch");
