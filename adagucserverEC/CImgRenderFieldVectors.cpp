@@ -133,6 +133,9 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
     for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
       size_t p = size_t(x - dPixelExtent[0]) + ((y - dPixelExtent[1]) * gridWidth);
       // Evaluate the rotation at the grid point (the cell centre), where the u/v value is defined and where barbs are drawn.
+      // This assumes u and v share the grid points given by the coordinate variables (Arakawa A, not staggered). That holds
+      // for HARMONIE output as encoded in its GRIB files: u, v and the mass fields have one grid definition without offsets.
+      // Staggered (e.g. Arakawa C) u/v fields are not supported.
       f8point gridPoint = {.x = dataSource->dfCellSizeX * (x + 0.5) + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * (y + 0.5) + dataSource->dfBBOX[3]};
       f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridPoint, gridYStep, warper, gridRelative);
       uValues[p] = newSpeed.u;
