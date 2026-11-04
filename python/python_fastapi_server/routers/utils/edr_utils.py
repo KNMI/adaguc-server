@@ -911,24 +911,21 @@ def supports_section(metadata):
     return vertical_dimension(metadata) is not None and "time" in dims
 
 
-def get_vertical(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> tuple[str, str]:
+def get_vertical_query(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> str:
+    """Return the native vertical selection, or omit it for absent/hidden coordinates."""
     layer = metadata[collection_name][requested_param]
     name = vertical_dimension(layer)
     if name is None or layer["dims"][name].get("hidden", False):
         # Hidden coordinates retain their configured selection, also when z is supplied.
-        return (None, "")
+        return ""
     vertical_name = layer["dims"][name]["serviceName"]
-    return (vertical_name, f"DIM_{vertical_name}={z_par or '*'}")
+    return f"DIM_{vertical_name}={z_par or '*'}"
 
 
-def native_query(query: dict, custom_dims=(), vertical_dims=()) -> bytes:
-    """Encode native parameters once; dimension helpers currently return key=value terms."""
-    query = dict(query)
-    for term in [*custom_dims, *vertical_dims]:
-        if term:
-            key, value = term.split("=", 1)
-            query[key] = value
-    return urlencode(query).encode("utf-8")
+def encode_native_query(query: dict, dimension_queries=()) -> bytes:
+    """Encode native parameters and any DIM_name=value selections for the CGI runner."""
+    dimensions = dict(term.split("=", 1) for term in dimension_queries if term)
+    return urlencode(query | dimensions).encode("utf-8")
 
 
 def propagate_data_headers(response, headers):

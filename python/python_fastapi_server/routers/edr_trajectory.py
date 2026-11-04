@@ -15,9 +15,9 @@ from .utils.edr_utils import (
     get_instance,
     get_metadata,
     get_parameters,
-    get_vertical,
+    get_vertical_query,
     instance_to_iso,
-    native_query,
+    encode_native_query,
     parse_coordinates,
     propagate_data_headers,
     supports_section,
@@ -69,7 +69,7 @@ async def get_trajectory(
     for parameter in parameters:
         if not supports_section(metadata[collection_name][parameter]):
             raise EdrException(400, f"Section requires time and a vertical coordinate for {parameter}")
-        _, dim = get_vertical(metadata, collection_name, parameter, z_par)
+        dim = get_vertical_query(metadata, collection_name, parameter, z_par)
         if dim:
             vertical_dims.add(dim)
 
@@ -88,7 +88,7 @@ async def get_trajectory(
         query["time"] = datetime_par
     if instance:
         query["dim_reference_time"] = instance_to_iso(instance)
-    status, body, headers = await call_adaguc(url=native_query(query, custom_dims, sorted(vertical_dims)))
+    status, body, headers = await call_adaguc(url=encode_native_query(query, [*custom_dims, *sorted(vertical_dims)]))
     if status != 0:
         raise exc_failed_call("Trajectory call failed")
     try:

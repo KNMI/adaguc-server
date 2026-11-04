@@ -54,7 +54,7 @@ def get_edr_locations() -> list[Feature]:
 
 
 async def get_locations_for_collection(coll: str, metadata) -> list[Feature]:
-    """ 
+    """
     Make a list of locations which fit in the latlongbbox of the first layer
     """
     locations_for_coll: list[Feature] = []
@@ -105,9 +105,7 @@ async def get_locations_(
     location_id: str = None,
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[
-        str, Query(alias="parameter-name", min_length=1)
-    ] = None,
+    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Union[FeatureCollection, Coverage, CoverageCollection]:
     """

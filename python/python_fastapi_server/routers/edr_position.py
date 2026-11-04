@@ -25,9 +25,9 @@ from .utils.edr_utils import (
     get_instance,
     get_metadata,
     get_parameters,
-    get_vertical,
+    get_vertical_query,
     instance_to_iso,
-    native_query,
+    encode_native_query,
     parse_coordinates,
     propagate_data_headers,
 )
@@ -122,7 +122,7 @@ async def handle_coll_inst_position(
     instance = get_instance(metadata, collection_name, instance)
     parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
 
-    _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
+    vertical_dim = get_vertical_query(metadata, collection_name, parameter_names[0], z_par)
 
     point = parse_coordinates(coords, "Point")[0]
 
@@ -169,7 +169,7 @@ async def get_point_value(
         query["time"] = datetime_par
     if instance:
         query["dim_reference_time"] = instance_to_iso(instance)
-    urlrequest = native_query(query, custom_dims, [vertical_dim])
+    urlrequest = encode_native_query(query, [*custom_dims, vertical_dim])
 
     status, response, headers = await call_adaguc(url=urlrequest)
     if status == 0:

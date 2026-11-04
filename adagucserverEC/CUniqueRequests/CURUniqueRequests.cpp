@@ -112,8 +112,8 @@ void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result
   }
 }
 
-void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
-                     CXMLParser::XMLElement *gfiStructure, const std::vector<int> &dimOrdering, const TrajectoryPoint *sample = nullptr) {
+void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDataSource *dataSource, CXMLParser::XMLElement *gfiStructure,
+                     const std::vector<int> &dimOrdering, const std::string &coordinates) {
 
   size_t numberOfDims = dataSource->requiredDims.size();
 
@@ -128,17 +128,9 @@ void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDr
   layerStructure.add(CXMLParser::XMLElement("standard_name", standardName));
   layerStructure.add(CXMLParser::XMLElement("units", dObjgetUnits(*dataObject)));
 
-  std::string coord;
-  if (sample != nullptr) {
-    coord = CT::printf("%.15g,%.15g", sample->first, sample->second);
-  } else {
-    auto ckey = CT::printf("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
-    const auto projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);
-    coord = CT::printf("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY);
-  }
   CXMLParser::XMLElement point("point");
   point.add(CXMLParser::XMLElement("SRS", "EPSG:4326"));
-  point.add(CXMLParser::XMLElement("coords", coord));
+  point.add(CXMLParser::XMLElement("coords", coordinates));
   layerStructure.add(point);
 
   // Sections need the actual hidden height in native JSON; Python omits hidden custom properties.
@@ -147,19 +139,12 @@ void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDr
     COGCDims &ogcDim = dataSource->requiredDims[dimOrdering[i]];
     if (ogcDim.hidden && !dataSource->srvParams->isTrajectory) {
       dimIndicesToSkip.push_back(i);
+    } else {
+      layerStructure.add(CXMLParser::XMLElement("dims", ogcDim.name));
     }
   }
-
-  for (size_t i = 0; i < numberOfDims; i++) {
-    if (std::find(dimIndicesToSkip.begin(), dimIndicesToSkip.end(), i) == dimIndicesToSkip.end()) {
-      layerStructure.add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]].name));
-    }
-  }
-  auto dataStructure = layerStructure.get("data");
-  if (dataStructure == nullptr) {
-    layerStructure.add(CXMLParser::XMLElement("data"));
-    dataStructure = layerStructure.getLast();
-  }
+  layerStructure.add(CXMLParser::XMLElement("data"));
+  auto dataStructure = layerStructure.getLast();
 
   std::sort(results.begin(), results.end(), compareFunctionCurResult());
   if (enableLogUnique) {
@@ -218,6 +203,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
   const bool isTrajectory = dataSource->srvParams->isTrajectory;
   TrajectorySampling sampling;
   bool outsideGrid = false;
+  std::string pointCoordinates;
   if (isTrajectory) {
     sampling = sampleTrajectoryGrid(dataSource, imageWarper);
     if (sampling.samples.empty()) return;
@@ -225,6 +211,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     auto ckey = CT::printf("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
     const auto projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);
     outsideGrid = projCacheInfo.isOutsideBBOX;
+    pointCoordinates = CT::printf("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY);
     sampling.runs.push_back({projCacheInfo.imx, projCacheInfo.imy, 1});
   }
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
@@ -410,13 +397,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                     currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(dimVariable->getType());
                   }
 
-                  // Spatial dimensions need not be the final two NetCDF dimensions.
-                  int variableDimIndex = -1;
-                  for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
-                    if (variable->dimensionlinks[d]->name == requestDimNameToFind) {
-                      variableDimIndex = d;
-                    }
-                  }
+                  const int variableDimIndex = variable->getDimIndex(requestDimNameToFind);
                   if (variableDimIndex != -1) {
 
                     int requestDimIndex = -1;
@@ -472,9 +453,12 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
         CDBDebug("dataObjectNr: %lu", dataObjectNr);
       }
       if (isTrajectory) {
-        for (const auto &sample: sampling.samples) createStructure(spatialResults.at(sample.cell), dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure, dimOrdering, &sample.lonlat);
+        for (const auto &sample: sampling.samples) {
+          const auto coordinates = CT::printf("%.15g,%.15g", sample.lonlat.first, sample.lonlat.second);
+          createStructure(spatialResults.at(sample.cell), dataObject, dataSource, gfiStructure, dimOrdering, coordinates);
+        }
       } else {
-        createStructure(results, dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure, dimOrdering);
+        createStructure(results, dataObject, dataSource, gfiStructure, dimOrdering, pointCoordinates);
       }
     } catch (int e) {
       CDBError("Error in createStructure at line %d", e);

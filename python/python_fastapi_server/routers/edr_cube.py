@@ -25,9 +25,9 @@ from .utils.edr_utils import (
     get_dataset_from_collection,
     get_instance,
     get_parameters,
-    get_vertical,
+    get_vertical_query,
     instance_to_iso,
-    native_query,
+    encode_native_query,
     propagate_data_headers,
     get_metadata,
 )
@@ -115,11 +115,6 @@ async def get_coll_inst_cube(
         allowed_params,
     )
 
-    if resolution_x is not None and resolution_y is not None:
-        res_queryterm = [f"resx={resolution_x}", f"resy={resolution_y}"]
-    else:
-        res_queryterm = []
-
     logger.info("callADAGUC by dataset")
 
     translate_names = get_translate_names(metadata[collection_name])
@@ -131,7 +126,7 @@ async def get_coll_inst_cube(
     if datetime_par is None:
         datetime_arg = "*"
     for parameter_name in parameter_names:
-        _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
+        vertical_dim = get_vertical_query(metadata, collection_name, parameter_name, z_par)
 
         query = {
             "dataset": dataset_name,
@@ -146,7 +141,9 @@ async def get_coll_inst_cube(
         }
         if instance:
             query["dim_reference_time"] = instance_to_iso(instance)
-        urlrequest = native_query(query, [*custom_dims, *res_queryterm], [vertical_dim])
+        if resolution_x is not None and resolution_y is not None:
+            query.update(resx=resolution_x, resy=resolution_y)
+        urlrequest = encode_native_query(query, [*custom_dims, vertical_dim])
 
         start = time.time()
         status, wcs_response, headers = await call_adaguc(url=urlrequest)

@@ -116,6 +116,6 @@ source variables or `orgname` renaming are unsupported.
 
 Only `EPSG:4326` and CoverageJSON are supported. `resolution_x` and `resolution_y`
 are rejected; rendering stride is ignored. Requests are limited to 100,000 vertices,
-100,000 path samples, 10 million sample/dimension combinations per layer, and the
+10,000 path samples, 10 million sample/dimension combinations per layer, and the
 file store's open-file capacity. Failed trajectory data calls return HTTP 400,
 following the existing EDR failed-call response.

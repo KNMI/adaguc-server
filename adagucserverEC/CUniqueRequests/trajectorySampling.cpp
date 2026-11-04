@@ -3,11 +3,39 @@
 #include "CDataReader.h"
 #include "CDataSource.h"
 #include "CImageWarper.h"
+#include "CDFObjectStore.h"
+#include "CServerError.h"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <functional>
 #include <set>
+#include <map>
+
+// Check request-wide trajectory limits before any layer starts sampling.
+int validateTrajectorySources(const std::vector<CDataSource *> &dataSources) {
+  // The request-owned store retains these handles. Reject requests exceeding
+  // its capacity rather than evicting and reopening files between layers.
+  std::set<std::string> files;
+  for (auto source: dataSources) {
+    if (source == nullptr) return 1;
+    for (const auto &variable: source->cfgLayer->Variable) {
+      if (!variable.attr.orgname.empty()) {
+        CDBError("Trajectory does not support per-layer source variable renaming");
+        setExceptionType(ServiceExceptionType::UnprocessableEntity);
+        return 1;
+      }
+    }
+    for (const auto &step: source->timeSteps) files.insert(step.fileName);
+    source->setTimeStep(0);
+  }
+  if (files.size() > size_t(CDFObjectStore::getCDFObjectStore()->getMaxNumberOfOpenObjects())) {
+    CDBError("Trajectory selects too many source files");
+    setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    return 1;
+  }
+  return 0;
+}
 
 static TrajectoryGrid snapshotTrajectoryGrid(CDataSource *source) {
   const auto x = static_cast<double *>(source->varX->data), y = static_cast<double *>(source->varY->data);
@@ -15,6 +43,7 @@ static TrajectoryGrid snapshotTrajectoryGrid(CDataSource *source) {
 }
 
 TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warper) {
+  if (source->formatConverterActive || source->getNumDataObjects() != 1) throw std::runtime_error("Trajectory requires a regular grid with one source variable per layer");
   auto axis = [](CDF::Variable *var) {
     if (var == nullptr || var->dimensionlinks.size() != 1) throw std::runtime_error("Trajectory requires regular one-dimensional grid axes with at least two cells");
     return regularTrajectoryAxis(static_cast<double *>(var->data), var->getSize());
@@ -34,6 +63,8 @@ TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warpe
     CImageWarper *warper;
     ~Close() { warper->closereproj(); }
   } close{warper};
+  TrajectorySampling result;
+  result.referenceGrid = snapshotTrajectoryGrid(source);
   auto project = [&](TrajectoryPoint p) {
     if (warper->reprojpoint(p.first, p.second) != 0 || !std::isfinite(p.first) || !std::isfinite(p.second)) throw std::runtime_error("Could not project trajectory coordinate");
     // Place cell boundaries at integers and centres at i + 0.5.
@@ -62,28 +93,28 @@ TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warpe
   // Repeated vertices must not introduce corner-only samples.
   auto vertices = source->srvParams->trajectoryCoords;
   vertices.erase(std::unique(vertices.begin(), vertices.end()), vertices.end());
-  if (vertices.size() == 1) {
-    const auto point = project(vertices.front());
-    traverseTrajectoryCells(point, point, width, height, cells);
-  }
+  // A stationary trajectory is one zero-length segment for the same walker.
+  if (vertices.size() == 1) vertices.push_back(vertices.front());
   for (size_t i = 1; i < vertices.size(); ++i) segment(vertices[i - 1], vertices[i], project(vertices[i - 1]), project(vertices[i]), 0);
-  TrajectorySampling result;
-  // Preserve path order for output; sort unique cells by row for reads.
-  std::set<std::pair<int, int>> unique; // y, x
+  // Cache each centre once; (y,x) keys also group unique cells into row runs.
+  std::map<std::pair<int, int>, TrajectoryPoint> cellCentres;
   for (const auto &cell: cells) {
-    TrajectoryPoint centre{static_cast<double *>(source->varX->data)[cell.first], static_cast<double *>(source->varY->data)[cell.second]};
-    if (warper->reprojpoint_inv(centre.first, centre.second) != 0 || !std::isfinite(centre.first) || !std::isfinite(centre.second))
-      throw std::runtime_error("Could not project trajectory cell centre");
-    result.samples.push_back({cell, centre});
-    unique.emplace(cell.second, cell.first);
+    auto [entry, firstVisit] = cellCentres.try_emplace(std::pair{cell.second, cell.first});
+    if (firstVisit) {
+      auto &centre = entry->second;
+      centre = {result.referenceGrid.x[cell.first], result.referenceGrid.y[cell.second]};
+      if (warper->reprojpoint_inv(centre.first, centre.second) != 0 || !std::isfinite(centre.first) || !std::isfinite(centre.second))
+        throw std::runtime_error("Could not project trajectory cell centre");
+    }
+    result.samples.push_back({cell, entry->second});
   }
-  for (const auto &[y, x]: unique) {
+  for (const auto &entry: cellCentres) {
+    const auto [y, x] = entry.first;
     if (!result.runs.empty() && result.runs.back().y == y && result.runs.back().x + result.runs.back().count == x)
       ++result.runs.back().count;
     else
       result.runs.push_back({x, y, 1});
   }
-  result.referenceGrid = snapshotTrajectoryGrid(source);
   // Bound output size across all selected times and levels.
   if (result.samples.size() > size_t(10000000) / std::max(1, source->getNumTimeSteps())) throw std::runtime_error("Trajectory selects too many values");
   return result;

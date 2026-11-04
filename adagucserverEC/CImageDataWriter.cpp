@@ -57,7 +57,7 @@
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
-#include "CDFObjectStore.h"
+#include "CUniqueRequests/trajectorySampling.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
@@ -448,34 +448,6 @@ void CImageDataWriter::setValue(CDFType type, void *data, size_t ptr, double pix
   if (type == CDF_DOUBLE) ((double *)data)[ptr] = (double)pixel;
 }
 
-// Check request-wide trajectory limits before any layer starts sampling.
-static int validateTrajectorySources(const std::vector<CDataSource *> &dataSources) {
-  // The request-owned store retains these handles. Reject requests exceeding
-  // its capacity rather than evicting and reopening files between layers.
-  std::set<std::string> files;
-  for (auto source: dataSources) {
-    if (source == nullptr) return 1;
-    for (const auto &variable: source->cfgLayer->Variable) {
-      if (!variable.attr.orgname.empty()) {
-        CDBError("Trajectory does not support per-layer source variable renaming");
-        setExceptionType(ServiceExceptionType::UnprocessableEntity);
-        return 1;
-      }
-    }
-    for (int step = 0; step < source->getNumTimeSteps(); ++step) {
-      source->setTimeStep(step);
-      files.insert(source->getFileName());
-    }
-    source->setTimeStep(0);
-  }
-  if (files.size() > size_t(CDFObjectStore::getCDFObjectStore()->getMaxNumberOfOpenObjects())) {
-    CDBError("Trajectory selects too many source files");
-    setExceptionType(ServiceExceptionType::UnprocessableEntity);
-    return 1;
-  }
-  return 0;
-}
-
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
   CImageWarper imageWarper;
   StopWatch_Measure("getFeatureInfo");
@@ -483,7 +455,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   if (CIMAGEDATAWRITER_DEBUG) {
     CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
   }
-  // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
   if (srvParam->isTrajectory && validateTrajectorySources(dataSources) != 0) return 1;
@@ -493,26 +464,20 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
       return 1;
     }
 
-    getFeatureInfoResultList.push_back(GetFeatureInfoResult());
-    GetFeatureInfoResult &getFeatureInfoResult = (getFeatureInfoResultList.back());
+    CDataReader reader;
+    if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) return 1;
+    if (srvParam->isTrajectory) {
+      status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
+      if (status != 0) return status;
+      continue;
+    }
+    auto &getFeatureInfoResult = getFeatureInfoResultList.emplace_back();
     bool headerIsAvailable = false;
     bool sameHeaderForAll = false;
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
 
-    CDataReader reader;
-    if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) return 1;
-    if (srvParam->isTrajectory) {
-      if (dataSource->formatConverterActive || dataSource->getNumDataObjects() != 1) {
-        CDBError("Trajectory requires a regular grid with one source variable per layer");
-        setExceptionType(ServiceExceptionType::UnprocessableEntity);
-        return 1;
-      }
-      status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
-      if (status != 0) return status;
-      continue;
-    }
     if (dataSource->getNumDataObjects() > 0) {
       if (dataSource->getFirstAvailableDataObject()->cdfVariable != NULL) {
         if (dataSource->isConfigured) {

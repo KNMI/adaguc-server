@@ -26,6 +26,9 @@ struct TrajectorySampling {
   TrajectoryGrid referenceGrid;
 };
 
+// Check source configuration and the request-wide open-file limit.
+int validateTrajectorySources(const std::vector<CDataSource *> &dataSources);
+
 // Build path-order samples and unique read runs; retain the grid and enforce the value limit.
 TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warper);
 
