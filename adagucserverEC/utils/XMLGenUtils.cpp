@@ -1,4 +1,3 @@
-#include <CXMLGen.h>
 #include "LayerMetadataStore.h"
 #include "XMLGenUtils.h"
 #include "CStopWatch.h"
@@ -12,7 +11,6 @@
 #include "CAutoConfigure.h"
 #include "CCDFObject.h"
 #include "CDBFileScanner.h"
-#include "CDrawImage.h"
 #include "CTString.h"
 
 static const bool CXMLGEN_DEBUG = false;

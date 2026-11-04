@@ -1,18 +1,13 @@
 #include "CDataPostProcessor_SolarTerminator.h"
 #include "solar/solar_terminator.h"
-#include <chrono>
 #include <ctime>
 #include "CTime.h"
 #include "CImageWarper.h"
 
-#include <execinfo.h>
 #include <cstdio>
 #include <cstdlib>
-#include <cxxabi.h>
-#include <dlfcn.h>
 
 #include <ctime>
-#include "CTString.h"
 
 /************************/
 /*      CDPPSolarTerminator  */

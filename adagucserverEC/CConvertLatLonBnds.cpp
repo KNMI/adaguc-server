@@ -24,8 +24,6 @@
  ******************************************************************************/
 
 #include "CConvertLatLonBnds.h"
-#include "CFillTriangle.h"
-#include "CImageWarper.h"
 #include "CCDFObject.h"
 #include "CTString.h"
 

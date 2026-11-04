@@ -1,4 +1,3 @@
-#include <type_traits>
 #include "CDataPostProcessor_PointsFromGrid.h"
 #include <CImageWarper.h>
 #include <utils/GeometryUtils.h>

@@ -24,7 +24,6 @@
  ******************************************************************************/
 
 #include "CImgWarpNearestRGBA.h"
-#include <string>
 #include <vector>
 #include "CCDFObject.h"
 #include "CDataSource.h"

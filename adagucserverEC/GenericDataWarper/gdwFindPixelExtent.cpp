@@ -1,12 +1,8 @@
-#include <array>
-#include <limits>
 #include <Types/GeoParameters.h>
 #include <CImageWarper.h>
 #include "CCDFObject.h"
-#include "CDataSource.h"
 #include "CDebugger.h"
 #include "CImageWarper.h"
-#include "CServerConfig_CPPXSD.h"
 #include "Types/CPointTypes.h"
 
 static const bool GenericDataWarper_DEBUG = false;

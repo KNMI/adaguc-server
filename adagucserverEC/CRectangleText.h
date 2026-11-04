@@ -24,7 +24,6 @@
  ******************************************************************************/
 #ifndef CRectangleText_H
 #define CRectangleText_H
-#include "CTString.h"
 
 #include "CColor.h"
 
