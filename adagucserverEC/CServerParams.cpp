@@ -34,6 +34,7 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include "utils/StyleSheetValidation.h"
+#include "utils/lintDataset.h"
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
 
@@ -324,6 +325,9 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
   StopWatch_Measure("CServerParams::parseConfigFile start parseConfig");
   int status = parseConfig(&configObj, configFileData, datasetName);
   StopWatch_Measure("CServerParams::parseConfigFile done parseConfig");
+  if (status == 0 && lintOutputEnabled) {
+    numXMLAttributesNotRecognized += lintConfiguredStyles(configFileData, datasetName);
+  }
 
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;

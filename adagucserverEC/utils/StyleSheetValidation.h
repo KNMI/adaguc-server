@@ -14,4 +14,12 @@
  */
 bool isAllowedStyleSheet(const std::string &xml);
 
+/**
+ * Lints the Style and Legend elements of a configuration file (adagucserver --lint) with the same rules, for values only:
+ * configurations are trusted, so files, fonts, all DataPostProc algorithms and unknown attributes (reported by parseConfig) are fine.
+ * Also reports printf formats that CT::formatFloat would replace with %g. Logs each issue with CDBLint.
+ * @return the number of issues
+ */
+int lintConfiguredStyles(const std::string &xml, const std::string &datasetName);
+
 #endif

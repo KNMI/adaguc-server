@@ -175,37 +175,7 @@ namespace {
     if (trimmed.empty()) return false;
     char *end = nullptr;
     value = strtod(trimmed.c_str(), &end);
-    return end == trimmed.c_str() + trimmed.size() && std::isfinite(value);
-  }
-
-  bool isValidValue(std::string_view value, const ValueRule &rule) {
-    if (value.size() > MAX_TEXT_LENGTH) return false;
-    switch (rule.type) {
-    case ValueType::Text:
-    case ValueType::PngFile:
-      return true;
-    case ValueType::Number: {
-      double number;
-      return parseNumber(value, number) && number >= rule.min && number <= rule.max;
-    }
-    case ValueType::NumberList: {
-      auto items = CT::split(value, ",");
-      if (items.size() > MAX_LIST_LENGTH) return false;
-      for (const auto &item: items) {
-        if (!isValidValue(item, {ValueType::Number, rule.min, rule.max})) return false;
-      }
-      return true;
-    }
-    case ValueType::Color:
-      return (value.size() == 7 || value.size() == 9) && value[0] == '#' && value.find_first_not_of("0123456789abcdefABCDEF", 1) == std::string_view::npos;
-    case ValueType::FloatFormat:
-      return value.size() <= 64;
-    case ValueType::Pattern:
-      return value.size() <= 256 && value.find('\\') == std::string_view::npos;
-    case ValueType::Algorithm:
-      return value == "pointsfromgrid" || value == "beaufort" || value == "clipminmax";
-    }
-    return false;
+    return end == trimmed.c_str() + trimmed.size() && !std::isnan(value);
   }
 
   std::string textContent(xmlNode *node) {
@@ -216,43 +186,104 @@ namespace {
     return text;
   }
 
-  bool isAllowedElement(xmlNode *node) {
-    std::string_view name = (const char *)node->name;
-    auto ruleIt = elementRules().find(name);
-    if (ruleIt == elementRules().end()) {
-      CDBError("STYLESHEET: element [%s] is not allowed", (const char *)node->name);
+  // Walks the Style and Legend elements. A posted STYLESHEET is untrusted: everything must be allowed, and the walk stops at the first issue.
+  // Configured styles are trusted: only the values of known elements and attributes are checked, and every issue is reported.
+  struct StyleChecker {
+    bool configured;
+    std::string datasetName = ""; // Configured only, for the lint messages
+    std::string context = "";     // The Style or Legend being checked
+    int issues = 0;
+
+    bool done() const { return !configured && issues > 0; }
+
+    void report(const std::string &message) {
+      issues++;
+      if (configured) {
+        CDBLint("ERROR: In dataset \"%s\", %s: %s", datasetName.c_str(), context.c_str(), message.c_str());
+      } else {
+        CDBError("STYLESHEET: %s", message.c_str());
+      }
+    }
+
+    bool isValidValue(std::string_view value, const ValueRule &rule) const {
+      if (!configured && value.size() > MAX_TEXT_LENGTH) return false;
+      switch (rule.type) {
+      case ValueType::Text:
+      case ValueType::PngFile:
+        return true;
+      case ValueType::Number: {
+        double number;
+        if (!parseNumber(value, number)) return false;
+        // Configurations may use -INF and INF for open intervals
+        if (std::isinf(number)) return configured && rule.min == -LARGE && rule.max == LARGE;
+        return number >= rule.min && number <= rule.max;
+      }
+      case ValueType::NumberList: {
+        auto items = CT::split(value, ",");
+        if (!configured && items.size() > MAX_LIST_LENGTH) return false;
+        for (const auto &item: items) {
+          if (!isValidValue(item, {ValueType::Number, rule.min, rule.max})) return false;
+        }
+        return true;
+      }
+      case ValueType::Color:
+        return (value.size() == 7 || value.size() == 9) && value[0] == '#' && value.find_first_not_of("0123456789abcdefABCDEF", 1) == std::string_view::npos;
+      case ValueType::FloatFormat:
+        // Posted formats are accepted, CT::formatFloat falls back to %g. A configured one should print as intended.
+        return configured ? CT::isSafeFloatFormat(value) : value.size() <= 64;
+      case ValueType::Pattern:
+        return configured || (value.size() <= 256 && value.find('\\') == std::string_view::npos);
+      case ValueType::Algorithm:
+        return configured || value == "pointsfromgrid" || value == "beaufort" || value == "clipminmax";
+      }
       return false;
     }
-    const ElementRule &rule = ruleIt->second;
-    for (xmlAttr *attribute = node->properties; attribute != nullptr; attribute = attribute->next) {
-      auto attributeIt = rule.attributes.find(std::string_view((const char *)attribute->name));
-      if (attributeIt == rule.attributes.end()) {
-        CDBError("STYLESHEET: attribute [%s] in [%s] is not allowed", (const char *)attribute->name, (const char *)node->name);
-        return false;
+
+    void checkElement(xmlNode *node) {
+      std::string_view name = (const char *)node->name;
+      auto ruleIt = elementRules().find(name);
+      if (ruleIt == elementRules().end()) {
+        if (!configured) report(CT::printf("element [%s] is not allowed", (const char *)node->name));
+        return;
       }
-      const char *value = attribute->children != nullptr && attribute->children->content != nullptr ? (const char *)attribute->children->content : "";
-      if (!isValidValue(value, attributeIt->second)) {
-        CDBError("STYLESHEET: invalid value for attribute [%s] in [%s]", (const char *)attribute->name, (const char *)node->name);
-        return false;
+      const ElementRule &rule = ruleIt->second;
+      for (xmlAttr *attribute = node->properties; attribute != nullptr && !done(); attribute = attribute->next) {
+        auto attributeIt = rule.attributes.find(std::string_view((const char *)attribute->name));
+        if (attributeIt == rule.attributes.end()) {
+          if (!configured) report(CT::printf("attribute [%s] in [%s] is not allowed", (const char *)attribute->name, (const char *)node->name));
+          continue;
+        }
+        const char *value = attribute->children != nullptr && attribute->children->content != nullptr ? (const char *)attribute->children->content : "";
+        if (isValidValue(value, attributeIt->second)) continue;
+        if (!configured) {
+          report(CT::printf("invalid value for attribute [%s] in [%s]", (const char *)attribute->name, (const char *)node->name));
+        } else if (attributeIt->second.type == ValueType::FloatFormat) {
+          report(CT::printf("unsupported format [%s] for attribute [%s] in [%s], %%g is used instead", value, (const char *)attribute->name, (const char *)node->name));
+        } else {
+          report(CT::printf("invalid value [%s] for attribute [%s] in [%s]", value, (const char *)attribute->name, (const char *)node->name));
+        }
+      }
+      if (rule.text.has_value() && !done()) {
+        std::string text = CT::trim(textContent(node));
+        if (!text.empty() && !isValidValue(text, *rule.text)) {
+          report(configured ? CT::printf("invalid value [%s] for [%s]", text.c_str(), (const char *)node->name) : CT::printf("invalid value for [%s]", (const char *)node->name));
+        }
+      }
+      for (xmlNode *child = node->children; child != nullptr && !done(); child = child->next) {
+        if (child->type == XML_TEXT_NODE || child->type == XML_CDATA_SECTION_NODE || child->type == XML_COMMENT_NODE) continue;
+        if (child->type != XML_ELEMENT_NODE || !rule.children.contains(std::string_view((const char *)child->name))) {
+          if (!configured) report(CT::printf("[%s] is not allowed in [%s]", child->name != nullptr ? (const char *)child->name : "?", (const char *)node->name));
+          continue;
+        }
+        if (node->parent != nullptr && node->parent->type == XML_DOCUMENT_NODE) {
+          xmlChar *childName = xmlGetProp(child, (const xmlChar *)"name");
+          context = CT::printf("%s [%s]", (const char *)child->name, childName != nullptr ? (const char *)childName : "");
+          xmlFree(childName);
+        }
+        checkElement(child);
       }
     }
-    if (rule.text.has_value()) {
-      std::string text = CT::trim(textContent(node));
-      if (!text.empty() && !isValidValue(text, *rule.text)) {
-        CDBError("STYLESHEET: invalid value for [%s]", (const char *)node->name);
-        return false;
-      }
-    }
-    for (xmlNode *child = node->children; child != nullptr; child = child->next) {
-      if (child->type == XML_TEXT_NODE || child->type == XML_CDATA_SECTION_NODE || child->type == XML_COMMENT_NODE) continue;
-      if (child->type != XML_ELEMENT_NODE || !rule.children.contains(std::string_view((const char *)child->name))) {
-        CDBError("STYLESHEET: [%s] is not allowed in [%s]", child->name != nullptr ? (const char *)child->name : "?", (const char *)node->name);
-        return false;
-      }
-      if (!isAllowedElement(child)) return false;
-    }
-    return true;
-  }
+  };
 
 } // namespace
 
@@ -273,7 +304,23 @@ bool isAllowedStyleSheet(const std::string &xml) {
     CDBError("STYLESHEET: root element must be Configuration");
     allowed = false;
   }
-  allowed = allowed && isAllowedElement(root);
+  if (allowed) {
+    StyleChecker checker{.configured = false};
+    checker.checkElement(root);
+    allowed = checker.issues == 0;
+  }
   xmlFreeDoc(doc);
   return allowed;
+}
+
+int lintConfiguredStyles(const std::string &xml, const std::string &datasetName) {
+  xmlDoc *doc = xmlReadMemory(xml.c_str(), xml.length(), nullptr, nullptr, XML_PARSE_NONET);
+  if (doc == nullptr) return 0; // Reported by parseConfig
+  xmlNode *root = xmlDocGetRootElement(doc);
+  StyleChecker checker{.configured = true, .datasetName = datasetName};
+  if (root != nullptr && std::string_view((const char *)root->name) == "Configuration") {
+    checker.checkElement(root);
+  }
+  xmlFreeDoc(doc);
+  return checker.issues;
 }
