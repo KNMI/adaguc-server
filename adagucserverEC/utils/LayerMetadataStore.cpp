@@ -40,15 +40,15 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["hidden"] = metadataLayer->layerMetadata.hidden;
     layerMetadataItem["enable_edr"] = metadataLayer->layerMetadata.enable_edr;
     json latlonbox;
-    for (size_t j = 0; j < 4; j++) {
-      latlonbox.push_back(metadataLayer->layerMetadata.dfLatLonBBOX[j]);
+    for (double &bboxItemValue: metadataLayer->layerMetadata.dfLatLonBBOX) {
+      latlonbox.push_back(bboxItemValue);
     }
     layerMetadataItem["latlonbox"] = latlonbox;
 
     json gridspec;
     json bbox;
-    for (size_t j = 0; j < 4; j++) {
-      bbox.push_back(metadataLayer->layerMetadata.dfBBOX[j]);
+    for (double &bboxitemValue: metadataLayer->layerMetadata.dfBBOX) {
+      bbox.push_back(bboxitemValue);
     }
     gridspec["bbox"] = bbox;
     gridspec["width"] = metadataLayer->layerMetadata.width;
@@ -106,14 +106,34 @@ int getStyleListMetadataAsJson(MetadataLayer *metadataLayer, json &styleListJson
 }
 
 int storemetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer) {
-  storeLayerMetadataStructIntoMetadataDb(metadataLayer);
-  storeLayerDimensionListIntoMetadataDb(metadataLayer);
-  storeLayerProjectionAndExtentListIntoMetadataDb(metadataLayer);
-  storeLayerStyleListIntoMetadataDb(metadataLayer);
-  return 0;
+  try {
+    const auto &datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
+    if (datasetName.empty()) {
+      CDBDebug("Not a dataset");
+      return 1;
+    }
+
+    json layerMetadataItem, projsettings, styleListJson;
+    if (getLayerBaseMetadataAsJson(metadataLayer, layerMetadataItem) != 0 || getProjectionListAsJson(metadataLayer, projsettings) != 0 ||
+        getStyleListMetadataAsJson(metadataLayer, styleListJson) != 0) {
+      return 1;
+    }
+    const std::map<std::string, std::string> metadata = {{"layermetadata", layerMetadataItem.dump()},
+                                                         {"dimensionlist", getDimensionListAsJson(metadataLayer->layerMetadata.dimList).dump()},
+                                                         {"projected_extents", projsettings.dump()},
+                                                         {"stylelist", styleListJson.dump()}};
+    auto dbAdapter = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg);
+    if (dbAdapter == nullptr) return 1;
+    return dbAdapter->storeLayerMetadataBatch(datasetName.c_str(), metadataLayer->dataSource->getLayerName(), metadata);
+  } catch (json::exception &e) {
+    CDBWarning("Unable to build metadata json structure");
+    return 1;
+  } catch (int e) {
+    return e;
+  }
 }
 
-std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, std::string metadataKey) {
+std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, const std::string &metadataKey) {
   std::string layerName = metadataLayer->dataSource->getLayerName();
   std::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
   if (datasetName.empty()) {
@@ -134,34 +154,6 @@ std::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, std::string met
   StopWatch_Measure("<CDBAdapterPostgreSQL::getLayerMetadata");
   CDBDebug("No metadata entry found for %s %s %s", datasetName.c_str(), layerName.c_str(), metadataKey.c_str());
   throw __LINE__;
-}
-
-int storeLayerMetadataInDb(MetadataLayer *metadataLayer, std::string metadataKey, std::string metadataBlob) {
-  try {
-    std::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
-    if (datasetName.empty()) {
-      CDBDebug("Not a dataset");
-      return 1;
-    }
-    std::string layerName = metadataLayer->dataSource->getLayerName();
-
-    return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName.c_str(), layerName.c_str(), metadataKey.c_str(), metadataBlob.c_str());
-  } catch (int e) {
-    return e;
-  }
-  return 0;
-}
-
-int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *metadataLayer) {
-
-  json layerMetadataItem;
-
-  if (getLayerBaseMetadataAsJson(metadataLayer, layerMetadataItem) != 0) {
-    return 1;
-  }
-
-  storeLayerMetadataInDb(metadataLayer, "layermetadata", layerMetadataItem.dump());
-  return 0;
 }
 
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
@@ -224,19 +216,6 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
   return 0;
 }
 
-int storeLayerProjectionAndExtentListIntoMetadataDb(MetadataLayer *metadataLayer) {
-  try {
-    json projsettings;
-    if (getProjectionListAsJson(metadataLayer, projsettings) != 0) {
-      return 1;
-    }
-    storeLayerMetadataInDb(metadataLayer, "projected_extents", projsettings.dump());
-  } catch (int e) {
-    return e;
-  }
-  return 0;
-}
-
 int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer) {
   if (!metadataLayer->readFromDb) {
     return 1;
@@ -253,7 +232,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
     json a;
     auto c = json::parse(projInfo);
     for (const auto &d: c.items()) {
-      auto bboxArray = d.value();
+      const auto &bboxArray = d.value();
       double bbox[4] = {
           bboxArray[0].get_to((bbox[0])),
           bboxArray[1].get_to((bbox[1])),
@@ -268,21 +247,6 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
     CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
-    return e;
-  }
-  return 0;
-}
-
-int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
-  try {
-    json styleListJson;
-    if (getStyleListMetadataAsJson(metadataLayer, styleListJson) != 0) {
-      CDBWarning("Unable to convert stylelist to json");
-      return 1;
-    }
-    storeLayerMetadataInDb(metadataLayer, "stylelist", styleListJson.dump());
-  } catch (int e) {
-    CDBWarning("Unable to store stylelist json in db");
     return e;
   }
   return 0;
@@ -321,19 +285,6 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
       metadataLayer->layerMetadata.styleList.push_back(style);
     }
 
-  } catch (json::exception &e) {
-    CDBWarning("Unable to build json structure");
-    return 1;
-  } catch (int e) {
-    return e;
-  }
-  return 0;
-}
-
-int storeLayerDimensionListIntoMetadataDb(MetadataLayer *metadataLayer) {
-  try {
-    json dimListJson = getDimensionListAsJson(metadataLayer->layerMetadata.dimList);
-    storeLayerMetadataInDb(metadataLayer, "dimensionlist", dimListJson.dump());
   } catch (json::exception &e) {
     CDBWarning("Unable to build json structure");
     return 1;
