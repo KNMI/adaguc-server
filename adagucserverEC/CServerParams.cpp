@@ -397,6 +397,14 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
     for (auto &legendGraphic: style.LegendGraphic) {
       if (!legendGraphic.attr.value.empty() && !resolveStyleSheetPngFile(legendGraphic.attr.value)) return 1;
     }
+    // Only configured styles may be included. Checked before the posted style is appended, so it cannot include
+    // itself: including itself several times would multiply at every level of nesting.
+    for (const auto &includeStyle: style.IncludeStyle) {
+      if (getServerStyleIndexByName(includeStyle.attr.name) < 0) {
+        CDBError("STYLESHEET: IncludeStyle [%s] is not a configured style", includeStyle.attr.name.c_str());
+        return 1;
+      }
+    }
   }
 
   // Replace in place, so indices into cfg->Legend stay valid

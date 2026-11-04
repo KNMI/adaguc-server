@@ -221,8 +221,8 @@ class TestCustomStyles(unittest.TestCase):
     def contour_style(self, textformatting):
         return f'<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max><ContourLine linecolor="#000000" textcolor="#000000" textformatting="{textformatting}" interval="0.05"/></Style>'
 
-    def test_CustomStyles_rejects_unsafe_formats(self):
-        """printf formats get a double: anything but one float conversion could crash or leak memory"""
+    def test_CustomStyles_accepts_unsafe_formats(self):
+        """printf formats get a double: CT::formatFloat prints anything but one float conversion with %g instead"""
         for fmt in ["%s", "%s%s%s%s", "%p %p", "%n", "%d", "%x", "%*f", "%1$f", "%Lf", "%f %f", "%123f", "%"]:
             for stylesheet in [
                 self.contour_style(fmt),
@@ -232,7 +232,11 @@ class TestCustomStyles(unittest.TestCase):
                 f'<Style name="s"><Vector textformat="{fmt}"/></Style>',
             ]:
                 with self.subTest(stylesheet=stylesheet):
-                    self.assertEqual(self.post_getmap(stylesheet).status_code, 422)
+                    response = self.post_getmap(stylesheet)
+                    self.assertEqual(response.status_code, 200, response.text)
+
+    def test_CustomStyles_rejects_long_formats(self):
+        self.assertEqual(self.post_getmap(self.contour_style("%f" * 33)).status_code, 422)
 
     def test_CustomStyles_accepts_safe_formats(self):
         for fmt in ["%2.2f", "%.1f degC", "%g", "%e", "%+08.3f", "100%%", " ", ""]:
@@ -253,8 +257,9 @@ class TestCustomStyles(unittest.TestCase):
             '<Legend name="l" type="svg" file="/etc/passwd"/>',
             # Applied to strings and integers too, so no safe format exists
             '<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>',
-            # Unbounded recursion
+            # IncludeStyle of a style that is not configured, like the posted style itself
             '<Style name="s"><IncludeStyle name="s"/></Style>',
+            '<Style name="s"><IncludeStyle name="does_not_exist"/></Style>',
             # Unknown elements, attributes and markup
             '<Style name="s"><Foo/></Style>',
             '<Style name="s"><ContourLine foo="1"/></Style>',
@@ -296,3 +301,10 @@ class TestCustomStyles(unittest.TestCase):
         response = self.post_getmap(accepted)
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(self.post_getmap(style.format('textdistance="0"')).status_code, 422)
+
+    def test_CustomStyles_include_configured_style(self):
+        """A posted style can include a configured style, also when it has the same name"""
+        for name in ["included", "testdata_style_manycontours"]:
+            with self.subTest(name=name):
+                response = self.post_getmap(f'<Style name="{name}"><IncludeStyle name="testdata_style_manycontours"/></Style>')
+                self.compare_image(response, "test_CustomStyles_dataset_style.png")
