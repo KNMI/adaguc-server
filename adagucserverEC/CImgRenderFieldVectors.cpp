@@ -1,5 +1,6 @@
 #include <CImgRenderFieldVectors.h>
 #include "f8vector.h"
+#include <algorithm>
 #include <utils.h>
 #include <string>
 #include <vector>
@@ -39,15 +40,23 @@ f8component jacobianTransform(f8component speedVector, f8point gridPoint, double
     //     |
     //     |
     // pnt0 = gridPoint, where we have (u,v)
-    // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
-    // The vector towards north pole at this location will be (0,1,0)
-    // The tangent plane at this location is XY wil a normal (0, 0, 1)
-    // Nummerical approach using projection onto a unit sphere
+    //
+    // Both points are placed on the unit sphere. Grid north at pnt0 is the direction from pnt0 to pntN, projected onto the
+    // tangent plane at pnt0. Without the projection the chord dips below the tangent plane by half the arc it spans, and
+    // that dip would be read as a rotation (for example on a plain lat/lon grid, where the correct angle is 0).
+    // True north at pnt0 is the earth's axis (0, 0, 1) projected onto the same tangent plane.
 
     f8vector pntNSph = {.x = cos(pntRadN.y) * cos(pntRadN.x), .y = cos(pntRadN.y) * sin(pntRadN.x), .z = sin(pntRadN.y)};
     f8vector pnt0Sph = {.x = cos(pntRad0.y) * cos(pntRad0.x), .y = cos(pntRad0.y) * sin(pntRad0.x), .z = sin(pntRad0.y)};
-    f8vector pntNSphNorm = (pntNSph - pnt0Sph).norm();
     f8vector normSph = pnt0Sph.norm();
+    f8vector chord = pntNSph - pnt0Sph;
+    double chordAlongNormal = dot(chord, normSph);
+    f8vector chordInTangentPlane = {
+        .x = chord.x - chordAlongNormal * normSph.x,
+        .y = chord.y - chordAlongNormal * normSph.y,
+        .z = chord.z - chordAlongNormal * normSph.z,
+    };
+    f8vector pntNSphNorm = chordInTangentPlane.norm();
     f8vector pntNSphRot = {
         .x = -normSph.z * normSph.x,
         .y = -normSph.z * normSph.y,
@@ -55,7 +64,8 @@ f8component jacobianTransform(f8component speedVector, f8point gridPoint, double
     };
     f8vector pntNSphRotNorm = pntNSphRot.norm();
 
-    double vectorAngle = acos(dot(pntNSphNorm, pntNSphRotNorm));
+    // Both vectors have unit length, but rounding can push their dot product just outside [-1, 1], where acos returns NaN.
+    double vectorAngle = acos(std::clamp(dot(pntNSphNorm, pntNSphRotNorm), -1.0, 1.0));
 
     // Determine the sign of the angle
     if (dot(cross(pntNSphRotNorm, pntNSphNorm), normSph) > 0.0) {
