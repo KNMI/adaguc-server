@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include "CImgWarpGeneric.h"
+#include "GenericDataWarper/gdwBilinear.h"
+#include "GenericDataWarper/gdwBulkColor.h"
 #include <cmath>
 #include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CImageDataWriter.h"
@@ -45,41 +47,22 @@
 #include "CDrawFunction.h"
 #include "CStopWatch.h"
 
-// Stores the sampled value in the destination grid and, unless drawgrid is off, paints its legend color.
-// Shared by the nearest and bilinear draw functions below, which only differ in how they sample value.
-template <typename V>
-void writeDestinationPixel(int x, int y, V value, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
-  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
-  if (!settings.drawgrid) return;
-  auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
-  if (colorIndex.a > 0) {
-    settings.drawImage->setPixel(x, y, colorIndex);
-  } else if (colorIndex.r > 0 || colorIndex.g > 0 || colorIndex.b > 0) {
-    // Deliberately transparent interval color (RGB set, alpha=0): force-erase.
-    settings.drawImage->setPixelTrueColorOverWrite(x, y, colorIndex.r, colorIndex.g, colorIndex.b, colorIndex.a);
-  }
-}
-
-template <typename T>
-void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
+template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings, GDWPixelBatch<T> &batch) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || std::isnan(value)) return;
 
   if (settings.smoothingFiter > 0) {
     value = smoothingAtLocation(warperState.sourceIndexX, warperState.sourceIndexY, (T *)warperState.sourceGrid, warperState, settings);
   }
-  writeDestinationPixel(x, y, value, warperState, settings, memo);
+  batch.append(x, y, value);
 };
 
-template <typename T>
-void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
-  if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
-
+template <typename T> bool loadBilinearValues(T val, GDWState &warperState, GDWDrawFunctionSettings &settings, T values[4]) {
   if (settings.hasNodataValue) {
-    if ((val) == (T)settings.dfNodataValue) return;
+    if ((val) == (T)settings.dfNodataValue) return false;
   }
 
-  if (std::isnan(val)) return;
+  if (std::isnan(val)) return false;
 
   T *sourceData = (T *)warperState.sourceGrid;
 
@@ -89,12 +72,12 @@ void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDr
   size_t sourceDataHeight = warperState.sourceGridHeight;
 
   if (warperState.hasSharedBoundaryLR == false) {
-    if (sourceDataPX >= sourceDataWidth - 1) return;
+    if (sourceDataPX >= sourceDataWidth - 1) return false;
   }
 
-  if (sourceDataPY >= sourceDataHeight - 1) return;
+  if (sourceDataPY >= sourceDataHeight - 1) return false;
 
-  T values[2][2] = {{0, 0}, {0, 0}};
+  T corners[2][2] = {{0, 0}, {0, 0}};
 
   const auto x0 = sourceDataPX;
   const auto x1 = sourceDataPX + 1 == sourceDataWidth ? size_t{0} : sourceDataPX + 1;
@@ -102,34 +85,86 @@ void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDr
   const auto y1 = sourceDataPY + 1;
 
   if (settings.smoothingFiter > 0) {
-    values[0][0] = smoothingAtLocation(x0, y0, sourceData, warperState, settings);
-    values[1][0] = smoothingAtLocation(x1, y0, sourceData, warperState, settings);
-    values[0][1] = smoothingAtLocation(x0, y1, sourceData, warperState, settings);
-    values[1][1] = smoothingAtLocation(x1, y1, sourceData, warperState, settings);
+    corners[0][0] = smoothingAtLocation(x0, y0, sourceData, warperState, settings);
+    corners[1][0] = smoothingAtLocation(x1, y0, sourceData, warperState, settings);
+    corners[0][1] = smoothingAtLocation(x0, y1, sourceData, warperState, settings);
+    corners[1][1] = smoothingAtLocation(x1, y1, sourceData, warperState, settings);
   } else {
-    values[0][0] = sourceData[x0 + y0 * sourceDataWidth];
-    values[1][0] = sourceData[x1 + y0 * sourceDataWidth];
-    values[0][1] = sourceData[x0 + y1 * sourceDataWidth];
-    values[1][1] = sourceData[x1 + y1 * sourceDataWidth];
+    corners[0][0] = sourceData[x0 + y0 * sourceDataWidth];
+    corners[1][0] = sourceData[x1 + y0 * sourceDataWidth];
+    corners[0][1] = sourceData[x0 + y1 * sourceDataWidth];
+    corners[1][1] = sourceData[x1 + y1 * sourceDataWidth];
   }
 
   // Reject the whole quad if any corner is nodata/NaN, like CImgWarpBilinear used to.
-  for (const auto &row: values) {
-    for (const T &cornerValue: row) {
-      if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || std::isnan(cornerValue)) return;
+  for (const auto &row : corners) {
+    for (const T &cornerValue : row) {
+      if ((settings.hasNodataValue && cornerValue == (T)settings.dfNodataValue) || std::isnan(cornerValue)) return false;
     }
   }
 
-  float dx = warperState.sourceTileDx;
-  float dy = warperState.sourceTileDy;
-  float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
-  float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
-  float bilValue = (1 - dy) * gx1 + dy * gx2;
-  writeDestinationPixel(x, y, bilValue, warperState, settings, memo);
+  values[0] = corners[0][0];
+  values[1] = corners[1][0];
+  values[2] = corners[0][1];
+  values[3] = corners[1][1];
+  return true;
+}
+
+// Collect pixels across quads so even one-pixel triangle spans contribute SIMD lanes.
+// Only sampling/classification is reordered; grid writes and blending keep traversal order.
+template <typename T> class BilinearDrawFunction {
+  GDWDrawFunctionSettings &settings;
+  GDWBatchPainter &painter;
+  mutable int cachedX = -1, cachedY = -1;
+  mutable bool valid = false;
+  mutable T values[4]{};
+  mutable int count = 0;
+  mutable int px[GDW_BATCH_SIZE], py[GDW_BATCH_SIZE];
+  alignas(64) mutable float dx[GDW_BATCH_SIZE], dy[GDW_BATCH_SIZE];
+  alignas(64) mutable T v00[GDW_BATCH_SIZE], v10[GDW_BATCH_SIZE], v01[GDW_BATCH_SIZE], v11[GDW_BATCH_SIZE];
+
+  bool prepare(T val, GDWState &state) const {
+    if (cachedX == state.sourceIndexX && cachedY == state.sourceIndexY) return valid;
+    cachedX = state.sourceIndexX;
+    cachedY = state.sourceIndexY;
+    valid = loadBilinearValues(val, state, settings, values);
+    return valid;
+  }
+  void append(int x, int y, GDWState &state) const {
+    px[count] = x;
+    py[count] = y;
+    dx[count] = float(state.sourceTileDx);
+    dy[count] = float(state.sourceTileDy);
+    v00[count] = values[0];
+    v10[count] = values[1];
+    v01[count] = values[2];
+    v11[count] = values[3];
+    if (++count == GDW_BATCH_SIZE) flush();
+  }
+
+public:
+  BilinearDrawFunction(GDWDrawFunctionSettings &settings, GDWBatchPainter &painter) : settings(settings), painter(painter) {}
+  bool prepareQuad(T val, GDWState &state) const { return prepare(val, state); }
+  void operator()(int x, int y, T val, GDWState &state) const {
+    if (prepare(val, state)) append(x, y, state);
+  }
+  void drawSpan(int start, int end, int y, double tileDx, double tileDy, double stepDx, double stepDy, T, GDWState &state) const {
+    for (int x = start; x < end; ++x, tileDx += stepDx, tileDy += stepDy) {
+      state.sourceTileDx = tileDx < 0 ? 0 : (tileDx > 1 ? 1 : tileDx);
+      state.sourceTileDy = tileDy < 0 ? 0 : (tileDy > 1 ? 1 : tileDy);
+      append(x, y, state);
+    }
+  }
+  void flush() const {
+    if (!count) return;
+    alignas(64) float output[GDW_BATCH_SIZE];
+    gdwBilinearBatch(output, dx, dy, v00, v10, v01, v11, count);
+    painter.write(count, px, py, output);
+    count = 0;
+  }
 };
 
-template <typename T>
-void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
+template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings, MemoizationForDeterminePixelColorFromValue &memo) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
@@ -204,15 +239,21 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
-
   if (!settings.drawgridboxoutline) {
+    GDWBatchPainter painter(settings);
     if (settings.interpolationMethod == InterpolationMethodNearest) {
       if (debug) {
         CDBDebug("Render nearest");
       }
       genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings, memo); });
+  if (dataType == CDFTYPE) {                                                                                                                                                                           \
+    GDWPixelBatch<CPPTYPE> batch(painter);                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &state) { warpImageNearestFunction(x, y, val, state, settings, batch); });                                         \
+    StopWatch_Measure("CImgWarpGeneric: start pixel batch");                                                                                                                                           \
+    batch.flush();                                                                                                                                                                                     \
+    StopWatch_Measure("CImgWarpGeneric: done pixel batch");                                                                                                                                            \
+  }
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
@@ -223,7 +264,13 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       genericDataWarper.useHalfCellOffset = true;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings, memo); });
+  if (dataType == CDFTYPE) {                                                                                                                                                                           \
+    BilinearDrawFunction<CPPTYPE> draw(settings, painter);                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, draw);                                                                                                                                                     \
+    StopWatch_Measure("CImgWarpGeneric: start pixel batch");                                                                                                                                           \
+    draw.flush();                                                                                                                                                                                      \
+    StopWatch_Measure("CImgWarpGeneric: done pixel batch");                                                                                                                                            \
+  }
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }

@@ -219,6 +219,9 @@ public:
   void setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255) { _pixel_blend(x, y, r, g, b, a); }
   void setPixelTrueColorOverWrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) { _pixel_overwrite(x, y, r, g, b, a); }
 
+  // Read-only native ARGB32 bytes, including row padding.
+  std::span<const unsigned char> getPremultipliedPixels() const { return {ARGBByteBuffer.get(), size_t(stride) * geoParams.height}; }
+
   // --- Lines and shapes -------------------------------------------------------------------------
 
   void moveTo(float x1, float y1);

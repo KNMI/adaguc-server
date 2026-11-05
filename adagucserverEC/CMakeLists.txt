@@ -113,6 +113,8 @@ add_library(
     Types/LayerMetadataType.h
     Types/LayerMetadataType.cpp
     Types/CPointTypes.h
+    GenericDataWarper/gdwBilinear.h
+    GenericDataWarper/gdwBulkColor.h
     GenericDataWarper/gdwDrawTriangle.h
     GenericDataWarper/GDWState.h
     GenericDataWarper/GDWDrawFunctionSettings.h
@@ -266,6 +268,14 @@ add_library(
     fork_server.h
     fork_server.cpp
 )
+
+# SIMD-only OpenMP directives do not require a threading runtime. Propagate to template users.
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-fopenmp-simd" ADAGUC_HAVE_OPENMP_SIMD)
+if(ADAGUC_HAVE_OPENMP_SIMD)
+  target_compile_options(adagucserverEC PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp-simd>)
+  target_compile_definitions(adagucserverEC PUBLIC ADAGUC_OPENMP_SIMD)
+endif()
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
 target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})

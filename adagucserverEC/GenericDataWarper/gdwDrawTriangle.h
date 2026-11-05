@@ -18,6 +18,8 @@ static inline int gdwFloorNonNegative(double v) { return (int)v; }
 // Header only, so drawFunction (void(int x, int y, T value, GDWState&)) can be inlined in the pixel loop.
 // Pixel ownership: a pixel belongs to a row span iff its center is in [minx, maxx), so shared edges don't double-draw (avoids stippling on translucent colors).
 // gdwDrawQuad takes unrounded corners and rounds each one once; gdwDrawTriangleRounded takes pre-rounded corners.
+// Callbacks may implement prepareQuad() and drawSpan() for batched sampling.
+// Direct callers of gdwDrawTriangleRounded provide an already prepared callback.
 
 // tUp: which half of a quad this triangle is.
 template <typename T, typename DrawFn>
@@ -108,10 +110,14 @@ int gdwDrawTriangleRounded(const double xP[3], const double yP[3], const T &valu
     const double WV2 = ((yv3 - yv1) * (startX - xv3) + (xv1 - xv3) * (y - yv3)) * invDn;
     double tileDx = tUp ? WV1 : 1 - WV1;
     double tileDy = tUp ? WV2 : WV1 + WV2;
-    for (int x = startPixel; x < endPixel; x++, tileDx += dDxPerPixel, tileDy += dDyPerPixel) {
-      warperState.sourceTileDx = tileDx < 0 ? 0 : (tileDx > 1 ? 1 : tileDx);
-      warperState.sourceTileDy = tileDy < 0 ? 0 : (tileDy > 1 ? 1 : tileDy);
-      drawFunction(x, y, value, warperState);
+    if constexpr (requires { drawFunction.drawSpan(startPixel, endPixel, y, tileDx, tileDy, dDxPerPixel, dDyPerPixel, value, warperState); }) {
+      drawFunction.drawSpan(startPixel, endPixel, y, tileDx, tileDy, dDxPerPixel, dDyPerPixel, value, warperState);
+    } else {
+      for (int x = startPixel; x < endPixel; x++, tileDx += dDxPerPixel, tileDy += dDyPerPixel) {
+        warperState.sourceTileDx = tileDx < 0 ? 0 : (tileDx > 1 ? 1 : tileDx);
+        warperState.sourceTileDy = tileDy < 0 ? 0 : (tileDy > 1 ? 1 : tileDy);
+        drawFunction(x, y, value, warperState);
+      }
     }
   }
   return 0;
@@ -128,6 +134,9 @@ int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoord
   if (triangleYCoords[0] >= H && triangleYCoords[1] >= H && triangleYCoords[2] >= H) return 0;
   const double xP[3] = {gdwRoundHalfAwayFromZero(triangleXCoords[0]), gdwRoundHalfAwayFromZero(triangleXCoords[1]), gdwRoundHalfAwayFromZero(triangleXCoords[2])};
   const double yP[3] = {gdwRoundHalfAwayFromZero(triangleYCoords[0]), gdwRoundHalfAwayFromZero(triangleYCoords[1]), gdwRoundHalfAwayFromZero(triangleYCoords[2])};
+  if constexpr (requires { drawFunction.prepareQuad(value, warperState); }) {
+    if (!drawFunction.prepareQuad(value, warperState)) return 0;
+  }
   return gdwDrawTriangleRounded(xP, yP, value, tUp, warperState, drawFunction);
 }
 
@@ -143,6 +152,9 @@ template <typename T, typename DrawFn> void gdwDrawQuad(const double quadX[4], c
   const double yP[4] = {gdwRoundHalfAwayFromZero(quadY[0]), gdwRoundHalfAwayFromZero(quadY[1]), gdwRoundHalfAwayFromZero(quadY[2]), gdwRoundHalfAwayFromZero(quadY[3])};
   // Sub-pixel height quad: both triangles would be too, skip.
   if (std::max(std::max(yP[0], yP[1]), std::max(yP[2], yP[3])) - std::min(std::min(yP[0], yP[1]), std::min(yP[2], yP[3])) < 1) return;
+  if constexpr (requires { drawFunction.prepareQuad(value, warperState); }) {
+    if (!drawFunction.prepareQuad(value, warperState)) return;
+  }
   const double xP[4] = {gdwRoundHalfAwayFromZero(quadX[0]), gdwRoundHalfAwayFromZero(quadX[1]), gdwRoundHalfAwayFromZero(quadX[2]), gdwRoundHalfAwayFromZero(quadX[3])};
 
   const double xA[3] = {xP[0], xP[1], xP[2]}, yA[3] = {yP[0], yP[1], yP[2]};

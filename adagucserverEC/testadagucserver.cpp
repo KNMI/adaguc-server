@@ -17,6 +17,10 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
+#include "GenericDataWarper/gdwBilinear.h"
+#include "GenericDataWarper/gdwBulkColor.h"
+#include <limits>
+#include <cstring>
 #include <vector>
 #include <chrono>
 #include <cstdint>
@@ -632,4 +636,145 @@ TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
   drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesQuad, W, H, -9.4, -7.2, outOfRange, false);
   drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesTriangles, W, H, -9.4, -7.2, outOfRange, true);
   CHECK(writesQuad == writesTriangles);
+}
+
+// Compare every mapper mode against master's scalar implementation, including
+// unequal/overlapping intervals, duplicate minima, partial alpha and erase colors.
+template <typename T> static bool gdwBatchColorsMatchScalar() {
+  CStyleConfiguration style;
+  for (int i = 0; i < 240; ++i) style.colors.emplace_back(i, 239 - i, i / 2, i % 3 == 0 ? 0 : (i % 3 == 1 ? 128 : 255));
+  GDWDrawFunctionSettings settings{};
+  settings.styleConfiguration = &style;
+  settings.hasNodataValue = true;
+  settings.dfNodataValue = 99;
+  settings.legendScale = 1.3;
+  settings.legendOffset = 11;
+  settings.legendValueRange = true;
+  settings.legendLowerRange = -20;
+  settings.legendUpperRange = 150;
+  settings.bgColorDefined = true;
+  settings.bgColor = CColor(9, 11, 13, 0);
+  settings.intervals = {{-10.5, -3.125, CColor(1, 2, 3, 128)}, {-2, 0, CColor(9, 7, 5, 0)}, {0, .4, CColor(3, 5, 7, 255)},
+                        {.4, 6, CColor(11, 13, 17, 64)}, {6, 11, CColor(19, 23, 29, 255)}, {6, 50, CColor(31, 37, 41, 90)}, {11, 15, CColor(43, 47, 53, 255)}};
+  T values[GDW_BATCH_SIZE];
+  for (int i = 0; i < GDW_BATCH_SIZE; ++i) values[i] = T((i % 180) - 20);
+  if constexpr (std::is_floating_point_v<T>) {
+    for (int i = 0; i < GDW_BATCH_SIZE; ++i) values[i] = T((i % 180) - 20) / T(3.1);
+    values[0] = std::numeric_limits<T>::quiet_NaN();
+    values[1] = std::numeric_limits<T>::infinity();
+    values[2] = -std::numeric_limits<T>::infinity();
+    values[3] = T(99);
+    values[4] = std::nextafter(T(6), T(0));
+    values[5] = T(6);
+    values[6] = std::nextafter(T(6), T(10));
+  }
+  for (int mode = 0; mode < 6; ++mode) {
+    settings.isUsingShadeIntervals = mode == 1 || mode == 2 || mode == 4;
+    settings.shadeInterval = mode == 2 || mode == 4 ? 2.5 : 0;
+    settings.legendLog = mode >= 3 ? 10 : 0;
+    settings.legendOffset = mode >= 3 ? 0 : 11;
+    settings.legendLogAsLog = 1;
+    GDWColorMapper mapper(settings);
+    for (int count: {0, 1, 3, 63, 255, GDW_BATCH_SIZE}) {
+      uint32_t output[GDW_BATCH_SIZE + 2];
+      std::fill(std::begin(output), std::end(output), 0x12345678);
+      mapper.map(values, output + 1, count);
+      if (output[0] != 0x12345678 || output[count + 1] != 0x12345678) return false;
+      for (int i = 0; i < count; ++i) {
+        if (output[i + 1] != GDWColorMapper::pack(determinePixelColorFromValue(values[i], &settings))) return false;
+      }
+    }
+  }
+  settings.isUsingShadeIntervals = true;
+  settings.shadeInterval = 0;
+  settings.intervals.clear();
+  GDWColorMapper empty(settings);
+  uint32_t output[GDW_BATCH_SIZE];
+  empty.map(values, output, GDW_BATCH_SIZE);
+  for (int i = 0; i < GDW_BATCH_SIZE; ++i) {
+    if (output[i] != GDWColorMapper::pack(determinePixelColorFromValue(values[i], &settings))) return false;
+  }
+  return true;
+}
+
+TEST(gdwBatchedColorsMatchScalarForAllDataTypes, GenericDataWarper) {
+#define CHECK_BATCH(CDFTYPE, CPPTYPE) CHECK(gdwBatchColorsMatchScalar<CPPTYPE>());
+  ENUMERATE_OVER_CDFTYPES(CHECK_BATCH)
+#undef CHECK_BATCH
+}
+
+TEST(gdwBatchPainterPreservesOverlapAndAlphaOrder, GenericDataWarper) {
+  CDrawImage expected, actual;
+  expected.createImage(17, 3);
+  actual.createImage(17, 3);
+  std::vector<float> expectedGrid(51, -9999), actualGrid(expectedGrid);
+  GDWDrawFunctionSettings settings{};
+  settings.isUsingShadeIntervals = true;
+  settings.intervals = {{0, 1, CColor(100, 70, 30, 128)}, {1, 2, CColor(10, 20, 30, 0)}, {2, 3, CColor(10, 20, 230, 255)}, {3, 4, CColor(0, 0, 0, 0)}};
+  settings.drawImage = &actual;
+  settings.destinationGrid = actualGrid.data();
+  GDWBatchPainter painter(settings);
+  GDWPixelBatch<float> batch(painter);
+  for (int i = 0; i < GDW_BATCH_SIZE * 2 + 19; ++i) {
+    int x = i % 17, y = i % 3;
+    float value = float(i % 4) + 0.5f;
+    expectedGrid[x + y * 17] = value;
+    auto color = determinePixelColorFromValue(value, &settings);
+    if (color.a > 0) expected.setPixel(x, y, color);
+    else if (color.r || color.g || color.b) expected.setPixelTrueColorOverWrite(x, y, color.r, color.g, color.b, color.a);
+    batch.append(x, y, value);
+  }
+  batch.flush();
+  CHECK(expectedGrid == actualGrid);
+  const auto expectedPixels = expected.getPremultipliedPixels();
+  const auto actualPixels = actual.getPremultipliedPixels();
+  CHECK(expectedPixels.size() == actualPixels.size());
+  CHECK(std::equal(expectedPixels.begin(), expectedPixels.end(), actualPixels.begin()));
+}
+
+template <typename T> static bool gdwBatchedInterpolationMatchesScalar() {
+  float dx[GDW_BATCH_SIZE], dy[GDW_BATCH_SIZE], actual[GDW_BATCH_SIZE], expected[GDW_BATCH_SIZE];
+  T v00[GDW_BATCH_SIZE], v10[GDW_BATCH_SIZE], v01[GDW_BATCH_SIZE], v11[GDW_BATCH_SIZE];
+  for (int i = 0; i < GDW_BATCH_SIZE; ++i) {
+    dx[i] = float(i) / 255; dy[i] = 1 - dx[i];
+    v00[i] = T(i % 97); v10[i] = T((i + 11) % 89); v01[i] = T((i + 37) % 83); v11[i] = T((i + 53) % 79);
+    float gx1 = (1 - dx[i]) * v00[i] + dx[i] * v10[i];
+    float gx2 = (1 - dx[i]) * v01[i] + dx[i] * v11[i];
+    expected[i] = (1 - dy[i]) * gx1 + dy[i] * gx2;
+  }
+  for (int count: {1, 3, 63, GDW_BATCH_SIZE}) {
+    gdwBilinearBatch(actual, dx, dy, v00, v10, v01, v11, count);
+    if (std::memcmp(expected, actual, size_t(count) * sizeof(float)) != 0) return false;
+  }
+  return true;
+}
+
+TEST(gdwBatchedInterpolationMatchesScalarForAllDataTypes, GenericDataWarper) {
+#define CHECK_BATCH(CDFTYPE, CPPTYPE) CHECK(gdwBatchedInterpolationMatchesScalar<CPPTYPE>());
+  ENUMERATE_OVER_CDFTYPES(CHECK_BATCH)
+#undef CHECK_BATCH
+}
+
+TEST(gdwColorHintsMatchScalarForRandomFloatBits, GenericDataWarper) {
+  GDWDrawFunctionSettings settings{};
+  settings.isUsingShadeIntervals = true;
+  settings.bgColorDefined = true;
+  settings.bgColor = CColor(3, 5, 7, 128);
+  // Deliberately nonuniform, with gaps and overlapping ranges.
+  settings.intervals = {{-100, -17.25, CColor(11, 13, 17, 255)}, {-17.25, -.01, CColor(19, 23, 29, 32)},
+                        {-.005, 0, CColor(31, 37, 41, 0)}, {0, .03125, CColor(43, 47, 53, 255)}, {.03125, 1234, CColor(59, 61, 67, 192)}};
+  GDWColorMapper mapper(settings);
+  uint32_t seed = 1234567;
+  bool equal = true;
+  for (int batch = 0; batch < 400; ++batch) {
+    float values[GDW_BATCH_SIZE];
+    uint32_t output[GDW_BATCH_SIZE];
+    for (float &value: values) {
+      seed = seed * 1664525u + 1013904223u;
+      std::memcpy(&value, &seed, sizeof(value));
+    }
+    mapper.map(values, output, GDW_BATCH_SIZE);
+    for (int i = 0; i < GDW_BATCH_SIZE; ++i) equal &= output[i] == GDWColorMapper::pack(determinePixelColorFromValue(values[i], &settings));
+  }
+  CHECK(equal);
 }
