@@ -13,7 +13,7 @@ The images in this tutorial were made with the commands shown.
 
 `STYLESHEET` is disabled by default. Enable it with the environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`:
 
-- Docker compose: add `- "ADAGUC_STYLESHEET_ENABLE=TRUE"` to the `environment` list of the `adaguc-server` service in [docker-compose.yml](../../Docker/docker-compose.yml) and restart.
+- Docker compose: change `- "ADAGUC_STYLESHEET_ENABLE=FALSE"` to `TRUE` in the `environment` list of the `adaguc-server` service in [docker-compose.yml](../../Docker/docker-compose.yml) and restart.
 - Local development server (see [Developing](../Developing.md)): `export ADAGUC_STYLESHEET_ENABLE=TRUE` before `python3 ./python/python_fastapi_server/main.py`.
 
 Without it, a request with `STYLESHEET` is refused with status 422 and `STYLESHEET is not enabled`.
@@ -222,18 +222,12 @@ document.getElementById("map").src = URL.createObjectURL(await response.blob());
 The XML is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
 
 - Allowed: `Legend` with `palette`, and one `Style` with the usual styling elements: `Min`, `Max`, `ShadeInterval`, `ContourLine`, `SmoothingFilter`, `RenderSettings`, `RenderMethod`, `Point`, `Vector`, `Thinning`, `SymbolInterval`, `FeatureInterval`, `Stippling`, `IncludeStyle`, and so on.
-- Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers.
+- Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`.
 - Not allowed: other elements such as `Layer`, font files, any file except the `.png` symbols above, `labelpropertyformat`, DOCTYPEs, and `DataPostProc` other than `pointsfromgrid`, `beaufort` and `clipminmax`.
 - printf formats such as `textformatting="%.1f"` are accepted. A format that is not a single float conversion (for example `%s`) is printed with `%g` instead.
 - Only one layer per request, and at most one `Style`.
 
-The server answers with:
-
-| Status | Reason |
-|---|---|
-| 422 | `STYLESHEET` is not enabled, the XML is invalid or not allowed, or more than one layer is requested. The body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. |
-| 413 | The POST body, or the parameters after url encoding, are larger than 64 KB. Encoding makes characters like `<`, `>`, `"` and spaces three bytes, so keep a stylesheet below about 20 KB. |
-| 415 | The POST body is not `application/x-www-form-urlencoded`. |
+A refused stylesheet gets status 422, and the body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. A stylesheet that is too large gets 413. See [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes) for all statuses.
 
 ## 11. Notes for server administrators
 

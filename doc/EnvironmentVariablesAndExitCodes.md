@@ -21,8 +21,25 @@ The following exit codes are supported:
 |SCAN_EXITCODE_FILENOMATCH_ISDELETED|68| File does not match any of the available datasets and is deleted  |
 |SCAN_EXITCODE_TIMEOUT|124| The scan process timed out |
 
+# HTTP status codes
 
+The Python server runs adaguc-server for each WMS, WCS and OpenDAP request, and turns its exit code into the HTTP status code of the response. It can also reject a request itself, before adaguc-server runs. Exit codes 34 and 35 are set by the Python server, not by adaguc-server.
 
+For WMS and WCS requests:
+
+| HTTP status | Cause | What to do |
+| -------- | ------- | ------- |
+| 200 OK | Exit code 0. `/healthcheck` always returns 200 and is not checked against `ADAGUC_TRUSTED_HOSTS`. | - |
+| 400 Bad Request | Exit code 35. Only in [fork mode](/doc/fork_server.md) (`ADAGUC_FORK_ENABLE=TRUE`): the request is too large for the fork server, or a request value contains a newline. | Send a smaller request, for example with fewer coordinates. |
+| 400 Invalid host header | The host of the request is not in `ADAGUC_TRUSTED_HOSTS`. When the request comes from a proxy in `ADAGUC_TRUSTED_PROXIES`, this is the host from its `X-Forwarded-Host` header. Only checked when `EXTERNALADDRESS` is unset. | Add the host to `ADAGUC_TRUSTED_HOSTS`. See [Running adaguc-server behind a reverse proxy](tutorials/Running_adaguc_server_behind_a_reverse_proxy.md). |
+| 404 Not Found | Exit code 32 (`HTTP_STATUSCODE_404_NOT_FOUND`): something is not found, for example a layer or the requested time range. | Check the request parameters against GetCapabilities. |
+| 413 Content Too Large | The POST body, or the parameters after url encoding, are larger than 64 KB. Encoding makes characters like `<`, `>`, `"` and spaces three bytes. | Keep a `STYLESHEET` below about 20 KB. |
+| 415 Unsupported Media Type | The body of a POST request is not `application/x-www-form-urlencoded`. | Send the parameters form url encoded. |
+| 422 Unprocessable Entity | Exit code 33 (`HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY`): adaguc-server could not process the request. For a `STYLESHEET`: it is not enabled (`ADAGUC_STYLESHEET_ENABLE`), the XML is invalid or not allowed, or more than one layer is requested; the body says why. | Check the request parameters. The log has the details. For a `STYLESHEET`, see [Post a custom style with STYLESHEET](tutorials/Post_a_custom_style_with_STYLESHEET.md). |
+| 500 Internal Server Error | Exit code 34: the request took longer than `ADAGUC_MAX_PROC_TIMEOUT` seconds and was stopped. | Request less data, or raise `ADAGUC_MAX_PROC_TIMEOUT`. |
+| 500 Internal Server Error | Any other non-zero exit code: adaguc-server ran into an error. | See the log. |
+
+OpenDAP requests return 500 for every non-zero exit code. The OGC API and EDR endpoints check their own query parameters, and return 400 or 404 with a description of the problem.
 
 # Environment variables
 
@@ -50,7 +67,7 @@ The following exit codes are supported:
 | `ADAGUCENV_RETENTIONPERIOD` | ISO 8601 duration specifying how long generated or cached files should be retained.<br>See also [environment.md](/doc/configuration/Environment.md). | -|
 | `EXTERNALADDRESS`         | Hostname where Adaguc Viewer and Adaguc Explorer are reachable. | -|
 | `ADAGUC_SERVER_PORT`      | The http port on which adaguc-server will be available. | 8080 |
-| `ADAGUC_TRUSTED_HOSTS`    | When EXTERNALADDRESS is unset, this is the allowed hosts list that can be advertised as online resource in the WMS GetCapabilities | * |
-| `ADAGUC_TRUSTED_PROXIES`  | When EXTERNALADDRESS is unset, this is the list of trusted proxies from which adaguc-server will determine its external address. (Via the x-forwared- headers) | * |
+| `ADAGUC_TRUSTED_HOSTS`    | When EXTERNALADDRESS is unset, this is the allowed hosts list that can be advertised as online resource in the WMS GetCapabilities. Requests for any other host get `400 Invalid host header`, see [HTTP status codes](#http-status-codes). | - (all hosts allowed) |
+| `ADAGUC_TRUSTED_PROXIES`  | When EXTERNALADDRESS is unset, this is the list of trusted proxies from which adaguc-server will determine its external address (via the `X-Forwarded-` headers). The headers of other clients are ignored. | `127.0.0.1` (the Docker Compose setup sets `*`) |
 | `PGBOUNCER_DISABLE_SSL`   | Disables SSL when connecting through PgBouncer. | `true` |
 | `PGBOUNCER_ENABLE`        | Enables or disables PostgreSQL connection pooling through PgBouncer. | `true` |

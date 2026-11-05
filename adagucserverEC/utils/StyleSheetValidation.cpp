@@ -16,6 +16,7 @@ namespace {
   enum class ValueType {
     Text,        // Free text, length limited
     Number,      // Finite number within [min, max]
+    Integer,     // Whole number within [min, max], for values read with atoi: "100000e-3" is 100 as a number but 100000 for atoi
     NumberList,  // Comma separated Numbers
     Color,       // #RRGGBB or #RRGGBBAA
     FloatFormat, // printf format, length limited. Every renderer prints it with CT::formatFloat, which falls back to %g for unsafe formats
@@ -47,6 +48,7 @@ namespace {
   const ValueRule PATTERN{ValueType::Pattern};
 
   ValueRule range(double min, double max) { return {ValueType::Number, min, max}; }
+  ValueRule intRange(double min, double max) { return {ValueType::Integer, min, max}; }
 
   // Every element and attribute a client may post. Missing on purpose: file and font attributes, symbol,
   // labelpropertyformat (applied to strings and integers too) and most DataPostProc attributes.
@@ -65,15 +67,15 @@ namespace {
           .text = TEXT,
           .children = {"palette"}}},
         {"palette",
-         {.attributes = {{"min", range(0, 255)},
-                         {"max", range(0, 255)},
-                         {"index", range(0, 255)},
-                         {"red", range(0, 255)},
-                         {"green", range(0, 255)},
-                         {"blue", range(0, 255)},
-                         {"alpha", range(-256, 255)}, // Negative means overwrite, see CStyleConfiguration::drawPixelFromPaletteIndex
+         {.attributes = {{"min", intRange(0, 255)},
+                         {"max", intRange(0, 255)},
+                         {"index", intRange(0, 255)},
+                         {"red", intRange(0, 255)},
+                         {"green", intRange(0, 255)},
+                         {"blue", intRange(0, 255)},
+                         {"alpha", intRange(-256, 255)}, // Negative means overwrite, see CStyleConfiguration::drawPixelFromPaletteIndex
                          {"color", COLOR}}}},
-        {"Thinning", {.attributes = {{"radius", range(0, 1000)}}}},
+        {"Thinning", {.attributes = {{"radius", intRange(0, 1000)}}}},
         {"Point",
          {.attributes = {{"fillcolor", COLOR},
                          {"linecolor", COLOR},
@@ -88,8 +90,8 @@ namespace {
                          {"pointstyle", TEXT},
                          {"min", NUMBER},
                          {"max", NUMBER},
-                         {"maxpointspercell", range(0, 1000)},
-                         {"maxpointcellsize", range(0, 1000)}}}},
+                         {"maxpointspercell", intRange(0, 1000)},
+                         {"maxpointcellsize", intRange(0, 1000)}}}},
         {"Vector",
          {.attributes = {{"linecolor", COLOR},
                          {"linewidth", range(0, 100)},
@@ -114,13 +116,13 @@ namespace {
         {"Log", {.text = range(0, LARGE)}},
         {"ContourIntervalL", {.text = range(0, LARGE)}},
         {"ContourIntervalH", {.text = range(0, LARGE)}},
-        {"SmoothingFilter", {.text = range(0, 20)}},
+        {"SmoothingFilter", {.text = intRange(0, 20)}},
         {"RenderMethod", {.text = TEXT}},
         {"ValueRange", {.attributes = {{"min", NUMBER}, {"max", NUMBER}}}},
         // The element text is the interval of a discrete legend
         {"ShadeInterval", {.attributes = {{"min", NUMBER}, {"max", NUMBER}, {"label", TEXT}, {"fillcolor", COLOR}, {"bgcolor", COLOR}, {"showinlegend", TEXT}}, .text = range(0, LARGE)}},
         {"SymbolInterval",
-         {.attributes = {{"min", NUMBER}, {"max", NUMBER}, {"file", PNG_FILE}, {"binary_and", range(0, 2147483647)}, {"offset_x", range(-1000, 1000)}, {"offset_y", range(-1000, 1000)}}}},
+         {.attributes = {{"min", NUMBER}, {"max", NUMBER}, {"file", PNG_FILE}, {"binary_and", intRange(0, 2147483647)}, {"offset_x", intRange(-1000, 1000)}, {"offset_y", intRange(-1000, 1000)}}}},
         {"ContourLine",
          {.attributes = {{"width", range(0, 100)},
                          {"dashing", {ValueType::NumberList, 0, 1000}},
@@ -152,10 +154,10 @@ namespace {
                          {"labelpropertyname", TEXT},
                          {"labelangle", range(-360, 360)},
                          {"labelpadding", range(0, 1000)}}}},
-        {"Stippling", {.attributes = {{"distancex", range(0, 1000)}, {"distancey", range(0, 1000)}, {"discradius", range(0, 1000)}, {"mode", TEXT}, {"color", COLOR}}}},
+        {"Stippling", {.attributes = {{"distancex", intRange(0, 1000)}, {"distancey", intRange(0, 1000)}, {"discradius", intRange(0, 1000)}, {"mode", TEXT}, {"color", COLOR}}}},
         {"RenderSettings",
          {.attributes = {{"settings", TEXT},
-                         {"striding", range(1, 100)},
+                         {"striding", intRange(1, 100)},
                          {"renderhint", TEXT},
                          {"scalewidth", range(0, 1000)},
                          {"scalecontours", TEXT},
@@ -178,6 +180,15 @@ namespace {
     char *end = nullptr;
     value = strtod(trimmed.c_str(), &end);
     return end == trimmed.c_str() + trimmed.size() && !std::isnan(value);
+  }
+
+  // Only an optional sign and digits, so atoi reads the same value. Long digit strings are refused, so the value fits in a double exactly.
+  bool parseInteger(std::string_view text, double &value) {
+    std::string trimmed = CT::trim(text);
+    size_t start = !trimmed.empty() && (trimmed[0] == '-' || trimmed[0] == '+') ? 1 : 0;
+    if (trimmed.size() == start || trimmed.size() - start > 15 || trimmed.find_first_not_of("0123456789", start) != std::string::npos) return false;
+    value = strtod(trimmed.c_str(), nullptr);
+    return true;
   }
 
   // The text as parseConfig reads it (CXMLSerializerInterface.cpp): only a first child that is text. Text after a comment
@@ -218,6 +229,10 @@ namespace {
         // Configurations may use -INF and INF for open intervals
         if (std::isinf(number)) return configured && rule.min == -LARGE && rule.max == LARGE;
         return number >= rule.min && number <= rule.max;
+      }
+      case ValueType::Integer: {
+        double number;
+        return parseInteger(value, number) && number >= rule.min && number <= rule.max;
       }
       case ValueType::NumberList: {
         auto items = CT::split(value, ",");
