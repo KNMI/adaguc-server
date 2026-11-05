@@ -5,11 +5,8 @@
 #include <utils/LayerUtils.h>
 #include "CCDFObject.h"
 #include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CImageWarper.h"
 #include "CServerConfig_CPPXSD.h"
-#include "CTString.h"
-#include "CXMLParser.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "CCDFReader.h"

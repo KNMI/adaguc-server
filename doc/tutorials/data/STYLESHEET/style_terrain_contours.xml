@@ -1,0 +1,16 @@
+<Legend name="terrain" type="colorRange">
+  <palette index="0"   color="#2B83BA"/>
+  <palette index="20"  color="#ABDDA4"/>
+  <palette index="60"  color="#FFFFBF"/>
+  <palette index="140" color="#D7A35B"/>
+  <palette index="240" color="#7A3B10"/>
+</Legend>
+<Style name="terrain_contours">
+  <Legend fixedclasses="true" tickinterval="10">terrain</Legend>
+  <Min>-5</Min>
+  <Max>75</Max>
+  <RenderSettings interpolationmethod="bilinear"/>
+  <SmoothingFilter>2</SmoothingFilter>
+  <ContourLine width="0.6" linecolor="#5A3A1A80" interval="5"/>
+  <ContourLine width="1.6" linecolor="#3A2008" textcolor="#3A2008" textstrokecolor="#FFFFFFC0" textstrokewidth="3" textsize="11" textformatting="%.0f m" interval="20"/>
+</Style>

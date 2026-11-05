@@ -25,9 +25,6 @@
 
 #ifndef CPGSQLDB_H
 #define CPGSQLDB_H
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include "libpq-fe.h" /* libpq header file */
 #include "CDBStore.h"
 #define CPGSQLDB_MAX_STR_LEN 8191

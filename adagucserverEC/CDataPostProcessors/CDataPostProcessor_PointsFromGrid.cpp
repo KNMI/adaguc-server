@@ -1,4 +1,3 @@
-#include <type_traits>
 #include "CDataPostProcessor_PointsFromGrid.h"
 #include <CImageWarper.h>
 #include <utils/GeometryUtils.h>
@@ -75,6 +74,17 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   }
 
   auto striding = getStrideFromGetMapLocation((*dataSource), warper, pixelOffset);
+  // A stride below 1 (or NaN when reprojection fails) would not advance the loops below
+  if (!(striding.x >= 1)) striding.x = 1;
+  if (!(striding.y >= 1)) striding.y = 1;
+  // The whole model field is looped, so limit the number of points when zoomed in on a large grid
+  const double maxPoints = 250000;
+  double numPoints = (dataSource->dWidth / striding.x) * (dataSource->dHeight / striding.y);
+  if (numPoints > maxPoints) {
+    double factor = sqrt(numPoints / maxPoints);
+    striding.x = ceil(striding.x * factor);
+    striding.y = ceil(striding.y * factor);
+  }
   CDBDebug("striding %f %f", striding.x, striding.y);
 
   // TODO: Calculate the start/end indices which are inside the getmap request. E.g. prevent looping the whole modelfield.

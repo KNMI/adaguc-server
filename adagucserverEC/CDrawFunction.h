@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 #include <float.h>
-#include <pthread.h>
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "utils/NodataUtils.h"
 #include "CColor.h"

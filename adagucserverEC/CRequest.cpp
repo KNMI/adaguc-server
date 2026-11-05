@@ -26,7 +26,6 @@
 
 static const bool CREQUEST_DEBUG = false;
 
-#include "Types/ProjectionStore.h"
 #include "CRequest.h"
 #include "CDataSource.h"
 #include "CServerParams.h"
@@ -43,8 +42,6 @@ static const bool CREQUEST_DEBUG = false;
 #include <CReadFile.h>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
-#include "utils/XMLGenUtils.h"
-#include "utils/LayerMetadataStore.h"
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
@@ -57,15 +54,12 @@ static const bool CREQUEST_DEBUG = false;
 #include "CDFObjectStore.h"
 #include "CDrawImage.h"
 #include "CImageDataWriter.h"
-#include "CImageWarper.h"
 #include "CStopWatch.h"
 #include "CTime.h"
-#include "CXMLParser.h"
 #include "CCDFStore.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
-#include "utils/ConfigurationUtils.h"
 
 int CRequest::CGI = 0;
 
@@ -514,8 +508,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
 
   // Use a short cache lifetime when a non-fixed dimension was resolved to a value different from the request.
-  const bool hasNonFixedDimensionChanges =
-      std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) { return !requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue; });
+  // Hidden dimensions (like a single height level) cannot be requested, their value belongs to the layer. Time dimensions can move on with new data.
+  const bool hasNonFixedDimensionChanges = std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) {
+    bool isFixed = requiredDim.hasFixedValue || (requiredDim.hidden && !requiredDim.isATimeDimension);
+    return !isFixed && requiredDim.value != requiredDim.queryValue;
+  });
   const auto cacheControlOption = hasNonFixedDimensionChanges ? CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE : CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE;
   srvParam->setCacheControlOption(cacheControlOption);
 
@@ -896,8 +893,11 @@ int CRequest::process_querystring() {
     CGI = 1;
   }
 
-  queryString = CT::decodeURL(queryString);
+  // Split before decoding, so an encoded '&' (%26) inside a value (e.g. STYLESHEET xml) stays part of that value
   auto parameters = CT::split(queryString, "&");
+  for (auto &parameter: parameters) {
+    parameter = CT::decodeURL(parameter);
+  }
 
   if (CREQUEST_DEBUG) {
     CDBDebug("Parsing query string parameters");
@@ -941,6 +941,10 @@ int CRequest::process_querystring() {
         CDBError("ADAGUC Server: Style already defined");
         dErrorOccured = 1;
       }
+    }
+    // Stylesheet parameter, for now only stored; will carry encoded style xml
+    if (uriKeyUpperCase == "STYLESHEET") {
+      srvParam->styleSheet = uriValue;
     }
     if (!uriValue.empty()) {
       // BBOX Parameters
@@ -1298,6 +1302,24 @@ int CRequest::process_querystring() {
     CDBDebug("Finished parsing query string parameters");
   }
   StopWatch_Measure("query string processed");
+
+  if (!srvParam->styleSheet.empty()) {
+    const char *styleSheetEnable = getenv("ADAGUC_STYLESHEET_ENABLE");
+    if (styleSheetEnable == nullptr || std::string_view(styleSheetEnable) != "TRUE") {
+      CDBError("ADAGUC Server: STYLESHEET is not enabled on this server");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (srvParam->requestedLayerNames.size() > 1) {
+      // The posted style applies to every layer, so only one layer is allowed
+      CDBError("ADAGUC Server: STYLESHEET can only be used with one layer, got %zu", srvParam->requestedLayerNames.size());
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (srvParam->applyStyleSheet(srvParam->styleSheet) != 0) {
+      CDBError("ADAGUC Server: Invalid STYLESHEET");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    }
+  }
 
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");

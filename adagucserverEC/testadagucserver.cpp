@@ -4,11 +4,9 @@
 #include "CTString.h"
 #include "CImageWarper.h"
 #include "CImgRenderFieldVectors.h"
-#include "f8vector.h"
 #include "ProjCache.h"
 #include "CDrawFunction.h"
 #include "CCDFHDF5IO.h"
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CProj4ToCF.h"
 #include "CServerConfig_CPPXSD.h"
@@ -22,6 +20,10 @@
 #include <chrono>
 #include <cstdint>
 #include <cmath>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include "CXMLSerializerInterface.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -122,17 +124,16 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.x, -5.920456, 0.001);
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 56.432904, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.direction(), 2.543957, 0.001);
+  // A vector that is not grid relative is returned as is
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, false);
+  DOUBLES_EQUAL(speedVector.u, compNoGridRel.u, 0);
+  DOUBLES_EQUAL(speedVector.v, compNoGridRel.v, 0);
 
   // Magnitudes should be the same
   DOUBLES_EQUAL(compNoGridRel.magnitude(), compGridRel.magnitude(), 0.001);
@@ -176,17 +177,17 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.x, 1.15, 0.001);
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 1.45, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
-  DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
-  DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
-  DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
-  DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
+  // On a lat/lon grid, grid north is true north, so a grid-relative vector must come back unrotated.
+  // The tolerance only allows for rounding: measuring the angle along the chord instead of in the tangent plane was off by 1.8e-3 here.
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
+  DOUBLES_EQUAL(speedVector.u, compGridRel.u, 1e-6);
+  DOUBLES_EQUAL(speedVector.v, compGridRel.v, 1e-6);
+  DOUBLES_EQUAL(speedVector.direction(), compGridRel.direction(), 1e-6);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.direction(), 2.543957, 0.001);
+  // A vector that is not grid relative is returned as is
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, false);
+  DOUBLES_EQUAL(speedVector.u, compNoGridRel.u, 0);
+  DOUBLES_EQUAL(speedVector.v, compNoGridRel.v, 0);
 
   // Magnitudes should be the same
   DOUBLES_EQUAL(compNoGridRel.magnitude(), compGridRel.magnitude(), 0.001);
@@ -220,7 +221,7 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
   f8point gridCoordURtoLatLon = gridCoordUR;
   warper.reprojModelToLatLon(gridCoordURtoLatLon);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   return compGridRel;
 }
 
@@ -693,4 +694,238 @@ TEST(smoothRasterField, linearFieldUnchangedInInterior) {
     }
   }
   CHECK(differences == 0);
+}
+
+TEST(CT, isSafeFloatFormat) {
+  for (const char *safe: {"", " ", "%f", "%2.2f", "%.1f", "%0.0f", "%+08.3e", "%g", "%G", "%a", "%.1f degC", "100%%", "%% %5.1f %%"}) {
+    CHECK(CT::isSafeFloatFormat(safe));
+  }
+  for (const char *unsafe: {"%s", "%p", "%n", "%d", "%x", "%c", "%*f", "%.*f", "%1$f", "%Lf", "%lf", "%f %f", "%123f", "%.123f", "%", "abc%"}) {
+    CHECK(!CT::isSafeFloatFormat(unsafe));
+  }
+}
+
+TEST(CT, formatFloatFallsBackForUnsafeFormats) {
+  CHECK(CT::formatFloat("%.1f", 1.25) == "1.2");
+  CHECK(CT::formatFloat("%.1f degC", 21.04) == "21.0 degC");
+  CHECK(CT::formatFloat("%+08.3f", 1.5) == "+001.500");
+  CHECK(CT::formatFloat("%e", 1500) == "1.500000e+03");
+  CHECK(CT::formatFloat("100%%", 1.5) == "100%");
+  CHECK(CT::formatFloat(" ", 1.5) == " ");
+  CHECK(CT::formatFloat("", 1.5) == "");
+  CHECK(CT::formatFloat("%s", 1.5) == "1.5");
+  CHECK(CT::formatFloat("%p %p", 2) == "2");
+}
+
+TEST(CStyleConfiguration, paletteLoopIsBoundedToPaletteIndices) {
+  // Indices far outside 0-239 used to loop over every index in between (billions of iterations)
+  CServerConfig::XMLE_Legend legend;
+  legend.attr.name = "testHugeIndexRange";
+  legend.attr.type = "colorRange";
+  CServerConfig::XMLE_palette pFrom, pTo;
+  pFrom.attr.index = -2000000000;
+  pFrom.attr.red = 0;
+  pFrom.attr.green = 0;
+  pFrom.attr.blue = 0;
+  pFrom.attr.alpha = 255;
+  pTo.attr.index = 2000000000;
+  pTo.attr.red = 255;
+  pTo.attr.green = 255;
+  pTo.attr.blue = 255;
+  pTo.attr.alpha = 255;
+  legend.palette.push_back(pFrom);
+  legend.palette.push_back(pTo);
+
+  auto start = std::chrono::steady_clock::now();
+  CStyleConfiguration styleConfiguration;
+  styleConfiguration.createPalette(&legend);
+  CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(1));
+  CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(120).a == 255);
+}
+
+TEST(CColor, isValid) {
+  CHECK(CColor::isValid("#00FF00"));
+  CHECK(CColor::isValid("#00ff00AA"));
+  CHECK(!CColor::isValid("red"));
+  CHECK(!CColor::isValid("#00FF0"));
+  CHECK(!CColor::isValid("#00FF00A"));
+  CHECK(!CColor::isValid("#GGHHII"));
+  CHECK(!CColor::isValid("00FF00AA"));
+  CHECK(!CColor::isValid(""));
+}
+
+TEST(CColor, parse) {
+  CHECK(CColor("#00ff80").c_str() == "#00FF80FF");
+  CHECK(CColor("#00FF8040").c_str() == "#00FF8040");
+  // Invalid colors are opaque black, also when they have the right length
+  CHECK(CColor("#GGHHII").c_str() == "#000000FF");
+  CHECK(CColor("red").c_str() == "#000000FF");
+}
+
+// Applies a STYLESHEET as CRequest does, to a configuration with the style testdata_style_manycontours and the legend rainbow
+static int applyStyleSheet(const std::string &styleSheet) {
+  CServerConfig config;
+  parseConfig(&config,
+              R"(<Configuration>
+                   <Legend name="rainbow" type="colorRange"><palette index="0" red="0" green="0" blue="0"/><palette index="240" red="255" green="255" blue="255"/></Legend>
+                   <Style name="testdata_style_manycontours"><Legend>rainbow</Legend><ContourLine classes="0.1"/></Style>
+                 </Configuration>)",
+              "test");
+  CServerParams srvParams;
+  srvParams.cfg = &config.Configuration[0];
+  return srvParams.applyStyleSheet(styleSheet);
+}
+
+// Returns the stylesheets for which applyStyleSheet does not give the expected result, one per line
+static std::string unexpectedStyleSheets(const std::vector<std::string> &styleSheets, bool expectAllowed) {
+  std::string unexpected;
+  for (const auto &styleSheet: styleSheets) {
+    if ((applyStyleSheet(styleSheet) == 0) != expectAllowed) unexpected += (expectAllowed ? "\nrefused: " : "\nallowed: ") + styleSheet.substr(0, 200);
+  }
+  return unexpected;
+}
+
+#define CHECK_STYLESHEETS(styleSheets, expectAllowed)                                                                                                                              \
+  {                                                                                                                                                                                \
+    std::string unexpected = unexpectedStyleSheets(styleSheets, expectAllowed);                                                                                                    \
+    if (!unexpected.empty()) FAIL(unexpected.c_str());                                                                                                                             \
+  }
+
+static std::string repeat(const std::string &text, int times) {
+  std::string result;
+  for (int i = 0; i < times; i++) result += text;
+  return result;
+}
+
+TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
+  CHECK_STYLESHEETS(
+      (std::vector<std::string>{
+          // Only Style and Legend elements may be posted, and only one Style
+          R"(<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>)",
+          R"(<Style name="a"/><Style name="b"/>)",
+          R"(<Style name=)",
+          // File access and other layers
+          R"(<Style name="s"><DataPostProc algorithm="addfeatures" a="/etc/passwd"/></Style>)",
+          R"(<Style name="s"><DataPostProc algorithm="include_layer" name="testdata"/></Style>)",
+          R"(<Style name="s"><DataPostProc algorithm="pointsfromgrid" name="x"/></Style>)",
+          R"(<Style name="s"><DataPostProc algorithm="convert_units" name="x"/></Style>)",
+          R"(<Style name="s"><Point fontfile="/etc/passwd"/></Style>)",
+          R"(<Style name="s"><Point symbol="/etc/passwd"/></Style>)",
+          R"(<Style name="s"><Point file="{ADAGUC_PATH}data/symbols/marker.png"/></Style>)",
+          R"(<Style name="s"><FeatureInterval labelfontfile="/etc/passwd"/></Style>)",
+          R"(<Legend name="l" type="svg" file="/etc/passwd"/>)",
+          // Applied to strings and integers too, so no safe format exists
+          R"(<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>)",
+          // Posted printf formats are accepted, but their length is limited
+          R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 33) + R"("/></Style>)",
+          // IncludeStyle of a style that is not configured, like the posted style itself
+          R"(<Style name="s"><IncludeStyle name="s"/></Style>)",
+          R"(<Style name="s"><IncludeStyle name="does_not_exist"/></Style>)",
+          // Unknown elements, attributes and markup
+          R"(<Style name="s"><Foo/></Style>)",
+          R"(<Style name="s"><ContourLine foo="1"/></Style>)",
+          R"(<Style name="s"><?php echo 1; ?></Style>)",
+          R"(<Configuration foo="1"><Style name="s"/></Configuration>)",
+          R"(<?xml version="1.0"?><!DOCTYPE Configuration [<!ENTITY x "y">]><Configuration><Style name="&x;"/></Configuration>)",
+          // Regex with back references
+          R"(<Style name="s"><FeatureInterval match="\(a*\)*\1"/></Style>)",
+          // Values that make loops endless or huge
+          R"(<Style name="s"><Stippling distancex="-5"/></Style>)",
+          R"(<Style name="s"><SmoothingFilter>1000</SmoothingFilter></Style>)",
+          R"(<Style name="s"><RenderSettings striding="0"/></Style>)",
+          R"(<Style name="s"><ContourLine interval="0"/></Style>)",
+          R"(<Style name="s"><ContourLine interval="-1"/></Style>)",
+          R"(<Style name="s"><ContourLine width="1e9"/></Style>)",
+          R"(<Legend name="l" type="colorRange"><palette index="2000000000" red="0" green="0" blue="0"/></Legend>)",
+          R"(<Legend name="l" type="interval"><palette min="0" max="2000000000" red="0" green="0" blue="0"/></Legend>)",
+          // Every DataPostProc goes over the whole grid, and add_dataobject allocates a grid
+          R"(<Style name="s">)" + repeat(R"(<DataPostProc algorithm="add_dataobject" name="m" a="1"/>)", 9) + "</Style>",
+          R"(<Style name="s"><DataPostProc algorithm="add_dataobject" name="m" a="inf"/></Style>)",
+          // Values read with atoi must be whole numbers: 20000e-3 is 20 as a number, but atoi reads 20000
+          R"(<Style name="s"><SmoothingFilter>20000e-3</SmoothingFilter></Style>)",
+          R"(<Style name="s"><Stippling distancex="100000e-3"/></Style>)",
+          R"(<Style name="s"><RenderSettings striding="0.5"/></Style>)",
+          R"(<Legend name="l" type="colorRange"><palette index="100000e-3" red="0" green="0" blue="0"/></Legend>)",
+          // Malformed values
+          R"(<Style name="s"><ContourLine linecolor="red"/></Style>)",
+          R"(<Style name="s"><Min>abc</Min></Style>)",
+          R"(<Style name="s"><Min>nan</Min></Style>)",
+          R"(<Style name="s"><Max>inf</Max></Style>)",
+          R"(<Style name="s"><ContourLine classes="0.1,abc"/></Style>)",
+          R"(<Style name=")" + std::string(2000, 'x') + R"("/>)",
+          R"(<Style name="s"><ShadeInterval>inf</ShadeInterval></Style>)",
+          R"(<Style name="s"><ShadeInterval>-1</ShadeInterval></Style>)",
+          R"(<Style name="s"><Log>-10</Log></Style>)",
+          // drawContour has one bit per ContourLine
+          R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 33) + "</Style>",
+          // A legend that is neither configured nor posted
+          R"(<Style name="s"><Legend>does_not_exist</Legend></Style>)",
+          // Only the text before a comment is read as value, so it must be the text that is checked
+          R"(<Style name="s"><SmoothingFilter>100000<!---->e-4</SmoothingFilter></Style>)",
+          R"(<Style name="s"><ContourIntervalL>-1<!---->e-999</ContourIntervalL></Style>)",
+          // Every IncludeStyle adds the included elements again
+          R"(<Style name="s">)" + repeat(R"(<IncludeStyle name="testdata_style_manycontours"/>)", 5) + "</Style>",
+      }),
+      false);
+}
+
+TEST(CServerParams, applyStyleSheetAcceptsAllowedContent) {
+  CHECK_STYLESHEETS(
+      (std::vector<std::string>{
+          R"(<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>)",
+          R"(<?xml version="1.0"?><Configuration><Style name="s"/></Configuration>)",
+          // Posted legends may be used by the posted style, and replace a configured legend with the same name
+          R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend><Style name="s"><Legend>l</Legend></Style>)",
+          R"(<Legend name="rainbow" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend>)",
+          // A configured style may be included, also by a posted style with the same name
+          R"(<Style name="testdata_style_manycontours"><IncludeStyle name="testdata_style_manycontours"/></Style>)",
+          // The limits themselves
+          R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 32) + "</Style>",
+          R"(<Style name="s">)" + repeat(R"(<DataPostProc algorithm="add_dataobject" name="m" a="1"/>)", 8) + "</Style>",
+          R"(<Style name="s">)" + repeat(R"(<IncludeStyle name="testdata_style_manycontours"/>)", 4) + "</Style>",
+          R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 32) + R"("/></Style>)",
+          // Values read with atoi accept whole numbers with an optional sign and surrounding whitespace
+          R"(<Style name="s"><SmoothingFilter> 20 </SmoothingFilter></Style>)",
+          R"(<Style name="s"><Stippling distancex="+10" distancey="10" discradius="2"/></Style>)",
+          R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0" alpha="-1"/></Legend>)",
+      }),
+      true);
+}
+
+TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
+  // Symbol directories are {ADAGUC_PATH}data/symbols, {ADAGUC_PATH}data/resources and {ADAGUC_DATASET_DIR}, including subdirectories
+  namespace fs = std::filesystem;
+  fs::path root = fs::temp_directory_path() / ("testadagucserver_symbols_" + std::to_string(getpid()));
+  fs::remove_all(root);
+  for (const char *dir: {"adaguc/data/symbols", "adaguc/data/resources/icons", "datasets/sub"}) fs::create_directories(root / dir);
+  for (const char *file: {"adaguc/data/symbols/marker.png", "adaguc/data/resources/icons/icon.png", "adaguc/data/resources/locations.geojson", "datasets/sub/symbol.png",
+                          "datasets/symbol.png", "datasets/dataset.xml", "outside.png"}) {
+    std::ofstream(root / file) << "x";
+  }
+  fs::create_symlink(root / "outside.png", root / "adaguc/data/symbols/link.png");
+
+  std::string adagucPath = getenv("ADAGUC_PATH") ? getenv("ADAGUC_PATH") : "", datasetDir = getenv("ADAGUC_DATASET_DIR") ? getenv("ADAGUC_DATASET_DIR") : "";
+  setenv("ADAGUC_PATH", (root / "adaguc").c_str(), 1);
+  setenv("ADAGUC_DATASET_DIR", (root / "datasets").c_str(), 1);
+
+  auto withFile = [](const std::vector<std::string> &files) {
+    std::vector<std::string> styleSheets;
+    for (const auto &file: files) {
+      styleSheets.push_back(R"(<Style name="s"><SymbolInterval file=")" + file + R"("/><Point pointstyle="symbol"/></Style>)");
+      styleSheets.push_back(R"(<Style name="s"><LegendGraphic value=")" + file + R"("/></Style>)");
+    }
+    return styleSheets;
+  };
+  std::string refused = unexpectedStyleSheets(withFile({"{ADAGUC_PATH}data/symbols/marker.png", "{ADAGUC_PATH}data/resources/icons/icon.png",
+                                                        "{ADAGUC_DATASET_DIR}/sub/symbol.png", "{ADAGUC_DATASET_DIR}/symbol.png"}),
+                                              true);
+  std::string allowed = unexpectedStyleSheets(withFile({"/etc/passwd", "/", "{ADAGUC_PATH}data/symbols/../../../../../etc/passwd", "{ADAGUC_PATH}data/symbols/does_not_exist.png",
+                                                        "{ADAGUC_PATH}data/resources/locations.geojson", "{ADAGUC_PATH}data/symbols/../../outside.png",
+                                                        "{ADAGUC_PATH}data/symbols/link.png", "{ADAGUC_DATASET_DIR}/dataset.xml", "{ADAGUC_DATASET_DIR}/../outside.png"}),
+                                              false);
+
+  adagucPath.empty() ? unsetenv("ADAGUC_PATH") : setenv("ADAGUC_PATH", adagucPath.c_str(), 1);
+  datasetDir.empty() ? unsetenv("ADAGUC_DATASET_DIR") : setenv("ADAGUC_DATASET_DIR", datasetDir.c_str(), 1);
+  fs::remove_all(root);
+  if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }

@@ -26,12 +26,10 @@
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
 #include <float.h>
-#include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CAreaMapper.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "Types/GeoParameters.h"
 

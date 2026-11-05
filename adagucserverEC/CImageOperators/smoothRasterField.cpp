@@ -1,20 +1,11 @@
 #include "smoothRasterField.h"
-#include "./CGenericDataWarper.h"
 #include <cstddef>
 #include <cstdint>
 #include <cmath>
 #include <vector>
-#include <CGenericDataWarper.h>
 #include <GenericDataWarper/GDWDrawFunctionSettings.h>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CGenericDataWarper.h"
-#include "CImageWarper.h"
-#include "CServerConfig_CPPXSD.h"
 #include "Types/CPointTypes.h"
-#include "Types/GeoParameters.h"
 
 /*
  * Fills settings.smoothingMemo with a box blur of sourceGrid (the average of all valid,

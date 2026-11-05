@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -73,6 +76,33 @@ namespace CT {
     buf.resize(numWritten);
     return buf;
   }
+
+  bool isSafeFloatFormat(std::string_view format) {
+    if (format.size() > 64) return false;
+    auto skipDigits = [&format](size_t &j) {
+      size_t start = j;
+      while (j < format.size() && std::isdigit((unsigned char)format[j])) j++;
+      return j - start <= 2;
+    };
+    int conversions = 0;
+    for (size_t j = 0; j < format.size(); j++) {
+      if (format[j] != '%') continue;
+      j++;
+      if (j < format.size() && format[j] == '%') continue; // Literal %
+      while (j < format.size() && std::string_view("-+ #0").find(format[j]) != std::string_view::npos) j++;
+      if (!skipDigits(j)) return false;
+      if (j < format.size() && format[j] == '.') {
+        j++;
+        if (!skipDigits(j)) return false;
+      }
+      // No length modifiers, *, $, %n, %s, %p or integer conversions
+      if (j >= format.size() || std::string_view("fFeEgGaA").find(format[j]) == std::string_view::npos) return false;
+      conversions++;
+    }
+    return conversions <= 1;
+  }
+
+  std::string formatFloat(const std::string &format, double value) { return printf(isSafeFloatFormat(format) ? format.c_str() : "%g", value); }
 
   void printfconcat(std::string &appendString, const char *a, ...) {
     std::string buf(CT_STRING_PRINT_BUFFER_SIZE + 1, '\0');
@@ -186,6 +216,25 @@ namespace CT {
 
   // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
   double toDouble(const std::string &input) { return atof(trim(input).c_str()); }
+
+  std::optional<double> parseDouble(std::string_view input) {
+    std::string trimmed = trim(input);
+    if (trimmed.empty()) return std::nullopt;
+    char *end = nullptr;
+    double value = strtod(trimmed.c_str(), &end);
+    if (end != trimmed.c_str() + trimmed.size() || std::isnan(value)) return std::nullopt;
+    return value;
+  }
+
+  std::optional<int> parseInt(std::string_view input) {
+    std::string trimmed = trim(input);
+    size_t start = !trimmed.empty() && (trimmed[0] == '-' || trimmed[0] == '+') ? 1 : 0;
+    if (trimmed.size() == start || trimmed.find_first_not_of("0123456789", start) != std::string::npos) return std::nullopt;
+    errno = 0;
+    long long value = strtoll(trimmed.c_str(), nullptr, 10);
+    if (errno == ERANGE || value < INT_MIN || value > INT_MAX) return std::nullopt;
+    return (int)value;
+  }
 
   std::string randomString(const int length) {
     const char charset[] = "0123456789"

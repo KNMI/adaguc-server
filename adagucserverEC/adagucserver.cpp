@@ -36,12 +36,7 @@
 #include "Types/ProjectionStore.h"
 #include <cdfVariableCache.h>
 #include "CDFObjectStore.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
-#include "CTString.h"
 #include "CTime.h"
-#include "CXMLParser.h"
 #include "CStopWatch.h"
 #include "CServerError.h"
 #include "fork_server.h"

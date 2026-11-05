@@ -1,14 +1,10 @@
 #ifndef GenericDataWarper_H
 #define GenericDataWarper_H
 
-#include <functional>
-#include <iostream>
 #include <cmath>
 #include <cstdlib>
-#include <proj.h>
 #include <cfloat>
 #include <algorithm>
-#include <vector>
 #include "CImageWarper.h"
 #include "Types/GeoParameters.h"
 #include "CDebugger.h"

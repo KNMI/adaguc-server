@@ -25,8 +25,6 @@
 
 #include "CDFObjectStore.h"
 #include "CDebugger.h"
-#include "CStopWatch.h"
-#include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 #include "CCDFGeoJSONIO.h"
@@ -46,7 +44,6 @@
 #include "CConvertTROPOMI.h"
 #include "CConvertLatLonGrid.h"
 #include "CConvertLatLonBnds.h"
-#include "CDataReader.h"
 #include "CCDFCSVReader.h"
 #include "CCDFReader.h"
 #include "CDataSource.h"

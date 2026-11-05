@@ -25,16 +25,13 @@
 
 #include "CImgRenderPolylines.h"
 #include "Types/CPointTypes.h"
-#include <set>
 #include "CConvertGeoJSON.h"
 #include <string>
-#include <algorithm>
 #include <regex.h>
 #include "CRectangleText.h"
 #include "utils/GeometryUtils.h"
 #include <map>
 #include <vector>
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
@@ -93,6 +90,7 @@ FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleCo
         if (attrMatchValue < atof(featureAttr.min.c_str()) || attrMatchValue >= atof(featureAttr.max.c_str())) continue;
       }
     }
+    double labelAngle = CT::parseDouble(featureAttr.labelangle).value_or(0);
     return {.backgroundColor = backgroundColor,
             .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
             .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((atof(featureAttr.borderwidth.c_str())) > 0)) ? atof(featureAttr.borderwidth.c_str()) : 0,
@@ -103,8 +101,8 @@ FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleCo
             .fontColor = featureAttr.labelcolor.empty() ? "#000000FF" : featureAttr.labelcolor.c_str(),
             .propertyName = featureAttr.labelpropertyname,
             .propertyFormat = featureAttr.labelpropertyformat.empty() ? "%s" : featureAttr.labelpropertyformat,
-            .angle = ((featureAttr.labelangle.empty() == false) && (CT::isNumeric(featureAttr.labelangle))) ? atof(featureAttr.labelangle.c_str()) * M_PI / 180 : 0,
-            .padding = ((featureAttr.labelpadding.empty() == false) && (CT::isInt(featureAttr.labelpadding))) ? atoi(featureAttr.labelpadding.c_str()) : 3};
+            .angle = std::isfinite(labelAngle) ? labelAngle * M_PI / 180 : 0,
+            .padding = CT::parseInt(featureAttr.labelpadding).value_or(3)};
   }
 
   return {.backgroundColor = backgroundColor,
