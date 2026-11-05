@@ -2,10 +2,7 @@
 #define CMakeEProfile_H
 
 #include <string>
-#include <map>
-#include <set>
 
-#include "CImageDataWriter.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
 

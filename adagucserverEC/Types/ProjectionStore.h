@@ -26,7 +26,6 @@
 #ifndef PROJECTIONSTORE_H
 #define PROJECTIONSTORE_H
 #include <tuple>
-#include "CTString.h"
 #include "GeoParameters.h"
 
 struct ProjectionMapKey {

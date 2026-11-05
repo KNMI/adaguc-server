@@ -1,4 +1,3 @@
-#include "CDirReader.h"
 #include "CTString.h"
 #include "CppUnitLite/TestHarness.h"
 

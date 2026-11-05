@@ -23,7 +23,6 @@
  *
  ******************************************************************************/
 
-#include <set>
 
 #include <vector>
 #include <iterator>
@@ -40,7 +39,6 @@
 #include "CStopWatch.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBoolean.h"
 #include "CImgRenderers/CImgRenderPoints.h"
 #include "CImgRenderStippling.h"
 #include "CImgRenderPolylines.h"
@@ -60,10 +58,8 @@
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"
-#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "Types/GeoParameters.h"
 #include "utils/projectionUtils.h"
 #include "CServerError.h"
