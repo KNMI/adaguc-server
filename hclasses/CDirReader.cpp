@@ -50,9 +50,15 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
   if ((dir = opendir(directory)) != NULL) {
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
+      std::string dirName = ent->d_name;
+      // Omit files and directories starting with a ., including "." and "..".
+      // Checked before the DT_UNKNOWN stat() fallback below so dotfiles never trigger a stat() call
+      // (relevant on NFS/EFS, where a stat() can be a real RPC round-trip rather than a cache hit).
+      if (dirName[0] == '.') {
+        continue;
+      }
       std::string fullName = directory;
       fullName = fullName + "/" + ent->d_name;
-
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
@@ -67,18 +73,16 @@ const std::vector<std::string> CDirReader::listDir(const char *directory, bool r
       }
 
       if (d_type == DT_REG || d_type == DT_DIR) {
-        if (ent->d_name[0] != '.') { // Omit files and directories starting with a .
-          if (((filesAndOrDirs & CDIRREADER_INCLUDE_FILES) && d_type == DT_REG) || ((filesAndOrDirs & CDIRREADER_INCLUDE_DIRECTORIES) && d_type == DT_DIR)) {
-            if (ext_filter == nullptr || std::regex_match(ent->d_name, self_regex)) {
-              result.push_back(makeCleanPath(fullName.c_str()).c_str());
-            }
+        if (((filesAndOrDirs & CDIRREADER_INCLUDE_FILES) && d_type == DT_REG) || ((filesAndOrDirs & CDIRREADER_INCLUDE_DIRECTORIES) && d_type == DT_DIR)) {
+          if (ext_filter == nullptr || std::regex_match(ent->d_name, self_regex)) {
+            result.push_back(makeCleanPath(fullName.c_str()).c_str());
           }
-          if (recursive && d_type == DT_DIR) {
-            auto dirFiles = listDir(fullName.c_str(), recursive, ext_filter, filesAndOrDirs, exceptionOnError);
-            // Move elements from dirFiles to result. dirFiles is left in undefined but safe-to-destruct state.
-            result.insert(result.end(), std::make_move_iterator(dirFiles.begin()), std::make_move_iterator(dirFiles.end()));
-            dirFiles.clear();
-          }
+        }
+        if (recursive && d_type == DT_DIR) {
+          auto dirFiles = listDir(fullName.c_str(), recursive, ext_filter, filesAndOrDirs, exceptionOnError);
+          // Move elements from dirFiles to result. dirFiles is left in undefined but safe-to-destruct state.
+          result.insert(result.end(), std::make_move_iterator(dirFiles.begin()), std::make_move_iterator(dirFiles.end()));
+          dirFiles.clear();
         }
       }
     }

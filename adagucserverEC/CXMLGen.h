@@ -25,8 +25,6 @@
 
 #ifndef CXMLGen_H
 #define CXMLGen_H
-#include <cstdio>
-#include <cstring>
 
 
 #include "./Types/LayerMetadataType.h"

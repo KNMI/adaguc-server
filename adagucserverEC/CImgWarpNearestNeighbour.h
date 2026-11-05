@@ -26,12 +26,10 @@
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
 #include <float.h>
-#include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CAreaMapper.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "Types/GeoParameters.h"
 
@@ -44,9 +42,6 @@ static const bool CIMGWARPNEARESTNEIGHBOUR_DEBUG = false;
  */
 class CImgWarpNearestNeighbour : public CImageWarperRenderInterface {
 private:
-  static void drawTriangle(CDrawImage *drawImage, int *xP, int *yP, int &value);
-  static void drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values);
-
   int set(const char *) { return 0; }
   int status;
 

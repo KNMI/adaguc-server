@@ -25,7 +25,6 @@
 
 #ifndef MY_ERROR_H
 #define MY_ERROR_H
-#include <cstdio>
 #include <string>
 #include <CDebugger.h>
 

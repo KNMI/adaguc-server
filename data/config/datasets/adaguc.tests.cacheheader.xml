@@ -17,7 +17,8 @@
     <ShadeInterval min="0.30" max="0.35"    label="0.30-0.35"    fillcolor="#8080FF"/>
     <ShadeInterval min="0.35" max="1.00"    label="0.35-1.00"    fillcolor="#FF0040"/>
     
-    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
     
   </Style>
   
@@ -33,6 +34,16 @@
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims/</FilePath>
     <Dimension name="time">time</Dimension>
     <Dimension name="member" hidden="true" fixvalue="member4">member</Dimension>
+    <Dimension name="height">elevation</Dimension>
+    <Variable>data</Variable>
+    <Styles>testdata</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>data_with_hidden</Name>
+    <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims/</FilePath>
+    <Dimension name="time">time</Dimension>
+    <Dimension name="member" hidden="true" default="min">member</Dimension>
     <Dimension name="height">elevation</Dimension>
     <Variable>data</Variable>
     <Styles>testdata</Styles>

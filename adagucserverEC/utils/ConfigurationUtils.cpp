@@ -2,15 +2,9 @@
 #include <CAutoResource.h>
 #include "Definitions.h"
 #include "parseQueryString.h"
-#include <algorithm>
 #include <ranges>
 #include <vector>
-#include <iostream>
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
 #include "CTString.h"
-#include "CXMLParser.h"
 #include "CStopWatch.h"
 
 std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvParam) {
@@ -122,7 +116,7 @@ int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam) {
   }
 
   // Check if a dataset was given in the querystring
-  if (getDatasetAndSldFromQueryString(*srvParam) != 0) {
+  if (getDatasetFromQueryString(*srvParam) != 0) {
     return 1;
   }
   // Include additional config files given in the include statement of the config file, last config file is included first

@@ -1,18 +1,10 @@
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include <algorithm>
-#include <sys/types.h>
-#include <CImageOperators/smoothRasterField.h>
 #include "CColor.h"
 #include "CDrawImage.h"
-#include "CCDFObject.h"
-#include "CCDFTypes.h"
 #include "CDataSource.h"
-#include "CGenericDataWarper.h"
-#include "CImageWarper.h"
 #include "CServerConfig_CPPXSD.h"
-#include "CTString.h"
 #include "Types/CPointTypes.h"
-#include "Types/GeoParameters.h"
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
   GDWDrawFunctionSettings settings;
@@ -32,6 +24,15 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendScale = styleConfiguration->legendScale;
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
+  settings.styleConfiguration = styleConfiguration;
+
+  const bool isLegacyStyle = isLegacyRenderMethod(styleConfiguration->renderMethod);
+
+  if (isLegacyStyle) {
+    // CImgWarpBilinear always sampled smooth; painted colors only for bilinear/shaded.
+    settings.interpolationMethod = InterpolationMethodBilinear;
+    settings.drawgrid = (styleConfiguration->renderMethod & (RM_BILINEAR | RM_SHADED)) != 0;
+  }
 
   if (styleConfiguration->renderSettings.size() > 0) {
     auto renderSetting = styleConfiguration->renderSettings.back();
@@ -57,11 +58,10 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   }
   /* Check the if we want to use discrete type */
 
-  // For the generic renderer and when shadeinterval is set, always apply shading.
-  if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
-    if (styleConfiguration->renderMethod == RM_GENERIC) {
-      settings.isUsingShadeIntervals = true;
-    }
+  // Generic renderer applies shading whenever ShadeInterval is set; legacy only if "shaded" is set.
+  if (!settings.isUsingShadeIntervals && styleConfiguration->shadeIntervals.size() > 0) {
+    const bool isGeneric = (styleConfiguration->renderMethod & RM_GENERIC) != 0 && !isLegacyStyle;
+    settings.isUsingShadeIntervals = (styleConfiguration->renderMethod & RM_SHADED) != 0 || isGeneric;
   }
 
   // Smoothingfilter:
@@ -95,6 +95,13 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
         }
       }
     }
+  }
+
+  // For a legacy style, only the "contour" keyword should draw contour lines.
+  if (isLegacyStyle) {
+    settings.shouldDrawContours = (styleConfiguration->renderMethod & RM_CONTOUR) != 0;
+  } else {
+    settings.shouldDrawContours = styleConfiguration->contourLines.size() > 0;
   }
 
   return settings;

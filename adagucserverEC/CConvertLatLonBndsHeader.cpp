@@ -23,8 +23,6 @@
  *
  ******************************************************************************/
 
-#include "CFillTriangle.h"
-#include "CImageWarper.h"
 #include "CConvertLatLonBnds.h"
 #include <string>
 #include <vector>
@@ -32,9 +30,7 @@
 #include "CDataSource.h"
 #include "CDebugger.h"
 #include "CStopWatch.h"
-#include "CTString.h"
 #include "Types/CPointTypes.h"
-#include "Types/GeoParameters.h"
 
 static const bool CConvertLatLonBnds_DEBUG = false;
 static const bool CConvertLatLonGrid_DEBUG = false;

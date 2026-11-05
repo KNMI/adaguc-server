@@ -13,7 +13,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="9.2.0"
+LABEL version="9.2.1"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -30,14 +30,30 @@ RUN apt-get -q -y update \
     udunits-bin \
     g++ \
     m4 \
-    netcdf-bin \
-    libnetcdf-dev \
     libhdf5-dev \
     libproj-dev \
     libgdal-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Debian trixie 13 ships netcdf  >=4.9.1 with two issues:
+# - nc_open reads 4MB regardless of file size:  https://github.com/Unidata/netcdf-c/issues/3469
+# - Memory leak in SIZE_MAX allocation when getxattr() is used - https://github.com/Unidata/netcdf-c/issues/3474
+# Therefore we fallback to v4.9.0 which does not have these issues - https://github.com/KNMI/adaguc-server/issues/812
+# Note, gdal still uses the stock one shipped by trixie, but this does not seem to cause harm.
+RUN mkdir -p /tmp/netcdf-c \
+    && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.9.0.tar.gz', '/tmp/netcdf-c.tar.gz')" \
+    && tar xzf /tmp/netcdf-c.tar.gz -C /tmp/netcdf-c --strip-components=1 \
+    && rm /tmp/netcdf-c.tar.gz \
+    && cmake -S /tmp/netcdf-c -B /tmp/netcdf-c-build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+    -DCMAKE_INSTALL_PREFIX=/opt/netcdf-c -DCMAKE_C_FLAGS="-Wno-error=incompatible-pointer-types" \
+    && cmake --build /tmp/netcdf-c-build --parallel "$(nproc)" \
+    && cmake --install /tmp/netcdf-c-build \
+    && rm -rf /tmp/netcdf-c /tmp/netcdf-c-build \
+    && echo /opt/netcdf-c/lib > /etc/ld.so.conf.d/netcdf-c.conf \
+    && ldconfig
+ENV CMAKE_PREFIX_PATH=/opt/netcdf-c
 
 # Install adaguc-server files need for compilation from context
 COPY adagucserverEC /adaguc/adaguc-server-master/adagucserverEC
@@ -67,7 +83,6 @@ RUN apt-get -q -y update \
     && apt-get -q -y install \
     postgresql-client \
     udunits-bin \
-    netcdf-bin \
     libcairo2 \
     libgdal-dev \
     libcurl4-openssl-dev \
@@ -79,6 +94,12 @@ RUN apt-get -q -y update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install the netcdf-c build with the full-file-read-on-open fix (see build
+# stage above), registering it with the dynamic linker the same way.
+COPY --from=build /opt/netcdf-c /opt/netcdf-c
+RUN echo /opt/netcdf-c/lib > /etc/ld.so.conf.d/netcdf-c.conf \
+    && ldconfig
 
 WORKDIR /adaguc/adaguc-server-master
 
@@ -138,7 +159,7 @@ RUN useradd -m adaguc -u 1000 && \
 COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
-COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
+COPY ./Docker/adaguc-internal-baselayers.xml /adaguc/adaguc-datasets-internal/adaguc-internal-baselayers.xml
 COPY scripts /adaguc/adaguc-server-master/scripts
 COPY ./scripts/*.sh /adaguc/
 
@@ -155,6 +176,9 @@ RUN  chmod +x /adaguc/*.sh && \
     ln -s /adaguc/scan.sh /bin/scan.sh && ln -s /adaguc/scan.sh /bin/scan  && ln -s /adaguc/adaguc-server-chkconfig.sh /bin/adaguc-server-chkconfig.sh
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
+
+# Use the same config for serving requests as start.sh and the scan scripts use for --updatedb
+ENV ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 

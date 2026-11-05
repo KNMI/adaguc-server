@@ -26,9 +26,7 @@
 #include "CCDFHDF5IO.h"
 
 #include <cinttypes>
-#include <cmath>
 #include <cstring>
-#include <netcdf.h>
 #include "CDFCopyData.h"
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."
@@ -48,8 +46,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
     }
   }
   newstart[0] = 0;
-  std::string varName;
-  varName = CT::printf("image%d%simage_data", (int)start[0] + 1, CCDFHDF5IO_GROUPSEPARATOR);
+  std::string varName = CT::printf("image%d%simage_data", (int)start[0] + 1, CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *var = ((CDFObject *)thisVar->getParentCDFObject())->getVariableThrows(varName.c_str());
 
   CDBDebug("Start reading %s", var->name.c_str());
@@ -531,7 +528,6 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
         mem_start[d] = 0;
         mem_count[d] = dims_out[d];
         totalVariableSize *= mem_count[d];
-        ;
       }
 
       var->setSize(totalVariableSize);
@@ -1149,8 +1145,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   }
 
   // Fill in dim ranges
-  std::string variableName;
-  variableName = CT::printf("image1%simage_data", CCDFHDF5IO_GROUPSEPARATOR);
+  std::string variableName = CT::printf("image1%simage_data", CCDFHDF5IO_GROUPSEPARATOR);
   CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
   geo = cdfObject->getVariableNE("geographic");
   if (geo == NULL) {

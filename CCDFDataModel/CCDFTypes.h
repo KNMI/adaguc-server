@@ -33,7 +33,6 @@
 
 #include <cstdio>
 #include <cstddef>
-#include <vector>
 #include <iostream>
 #include <cstdlib>
 

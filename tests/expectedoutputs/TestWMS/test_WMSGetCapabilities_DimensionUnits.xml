@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.tests.311-getcapabilities-dimension-units</Title>
 <CRS>CRS:84</CRS>

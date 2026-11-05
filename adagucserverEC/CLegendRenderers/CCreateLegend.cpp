@@ -2,10 +2,7 @@
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CDebugger.h"
-#include "CImageWarper.h"
 #include "CTString.h"
-#include "CXMLParser.h"
-#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 static const bool CIMAGEDATAWRITER_DEBUG = false;
 
@@ -28,8 +25,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration != NULL) {
 
-      auto drawSettings = getDrawFunctionSettings(dataSource, legendImage, styleConfiguration);
-      if (drawSettings.drawgrid == false) {
+      // Only an explicit drawgrid="false" skips the legend, not an auto-derived one.
+      if (styleConfiguration->renderSettings.size() > 0 && styleConfiguration->renderSettings.back().attr.drawgrid == ("false")) {
         legendImage->crop(4);
         return 0;
       }
@@ -184,23 +181,20 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
       }
     }
 
-    CColor black(0, 0, 0, 255);
-
     for (size_t j = 0; j < numFlags; j++) {
       float y = j * blockDistance + (cbH - numFlags * blockDistance + 8);
       double value = dataSource->getDataObject(0)->statusFlagList[j].value;
       if (useShadeIntervals) {
         CColor col = CImageDataWriter::getPixelColorForValue(dataSource, value);
-        legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, col, black);
+        legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, col, standardCColorBlack);
       } else {
-        int c = CImageDataWriter::getColorIndexForValue(dataSource, value);
-        legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, c, 248);
+        CColor col = styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, value));
+        legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, col, standardCColorBlack);
       }
 
       std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(0)->statusFlagList, value);
-      std::string legendMessage;
-      legendMessage = CT::printf("%d) %s", (int)value, flagMeaning.c_str());
-      legendImage->setText(legendMessage.c_str(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, 248);
+      std::string legendMessage = CT::printf("%d) %s", (int)value, flagMeaning.c_str());
+      legendImage->setText(legendMessage.c_str(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, standardCColorBlack);
     }
   }
 

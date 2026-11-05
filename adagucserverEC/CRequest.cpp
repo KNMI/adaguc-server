@@ -26,7 +26,6 @@
 
 static const bool CREQUEST_DEBUG = false;
 
-#include "Types/ProjectionStore.h"
 #include "CRequest.h"
 #include "CDataSource.h"
 #include "CServerParams.h"
@@ -43,8 +42,6 @@ static const bool CREQUEST_DEBUG = false;
 #include <CReadFile.h>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
-#include "utils/XMLGenUtils.h"
-#include "utils/LayerMetadataStore.h"
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
@@ -57,15 +54,12 @@ static const bool CREQUEST_DEBUG = false;
 #include "CDFObjectStore.h"
 #include "CDrawImage.h"
 #include "CImageDataWriter.h"
-#include "CImageWarper.h"
 #include "CStopWatch.h"
 #include "CTime.h"
-#include "CXMLParser.h"
 #include "CCDFStore.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
-#include "utils/ConfigurationUtils.h"
 
 int CRequest::CGI = 0;
 
@@ -514,8 +508,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
 
   // Use a short cache lifetime when a non-fixed dimension was resolved to a value different from the request.
-  const bool hasNonFixedDimensionChanges =
-      std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) { return !requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue; });
+  // Hidden dimensions (like a single height level) cannot be requested, their value belongs to the layer. Time dimensions can move on with new data.
+  const bool hasNonFixedDimensionChanges = std::ranges::any_of(dataSource->requiredDims, [](const auto &requiredDim) {
+    bool isFixed = requiredDim.hasFixedValue || (requiredDim.hidden && !requiredDim.isATimeDimension);
+    return !isFixed && requiredDim.value != requiredDim.queryValue;
+  });
   const auto cacheControlOption = hasNonFixedDimensionChanges ? CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE : CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE;
   srvParam->setCacheControlOption(cacheControlOption);
 
@@ -1679,7 +1676,6 @@ int CRequest::process_querystring() {
 
       CDrawImage drawImage;
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       drawImage.enableTransparency(true);
 
       // Set font location
@@ -1696,7 +1692,6 @@ int CRequest::process_querystring() {
         }
       }
       drawImage.createImage(300, 30);
-      drawImage.create685Palette();
       try {
         CCreateScaleBar::createScaleBar(&drawImage, srvParam->geoParams, 1);
       } catch (int e) {
@@ -2370,7 +2365,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
             CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
             if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
-              legendImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+              styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
             }
 
             status = imageDataWriter.createLegend(dataSources[d], &legendImage);

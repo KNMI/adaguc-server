@@ -23,7 +23,6 @@
  *
  ******************************************************************************/
 
-#include <set>
 
 #include <vector>
 #include <sstream>
@@ -38,8 +37,6 @@
 #include "CStopWatch.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
-#include "CImgWarpBoolean.h"
 #include "CImgRenderers/CImgRenderPoints.h"
 #include "CImgRenderStippling.h"
 #include "CImgRenderPolylines.h"
@@ -52,16 +49,15 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include "CDataPostProcessors/CDataPostProcessor_PointsFromGrid.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"
-#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "Types/GeoParameters.h"
 #include "utils/projectionUtils.h"
 #include "CServerError.h"
@@ -305,19 +301,13 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
-    drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-  }
-
   if (styleConfiguration != NULL) {
 
     if (styleConfiguration->renderMethod & RM_RGBA) {
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         writerStatus = initialized;
         drawImage.createImage(40, 20);
-        drawImage.create685Palette();
         return 0;
       }
     }
@@ -326,17 +316,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0].attr.name == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png24")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
       if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/webp")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
       if (dataSource->cfgLayer->WMSFormat[0].attr.quality.empty() == false) {
@@ -397,20 +377,11 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
-    // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
-      status = drawImage.create685Palette();
-      if (status != 0) {
-        CDBError("Unable to create standard 6-8-5 palette");
-        return 1;
-      }
-    }
-
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -708,8 +679,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                   if (dataSource->getDataObject(o)->hasStatusFlag) {
                     // Add status flag
-                    std::string flagMeaning;
-                    flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
                     element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
                     element.units = "";
                   } else {
@@ -885,6 +855,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if (styleConfiguration == nullptr) {
+    CDBError("Unable to get style for layer %s", dataSource->layerName.c_str());
+    reader.close();
+    return 1;
+  }
   auto renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
@@ -979,145 +954,42 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
   }
 
-  /**
-   * Use bilinear renderer
-   */
-  if (renderMethod & RM_CONTOUR || renderMethod & RM_BILINEAR || renderMethod & RM_SHADED || renderMethod & RM_VECTOR || renderMethod & RM_BARB || renderMethod & RM_THIN) {
-    if (CIMAGEDATAWRITER_DEBUG) {
-      CDBDebug("Using CImgWarpBilinear");
-    }
-    if (dataSource->hasFieldData && dataSource->getFirstAvailableDataObject()->points.size() == 0) {
-      imageWarperRenderer = new CImgWarpBilinear();
-      std::string bilinearSettings;
-      bool drawMap = false;
-      bool drawContour = false;
-      bool drawVector = false;
-      bool drawBarb = false;
-      bool drawShaded = false;
-      bool drawGridVectors = false;
-
-      if (renderMethod & RM_BILINEAR) drawMap = true;
-      if (renderMethod & RM_CONTOUR) drawContour = true;
-      if (renderMethod & RM_VECTOR) drawVector = true;
-      if (renderMethod & RM_SHADED) drawShaded = true;
-      if (renderMethod & RM_BARB) drawBarb = true;
-      if (renderMethod & RM_THIN) drawGridVectors = true;
-
-      /*
-        Check the if we want to use discrete type with the bilinear rendermethod.
-        The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
-      */
-      if (styleConfiguration != nullptr) {
+  // Generic renderer; also serves legacy bilinear/shaded/contour/vector/barb keywords via getDrawFunctionSettings()/drawContour().
+  if (renderMethod & (RM_CONTOUR | RM_BILINEAR | RM_SHADED | RM_VECTOR | RM_BARB | RM_GENERIC)) {
+    // Backfill a default <Vector>/<Thinning>/pointsfromgrid for old barb/vector styles that relied on CImgWarpBilinear's built-in defaults.
+    // RM_THIN alone is excluded: CImgWarpBilinear's "thin" was a dead no-op, so keep that style a no-op too.
+    if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
+      if (styleConfiguration->vectorIntervals.empty()) {
+        CServerConfig::XMLE_Vector defaultVector;
+        defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";
+        defaultVector.attr.linecolor = "#0000FF";
+        defaultVector.attr.outlinewidth = 0;
         for (const auto &renderSetting: styleConfiguration->renderSettings) {
-          std::string renderHint = renderSetting.attr.renderhint;
-          if (renderHint == RENDERHINT_DISCRETECLASSES) {
-            drawMap = false;   // Don't use continous legends with the bilinear renderer
-            drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+          if (renderSetting.attr.rendertextforvectors == "true") {
+            defaultVector.attr.plotvalue = "true";
           }
         }
+        styleConfiguration->vectorIntervals.push_back(defaultVector);
       }
-
-      if (drawMap == true) CT::printfconcat(bilinearSettings, "drawMap=true;");
-      if (drawVector == true) CT::printfconcat(bilinearSettings, "drawVector=true;");
-      if (drawBarb == true) CT::printfconcat(bilinearSettings, "drawBarb=true;");
-      if (drawShaded == true) CT::printfconcat(bilinearSettings, "drawShaded=true;");
-      if (drawContour == true) CT::printfconcat(bilinearSettings, "drawContour=true;");
-      if (drawGridVectors) CT::printfconcat(bilinearSettings, "drawGridVectors=true;");
-      CT::printfconcat(bilinearSettings, "smoothingFilter=%d;", styleConfiguration->smoothingFilter);
-      if (drawShaded == true || drawContour == true) {
-        CT::printfconcat(bilinearSettings, "shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
-                         styleConfiguration->contourIntervalL);
-
-        for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
-          if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
-            CT::printfconcat(bilinearSettings, "shading=min(%g)$max(%g)$", shadeInterval.attr.min, shadeInterval.attr.max);
-            if (shadeInterval.attr.fillcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
-            }
-            if (!shadeInterval.attr.bgcolor.empty()) {
-              CT::printfconcat(bilinearSettings, "$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-        }
+      if (styleConfiguration->thinningList.empty()) {
+        CServerConfig::XMLE_Thinning defaultThinning;
+        defaultThinning.attr.radius = "40";
+        styleConfiguration->thinningList.push_back(defaultThinning);
       }
-      if (drawContour == true) {
-
-        for (size_t j = 0; j < styleConfiguration->contourLines.size(); j++) {
-          CServerConfig::XMLE_ContourLine *contourLine = &styleConfiguration->contourLines[j];
-          // Check if we have a interval contour line or a contourline with separate classes
-          if (contourLine->attr.interval.empty() == false) {
-            // ContourLine interval
-            CT::printfconcat(bilinearSettings, "contourline=");
-            if (contourLine->attr.width.empty() == false) {
-              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
-            }
-            if (contourLine->attr.linecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
-            }
-            if (contourLine->attr.textcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
-            }
-            if (contourLine->attr.textsize.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
-            }
-            if (contourLine->attr.textstrokewidth.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-            }
-
-            if (contourLine->attr.textstrokecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-            }
-            if (contourLine->attr.interval.empty() == false) {
-              CT::printfconcat(bilinearSettings, "interval(%s)$", contourLine->attr.interval.c_str());
-            }
-            if (contourLine->attr.textformatting.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
-            }
-            if (contourLine->attr.dashing.empty() == false) {
-              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-          if (contourLine->attr.classes.empty() == false) {
-            // ContourLine classes
-            CT::printfconcat(bilinearSettings, "contourline=");
-            if (contourLine->attr.width.empty() == false) {
-              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
-            }
-            if (contourLine->attr.linecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
-            }
-            if (contourLine->attr.textcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
-            }
-            if (contourLine->attr.classes.empty() == false) {
-              CT::printfconcat(bilinearSettings, "classes(%s)$", contourLine->attr.classes.c_str());
-            }
-            if (contourLine->attr.textsize.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
-            }
-            if (contourLine->attr.textstrokewidth.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-            }
-            if (contourLine->attr.textstrokecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-            }
-            if (contourLine->attr.textformatting.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
-            }
-            if (contourLine->attr.dashing.empty() == false) {
-              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-        }
+      if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
+        // CImgWarpBilinear always required speed_component/direction_component from pointsfromgrid.
+        CServerConfig::XMLE_DataPostProc pointsFromGridProc;
+        pointsFromGridProc.attr.algorithm = CDATAPOSTPROCESSOR_PointsFromGrid_ID;
+        pointsFromGridProc.attr.select = "speed_component,direction_component";
+        CDPPointsFromGrid().execute(&pointsFromGridProc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
       }
-      if (CIMAGEDATAWRITER_DEBUG) {
-        CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
-      }
-      imageWarperRenderer->set(bilinearSettings.c_str());
+    }
+
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpGeneric");
+    }
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpGeneric();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1132,20 +1004,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpHillShaded();
-      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-      delete imageWarperRenderer;
-    }
-  }
-
-  /**
-   * Use New bilinear renderer
-   */
-  if (renderMethod & RM_GENERIC) {
-    if (CIMAGEDATAWRITER_DEBUG) {
-      CDBDebug("Using CImgWarpGeneric");
-    }
-    if (dataSource->hasFieldData) {
-      imageWarperRenderer = new CImgWarpGeneric();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1218,17 +1076,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Drawingnormal legend");
       }
       if (j != 0) {
-        /*
-         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
-         * For j==0, the legend is already initialized previously
-         */
         if (CIMAGEDATAWRITER_DEBUG) {
           CDBDebug("REINITLEGEND");
         }
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -1298,9 +1152,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       double gridSize = 10;
       double precision = 0.25;
       double numTestSteps = 5;
-      CColor textColor(0, 0, 0, 128);
+      CColor textColor = standardCColorTranslucentBlack;
       float lineWidth = 0.25;
-      int lineColor = 247;
+      CColor lineColor = standardCColorDarkGray;
 
       if (dataSource->cfgLayer->Grid[0].attr.resolution.empty() == false) {
         gridSize = atof(dataSource->cfgLayer->Grid[0].attr.resolution.c_str());
@@ -2104,10 +1958,5 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage) { return CCreateLegend::createLegend(dataSource, legendImage); }
 
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage, bool rotate) { return CCreateLegend::createLegend(dataSource, legendImage, rotate); }
-
-int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float size, float angle, const char *text, unsigned char colorIndex) {
-  drawImage.drawText(x, y, fontlocation, size, angle, text, colorIndex);
-  return 0;
-}
 
 int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

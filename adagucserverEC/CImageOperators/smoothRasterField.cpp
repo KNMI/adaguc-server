@@ -1,25 +1,14 @@
 #include "smoothRasterField.h"
-#include "./CGenericDataWarper.h"
 #include <cstddef>
 #include <cmath>
-#include <CGenericDataWarper.h>
 #include <GenericDataWarper/GDWDrawFunctionSettings.h>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CGenericDataWarper.h"
-#include "CImageWarper.h"
-#include "CServerConfig_CPPXSD.h"
 #include "Types/CPointTypes.h"
-#include "Types/GeoParameters.h"
 
 #define MEMO_NODATAVALUE -99999999999999.f
 
+// Callers only invoke this when settings.smoothingFiter > 0.
 template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (settings.smoothingFiter == 0) {
-    return (T)settings.dfNodataValue;
-  }
   if (sourceX < 0 || sourceY < 0 || sourceX >= warperState.sourceGridWidth || sourceY >= warperState.sourceGridHeight) return (T)settings.dfNodataValue;
 
   size_t p = sourceX + sourceY * warperState.sourceGridWidth;
@@ -43,7 +32,7 @@ template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceG
       auto sy = y1 + sourceY;
       if (sx < warperState.sourceGridWidth && sy < warperState.sourceGridHeight && sx >= 0 && sy >= 0) {
         double value = (double)(sourceGrid[(sx) + (sy)*warperState.sourceGridWidth]);
-        if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) continue;
+        if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || std::isnan(value)) continue;
         double d = 1;
         distanceAmmount += d;
         resultValue += value * d;

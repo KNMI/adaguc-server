@@ -247,8 +247,8 @@ class TestWMSTimeSeries(unittest.TestCase):
         env = make_adaguc_env("adaguc_tests_uwcwdini_windcomponents")
         update_db(env)
 
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc_tests_uwcwdini_windcomponents&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=4509.516234000213,5087774.625591068,1352501.5362287262,6506770.215673305&STYLES=windbarbs_kts%2Fbarbshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&showlegend=true",
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc_tests_uwcwdini_windcomponents&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-669486.4937633628,4378276.830549949,2026497.5462260891,7216268.010714424&STYLES=windbarbs_kts_contours&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&showlegend=true",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)

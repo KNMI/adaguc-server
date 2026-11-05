@@ -26,8 +26,6 @@
 #include "CImgRenderStippling.h"
 #include "CGenericDataWarper.h"
 #include <string>
-#include <vector>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
 #include "CDataSource.h"
 #include "CDebugger.h"
@@ -54,7 +52,7 @@ void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {
       pcolorind = 0;
     CColor c;
     if (color.empty()) {
-      c = drawImage->getColorForIndex(pcolorind);
+      c = styleConfiguration->getCColorFromLegendPaletteIndex(pcolorind);
     } else {
       c.parse(color.c_str());
     }
@@ -86,7 +84,6 @@ template <class T> void CImgRenderStippling::_stippleMiddleOfPoints() {
       cy *= double(dataSource->srvParams->geoParams.height);
       int dx = cx, dy = cy;
       T val = ((T *)sourceData)[x + y * dataSource->dWidth];
-      CDBDebug("%f", (float)val);
       if (val == val && val != settings->dfNodataValue) {
 
         _setStippling(dx, dy, (float)val);
@@ -232,8 +229,6 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
       }
     }
   }
-  settings.dataField = new float[settings.width * settings.height];
-
   delete[] settings.dataField;
   return;
 }

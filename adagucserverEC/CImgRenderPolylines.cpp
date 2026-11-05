@@ -25,16 +25,13 @@
 
 #include "CImgRenderPolylines.h"
 #include "Types/CPointTypes.h"
-#include <set>
 #include "CConvertGeoJSON.h"
 #include <string>
-#include <algorithm>
 #include <regex.h>
 #include "CRectangleText.h"
 #include "utils/GeometryUtils.h"
 #include <map>
 #include <vector>
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
@@ -122,12 +119,6 @@ FeatureStyle getAttributesForFeature(CFeature *feature, std::string id, CStyleCo
 }
 
 void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSource, CDrawImage *drawImage) {
-  CColor drawPointTextColor(0, 0, 0, 255);
-  CColor drawPointFillColor(0, 0, 0, 128);
-  CColor drawPointLineColor(0, 0, 0, 255);
-
-  CColor defaultColor(0, 0, 0, 255);
-
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   std::string name = dataSource->featureSet;
