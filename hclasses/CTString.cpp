@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -223,6 +226,25 @@ namespace CT {
 
   // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
   double toDouble(const std::string &input) { return atof(trim(input).c_str()); }
+
+  std::optional<double> parseDouble(std::string_view input) {
+    std::string trimmed = trim(input);
+    if (trimmed.empty()) return std::nullopt;
+    char *end = nullptr;
+    double value = strtod(trimmed.c_str(), &end);
+    if (end != trimmed.c_str() + trimmed.size() || std::isnan(value)) return std::nullopt;
+    return value;
+  }
+
+  std::optional<int> parseInt(std::string_view input) {
+    std::string trimmed = trim(input);
+    size_t start = !trimmed.empty() && (trimmed[0] == '-' || trimmed[0] == '+') ? 1 : 0;
+    if (trimmed.size() == start || trimmed.find_first_not_of("0123456789", start) != std::string::npos) return std::nullopt;
+    errno = 0;
+    long long value = strtoll(trimmed.c_str(), nullptr, 10);
+    if (errno == ERANGE || value < INT_MIN || value > INT_MAX) return std::nullopt;
+    return (int)value;
+  }
 
   std::string randomString(const int length) {
     const char charset[] = "0123456789"

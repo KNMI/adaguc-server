@@ -25,6 +25,7 @@
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -120,6 +121,18 @@ namespace CT {
    * Converts a string to double after trimming whitespace.
    */
   double toDouble(const std::string &input);
+
+  /**
+   * Parses the whole string, after trimming whitespace, as a number in the syntax of atof, like 1e-3 and -inf.
+   * Returns nothing for an empty string, NaN, or text after the number like "1abc", which toDouble reads as 1.
+   */
+  std::optional<double> parseDouble(std::string_view input);
+
+  /**
+   * Parses the whole string, after trimming whitespace, as an int: an optional sign and digits only.
+   * Returns nothing for anything else, like "1.5", "1e3" and "5px" which atoi reads as 1, 1 and 5, and for values beyond int.
+   */
+  std::optional<int> parseInt(std::string_view input);
 
   /**
    * Function which returns a std::vector on the stack with a list of strings allocated on the stack

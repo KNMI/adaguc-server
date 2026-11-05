@@ -672,3 +672,22 @@ TEST(CStyleConfiguration, paletteLoopIsBoundedToPaletteIndices) {
   CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(1));
   CHECK(styleConfiguration.getCColorFromLegendPaletteIndex(120).a == 255);
 }
+
+TEST(CColor, isValid) {
+  CHECK(CColor::isValid("#00FF00"));
+  CHECK(CColor::isValid("#00ff00AA"));
+  CHECK(!CColor::isValid("red"));
+  CHECK(!CColor::isValid("#00FF0"));
+  CHECK(!CColor::isValid("#00FF00A"));
+  CHECK(!CColor::isValid("#GGHHII"));
+  CHECK(!CColor::isValid("00FF00AA"));
+  CHECK(!CColor::isValid(""));
+}
+
+TEST(CColor, parse) {
+  CHECK(CColor("#00ff80").c_str() == "#00FF80FF");
+  CHECK(CColor("#00FF8040").c_str() == "#00FF8040");
+  // Invalid colors are opaque black, also when they have the right length
+  CHECK(CColor("#GGHHII").c_str() == "#000000FF");
+  CHECK(CColor("red").c_str() == "#000000FF");
+}

@@ -1,12 +1,12 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <cmath>
-#include <cstdlib>
 #include <limits>
 #include <map>
 #include <optional>
 #include <set>
 #include <string_view>
+#include "CColor.h"
 #include "CDebugger.h"
 #include "CTString.h"
 #include "StyleSheetValidation.h"
@@ -174,23 +174,6 @@ namespace {
     return rules;
   }
 
-  bool parseNumber(std::string_view text, double &value) {
-    std::string trimmed = CT::trim(text);
-    if (trimmed.empty()) return false;
-    char *end = nullptr;
-    value = strtod(trimmed.c_str(), &end);
-    return end == trimmed.c_str() + trimmed.size() && !std::isnan(value);
-  }
-
-  // Only an optional sign and digits, so atoi reads the same value. Long digit strings are refused, so the value fits in a double exactly.
-  bool parseInteger(std::string_view text, double &value) {
-    std::string trimmed = CT::trim(text);
-    size_t start = !trimmed.empty() && (trimmed[0] == '-' || trimmed[0] == '+') ? 1 : 0;
-    if (trimmed.size() == start || trimmed.size() - start > 15 || trimmed.find_first_not_of("0123456789", start) != std::string::npos) return false;
-    value = strtod(trimmed.c_str(), nullptr);
-    return true;
-  }
-
   // The text as parseConfig reads it (CXMLSerializerInterface.cpp): only a first child that is text. Text after a comment
   // or CDATA is not read, so it must not be validated either: <Max>1<!---->e9</Max> would pass as 1e9 and be used as 1.
   std::string textContent(xmlNode *node) {
@@ -224,15 +207,16 @@ namespace {
       case ValueType::PngFile:
         return true;
       case ValueType::Number: {
-        double number;
-        if (!parseNumber(value, number)) return false;
+        auto number = CT::parseDouble(value);
+        if (!number.has_value()) return false;
         // Configurations may use -INF and INF for open intervals
-        if (std::isinf(number)) return configured && rule.min == -LARGE && rule.max == LARGE;
-        return number >= rule.min && number <= rule.max;
+        if (std::isinf(*number)) return configured && rule.min == -LARGE && rule.max == LARGE;
+        return *number >= rule.min && *number <= rule.max;
       }
       case ValueType::Integer: {
-        double number;
-        return parseInteger(value, number) && number >= rule.min && number <= rule.max;
+        // Only whole numbers, so atoi reads the same value
+        auto number = CT::parseInt(value);
+        return number.has_value() && *number >= rule.min && *number <= rule.max;
       }
       case ValueType::NumberList: {
         auto items = CT::split(value, ",");
@@ -243,7 +227,7 @@ namespace {
         return true;
       }
       case ValueType::Color:
-        return (value.size() == 7 || value.size() == 9) && value[0] == '#' && value.find_first_not_of("0123456789abcdefABCDEF", 1) == std::string_view::npos;
+        return CColor::isValid(value);
       case ValueType::FloatFormat:
         // Posted formats are accepted, CT::formatFloat falls back to %g. A configured one should print as intended.
         return configured ? CT::isSafeFloatFormat(value) : value.size() <= 64;
