@@ -14,7 +14,7 @@ The images in this tutorial were made with the commands shown.
 `STYLESHEET` is disabled by default. Enable it with the environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`:
 
 - Docker compose: change `- "ADAGUC_STYLESHEET_ENABLE=FALSE"` to `TRUE` in the `environment` list of the `adaguc-server` service in [docker-compose.yml](../../Docker/docker-compose.yml) and restart.
-- Local development server (see [Developing](../Developing.md)): `export ADAGUC_STYLESHEET_ENABLE=TRUE` before `python3 ./python/python_fastapi_server/main.py`.
+- Local development server: the environment in [Developing](../Developing.md) already sets `export ADAGUC_STYLESHEET_ENABLE=TRUE`.
 
 Without it, a request with `STYLESHEET` is refused with status 422 and `STYLESHEET is not enabled`.
 
