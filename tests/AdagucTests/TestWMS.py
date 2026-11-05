@@ -2212,6 +2212,21 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(headers, ["Content-Type:image/png", "Cache-Control:max-age=60"])
 
+        #### From here, dimension 'member' is hidden, its value comes from the layer and cannot be requested
+        # If all other dims are specified, we get long cache
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_with_hidden&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z&elevation=5000",
+            {"ADAGUC_CONFIG": config},
+        )
+        self.assertEqual(headers, ["Content-Type:image/png", "Cache-Control:max-age=7200"])
+
+        # A visible dimension that is not provided still results in short cache
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_with_hidden&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z",
+            {"ADAGUC_CONFIG": config},
+        )
+        self.assertEqual(headers, ["Content-Type:image/png", "Cache-Control:max-age=60"])
+
     def test_WMSGetMap_IrregularGrid_1Dimensional_latlon(self):
         """
         This will test  a file where lon and lat variables have irregular spacing. These variables are still 1 dimensional.

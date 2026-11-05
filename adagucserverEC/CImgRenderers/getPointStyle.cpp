@@ -1,5 +1,4 @@
 #include <CServerConfig_CPPXSD.h>
-#include <cfloat>
 #include "getPointStyle.h"
 #include "CColor.h"
 #include "CTString.h"

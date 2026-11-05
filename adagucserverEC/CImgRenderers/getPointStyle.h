@@ -1,7 +1,6 @@
 #ifndef GETPOINTSTYLE_H
 #define GETPOINTSTYLE_H
 
-#include "CTString.h"
 #include <CServerConfig_CPPXSD.h>
 
 struct PointStyle {

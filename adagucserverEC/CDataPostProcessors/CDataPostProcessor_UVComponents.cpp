@@ -1,12 +1,8 @@
 #include "CDataPostProcessor_UVComponents.h"
 #include "CRequest.h"
-#include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 #include <CImgRenderFieldVectors.h>
-#include "CDrawImage.h"
 #include "CImageWarper.h"
-#include "CTString.h"
-#include "CXMLParser.h"
 
 /************************/
 /*      CDDPUVComponents  */

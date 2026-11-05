@@ -26,16 +26,12 @@
 #ifndef CCDFHDF5IO_H
 #define CCDFHDF5IO_H
 
-#include "CCDFDataModel.h"
 #include <cstdio>
-#include <cfloat>
 #include <vector>
-#include <iostream>
 #include <hdf5.h>
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
-#include <proj.h>
 
 #define KNMI_VOLSCAN_PROJ4 "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0 +unit=km"
 

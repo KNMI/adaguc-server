@@ -26,8 +26,6 @@
 #include "CImgRenderStippling.h"
 #include "CGenericDataWarper.h"
 #include <string>
-#include <vector>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
 #include "CDataSource.h"
 #include "CDebugger.h"

@@ -1,7 +1,6 @@
 #include "CDataPostProcessor_AddDataObject.h"
 #include "CCDFObject.h"
 #include "CDebugger.h"
-#include "CTString.h"
 
 const char *CDPPAddDataObject::getId() { return CDATAPOSTPROCESSOR_AddDataObject_ID; }
 

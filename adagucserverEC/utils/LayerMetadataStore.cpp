@@ -5,9 +5,7 @@
 #include "XMLGenUtils.h"
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 #include "CDebugger.h"
-#include "CDrawImage.h"
 #include "CStopWatch.h"
-#include "CTString.h"
 
 json getDimensionListAsJson(std::vector<LayerMetadataDim> &dimList) {
   json dimListJson;

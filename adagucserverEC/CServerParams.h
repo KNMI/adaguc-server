@@ -26,12 +26,10 @@
 #ifndef CServerParams_H
 #define CServerParams_H
 #include <climits>
-#include <cstdlib>
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
 #include "./Types/GeoParameters.h"
-#include <map>
 #include <tuple>
 #include <string>
 

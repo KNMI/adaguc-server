@@ -27,9 +27,6 @@
 #define CXMLSerializerInterface_H
 #include <iostream>
 #include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 extern int numXMLAttributesNotRecognized;
 

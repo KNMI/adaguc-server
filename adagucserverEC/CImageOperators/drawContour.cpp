@@ -1,7 +1,6 @@
 
 #include "drawContour.h"
 #include <CDrawImage.h>
-#include <set>
 #include "CDebugger.h"
 #include "CStopWatch.h"
 #include "CTString.h"

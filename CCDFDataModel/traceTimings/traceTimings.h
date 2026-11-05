@@ -1,7 +1,5 @@
 #ifndef TRACE_TIMINGS_H
 #define TRACE_TIMINGS_H
-#include <cstdio>
-#include <iostream>
 #include <map>
 #include <chrono>
 #include <string>

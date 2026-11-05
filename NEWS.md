@@ -3,14 +3,11 @@
 - WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.
 - New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only.
 - `adagucserver --lint` now also checks the values in configured `Style` and `Legend` elements with the `STYLESHEET` rules .
-
-
-**Version 9.2.1**
-
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
 - Fixed a `baselayers.xml` in your own dataset directory clashing with the internal baselayers dataset of the Docker image. The internal dataset is now named `adaguc-internal-baselayers`.
 - Reduced SQL queries when scanning dataset
 - Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
+- Hidden dimensions, like a single height level, no longer make GetMap use the short lived cache header. Fixes [803](https://github.com/KNMI/adaguc-server/issues/803)
 
 **Version 9.2.0 - 2026-10-28**
 

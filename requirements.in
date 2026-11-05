@@ -19,6 +19,7 @@ fastapi~=0.136.3
 geojson-pydantic~=1.0
 gunicorn~=26.0
 httpx~=0.28.1
+isodate~=0.7
 lxml~=6.1
 netCDF4~=1.7
 numpy~=2.4
