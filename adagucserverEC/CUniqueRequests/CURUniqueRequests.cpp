@@ -1,5 +1,6 @@
 #include <vector>
 #include <algorithm>
+#include <numeric>
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
@@ -93,10 +94,8 @@ void sortAndAggregate(std::map<std::string, CURFileInfo> &fileInfoMap) {
 void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, const std::vector<int> &dimOrdering, const std::vector<int> &dimIndicesToSkip) {
   int dimIndex = dimOrdering[depth];
 
-  for (const int &dimIndexToSkip: dimIndicesToSkip) {
-    if (depth == dimIndexToSkip) {
-      return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
-    }
+  if (std::ranges::find(dimIndicesToSkip, depth) != dimIndicesToSkip.end()) {
+    return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
   }
   std::string dimIndexName = result->dimensionKeys[dimIndex].name;
 
@@ -112,8 +111,8 @@ void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result
   }
 }
 
-void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDataSource *dataSource, CXMLParser::XMLElement *gfiStructure,
-                     const std::vector<int> &dimOrdering, const std::string &coordinates) {
+void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDataSource *dataSource, CXMLParser::XMLElement *gfiStructure, const std::vector<int> &dimOrdering,
+                     const std::string &coordinates) {
 
   size_t numberOfDims = dataSource->requiredDims.size();
 
@@ -151,8 +150,8 @@ void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDa
     CDBDebug("Found %lu elements", results.size());
   }
 
-  for (size_t j = 0; j < results.size(); j++) {
-    recurDataStructure(dataStructure, &results[j], 0, dimOrdering, dimIndicesToSkip);
+  for (auto &result: results) {
+    recurDataStructure(dataStructure, &result, 0, dimOrdering, dimIndicesToSkip);
   }
   gfiStructure->add(layerStructure);
 }
@@ -168,11 +167,8 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
   int numberOfDataSourceDims = dataSource->requiredDims.size();
 
   /* Determine ordering of dimensions */
-  std::vector<int> dimOrdering;
-  dimOrdering.resize(numberOfDataSourceDims);
-  for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    dimOrdering[dimnr] = dimnr;
-  }
+  std::vector<int> dimOrdering(numberOfDataSourceDims);
+  std::iota(dimOrdering.begin(), dimOrdering.end(), 0);
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
     if (CT::toLowerCase(dataSource->requiredDims[dimnr].name) == "reference_time" && dimnr != 0) {
       std::swap(dimOrdering[dimnr], dimOrdering[0]);
@@ -216,7 +212,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
   }
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
     const auto dataObject = dataSource->getDataObject(dataObjectNr);
-    std::map<TrajectoryCell, std::vector<CURResult>> spatialResults;
+    std::map<std::pair<int, int>, std::vector<CURResult>> spatialResults;
     std::string variableName = dataObject->cdfVariable->name;
     for (const auto &[dimName, fileInfo]: fileInfoMap) {
       if (!outsideGrid) {
@@ -251,11 +247,9 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
             // readData() otherwise reuses the previous array buffer, even for a different slice.
             variable->freeData();
 
-            for (size_t j = 0; j < numberOfDims; j++) {
-              start[j] = 0;
-              count[j] = 1;
-              stride[j] = 1;
-            }
+            std::fill(start.begin(), start.end(), 0);
+            std::fill(count.begin(), count.end(), 1);
+            std::fill(stride.begin(), stride.end(), 1);
             if (enableLogUnique) {
               CDBDebug("Querying raster run x=%d y=%d count=%d", run.x, run.y, run.count);
               CDBDebug("Querying raster dimIndex %d %d", dataSource->dimXIndex, dataSource->dimYIndex);
@@ -400,17 +394,12 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                   const int variableDimIndex = variable->getDimIndex(requestDimNameToFind);
                   if (variableDimIndex != -1) {
 
-                    int requestDimIndex = -1;
-                    for (size_t i = 0; i < dimensionRequest.size(); i++) {
-                      if (dimensionRequest[i].name == requestDimNameToFind) {
-                        requestDimIndex = i;
-                      }
-                    }
-                    if (requestDimIndex == -1) {
+                    const auto requestDim = std::ranges::find_if(dimensionRequest, [&](const auto &dimension) { return dimension.name == requestDimNameToFind; });
+                    if (requestDim == dimensionRequest.end()) {
                       CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
                       throw(__LINE__);
                     }
-                    auto values = dimensionRequest[requestDimIndex].values;
+                    const auto &values = requestDim->values;
                     size_t numValues = values.size();
                     size_t multiplyIndex = multiplies[variableDimIndex];
                     currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplyIndex) % numValues];
@@ -454,8 +443,8 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
       }
       if (isTrajectory) {
         for (const auto &sample: sampling.samples) {
-          const auto coordinates = CT::printf("%.15g,%.15g", sample.lonlat.first, sample.lonlat.second);
-          createStructure(spatialResults.at(sample.cell), dataObject, dataSource, gfiStructure, dimOrdering, coordinates);
+          const auto coordinates = CT::printf("%.15g,%.15g", sample.lonlat.x, sample.lonlat.y);
+          createStructure(spatialResults.at({sample.cell.x, sample.cell.y}), dataObject, dataSource, gfiStructure, dimOrdering, coordinates);
         }
       } else {
         createStructure(results, dataObject, dataSource, gfiStructure, dimOrdering, pointCoordinates);

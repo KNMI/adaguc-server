@@ -37,42 +37,42 @@ int main() {
 }
 
 TEST(crossedCells, Trajectory) {
-  std::vector<TrajectoryCell> cells;
+  std::vector<i4point> cells;
   traverseTrajectoryCells({0.2, 1.2}, {3.2, 1.2}, 4, 3, cells);
-  CHECK((cells == std::vector<TrajectoryCell>{{0, 1}, {1, 1}, {2, 1}, {3, 1}}));
+  CHECK((cells == std::vector<i4point>{{0, 1}, {1, 1}, {2, 1}, {3, 1}}));
   cells.clear();
   traverseTrajectoryCells({3.2, 1.2}, {0.2, 1.2}, 4, 3, cells);
-  CHECK((cells == std::vector<TrajectoryCell>{{3, 1}, {2, 1}, {1, 1}, {0, 1}}));
+  CHECK((cells == std::vector<i4point>{{3, 1}, {2, 1}, {1, 1}, {0, 1}}));
 }
 
 TEST(clippingAndCorners, Trajectory) {
-  std::vector<TrajectoryCell> cells;
+  std::vector<i4point> cells;
   traverseTrajectoryCells({-10, 0.5}, {10, 0.5}, 3, 3, cells);
-  CHECK((cells == std::vector<TrajectoryCell>{{0, 0}, {1, 0}, {2, 0}}));
+  CHECK((cells == std::vector<i4point>{{0, 0}, {1, 0}, {2, 0}}));
   cells.clear();
   traverseTrajectoryCells({0.2, 0.2}, {2.8, 2.8}, 3, 3, cells);
-  CHECK((cells == std::vector<TrajectoryCell>{{0, 0}, {1, 1}, {2, 2}}));
+  CHECK((cells == std::vector<i4point>{{0, 0}, {1, 1}, {2, 2}}));
   cells.clear();
   traverseTrajectoryCells({-5, -5}, {-1, -1}, 3, 3, cells);
   CHECK(cells.empty());
   traverseTrajectoryCells({1.2, 1.2}, {1.2, 1.2}, 3, 3, cells);
-  CHECK((cells == std::vector<TrajectoryCell>{{1, 1}}));
+  CHECK((cells == std::vector<i4point>{{1, 1}}));
 }
 
 TEST(boundariesAndRevisits, Trajectory) {
-  std::vector<TrajectoryCell> cells;
+  std::vector<i4point> cells;
   traverseTrajectoryCells({0.2, 1}, {2.8, 1}, 3, 3, cells);
   traverseTrajectoryCells({2.8, 1}, {0.2, 1}, 3, 3, cells);
-  CHECK((cells == std::vector<TrajectoryCell>{{0, 1}, {1, 1}, {2, 1}, {1, 1}, {0, 1}}));
+  CHECK((cells == std::vector<i4point>{{0, 1}, {1, 1}, {2, 1}, {1, 1}, {0, 1}}));
 }
 
 TEST(subdivisionAtCorners, Trajectory) {
-  std::vector<TrajectoryCell> whole, subdivided;
+  std::vector<i4point> whole, subdivided;
   traverseTrajectoryCells({0.2, 2.8}, {2.8, 0.2}, 3, 3, whole);
   traverseTrajectoryCells({0.2, 2.8}, {1, 2}, 3, 3, subdivided);
   traverseTrajectoryCells({1, 2}, {2, 1}, 3, 3, subdivided);
   traverseTrajectoryCells({2, 1}, {2.8, 0.2}, 3, 3, subdivided);
-  CHECK((whole == std::vector<TrajectoryCell>{{0, 2}, {1, 1}, {2, 0}}));
+  CHECK((whole == std::vector<i4point>{{0, 2}, {1, 1}, {2, 0}}));
   CHECK(whole == subdivided);
 }
 

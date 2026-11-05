@@ -65,23 +65,23 @@ TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warpe
   } close{warper};
   TrajectorySampling result;
   result.referenceGrid = snapshotTrajectoryGrid(source);
-  auto project = [&](TrajectoryPoint p) {
-    if (warper->reprojpoint(p.first, p.second) != 0 || !std::isfinite(p.first) || !std::isfinite(p.second)) throw std::runtime_error("Could not project trajectory coordinate");
+  auto project = [&](f8point p) {
+    if (warper->reprojpoint(p.x, p.y) != 0 || !std::isfinite(p.x) || !std::isfinite(p.y)) throw std::runtime_error("Could not project trajectory coordinate");
     // Place cell boundaries at integers and centres at i + 0.5.
-    p.first = (p.first - x0) / sx + 0.5;
-    p.second = (p.second - y0) / sy + 0.5;
+    p.x = (p.x - x0) / sx + 0.5;
+    p.y = (p.y - y0) / sy + 0.5;
     return p;
   };
-  std::vector<TrajectoryCell> cells;
+  std::vector<i4point> cells;
   size_t subdivisions = 0;
-  std::function<void(TrajectoryPoint, TrajectoryPoint, TrajectoryPoint, TrajectoryPoint, int)> segment;
-  segment = [&](TrajectoryPoint a, TrajectoryPoint b, TrajectoryPoint ga, TrajectoryPoint gb, int depth) {
+  std::function<void(f8point, f8point, f8point, f8point, int)> segment;
+  segment = [&](f8point a, f8point b, f8point ga, f8point gb, int depth) {
     if (++subdivisions > MAX_TRAJECTORY_SAMPLES * 4) throw std::runtime_error("Trajectory is too complex");
-    const TrajectoryPoint mid{(a.first + b.first) / 2, (a.second + b.second) / 2};
+    const f8point mid{(a.x + b.x) / 2, (a.y + b.y) / 2};
     const auto gm = project(mid);
     // Split curved or long segments before tracing their crossed cells.
-    const double error = std::hypot(gm.first - (ga.first + gb.first) / 2, gm.second - (ga.second + gb.second) / 2);
-    const double length = std::hypot(gb.first - ga.first, gb.second - ga.second);
+    const double error = std::hypot(gm.x - (ga.x + gb.x) / 2, gm.y - (ga.y + gb.y) / 2);
+    const double length = std::hypot(gb.x - ga.x, gb.y - ga.y);
     if (error > 0.001 || length > 32) {
       if (depth >= 24) throw std::runtime_error("Trajectory projection did not converge");
       segment(a, mid, ga, gm, depth + 1);
@@ -97,14 +97,13 @@ TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warpe
   if (vertices.size() == 1) vertices.push_back(vertices.front());
   for (size_t i = 1; i < vertices.size(); ++i) segment(vertices[i - 1], vertices[i], project(vertices[i - 1]), project(vertices[i]), 0);
   // Cache each centre once; (y,x) keys also group unique cells into row runs.
-  std::map<std::pair<int, int>, TrajectoryPoint> cellCentres;
+  std::map<std::pair<int, int>, f8point> cellCentres;
   for (const auto &cell: cells) {
-    auto [entry, firstVisit] = cellCentres.try_emplace(std::pair{cell.second, cell.first});
+    auto [entry, firstVisit] = cellCentres.try_emplace(std::pair{cell.y, cell.x});
     if (firstVisit) {
       auto &centre = entry->second;
-      centre = {result.referenceGrid.x[cell.first], result.referenceGrid.y[cell.second]};
-      if (warper->reprojpoint_inv(centre.first, centre.second) != 0 || !std::isfinite(centre.first) || !std::isfinite(centre.second))
-        throw std::runtime_error("Could not project trajectory cell centre");
+      centre = {result.referenceGrid.x[cell.x], result.referenceGrid.y[cell.y]};
+      if (warper->reprojpoint_inv(centre.x, centre.y) != 0 || !std::isfinite(centre.x) || !std::isfinite(centre.y)) throw std::runtime_error("Could not project trajectory cell centre");
     }
     result.samples.push_back({cell, entry->second});
   }

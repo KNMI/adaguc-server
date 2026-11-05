@@ -90,7 +90,7 @@ public:
   double dX = 0;
   double dY = 0;
   bool isTrajectory = false;
-  std::vector<std::pair<double, double>> trajectoryCoords;
+  std::vector<f8point> trajectoryCoords;
   std::string Format;
   std::string InfoFormat;
   std::string BGColor;

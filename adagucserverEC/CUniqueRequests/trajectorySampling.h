@@ -9,14 +9,15 @@ class CDataSource;
 class CImageWarper;
 
 struct TrajectorySample {
-  TrajectoryCell cell;
-  TrajectoryPoint lonlat;
+  i4point cell;
+  f8point lonlat;
 };
 struct TrajectoryRun {
   int x, y, count;
 };
 struct TrajectoryGrid {
   std::string projection;
+  // Independent grid axes; their lengths may differ.
   std::vector<double> x, y;
   bool operator==(const TrajectoryGrid &) const = default;
 };
