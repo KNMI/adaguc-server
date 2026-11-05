@@ -1,3 +1,4 @@
+import json
 import os
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
@@ -173,3 +174,33 @@ class TestRendering:
         AdagucTestTools().writetojson(self.testresultspath + filename, data)
         assert status == 0
         assert AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename)
+
+    @pytest.mark.parametrize(("i", "j"), [(5, 5), (900, 900)])
+    def test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoFarFromFeatures(self, i: int, j: int):
+        """
+        Clicking outside the polygons and more than 30 pixels from the nearest point gives nodata and no feature properties.
+        Processing continues after such a miss (other files can still have a feature), so the result is completed like a hit:
+        the layer title is the long name of the variable, as for a click on a polygon.
+        """
+        AdagucTestTools().cleanTempDir()
+
+        env = make_adaguc_env("adaguc.tests.CTRRendering.xml")
+        update_db(env)
+
+        query = (
+            "dataset=adaguc.tests.CTRRendering&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=EHAM_Schiphol_onlyoutlines&QUERY_LAYERS=EHAM_Schiphol_onlyoutlines"
+            "&CRS=EPSG%3A3857&BBOX=463835.69270030205,6790367.198023051,579328.613723787,6905987.034344364&WIDTH=910&HEIGHT=911&STYLES=&"
+            f"&I={i}&J={j}"
+        )
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(f"{query}&INFO_FORMAT=application/json", env=env)
+        assert status == 0
+        result = json.loads(data)
+        assert len(result) == 1
+        assert result[0]["name"] == "features"
+        assert result[0]["data"] == {"0": "nodata"}
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(f"{query}&INFO_FORMAT=text/plain", env=env)
+        assert status == 0
+        lines = [line.strip() for line in data.decode().splitlines() if line.strip()]
+        assert lines[1:] == ["Feature index (EHAM_Schiphol_onlyoutlines)", "Feature index nodata"]
