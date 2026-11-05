@@ -26,7 +26,6 @@
 
 static const bool CREQUEST_DEBUG = false;
 
-#include "Types/ProjectionStore.h"
 #include "CRequest.h"
 #include "CDataSource.h"
 #include "CServerParams.h"
@@ -43,8 +42,6 @@ static const bool CREQUEST_DEBUG = false;
 #include <CReadFile.h>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
-#include "utils/XMLGenUtils.h"
-#include "utils/LayerMetadataStore.h"
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
@@ -57,15 +54,12 @@ static const bool CREQUEST_DEBUG = false;
 #include "CDFObjectStore.h"
 #include "CDrawImage.h"
 #include "CImageDataWriter.h"
-#include "CImageWarper.h"
 #include "CStopWatch.h"
 #include "CTime.h"
-#include "CXMLParser.h"
 #include "CCDFStore.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
-#include "utils/ConfigurationUtils.h"
 
 int CRequest::CGI = 0;
 

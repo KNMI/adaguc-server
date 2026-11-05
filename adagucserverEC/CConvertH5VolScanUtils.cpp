@@ -26,9 +26,6 @@
 #include <tuple>
 #include <vector>
 #include "CConvertH5VolScanUtils.h"
-#include "CDataSource.h"
-#include "CImageWarper.h"
-#include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 #include <string>
 #include "CCDFObject.h"

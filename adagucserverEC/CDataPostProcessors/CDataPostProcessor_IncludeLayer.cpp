@@ -1,16 +1,13 @@
-#include <ranges>
 #include "CDataPostProcessor_IncludeLayer.h"
 #include "CDataPostProcessor.h"
 #include "CRequest.h"
 #include <utils/LayerUtils.h>
 #include "CCDFObject.h"
 #include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CGenericDataWarper.h"
 #include "CImageWarper.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CTString.h"
-#include "CXMLParser.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "CServerError.h"

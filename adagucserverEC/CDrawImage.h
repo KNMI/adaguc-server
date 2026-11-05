@@ -30,15 +30,11 @@
 #include <memory>
 #include <span>
 #include <vector>
-#include <iostream>
-#include "CTString.h"
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 #include "CServerConfig_CPPXSD.h"
-#include <cmath>
 #include <cairo.h>
 #include "CColor.h"
 #include "CRectangleText.h"

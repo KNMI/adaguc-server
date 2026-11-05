@@ -26,9 +26,7 @@
 #include "CCDFHDF5IO.h"
 
 #include <cinttypes>
-#include <cmath>
 #include <cstring>
-#include <netcdf.h>
 #include "CDFCopyData.h"
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."

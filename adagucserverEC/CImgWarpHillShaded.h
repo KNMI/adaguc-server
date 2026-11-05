@@ -25,7 +25,6 @@
 
 #ifndef CImgWarpHillShaded_H
 #define CImgWarpHillShaded_H
-#include <cstdlib>
 #include "CImageWarperRenderInterface.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"

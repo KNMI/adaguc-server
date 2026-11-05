@@ -1,7 +1,4 @@
 
-#include <cstddef>
-#include <vector>
-#include <cmath>
 #include <CDataSource.h>
 #include <CCDFVariable.h>
 

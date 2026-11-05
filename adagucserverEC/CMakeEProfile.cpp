@@ -1,15 +1,10 @@
 #include <vector>
-#include <algorithm>
 #include "CMakeEProfile.h"
 #include "Definitions.h"
-#include "CStopWatch.h"
-#include "CXMLParser.h"
 #include "CDataSource.h"
 #include "utils/NodataUtils.h"
 #include "CDrawImage.h"
 #include "CDebugger.h"
-#include "CImageDataWriter.h"
-#include "CUniqueRequests/CURTypes.h"
 #include "CDFObjectStore.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"

@@ -32,8 +32,6 @@
 #include "CDBFactory.h"
 #include "CDebugger.h"
 #include "CReporter.h"
-#include "adagucserver.h"
-#include "CNetCDFDataWriter.h"
 #include "CCreateTiles.h"
 #include <set>
 #include "utils/LayerMetadataStore.h"
@@ -41,11 +39,8 @@
 #include <string>
 #include <vector>
 #include "CCDFObject.h"
-#include "CCDFReader.h"
 #include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CTString.h"
-#include "CXMLParser.h"
 #include "CAutoConfigure.h"
 #include "CTime.h"
 #include <netcdf.h>

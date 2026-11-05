@@ -22,7 +22,6 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#include <cmath>
 
 #include "CCDFHDF5IO.h"
 #include "ProjCache.h"

@@ -2,15 +2,9 @@
 #include <CAutoResource.h>
 #include "Definitions.h"
 #include "parseQueryString.h"
-#include <algorithm>
 #include <ranges>
 #include <vector>
-#include <iostream>
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
 #include "CTString.h"
-#include "CXMLParser.h"
 #include "CStopWatch.h"
 
 std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvParam) {

@@ -1,11 +1,7 @@
 #ifndef CMakeJSONTimeSeries_H
 #define CMakeJSONTimeSeries_H
 
-#include <string>
-#include <map>
-#include <set>
 
-#include "CImageDataWriter.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
 #include "CXMLParser.h"

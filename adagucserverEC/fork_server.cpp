@@ -5,7 +5,6 @@
 #include <ctime>
 #include <fcntl.h>
 #include <map>
-#include <mutex>
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
