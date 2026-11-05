@@ -257,11 +257,16 @@ std::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, in
  * @return stringlist with the list of available legends.
  */
 
+// Settings in the layer apply to configured styles only, not to a style posted in STYLESHEET
+bool CDataSource::isStyleSheetStyle(const CServerConfig::XMLE_Style *style) const {
+  return style != nullptr && srvParams->styleSheetStyleIndex != -1 && style == &cfg->Style[srvParams->styleSheetStyleIndex];
+}
+
 std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::XMLE_Style *style) {
   if (debugDataSource) {
     CDBDebug("getLegendListForDataSource");
   }
-  if (this->cfgLayer->Legend.size() > 0) {
+  if (this->cfgLayer->Legend.size() > 0 && !isStyleSheetStyle(style)) {
     return getLegendNames(this->cfgLayer->Legend);
   } else {
     if (style != NULL) {
@@ -282,7 +287,7 @@ std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerCo
   std::string renderMethodList;
 
   // rendermethods defined in the layers must prepend rendermethods defined in the style
-  if (this->cfgLayer->RenderMethod.size() > 0) {
+  if (this->cfgLayer->RenderMethod.size() > 0 && !isStyleSheetStyle(style)) {
 
     for (size_t j = 0; j < this->cfgLayer->RenderMethod.size(); j++) {
       if (renderMethodList.length() > 0) renderMethodList += ",";
@@ -495,6 +500,28 @@ CStyleConfiguration *CDataSource::getStyle() {
     return nullptr;
   }
   std::string styleName = "default";
+
+  if (srvParams->styleSheetStyleIndex != -1) {
+    // A Style posted in STYLESHEET is used regardless of STYLES, same setup as a style from getStyleListForDataSource
+    CServerConfig::XMLE_Style *style = &cfg->Style[srvParams->styleSheetStyleIndex];
+    std::vector<std::string> renderMethods = getRenderMethodListForDataSource(style);
+    std::vector<std::string> legendList = getLegendListForDataSource(style);
+    currentStyle = CStyleConfiguration();
+    currentStyle.styleCompositionName = style->attr.name;
+    currentStyle.styleName = style->attr.name;
+    currentStyle.styleTitle = style->attr.title.empty() ? style->attr.name : style->attr.title;
+    currentStyle.renderMethod = renderMethods.empty() ? RM_GENERIC : getRenderMethodFromString(renderMethods[0]);
+    currentStyle.styleIndex = srvParams->styleSheetStyleIndex;
+    currentStyle.legendIndex = srvParams->getServerLegendIndexByName(legendList.empty() ? "rainbow" : legendList[0]);
+    if (currentStyle.makeStyleConfig(this) == -1) {
+      currentStyle.hasError = true;
+    }
+    if (currentStyle.legendIndex == -1) {
+      CDBError("STYLESHEET: legend %s not found", legendList.empty() ? "rainbow" : legendList[0].c_str());
+    }
+    currentStyleSet = true;
+    return &currentStyle;
+  }
 
   std::vector<std::string> layerstyles = CT::split(srvParams->Styles, ",");
   int layerIndex = datasourceIndex;

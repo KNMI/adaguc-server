@@ -1,3 +1,4 @@
+#include <cmath>
 #include "CTString.h"
 #include "CppUnitLite/TestHarness.h"
 
@@ -259,4 +260,35 @@ TEST(string, startsWith) {
 TEST(string, encodeXml) {
   std::string valueToCheck = "maybe<you>are&right&amp;";
   CHECK_EQUAL("maybe&lt;you>are&amp;right&amp;", CT::encodeXml(valueToCheck));
+}
+TEST(string, parseDouble) {
+  DOUBLES_EQUAL(14, CT::parseDouble("14").value(), 0);
+  DOUBLES_EQUAL(-0.5, CT::parseDouble(" -0.5 ").value(), 0);
+  DOUBLES_EQUAL(0.001, CT::parseDouble("1e-3").value(), 1e-15);
+  DOUBLES_EQUAL(0.5, CT::parseDouble(".5").value(), 0);
+  CHECK(std::isinf(CT::parseDouble("-INF").value()));
+  // toDouble reads these as 1, 0 and 5
+  CHECK(!CT::parseDouble("1abc").has_value());
+  CHECK(!CT::parseDouble("0,5").has_value());
+  CHECK(!CT::parseDouble("5 px").has_value());
+  CHECK(!CT::parseDouble("").has_value());
+  CHECK(!CT::parseDouble("  ").has_value());
+  CHECK(!CT::parseDouble("nan").has_value());
+}
+
+TEST(string, parseInt) {
+  LONGS_EQUAL(14, CT::parseInt("14").value());
+  LONGS_EQUAL(-256, CT::parseInt(" -256 ").value());
+  LONGS_EQUAL(7, CT::parseInt("+7").value());
+  LONGS_EQUAL(2147483647, CT::parseInt("2147483647").value());
+  // atoi reads these as 1, 1, 100000 and 5
+  CHECK(!CT::parseInt("1.5").has_value());
+  CHECK(!CT::parseInt("1e3").has_value());
+  CHECK(!CT::parseInt("100000e-3").has_value());
+  CHECK(!CT::parseInt("5px").has_value());
+  // Beyond int, where atoi overflows
+  CHECK(!CT::parseInt("2147483648").has_value());
+  CHECK(!CT::parseInt("-99999999999999999999").has_value());
+  CHECK(!CT::parseInt("").has_value());
+  CHECK(!CT::parseInt("-").has_value());
 }

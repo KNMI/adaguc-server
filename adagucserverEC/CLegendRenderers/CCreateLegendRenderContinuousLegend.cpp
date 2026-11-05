@@ -26,7 +26,7 @@ double CCreateLegend::nextTick(double prev) {
 
 std::string CCreateLegend::formatTickLabel(const std::string &textformatting, double tick, double min, double max, int tickRound) {
   if (textformatting.empty() == false) {
-    return CT::printf(textformatting.c_str(), tick);
+    return CT::formatFloat(textformatting, tick);
   }
   if (tickRound == 0) {
     return floatToString(min, max, tick);
@@ -184,6 +184,11 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     std::vector<std::string> logLabels;
     std::vector<double> tickValues;
 
+    // nextTick multiplies, so starting at 0 (for example when min underflows) the ticks would never reach max
+    if (min <= 0 || std::isnan(min)) {
+      CDBError("Log legend needs a minimum above 0, got %g", min);
+      return 1;
+    }
     double tick = min;
     while (tick < max) {
       logLabels.push_back(formatTickLabel(textformatting, tick, min, max, tickRound));
@@ -257,7 +262,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
       std::string label;
       if (!textformatting.empty()) {
-        label = CT::printf(textformatting.c_str(), v);
+        label = CT::formatFloat(textformatting, v);
       } else if (tickRound == 0) {
         label = floatToString(decimals, v);
       } else {
