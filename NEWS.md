@@ -6,6 +6,7 @@
 - Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
 - Hidden dimensions, like a single height level, no longer make GetMap use the short lived cache header. Fixes [803](https://github.com/KNMI/adaguc-server/issues/803)
 - GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
+- Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
 
 **Version 9.2.0 - 2026-10-28**
 
