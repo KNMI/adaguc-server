@@ -24,11 +24,9 @@
  ******************************************************************************/
 
 #include "CConvertUGRIDMesh.h"
-#include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include "CCDFObject.h"
 #include "CDebugger.h"
-#include "CTString.h"
 #include "CStopWatch.h"
 
 static const bool CCONVERTADAGUCPOINT_DEBUG = false;

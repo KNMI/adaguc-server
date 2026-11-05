@@ -6,7 +6,6 @@
 #include "write_webp.h"
 
 #include "webp/encode.h"
-#include "webp/types.h"
 
 static int webPWriter(const uint8_t *data, size_t data_size, const WebPPicture *const pic) {
   FILE *const out = (FILE *)pic->custom_ptr;

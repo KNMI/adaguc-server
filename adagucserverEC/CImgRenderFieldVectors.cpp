@@ -3,11 +3,8 @@
 #include <algorithm>
 #include <utils.h>
 #include <string>
-#include <vector>
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CImageWarper.h"
-#include "CTString.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 

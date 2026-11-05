@@ -27,7 +27,6 @@
 #define CImageWarper_H
 #include "CDataReader.h"
 #include <proj.h>
-#include <cmath>
 #include <string>
 #include <vector>
 #include "CDataSource.h"

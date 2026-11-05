@@ -25,16 +25,13 @@
 
 #include "CImgRenderPolylines.h"
 #include "Types/CPointTypes.h"
-#include <set>
 #include "CConvertGeoJSON.h"
 #include <string>
-#include <algorithm>
 #include <regex.h>
 #include "CRectangleText.h"
 #include "utils/GeometryUtils.h"
 #include <map>
 #include <vector>
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"

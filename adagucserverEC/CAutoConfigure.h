@@ -25,11 +25,9 @@
 
 #ifndef CAUTOCONFIGURE_H
 #define CAUTOCONFIGURE_H
-#include <cmath>
 #include "CDataSource.h"
 
 // #include "CADAGUC_time.h"
-#include <sys/stat.h>
 
 class CAutoConfigure {
 private:

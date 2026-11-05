@@ -27,7 +27,6 @@
 #define CGeoParams_H
 #include "CTString.h"
 #include <cmath>
-#include <map>
 #include <cstddef>
 
 struct i4point {

@@ -1,7 +1,4 @@
 #include <cstdio>
-#include <vector>
-#include <iostream>
-#include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFGeoJSONIO.h"

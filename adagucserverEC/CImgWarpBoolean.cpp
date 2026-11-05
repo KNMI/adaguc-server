@@ -24,11 +24,4 @@
  ******************************************************************************/
 
 #include "CImgWarpBoolean.h"
-#include "CImageWarperRenderInterface.h"
-#include <string>
-#include <vector>
-#include "CCDFObject.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
 #include "Types/CPointTypes.h"
-#include "Types/GeoParameters.h"

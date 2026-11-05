@@ -1,5 +1,4 @@
 #include <png.h>
-#include <errno.h>
 #include <string.h>
 #include <cstdint>
 #include "CDebugger.h"

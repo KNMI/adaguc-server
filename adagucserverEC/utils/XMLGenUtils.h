@@ -12,7 +12,6 @@
 #define XMLGENUTILS_CHECKDEP_DATASOURCE_NO_TIME 1
 #define XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION 2
 
-#include "CXMLGen.h"
 
 int getProjectionInformationForLayer(MetadataLayer *metadataLayer);
 int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList, std::map<std::string, std::vector<std::string>> dimValuesMap);

@@ -1,6 +1,5 @@
 #include <CImageWarper.h>
 #include <CDataSource.h>
-#include <CDrawImage.h>
 
 #ifndef CIMGRENDERFIELDVECTORS_H
 #define CIMGRENDERFIELDVECTORS_H

@@ -29,7 +29,6 @@
 #include "CDataSource.h"
 #include "CConvertH5VolScanUtils.h"
 #include "CImageWarper.h"
-#include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 #include "CCDFObject.h"
 #include "CServerParams.h"

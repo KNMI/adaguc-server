@@ -28,11 +28,7 @@
 
 #include <cstdio>
 #include <vector>
-#include <iostream>
-#include <netcdf.h>
 #include <cmath>
-#include <strings.h>
-#include "CCDFDataModel.h"
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
