@@ -13,7 +13,7 @@ import pytest_asyncio
 
 import adaguc.CGIRunner as cgi_runner_module
 from adaguc.CGIRunner import CGIRunner
-from fork_server_supervisor import ForkServerSupervisor
+from adaguc.fastapi_server.fork_server_supervisor import ForkServerSupervisor
 
 ADAGUC_PATH = Path(os.environ["ADAGUC_PATH"])
 ADAGUC_BINARY = ADAGUC_PATH / "bin" / "adagucserver"

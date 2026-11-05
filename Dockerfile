@@ -123,6 +123,8 @@ FROM deps AS base
 COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
+COPY pyproject.toml LICENSE.txt /adaguc/adaguc-server-master/
+RUN python3 -m pip install --no-deps .
 
 ######### Test stage ############
 FROM test-deps AS test
@@ -133,9 +135,10 @@ COPY python /adaguc/adaguc-server-master/python
 COPY tests /adaguc/adaguc-server-master/tests
 COPY scripts /adaguc/adaguc-server-master/scripts
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
+COPY pyproject.toml LICENSE.txt /adaguc/adaguc-server-master/
 
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
-RUN cd ./python/lib/ && python3 setup.py develop
+RUN python3 -m pip install --no-deps .
 RUN bash runtests_psql.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
@@ -180,12 +183,7 @@ ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 # Use the same config for serving requests as start.sh and the scan scripts use for --updatedb
 ENV ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml
 
-ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
-
-
-# Build and test adaguc python support
-WORKDIR /adaguc/adaguc-server-master/python/lib/
-RUN python3 setup.py install
+# Test installed adaguc Python support
 RUN rm -f result.png \
     && if [ "$TEST_IN_CONTAINER" = "local_build" ]; then \
     db_host="host.docker.internal"; \

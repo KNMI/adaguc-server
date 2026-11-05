@@ -2,8 +2,9 @@ import asyncio
 import logging
 import os
 import signal
+from importlib.resources import files
 
-from configure_logging import configure_logging
+from .configure_logging import configure_logging
 from adaguc.runAdaguc import runAdaguc
 from adaguc.fork_settings import get_fork_socket_path
 
@@ -23,7 +24,7 @@ class ForkServerSupervisor:
         adaguc_env = runAdaguc().getAdagucEnv()
         self.env.update({k: str(v) for k, v in adaguc_env.items()})
         self.env["ADAGUC_CONFIG"] = os.environ.get(
-            "ADAGUC_CONFIG", f"{self.env.get('ADAGUC_PATH')}/python/lib/adaguc/adaguc-server-config-python-postgres.xml"
+            "ADAGUC_CONFIG", str(files("adaguc").joinpath("adaguc-server-config-python-postgres.xml"))
         )
         self.env["ADAGUC_ONLINERESOURCE"] = os.environ.get("EXTERNALADDRESS", "") + "/adaguc-server?"
 

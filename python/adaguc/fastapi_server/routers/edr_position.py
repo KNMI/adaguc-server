@@ -1,4 +1,4 @@
-"""python/python_fastapi_server/routers/edr.py
+"""python/adaguc/fastapi_server/routers/edr.py
 Adaguc-Server OGC EDR implementation
 
 This code uses Adaguc's OGC WMS and WCS endpoints to convert into an EDR service.

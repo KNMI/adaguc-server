@@ -5,7 +5,7 @@
             "name": "debug python server",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/python/python_fastapi_server/main.py",
+            "module": "adaguc.fastapi_server.main",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/Docker/.env",
             "env": {
@@ -14,7 +14,7 @@
                 "ADAGUC_ONLINERESOURCE": "",
                 "ADAGUC_NUMPARALLELPROCESSES": "4",
                 "ADAGUC_TMP": "/tmp",
-                "ADAGUC_CONFIG": "${workspaceFolder}/python/lib/adaguc/adaguc-server-config-python-postgres.xml",
+                "ADAGUC_CONFIG": "${workspaceFolder}/python/adaguc/adaguc-server-config-python-postgres.xml",
                 "ADAGUC_ENABLELOGBUFFER": "FALSE",
                 "ADAGUC_PORT": "8080",
                 "EXTERNALADDRESS": "http://localhost:8080"
@@ -59,7 +59,7 @@
                 },
                 {
                     "name": "ADAGUC_CONFIG",
-                    "value": "${workspaceFolder}/python/lib/adaguc/adaguc-server-config-python-postgres.xml",
+                    "value": "${workspaceFolder}/python/adaguc/adaguc-server-config-python-postgres.xml",
                 },
                 {
                     "name": "ADAGUC_ENABLELOGBUFFER",

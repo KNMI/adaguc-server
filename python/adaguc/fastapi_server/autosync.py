@@ -4,9 +4,9 @@ import asyncio
 import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-from routers.wmswcs import testadaguc
-from routers.setup_adaguc import setup_adaguc
-from configure_logging import configure_logging
+from .routers.wmswcs import testadaguc
+from .routers.setup_adaguc import setup_adaguc
+from .configure_logging import configure_logging
 
 configure_logging(logging)
 

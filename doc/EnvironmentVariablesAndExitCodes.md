@@ -44,7 +44,7 @@ OpenDAP requests return 500 for every non-zero exit code. The OGC API and EDR en
 | Environment variable      | Description | Default value |
 |---------------------------|-------------|---------------|
 | `ADAGUC_AUTOWMS_DIR`      | Directory used for automatic WMS generation. NetCDF, PNG, CSV, or HDF5 files placed here are automatically exposed through a generated WMS service. | `/data/adaguc-autowms` |
-| `ADAGUC_CONFIG`           | Path to the main server configuration XML file. | `${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml` |
+| `ADAGUC_CONFIG`           | Path to the main server configuration XML file. | `${ADAGUC_PATH}/python/adaguc/adaguc-server-config-python-postgres.xml` |
 | `ADAGUC_DATA_DIR`         | Directory containing data files, such as NetCDF files used for realtime updates. | `/data/adaguc-data` |
 | `ADAGUC_DATARESTRICTION`  | Controls access restrictions for certain services. Possible values: `ALLOW_WCS`, `ALLOW_GFI`, `ALLOW_METADATA`, `SHOW_QUERYINFO`.<br>Values can be combined with `\|`. `FALSE` means no restrictions. | `FALSE` (`ALLOW_WCS\|ALLOW_GFI\|ALLOW_METADATA`) |
 | `ADAGUC_DATASET_DIR`      | Directory containing dataset configuration XML files. | `/data/adaguc-datasets` |

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 ./python/python_fastapi_server/autosync.py
+python3 -m adaguc.fastapi_server.autosync

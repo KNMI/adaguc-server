@@ -8,7 +8,7 @@ import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
-from main import app
+from adaguc.fastapi_server.main import app
 
 logger = logging.getLogger(__name__)
 
