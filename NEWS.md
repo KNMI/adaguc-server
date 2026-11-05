@@ -4,6 +4,8 @@
 - Fixed a `baselayers.xml` in your own dataset directory clashing with the internal baselayers dataset of the Docker image. The internal dataset is now named `adaguc-internal-baselayers`.
 - Reduced SQL queries when scanning dataset
 - Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
+- A scalar variable with standard_name `forecast_reference_time` is now advertised as `reference_time` dimension with units `ISO8601` and ISO8601 values, like a `reference_time` dimension. Before, GetCapabilities showed the units of the NetCDF variable, for example `seconds since 1970-01-01`. Layers scanned before can still show the old units when the variable name does not end with `reference_time`: clear their rows in the `autoconfigure_dimensions` table.
+- WCS DescribeCoverage now uses the `time` dimension as time axis, also when the layer has a `reference_time` dimension. Before, it used the last dimension with `ISO8601` units, which could be `reference_time`.
 - Hidden dimensions, like a single height level, no longer make GetMap use the short lived cache header. Fixes [803](https://github.com/KNMI/adaguc-server/issues/803)
 
 **Version 9.2.0 - 2026-10-28**
