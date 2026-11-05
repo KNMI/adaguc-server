@@ -4,7 +4,7 @@ import time
 #  cd  ./python/lib/adaguc/
 # pytest -rpP
 
-from .CGIRunner import CGIRunner as CGIRunner
+from adaguc.CGIRunner import CGIRunner as CGIRunner
 from io import BytesIO
 
 

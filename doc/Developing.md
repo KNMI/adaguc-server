@@ -47,7 +47,7 @@ When started, the database is available via username adaguc, databasename adaguc
 
 ## 3. Install python dependencies
 
-To make the application accesible via the web, a python wrapper is available. This requires at least python 3.8 and the ability to create a virtualenv with python.
+To make the application accesible via the web, a python wrapper is available. This requires Python 3.14 and the ability to create a virtualenv with python.
 
 To install virtualenv please check [Virtual env on ubuntu](./developing/scripts/virtual-env-with-ubuntu.md)
 
@@ -56,11 +56,13 @@ You have to do once:
 ```
 python3 -m venv env
 source env/bin/activate
-pip3 install --upgrade pip pip-tools
-pip3 install -r requirements.txt
-pip3 install -r requirements-dev.txt
-cd ./python/lib/ && python3 setup.py develop && cd ../../
+python -m pip install --upgrade pip pip-tools
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
+python -m pip install -e .
 ```
+Run these commands from the repository root. The editable installation uses the source files directly; reinstall it after changing package configuration or dependencies. Third-party dependencies remain managed through the requirements files.
+
 Make sure the data directories are available:
 
 ``` 
@@ -78,7 +80,7 @@ export ADAGUC_PATH=`pwd`
 export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
-export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_CONFIG=${ADAGUC_PATH}/python/adaguc/adaguc-server-config-python-postgres.xml
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
@@ -103,7 +105,7 @@ export ADAGUC_PATH=`pwd`
 export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
-export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_CONFIG=${ADAGUC_PATH}/python/adaguc/adaguc-server-config-python-postgres.xml
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
@@ -117,7 +119,7 @@ export ADAGUC_FORK_ENABLE=TRUE
 # Then you can use:
 # gdb ./bin/adagucserver `ls -Art core-adagucserver.* | tail -n 1`
 
-python3 ./python/python_fastapi_server/main.py
+python3 -m adaguc.fastapi_server.main
 ```
 
 The adaguc-server WMS server will then be accessible at http://127.0.0.1:8080/wms. The autowms can be explored at the adaguc-viewer via the following link: https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://localhost:8080/autowms. Keep in mind that you have to disable security, as the server is not running on https.
@@ -165,7 +167,7 @@ You need to do these steps _once_ to setup the pre-commit hooks:
 1. Install the python dependencies:
 ```bash
 pip-sync requirements.txt requirements-dev.txt
-cd ./python/lib/ && python3 setup.py develop && cd ../../
+python -m pip install -e .
 ```
 
 2. Setup pre-commit hooks

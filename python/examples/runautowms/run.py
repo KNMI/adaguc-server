@@ -14,7 +14,7 @@ adagucInstance = runAdaguc()
 
 adagucServerHome = os.getenv("ADAGUC_PATH", os.getcwd() + "/../../../../")
 adagucInstance.setAdagucPath(adagucServerHome)
-adagucInstance.setConfiguration(adagucServerHome + "/python/lib/adaguc/adaguc-server-config-python.xml")
+adagucInstance.setConfiguration(adagucServerHome + "/python/adaguc/adaguc-server-config-python.xml")
 adagucInstance.setAutoWMSDir(adagucServerHome + "/data/datasets/")
 adagucInstance.setTmpDir(adagucServerHome + "/python/examples/runautowms/")
 

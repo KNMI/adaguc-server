@@ -1,0 +1,24 @@
+Metadata-Version: 2.4
+Name: adaguc
+Version: 0.0.3
+Summary: Python wrapper arround the adaguc-server
+Home-page: https://github.com/KNMI/adaguc-server
+Author: KNMI Geospatial Task Force
+Author-email: gstf@knmi.nl
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache2 License
+Classifier: Operating System :: Linux
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+Please check the [Development](../../doc/Developing.md) readme in the adaguc-server doc folder.

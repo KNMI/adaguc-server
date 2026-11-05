@@ -141,8 +141,8 @@ async def handle_ogc_api_root(
 
     if request_type(responsetype) == "HTML":
         return templates.TemplateResponse(
-            "landingpage.html",
-            {"request": req, "landingpage": landing_page.model_dump()},
+            request=req, name="landingpage.html",
+            context={"request": req, "landingpage": landing_page.model_dump()},
         )
     return landing_page
 
@@ -269,7 +269,7 @@ async def get_collections(
 
     if request_type(responsetype) == "HTML":
         collections_list = [c.model_dump() for c in collections]
-        return templates.TemplateResponse("collections.html", {"request": req, "collections": collections_list})
+        return templates.TemplateResponse(request=req, name="collections.html", context={"request": req, "collections": collections_list})
 
     return Collections(
         links=links,
@@ -291,7 +291,7 @@ async def get_collection(coll: str, req: Request, responsetype: str = Query(defa
         links=get_collection_links(str(req.url_for("get_collection", coll=coll))),
     )
     if request_type(responsetype) == "HTML":
-        return templates.TemplateResponse("collection.html", {"request": req, "collection": collection.model_dump()})
+        return templates.TemplateResponse(request=req, name="collection.html", context={"request": req, "collection": collection.model_dump()})
     return collection
 
 
@@ -314,8 +314,8 @@ async def get_conformance(req: Request, responsetype: str = Query(default="json"
     conf_classes = ConfClasses(conformsTo=conformanceClasses)
     if request_type(responsetype) == "HTML":
         return templates.TemplateResponse(
-            "conformance.html",
-            {
+            request=req, name="conformance.html",
+            context={
                 "request": req,
                 "title": "conformance",
                 "description": "D",
@@ -629,8 +629,8 @@ async def get_items_for_collection(
     if request_type(responsetype) == "HTML":
         features = [f.model_dump() for f in feature_collection.features]
         return templates.TemplateResponse(
-            "items.html",
-            {
+            request=req, name="items.html",
+            context={
                 "request": req,
                 "items": jsonable_encoder(feature_collection),
                 "description": "Description",
@@ -660,8 +660,8 @@ async def get_item_for_collection(
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
         if request_type(responsetype) == "HTML":
             return templates.TemplateResponse(
-                "item.html",
-                {
+                request=req, name="item.html",
+                context={
                     "request": req,
                     "collection": coll,
                     "description": "D",

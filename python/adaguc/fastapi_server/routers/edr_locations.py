@@ -1,4 +1,4 @@
-"""python/python_fastapi_server/routers/edr.py
+"""python/adaguc/fastapi_server/routers/edr.py
 Adaguc-Server OGC EDR implementation
 
 This code uses Adaguc's OGC WMS and WCS endpoints to convert into an EDR service.
@@ -18,8 +18,8 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
-from routers.covjsonresponse import CovJSONResponse
-from routers.edr_position import handle_coll_inst_position
+from .covjsonresponse import CovJSONResponse
+from .edr_position import handle_coll_inst_position
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 

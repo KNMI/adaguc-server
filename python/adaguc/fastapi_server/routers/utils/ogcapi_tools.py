@@ -13,7 +13,7 @@ from defusedxml.ElementTree import ParseError, parse
 from owslib.wms import WebMapService
 
 
-from routers.models.ogcapifeatures_1_model import (
+from ..models.ogcapifeatures_1_model import (
     FeatureGeoJSON,
     Link,
     PointGeoJSON,

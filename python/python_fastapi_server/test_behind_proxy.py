@@ -8,7 +8,7 @@ from importlib import reload
 from xml.etree import ElementTree
 from fastapi.testclient import TestClient
 from fastapi import Response
-import main
+from adaguc.fastapi_server import main
 import pytest
 from unittest.mock import patch
 

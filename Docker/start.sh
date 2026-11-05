@@ -39,4 +39,4 @@ fi
 echo "Start serving on 0.0.0.0"
 # keep-alive should be greater than the idle timout of the proxy/load balancer sitting in front of adaguc
 # See: https://iximiuz.com/en/posts/reverse-proxy-http-keep-alive-and-502s/
-gunicorn --bind 0.0.0.0:${ADAGUC_SERVER_PORT} --workers=1 -k no_proxy_headers_uvicorn_worker.NoProxyHeadersUvicornWorker --disable-redirect-access-to-syslog --keep-alive 200 --access-logfile - main:app
+gunicorn --bind 0.0.0.0:${ADAGUC_SERVER_PORT} --workers=1 -k adaguc.fastapi_server.no_proxy_headers_uvicorn_worker.NoProxyHeadersUvicornWorker --disable-redirect-access-to-syslog --keep-alive 200 --access-logfile - adaguc.fastapi_server.main:app

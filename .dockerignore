@@ -13,6 +13,8 @@
 !Docker/supervisord/
 !requirements.txt
 !requirements-dev.txt
+!pyproject.toml
+!LICENSE.txt
 !adagucserverEC/
 !CCDFDataModel/
 !cmake/
@@ -20,6 +22,8 @@
 !hclasses/
 !scripts/
 !python/
+!tests/
+tests/*
 !tests/AdagucTests/
 !tests/expectedoutputs/
 !tests/inspiretests/

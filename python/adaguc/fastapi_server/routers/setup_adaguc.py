@@ -4,6 +4,7 @@ Setup adaguc
 import logging
 import os
 import sys
+from importlib.resources import files
 
 from adaguc.runAdaguc import runAdaguc
 
@@ -40,8 +41,7 @@ def setup_adaguc(displaylogging=False):
     # Get the location of the adaguc-server configuration file
     adaguc_server_config = os.getenv(
         "ADAGUC_CONFIG",
-        adaguc_server_home
-        + "/python/lib/adaguc/adaguc-server-config-python-postgres.xml",
+        str(files("adaguc").joinpath("adaguc-server-config-python-postgres.xml")),
     )
     if adaguc_server_config is None or len(adaguc_server_config) < 1:
         print(

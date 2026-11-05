@@ -65,7 +65,7 @@ or locally:
 
 ```
 Scanning full dataset [nwcsaf_mtg]:
-/home/plieger/code/github/KNMI/adaguc-server/bin/adagucserver --updatedb --verboseoff --config /home/plieger/code/github/KNMI/adaguc-server/python/lib/adaguc/adaguc-server-config-python-postgres.xml,nwcsaf_mtg
+/home/plieger/code/github/KNMI/adaguc-server/bin/adagucserver --updatedb --verboseoff --config /home/plieger/code/github/KNMI/adaguc-server/python/adaguc/adaguc-server-config-python-postgres.xml,nwcsaf_mtg
 [D:000:pid640062: adagucserverEC/CDBFileScanner.cpp:885]                          ==> *** Starting update layer [tcwvtiled] ***
 [D:001:pid640062: adagucserverEC/CDBFileScanner.cpp:1078]                       Reading directory /data/adaguc-data/NWCSAF with filter ^S_NWC_WV09_MTI1_GLOBAL-NR.*\.nc$
 [D:002:pid640062: adagucserverEC/CDBFileScanner.cpp:804]                        The database contains 4 files, found 0 files in DB which are missing on filesystem.

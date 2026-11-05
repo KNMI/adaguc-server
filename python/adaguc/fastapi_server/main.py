@@ -10,17 +10,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
-from middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
-from routers.utils.utils import get_base_url, get_externaladdress
-from routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
-from routers.autowms import autowms_router
-from routers.edr import edrApiApp
-from routers.ogcapi import ogcApiApp
-from routers.opendap import opendapRouter
-from routers.wmswcs import testadaguc, wmsWcsRouter
-from routers.caching_middleware import CachingMiddleware
-from configure_logging import configure_logging
-from fork_server_supervisor import ForkServerSupervisor
+from .middleware.x_forwarded_headers import ForwardedHostAndPrefixMiddleware
+from .routers.utils.utils import get_base_url, get_externaladdress
+from .routers.ContentTypeBasedBrotli import ContentTypeBasedBrotli
+from .routers.autowms import autowms_router
+from .routers.edr import edrApiApp
+from .routers.ogcapi import ogcApiApp
+from .routers.opendap import opendapRouter
+from .routers.wmswcs import testadaguc, wmsWcsRouter
+from .routers.caching_middleware import CachingMiddleware
+from .configure_logging import configure_logging
+from .fork_server_supervisor import ForkServerSupervisor
 from adaguc.fork_settings import is_fork_enabled
 
 configure_logging(logging)
@@ -135,4 +135,4 @@ logging.info("Starting server on 0.0.0.0")
 
 if __name__ == "__main__":
     testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True, proxy_headers=True)
+    uvicorn.run(app="adaguc.fastapi_server.main:app", host="0.0.0.0", port=8080, reload=True, proxy_headers=True)
