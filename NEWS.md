@@ -4,6 +4,7 @@
 - Fixed a `baselayers.xml` in your own dataset directory clashing with the internal baselayers dataset of the Docker image. The internal dataset is now named `adaguc-internal-baselayers`.
 - Reduced SQL queries when scanning dataset
 - Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
+- GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used.
 
 **Version 9.2.0 - 2026-10-28**
 

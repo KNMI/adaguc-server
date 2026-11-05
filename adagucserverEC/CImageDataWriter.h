@@ -85,8 +85,8 @@ private:
   void setValue(CDFType type, void *data, size_t ptr, double pixel);
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
 
-  /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
-  void getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance);
+  // Fills the value of the last element from the nearest point within maxPixelDistance. Returns its distance in pixels, or -1 when no point was used.
+  double getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance);
 
 public:
   bool isProfileData;

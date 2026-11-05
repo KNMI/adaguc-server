@@ -26,6 +26,8 @@
 #include <set>
 
 #include <vector>
+#include <iterator>
+#include <limits>
 #include <sstream>
 #include <algorithm>
 #include <cmath>
@@ -231,13 +233,18 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawI
   return 0;
 }
 
-void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance) {
+// True when the element has no value (yet) for this data object
+static bool hasNoValue(const GFIElement &element, const DataObject *dataObject) {
+  return element.value.empty() || element.value == "nodata" || (dataObject->hasNodataValue && element.value == CT::printf("%f", dataObject->dfNodataValue));
+}
+
+double CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance) {
   if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size() == 0 || dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS") != NULL) {
-    return;
+    return -1;
   }
   int closestIndex = findClosestPoint(dataSource->getDataObject(dataObjectNrInDataSource)->points, getFeatureInfoResult.lon_coordinate, getFeatureInfoResult.lat_coordinate);
   if (closestIndex == -1) {
-    return;
+    return -1;
   }
   /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
   double pointPX = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lon, pointPY = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lat;
@@ -253,13 +260,13 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
 
   if (pixelDistance > maxPixelDistance) {
-    return;
+    return -1;
   }
 
   auto dataObject = dataSource->getDataObject(dataObjectNrInDataSource);
   auto &point = dataObject->points[closestIndex];
   auto &element = getFeatureInfoResult.elements.back();
-  if (element.value.empty() || element.value == "nodata" || (dataObject->hasNodataValue && element.value == CT::printf("%f", dataObject->dfNodataValue))) {
+  if (hasNoValue(element, dataObject)) {
     if (dataObject->hasStatusFlag) {
       // Add status flag
       std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, (int)point.v);
@@ -284,6 +291,7 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
     pointID.value = param.value;
     pointID.units = "";
   }
+  return pixelDistance;
 }
 
 int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
@@ -526,7 +534,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     } else {
       CDBDebug("Num time steps for dataSource %d", dataSource->getNumTimeSteps());
 
-      std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
+      // Files can share dimension values, for example point data split over several files with the same time. Per dimension key
+      // (dimension values and data object) the result closest to the clicked location is kept: a value from the grid, or the nearest point.
+      struct DimKeyResult {
+        double distance;                 // In pixels, infinity when there is no value
+        std::vector<GFIElement> elements; // The element of the data object, followed by the parameters of its point or feature
+      };
+      std::vector<std::string> dimKeyOrder;
+      std::map<std::string, DimKeyResult> dimKeyResults;
 
       for (int step = 0; step < dataSource->getNumTimeSteps(); step++) {
         dataSource->setTimeStep(step);
@@ -617,16 +632,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             }
             CT::printfconcat(dimkey, "[dataobject=%lu]", o);
 
-            std::map<std::string, bool>::iterator dimensionKeyValueMapIterator = dimensionKeyValueMap.find(dimkey.c_str());
-            if (dimensionKeyValueMapIterator != dimensionKeyValueMap.end()) {
-              if (dimensionKeyValueMapIterator->second == false) {
-                if (getFeatureInfoResult.elements.size() > 0) {
-                  getFeatureInfoResult.elements.pop_back();
-                }
-              }
-            } else {
-              dimensionKeyValueMap[dimkey.c_str()] = false;
-            }
+            size_t firstElement = getFeatureInfoResult.elements.size();
             getFeatureInfoResult.elements.push_back(GFIElement());
             GFIElement &element = getFeatureInfoResult.elements.back();
 
@@ -690,7 +696,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     element.value = CT::printf("%f", pixel);
                   }
                 }
-                dimensionKeyValueMap[dimkey.c_str()] = true;
 
                 if (dataSource->getDataObject(o)->features.empty() == false) {
                   int closestIndex = pixel;
@@ -717,8 +722,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                       warper.closereproj();
 
                       if (pixelDistance > 30) {
+                        // Too far away: no feature in this file, other files or layers can still have one
                         element.value = "nodata";
-                        return 0;
+                        closestIndex = -1;
                       };
                     }
                   }
@@ -747,9 +753,28 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                 element.value = "nodata";
               }
             }
-            getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30);
+            double pointDistance = getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30);
+
+            // Move the elements of this data object out of the result, they are added back below for the best file
+            DimKeyResult result = {.distance = std::numeric_limits<double>::infinity(),
+                                   .elements = {std::make_move_iterator(getFeatureInfoResult.elements.begin() + firstElement), std::make_move_iterator(getFeatureInfoResult.elements.end())}};
+            getFeatureInfoResult.elements.resize(firstElement);
+            if (!hasNoValue(result.elements[0], dataSource->getDataObject(o))) {
+              result.distance = pointDistance >= 0 ? pointDistance : 0;
+            }
+            auto it = dimKeyResults.find(dimkey);
+            if (it == dimKeyResults.end()) {
+              dimKeyOrder.push_back(dimkey);
+              dimKeyResults.emplace(dimkey, std::move(result));
+            } else if (result.distance < it->second.distance) {
+              it->second = std::move(result);
+            }
           }
         }
+      }
+      for (const auto &dimkey: dimKeyOrder) {
+        auto &elements = dimKeyResults[dimkey].elements;
+        getFeatureInfoResult.elements.insert(getFeatureInfoResult.elements.end(), std::make_move_iterator(elements.begin()), std::make_move_iterator(elements.end()));
       }
     }
   }
