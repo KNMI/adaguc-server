@@ -141,7 +141,7 @@ TrajectorySampling sampleTrajectoryGrid(CDataSource *source, CImageWarper *warpe
       result.runs.push_back({x, y, 1});
   }
   // Bound output size across all selected times and levels.
-  if (result.samples.size() > size_t(10000000) / std::max(1, source->getNumTimeSteps())) {
+  if (result.samples.size() > size_t(1000000) / std::max(1, source->getNumTimeSteps())) {
     CDBError("Trajectory selects too many values");
     throw(__LINE__);
   }

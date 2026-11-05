@@ -51,8 +51,8 @@ async def get_trajectory(
     f: str = "CoverageJSON",
 ):
     points = parse_coordinates(coords, "LineString")
-    if len(points) > 100000:
-        raise EdrException(400, "Trajectory supports at most 100000 vertices")
+    if len(points) > 1000:
+        raise EdrException(400, "Trajectory supports at most 1000 vertices")
     if crs != "EPSG:4326":
         raise EdrException(400, "Trajectory currently supports crs=EPSG:4326")
     if f not in ("CoverageJSON", "application/prs.coverage+json"):

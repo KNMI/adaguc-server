@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-constexpr std::size_t MAX_TRAJECTORY_SAMPLES = 10000;
+constexpr std::size_t MAX_TRAJECTORY_SAMPLES = 2000;
 
 // Return the origin and spacing of a regular axis, tolerating float32 rounding.
 std::pair<double, double> regularTrajectoryAxis(const double *values, std::size_t count, bool floatAxis);

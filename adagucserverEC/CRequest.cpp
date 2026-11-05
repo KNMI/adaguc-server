@@ -1549,14 +1549,14 @@ int CRequest::process_querystring() {
         // Python validates WKT and geographic bounds; here we only decode safe coordinate pairs.
         const auto fields = CT::split(trajectoryCoords, ",");
         try {
-          if (fields.size() < 4 || fields.size() > 200000 || fields.size() % 2 != 0) throw std::invalid_argument("Invalid coordinate count");
+          if (fields.size() < 4 || fields.size() > 2000 || fields.size() % 2 != 0) throw std::invalid_argument("Invalid coordinate count");
           for (size_t i = 0; i < fields.size(); i += 2) {
             const double x = std::stod(fields[i]), y = std::stod(fields[i + 1]);
             if (!std::isfinite(x) || !std::isfinite(y)) throw std::invalid_argument("Invalid coordinate pair");
             srvParam->trajectoryCoords.emplace_back(x, y);
           }
         } catch (const std::exception &) {
-          CDBError("Trajectory COORDS must contain 2 to 100000 finite longitude/latitude pairs: x,y,x,y,...");
+          CDBError("Trajectory COORDS must contain 2 to 1000 finite longitude/latitude pairs: x,y,x,y,...");
           setExceptionType(ServiceExceptionType::UnprocessableEntity);
           return 1;
         }

@@ -1038,7 +1038,8 @@ def test_wildcard_query(client: TestClient):
 @pytest.mark.parametrize("z,filename", [(None, "trajectory_section.json"), ("10", "trajectory_section_z10.json")])
 def test_trajectory_section(client, z, filename):
     params = {
-        "coords": "LINESTRING(5.1 52.1,8.1 52.1)",
+        # Exercise the 1,000-vertex boundary without changing the sampled path.
+        "coords": "LINESTRING(" + ",".join(["5.1 52.1"] * 999 + ["8.1 52.1"]) + ")",
         "parameter-name": "testdata",
         "datetime": "2024-06-01T01:00:00Z/2024-06-01T02:00:00Z",
     }
@@ -1052,7 +1053,12 @@ def test_trajectory_section(client, z, filename):
 
 @pytest.mark.parametrize(
     "coords",
-    [None, "POINT(5 52)", "LINESTRING(5.152.1,8 52)"],
+    [
+        None,
+        "POINT(5 52)",
+        "LINESTRING(5.152.1,8 52)",
+        pytest.param("LINESTRING(" + ",".join(["5 52"] * 1001) + ")", id="too-many-vertices"),
+    ],
 )
 def test_trajectory_invalid_coords(client, coords):
     params = {} if coords is None else {"coords": coords}
