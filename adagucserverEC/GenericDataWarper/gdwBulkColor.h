@@ -2,7 +2,6 @@
 #define GDW_BULK_COLOR_H
 
 #include <array>
-#include <cstring>
 #include <vector>
 #include "CDrawFunction.h"
 
@@ -22,10 +21,7 @@ class GDWColorMapper {
 
 public:
   static uint32_t pack(const CColor &color) {
-    static_assert(sizeof(CColor) == sizeof(uint32_t));
-    uint32_t packed;
-    std::memcpy(&packed, &color, sizeof(packed));
-    return packed;
+    return uint32_t(color.r) | (uint32_t(color.g) << 8) | (uint32_t(color.b) << 16) | (uint32_t(color.a) << 24);
   }
 
   explicit GDWColorMapper(GDWDrawFunctionSettings &settings) : settings(settings) {
@@ -127,7 +123,11 @@ public:
     for (int i = 0; i < count; ++i) {
       grid[size_t(y[i]) * width + x[i]] = values[i];
       if (!settings.drawgrid) continue;
-      std::memcpy(&color, &colors[i], sizeof(color));
+      const uint32_t packed = colors[i];
+      color.r = static_cast<unsigned char>(packed);
+      color.g = static_cast<unsigned char>(packed >> 8);
+      color.b = static_cast<unsigned char>(packed >> 16);
+      color.a = static_cast<unsigned char>(packed >> 24);
       if (color.a > 0) settings.drawImage->setPixel(x[i], y[i], color);
       else if (color.r > 0 || color.g > 0 || color.b > 0) settings.drawImage->setPixelTrueColorOverWrite(x[i], y[i], color.r, color.g, color.b, color.a);
     }
