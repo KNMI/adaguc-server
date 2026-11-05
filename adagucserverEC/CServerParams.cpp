@@ -403,6 +403,18 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
       CDBError("STYLESHEET may contain at most 32 ContourLine elements, got %zu", style.ContourLine.size());
       return 1;
     }
+    // Every DataPostProc goes over the whole grid, and add_dataobject allocates a grid
+    if (style.DataPostProc.size() > 8) {
+      CDBError("STYLESHEET may contain at most 8 DataPostProc elements, got %zu", style.DataPostProc.size());
+      return 1;
+    }
+    // Other algorithms use name for a layer or file
+    for (const auto &dataPostProc: style.DataPostProc) {
+      if (!dataPostProc.attr.name.empty() && dataPostProc.attr.algorithm != "add_dataobject") {
+        CDBError("STYLESHEET: DataPostProc attribute [name] is only allowed for add_dataobject");
+        return 1;
+      }
+    }
     for (auto &symbolInterval: style.SymbolInterval) {
       if (!resolveStyleSheetPngFile(symbolInterval.attr.file)) return 1;
     }

@@ -20,6 +20,7 @@ import main  # pylint: disable=wrong-import-position
 DATASET = "adaguc.tests.customstyles"
 GET_MAP_QUERY = "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours&FORMAT=image/png&TRANSPARENT=FALSE"
 GET_LEGEND_GRAPHIC_QUERY = "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=testdata&FORMAT=image/png"
+GET_FEATURE_INFO_QUERY = "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=testdata&QUERY_LAYERS=testdata&CRS=EPSG%3A4326&BBOX=30,-30,75,30&WIDTH=256&HEIGHT=256&I=128&J=128&INFO_FORMAT=text/plain"
 
 TESTRESULTSPATH = "testresults/TestCustomStyles/"
 EXPECTEDOUTPUTSPATH = "expectedoutputs/TestCustomStyles/"
@@ -81,11 +82,11 @@ def post_getlegendgraphic(client, stylesheet):
     return client.post("/wms", data=params)
 
 
-def assert_image(response, filename):
+def assert_image(response, filename, expected=None):
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "image/png"
     AdagucTestTools().writetofile(TESTRESULTSPATH + filename, response.content)
-    assert AdagucTestTools().compareImage(EXPECTEDOUTPUTSPATH + filename, TESTRESULTSPATH + filename)
+    assert AdagucTestTools().compareImage(expected or EXPECTEDOUTPUTSPATH + filename, TESTRESULTSPATH + filename)
 
 
 def contour_style(textformatting):
@@ -281,6 +282,7 @@ def test_CustomStyles_accepts_safe_formats(client, fmt):
         '<Style name="s"><DataPostProc algorithm="addfeatures" a="/etc/passwd"/></Style>',
         '<Style name="s"><DataPostProc algorithm="include_layer" name="testdata"/></Style>',
         '<Style name="s"><DataPostProc algorithm="pointsfromgrid" name="x"/></Style>',
+        '<Style name="s"><DataPostProc algorithm="convert_units" name="x"/></Style>',
         '<Style name="s"><Point fontfile="/etc/passwd"/></Style>',
         '<Style name="s"><Point symbol="/etc/passwd"/></Style>',
         '<Style name="s"><FeatureInterval labelfontfile="/etc/passwd"/></Style>',
@@ -307,6 +309,9 @@ def test_CustomStyles_accepts_safe_formats(client, fmt):
         '<Style name="s"><ContourLine width="1e9"/></Style>',
         '<Legend name="l" type="colorRange"><palette index="2000000000" red="0" green="0" blue="0"/></Legend>',
         '<Legend name="l" type="interval"><palette min="0" max="2000000000" red="0" green="0" blue="0"/></Legend>',
+        # Every DataPostProc goes over the whole grid, and add_dataobject allocates a grid
+        '<Style name="s">' + '<DataPostProc algorithm="add_dataobject" name="m" a="1"/>' * 9 + "</Style>",
+        '<Style name="s"><DataPostProc algorithm="add_dataobject" name="m" a="inf"/></Style>',
         # Values read with atoi must be whole numbers: 20000e-3 is 20 as a number, but atoi reads 20000
         '<Style name="s"><SmoothingFilter>20000e-3</SmoothingFilter></Style>',
         '<Style name="s"><Stippling distancex="100000e-3"/></Style>',
@@ -352,6 +357,86 @@ def test_CustomStyles_accepts_whole_numbers(client, stylesheet):
     """Values read with atoi accept whole numbers with an optional sign and surrounding whitespace"""
     response = post_getmap(client, stylesheet)
     assert response.status_code == 200, response.text
+
+
+@pytest.mark.parametrize(
+    ("dataPostProc", "expected"),
+    [
+        ('<DataPostProc algorithm="ax+b" a="2" b="1" units="x"/>', "Testdata 1.395386 x"),
+        ('<DataPostProc algorithm="convert_units" a="2" from_units="1" units="x2"/>', "Testdata 0.395386 x2"),
+        # Only data in one of the from_units is converted
+        ('<DataPostProc algorithm="convert_units" a="2" from_units="kts" units="x2"/>', "Testdata 0.197693 1"),
+    ],
+)
+def test_CustomStyles_convert_units(client, dataPostProc, expected):
+    """A posted style can convert units, the value at this location is 0.197693 with units 1"""
+    params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
+    params["STYLESHEET"] = f'<Style name="s">{dataPostProc}</Style>'
+    response = client.post("/wms", data=params)
+    assert response.status_code == 200, response.text
+    assert expected in response.text
+
+
+@pytest.mark.parametrize(
+    ("dataPostProcs", "expected"),
+    [
+        # pow(pow(10, 0.197693 / 10) / 200, 0.625)
+        ('<DataPostProc algorithm="dbztorr"/>', ["Testdata 0.037516 mm/hr"]),
+        # Only the selected data objects are in the output
+        ('<DataPostProc algorithm="add_dataobject" name="m1" a="1"/><DataPostProc algorithm="filter_dataobjects" select="testdata"/>', ["Testdata 0.197693 1"]),
+        ('<DataPostProc algorithm="add_dataobject" name="m1" a="1"/><DataPostProc algorithm="filter_dataobjects" select="m1"/>', ["m1 1.000000 1"]),
+    ],
+)
+def test_CustomStyles_datapostproc_getfeatureinfo(client, dataPostProcs, expected):
+    """Other DataPostProc algorithms without file or layer access"""
+    params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
+    params["STYLESHEET"] = f'<Style name="s">{dataPostProcs}</Style>'
+    response = client.post("/wms", data=params)
+    assert response.status_code == 200, response.text
+    assert [line.strip(" -") for line in response.text.splitlines() if line.startswith("  ")] == expected
+
+
+def test_CustomStyles_add_dataobject_getfeatureinfo(client):
+    """Every add_dataobject adds one data object with its own value. GetFeatureInfo reads the data twice, which used to add
+    a second object that was never filled: its value was uninitialized memory."""
+    params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
+    params["STYLESHEET"] = '<Style name="s"><DataPostProc algorithm="add_dataobject" name="m1" a="1"/><DataPostProc algorithm="add_dataobject" name="m2" a="2"/></Style>'
+    response = client.post("/wms", data=params)
+    assert response.status_code == 200, response.text
+    values = [line.strip(" -") for line in response.text.splitlines() if line.startswith("  ")]
+    assert values == ["m2 2.000000 1", "m1 1.000000 1", "Testdata 0.197693 1"]
+
+
+def test_CustomStyles_add_dataobject(client, monkeypatch):
+    """add_dataobject adds a constant magnitude to draw vectors from directions only, as the configured style wind_wave_direction does"""
+    env = make_adaguc_env("adaguc.tests.vectorrendering")
+    update_db(env)
+    monkeypatch.setenv("ADAGUC_CONFIG", env["ADAGUC_CONFIG"])
+    params = {
+        "SERVICE": "WMS",
+        "VERSION": "1.3.0",
+        "REQUEST": "GetMap",
+        "LAYERS": "wind_wave_direction",
+        "WIDTH": "1151",
+        "HEIGHT": "1135",
+        "CRS": "EPSG:3857",
+        "BBOX": "-61120.32818755589,6253361.75474204,1285634.726913556,7581395.62749596",
+        "STYLES": "",
+        "FORMAT": "image/png",
+        "TRANSPARENT": "TRUE",
+        "time": "2026-01-27T03:00:00Z",
+        "DIM_reference_time": "2026-01-26T06:00:00Z",
+        "STYLESHEET": """
+          <Style name="s">
+            <DataPostProc algorithm="add_dataobject" name="dummy-magnitude" a="1"/>
+            <DataPostProc algorithm="pointsfromgrid" select="dummy-magnitude,wind-wave-from-direction-mean-msl" a="50"/>
+            <RenderSettings drawgrid="false"/>
+            <Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="40.0"/>
+          </Style>
+        """,
+    }
+    filename = "test_WMSGetMap_wave_direction_vector_with_add_dataobject.png"
+    assert_image(client.post("/wms", data=params), filename, expected=f"expectedoutputs/TestPointsAndVectors/{filename}")
 
 
 def test_CustomStyles_rejects_too_large_body(client):

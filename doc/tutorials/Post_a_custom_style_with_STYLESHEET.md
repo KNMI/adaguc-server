@@ -223,9 +223,9 @@ The XML is checked against an allowlist before it is used. See [StyleSheetValida
 
 - Allowed: `Legend` with `palette`, and one `Style` with the usual styling elements: `Min`, `Max`, `ShadeInterval`, `ContourLine`, `SmoothingFilter`, `RenderSettings`, `RenderMethod`, `Point`, `Vector`, `Thinning`, `SymbolInterval`, `FeatureInterval`, `Stippling`, `IncludeStyle`, and so on.
 - Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`.
-- Not allowed: other elements such as `Layer`, font files, any file except the `.png` symbols above, `labelpropertyformat`, DOCTYPEs, and `DataPostProc` other than `pointsfromgrid`, `beaufort` and `clipminmax`.
+- Not allowed: other elements such as `Layer`, font files, any file except the `.png` symbols above, `labelpropertyformat`, DOCTYPEs, and `DataPostProc` other than `pointsfromgrid`, `beaufort`, `clipminmax`, `convert_units` (also as `ax+b`, `toknots` and `windspeed_knots_to_ms`), `add_dataobject`, `dbztorr` and `filter_dataobjects`. The `name` attribute of a `DataPostProc` is only allowed for `add_dataobject`, see [Styling of vector with rotation and add_dataobject datapostproc](./Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
 - printf formats such as `textformatting="%.1f"` are accepted. A format that is not a single float conversion (for example `%s`) is printed with `%g` instead.
-- Only one layer per request, and at most one `Style`.
+- Only one layer per request, at most one `Style`, and at most 8 `DataPostProc` elements in it.
 
 A refused stylesheet gets status 422, and the body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. A stylesheet that is too large gets 413. See [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes) for all statuses.
 

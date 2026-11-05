@@ -22,7 +22,7 @@ namespace {
     FloatFormat, // printf format, length limited. Every renderer prints it with CT::formatFloat, which falls back to %g for unsafe formats
     PngFile,     // Checked and resolved by CServerParams::applyStyleSheet
     Pattern,     // FeatureInterval regex, without backslashes (no back references or bounds)
-    Algorithm,   // DataPostProc algorithm without file or layer access
+    Algorithm,   // DataPostProc algorithm without file or layer access. CServerParams::applyStyleSheet allows name only for add_dataobject
   };
 
   struct ValueRule {
@@ -51,7 +51,7 @@ namespace {
   ValueRule intRange(double min, double max) { return {ValueType::Integer, min, max}; }
 
   // Every element and attribute a client may post. Missing on purpose: file and font attributes, symbol,
-  // labelpropertyformat (applied to strings and integers too) and most DataPostProc attributes.
+  // labelpropertyformat (applied to strings and integers too) and most DataPostProc algorithms and attributes.
   // IncludeStyle may only name a configured style, see CServerParams::applyStyleSheet.
   // Element and attribute names follow CServerConfig_CPPXSD.h. An attribute added there is refused for STYLESHEET until it is added here.
   const std::map<std::string, ElementRule, std::less<>> &elementRules() {
@@ -169,7 +169,7 @@ namespace {
                          {"drawgridboxoutline", TEXT},
                          {"drawgrid", TEXT}}}},
         {"IncludeStyle", {.attributes = {{"name", TEXT}}}},
-        {"DataPostProc", {.attributes = {{"algorithm", {ValueType::Algorithm}}, {"a", NUMBER}, {"b", NUMBER}, {"select", TEXT}, {"units", TEXT}}}},
+        {"DataPostProc", {.attributes = {{"algorithm", {ValueType::Algorithm}}, {"a", NUMBER}, {"b", NUMBER}, {"select", TEXT}, {"units", TEXT}, {"from_units", TEXT}, {"name", TEXT}}}},
     };
     return rules;
   }
@@ -250,7 +250,8 @@ namespace {
       case ValueType::Pattern:
         return configured || (value.size() <= 256 && value.find('\\') == std::string_view::npos);
       case ValueType::Algorithm:
-        return configured || value == "pointsfromgrid" || value == "beaufort" || value == "clipminmax";
+        return configured || value == "pointsfromgrid" || value == "beaufort" || value == "clipminmax" || value == "convert_units" || value == "ax+b" || value == "toknots" ||
+               value == "windspeed_knots_to_ms" || value == "add_dataobject" || value == "dbztorr" || value == "filter_dataobjects";
       }
       return false;
     }
