@@ -169,9 +169,10 @@ Troubleshooting
   or pod IP, not `127.0.0.1` — check the actual source IP adaguc-server sees (log it, or
   temporarily set `ADAGUC_TRUSTED_PROXIES=*` to confirm this is the cause before narrowing it back
   down).
-- **`400 Invalid host header`.** The resulting hostname (the rewritten `X-Forwarded-Host`, or the
-  `EXTERNALADDRESS`'s own host if you also set `ADAGUC_TRUSTED_HOSTS`) is not in
-  `ADAGUC_TRUSTED_HOSTS`. Add it, or use `*` while testing.
+- **`400 Invalid host header`.** The resulting hostname (the rewritten `X-Forwarded-Host`) is not
+  in `ADAGUC_TRUSTED_HOSTS`. Add it, or use `*` while testing. This check only runs when
+  `EXTERNALADDRESS` is unset. See also the
+  [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes).
 - **Changing `EXTERNALADDRESS` or the proxy headers has no effect.** `EXTERNALADDRESS` always wins
   outright over the headers; unset it if you want the dynamic, header-based behavior instead.
 
