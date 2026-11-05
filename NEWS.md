@@ -8,6 +8,8 @@
 - Reduced SQL queries when scanning dataset
 - Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
 - Hidden dimensions, like a single height level, no longer make GetMap use the short lived cache header. Fixes [803](https://github.com/KNMI/adaguc-server/issues/803)
+- Fixed wind direction in GetFeatureInfo and EDR point queries for grid-relative wind (`uvcomponents`). The bounding box of the queried cell had X and Y swapped, so the rotation to true north was computed about two cells too far east. Directions and eastward/northward components can change by several degrees on coarse grids; speed is unchanged.
+- Grid-relative wind (`uvcomponents`) is now rotated to true north with the angle at the grid point itself, where the value is defined and where barbs and vectors are drawn, measured in the tangent plane of the earth's surface. Previously the angle was taken at a cell corner over a full-cell step, which also added a spurious rotation of half a cell's arc (about 0.1 degree on a 0.25 degree lat/lon grid, where the correct rotation is 0). Barb, vector and direction output change by a few degrees on coarse grids; on fine grids the change is hardly visible.
 - GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
 
 **Version 9.2.0 - 2026-10-28**
