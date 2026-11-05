@@ -33,6 +33,8 @@ tests/*
 !tests/conftest.py
 **/*.pyc
 **/__pycache__
+**/*.egg-info
+**/.pytest_cache
 python/lib/env/
 python/lib/dist/
 python/lib/result.png
