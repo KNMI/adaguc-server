@@ -26,12 +26,8 @@
 #include "CGenericDataWarper.h"
 #include "Types/GeoParameters.h"
 #include "CDebugger.h"
-#include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "utils/projectionUtils.h"
-#include "CCDFObject.h"
-#include "CDataSource.h"
 #include "CImageWarper.h"
-#include "CServerConfig_CPPXSD.h"
 #include "Types/CPointTypes.h"
 #include <CStopWatch.h>
 

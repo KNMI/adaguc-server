@@ -32,7 +32,6 @@
 #include "CDataSource.h"
 #include "CDebugger.h"
 #include "CImageWarper.h"
-#include "CFillTriangle.h"
 #include "CCDFObject.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CServerParams.h"

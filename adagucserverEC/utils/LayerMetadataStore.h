@@ -12,21 +12,14 @@ int getLayerBaseMetadataAsJson(MetadataLayer *myMetadataLayer, json &layerMetada
 int getProjectionListAsJson(MetadataLayer *myMetadataLayer, json &projsettings);
 int getStyleListMetadataAsJson(MetadataLayer *myMetadataLayer, json &styleListJson);
 
-int storeLayerMetadataInDb(MetadataLayer *myMetadataLayer, std::string metadataKey, std::string metadataBlob);
-std::string getLayerMetadataFromDb(MetadataLayer *myMetadataLayer, std::string metadataKey);
+std::string getLayerMetadataFromDb(MetadataLayer *myMetadataLayer, const std::string &metadataKey);
 
-int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *myMetadataLayer);
-
-int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *layer);
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *layer);
 
-int storeLayerProjectionAndExtentListIntoMetadataDb(MetadataLayer *layer);
 int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *layer);
 
-int storeLayerDimensionListIntoMetadataDb(MetadataLayer *myMetadataLayer);
 int loadLayerDimensionListFromMetadataDb(MetadataLayer *layer);
 
-int storeLayerStyleListIntoMetadataDb(MetadataLayer *myMetadataLayer);
 int loadLayerStyleListFromMetadataDb(MetadataLayer *layer);
 
 int updateMetaDataTable(CDataSource *dataSource);

@@ -26,7 +26,6 @@
 #ifndef CImgRenderStippling_H
 #define CImgRenderStippling_H
 #include <float.h>
-#include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
 #include "CDataSource.h"

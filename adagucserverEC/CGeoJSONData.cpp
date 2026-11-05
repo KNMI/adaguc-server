@@ -25,9 +25,7 @@
 
 #include "CGeoJSONData.h"
 #include "CDebugger.h"
-#include <iostream>
 
-#include <cstdio>
 #include <cinttypes>
 
 std::string FeatureProperty::toString() {

@@ -1,7 +1,5 @@
 #include "CCreateScaleBar.h"
 #include "Definitions.h"
-#include "CStopWatch.h"
-#include "CDataSource.h"
 #include "CDebugger.h"
 #include "CDrawImage.h"
 #include "Types/GeoParameters.h"

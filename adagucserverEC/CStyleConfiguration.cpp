@@ -2,7 +2,6 @@
 #include "CXMLParser.h"
 #include "CDebugger.h"
 #include "CDataSource.h"
-#include "CDrawImage.h"
 #include "CTString.h"
 
 static const bool CDATASOURCE_DEBUG = false;

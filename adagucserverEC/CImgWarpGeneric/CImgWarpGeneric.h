@@ -25,7 +25,6 @@
 
 #ifndef CImgWarpGeneric_H
 #define CImgWarpGeneric_H
-#include <cstdlib>
 
 #include "CImageWarperRenderInterface.h"
 #include "CDataSource.h"

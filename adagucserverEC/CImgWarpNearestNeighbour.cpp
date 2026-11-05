@@ -29,11 +29,8 @@
 #include "CGenericDataWarper.h"
 #include "CDrawFunction.h"
 #include "utils/projectionUtils.h"
-#include <limits>
-#include "CFillTriangle.h"
 #include <string>
 #include <vector>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
 #include "CDataSource.h"
 #include "CDebugger.h"
