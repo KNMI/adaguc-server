@@ -118,17 +118,16 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.x, -5.920456, 0.001);
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 56.432904, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.direction(), 2.543957, 0.001);
+  // A vector that is not grid relative is returned as is
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, false);
+  DOUBLES_EQUAL(speedVector.u, compNoGridRel.u, 0);
+  DOUBLES_EQUAL(speedVector.v, compNoGridRel.v, 0);
 
   // Magnitudes should be the same
   DOUBLES_EQUAL(compNoGridRel.magnitude(), compGridRel.magnitude(), 0.001);
@@ -172,17 +171,17 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(gridCoordURtoLatLon.x, 1.15, 0.001);
   DOUBLES_EQUAL(gridCoordURtoLatLon.y, 1.45, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
-  DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
-  DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
-  DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
-  DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
+  // On a lat/lon grid, grid north is true north, so a grid-relative vector must come back unrotated.
+  // The tolerance only allows for rounding: measuring the angle along the chord instead of in the tangent plane was off by 1.8e-3 here.
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
+  DOUBLES_EQUAL(speedVector.u, compGridRel.u, 1e-6);
+  DOUBLES_EQUAL(speedVector.v, compGridRel.v, 1e-6);
+  DOUBLES_EQUAL(speedVector.direction(), compGridRel.direction(), 1e-6);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
-  DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
-  DOUBLES_EQUAL(compNoGridRel.direction(), 2.543957, 0.001);
+  // A vector that is not grid relative is returned as is
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, false);
+  DOUBLES_EQUAL(speedVector.u, compNoGridRel.u, 0);
+  DOUBLES_EQUAL(speedVector.v, compNoGridRel.v, 0);
 
   // Magnitudes should be the same
   DOUBLES_EQUAL(compNoGridRel.magnitude(), compGridRel.magnitude(), 0.001);
@@ -216,7 +215,7 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
   f8point gridCoordURtoLatLon = gridCoordUR;
   warper.reprojModelToLatLon(gridCoordURtoLatLon);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR.y - gridCoordLL.y, &warper, true);
   return compGridRel;
 }
 
