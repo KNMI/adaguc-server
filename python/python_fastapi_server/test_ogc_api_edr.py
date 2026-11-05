@@ -1060,7 +1060,7 @@ def test_trajectory_invalid_coords(client, coords):
     assert resp.status_code == 400, resp.text
 
 
-def test_trajectory_multiple_parameters(client):
+def test_trajectory_multiple_parameters(client, monkeypatch):
     resp = client.get(
         "/edr/collections/testcollection.testcollection/trajectory",
         params={"coords": "LINESTRING(5 52,7 53)", "parameter-name": "testdata,testdata2", "z": "*"},
@@ -1070,6 +1070,30 @@ def test_trajectory_multiple_parameters(client):
     assert result["type"] == "CoverageCollection"
     assert len(result["coverages"]) == 2
     assert [len(c["domain"]["axes"]["z"]["values"]) for c in result["coverages"]] == [4, 3]
+
+    from copy import deepcopy
+    from routers import edr_trajectory
+
+    get_metadata = edr_trajectory.get_metadata
+    surface_layers = ["testdata2"]
+
+    async def mixed_metadata(*args, **kwargs):
+        metadata = deepcopy(await get_metadata(*args, **kwargs))
+        for layer in surface_layers:
+            metadata["testcollection.testcollection"][layer]["dims"].pop("time")
+        return metadata
+
+    monkeypatch.setattr(edr_trajectory, "get_metadata", mixed_metadata)
+    base = "/edr/collections/testcollection.testcollection/trajectory"
+    query = {"coords": "LINESTRING(5 52,7 53)"}
+    resp = client.get(base, params=query)
+    assert resp.status_code == 200, resp.text
+    assert list(resp.json()["parameters"]) == ["testdata"]
+    resp = client.get(base, params=query | {"parameter-name": "testdata2"})
+    assert resp.status_code == 400, resp.text
+    surface_layers.append("testdata")
+    resp = client.get(base, params=query)
+    assert resp.status_code == 400, resp.text
 
 
 def test_trajectory_outside_grid(client):
@@ -1110,3 +1134,24 @@ def test_trajectory_hidden_height_and_members(client):
     assert len(coverages) == 5
     assert len({coverage["domain"]["custom:member"] for coverage in coverages}) == 5
     assert all(coverage["domain"]["axes"]["z"]["values"] == [2] for coverage in coverages)
+
+
+def test_edr_untyped_or_named_height():
+    from routers.edr_covjson import covjson_from_resp
+    from routers.trajectory_covjson import sections_from_response
+    from routers.utils.edr_exception import EdrException
+    from routers.utils.edr_utils import get_vertical_query, supports_section
+
+    layer = {"dims": {"time": {}, "height": {"type": "dimtype_other", "serviceName": "height", "hidden": False}}}
+    metadata = {"collection": {"data": layer}}
+    for z in (None, "3"):
+        assert get_vertical_query(metadata, "collection", "data", z) == ""
+    assert not supports_section(layer)
+    sample = {"layername": "data", "point": {"coords": "5,52"}, "dims": ["height", "time"], "data": {"surface": {"2024-01-01": "1"}}}
+    layer["dims"]["height"].update({"cdfName": "height", "type": "dimtype_vertical"})
+    layer["dims"]["time"]["cdfName"] = "time"
+    assert supports_section(layer)
+    for convert in (covjson_from_resp, sections_from_response):
+        with pytest.raises(EdrException) as exc:
+            convert([sample], {"data": layer}, "collection")
+        assert exc.value.status_code == 400

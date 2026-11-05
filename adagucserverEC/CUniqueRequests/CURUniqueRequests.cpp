@@ -15,7 +15,7 @@
 #include "trajectorySampling.h"
 #include "CDataPostProcessors/CDataPostProcessor.h"
 
-bool enableLogUnique = false;
+static const bool enableLogsForCURUniqueRequests = false;
 
 void nestRequest(std::map<std::string, CURDimInfo>::iterator diminfomapiterator, std::vector<CURAggregatedDimension> &aggregatedDimensions, CURFileInfo &fileInfo, int depth) {
   if (diminfomapiterator != fileInfo.dimInfoMap.end()) {
@@ -29,7 +29,7 @@ void nestRequest(std::map<std::string, CURDimInfo>::iterator diminfomapiterator,
     }
     return;
   } else {
-    if (enableLogUnique) {
+    if (enableLogsForCURUniqueRequests) {
       CDBDebug("Add request with following:");
     }
     std::vector<CURAggregatedDimension> d;
@@ -51,7 +51,7 @@ void sortAndAggregate(std::map<std::string, CURFileInfo> &fileInfoMap) {
             currentDimIndex = dimindex;
           } else {
             //*** GO ***
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               CDBDebug("Print stop at %d", currentDimIndex);
             }
             currentDimIndex = -1;
@@ -60,7 +60,7 @@ void sortAndAggregate(std::map<std::string, CURFileInfo> &fileInfoMap) {
         }
 
         if (currentDimIndex == -1) {
-          if (enableLogUnique) {
+          if (enableLogsForCURUniqueRequests) {
             CDBDebug("Print start at %d", dimindex);
           }
           currentDimIndex = dimindex;
@@ -69,7 +69,7 @@ void sortAndAggregate(std::map<std::string, CURFileInfo> &fileInfoMap) {
         }
 
         if (currentDimIndex != -1) {
-          if (enableLogUnique) {
+          if (enableLogsForCURUniqueRequests) {
             CDBDebug("Add %d/%s", dimindex, dimvalue.c_str());
           }
 
@@ -91,7 +91,7 @@ void sortAndAggregate(std::map<std::string, CURFileInfo> &fileInfoMap) {
   }
 }
 
-void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, const std::vector<int> &dimOrdering, const std::vector<int> &dimIndicesToSkip) {
+void recurDataStructure(CXMLParser::XMLElement *dataStructure, const CURResult *result, int depth, const std::vector<int> &dimOrdering, const std::vector<int> &dimIndicesToSkip) {
   int dimIndex = dimOrdering[depth];
 
   if (std::ranges::find(dimIndicesToSkip, depth) != dimIndicesToSkip.end()) {
@@ -111,7 +111,7 @@ void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result
   }
 }
 
-void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDataSource *dataSource, CXMLParser::XMLElement *gfiStructure, const std::vector<int> &dimOrdering,
+void createStructure(const std::vector<CURResult> &results, DataObject *dataObject, CDataSource *dataSource, CXMLParser::XMLElement *gfiStructure, const std::vector<int> &dimOrdering,
                      const std::string &coordinates) {
 
   size_t numberOfDims = dataSource->requiredDims.size();
@@ -145,12 +145,11 @@ void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDa
   layerStructure.add(CXMLParser::XMLElement("data"));
   auto dataStructure = layerStructure.getLast();
 
-  std::sort(results.begin(), results.end(), compareFunctionCurResult());
-  if (enableLogUnique) {
+  if (enableLogsForCURUniqueRequests) {
     CDBDebug("Found %lu elements", results.size());
   }
 
-  for (auto &result: results) {
+  for (const auto &result: results) {
     recurDataStructure(dataStructure, &result, 0, dimOrdering, dimIndicesToSkip);
   }
   gfiStructure->add(layerStructure);
@@ -160,7 +159,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                                      CXMLParser::XMLElement *gfiStructure) {
 
   sortAndAggregate(fileInfoMap);
-  if (enableLogUnique) {
+  if (enableLogsForCURUniqueRequests) {
     CDBDebug("======================== makeRequests ========================================");
   }
   CDataReader reader;
@@ -183,7 +182,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     }
   }
 
-  if (enableLogUnique) {
+  if (enableLogsForCURUniqueRequests) {
     for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
       CDBDebug("New order = %d/%d = [%s]", dimnr, dimOrdering[dimnr], dataSource->requiredDims[dimOrdering[dimnr]].name.c_str());
     }
@@ -191,9 +190,17 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
   std::vector<CURResult> results;
 
-  if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) throw std::runtime_error("Could not read sampling grid");
+  if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) {
+    if (dataSource->srvParams->isTrajectory) {
+      CDBError("Could not read trajectory grid from %s", dataSource->getFileName().c_str());
+      throw(__LINE__);
+    }
+    if (enableLogsForCURUniqueRequests) {
+      CDBDebug("Could not read initial header from %s", dataSource->getFileName().c_str());
+    }
+  }
 
-  if (enableLogUnique) {
+  if (enableLogsForCURUniqueRequests) {
     CDBDebug("===================== iterating data objects ==================");
   }
   const bool isTrajectory = dataSource->srvParams->isTrajectory;
@@ -214,17 +221,17 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     const auto dataObject = dataSource->getDataObject(dataObjectNr);
     std::map<std::pair<int, int>, std::vector<CURResult>> spatialResults;
     std::string variableName = dataObject->cdfVariable->name;
+    const auto originalNodata = dataObject->dfNodataValue;
     for (const auto &[dimName, fileInfo]: fileInfoMap) {
       if (!outsideGrid) {
         if (isTrajectory) prepareTrajectoryFile(reader, dataSource, fileInfo.representativeStep, sampling);
         CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dimName.c_str());
 
-        if (enableLogUnique) {
+        if (enableLogsForCURUniqueRequests) {
           CDBDebug("Getting data variable [%s]", variableName.c_str());
         }
 
         CDF::Variable *variable = cdfObject->getVariableNE(variableName);
-        const auto originalNodata = dataObject->dfNodataValue;
         dataObject->cdfVariable = variable;
         if (variable == NULL) {
           CDBError("Variable %s not found", variableName.c_str());
@@ -240,7 +247,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
         for (const auto &run: sampling.runs) {
           for (const auto &dimensionRequest: fileInfo.requests) {
 
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               CDBDebug("Reading file %s  for variable %s", dimName.c_str(), variable->name.c_str());
             }
 
@@ -250,7 +257,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
             std::fill(start.begin(), start.end(), 0);
             std::fill(count.begin(), count.end(), 1);
             std::fill(stride.begin(), stride.end(), 1);
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               CDBDebug("Querying raster run x=%d y=%d count=%d", run.x, run.y, run.count);
               CDBDebug("Querying raster dimIndex %d %d", dataSource->dimXIndex, dataSource->dimYIndex);
             }
@@ -272,12 +279,18 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
                 netcdfDimIndex = variable->getDimIndex(request.name);
                 if (netcdfDimIndex == -1) {
-                  CDBDebug("Unable to find dimension [%s] for variable %s", request.name.c_str(), variable->name.c_str());
+                  if (enableLogsForCURUniqueRequests) {
+                    CDBDebug("Unable to find dimension [%s] for variable %s", request.name.c_str(), variable->name.c_str());
+                  }
 
                   if (dtype == CDataReader::dtype_reference_time) {
-                    CDBDebug("IS REFERENCE TIME %s", request.name.c_str());
+                    if (enableLogsForCURUniqueRequests) {
+                      CDBDebug("IS REFERENCE TIME %s", request.name.c_str());
+                    }
                   } else if (variable->getParentCDFObject()->getDimensionNE(request.name) != nullptr) {
-                    CDBDebug("IT IS IN THE DATAMODEL");
+                    if (enableLogsForCURUniqueRequests) {
+                      CDBDebug("IT IS IN THE DATAMODEL");
+                    }
 
                   } else {
                     CDBError("Unable to find dimension [%s] for variable %s", request.name.c_str(), variable->name.c_str());
@@ -291,7 +304,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                   start[netcdfDimIndex] = request.start;
                   count[netcdfDimIndex] = request.values.size();
                 }
-                if (enableLogUnique) {
+                if (enableLogsForCURUniqueRequests) {
                   CDBDebug("  request  netcdfdimindex %d  %s %d %lu", netcdfDimIndex, request.name.c_str(), request.start, request.values.size());
                 }
               }
@@ -313,11 +326,11 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
               variable->setType(CDF_DOUBLE);
             }
 
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
             }
             int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               CDBDebug("Read %lu elements", variable->getSize());
             }
             if (status != 0) {
@@ -325,27 +338,17 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
               throw(__LINE__);
             }
 
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               for (size_t j = 0; j < variable->getSize(); j++) {
                 CDBDebug("Orig Data value %lu is \t %f", j, ((double *)variable->data)[j]);
               }
             }
-            if (isTrajectory) dataObject->dfNodataValue = originalNodata;
+            // Each fresh read needs the unprocessed nodata value, including across files.
+            dataObject->dfNodataValue = originalNodata;
             /**
              * DataPostProc: Here our datapostprocessor comes into action!
              */
             for (const auto &proc: dataSource->cfgLayer->DataPostProc) {
-              // Algorithm ax+b:
-              if (proc.attr.algorithm == ("ax+b")) {
-                auto dfadd_offset = atof(proc.attr.b.c_str());
-                auto dfscale_factor = atof(proc.attr.a.c_str());
-                double *_data = (double *)variable->data;
-                for (size_t j = 0; j < variable->getSize(); j++) {
-                  _data[j] = _data[j] * dfscale_factor + dfadd_offset;
-                }
-                // Convert the nodata type
-                dataSource->getDataObject(dataObjectNr)->dfNodataValue = dataSource->getDataObject(dataObjectNr)->dfNodataValue * dfscale_factor + dfadd_offset;
-              }
               // Apply units:
               if (proc.attr.units.empty() == false) {
                 dataSource->getDataObject(dataObjectNr)->overruledUnits = proc.attr.units;
@@ -355,7 +358,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
               getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
             }
             /* End of data postproc */
-            if (enableLogUnique) {
+            if (enableLogsForCURUniqueRequests) {
               CDBDebug("Read %lu elements", variable->getSize());
 
               for (size_t j = 0; j < variable->getSize(); j++) {
@@ -437,16 +440,27 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     }
 
     try {
-      if (enableLogUnique) {
+      if (enableLogsForCURUniqueRequests) {
         CDBDebug("**************** Create Structure ********************");
         CDBDebug("dataObjectNr: %lu", dataObjectNr);
       }
       if (isTrajectory) {
+        std::map<std::pair<int, int>, size_t> structureIndices;
         for (const auto &sample: sampling.samples) {
-          const auto coordinates = CT::printf("%.15g,%.15g", sample.lonlat.x, sample.lonlat.y);
-          createStructure(spatialResults.at({sample.cell.x, sample.cell.y}), dataObject, dataSource, gfiStructure, dimOrdering, coordinates);
+          const auto key = std::pair{sample.cell.x, sample.cell.y};
+          const auto [entry, firstVisit] = structureIndices.try_emplace(key, gfiStructure->xmlElements.size());
+          if (firstVisit) {
+            auto &cellResults = spatialResults.at(key);
+            std::sort(cellResults.begin(), cellResults.end(), compareFunctionCurResult());
+            const auto coordinates = CT::printf("%.15g,%.15g", sample.lonlat.x, sample.lonlat.y);
+            createStructure(cellResults, dataObject, dataSource, gfiStructure, dimOrdering, coordinates);
+          } else {
+            // Revisits reuse the first structure; indices survive vector reallocation.
+            gfiStructure->add(gfiStructure->xmlElements.at(entry->second));
+          }
         }
       } else {
+        std::sort(results.begin(), results.end(), compareFunctionCurResult());
         createStructure(results, dataObject, dataSource, gfiStructure, dimOrdering, pointCoordinates);
       }
     } catch (int e) {
@@ -456,7 +470,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
   }
   reader.close();
 
-  if (enableLogUnique) {
+  if (enableLogsForCURUniqueRequests) {
     CDBDebug("/makeRequests");
   }
 }

@@ -1541,6 +1541,11 @@ int CRequest::process_querystring() {
       }
 
       if (srvParam->isTrajectory) {
+        if (srvParam->InfoFormat != "application/json") {
+          CDBError("GetTrajectory requires INFO_FORMAT=application/json");
+          setExceptionType(ServiceExceptionType::UnprocessableEntity);
+          return 1;
+        }
         // Python validates WKT and geographic bounds; here we only decode safe coordinate pairs.
         const auto fields = CT::split(trajectoryCoords, ",");
         try {

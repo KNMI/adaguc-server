@@ -52,11 +52,11 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
     uniqueRequest.makeRequests(fileInfoMap, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
   } catch (int e) {
     CDBError("Error in makeRequests at line %d", e);
+    if (dataSource->srvParams->isTrajectory) {
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+      return 1;
+    }
     throw(__LINE__);
-  } catch (const std::exception &e) {
-    if (dataSource->srvParams->isTrajectory) setExceptionType(ServiceExceptionType::UnprocessableEntity);
-    CDBError("%s", e.what());
-    return 1;
   }
 
   return 0;

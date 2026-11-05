@@ -108,7 +108,7 @@ later revisits remain. Omitted `z` selects all visible levels; hidden heights ke
 their configured selection and are reported in `z`. Omitted `datetime` uses the
 configured default, as for position. A path outside the grid returns HTTP 404.
 
-Supported: numeric parameters with time and an identifiable vertical coordinate,
+Supported: numeric parameters with time and a vertical dimension configured with `type="vertical"`,
 on regular grids with matching one-dimensional axes across source files,
 including rotated-pole grids. Each axis needs at least two cells; spatial
 dimensions must be the final two variable dimensions. Layers requiring multiple

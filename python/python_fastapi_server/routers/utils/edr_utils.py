@@ -11,6 +11,7 @@ KNMI
 from __future__ import annotations
 import json
 import logging
+import math
 import re
 from urllib.parse import urlencode
 from datetime import datetime, timezone
@@ -658,6 +659,17 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     return None
 
 
+def numeric_vertical_coordinate(value) -> float:
+    """Convert a returned z coordinate, rejecting named and nonfinite levels."""
+    try:
+        level = float(value)
+        if not math.isfinite(level):
+            raise ValueError
+        return level
+    except (TypeError, ValueError) as exc:
+        raise EdrException(400, "Vertical coordinates must be finite numbers") from exc
+
+
 def try_numeric_conversion(values: list[str | float]):
     try:
         new_values = [float(v) for v in values]
@@ -893,14 +905,11 @@ def parse_coordinates(coords, geometry_type):
 
 
 def vertical_dimension(metadata):
-    """Find the vertical coordinate; prefer explicit dimension typing over names."""
+    """Find an explicitly typed vertical coordinate, preferring visible dimensions."""
     dims = metadata.get("dims") or {}
     candidates = sorted(dims.items(), key=lambda item: item[1].get("hidden", False))
     for name, dim in candidates:
         if dim.get("type") == "dimtype_vertical":
-            return name
-    for name, dim in candidates:
-        if dim.get("serviceName") in ("height", "elevation", "height_above_ground_level_in_m"):
             return name
     return None
 

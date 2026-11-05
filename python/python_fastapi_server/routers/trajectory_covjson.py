@@ -18,7 +18,7 @@ from covjson_pydantic.reference_system import ReferenceSystem, ReferenceSystemCo
 from covjson_pydantic.unit import Symbol, Unit
 
 from .utils.edr_exception import EdrException
-from .utils.edr_utils import SYMBOL_TYPE_URL, get_param_metadata, vertical_dimension
+from .utils.edr_utils import SYMBOL_TYPE_URL, get_param_metadata, numeric_vertical_coordinate, vertical_dimension
 
 
 class SectionAxes(CovJsonBaseModel):
@@ -87,7 +87,8 @@ def sections_from_response(data, metadata, collection_name):
                 selected = dict(zip(dims, keys))
                 key = tuple((dim, selected[dim]) for dim in other_dims)
                 group = groups.setdefault(key, {"times": set(), "levels": set(), "values": {}})
-                level, time = float(selected[vertical]), selected["time"]
+                level = numeric_vertical_coordinate(selected[vertical])
+                time = selected["time"]
                 group["times"].add(time)
                 group["levels"].add(level)
                 group["values"][level, time, sample_index] = numeric_value(value)

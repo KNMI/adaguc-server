@@ -465,7 +465,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     }
 
     CDataReader reader;
-    if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) return 1;
+    if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) {
+      if (srvParam->isTrajectory) {
+        CDBError("Could not read trajectory grid from %s", dataSource->getFileName().c_str());
+        return 1;
+      }
+      // Let regular feature-info requests handle failures per step
+      CDBDebug("Could not read initial header from %s", dataSource->getFileName().c_str());
+    }
     if (srvParam->isTrajectory) {
       status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
       if (status != 0) return status;

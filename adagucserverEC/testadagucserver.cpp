@@ -76,18 +76,27 @@ TEST(subdivisionAtCorners, Trajectory) {
   CHECK(whole == subdivided);
 }
 
+TEST(longitudeSeam, Trajectory) {
+  std::vector<i4point> cells;
+  traverseTrajectoryCells({-1.5, 1.5}, {2.5, 1.5}, 360, 3, cells, 360);
+  CHECK((cells == std::vector<i4point>{{358, 1}, {359, 1}, {0, 1}, {1, 1}, {2, 1}}));
+  cells.clear();
+  traverseTrajectoryCells({2.5, 1.5}, {-1.5, 1.5}, 360, 3, cells, 360);
+  CHECK((cells == std::vector<i4point>{{2, 1}, {1, 1}, {0, 1}, {359, 1}, {358, 1}}));
+}
+
 TEST(float32GridSpacing, Trajectory) {
-  for (const auto &[origin, count, direction]: std::vector<std::tuple<double, size_t, double>>{{-13.5, 676, 1}, {-13.6, 564, 1}, {14.55, 564, -1}}) {
+  for (const auto &[origin, count, spacing]: std::vector<std::tuple<double, size_t, double>>{{-13.5, 676, 0.05}, {-13.6, 564, 0.05}, {14.55, 564, -0.05}, {50, 1001, 0.01}, {65, 401, 0.025}}) {
     std::vector<double> values(count);
-    for (size_t i = 0; i < count; ++i) values[i] = float(origin + i * 0.05 * direction);
-    const auto [first, step] = regularTrajectoryAxis(values.data(), values.size());
+    for (size_t i = 0; i < count; ++i) values[i] = float(origin + i * spacing);
+    const auto [first, step] = regularTrajectoryAxis(values.data(), values.size(), true);
     CHECK(first == values.front());
-    CHECK(std::abs(step - 0.05 * direction) < 1e-8);
+    CHECK(std::abs(step - spacing) < 1e-8);
     values[count / 2] += 0.01;
     bool rejected = false;
     try {
-      regularTrajectoryAxis(values.data(), values.size());
-    } catch (const std::runtime_error &) {
+      regularTrajectoryAxis(values.data(), values.size(), true);
+    } catch (int) {
       rejected = true;
     }
     CHECK(rejected);

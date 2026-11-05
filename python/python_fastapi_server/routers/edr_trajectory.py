@@ -64,6 +64,11 @@ async def get_trajectory(
     dataset = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
     parameters = get_parameters(metadata, collection_name, parameter_name)
+    if parameter_name is None:
+        # Collections may also contain surface or timeless layers.
+        parameters = [parameter for parameter in parameters if supports_section(metadata[collection_name][parameter])]
+    if not parameters:
+        raise EdrException(400, "Section requires a parameter with time and a vertical coordinate")
 
     vertical_dims = set()
     for parameter in parameters:
