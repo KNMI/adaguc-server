@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities
+        version="1.3.0"
+        updateSequence="0"
+        xmlns="http://www.opengis.net/wms"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd"
+
+     >
+    <Service>
+        <Name>WMS</Name>
+        <Title>adaguc.testGeoJSONReader_point_dimensions</Title>
+        <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+        <KeywordList>
+            <Keyword>view</Keyword>
+            <Keyword>infoMapAccessService</Keyword>
+            <Keyword>ADAGUCServer version 9.2.1, of Nov  3 2026 15:30:15 </Keyword>
+        </KeywordList>
+        <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testGeoJSONReader_point_dimensions&amp;SERVICE=WMS&amp;"/>
+        <ContactInformation>
+          
+        </ContactInformation>
+        <Fees>no conditions apply</Fees>
+        <AccessConstraints>None</AccessConstraints>
+        <MaxWidth>8192</MaxWidth>
+        <MaxHeight>8192</MaxHeight>
+    </Service>
+    <Capability>
+        <Request>
+            <GetCapabilities>
+                <Format>text/xml</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testGeoJSONReader_point_dimensions&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetCapabilities>
+            <GetMap>
+                <Format>image/png</Format>
+                <Format>image/png;mode=8bit</Format>
+                <Format>image/png;mode=8bit_noalpha</Format>
+                <Format>image/png;mode=24bit</Format>
+                <Format>image/png;mode=32bit</Format>
+                <Format>image/webp</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testGeoJSONReader_point_dimensions&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetMap>
+            <GetFeatureInfo>
+                <Format>image/png</Format>
+                <Format>text/plain</Format>
+                <Format>text/html</Format>
+                <Format>text/xml</Format>
+                <Format>application/json</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testGeoJSONReader_point_dimensions&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetFeatureInfo>
+        </Request>
+        <Exception>
+            <Format>XML</Format>
+            <Format>INIMAGE</Format>
+            <Format>BLANK</Format>
+        </Exception>
+<Layer>
+<Title>WMS of  adaguc.testGeoJSONReader_point_dimensions</Title>
+<CRS>CRS:84</CRS>
+<CRS>EPSG:25831</CRS>
+<CRS>EPSG:25832</CRS>
+<CRS>EPSG:28992</CRS>
+<CRS>EPSG:3035</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
+<CRS>EPSG:50001</CRS>
+<CRS>EPSG:5041</CRS>
+<CRS>EPSG:54030</CRS>
+<CRS>EPSG:7399</CRS>
+<CRS>EPSG:900913</CRS>
+<BoundingBox CRS="CRS:84" minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
+<BoundingBox CRS="EPSG:25831" minx="-14577526.584006" miny="-19774563.719854" maxx="16939636.181752" maxy="19774563.719854" />
+<BoundingBox CRS="EPSG:25832" minx="-14577526.584006" miny="-19774835.019046" maxx="16939636.181752" maxy="19774835.019046" />
+<BoundingBox CRS="EPSG:28992" minx="-452599348.207002" miny="-486932282.374898" maxx="360469125.383497" maxy="416173056.053272" />
+<BoundingBox CRS="EPSG:3035" minx="-9421242.158061" miny="-8331380.378872" maxx="15769291.132540" maxy="16987931.819066" />
+<BoundingBox CRS="EPSG:3067" minx="-14577526.584006" miny="-19774563.719854" maxx="16939636.181752" maxy="19774563.719854" />
+<BoundingBox CRS="EPSG:32661" minx="-409007257748668690726912.000000" miny="-409756247202162022547456.000000" maxx="410006011786550629629952.000000" maxy="409756247202162022547456.000000" />
+<BoundingBox CRS="EPSG:3411" minx="-399508541751597511737344.000000" miny="-399995875110778891665408.000000" maxx="399995875110778891665408.000000" maxy="399508541751597511737344.000000" />
+<BoundingBox CRS="EPSG:3412" minx="-399813101903146288939008.000000" miny="-400056805700005579980800.000000" maxx="399813101903146288939008.000000" maxy="399082287428105094037504.000000" />
+<BoundingBox CRS="EPSG:3575" minx="-12703162.864857" miny="-12726425.373851" maxx="12734182.693882" maxy="12726425.373851" />
+<BoundingBox CRS="EPSG:3857" minx="-20037508.342789" miny="-242528680.943743" maxx="20037508.342789" maxy="242528680.943743" />
+<BoundingBox CRS="EPSG:40000" minx="-412229624951873237680128.000000" miny="-411476114435280419684352.000000" maxx="412229624951873237680128.000000" maxy="412480897169568118603776.000000" />
+<BoundingBox CRS="EPSG:4258" minx="-90.000000" miny="-180.000000" maxx="90.000000" maxy="180.000000" />
+<BoundingBox CRS="EPSG:4326" minx="-90.000000" miny="-180.000000" maxx="90.000000" maxy="180.000000" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="-409756247202162022547456.000000" miny="-409007257748668690726912.000000" maxx="409756247202162022547456.000000" maxy="410006011786550629629952.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-17001389.305075" miny="-8625154.665100" maxx="17001389.305075" maxy="8625154.665100" />
+<BoundingBox CRS="EPSG:7399" minx="-18033315.888744" miny="-9020047.847898" maxx="18033315.888744" maxy="9020047.847898" />
+<BoundingBox CRS="EPSG:900913" minx="-20037508.342789" miny="-242528680.943743" maxx="20037508.342789" maxy="242528680.943743" />
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>points</Name>
+<Title>Points</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>-180.000000</westBoundLongitude>
+  <eastBoundLongitude>180.000000</eastBoundLongitude>
+  <southBoundLatitude>-90.000000</southBoundLatitude>
+  <northBoundLatitude>90.000000</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
+<BoundingBox CRS="EPSG:25831" minx="-14577526.584006" miny="-19774563.719854" maxx="16939636.181752" maxy="19774563.719854" />
+<BoundingBox CRS="EPSG:25832" minx="-14577526.584006" miny="-19774835.019046" maxx="16939636.181752" maxy="19774835.019046" />
+<BoundingBox CRS="EPSG:28992" minx="-452599348.207002" miny="-486932282.374898" maxx="360469125.383497" maxy="416173056.053272" />
+<BoundingBox CRS="EPSG:3035" minx="-9421242.158061" miny="-8331380.378872" maxx="15769291.132540" maxy="16987931.819066" />
+<BoundingBox CRS="EPSG:3067" minx="-14577526.584006" miny="-19774563.719854" maxx="16939636.181752" maxy="19774563.719854" />
+<BoundingBox CRS="EPSG:32661" minx="-409007257748668690726912.000000" miny="-409756247202162022547456.000000" maxx="410006011786550629629952.000000" maxy="409756247202162022547456.000000" />
+<BoundingBox CRS="EPSG:3411" minx="-399508541751597511737344.000000" miny="-399995875110778891665408.000000" maxx="399995875110778891665408.000000" maxy="399508541751597511737344.000000" />
+<BoundingBox CRS="EPSG:3412" minx="-399813101903146288939008.000000" miny="-400056805700005579980800.000000" maxx="399813101903146288939008.000000" maxy="399082287428105094037504.000000" />
+<BoundingBox CRS="EPSG:3575" minx="-12703162.864857" miny="-12726425.373851" maxx="12734182.693882" maxy="12726425.373851" />
+<BoundingBox CRS="EPSG:3857" minx="-20037508.342789" miny="-242528680.943743" maxx="20037508.342789" maxy="242528680.943743" />
+<BoundingBox CRS="EPSG:40000" minx="-412229624951873237680128.000000" miny="-411476114435280419684352.000000" maxx="412229624951873237680128.000000" maxy="412480897169568118603776.000000" />
+<BoundingBox CRS="EPSG:4258" minx="-90.000000" miny="-180.000000" maxx="90.000000" maxy="180.000000" />
+<BoundingBox CRS="EPSG:4326" minx="-90.000000" miny="-180.000000" maxx="90.000000" maxy="180.000000" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="-409756247202162022547456.000000" miny="-409007257748668690726912.000000" maxx="409756247202162022547456.000000" maxy="410006011786550629629952.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-17001389.305075" miny="-8625154.665100" maxx="17001389.305075" maxy="8625154.665100" />
+<BoundingBox CRS="EPSG:7399" minx="-18033315.888744" miny="-9020047.847898" maxx="18033315.888744" maxy="9020047.847898" />
+<BoundingBox CRS="EPSG:900913" minx="-20037508.342789" miny="-242528680.943743" maxx="20037508.342789" maxy="242528680.943743" />
+<Dimension name="time" units="ISO8601" default="2018-12-04T12:05:00Z" multipleValues="1" nearestValue="0" current="1">2018-12-04T12:00:00Z,2018-12-04T12:05:00Z</Dimension>
+<Dimension name="reference_time" units="ISO8601" default="2018-12-04T09:00:00Z" multipleValues="1" nearestValue="0" current="1">2018-12-04T06:00:00Z,2018-12-04T09:00:00Z</Dimension>
+<Dimension name="elevation" units="m" default="1000" multipleValues="1" nearestValue="0" >500,1000</Dimension>
+   <Style>
+    <Name>stations_mistpost/point</Name>
+    <Title>stations_mistpost/point</Title>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testGeoJSONReader_point_dimensions&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=points&amp;format=image/png&amp;STYLE=stations_mistpost/point"/>
+    </LegendURL>
+  </Style>
+</Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>

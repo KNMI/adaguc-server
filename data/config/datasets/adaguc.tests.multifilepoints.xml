@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Point data split over several files with the same time, see TestMultiFilePoints.
+       The stations of data/datasets/kmds/kmds_alle_stations_10001_202511060920.nc in four files. -->
+  <Include location="{ADAGUC_DATASET_DIR}/includes/geoweb-legends.include.xml"/>
+  <Include location="{ADAGUC_DATASET_DIR}/includes/observation-styles.include.xml"/>
+
+  <Layer type="database">
+    <Name>ta</Name>
+    <Variable>ta</Variable>
+    <FilePath filter="^points_part.*\.nc$">{ADAGUC_PATH}/data/datasets/multifile_points/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.temperature</Styles>
+  </Layer>
+</Configuration>

@@ -1,0 +1,109 @@
+{
+  "dimensions": {
+    "reference_time": {
+      "value": "2018-12-04T06:00:00Z",
+      "units": "ISO8601"
+    },
+    "time": {
+      "value": "2018-12-04T12:00:00Z",
+      "units": "ISO8601"
+    },
+    "elevation": {
+      "value": 1000,
+      "units": "m"
+    }
+  },
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1000 Assendelft BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Assendelft BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Assendelft BTP"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.725833333,
+          52.48194444
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1000 Muiden BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Muiden BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Muiden BTP"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.092222222,
+          52.33527778
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1000 Nieuw Vennep  BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Nieuw Vennep  BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Nieuw Vennep  BTP"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.647777778,
+          52.255
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1000 Nieuwkoop BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Nieuwkoop BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Nieuwkoop BTP"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.765,
+          52.15138889
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "E1000 Voorschoten AWS",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Voorschoten AWS",
+        "Field_2": "Link to station",
+        "Field_1": "Voorschoten AWS"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.4363888889,
+          52.1397222222
+        ]
+      }
+    }
+  ]
+}
