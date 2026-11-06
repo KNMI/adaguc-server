@@ -856,6 +856,34 @@ def test_adaguc_tests_uwcwdini_windcomponents_position(client: TestClient):
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
+def test_adaguc_tests_uwcwdini_winddirection_position(client: TestClient):
+    # Same query as above, but on a layer where filter_dataobjects only selects the direction component
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-direction-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z"
+    )
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "test_adaguc_tests_uwcwdini_winddirection_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_adaguc_tests_uwcwdini_windspeed_position(client: TestClient):
+    # Same query as above, but on a layer where filter_dataobjects only selects the speed component
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-speed-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z"
+    )
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "test_adaguc_tests_uwcwdini_windspeed_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
 def test_no_parameters(client: TestClient):
     url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)"
     resp = client.get(url)
