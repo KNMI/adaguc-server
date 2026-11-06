@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <Legend name="testdatasetlinter_invalid_legend" type="colorRange">
+    <palette index="0" red="0" green="0" blue="300"/>
+    <palette index="240" red="255" green="0" blue="0"/>
+  </Legend>
+
+  <Style name="testdata_style_invalid_values" title="Style with invalid values" abstract="Style with invalid values">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">testdatasetlinter_invalid_legend</Legend>
+    <Min>0.0</Min>
+    <Max>0,5</Max>
+    <ContourLine width="0.8" linecolor="#88000" textcolor="#000000" textformatting="%s" classes="0.10,a"/>
+    <FeatureInterval min="-INF" max="0" fillcolor="#FF0000"/>
+    <StandardNames standard_name="test_data"/>
+  </Style>
+
+  <!-- Layers -->
+  <Layer type="database">
+    <FilePath filter="">/data/adaguc-autowms/testdata.nc</FilePath>
+    <Title>Awesome</Title>
+    <Variable>testdata</Variable>
+    <Styles>testdata_style_invalid_values</Styles>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>

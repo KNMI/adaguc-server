@@ -84,7 +84,8 @@ class CachingMiddleware(BaseHTTPMiddleware):
             self.redis_pool = redis.ConnectionPool.from_url(ADAGUC_REDIS)
 
     async def dispatch(self, request, call_next):
-        if self.shortcut:
+        # Only GET: the key is the url, so a POST (with its parameters in the body) would be served for the GET url
+        if self.shortcut or request.method != "GET":
             return await call_next(request)
 
         # Check if request is in cache, if so return that

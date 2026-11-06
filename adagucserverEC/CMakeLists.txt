@@ -79,6 +79,8 @@ add_library(
     handleTileRequest.cpp
     utils/LayerMetadataStore.h
     utils/LayerMetadataStore.cpp
+    utils/StyleSheetValidation.h
+    utils/StyleSheetValidation.cpp
     utils/XMLGenUtils.h
     utils/XMLGenUtils.cpp
     utils/CXMLTemplates.h

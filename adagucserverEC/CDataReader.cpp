@@ -828,9 +828,10 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
   if (singleCellMode) {
     double orgX = dfdim_X[0] - dataSource->dfCellSizeX / 2.0f;
     double orgY = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
-    dataSource->dfBBOX[0] = orgY + (x + 2) * dataSource->dfCellSizeX;
-    dataSource->dfBBOX[1] = orgX + (y + 2) * dataSource->dfCellSizeY;
-    dataSource->dfBBOX[2] = orgX + (x + 0) * dataSource->dfCellSizeX;
+    // Bounding box of cell (x, y), using the same edge convention as the whole-grid bbox above.
+    dataSource->dfBBOX[0] = orgX + (x + 0) * dataSource->dfCellSizeX;
+    dataSource->dfBBOX[1] = orgY + (y + 1) * dataSource->dfCellSizeY;
+    dataSource->dfBBOX[2] = orgX + (x + 1) * dataSource->dfCellSizeX;
     dataSource->dfBBOX[3] = orgY + (y + 0) * dataSource->dfCellSizeY;
   }
 

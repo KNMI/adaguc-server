@@ -85,8 +85,14 @@ private:
   void setValue(CDFType type, void *data, size_t ptr, double pixel);
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
 
-  /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
-  void getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance);
+  // What a GetFeatureInfo value is, in order of preference when files share dimension values
+  enum class GFIValueKind { Valid = 0, NotANumber = 1, Missing = 2 };
+  static GFIValueKind getGFIValueKind(const DataObject *dataObject, double value);
+
+  // Adds the nearest point within maxPixelDistance: its parameters, and its value to the element at elementIndex when valueKind is Missing
+  // (valueKind is then updated). Returns the distance to the point in pixels, or -1 when there is no point within maxPixelDistance.
+  double getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance, size_t elementIndex,
+                                           GFIValueKind &valueKind);
 
 public:
   bool isProfileData;
