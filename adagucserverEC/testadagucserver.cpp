@@ -24,6 +24,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "CXMLSerializerInterface.h"
+#include "utils/DimensionKind.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -936,4 +937,56 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   datasetDir.empty() ? unsetenv("ADAGUC_DATASET_DIR") : setenv("ADAGUC_DATASET_DIR", datasetDir.c_str(), 1);
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
+}
+
+static CServerConfig::XMLE_Dimension makeCfgDim(const std::string &serviceName, const std::string &cdfName, const std::string &units, const std::string &type = "dimtype_none") {
+  CServerConfig::XMLE_Dimension cfgDim;
+  cfgDim.elementValue = serviceName;
+  cfgDim.attr.name = cdfName;
+  cfgDim.attr.units = units;
+  cfgDim.attr.type = type;
+  return cfgDim;
+}
+
+TEST(byServiceName, DimKind) {
+  CHECK(getDimKindForServiceName("time") == DimKind::Time);
+  CHECK(getDimKindForServiceName("reference_time") == DimKind::ReferenceTime);
+  CHECK(getDimKindForServiceName("forecast_reference_time") == DimKind::ReferenceTime);
+  CHECK(getDimKindForServiceName("elevation") == DimKind::Normal);
+  CHECK(getDimKindForServiceName("validtime") == DimKind::Normal);
+}
+
+TEST(configuredDimension, DimKind) {
+  // As made by autoconfigure, whatever the NetCDF name
+  CHECK(getDimKind(makeCfgDim("time", "valid", "ISO8601")) == DimKind::Time);
+  CHECK(getDimKind(makeCfgDim("reference_time", "frt", "ISO8601")) == DimKind::ReferenceTime);
+  // A service name for time without ISO8601 units falls back to the NetCDF name
+  CHECK(getDimKind(makeCfgDim("reference_time", "frt", "")) == DimKind::Normal);
+  CHECK(getDimKind(makeCfgDim("time", "time", "seconds since 1970-01-01")) == DimKind::Time);
+  // NetCDF name
+  CHECK(getDimKind(makeCfgDim("run", "forecast_reference_time", "")) == DimKind::ReferenceTime);
+  CHECK(getDimKind(makeCfgDim("validtime", "validtime", "ISO8601")) == DimKind::Time);
+  CHECK(getDimKind(makeCfgDim("validtime", "validtime", "")) == DimKind::Normal);
+  // The type attribute
+  CHECK(getDimKind(makeCfgDim("valid", "valid", "", "dimtype_time")) == DimKind::Time);
+  CHECK(getDimKind(makeCfgDim("run", "run", "", "dimtype_reference_time")) == DimKind::ReferenceTime);
+  // Not a time dimension
+  CHECK(getDimKind(makeCfgDim("elevation", "height", "m", "dimtype_vertical")) == DimKind::Normal);
+  CHECK(getDimKind(makeCfgDim("member", "member", "ISO8601")) == DimKind::Normal);
+}
+
+TEST(layerMetadataDimension, DimKind) {
+  LayerMetadataDim dim;
+  dim.type = "dimtype_none";
+  dim.serviceName = "reference_time";
+  dim.cdfName = "frt";
+  dim.units = "ISO8601";
+  CHECK(getDimKind(dim) == DimKind::ReferenceTime);
+  dim.serviceName = "time";
+  dim.cdfName = "time";
+  CHECK(getDimKind(dim) == DimKind::Time);
+  dim.serviceName = "elevation";
+  dim.cdfName = "height";
+  dim.units = "m";
+  CHECK(getDimKind(dim) == DimKind::Normal);
 }

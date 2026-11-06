@@ -37,6 +37,7 @@
 #include "utils/XMLGenUtils.h"
 #include "utils/CXMLTemplates.h"
 #include "utils/LayerUtils.h"
+#include "utils/DimensionKind.h"
 #include "CTString.h"
 
 static const bool CXMLGEN_DEBUG = false;
@@ -643,16 +644,16 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
           }
           if (layer->hasError == 0) {
 
-            // The time axis of the coverage: the time dimension, otherwise an ISO8601 dimension which is not a reference time
+            // The time axis of the coverage: the time dimension, otherwise the first other ISO8601 dimension which is not a reference time
             int timeDimIndex = -1;
             int d = 0;
             for (const auto &dim: layer->layerMetadata.dimList) {
-              if (dim.serviceName == "time") {
-                timeDimIndex = d;
-                break;
-              }
-              if (dim.units == "ISO8601" && !dim.serviceName.ends_with("reference_time") && timeDimIndex < 0) {
-                timeDimIndex = d;
+              if (dim.units == "ISO8601" && getDimKind(dim) != DimKind::ReferenceTime) {
+                if (getDimKindForServiceName(dim.serviceName) == DimKind::Time) {
+                  timeDimIndex = d;
+                  break;
+                }
+                if (timeDimIndex < 0) timeDimIndex = d;
               }
               d++;
             }
