@@ -142,12 +142,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  /*
-   * Walks the line from (x, y) using the distance field, adding a point to segments every maxLineDistance pixels.
-   * Every neighbour with this definition's bit is cleared, but only the first one found is followed.
-   * The first step's followed neighbour and the other neighbours it cleared are stored in the optional outputs.
-   * Returns true when the line closed onto segments[0].
-   */
+  // Walks the line from (x, y), clearing all neighbours but following only the first. Returns true when the line closed.
   auto walkLine = [&](int x, int y, std::vector<i4point> &segments, i4point *firstFollowed, std::vector<i4point> *firstCleared, bool closeLoop) {
     bool foundLine = true; /* This iteration starts at the beginning of a line segment */
     bool firstStep = true;
@@ -226,11 +221,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   std::vector<i4point> firstCleared;
   bool closed = walkLine(lineX, lineY, lineSegments, &firstFollowed, &firstCleared, true);
 
-  // The candidate scan often starts a trace halfway along a line. Its first step cleared the line's pixels on both
-  // sides of the start but followed only one, so the other half would later be traced as a separate line ending a
-  // pixel short of this start: a visible gap. Walk that other half from here and prepend it, so both halves join.
-  // Only a neighbour on the opposite side of the followed one qualifies; a sideways one is usually a different,
-  // nearby line of this definition.
+  // A trace starting halfway along a line followed only one side. Walk the opposite side too and prepend it, to avoid a gap.
   if (!closed) {
     int followedDx = firstFollowed.x - lineX;
     int followedDy = firstFollowed.y - lineY;
@@ -238,12 +229,11 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
       if ((other.x - lineX) * followedDx + (other.y - lineY) * followedDy >= 0) continue;
       std::vector<i4point> otherHalf = {other};
       walkLine(other.x, other.y, otherHalf, nullptr, nullptr, false);
-      // Without the neighbour itself, which can sit beside the line and would put a kink at the join.
+      // Without the neighbour itself, which would put a kink at the join.
       lineSegments.insert(lineSegments.begin(), otherHalf.rbegin(), otherHalf.size() > 1 ? otherHalf.rend() - 1 : otherHalf.rend());
       break;
     }
-    // A closed contour traced from halfway along ends where both halves meet. Their last pixels were cleared
-    // as neighbours without being drawn, so join the ends here, with the same distance as the loop check above.
+    // Close a contour whose two halves meet.
     if (lineSegments.size() > 2 && lineSegments.front().distance(lineSegments.back()) < 8) {
       lineSegments.push_back(lineSegments.front());
     }
@@ -261,7 +251,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
 
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
   int numLineSegments = (int)lineSegments.size();
-  // First label halfway the label interval, or halfway a shorter line, so labels stay away from where a line starts and ends.
+  // Keep the first label away from the line ends.
   int startAtStep = std::min(drawTextAtEveryNPixels / 2, std::max(0, (numLineSegments - spaceForTextNr) / 2));
 
   // textLocations is shared across contour definitions: gaps around any label, not just this one's.
@@ -282,7 +272,6 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   if (doDrawText && numLineSegments > 20) {
     for (int j = 0; j < numLineSegments; j++) {
       auto &lineSegment = lineSegments[j];
-      // Steps since the last label position; labels and their gaps both count from startAtStep.
       int matchModulo = j < startAtStep ? -1 : (j - startAtStep) % drawTextAtEveryNPixels;
       bool startText = matchModulo == 0;
       if (startText && j + spaceForTextNr < numLineSegments) {

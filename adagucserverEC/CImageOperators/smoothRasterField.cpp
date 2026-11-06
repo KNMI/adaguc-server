@@ -7,30 +7,18 @@
 #include "CCDFTypes.h"
 #include "Types/CPointTypes.h"
 
-/*
- * Fills settings.smoothingMemo with a box blur of sourceGrid (the average of all valid,
- * in-bounds neighbours within +/- smoothingFiter cells of each pixel). A uniform box kernel
- * factors exactly into a 1D horizontal and a 1D vertical box kernel, so this is computed as
- * two separable sliding-window passes (each using a running prefix sum per row/column) rather
- * than summing the full (2r+1)x(2r+1) window at every pixel directly. That brings the cost
- * down from O(width*height*smoothingFiter^2) to O(width*height), independent of the filter
- * radius, while producing the same per-pixel average of valid neighbours.
- */
+// Fills settings.smoothingMemo with the average of the valid values within +/- smoothingFiter cells of each cell.
+// Done as a horizontal and a vertical pass with prefix sums, so the cost does not depend on the radius.
 template <typename T> void computeSmoothedGrid(T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
   int width = warperState.sourceGridWidth;
   int height = warperState.sourceGridHeight;
   int r = (int)settings.smoothingFiter;
   size_t numGridElements = (size_t)width * (size_t)height;
 
-  // Hoisted out of the per-pixel loops below: settings doesn't change during this call, but the
-  // compiler can't easily prove that through the reference capture, so computing this once avoids
-  // redoing the cast on every one of the width*height pixels visited.
   double nodataAsDouble = settings.hasNodataValue ? (double)(T)settings.dfNodataValue : 0.0;
   auto isValid = [&](double value) { return !((settings.hasNodataValue && value == nodataAsDouble) || std::isnan(value)); };
 
-  // Horizontal pass: for each row, the sum and count of valid values within [x-r, x+r].
-  // Counts only ever need integer range (max (2r+1)^2), so int32_t instead of double halves the
-  // scratch memory these two buffers need on large grids.
+  // Horizontal pass: sum and count of valid values within [x-r, x+r]
   std::vector<double> rowSum(numGridElements);
   std::vector<int32_t> rowCount(numGridElements);
   std::vector<double> prefixVal(width + 1);
@@ -53,7 +41,7 @@ template <typename T> void computeSmoothedGrid(T *sourceGrid, GDWState &warperSt
     }
   }
 
-  // Vertical pass: for each column, the sum/count of the horizontal results within [y-r, y+r].
+  // Vertical pass: sum and count of the horizontal results within [y-r, y+r]
   settings.smoothingMemo.resize(numGridElements);
   std::vector<double> prefixVal2(height + 1);
   std::vector<int32_t> prefixCnt2(height + 1);

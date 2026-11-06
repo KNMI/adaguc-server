@@ -41,9 +41,7 @@
 #include "CServerError.h"
 #include "fork_server.h"
 
-// PROJ reports failed grid/datum lookups and similar issues straight to stderr by default, even
-// when it still produces a usable (if less precise) transformation. Disabled for now rather than
-// routed through CDBDebug - revisit if these turn out to carry real diagnostic value.
+// PROJ writes warnings such as failed grid lookups to stderr, also when the transformation still works
 static void projLogFunction(void *, int /*level*/, const char * /*message*/) {}
 
 int processQueryStringRequest() {

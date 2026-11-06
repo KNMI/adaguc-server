@@ -733,8 +733,7 @@ class TestWMS(unittest.TestCase):
         )
 
     def test_WMSGetMapWithGridBoxOutline_testdatanc(self):
-        """RenderSettings drawgridboxoutline="true": draws the source grid cell boundaries
-        instead of interpolating/shading the field."""
+        """RenderSettings drawgridboxoutline="true" draws the source grid cell boundaries"""
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMapWithGridBoxOutline_testdatanc.png"
         # pylint: disable=unused-variable

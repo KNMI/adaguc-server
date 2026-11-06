@@ -36,9 +36,7 @@ class TestContour:
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
                 "TRANSPARENT=FALSE",
-                # A finer destination grid changes where contour line tracing starts and how far
-                # apart distance-field pixels land, so this is a useful second data point for the
-                # same gap-tracing code at a different pixel density.
+                # Another pixel density for the contour tracer
                 id="2x",
             ),
             pytest.param(
@@ -49,8 +47,7 @@ class TestContour:
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
                 "TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
-                # The 25-class, -52 to 48 multicolor legend instead of plain contour lines, a
-                # heavier SmoothingFilter of 6, and blue contour lines every 2 degrees overlaid.
+                # Classed shading with SmoothingFilter 6 and contour lines
                 id="2x_shaded_extrasmooth",
             ),
             pytest.param(
@@ -61,9 +58,7 @@ class TestContour:
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
                 "TRANSPARENT=FALSE",
-                # The unsmoothed field has real grid-scale noise (5.5km convection-permitting
-                # model output), which turns into thousands of tiny disconnected contour loops
-                # rather than a bug - SmoothingFilter is the normal way to get readable isotherms.
+                # SmoothingFilter removes the many small loops from grid-scale noise
                 id="smoothed",
             ),
             pytest.param(
@@ -74,8 +69,7 @@ class TestContour:
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
                 "TRANSPARENT=TRUE",
-                # Two ContourLine definitions with different intervals and dash patterns, drawgrid
-                # disabled - the same pattern as the production "pressure_cwk" isobar style.
+                # Two dashed ContourLine definitions, like the pressure_cwk style
                 id="dashed",
             ),
             pytest.param(
@@ -96,8 +90,7 @@ class TestContour:
                 "EPSG:3857",
                 "849140.1753254525,7851535.092767621,888288.2674508916,7911855.112267022",
                 "TRANSPARENT=TRUE",
-                # Reprojected to EPSG:3857 and zoomed in tight (a ~39x60km bbox) on a single
-                # contour line's sharp turn - close-up, high-curvature zoom in a different CRS.
+                # Zoomed in on a sharp turn of a contour line, in EPSG:3857
                 id="dashed_zoomed_mercator",
             ),
             pytest.param(
@@ -118,9 +111,7 @@ class TestContour:
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
                 "TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
-                # ShadeInterval-based classed style instead of contour lines - 25 fixed 4-degree
-                # classes from -52 to 48 with an explicit fillcolor per class, exercising
-                # ShadeInterval legend generation rather than the contour tracer.
+                # ShadeInterval classes, no contour lines
                 id="shaded",
             ),
             pytest.param(
@@ -131,9 +122,7 @@ class TestContour:
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
                 "TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
-                # Same classed style as temperature_shaded, but with a SmoothingFilter of 4 and
-                # blue contour lines every 2 degrees overlaid - checks ShadeInterval classes and
-                # the contour tracer combine correctly on a smoothed field.
+                # ShadeInterval classes with SmoothingFilter 4 and contour lines
                 id="shaded_contour",
             ),
         ],

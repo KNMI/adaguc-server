@@ -677,8 +677,7 @@ TEST(smoothRasterField, radiusLargerThanGridAveragesEverything) {
 }
 
 TEST(smoothRasterField, linearFieldUnchangedInInterior) {
-  // A symmetric window averages a linear field to its center value. Integer values keep every sum exact,
-  // so long rows (large prefix sums) must still give exactly the original value away from the edges.
+  // Away from the edges, smoothing a linear field gives the field itself. Integer values keep the sums exact.
   const int width = 300, height = 200, r = 12;
   std::vector<float> grid(width * height);
   for (int y = 0; y < height; y++) {

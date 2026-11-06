@@ -113,12 +113,7 @@ class TestGenericImageWarper:
         )
 
     def test_GenericImageWarperOnAHNDataset_contour_tight_curve_no_gap(self):
-        """
-        Regression test for a contour-tracing bug where a tight curve's apex (more than one
-        valid neighbor pixel to continue onto, e.g. the flat top of a U-turn) silently dropped
-        every continuation but one, leaving a visible gap in the line. Bounding box below is
-        zoomed in on exactly such an apex in this dataset.
-        """
+        """A contour line must not have a gap at the apex of a tight curve"""
         env = make_adaguc_env("adaguc.tests.ahn_utrechtse_heuvelrug_500m", self.testresultspath, self.expectedoutputsspath)
         update_db(env)
         run_adaguc_and_compare_image(
