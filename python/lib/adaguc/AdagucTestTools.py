@@ -9,7 +9,7 @@ import shutil
 from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
-from PIL import Image
+from . import imagecompare
 import subprocess
 from deepdiff import DeepDiff
 
@@ -181,102 +181,31 @@ class AdagucTestTools:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def compareImage(self, expectedImagePath, returnedImagePath, maxAllowedColorDifference=1, maxAllowedColorPercentage=0.01):
-        """Compare the pictures referred to by the arguments.
+    def compareImage(self, expectedImagePath, returnedImagePath, tolerance=imagecompare.EXACT):
+        """Compare the pictures referred to by the arguments. On failure, a diff image is written next to the
+        returned image.
 
         Args:
             expectedImagePath (str): path of the image that we expected
             returnedImagePath (str): path of the image that we got as output from the test
-            maxAllowedColorDifference(int): max allowed difference in a single color band
-            maxAllowedColorPercentage(float): max allowed percentage of pixels that have different colors
+            tolerance (str): "exact" (default): all pixels identical. "geometry": each pixel may differ by a small
+                margin, detects shifts of one pixel. "antialiasing": also accepts antialiasing differences at edges
+                and in text, caused by other cairo, pixman or FreeType versions. Use the strictest tolerance that
+                passes in all environments. See adaguc.imagecompare and doc/developing/antialiasing-differences.md.
 
         Returns:
-            bool: True if the difference is "small enough"
+            bool: True if the images match within the tolerance
         """
 
         if filecmp.cmp(returnedImagePath, expectedImagePath, shallow=False):
+            diff_path = imagecompare.diff_image_path(returnedImagePath)
+            if os.path.exists(diff_path):
+                os.remove(diff_path)
             return True
-        expected_image = Image.open(expectedImagePath)
-        returned_image = Image.open(returnedImagePath)
-        if expected_image.size != returned_image.size:
-            print(f"\nError, size of expected and actual image do not match: {expected_image.size} vs {returned_image.size}")
-            return False
-
-        if expected_image.mode != returned_image.mode:
-            print(f"\nError, mode of expected and actual image do not match: {expected_image.mode} vs {returned_image.mode}")
-            return False
-
-        width, height = expected_image.size
-        if returned_image.mode == "P":
-            expected_palette_values = expected_image.getpalette()
-            returned_palette_values = returned_image.getpalette()
-            if returned_image.palette.mode == "RGB":
-                print(f"\tApplying palette translation for comparison...")
-                expected_palette = [tuple(expected_palette_values[i : i + 3]) for i in range(0, len(expected_palette_values), 3)]
-                returned_palette = [tuple(returned_palette_values[i : i + 3]) for i in range(0, len(returned_palette_values), 3)]
-            else:
-                print(f"\nError: Palette mode {returned_image.palette.mode} not supported!")
-                return False
-
-        n_bands = len(expected_image.getbands())
-
-        max_color_difference_pixel = None
-        max_color_difference_value = -1
-        sum_color_difference = 0
-        count_pixels_with_color_difference = 0
-        for x in range(0, width):
-            for y in range(0, height):
-                c = (x, y)
-                expected_color = expected_image.getpixel(c)
-                returned_color = returned_image.getpixel(c)
-
-                if n_bands == 1:
-                    if returned_image.mode == "P":
-                        expected_color = expected_palette[expected_color]
-                        returned_color = returned_palette[returned_color]
-                    else:
-                        expected_color = (expected_color,)
-                        returned_color = (returned_color,)
-                diff_color = tuple(map(lambda e, g: e - g, expected_color, returned_color))
-
-                if expected_color != returned_color:
-                    print(
-                        f"Warning: pixel {c} has different color, (expected, actual, diff) = "
-                        f"{expected_color} \t{returned_color} \t{diff_color}",
-                        flush=True,
-                    )
-                    count_pixels_with_color_difference += 1
-                    abs_color_diff = tuple(abs(d) for d in diff_color)
-                    if max(abs_color_diff) > max_color_difference_value:
-                        max_color_difference_value = max(abs_color_diff)
-                        max_color_difference_pixel = c
-                    sum_color_difference += sum(abs_color_diff)
-
-        if count_pixels_with_color_difference > 0:
-            print(
-                f"Warning: Max color difference {max_color_difference_value} in pixel {max_color_difference_pixel}. "
-                f"Sum of absolute color difference: {sum_color_difference}. "
-                f"Number of pixels with color difference: {count_pixels_with_color_difference}. "
-                f"Percentage of pixel with color difference: {count_pixels_with_color_difference*100.0/(width*height):.6f} %",
-                flush=True,
-            )
-
-        if max_color_difference_value > maxAllowedColorDifference:
-            print(
-                f"Error, difference for pixel {max_color_difference_pixel} is too large ({max_color_difference_value} > {maxAllowedColorDifference})",
-                flush=True,
-            )
-            return False
-
-        if count_pixels_with_color_difference * 100.0 / (width * height) > maxAllowedColorPercentage:
-            print(
-                f"Error, percentage of pixels with color difference is too large "
-                f"({count_pixels_with_color_difference*100.0/(width*height)} % > {maxAllowedColorPercentage} %)",
-                flush=True,
-            )
-            return False
-
-        return True
+        result = imagecompare.compare_image_files(expectedImagePath, returnedImagePath, tolerance)
+        for message in result.messages:
+            print(("" if result.match else "Error: ") + message, flush=True)
+        return result.match
 
     def compareGetCapabilitiesXML(self, testresultFileLocation, expectedOutputFileLocation):
         expectedxml = self.readfromfile(expectedOutputFileLocation)

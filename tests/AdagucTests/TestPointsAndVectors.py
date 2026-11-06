@@ -31,7 +31,7 @@ class TestPointsAndVectors:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            10,
+            tolerance="antialiasing",
         )
 
     def test_WMSGetMap_Discs_example_windbarbs_from_pointdata_csv(self):
@@ -49,7 +49,7 @@ class TestPointsAndVectors:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            60,
+            tolerance="antialiasing",
         )
 
     def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options(
@@ -66,7 +66,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
@@ -83,8 +83,7 @@ class TestPointsAndVectors:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            maxAllowedColorDifference=194,
-            maxAllowedColorPercentage=0.14,
+            tolerance="antialiasing",
         )
 
     def test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf(self):
@@ -102,7 +101,7 @@ class TestPointsAndVectors:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            30,
+            tolerance="geometry",
         )
 
     def test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf(self):
@@ -120,8 +119,7 @@ class TestPointsAndVectors:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            maxAllowedColorDifference=56,
-            maxAllowedColorPercentage=0.05,
+            tolerance="antialiasing",
         )
 
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc(self):
@@ -136,7 +134,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature(self):
         AdagucTestTools().cleanTempDir()
@@ -150,7 +148,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned(self):
         AdagucTestTools().cleanTempDir()
@@ -164,7 +162,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_WMSGetMap_select_temperature_as_point_from_grid(self):
         AdagucTestTools().cleanTempDir()
@@ -179,7 +177,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_WMSGetMap_windbarbs_on_gridded_netcdf_striding_offset(self):
         AdagucTestTools().cleanTempDir()
@@ -196,6 +194,7 @@ class TestPointsAndVectors:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
+            tolerance="antialiasing",
         )
 
     def test_WMSGetMap_windbarbs_kts_selectpoint_for_grids(self):
@@ -211,7 +210,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_WMSGetMap_wave_direction_vector_with_add_dataobject(self):
         AdagucTestTools().cleanTempDir()
@@ -226,7 +225,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_WMSGetMap_wave_direction_vector(self):
         AdagucTestTools().cleanTempDir()
@@ -241,7 +240,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_WMSGetMap_warning_vectors_per_feature(self):
         AdagucTestTools().cleanTempDir()
@@ -256,7 +255,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_warning_vectors_per_feature_thumbnail(self):
         AdagucTestTools().cleanTempDir()
@@ -271,7 +270,7 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_WMSGetMap_warning_points_and_features(self):
         AdagucTestTools().cleanTempDir()
@@ -286,4 +285,4 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")

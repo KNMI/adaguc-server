@@ -27,48 +27,37 @@ class TestsForLegacyBilinearRender:
     # would resolve against whatever directory pytest was started from.
     AdagucTestTools().mkdir_p(os.path.join(ADAGUC_PATH, "tests", testresultspath))
 
+    @staticmethod
+    def _tolerance(render_method: str) -> str:
+        """Contours have text labels; barbs and vectors are antialiased shapes; the plain raster variants are exact."""
+        if "contour" in render_method:
+            return "antialiasing"
+        if "barb" in render_method or "vector" in render_method:
+            return "geometry"
+        return "exact"
+
     def _env(self):
         env = make_adaguc_env("adaguc.tests.legacybilinearrender", self.testresultspath, self.expectedoutputsspath)
         update_db(env)
         return env
 
-    # Contour labels are text, so those variants get the same antialiasing tolerance the other
-    # contour tests use; plain raster variants are compared tightly.
-    @pytest.mark.parametrize(
-        ("render_method", "max_color_difference", "max_color_percentage"),
-        [
-            ("nearest", 1, 0.01),
-            ("bilinear", 1, 0.01),
-            ("shaded", 1, 0.01),
-            ("contour", 30, 0.1),
-            ("nearestcontour", 30, 0.1),
-            ("shadedcontour", 30, 0.1),
-        ],
-    )
-    def test_legacy_scalar_rendermethod(self, render_method: str, max_color_difference: int, max_color_percentage: float):
+    @pytest.mark.parametrize("render_method", ["nearest", "bilinear", "shaded", "contour", "nearestcontour", "shadedcontour"])
+    def test_legacy_scalar_rendermethod(self, render_method: str):
         run_adaguc_and_compare_image(
             self._env(),
             f"test_legacy_scalar_{render_method}.png",
             f"DATASET=adaguc.tests.legacybilinearrender&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=legacy_scalar%2F{render_method}&FORMAT=image/png&TRANSPARENT=TRUE",
-            maxAllowedColorDifference=max_color_difference,
-            maxAllowedColorPercentage=max_color_percentage,
+            tolerance=self._tolerance(render_method),
         )
 
-    @pytest.mark.parametrize(
-        ("render_method", "max_color_difference", "max_color_percentage"),
-        [
-            ("shaded", 1, 0.01),
-            ("shadedcontour", 30, 0.1),
-        ],
-    )
-    def test_legacy_scalar_translucent_rendermethod(self, render_method: str, max_color_difference: int, max_color_percentage: float):
+    @pytest.mark.parametrize("render_method", ["shaded", "shadedcontour"])
+    def test_legacy_scalar_translucent_rendermethod(self, render_method: str):
         """Translucent shade intervals must have a uniform alpha: no pixel may be blended twice at triangle seams."""
         run_adaguc_and_compare_image(
             self._env(),
             f"test_legacy_scalar_translucent_{render_method}.png",
             f"DATASET=adaguc.tests.legacybilinearrender&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=legacy_scalar_translucent%2F{render_method}&FORMAT=image/png&TRANSPARENT=TRUE",
-            maxAllowedColorDifference=max_color_difference,
-            maxAllowedColorPercentage=max_color_percentage,
+            tolerance=self._tolerance(render_method),
         )
 
     @pytest.mark.parametrize(
@@ -80,6 +69,5 @@ class TestsForLegacyBilinearRender:
             self._env(),
             f"test_legacy_wind_{render_method}.png",
             f"DATASET=adaguc.tests.legacybilinearrender&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-669486.4937633628,4378276.830549949,2026497.5462260891,7216268.010714424&STYLES=legacy_windbarbs_kts%2F{render_method}&FORMAT=image/png&TRANSPARENT=TRUE&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z",
-            maxAllowedColorDifference=37,
-            maxAllowedColorPercentage=0.1,
+            tolerance=self._tolerance(render_method),
         )

@@ -13,6 +13,7 @@
 - Grid-relative wind (`uvcomponents`) is now rotated to true north with the angle at the grid point itself, where the value is defined and where barbs and vectors are drawn, measured in the tangent plane of the earth's surface. Previously the angle was taken at a cell corner over a full-cell step, which also added a spurious rotation of half a cell's arc (about 0.1 degree on a 0.25 degree lat/lon grid, where the correct rotation is 0). Barb, vector and direction output change by a few degrees on coarse grids; on fine grids the change is hardly visible.
 - GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
 - Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
+- Image comparison in the tests: `compareImage` has a `tolerance` (`exact`, the default, `geometry` or `antialiasing`) instead of `maxAllowedColorDifference`/`maxAllowedColorPercentage`, chosen by what the image contains (raster only, antialiased shapes, or text). Image tests no longer compare PNG files byte for byte. A failing comparison writes a diff image. See [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
 
 **Version 9.2.0 - 2026-10-28**
 

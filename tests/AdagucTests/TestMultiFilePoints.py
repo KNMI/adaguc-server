@@ -35,7 +35,7 @@ class TestMultiFilePoints:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     @pytest.mark.parametrize(
         ("station", "x", "y", "expected"),
