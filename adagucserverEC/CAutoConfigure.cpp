@@ -215,7 +215,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
               try {
                 cdfObject->variables[j]->getAttributeThrows("units");
               } catch (int e) {
-                CDBError("No units found for forecast_reference_time variable [%s], it is not added as reference_time dimension", cdfObject->variables[j]->name.c_str());
+                CDBWarning("No units found for forecast_reference_time variable [%s], it is not added as reference_time dimension", cdfObject->variables[j]->name.c_str());
                 throw(e);
               }
 
