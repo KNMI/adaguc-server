@@ -59,6 +59,7 @@ static const bool CREQUEST_DEBUG = false;
 #include "CStopWatch.h"
 #include "CTime.h"
 #include "CCDFStore.h"
+#include "utils/DimensionKind.h"
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
@@ -441,7 +442,7 @@ static void normalizeAndValidateTimeDims(CDataSource *dataSource) {
   }
 
   for (auto &dim: dataSource->requiredDims) {
-    if (dim.name == "time" || dim.name.ends_with("reference_time")) {
+    if (getDimKindForServiceName(dim.name) != DimKind::Normal) {
       dim.isATimeDimension = true;
       // Database timestamps may use a space and omit the trailing Z.
       if (dim.value.length() > 12) {
