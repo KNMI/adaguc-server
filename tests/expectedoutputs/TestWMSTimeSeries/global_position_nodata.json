@@ -1,0 +1,27 @@
+[
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "-1.000000,50.000000"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "nodata",
+        "2024-01-01T01:00:00Z": "nodata"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "nodata",
+        "2024-01-01T01:00:00Z": "nodata"
+      }
+    }
+  }
+]

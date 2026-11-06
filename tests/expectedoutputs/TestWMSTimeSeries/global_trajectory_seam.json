@@ -1,0 +1,227 @@
+[
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "358,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "359,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "nodata",
+        "2024-01-01T01:00:00Z": "nodata"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "nodata",
+        "2024-01-01T01:00:00Z": "nodata"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "0,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "1,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "2,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "1,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "0,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "359,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "nodata",
+        "2024-01-01T01:00:00Z": "nodata"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "nodata",
+        "2024-01-01T01:00:00Z": "nodata"
+      }
+    }
+  },
+  {
+    "name": "data",
+    "layername": "data",
+    "variablename": "data",
+    "standard_name": "data",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "358,50"
+    },
+    "dims": [
+      "height",
+      "time"
+    ],
+    "data": {
+      "0": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      },
+      "10": {
+        "2024-01-01T00:00:00Z": "12.000000",
+        "2024-01-01T01:00:00Z": "14.000000"
+      }
+    }
+  }
+]
