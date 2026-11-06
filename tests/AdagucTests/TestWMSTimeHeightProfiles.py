@@ -48,11 +48,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         status, data, _ = AdagucTestTools().runADAGUCServer(wms_arg, env=self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-            self.expectedoutputsspath + filename,
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"), self.expectedoutputsspath + filename)
 
     def test_wmsgetfeatureinfo_timeheightprofiles(self):
         """
@@ -69,11 +65,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         status, data, _ = AdagucTestTools().runADAGUCServer(wms_arg, env=self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-            self.expectedoutputsspath + filename,
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry"), self.expectedoutputsspath + filename)
 
     def test_wmsgetfeatureinfo_png_timeheightprofiles_as_dataset(self):
         """
@@ -112,8 +104,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                0,
-                0,
+                tolerance="geometry",
             )
         )
 

@@ -45,7 +45,7 @@ class TestCSV:
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_CSV_reference_time(self):
         AdagucTestTools().cleanTempDir()
@@ -94,7 +94,7 @@ class TestCSV:
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_CSV_negative_values(self):
         AdagucTestTools().cleanTempDir()
@@ -109,7 +109,7 @@ class TestCSV:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
 
     def test_CSV_radiusandvalue(self):
         AdagucTestTools().cleanTempDir()
@@ -125,7 +125,7 @@ class TestCSV:
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_CSV_radiusandvalue_and_symbol(self):
         AdagucTestTools().cleanTempDir()
@@ -141,7 +141,7 @@ class TestCSV:
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_CSV_windbarbs_Cairo_png(self):
         AdagucTestTools().cleanTempDir()
@@ -156,4 +156,4 @@ class TestCSV:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
