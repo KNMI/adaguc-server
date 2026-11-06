@@ -83,6 +83,7 @@ private:
   std::vector<std::string> getLegendListForDataSource(CServerConfig::XMLE_Style *style);
   std::vector<std::string> getStyleNames(const std::vector<CServerConfig::XMLE_Styles> &Styles);
   std::vector<std::string> getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style);
+  bool isStyleSheetStyle(const CServerConfig::XMLE_Style *style) const;
 
 public:
   bool debug = false;

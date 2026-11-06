@@ -29,8 +29,6 @@
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "Types/GeoParameters.h"
-#include "CServerError.h"
-#include "CXMLParser.h"
 #include <cairo-ft.h>
 #include <fontconfig/fontconfig.h>
 #include "write_png.h"

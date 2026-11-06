@@ -26,7 +26,6 @@
 #ifndef CAREAMAPPER
 #define CAREAMAPPER
 
-#include <cstdio>
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"

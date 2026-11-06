@@ -7,6 +7,7 @@ Pointtimeseries example
 1. Point timeseries NetCDF - Automated weather station observations
 1. Random observations with a timestamp (earthquakes)
 1. Random events fixed in timeslots (lightning)
+1. Forecast reference time and elevation
 1. TODO symbols
 
 ## 1) 10000 random points - no time dimension
@@ -349,3 +350,86 @@ this dimension has an interval of 5 minutes:
   <Styles>btd</Styles>
 </Layer>
 ```
+
+## 5) Forecast reference time and elevation
+------------------------------------------
+
+Point variables can have more dimensions than `station` and `time`. All dimensions of a point variable except the station dimension become WMS dimensions, so forecasts with a reference time and observations at several heights can be served as point data as well.
+
+### Reference time
+
+A reference time can be given as a dimension of the point variables, with a dimension variable with standard_name `forecast_reference_time`. It is then selected with the `DIM_reference_time` WMS parameter:
+
+```
+netcdf points_reference_time_dimension {
+dimensions:
+        station = 8 ;
+        time = 1 ;
+        reference_time = 1 ;
+variables:
+        string station(station) ;
+        double lat(station) ;
+                lat:standard_name = "latitude" ;
+                lat:units = "degrees_north" ;
+        double lon(station) ;
+                lon:standard_name = "longitude" ;
+                lon:units = "degrees_east" ;
+        double time(time) ;
+                time:standard_name = "time" ;
+                time:units = "seconds since 1970-01-01 00:00:00" ;
+        double reference_time(reference_time) ;
+                reference_time:standard_name = "forecast_reference_time" ;
+                reference_time:units = "seconds since 1970-01-01 00:00:00" ;
+        double ta(station, reference_time, time) ;
+                ta:standard_name = "air_temperature" ;
+                ta:units = "degrees Celsius" ;
+
+// global attributes:
+                :featureType = "timeSeries" ;
+}
+```
+
+Alternatively, a scalar variable with standard_name `forecast_reference_time` can be added to the file, while the point variables keep the `(station, time)` dimensions. This scalar variable is also detected as the `reference_time` dimension:
+
+```
+        double forecast_reference_time ;
+                forecast_reference_time:standard_name = "forecast_reference_time" ;
+                forecast_reference_time:units = "seconds since 1970-01-01 00:00:00" ;
+        double ta(station, time) ;
+```
+
+### Elevation
+
+An elevation dimension is recognized by the standard_name of its dimension variable (`elevation`, `height` or `pressurelevel_0`), by its `_CoordinateAxisType` (`Height` or `Pressure`) or by a `positive` attribute. One file can contain several levels; the level is selected with the `ELEVATION` WMS parameter:
+
+```
+dimensions:
+        station = 8 ;
+        time = 1 ;
+        height = 2 ;
+variables:
+        double height(height) ;
+                height:standard_name = "height" ;
+                height:units = "m" ;
+                height:positive = "up" ;
+        double ta(station, time, height) ;
+                ta:standard_name = "air_temperature" ;
+                ta:units = "degrees Celsius" ;
+```
+
+The dimensions are detected automatically, no `<Dimension>` elements are needed in the layer configuration:
+
+```xml
+<Layer type="database">
+  <Name>ta</Name>
+  <Variable>ta</Variable>
+  <FilePath filter="^.*\.nc$">/data/points/</FilePath>
+  <Styles>temperature</Styles>
+</Layer>
+```
+
+```
+&REQUEST=GetMap&LAYERS=ta&TIME=2020-12-20T12:00:00Z&DIM_reference_time=2020-12-20T06:00:00Z&ELEVATION=100
+```
+
+For point data in GeoJSON files, see the [GeoJSON format](data_format_standard_geojson.md).

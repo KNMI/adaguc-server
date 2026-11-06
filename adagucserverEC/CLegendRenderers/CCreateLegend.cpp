@@ -2,9 +2,7 @@
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CDebugger.h"
-#include "CImageWarper.h"
 #include "CTString.h"
-#include "CXMLParser.h"
 
 static const bool CIMAGEDATAWRITER_DEBUG = false;
 

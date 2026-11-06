@@ -3,11 +3,7 @@
 #include "CTString.h"
 #include "CRequest.h"
 #include "ConfigurationUtils.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
 #include "CServerParams.h"
-#include "CXMLParser.h"
 
 bool checkIfFileMatchesLayer(std::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
   // Get the directory of the file to scan:

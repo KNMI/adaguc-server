@@ -26,16 +26,12 @@
 #include "Types/ProjectionStore.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"
-#include "CDrawImage.h"
 #include "CDebugger.h"
-#include "CStopWatch.h"
 #include "Types/CPointTypes.h"
 #include "ProjCache.h"
 #include <algorithm>
-#include <iostream>
 #include <vector>
 #include <cmath>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
 #include "CDataSource.h"
 #include "CProj4ToCF.h"

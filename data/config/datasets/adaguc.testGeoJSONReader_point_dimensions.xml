@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Settings enablemetadatacache="false"/>
+  <Style name="stations_mistpost">
+    <Legend fixed="true">bluewhitered</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#40404040" textcolor="#000000A0" linecolor="#000000A0" discradius="6" dot="false" fontsize="10" textformat="%s" textradius="15"/>
+  </Style>
+
+  <Layer type="database">
+    <FilePath filter="^.*\.geojson$">{ADAGUC_PATH}/data/datasets/geojson_point_dimensions/</FilePath>
+    <Name>points</Name>
+    <Title>Points</Title>
+    <Variable>name</Variable>
+    <Styles>stations_mistpost</Styles>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>

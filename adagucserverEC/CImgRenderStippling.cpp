@@ -26,8 +26,6 @@
 #include "CImgRenderStippling.h"
 #include "CGenericDataWarper.h"
 #include <string>
-#include <vector>
-#include "CCDFObject.h"
 #include "CCDFTypes.h"
 #include "CDataSource.h"
 #include "CDebugger.h"
@@ -159,6 +157,12 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
         color = stippling.attr.color;
       }
     }
+  }
+  // A negative distance would never end the stippling loops
+  if (xDistance < 0 || yDistance < 0) {
+    CDBWarning("Negative stippling distance, using the default of 22");
+    if (xDistance < 0) xDistance = 22;
+    if (yDistance < 0) yDistance = 22;
   }
 
   double bboxWidth = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left);
