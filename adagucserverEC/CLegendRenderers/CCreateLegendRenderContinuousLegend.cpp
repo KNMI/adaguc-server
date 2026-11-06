@@ -1,6 +1,7 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
+#include "CImageWarper.h"
 #include <algorithm>
 
 double CCreateLegend::nextTick(double prev) {

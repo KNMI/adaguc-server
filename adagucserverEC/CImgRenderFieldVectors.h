@@ -1,14 +1,10 @@
-#include <CImageWarper.h>
-#include <CDataSource.h>
+#include <Types/GeoParameters.h>
 
 #ifndef CIMGRENDERFIELDVECTORS_H
 #define CIMGRENDERFIELDVECTORS_H
 
-struct CalculatedWindVector {
-  int x, y;
-  double dir, viewDirCorrection, strength;
-  bool convertToKnots, flip;
-};
+class CImageWarper;
+class CDataSource;
 
 f8component jacobianTransform(f8component speedVector, f8point gridPoint, double gridYStep, CImageWarper *warper, bool gridRelative);
 

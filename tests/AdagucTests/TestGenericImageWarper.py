@@ -112,6 +112,19 @@ class TestGenericImageWarper:
             f"LAYERS=ahn_utrechtseheuvelrug_500m&STYLES={styles}&DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=1200&HEIGHT=1000&CRS=EPSG%3A3857&BBOX=590359.2826213799,6784102.0088095935,707368.84890462,6894816.225400406&FORMAT=image/png&TRANSPARENT=TRUE",
         )
 
+    def test_GenericImageWarperOnAHNDataset_contour_tight_curve_no_gap(self):
+        """A contour line must not have a gap at the apex of a tight curve"""
+        env = make_adaguc_env("adaguc.tests.ahn_utrechtse_heuvelrug_500m", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_image(
+            env,
+            "ahn_utrechtseheuvelrug_500m_hillshaded_contour_tight_curve_no_gap.png",
+            "DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+            "&LAYERS=ahn_utrechtseheuvelrug_500m_hillshaded&WIDTH=686&HEIGHT=1057&CRS=EPSG%3A3857"
+            "&BBOX=599744.071003962,6783137.928485779,696607.8022179123,6932387.146988906"
+            "&STYLES=style_colormapped_bilinear_multicolor_contours&FORMAT=image/png&TRANSPARENT=TRUE",
+        )
+
     def test_getmap_latlon_latdecreasing_and_increasing_genericbilinear(self):
         """
         Test rendering of data aligned upwards and downwards with bilinear interpolation
