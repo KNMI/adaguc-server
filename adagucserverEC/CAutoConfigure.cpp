@@ -77,6 +77,10 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         xmleDim->elementValue = (record.get("ogcname"));
         xmleDim->attr.name = (record.get("ncname"));
         xmleDim->attr.units = (record.get("units"));
+        // Rows stored before reference times were advertised as ISO8601 have empty units
+        if (xmleDim->elementValue == "reference_time" && xmleDim->attr.units.empty()) {
+          xmleDim->attr.units = "ISO8601";
+        }
         if (CAUTOCONFIGURE_DEBUG) {
           CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->elementValue.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
         }

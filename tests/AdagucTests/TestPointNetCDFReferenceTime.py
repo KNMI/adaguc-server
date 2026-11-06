@@ -1,7 +1,9 @@
+import os
 import re
+import subprocess
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
-from conftest import make_adaguc_env, update_db
+from conftest import clean_postgres, make_adaguc_env, update_db
 
 DATASET = "{ADAGUC_PATH}/data/config/datasets/adaguc.tests.netcdfpoint_reference_time.xml"
 LAYERS = ["ta_reftime_dimension", "ta_reftime_scalar", "ta_reftime_scalar_frt"]
@@ -31,6 +33,41 @@ class TestPointNetCDFReferenceTime:
 
         assert status == 0
         assert AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename)
+
+    def test_PointNetCDF_reference_time_GetCapabilities_scanned_before(self):
+        """Rows in autoconfigure_dimensions stored before reference times were advertised as ISO8601 have empty units"""
+        AdagucTestTools().cleanTempDir()
+
+        env = make_adaguc_env(DATASET)
+        update_db(env)
+        status, _, _ = AdagucTestTools().runADAGUCServer("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
+        assert status == 0
+
+        try:
+            result = subprocess.run(
+                [
+                    "psql",
+                    os.environ["ADAGUC_DB"],
+                    "-c",
+                    "UPDATE autoconfigure_dimensions SET units = '' WHERE layerid LIKE '%_ta_reftime_scalar_frt' AND ogcname = 'reference_time'",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            assert result.stdout.strip() == "UPDATE 1"
+
+            filename = "test_PointNetCDF_reference_time_GetCapabilities.xml"
+            status, data, _ = AdagucTestTools().runADAGUCServer("SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
+            AdagucTestTools().writetofile(self.testresultspath + "scanned_before_" + filename, data)
+
+            assert status == 0
+            assert AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + "scanned_before_" + filename, self.expectedoutputsspath + filename
+            )
+        finally:
+            # Other tests should not see the modified row
+            clean_postgres()
 
     @pytest.mark.parametrize("layer", LAYERS)
     @pytest.mark.parametrize(
