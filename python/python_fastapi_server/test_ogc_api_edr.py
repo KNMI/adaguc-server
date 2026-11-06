@@ -857,6 +857,18 @@ def test_adaguc_tests_uwcwdini_windcomponents_position(client: TestClient):
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
+def test_position_brotli_encoding(client: TestClient):
+    """CoverageJSON responses are brotli encoded when the client accepts it"""
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z",
+        headers={"Accept-Encoding": "br"},
+    )
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/prs.coverage+json"
+    assert resp.headers["content-encoding"] == "br"
+    assert resp.json()["type"] == "CoverageCollection"
+
+
 def test_adaguc_tests_uwcwdini_winddirection_position(client: TestClient):
     # Same query as above, but on a layer where filter_dataobjects only selects the direction component
     resp = client.get(

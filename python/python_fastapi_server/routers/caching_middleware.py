@@ -33,7 +33,11 @@ async def get_cached_response(redis_pool, request):
     headers_len = int(cached[10:16].decode("utf-8"))
     headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
     is_compression_needed = requires_encoding(headers)
-    data = brotli.decompress(cached[16 + headers_len :]) if is_compression_needed else cached[16 + headers_len :]
+    try:
+        data = brotli.decompress(cached[16 + headers_len :]) if is_compression_needed else cached[16 + headers_len :]
+    except brotli.error:
+        # Cached before its content type was compressed, handle as not cached
+        return None, None, None
     return age, headers, data
 
 
