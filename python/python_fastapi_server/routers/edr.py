@@ -28,6 +28,7 @@ from .utils.edr_exception import EdrException, exc_unknown_collection
 from .edr_locations import router as locations_router
 from .edr_position import router as position_router
 from .edr_instances import router as instances_router
+from .edr_trajectory import router as trajectory_router
 
 from .utils.edr_utils import generate_max_age, get_collectioninfo_from_md, get_instance, get_metadata
 from .utils.utils import get_base_url
@@ -38,6 +39,7 @@ logger.debug("Starting EDR")
 edrApiApp = FastAPI(redirect_slashes=False, debug=False)
 edrApiApp.include_router(cube_router)
 edrApiApp.include_router(position_router)
+edrApiApp.include_router(trajectory_router)
 edrApiApp.include_router(locations_router)
 edrApiApp.include_router(instances_router)
 

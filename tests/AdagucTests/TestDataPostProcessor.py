@@ -142,7 +142,8 @@ class TestDataPostProcessor(unittest.TestCase):
 
     def test_gfitimeseries_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
         """
-        Test multiple data conversions in one layer for timeseries.
+        The knots round trip followed by *10, +1000, and *0.1-10000 gives source-9900.
+        Each configured conversion must run once.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml", self.testresultspath, self.expectedoutputsspath)
         update_db(env)

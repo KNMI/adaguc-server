@@ -406,3 +406,29 @@ class TestWMSTimeSeries(unittest.TestCase):
             assert status == 0
             heights = json.loads(data)[0]["data"]["2026-09-09T12:00:00Z"]
             assert list(heights) == ["20"]
+
+    def test_trajectory_longitude_seam_and_multifile_nodata(self):
+        # Check if ax+b doesn't get applied twice.
+        env = make_adaguc_env("adaguc.tests.trajectory_global", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        query = "SERVICE=WMS&VERSION=1.3.0&CRS=EPSG:4326&QUERY_LAYERS=data&INFO_FORMAT=application/json&TIME=*&DIM_height=*"
+        for filename, request in [
+            ("global_position_nodata.json", "&REQUEST=GetPointValue&X=-1&Y=50"),
+            ("global_position_axplusb.json", "&REQUEST=GetPointValue&X=0&Y=50"),
+            ("global_trajectory_seam.json", "&REQUEST=GetTrajectory&COORDS=-2,50,2,50,-2,50"),
+        ]:
+            run_adaguc_and_compare_json(env, filename, query + request)
+
+    def test_multifile_timeseries_converts_every_file_once(self):
+        # Four files: the middle ones are not opened by the data reader, and must be converted too.
+        env = make_adaguc_env("adaguc.tests.axplusb_multifile", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        times = [f"2024-01-01T0{hour}:00:00Z" for hour in range(4)]
+        for layer, expected in [("data", ["12", "14", "16", "18"]), ("data_chain", ["30", "50", "70", "90"])]:
+            for x, values in [(1, expected), (3, ["nodata"] * 4)]:
+                query = f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326&QUERY_LAYERS={layer}&INFO_FORMAT=application/json&TIME=*&X={x}&Y=50"
+                status, data, _ = AdagucTestTools().runADAGUCServer(url=query, env=env)
+                assert status == 0
+                series = json.loads(data)[0]["data"]
+                assert list(series) == times
+                assert [value.split(".")[0] for value in series.values()] == values, (layer, x, series)

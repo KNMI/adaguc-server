@@ -11,7 +11,9 @@ KNMI
 from __future__ import annotations
 import json
 import logging
+import math
 import re
+from urllib.parse import urlencode
 from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
@@ -25,6 +27,7 @@ from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
 from fastapi import Request, Response
 from fastapi.datastructures import QueryParams
+from geomet import wkt
 
 # TODO; this import should be possible!
 # from python.lib.adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
@@ -32,6 +35,8 @@ HTTP_STATUSCODE_404_NOT_FOUND = 32
 
 from .edr_exception import (
     AdagucErrorCode,
+    EdrException,
+    exc_invalid_point,
     exc_failed_call,
     exc_unknown_collection,
     exc_incorrect_instance,
@@ -318,6 +323,15 @@ def get_collectioninfo_from_md(
         title="Cube query",
         variables=cube_variables,
     )
+    trajectory_link = EDRQueryLink(
+        href=f"{base_url}/trajectory",
+        rel="data",
+        hreflang="en",
+        title="Trajectory query (2D LINESTRING on regular grids)",
+        variables=position_variables.model_copy(update={"query_type": "trajectory"}),
+    )
+    # A collection needs at least one parameter capable of producing a Section.
+    trajectory_query = EDRQuery(link=trajectory_link) if any(supports_section(layer) for layer in metadata.values()) else None
     locations_link = None
     if len(location_list) > 0:
         locations_variables = Variables(
@@ -352,6 +366,7 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
                 instances=EDRQuery(link=instances_query_link),
                 locations=EDRQuery(link=locations_link),
             )
@@ -359,6 +374,7 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
                 instances=EDRQuery(link=instances_query_link),
             )
     else:
@@ -366,12 +382,14 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
                 locations=EDRQuery(link=locations_link),
             )
         else:
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
+                trajectory=trajectory_query,
             )
 
     parameter_info = get_params_for_dataset(metadata, collection_name, primary_extent)
@@ -641,6 +659,17 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     return None
 
 
+def numeric_vertical_coordinate(value) -> float:
+    """Convert a returned z coordinate, rejecting named and nonfinite levels."""
+    try:
+        level = float(value)
+        if not math.isfinite(level):
+            raise ValueError
+        return level
+    except (TypeError, ValueError) as exc:
+        raise EdrException(400, "Vertical coordinates must be finite numbers") from exc
+
+
 def try_numeric_conversion(values: list[str | float]):
     try:
         new_values = [float(v) for v in values]
@@ -853,21 +882,69 @@ def get_parameters(metadata: dict, collection_name: str, parameter_name_par: str
     return parameters
 
 
-def get_vertical(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> tuple[str, str]:
-    vertical_name = None
-    vertical_dim = ""
-    for param_dim in metadata[collection_name][requested_param]["dims"].values():
-        if not param_dim["hidden"]:
-            if param_dim["type"] == "dimtype_vertical":
-                vertical_name = param_dim["serviceName"]
-                break
+def parse_coordinates(coords, geometry_type):
+    """Validate EDR's supported 2D WKT and return longitude/latitude pairs."""
+    kind = geometry_type.upper()
+    try:
+        number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+        pair = rf"{number}\s+{number}"
+        vertices = pair if kind == "POINT" else rf"{pair}(?:\s*,\s*{pair})+"
+        # geomet accepts malformed numeric separators and ignores trailing text.
+        if coords is None or re.fullmatch(rf"\s*{kind}\s*\(\s*{vertices}\s*\)\s*", coords, re.IGNORECASE) is None:
+            raise ValueError
+        # geomet's tokenizer handles minus signs but not leading plus signs.
+        geometry = wkt.loads(coords.upper().replace("+", ""))
+        points = [geometry["coordinates"]] if kind == "POINT" else geometry["coordinates"]
+        if any(not (-180 <= lon <= 180 and -90 <= lat <= 90) for lon, lat in points):
+            raise ValueError
+        return points
+    except (TypeError, ValueError, StopIteration) as exc:
+        if kind == "POINT":
+            raise exc_invalid_point(coords) from exc
+        raise EdrException(400, "coords must be a 2D WKT LINESTRING with at least two finite longitude/latitude coordinates") from exc
 
-    if z_par:
-        if vertical_name is not None:
-            vertical_dim = f"DIM_{vertical_name}={z_par}"
-    elif vertical_name is not None:
-        vertical_dim = f"DIM_{vertical_name}=*"
-    return (vertical_name, vertical_dim)
+
+def vertical_dimension(metadata):
+    """Find an explicitly typed vertical coordinate, preferring visible dimensions."""
+    dims = metadata.get("dims") or {}
+    candidates = sorted(dims.items(), key=lambda item: item[1].get("hidden", False))
+    for name, dim in candidates:
+        if dim.get("type") == "dimtype_vertical":
+            return name
+    return None
+
+
+def supports_section(metadata):
+    """Metadata eligibility only; native grid compatibility is checked when reading."""
+    dims = metadata.get("dims") or {}
+    return vertical_dimension(metadata) is not None and "time" in dims
+
+
+def get_vertical_query(metadata: dict, collection_name: str, requested_param: str, z_par: str | None) -> str:
+    """Return the native vertical selection, or omit it for absent/hidden coordinates."""
+    layer = metadata[collection_name][requested_param]
+    name = vertical_dimension(layer)
+    if name is None or layer["dims"][name].get("hidden", False):
+        # Hidden coordinates retain their configured selection, also when z is supplied.
+        return ""
+    vertical_name = layer["dims"][name]["serviceName"]
+    return f"DIM_{vertical_name}={z_par or '*'}"
+
+
+def encode_native_query(query: dict, dimension_queries=()) -> bytes:
+    """Encode native parameters and any DIM_name=value selections for the CGI runner."""
+    dimensions = dict(term.split("=", 1) for term in dimension_queries if term)
+    return urlencode(query | dimensions).encode("utf-8")
+
+
+def propagate_data_headers(response, headers):
+    """Append trace headers so callers making several native requests retain each trace."""
+    ttl = get_ttl_from_adaguc_headers(headers)
+    if ttl is not None:
+        response.headers["cache-control"] = generate_max_age(ttl)
+    trace = get_trace_timings_from_adaguc_headers(headers)
+    if trace is not None:
+        response.headers.append("X-Trace-Timings", trace)
 
 
 def get_custom(

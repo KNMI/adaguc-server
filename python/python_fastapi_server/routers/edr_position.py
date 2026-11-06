@@ -13,24 +13,23 @@ from typing import Union
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import APIRouter, Query, Request
-from geomet import wkt
 from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .edr_covjson import covjson_from_resp
-from .utils.edr_exception import EdrException, exc_invalid_point
+from .utils.edr_exception import EdrException
 from .utils.edr_utils import (
     call_adaguc,
-    generate_max_age,
     get_custom,
     get_dataset_from_collection,
     get_instance,
     get_metadata,
     get_parameters,
-    get_trace_timings_from_adaguc_headers,
-    get_ttl_from_adaguc_headers,
-    get_vertical,
+    get_vertical_query,
     instance_to_iso,
+    encode_native_query,
+    parse_coordinates,
+    propagate_data_headers,
 )
 
 router = APIRouter()
@@ -123,23 +122,14 @@ async def handle_coll_inst_position(
     instance = get_instance(metadata, collection_name, instance)
     parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
 
-    _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
+    vertical_dim = get_vertical_query(metadata, collection_name, parameter_names[0], z_par)
 
-    try:
-        latlons = wkt.loads(coords)
-    except StopIteration as exc:
-        raise exc_invalid_point(coords) from exc
-
-    # TODO: for now only support POINT and not MULTIPOINT
-    if len(latlons.get("coordinates", [])) != 2:
-        raise exc_invalid_point(coords)
-
-    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+    point = parse_coordinates(coords, "Point")[0]
 
     resp, headers = await get_point_value(
         dataset_name,
         instance,
-        [coord["lon"], coord["lat"]],
+        point,
         parameter_names,
         datetime_par,
         vertical_dim,
@@ -147,12 +137,7 @@ async def handle_coll_inst_position(
     )
     if resp:
         dat = json.loads(resp)
-        ttl = get_ttl_from_adaguc_headers(headers)
-        if ttl is not None:
-            response.headers["cache-control"] = generate_max_age(ttl)
-        trace_timing = get_trace_timings_from_adaguc_headers(headers)
-        if trace_timing is not None:
-            response.headers.append("X-Trace-Timings", trace_timing)
+        propagate_data_headers(response, headers)
         return covjson_from_resp(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
@@ -169,21 +154,24 @@ async def get_point_value(
 ) -> tuple[bytes, list[str]]:
     """Returns information in EDR format for a given collection and position"""
     custom_dims = [] if custom_dims is None else custom_dims
-    urlrequest = "&".join(
-        [
-            f"dataset={dataset_name}",
-            "service=wms&version=1.3.0&request=GetPointValue&info_format=application/json&crs=EPSG:4326",
-            f"query_layers={','.join(parameters)}",
-            f"X={coords[0]}",
-            f"Y={coords[1]}",
-            f"time={datetime_par}" if datetime_par else "",
-            f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
-            *custom_dims,
-            f"{vertical_dim}" if len(vertical_dim) > 0 else "",
-        ]
-    )
+    query = {
+        "dataset": dataset_name,
+        "service": "wms",
+        "version": "1.3.0",
+        "request": "GetPointValue",
+        "info_format": "application/json",
+        "crs": "EPSG:4326",
+        "query_layers": ",".join(parameters),
+        "X": coords[0],
+        "Y": coords[1],
+    }
+    if datetime_par:
+        query["time"] = datetime_par
+    if instance:
+        query["dim_reference_time"] = instance_to_iso(instance)
+    urlrequest = encode_native_query(query, [*custom_dims, vertical_dim])
 
-    status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+    status, response, headers = await call_adaguc(url=urlrequest)
     if status == 0:
         return response, headers
     return None, None

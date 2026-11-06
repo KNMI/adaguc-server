@@ -33,6 +33,23 @@ class TestWMS(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
+    def test_GetTrajectory_requires_json(self):
+        query = "source=testdata.nc&SERVICE=WMS&REQUEST=GetTrajectory&QUERY_LAYERS=testdata&COORDS=invalid"
+        for suffix in ("", "&INFO_FORMAT=text/html", "&INFO_FORMAT=text/plain"):
+            with self.subTest(format=suffix):
+                status, data, _ = AdagucTestTools().runADAGUCServer(query + suffix, env=self.env, showLogOnError=False)
+                self.assertEqual(status, 422)
+                self.assertIn(b"GetTrajectory requires INFO_FORMAT=application/json", data)
+
+    def test_GetTrajectory_unsupported_grid(self):
+        query = (
+            "source=example_file_irregular_1Dlat1Dlon_grid.nc&SERVICE=WMS&REQUEST=GetTrajectory"
+            "&CRS=EPSG:4326&QUERY_LAYERS=data_var_1&INFO_FORMAT=application/json&COORDS=-5,50,5,50"
+        )
+        status, data, _ = AdagucTestTools().runADAGUCServer(query, env=self.env, showLogOnError=False)
+        self.assertEqual(status, 422)
+        self.assertIn(b"Trajectory requires a regular grid with one source variable per layer", data)
+
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetCapabilities_testdatanc.xml"

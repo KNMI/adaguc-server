@@ -29,7 +29,7 @@ from covjson_pydantic.unit import Unit as CovJsonUnit
 from pydantic import AwareDatetime
 
 from .utils.edr_exception import EdrException
-from .utils.edr_utils import DATETIME_ISO8601_FMT, VOCAB_ENDPOINT_URL, get_param_metadata
+from .utils.edr_utils import DATETIME_ISO8601_FMT, VOCAB_ENDPOINT_URL, get_param_metadata, numeric_vertical_coordinate
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
@@ -99,6 +99,8 @@ def covjson_from_resp(dats, metadata, collection_name):
                 vertical_steps = getdimvals(dims, vertical_name)
             else:
                 vertical_steps = getdimvals(dims, "elevation")
+            if vertical_steps:
+                vertical_steps = [numeric_vertical_coordinate(level) for level in vertical_steps]
 
             custom_dim_values = []
             if custom_name is not None and len(custom_name) > 0:

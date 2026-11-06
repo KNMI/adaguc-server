@@ -40,6 +40,8 @@ static const bool CREQUEST_DEBUG = false;
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include <CReadFile.h>
+#include <cmath>
+#include <stdexcept>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
 #include <json_adaguc.h>
@@ -819,7 +821,7 @@ int CRequest::process_querystring() {
   }
 
   setErrorMode(ServiceExceptionMode::ExceptionPlainText);
-  std::string SERVICE, REQUEST;
+  std::string SERVICE, REQUEST, trajectoryCoords;
 
   int dFound_Width = 0;
   int dFound_Height = 0;
@@ -947,6 +949,7 @@ int CRequest::process_querystring() {
       srvParam->styleSheet = uriValue;
     }
     if (!uriValue.empty()) {
+      if (uriKeyUpperCase == "COORDS") trajectoryCoords = uriValue;
       // BBOX Parameters
       if (uriKeyUpperCase == "BBOX") {
         auto bboxvalues = CT::split(CT::replace(uriValue, "%2C", ","), ",");
@@ -1367,7 +1370,11 @@ int CRequest::process_querystring() {
         srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
       else if (REQUEST == "GETPOINTVALUE")
         srvParam->requestType = REQUEST_WMS_GETPOINTVALUE;
-      else if (REQUEST == "GETLEGENDGRAPHIC")
+      else if (REQUEST == "GETTRAJECTORY") {
+        // Trajectory shares feature-info output, but has its own spatial input.
+        srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
+        srvParam->isTrajectory = true;
+      } else if (REQUEST == "GETLEGENDGRAPHIC")
         srvParam->requestType = REQUEST_WMS_GETLEGENDGRAPHIC;
       else if (REQUEST == "GETMETADATA")
         srvParam->requestType = REQUEST_WMS_GETMETADATA;
@@ -1558,6 +1565,34 @@ int CRequest::process_querystring() {
         }
       }
 
+      if (srvParam->isTrajectory) {
+        if (srvParam->InfoFormat != "application/json") {
+          CDBError("GetTrajectory requires INFO_FORMAT=application/json");
+          setExceptionType(ServiceExceptionType::UnprocessableEntity);
+          return 1;
+        }
+        // Python validates WKT and geographic bounds; here we only decode safe coordinate pairs.
+        const auto fields = CT::split(trajectoryCoords, ",");
+        try {
+          if (fields.size() < 4 || fields.size() > 2000 || fields.size() % 2 != 0) throw std::invalid_argument("Invalid coordinate count");
+          for (size_t i = 0; i < fields.size(); i += 2) {
+            const double x = std::stod(fields[i]), y = std::stod(fields[i + 1]);
+            if (!std::isfinite(x) || !std::isfinite(y)) throw std::invalid_argument("Invalid coordinate pair");
+            srvParam->trajectoryCoords.emplace_back(x, y);
+          }
+        } catch (const std::exception &) {
+          CDBError("Trajectory COORDS must contain 2 to 1000 finite longitude/latitude pairs: x,y,x,y,...");
+          setExceptionType(ServiceExceptionType::UnprocessableEntity);
+          return 1;
+        }
+        // The writer still needs an image context. Sampling uses COORDS, never this extent.
+        srvParam->dFound_BBOX = dFound_WMSLAYERS = dFound_Width = dFound_Height = 1;
+        srvParam->geoParams.bbox.left = srvParam->geoParams.bbox.right = 0;
+        srvParam->geoParams.bbox.bottom = srvParam->geoParams.bbox.top = 0;
+        srvParam->geoParams.width = srvParam->geoParams.height = 1;
+        srvParam->dX = srvParam->dY = -1;
+      }
+
       if (srvParam->requestType == REQUEST_WMS_GETPOINTVALUE) {
         /*
          * Maps REQUEST_WMS_GETPOINTVALUE to REQUEST_WMS_GETFEATUREINFO
@@ -1662,7 +1697,7 @@ int CRequest::process_querystring() {
         }
 
         if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
-          if (srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1) {
+          if (!srvParam->isTrajectory && (srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1)) {
             if (dFound_X == 0) {
               CDBError("ADAGUC Server: Parameter X missing");
               dErrorOccured = 1;
@@ -1673,7 +1708,7 @@ int CRequest::process_querystring() {
             }
           }
 
-          if (srvParam->OGCVersion == WMS_VERSION_1_3_0) {
+          if (!srvParam->isTrajectory && srvParam->OGCVersion == WMS_VERSION_1_3_0) {
             if (dFound_I == 0 && dFound_X == 0) {
               CDBError("ADAGUC Server: Parameter I or X missing");
               dErrorOccured = 1;
