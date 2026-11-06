@@ -74,6 +74,5 @@ class TestPointNetCDFReferenceTime:
         assert status == 0
         temporal_domain = re.search(r"<temporalDomain>(.*)</temporalDomain>", data.decode(), re.DOTALL)
         assert temporal_domain is not None
-        assert "2020-12-20T12:00:00Z" in temporal_domain.group(1)
-        assert "06:00:00Z" not in temporal_domain.group(1)
-        assert "09:00:00Z" not in temporal_domain.group(1)
+        time_positions = re.findall(r"<gml:timePosition>(.*?)</gml:timePosition>", temporal_domain.group(1))
+        assert time_positions == ["2020-12-20T12:00:00Z", "2020-12-20T12:10:00Z"]
