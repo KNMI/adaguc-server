@@ -2,9 +2,10 @@
 Creates point timeseries NetCDF files with a forecast reference time, in two layouts:
 - dimension/: reference_time is a dimension of the point variables, ta(station, reference_time, time)
 - scalar/: forecast_reference_time is a scalar variable, ta(station, time)
+- scalar_frt/: like scalar/, but the scalar variable is named frt. Only its standard_name tells it is a reference time.
 
 Each file has one constant temperature, so the selected file can be recognized in the rendered image.
-Usage: python3 create_point_reference_time.py <outputdir>
+Usage: python3 create_point_reference_time.py <outputdir> [layout ...]
 """
 
 import datetime
@@ -74,7 +75,7 @@ def create_file(filename, layout, reftime, time, value):
         ta = ncfile.createVariable("ta", "f8", ("station", "reference_time", "time"))
         ta[:] = np.full((len(STATIONS), 1, 1), value)
     else:
-        reftimevar = ncfile.createVariable("forecast_reference_time", "f8", ())
+        reftimevar = ncfile.createVariable("frt" if layout == "scalar_frt" else "forecast_reference_time", "f8", ())
         reftimevar.assignValue(seconds(reftime))
         ta = ncfile.createVariable("ta", "f8", ("station", "time"))
         ta[:] = np.full((len(STATIONS), 1), value)
@@ -87,7 +88,8 @@ def create_file(filename, layout, reftime, time, value):
 
 def main():
     outputdir = sys.argv[1] if len(sys.argv) > 1 else "."
-    for layout in ("dimension", "scalar"):
+    layouts = sys.argv[2:] if len(sys.argv) > 2 else ("dimension", "scalar", "scalar_frt")
+    for layout in layouts:
         os.makedirs(os.path.join(outputdir, layout), exist_ok=True)
         for reftime, time, value in FILES:
             filename = f"points_ref{reftime[11:13]}_t{time[11:13]}{time[14:16]}.nc"

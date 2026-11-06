@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 9.2.1, of Nov  5 2026 13:28:54 </Keyword>
+            <Keyword>ADAGUCServer version 9.2.1, of Nov  5 2026 16:03:59 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.netcdfpoint_reference_time&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -168,6 +168,44 @@
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
        <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.netcdfpoint_reference_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=ta_reftime_scalar&amp;format=image/png&amp;STYLE=values/point"/>
+    </LegendURL>
+  </Style>
+</Layer>
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>ta_reftime_scalar_frt</Name>
+<Title>Temperature, scalar frt</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>4.150300</westBoundLongitude>
+  <eastBoundLongitude>5.173500</eastBoundLongitude>
+  <southBoundLatitude>52.139702</southBoundLatitude>
+  <northBoundLatitude>52.994999</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="4.150300" miny="52.139702" maxx="5.173500" maxy="52.994999" />
+<BoundingBox CRS="EPSG:25831" minx="577204.557542" miny="5777200.361972" maxx="648738.264405" maxy="5873924.178815" />
+<BoundingBox CRS="EPSG:25832" minx="168200.656570" miny="5783483.625601" maxx="243225.051661" maxy="5882723.074918" />
+<BoundingBox CRS="EPSG:28992" minx="70327.039698" miny="461300.263620" maxx="140651.205481" maxy="557159.486184" />
+<BoundingBox CRS="EPSG:3035" minx="3236486.419328" miny="3921002.145933" maxx="3336526.280821" maxy="3997182.571049" />
+<BoundingBox CRS="EPSG:3067" minx="-1052515.799846" miny="6004583.844612" maxx="-954412.220275" maxy="6119658.230891" />
+<BoundingBox CRS="EPSG:32661" minx="-2345725.689931" miny="2307708.743978" maxx="-2234381.644556" maxy="2392892.925722" />
+<BoundingBox CRS="EPSG:3411" minx="3138061.617312" miny="-2780754.265043" maxx="3265034.854136" maxy="-2656986.001355" />
+<BoundingBox CRS="EPSG:3412" minx="2588305.709071" miny="35617688.478033" maxx="3304836.236299" maxy="36554264.006427" />
+<BoundingBox CRS="EPSG:3575" minx="-422637.142201" miny="-4132080.115243" maxx="-341320.299713" maxy="-4035513.259281" />
+<BoundingBox CRS="EPSG:3857" minx="462009.285527" miny="6825424.862569" maxx="575911.392413" maxy="6982072.911716" />
+<BoundingBox CRS="EPSG:40000" minx="309566.140823" miny="-4371957.434538" maxx="395264.512799" maxy="-4259941.292309" />
+<BoundingBox CRS="EPSG:4258" minx="52.139702" miny="4.150300" maxx="52.994999" maxy="5.173500" />
+<BoundingBox CRS="EPSG:4326" minx="52.139702" miny="4.150300" maxx="52.994999" maxy="5.173500" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:5041" minx="2307708.743978" miny="-2345725.689931" maxx="2392892.925722" maxy="-2234381.644556" />
+<BoundingBox CRS="EPSG:54030" minx="332788.214320" miny="5547246.680416" maxx="417596.806871" maxy="5634733.949875" />
+<BoundingBox CRS="EPSG:7399" minx="302837.768163" miny="6095669.472291" maxx="382184.537080" maxy="6183411.293354" />
+<BoundingBox CRS="EPSG:900913" minx="462009.285527" miny="6825424.862569" maxx="575911.392413" maxy="6982072.911716" />
+<Dimension name="time" units="ISO8601" default="2020-12-20T12:10:00Z" multipleValues="1" nearestValue="0" current="1">2020-12-20T12:00:00Z,2020-12-20T12:10:00Z</Dimension>
+<Dimension name="reference_time" units="ISO8601" default="2020-12-20T09:00:00Z" multipleValues="1" nearestValue="0" current="1">2020-12-20T06:00:00Z,2020-12-20T09:00:00Z</Dimension>
+   <Style>
+    <Name>values/point</Name>
+    <Title>values/point</Title>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.netcdfpoint_reference_time&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=ta_reftime_scalar_frt&amp;format=image/png&amp;STYLE=values/point"/>
     </LegendURL>
   </Style>
 </Layer>
