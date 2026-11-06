@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <memory>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
@@ -225,10 +227,19 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   if (!closed) {
     int followedDx = firstFollowed.x - lineX;
     int followedDy = firstFollowed.y - lineY;
+    // Candidates at 90 degrees or more from the followed direction, most opposite first. Perpendicular ones count too,
+    // so the second arm is found at an apex (followed (-1,1), other (1,1)) or a right-angle corner.
+    std::vector<std::pair<int, i4point>> candidates;
     for (const auto &other: firstCleared) {
-      if ((other.x - lineX) * followedDx + (other.y - lineY) * followedDy >= 0) continue;
+      int dot = (other.x - lineX) * followedDx + (other.y - lineY) * followedDy;
+      if (dot <= 0) candidates.push_back({dot, other});
+    }
+    std::stable_sort(candidates.begin(), candidates.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
+    for (const auto &[dot, other]: candidates) {
       std::vector<i4point> otherHalf = {other};
       walkLine(other.x, other.y, otherHalf, nullptr, nullptr, false);
+      // A neighbour with no continuation is just a thick part of the line: try the next one.
+      if (otherHalf.back().x == other.x && otherHalf.back().y == other.y) continue;
       // Without the neighbour itself, which would put a kink at the join.
       lineSegments.insert(lineSegments.begin(), otherHalf.rbegin(), otherHalf.size() > 1 ? otherHalf.rend() - 1 : otherHalf.rend());
       break;

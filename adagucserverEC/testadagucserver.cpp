@@ -695,6 +695,49 @@ TEST(smoothRasterField, linearFieldUnchangedInInterior) {
   CHECK(differences == 0);
 }
 
+TEST(smoothRasterField, infAndHugeValuesOnlyAffectTheirOwnWindow) {
+  // Inf is skipped like nodata, and a huge undeclared fill value only changes the cells whose window contains it.
+  std::vector<float> grid(200, 1);
+  grid[10] = INFINITY;
+  grid[100] = 9.96921e36f;
+  auto smoothed = smoothGrid(grid, 200, 1, 2);
+  int wrongOutsideWindows = 0;
+  for (int x = 0; x < 200; x++) {
+    bool nearHuge = x >= 98 && x <= 102;
+    if (!nearHuge && smoothed[x] != 1) wrongOutsideWindows++;
+  }
+  CHECK(wrongOutsideWindows == 0);
+}
+
+TEST(smoothRasterField, matchesBruteForceAcrossTileBorders) {
+  // Grid spans several 64x64 tiles, does not divide evenly, and contains nodata.
+  const int width = 150, height = 97, r = 3;
+  const float nodata = -9999;
+  std::vector<float> grid(width * height);
+  for (int i = 0; i < width * height; i++) {
+    grid[i] = (i * 7919) % 13 == 0 ? nodata : (float)((i * 31) % 101) / 7.f;
+  }
+  auto smoothed = smoothGrid(grid, width, height, r, nodata);
+  int mismatches = 0;
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      double sum = 0;
+      int count = 0;
+      for (int sy = std::max(0, y - r); sy <= std::min(height - 1, y + r); sy++) {
+        for (int sx = std::max(0, x - r); sx <= std::min(width - 1, x + r); sx++) {
+          float v = grid[sx + sy * width];
+          if (v == nodata) continue;
+          sum += v;
+          count++;
+        }
+      }
+      float expected = count > 0 ? (float)(sum / count) : nodata;
+      if (std::fabs(smoothed[x + y * width] - expected) > 1e-4) mismatches++;
+    }
+  }
+  CHECK(mismatches == 0);
+}
+
 TEST(CT, isSafeFloatFormat) {
   for (const char *safe: {"", " ", "%f", "%2.2f", "%.1f", "%0.0f", "%+08.3e", "%g", "%G", "%a", "%.1f degC", "100%%", "%% %5.1f %%"}) {
     CHECK(CT::isSafeFloatFormat(safe));
