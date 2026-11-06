@@ -77,6 +77,10 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         xmleDim->elementValue = (record.get("ogcname"));
         xmleDim->attr.name = (record.get("ncname"));
         xmleDim->attr.units = (record.get("units"));
+        // Rows stored before reference times were advertised as ISO8601 have empty units
+        if (xmleDim->elementValue == "reference_time" && xmleDim->attr.units.empty()) {
+          xmleDim->attr.units = "ISO8601";
+        }
         if (CAUTOCONFIGURE_DEBUG) {
           CDBDebug("[OK] From DB: Retrieved dim %s-%s for layer %s", xmleDim->elementValue.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
         }
@@ -211,11 +215,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
           try {
             if (cdfObject->variables[j]->getAttributeThrows("standard_name")->toString() == "forecast_reference_time") {
               CDBDebug("Found forecast_reference_time variable with name [%s]", cdfObject->variables[j]->name.c_str());
-              std::string units = "";
+              // The variable must have units, but reference times are always advertised as ISO8601
               try {
-                cdfObject->variables[j]->getAttributeThrows("units")->toString();
+                cdfObject->variables[j]->getAttributeThrows("units");
               } catch (int e) {
-                CDBError("No units found for forecast_reference_time variable");
+                CDBWarning("No units found for forecast_reference_time variable [%s], it is not added as reference_time dimension", cdfObject->variables[j]->name.c_str());
                 throw(e);
               }
 
@@ -232,7 +236,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 CServerConfig::XMLE_Dimension *xmleDim = addXmlObj(dataSource->cfgLayer->Dimension);
                 xmleDim->elementValue = ("reference_time");
                 xmleDim->attr.name = (cdfObject->variables[j]->name);
-                xmleDim->attr.units = (units);
+                xmleDim->attr.units = ("ISO8601");
                 /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                     ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), xmleDim->attr.name.c_str(), "reference_time", xmleDim->attr.units.c_str());

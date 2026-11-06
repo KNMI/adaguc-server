@@ -237,15 +237,23 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   }
 }
 
-bool isLayerDimATimeDim(CServerConfig::XMLE_Dimension *cfgLayerDim) {
-  return (cfgLayerDim->attr.name == ("time") || (CT::indexOf(cfgLayerDim->attr.name, "time") >= 0 && cfgLayerDim->attr.units == ("ISO8601")));
+// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units.
+// Their values are stored as timestamps (CDBFileScanner, for standard_name time or forecast_reference_time), so they are ordered
+// by value and returned as ISO8601. Autoconfigure names them time or reference_time with ISO8601 units, whatever the NetCDF name.
+bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
+  const auto &name = cfgDim->attr.name;
+  const auto &type = cfgDim->attr.type;
+  const auto &serviceName = cfgDim->elementValue;
+  bool isIso8601 = cfgDim->attr.units == "ISO8601";
+  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" || (CT::indexOf(name, "time") >= 0 && isIso8601) ||
+         ((serviceName == "time" || serviceName.ends_with("reference_time")) && isIso8601);
 }
 
 LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap,
                                         const std::string &tableName) {
   // Get all dimension values from the db
   auto srvParam = dataSource->srvParams;
-  bool isTimeDim = isLayerDimATimeDim(cfgLayerDim);
+  bool isTimeDim = isATimeDimension(cfgLayerDim);
 
   auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->elementValue);
   std::vector<std::string> queryValues;
@@ -422,13 +430,6 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
   dim.hidden = false;
   dim.type = "dimtype_none";
   return dim;
-}
-
-// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units
-bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
-  const auto &name = cfgDim->attr.name;
-  const auto &type = cfgDim->attr.type;
-  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" || (CT::indexOf(name, "time") >= 0 && cfgDim->attr.units == "ISO8601");
 }
 
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim, const std::string &tableName) {

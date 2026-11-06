@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Settings enablemetadatacache="false"/>
+  <Style name="values">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>40</Max>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#40404040" textcolor="#000000FF" discradius="6" dot="false" fontsize="12" textformat="%0.0f" textradius="12"/>
+  </Style>
+
+  <!-- reference_time is a dimension of the point variables -->
+  <Layer type="database">
+    <FilePath filter="^.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdfpoint_reference_time/dimension/</FilePath>
+    <Name>ta_reftime_dimension</Name>
+    <Title>Temperature, reference_time dimension</Title>
+    <Variable>ta</Variable>
+    <Styles>values</Styles>
+  </Layer>
+
+  <!-- forecast_reference_time is a scalar variable -->
+  <Layer type="database">
+    <FilePath filter="^.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdfpoint_reference_time/scalar/</FilePath>
+    <Name>ta_reftime_scalar</Name>
+    <Title>Temperature, scalar forecast_reference_time</Title>
+    <Variable>ta</Variable>
+    <Styles>values</Styles>
+  </Layer>
+
+  <!-- A scalar variable named frt with standard_name forecast_reference_time -->
+  <Layer type="database">
+    <FilePath filter="^.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdfpoint_reference_time/scalar_frt/</FilePath>
+    <Name>ta_reftime_scalar_frt</Name>
+    <Title>Temperature, scalar frt</Title>
+    <Variable>ta</Variable>
+    <Styles>values</Styles>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>
