@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <unistd.h>
 #include "CXMLSerializerInterface.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
