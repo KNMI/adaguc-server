@@ -1086,6 +1086,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
     StopWatch_Measure("start reading image data");
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
+      // True when the data is read from the file here, so it is not scaled yet
+      bool dataIsRead = false;
 
       if (dataSource->formatConverterActive == false) {
 
@@ -1093,6 +1095,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         if (dataSource->getDataObject(varNr)->cdfVariable->enableCache == false) {
           dataSource->getDataObject(varNr)->cdfVariable->freeData();
         }
+        dataIsRead = dataSource->getDataObject(varNr)->cdfVariable->data == nullptr;
 
         if (dataSource->getDataObject(varNr)->cdfVariable->readData(dataSource->getDataObject(varNr)->cdfVariable->getType(), start.data(), count.data(), stride.data()) != 0) {
           CDBError("Unable to read data for variable %s in file %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), dataSource->getFileName().c_str());
@@ -1224,7 +1227,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
       CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
       CDF::Attribute *add_offset = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
-      if (!appliedScaleOffset && scale_factor != nullptr) {
+      // The flag stays on the (cached) variable after an earlier read, for example of another level. Data read again from the
+      // file must be scaled again, but the _FillValue and nodata value were scaled already.
+      bool scaleNodata = !appliedScaleOffset;
+      if ((!appliedScaleOffset || dataIsRead) && scale_factor != nullptr) {
         appliedScaleOffset = true;
         dataSource->getDataObject(varNr)->cdfVariable->setAttribute("ADAGUC_SCALE_OFFSET_APPLIED", CDF_BYTE, appliedScaleOffset);
 
@@ -1257,9 +1263,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
             }
           }
           // Convert the nodata type and put it back
-          dataSource->getDataObject(varNr)->dfNodataValue = fNoData * fscale_factor + fadd_offset;
-          float d = dataSource->getDataObject(varNr)->dfNodataValue;
-          dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_FLOAT, d);
+          if (scaleNodata) {
+            dataSource->getDataObject(varNr)->dfNodataValue = fNoData * fscale_factor + fadd_offset;
+            float d = dataSource->getDataObject(varNr)->dfNodataValue;
+            dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_FLOAT, d);
+          }
         }
 
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_DOUBLE) {
@@ -1270,8 +1278,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           }
 
           // Convert the nodata type
-          dataSource->getDataObject(varNr)->dfNodataValue = dataSource->getDataObject(varNr)->dfNodataValue * dfscale_factor + dfadd_offset;
-          dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_DOUBLE, dataSource->getDataObject(varNr)->dfNodataValue);
+          if (scaleNodata) {
+            dataSource->getDataObject(varNr)->dfNodataValue = dataSource->getDataObject(varNr)->dfNodataValue * dfscale_factor + dfadd_offset;
+            dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_DOUBLE, dataSource->getDataObject(varNr)->dfNodataValue);
+          }
         }
       }
 

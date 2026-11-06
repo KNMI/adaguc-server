@@ -2,13 +2,18 @@ import json
 import logging
 import os
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
+import netCDF4
+import numpy as np
 import pytest
+from pyproj import CRS
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
 from main import app
+from routers.netcdf_to_covjson import get_epsg_axis_order
+from routers.utils.native_grid import get_collection_native_crs_wkt
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +40,8 @@ def setup_test_data():
         "adaguc_tests_solarterminator.xml",
         "adaguc.tests.multi_reftime_temporal_extent.xml",
         "adaguc.tests.arcus_uwcw_manymodelruns.xml",
+        "adaguc.tests.rotatedpole_edr.xml",
+        "adaguc.tests.lambert_edr.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -79,8 +86,10 @@ def test_collections(client: TestClient):
     assert collection_ids == [
         "adaguc.tests.arcus_uwcw.hagl_member",
         "adaguc.tests.arcus_uwcw_manymodelruns.hagl",
+        "adaguc.tests.lambert_edr.lambert",
         "adaguc.tests.members.mycollection",
         "adaguc.tests.multi_reftime_temporal_extent.gl",
+        "adaguc.tests.rotatedpole_edr.rotatedpole",
         "adaguc_ewclocalclimateinfo_test",
         "adaguc_tests_solarterminator",
         "adaguc_tests_uwcwdini_windcomponents",
@@ -88,7 +97,7 @@ def test_collections(client: TestClient):
         "testcollection.testcollection",
     ]
 
-    coll_5d = colls["collections"][7]
+    coll_5d = next(coll for coll in colls["collections"] if coll["id"] == "netcdf_5d.data_5d")
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(ext_name in coll_5d["extent"] for ext_name in ("spatial", "temporal", "vertical", "custom"))
     assert list(coll_5d["extent"]) == [
@@ -1201,3 +1210,240 @@ def test_edr_untyped_or_named_height():
         with pytest.raises(EdrException) as exc:
             convert([sample], {"data": layer}, "collection")
         assert exc.value.status_code == 400
+
+
+ROTATED_POLE_CUBE_URL = "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?bbox=4,51,7,53&parameter-name=pr_adjust"
+# With crs=native the bbox is in the coordinates of the native grid, here rotated degrees
+NATIVE_BBOX = (-1.0, -1.5, 0.5, 0.2)
+ROTATED_POLE_NATIVE_CUBE_URL = (
+    "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?bbox=" + ",".join(str(v) for v in NATIVE_BBOX) + "&parameter-name=pr_adjust&crs=native"
+)
+
+
+def test_cube_native_grid(client: TestClient):
+    """crs=native returns the cells of the rotated pole grid of the data, with its WKT, instead of resampling to EPSG:4326"""
+    collection = client.get("/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole").json()
+    assert collection["crs"] == ["EPSG:4326", "native"]
+    crs_details = collection["data_queries"]["cube"]["link"]["variables"]["crs_details"]
+    assert [crs_detail["crs"] for crs_detail in crs_details] == ["EPSG:4326", "native"]
+    # A CF rotated pole, not the PROJ-only ob_tran method
+    wkt = crs_details[1]["wkt"]
+    assert "Pole rotation (netCDF CF convention)" in wkt and "ob_tran" not in wkt
+    # The same pole as the grid_mapping of the file
+    cf = CRS.from_wkt(wkt).to_cf()
+    assert cf["grid_north_pole_latitude"] == pytest.approx(37.25)
+    assert cf["grid_north_pole_longitude"] == pytest.approx(-174.55, abs=1e-4)
+
+    resp = client.get(ROTATED_POLE_NATIVE_CUBE_URL)
+    assert resp.status_code == 200, resp.text
+    coverage = resp.json()
+    system = coverage["domain"]["referencing"][0]["system"]
+    assert "id" not in system
+    assert system["wkt"] == crs_details[1]["wkt"]
+
+    # The x and y values are cell centers of the source grid, and every value is the value of that source cell
+    source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "test_rotated_pole_RACMO.nc"))
+    source_x, source_y = source.variables["x"][:], source.variables["y"][:]
+    x = coverage["domain"]["axes"]["x"]["values"]
+    y = coverage["domain"]["axes"]["y"]["values"]
+    columns = [int(np.argmin(np.abs(source_x - value))) for value in x]
+    rows = [int(np.argmin(np.abs(source_y - value))) for value in y]
+    assert np.allclose(source_x[columns], x) and np.allclose(source_y[rows], y)
+    assert 1 < len(x) < len(source_x) and 1 < len(y) < len(source_y)
+    # Exactly the cells that intersect the native bbox
+    half_x, half_y = abs(source_x[1] - source_x[0]) / 2, abs(source_y[1] - source_y[0]) / 2
+    intersecting_x = [v for v in source_x if v + half_x > NATIVE_BBOX[0] and v - half_x < NATIVE_BBOX[2]]
+    intersecting_y = [v for v in source_y if v + half_y > NATIVE_BBOX[1] and v - half_y < NATIVE_BBOX[3]]
+    assert np.allclose(sorted(x), sorted(intersecting_x)) and np.allclose(sorted(y), sorted(intersecting_y))
+    expected = source.variables["pr_adjust"][0][rows][:, columns].astype(float).filled(np.nan).flatten()
+    values = np.array([np.nan if value is None else value for value in coverage["ranges"]["pr_adjust"]["values"]])
+    assert np.allclose(values, expected, equal_nan=True)
+    assert np.count_nonzero(~np.isnan(values)) > 10
+
+
+def test_cube_native_grid_errors(client: TestClient):
+    resp = client.get(ROTATED_POLE_CUBE_URL + "&crs=EPSG:3857")
+    assert resp.status_code == 400
+    # Outside the native grid, and an inverted bbox
+    for bbox in ("100,0,101,1", "0.5,0.2,-1,-1.5"):
+        resp = client.get(ROTATED_POLE_CUBE_URL.replace("bbox=4,51,7,53", f"bbox={bbox}") + "&crs=native")
+        assert resp.status_code == 400
+    # The default is still EPSG:4326
+    coverage = client.get(ROTATED_POLE_CUBE_URL).json()
+    assert coverage["domain"]["referencing"][0]["system"]["id"] == "http://www.opengis.net/def/crs/EPSG/0/4326"
+
+
+def test_collection_with_trailing_slash(client: TestClient):
+    """Slash redirects are disabled, so /collections/{id}/ has its own route"""
+    resp = client.get("/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/")
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["id"] == "adaguc.tests.rotatedpole_edr.rotatedpole"
+
+
+def native_cells_in_bbox(centers, bbox_min: float, bbox_max: float) -> list:
+    """The cell centers of a regular axis whose cells intersect [bbox_min, bbox_max]"""
+    half = abs(float(centers[1]) - float(centers[0])) / 2
+    return [float(v) for v in centers if v + half > bbox_min and v - half < bbox_max]
+
+
+def range_values(coverage: dict, name: str) -> np.ndarray:
+    return np.array([np.nan if value is None else value for value in coverage["ranges"][name]["values"]], dtype=float)
+
+
+LAMBERT_FILE = os.path.join("data", "datasets", "test_lambert_two_parameters.nc")
+LAMBERT_BBOX = (100000, 100000, 400000, 450000)  # metres in the Lambert conformal conic grid
+LAMBERT_CUBE_URL = "/edr/collections/adaguc.tests.lambert_edr.lambert/cube?crs=native&bbox=" + ",".join(str(v) for v in LAMBERT_BBOX)
+
+
+def test_cube_native_grid_projected_levels(client: TestClient):
+    """crs=native on a projected grid in metres (Lambert conformal conic), over all levels and times"""
+    collection = client.get("/edr/collections/adaguc.tests.lambert_edr.lambert").json()
+    assert collection["crs"] == ["EPSG:4326", "native"]
+    wkt = collection["data_queries"]["cube"]["link"]["variables"]["crs_details"][1]["wkt"]
+    source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], LAMBERT_FILE))
+    assert CRS.from_wkt(wkt).equals(CRS.from_proj4(source.variables["crs"].proj4_params))
+
+    resp = client.get(LAMBERT_CUBE_URL + "&parameter-name=wspeed&z=10/600")
+    assert resp.status_code == 200, resp.text
+    coverage = resp.json()
+    assert coverage["domain"]["referencing"][0]["system"] == {"type": "ProjectedCRS", "wkt": wkt}
+    axes = coverage["domain"]["axes"]
+    assert axes["z"]["values"] == [10, 100, 200, 300, 600]
+    assert len(axes["t"]["values"]) == 4
+
+    # Exactly the source cells that intersect the bbox
+    source_x, source_y = source.variables["x"][:], source.variables["y"][:]
+    x, y = axes["x"]["values"], axes["y"]["values"]
+    assert np.allclose(sorted(x), sorted(native_cells_in_bbox(source_x, LAMBERT_BBOX[0], LAMBERT_BBOX[2])))
+    assert np.allclose(sorted(y), sorted(native_cells_in_bbox(source_y, LAMBERT_BBOX[1], LAMBERT_BBOX[3])))
+
+    # Every value of every level and time is the value of its source cell
+    rng = coverage["ranges"]["wspeed"]
+    assert rng["axisNames"] == ["t", "z", "y", "x"] and rng["shape"] == [4, 5, len(y), len(x)]
+    columns = [int(np.argmin(np.abs(source_x - value))) for value in x]
+    rows = [int(np.argmin(np.abs(source_y - value))) for value in y]
+    expected = source.variables["wspeed"][:][:, :, rows][:, :, :, columns].astype(float).flatten()
+    assert np.allclose(range_values(coverage, "wspeed"), expected)
+
+
+def test_cube_native_grid_two_parameters(client: TestClient):
+    """Two parameters with crs=native give two coverages on the same native grid, each with its own values"""
+    resp = client.get(LAMBERT_CUBE_URL + "&parameter-name=wspeed,wspeed_kts&z=100/300")
+    assert resp.status_code == 200, resp.text
+    collection = resp.json()
+    assert collection["type"] == "CoverageCollection"
+    speed, speed_kts = collection["coverages"]
+    assert list(speed["ranges"]) == ["wspeed"] and list(speed_kts["ranges"]) == ["wspeed_kts"]
+    assert speed["domain"]["axes"] == speed_kts["domain"]["axes"]
+    assert speed["domain"]["axes"]["z"]["values"] == [100, 200, 300]
+    assert speed["domain"]["referencing"] == speed_kts["domain"]["referencing"]
+    assert speed["domain"]["referencing"][0]["system"]["type"] == "ProjectedCRS"
+    assert np.allclose(range_values(speed, "wspeed") * 1.943844, range_values(speed_kts, "wspeed_kts"), rtol=1e-5)
+
+
+def test_cube_native_grid_instance(client: TestClient):
+    """crs=native on the instance route gives the same native cells as on the collection route"""
+    collection_url = "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member"
+    bbox = (400000, 6600000, 800000, 7100000)  # metres in the Mercator grid
+    query = "/cube?crs=native&parameter-name=wind_speed_hagl_kts&bbox=" + ",".join(str(v) for v in bbox)
+
+    instance_id = client.get(collection_url + "/instances").json()["instances"][0]["id"]
+    resp = client.get(f"{collection_url}/instances/{instance_id}{query}")
+    assert resp.status_code == 200, resp.text
+    coverage = resp.json()
+    # This Mercator grid has an EPSG code, so it is referenced by its id instead of WKT
+    assert coverage["domain"]["referencing"][0]["system"] == {"type": "ProjectedCRS", "id": "http://www.opengis.net/def/crs/EPSG/0/3857"}
+
+    source = netCDF4.Dataset(
+        os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "arcustest_uwcw", "uwcw_ha43ens_nl_2km_wind-speed-hagl_geoweb_nc_20240605T03_5x5.nc")
+    )
+    axes = coverage["domain"]["axes"]
+    assert np.allclose(sorted(axes["x"]["values"]), native_cells_in_bbox(source.variables["x"][:], bbox[0], bbox[2]))
+    assert np.allclose(sorted(axes["y"]["values"]), sorted(native_cells_in_bbox(source.variables["y"][:], bbox[1], bbox[3])))
+
+    # The collection route uses the same (only) instance
+    assert client.get(collection_url + query).json() == coverage
+
+
+def test_cube_native_grid_bbox_on_cell_edges(client: TestClient):
+    """A native bbox exactly on cell edges selects only the cells inside it, not the neighbouring ones"""
+    source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "test_rotated_pole_RACMO.nc"))
+    source_x, source_y = source.variables["x"][:], source.variables["y"][:]
+    cellsize_x = (source_x[-1] - source_x[0]) / (len(source_x) - 1)
+    cellsize_y = (source_y[-1] - source_y[0]) / (len(source_y) - 1)
+    # The left edge of column 2 to the right edge of column 5, and the bottom edge of row 3 to the top edge of row 9
+    bbox = (
+        source_x[0] + (2 - 0.5) * cellsize_x,
+        source_y[0] + (3 - 0.5) * cellsize_y,
+        source_x[0] + (5 + 0.5) * cellsize_x,
+        source_y[0] + (9 + 0.5) * cellsize_y,
+    )
+    resp = client.get(
+        "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?parameter-name=pr_adjust&crs=native&bbox=" + ",".join(repr(float(v)) for v in bbox)
+    )
+    assert resp.status_code == 200, resp.text
+    axes = resp.json()["domain"]["axes"]
+    assert np.allclose(sorted(axes["x"]["values"]), source_x[2:6])
+    assert np.allclose(sorted(axes["y"]["values"]), sorted(source_y[3:10]))
+
+
+def test_cube_native_grid_not_available(client: TestClient):
+    """A collection on a lat/lon grid does not offer crs=native, and refuses it"""
+    collection = client.get("/edr/collections/netcdf_5d.data_5d").json()
+    assert collection["crs"] == ["EPSG:4326"]
+    assert [crs_detail["crs"] for crs_detail in collection["data_queries"]["cube"]["link"]["variables"]["crs_details"]] == ["EPSG:4326"]
+
+    resp = client.get("/edr/collections/netcdf_5d.data_5d/cube?bbox=4,51,7,53&crs=native")
+    assert resp.status_code == 400
+    assert "crs=native is not available" in resp.json()["description"]
+
+
+@pytest.mark.parametrize(
+    "crs", ["EPSG:4326", "CRS84", "OGC:CRS84", "http://www.opengis.net/def/crs/EPSG/0/4326", "http://www.opengis.net/def/crs/OGC/1.3/CRS84"]
+)
+def test_cube_explicit_default_crs(client: TestClient, crs: str):
+    """Asking for EPSG:4326 explicitly, in any of its spellings, gives the same as not asking for a crs"""
+    resp = client.get(ROTATED_POLE_CUBE_URL + "&crs=" + quote(crs, safe=""))
+    assert resp.status_code == 200, resp.text
+    assert resp.json() == client.get(ROTATED_POLE_CUBE_URL).json()
+
+
+def test_native_crs_is_only_for_cube_queries(client: TestClient):
+    """The collection lists crs=native, which only cube queries support. Position and trajectory coords are lon/lat, so they refuse it."""
+    rotated = "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole"
+    assert client.get(rotated).json()["crs"] == ["EPSG:4326", "native"]
+    resp = client.get(rotated + "/position", params={"coords": "POINT(5 52)", "parameter-name": "pr_adjust", "crs": "native"})
+    assert resp.status_code == 400
+    assert "position" in resp.json()["description"]
+
+    trajectory = "/edr/collections/testcollection.testcollection/instances/202406010000/trajectory"
+    params = {"coords": "LINESTRING(5.1 52.1,8.1 52.1)", "parameter-name": "testdata", "datetime": "2024-06-01T01:00:00Z"}
+    assert client.get(trajectory, params=params | {"crs": "native"}).status_code == 400
+    # Like the cube, position and trajectory accept every spelling of EPSG:4326
+    assert client.get(trajectory, params=params | {"crs": "CRS84"}).json() == client.get(trajectory, params=params).json()
+    position = {"coords": "POINT(5 52)", "parameter-name": "pr_adjust"}
+    assert client.get(rotated + "/position", params=position | {"crs": "CRS84"}).json() == client.get(rotated + "/position", params=position).json()
+
+
+def test_cube_native_grid_refuses_resolution(client: TestClient):
+    """crs=native returns the cells of the native grid, so a resolution cannot be applied"""
+    resp = client.get(ROTATED_POLE_NATIVE_CUBE_URL + "&resolution_x=0.5&resolution_y=0.5")
+    assert resp.status_code == 400
+    assert "resolution" in resp.json()["description"]
+
+
+def test_collection_native_crs_needs_one_grid():
+    """crs=native is only advertised when all parameters share one native grid"""
+    rotated = {"projstring": "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs"}
+    lambert = {"projstring": "+proj=lcc +lat_0=52 +lon_0=5 +lat_1=52 +lat_2=52 +a=6371229 +b=6371229 +no_defs"}
+    assert get_collection_native_crs_wkt([rotated, rotated]) is not None
+    assert get_collection_native_crs_wkt([rotated, lambert]) is None
+    assert get_collection_native_crs_wkt([rotated, None]) is None
+    assert get_collection_native_crs_wkt([]) is None
+
+
+def test_covjson_axis_order_follows_epsg():
+    """Geographic EPSG CRSs have latitude first, like EPSG:4326; projected ones and CRSs without EPSG code have x first"""
+    assert get_epsg_axis_order(4258) == ["y", "x"]
+    assert get_epsg_axis_order(28992) == ["x", "y"]
+    assert get_epsg_axis_order(None) == ["x", "y"]

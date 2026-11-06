@@ -59,6 +59,7 @@ struct f8box {
   void toArray(double box[4]);
   f8box swapXY();
   double get(size_t index);
+  bool operator==(const f8box &) const = default;
 };
 /**
  * Custom comparison operator for the BBOX
@@ -83,6 +84,7 @@ struct GeoParameters {
   double cellsizeX = 0;
   double cellsizeY = 0;
   std::string crs;
+  bool operator==(const GeoParameters &) const = default;
 };
 
 #endif

@@ -7,6 +7,8 @@
 #include "CGenericDataWarper.h"
 
 #include "CRequest.h"
+#include "utils/serverutils.h"
+#include <memory>
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "CCDFObject.h"
 #include "CImageWarper.h"
@@ -516,6 +518,20 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double dfNoData = NAN;
     if (dataSource->getDataObject(j)->hasNodataValue == 1) {
       dfNoData = dataSource->getDataObject(j)->dfNodataValue;
+      // Only the header is read here. CDataReader applies scale_factor and add_offset to the nodata value when it reads the data,
+      // and that value becomes the _FillValue, so fill with it too: otherwise cells without data do not match the _FillValue.
+      CDF::Attribute *scaleFactor = sourceVar->getAttributeNE("scale_factor");
+      if (scaleFactor != nullptr && sourceVar->getAttributeNE("ADAGUC_SCALE_OFFSET_APPLIED") == nullptr) {
+        double dfScaleFactor = 1, dfAddOffset = 0;
+        scaleFactor->getData(&dfScaleFactor, 1);
+        CDF::Attribute *addOffset = sourceVar->getAttributeNE("add_offset");
+        if (addOffset != nullptr) addOffset->getData(&dfAddOffset, 1);
+        if (destVar->getType() == CDF_FLOAT) {
+          dfNoData = (float)dfNoData * (float)dfScaleFactor + (float)dfAddOffset;
+        } else {
+          dfNoData = dfNoData * dfScaleFactor + dfAddOffset;
+        }
+      }
     }
 
     if (CNetCDFDataWriter_DEBUG) {
@@ -556,6 +572,9 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   }
   int status;
   bool verbose = false;
+  // The projection grid of the warper only depends on the source and destination grid, so data sources with the same source grid (like levels) share it.
+  std::unique_ptr<GenericDataWarper> genericDataWarper;
+  GeoParameters genericDataWarperSourceGeo;
   for (size_t i = 0; i < dataSources.size(); i++) {
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
@@ -897,26 +916,29 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Warping from %dx%d to %lux%lu", sourceGeo.width, sourceGeo.height, settings.width, settings.height);
       }
 
+      if (!genericDataWarper || !(genericDataWarperSourceGeo == sourceGeo)) {
+        genericDataWarper = std::make_unique<GenericDataWarper>();
+        genericDataWarperSourceGeo = sourceGeo;
+      }
+
       if (drawFunctionMode == CNetCDFDataWriter_NEAREST) {
-        GenericDataWarper genericDataWarper;
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = srvParam->geoParams};
         auto dataType = variable->getType();
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE)                                                                                                                                                                             \
-    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
+    genericDataWarper->render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
         ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_AVG_RGB) {
-        GenericDataWarper genericDataWarper;
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = srvParam->geoParams};
         auto dataType = variable->getType();
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE)                                                                                                                                                                             \
-    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
+    genericDataWarper->render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
         ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
@@ -1104,7 +1126,7 @@ int CNetCDFDataWriter::end() {
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n", endPos);
     printf("%s%s\r\n\n", "Content-Type:application/netcdf", srvParam->getResponseHeaders(srvParam->getCacheControlOption()).c_str());
-    for (size_t j = 0; j < endPos; j++) putchar(getc(fp));
+    copyFileToStream(fp, stdout);
     fclose(fp);
     fclose(stdout);
   }

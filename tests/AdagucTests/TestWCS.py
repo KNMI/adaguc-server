@@ -218,6 +218,27 @@ class TestWCS:
         assert status == 0
         assert data[0:6] == b"\x89HDF\r\n"
 
+    def test_WCSGetCoverageNetCDF4_packed_data_levels(self):
+        """
+        Packed data (scale_factor 0.1) over several levels:
+        - Every level must be scaled. Only the first level was: the variable is reused for the next level and was marked as scaled.
+        - Cells outside the source grid must have the _FillValue. They got the unscaled _FillValue (-9999), while the _FillValue
+          attribute was scaled (-999.9), so they were not seen as nodata.
+        """
+        AdagucTestTools().cleanTempDir()
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=testdata_packed_fillvalue.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=packed&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-5,45,15,60&RESX=1&RESY=1&elevation=1/3",
+            env=self.env,
+        )
+        assert status == 0
+        values = netCDF4.Dataset("filename.nc", memory=data).variables["packed"][:]
+        assert values.shape == (3, 15, 20)
+        for level in range(3):
+            # The source grid covers 10 by 5 of the 20 by 15 cells, one of them is nodata. Level n has the values 10n to 10n + 4.9.
+            assert values[level].count() == 49
+            expected = [round(10 * level + i * 0.1, 1) for i in range(50) if i != 23]
+            assert sorted(round(float(value), 1) for value in values[level].compressed()) == expected
+
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         """
         Check if WCS GetCoverage for testdata.nc as TIFF file is OK

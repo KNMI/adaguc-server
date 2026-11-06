@@ -6,6 +6,9 @@ from starlette.middleware.gzip import GZipResponder
 from starlette.types import Message, Receive, Scope, Send
 from .is_br_encoding_needed import requires_encoding
 
+# The default level 9 is about ten times slower than 6 for a few percent smaller responses, e.g. 2.6s instead of 0.23s for 13MB of CoverageJSON
+GZIP_COMPRESSLEVEL = 6
+
 
 class MyBrotliResponder(BrotliResponder):
     """This middleware extends the BrotliResponder but makes it content type aware"""
@@ -49,7 +52,7 @@ class ContentTypeBasedBrotli(BrotliMiddleware):
             await br_responder(scope, receive, send)
             return
         if self.gzip_fallback and "gzip" in headers.get("Accept-Encoding", ""):
-            gzip_responder = GZipResponder(self.app, self.minimum_size)
+            gzip_responder = GZipResponder(self.app, self.minimum_size, compresslevel=GZIP_COMPRESSLEVEL)
             await gzip_responder(scope, receive, send)
             return
         await self.app(scope, receive, send)
