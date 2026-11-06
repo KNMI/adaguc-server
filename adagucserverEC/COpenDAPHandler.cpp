@@ -8,6 +8,7 @@
 #include "CDBFactory.h"
 #include "CAutoResource.h"
 #include "utils/LayerUtils.h"
+#include <unistd.h>
 #include <string>
 #include <vector>
 #include "CCDFObject.h"
@@ -415,6 +416,30 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v, CDFType type) {
   }
   return 0;
 }
+/**
+ * A fully buffered stream on stdout, flushed and closed when it goes out of scope. setvbuf may only be called before a stream is
+ * used, so stdout itself, which may already have been written to, cannot get a buffer.
+ */
+struct BufferedStdout {
+  FILE *stream = stdout;
+  BufferedStdout() {
+    fflush(stdout);
+    int fd = dup(STDOUT_FILENO);
+    FILE *buffered = fd < 0 ? nullptr : fdopen(fd, "w");
+    if (buffered == nullptr) {
+      if (fd >= 0) close(fd);
+      return;
+    }
+    setvbuf(buffered, nullptr, _IOFBF, 1 << 16);
+    stream = buffered;
+  }
+  ~BufferedStdout() {
+    if (stream != stdout) fclose(stream);
+  }
+  BufferedStdout(const BufferedStdout &) = delete;
+  BufferedStdout &operator=(const BufferedStdout &) = delete;
+};
+
 int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, CServerParams *srvParam) {
 
   if (COPENDAPHANDLER_DEBUG) {
@@ -484,25 +509,27 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     return 1;
   }
 
-  opendapoutstream = stdout;
+  // The data is written per value or byte. In fork mode stdout is unbuffered, which would make every one a write call.
+  BufferedStdout bufferedStdout;
+  opendapoutstream = bufferedStdout.stream;
 
   if (isDODRequest) {
     if (jsonWriter) {
-      printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
+      fprintf(opendapoutstream, "%s%c%c\n", "Content-Type: application/json", 13, 10);
     } else {
-      printf("%s%c%c", "XDAP: 2.0 ", 13, 10);
-      printf("%s%c%c\n", "Content-Type: application/octet-stream", 13, 10);
+      fprintf(opendapoutstream, "%s%c%c", "XDAP: 2.0 ", 13, 10);
+      fprintf(opendapoutstream, "%s%c%c\n", "Content-Type: application/octet-stream", 13, 10);
     }
   } else {
 
     if (jsonWriter) {
-      printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
+      fprintf(opendapoutstream, "%s%c%c\n", "Content-Type: application/json", 13, 10);
     } else {
-      printf("%s%c%c", "XDAP: 2.0 ", 13, 10);
+      fprintf(opendapoutstream, "%s%c%c", "XDAP: 2.0 ", 13, 10);
       if (isDDSRequest) {
-        printf("%s%c%c", "Content-Description: dods-dds ", 13, 10);
+        fprintf(opendapoutstream, "%s%c%c", "Content-Description: dods-dds ", 13, 10);
       }
-      printf("%s%c%c\n", "Content-Type: text/plain; charset=utf-8", 13, 10);
+      fprintf(opendapoutstream, "%s%c%c\n", "Content-Type: text/plain; charset=utf-8", 13, 10);
     }
   }
 

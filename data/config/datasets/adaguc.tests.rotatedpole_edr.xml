@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- A small rotated pole grid, for EDR cube requests with crs=native -->
+  <Layer type="database">
+    <Group collection="rotatedpole"/>
+    <Title>Precipitation on a rotated pole grid</Title>
+    <Name>pr_adjust</Name>
+    <FilePath>{ADAGUC_PATH}/data/datasets/test_rotated_pole_RACMO.nc</FilePath>
+    <Variable>pr_adjust</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+  </Layer>
+</Configuration>

@@ -34,6 +34,7 @@
 #include "CServerParams.h"
 #include "CDataSource.h"
 #include "CDataReader.h"
+#include "utils/serverutils.h"
 #include "gdalwarper.h"
 #include "CDebugger.h"
 #include "CTString.h"
@@ -570,7 +571,7 @@ int CGDALDataWriter::end() {
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n", endPos);
     printf("%s%s\r\n\n", mimeType.c_str(), srvParam->getResponseHeaders(srvParam->getCacheControlOption()).c_str());
-    for (size_t j = 0; j < endPos; j++) putchar(getc(fp));
+    copyFileToStream(fp, stdout);
     fclose(fp);
     fclose(stdout);
   }

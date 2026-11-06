@@ -11,7 +11,7 @@ from asyncio.subprocess import Process
 from subprocess import PIPE
 from typing import NamedTuple
 
-from adaguc.fork_settings import MAX_FORK_REQUEST_BYTES, get_fork_socket_path, is_fork_enabled
+from adaguc.fork_settings import FORK_EXIT_STATUS_MARKER, MAX_FORK_REQUEST_BYTES, get_fork_socket_path, is_fork_enabled
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
@@ -62,7 +62,7 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     Send a request to the ADAGUC fork server through a Unix socket.
 
     Environment variables required for request handling are serialized and written to the socket.
-    The response contains the normal ADAGUC output, followed by a 4-byte exit status appended by the fork server.
+    The response contains the normal ADAGUC output, followed by FORK_EXIT_STATUS_MARKER and a 4-byte exit status appended by the fork server.
     """
 
     data = [
@@ -100,12 +100,15 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
         except OSError:
             pass
 
-    if len(process_output) < 4:
+    # The response ends with the marker and the 4-byte exit status. Without the marker the connection was closed before the fork
+    # server wrote the status, for example because it was restarted while the child was running: the response is incomplete.
+    trailer_size = len(FORK_EXIT_STATUS_MARKER) + 4
+    if len(process_output) < trailer_size or process_output[-trailer_size:-4] != FORK_EXIT_STATUS_MARKER:
         raise RuntimeError("Invalid response from ADAGUC fork server: missing exit status")
 
-    # Status code is stored in the last 4 bytes from the received data. It is negative when the child was killed by a signal.
+    # The status is negative when the child was killed by a signal
     status_code = int.from_bytes(process_output[-4:], sys.byteorder, signed=True)
-    process_output = process_output[:-4]
+    process_output = process_output[:-trailer_size]
     return AdagucResponse(status_code=status_code, process_output=process_output, process_error=b"")
 
 

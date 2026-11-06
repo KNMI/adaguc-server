@@ -27,6 +27,8 @@
 #include "CStopWatch.h"
 #include "CDFCopyData.h"
 #include <cstring>
+#include <algorithm>
+#include <vector>
 #include "traceTimings/traceTimings.h"
 
 
@@ -35,6 +37,45 @@
 static const bool CCDFNETCDFIO_DEBUG = false;
 static const bool CCDFNETCDFIO_DEBUG_OPEN = false;
 static const bool CCDFNETCDFWRITER_DEBUG = false;
+
+// The chunk cache of a variable is not made larger than this
+static const size_t MAX_CHUNK_CACHE_BYTES = 256 * 1024 * 1024;
+// Files stay open during a request (see CDFObjectStore), and so do their chunk caches. All enlarged caches together stay below this.
+static const size_t MAX_TOTAL_CHUNK_CACHE_BYTES = 512 * 1024 * 1024;
+static size_t totalChunkCacheBytes = 0;
+
+/**
+ * Makes the chunk cache of a variable large enough for all chunks a read with start/count/stride touches. Otherwise reading part
+ * of these chunks again decompresses all of them again: for chunks with all levels, every level read decompresses the whole variable.
+ * Leaves the cache as it is when the chunks would not fit in MAX_CHUNK_CACHE_BYTES, or when the enlarged caches of this process
+ * would exceed MAX_TOTAL_CHUNK_CACHE_BYTES.
+ */
+static void fitChunkCacheToRead(int groupId, int varId, size_t numDims, const size_t *start, const size_t *count, const ptrdiff_t *stride) {
+  int storage;
+  std::vector<size_t> chunkSizes(numDims);
+  if (numDims == 0 || nc_inq_var_chunking(groupId, varId, &storage, chunkSizes.data()) != NC_NOERR || storage != NC_CHUNKED) return;
+  nc_type xtype;
+  size_t typeSize;
+  if (nc_inq_vartype(groupId, varId, &xtype) != NC_NOERR || nc_inq_type(groupId, xtype, nullptr, &typeSize) != NC_NOERR) return;
+  size_t numChunks = 1;
+  size_t chunkBytes = typeSize;
+  for (size_t i = 0; i < numDims; i++) {
+    if (chunkSizes[i] == 0 || count[i] == 0) return;
+    size_t last = start[i] + (count[i] - 1) * (stride != nullptr ? stride[i] : 1);
+    numChunks *= last / chunkSizes[i] - start[i] / chunkSizes[i] + 1;
+    chunkBytes *= chunkSizes[i];
+  }
+  size_t neededBytes = numChunks * chunkBytes;
+  size_t cacheBytes, cacheSlots;
+  float preemption;
+  if (neededBytes > MAX_CHUNK_CACHE_BYTES || nc_get_var_chunk_cache(groupId, varId, &cacheBytes, &cacheSlots, &preemption) != NC_NOERR || neededBytes <= cacheBytes) return;
+  // Counted until the process ends: a request is one process, and closing a file does not need to give its share back.
+  if (totalChunkCacheBytes + neededBytes > MAX_TOTAL_CHUNK_CACHE_BYTES) return;
+  // HDF5 advises about 100 hash slots per chunk in the cache
+  if (nc_set_var_chunk_cache(groupId, varId, neededBytes, std::max(cacheSlots, numChunks * 100 + 1), preemption) == NC_NOERR) {
+    totalChunkCacheBytes += neededBytes;
+  }
+}
 
 CDFNetCDFReader::CDFNetCDFReader() : CDFReader() {
   if (CCDFNETCDFIO_DEBUG) {
@@ -145,6 +186,10 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     CDBDebug("Setting variable size to %zu", totalVariableSize);
   }
   var->setSize(totalVariableSize);
+
+  if (useStartCount) {
+    fitChunkCacheToRead(varGroupId, var->id, var->dimensionlinks.size(), start, count, stride);
+  }
 
   if (CCDFNETCDFIO_DEBUG) {
     CDBDebug("Allocating data for variable %s, type: %s, size: %zu", var->name.c_str(), CDF::getCDFDataTypeName(var->currentType).c_str(), var->getSize());

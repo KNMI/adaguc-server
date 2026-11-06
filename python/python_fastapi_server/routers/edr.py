@@ -31,6 +31,7 @@ from .edr_instances import router as instances_router
 from .edr_trajectory import router as trajectory_router
 
 from .utils.edr_utils import generate_max_age, get_collectioninfo_from_md, get_instance, get_metadata
+from .utils.native_grid import EPSG_4326_CRS_DETAILS
 from .utils.utils import get_base_url
 
 logger = logging.getLogger(__name__)
@@ -56,10 +57,7 @@ async def edr_exception_handler(_, exc: EdrException):
     )
 
 
-DEFAULT_CRS_OBJECT = {
-    "crs": "EPSG:4326",
-    "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
-}
+DEFAULT_CRS_OBJECT = EPSG_4326_CRS_DETAILS
 
 
 @edrApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
@@ -95,6 +93,12 @@ async def rest_get_edr_collections(request: Request, response: Response):
 
 @edrApiApp.get(
     "/collections/{collection_name}",
+    response_model=Collection,
+    response_model_exclude_none=True,
+)
+# Slash redirects are disabled for the app, so the URL with a trailing slash needs its own route
+@edrApiApp.get(
+    "/collections/{collection_name}/",
     response_model=Collection,
     response_model_exclude_none=True,
 )
