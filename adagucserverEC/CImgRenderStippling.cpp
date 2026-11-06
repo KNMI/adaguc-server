@@ -158,6 +158,12 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
       }
     }
   }
+  // A negative distance would never end the stippling loops
+  if (xDistance < 0 || yDistance < 0) {
+    CDBWarning("Negative stippling distance, using the default of 22");
+    if (xDistance < 0) xDistance = 22;
+    if (yDistance < 0) yDistance = 22;
+  }
 
   double bboxWidth = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left);
   double bboxHeight = (dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom);

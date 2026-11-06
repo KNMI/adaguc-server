@@ -33,7 +33,9 @@ For WMS and WCS requests:
 | 400 Bad Request | Exit code 35. Only in [fork mode](/doc/fork_server.md) (`ADAGUC_FORK_ENABLE=TRUE`): the request is too large for the fork server, or a request value contains a newline. | Send a smaller request, for example with fewer coordinates. |
 | 400 Invalid host header | The host of the request is not in `ADAGUC_TRUSTED_HOSTS`. When the request comes from a proxy in `ADAGUC_TRUSTED_PROXIES`, this is the host from its `X-Forwarded-Host` header. Only checked when `EXTERNALADDRESS` is unset. | Add the host to `ADAGUC_TRUSTED_HOSTS`. See [Running adaguc-server behind a reverse proxy](tutorials/Running_adaguc_server_behind_a_reverse_proxy.md). |
 | 404 Not Found | Exit code 32 (`HTTP_STATUSCODE_404_NOT_FOUND`): something is not found, for example a layer or the requested time range. | Check the request parameters against GetCapabilities. |
-| 422 Unprocessable Entity | Exit code 33 (`HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY`): adaguc-server could not process the request. | Check the request parameters. The log has the details. |
+| 413 Content Too Large | The POST body, or the parameters after url encoding, are larger than 64 KB. Encoding makes characters like `<`, `>`, `"` and spaces three bytes. | Keep a `STYLESHEET` below about 20 KB. |
+| 415 Unsupported Media Type | The body of a POST request is not `application/x-www-form-urlencoded`. | Send the parameters form url encoded. |
+| 422 Unprocessable Entity | Exit code 33 (`HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY`): adaguc-server could not process the request. For a `STYLESHEET`: it is not enabled (`ADAGUC_STYLESHEET_ENABLE`), the XML is invalid or not allowed, or more than one layer is requested; the body says why. | Check the request parameters. The log has the details. For a `STYLESHEET`, see [Post a custom style with STYLESHEET](tutorials/Post_a_custom_style_with_STYLESHEET.md). |
 | 500 Internal Server Error | Exit code 34: the request took longer than `ADAGUC_MAX_PROC_TIMEOUT` seconds and was stopped. | Request less data, or raise `ADAGUC_MAX_PROC_TIMEOUT`. |
 | 500 Internal Server Error | Any other non-zero exit code: adaguc-server ran into an error. | See the log. |
 
@@ -58,6 +60,7 @@ OpenDAP requests return 500 for every non-zero exit code. The OGC API and EDR en
 | `ADAGUC_NUMPARALLELPROCESSES` | Number of parallel worker processes used by the adaguc-server. | `4` |
 | `ADAGUC_ONLINERESOURCE`   | Optional override for the [OnlineResource](configuration/OnlineResource.md) URL used by the CGI service. Can also be configured in the XML configuration file. | -|
 | `ADAGUC_PATH`             | Root directory of the adaguc-server code base. Available as`{ADAGUC_PATH}` substitution in configuration files. | Current working directory (`pwd`) |
+| `ADAGUC_STYLESHEET_ENABLE` | Allows clients to post their own style with the `STYLESHEET` parameter when set to `TRUE`. The posted XML is checked against an allowlist; still put a rate or concurrency limit in front of a public server, because a valid style can be expensive to render. | `FALSE` |
 | `ADAGUC_TMP`              | Directory used for temporary files. Available as `{ADAGUC_TMP}` substitution in configuration files. | -|
 | `ADAGUC_TRACE_TIMINGS`    | Enables timing measurements for internal operations such as database queries, file access, and image generation.<br>Results are returned in the `x-trace-timings` HTTP header. | `FALSE` |
 | `ADAGUCENV_ENABLECLEANUP` | Enables or disables automatic cleanup of files based on the retention period.<br>See also [environment.md](/doc/configuration/Environment.md). | -|

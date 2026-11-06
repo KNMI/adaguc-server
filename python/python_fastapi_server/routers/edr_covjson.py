@@ -9,6 +9,7 @@ KNMI
 """
 
 import itertools
+from collections import Counter
 import math
 from datetime import datetime, timezone
 from copy import deepcopy
@@ -28,7 +29,7 @@ from covjson_pydantic.unit import Unit as CovJsonUnit
 from pydantic import AwareDatetime
 
 from .utils.edr_exception import EdrException
-from .utils.edr_utils import DATETIME_ISO8601_FMT, get_param_metadata, numeric_vertical_coordinate
+from .utils.edr_utils import DATETIME_ISO8601_FMT, VOCAB_ENDPOINT_URL, get_param_metadata, numeric_vertical_coordinate
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
@@ -41,12 +42,35 @@ def try_numeric(values):
         return values
 
 
+def get_entry_param_metadata(dat: dict, param_metadata: dict) -> tuple[str, dict]:
+    """
+    Returns the parameter id and metadata for one GetFeatureInfo entry.
+
+    A layer can return several entries, for example the `convert_uv_components`
+    post-processor returns speed, direction and four wind components. The layer
+    metadata only describes the first variable, so for those entries the id,
+    unit and observed property are taken from the entry itself.
+    """
+    variable_name = dat.get("variablename", "")
+    param_id = f"{dat['layername']}.{variable_name}"
+    entry_metadata = dict(param_metadata)
+    if dat.get("units"):
+        entry_metadata["parameter_unit"] = dat["units"]
+    standard_name = dat.get("standard_name", "")
+    if standard_name:
+        entry_metadata["observed_property_id"] = VOCAB_ENDPOINT_URL + standard_name
+        entry_metadata["observed_property_label"] = standard_name.replace("_", " ").capitalize()
+    entry_metadata["parameter_label"] = f"{param_metadata['parameter_label']} ({variable_name})"
+    return param_id, entry_metadata
+
+
 def covjson_from_resp(dats, metadata, collection_name):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
     covjson_list = []
     dataset_name = collection_name.rsplit(".")[0]
+    entries_per_layer = Counter(dat["layername"] for dat in dats)
     for dat in dats:
         if dat["layername"] not in list(metadata.keys()):
             print("SKIPPING layername named ", dat["layername"])
@@ -107,6 +131,9 @@ def covjson_from_resp(dats, metadata, collection_name):
             parameters: dict[str, CovJsonParameter] = {}
             ranges = {}
             param_metadata = get_param_metadata(metadata[dat["layername"]], dataset_name)
+            param_id = dat["layername"]
+            if entries_per_layer[dat["layername"]] > 1:
+                param_id, param_metadata = get_entry_param_metadata(dat, param_metadata)
             symbol = CovJsonSymbol(
                 value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
             )
@@ -117,14 +144,14 @@ def covjson_from_resp(dats, metadata, collection_name):
             )
 
             param = CovJsonParameter(
-                id=dat["layername"],
+                id=param_id,
                 observedProperty=observed_property,
                 # description={"en":param_metadata["wms_layer_title"]}, # TODO in follow up
                 unit=unit,
                 label={"en:": param_metadata["parameter_label"]},
             )
 
-            parameters[dat["layername"]] = param
+            parameters[param_id] = param
             axis_names = ["t"]
             shape = [len(time_steps)]
             if vertical_steps:
@@ -137,7 +164,7 @@ def covjson_from_resp(dats, metadata, collection_name):
                 "shape": shape,
                 "values": values,
             }
-            ranges[dat["layername"]] = _range
+            ranges[param_id] = _range
 
             axes: dict[str, ValuesAxis] = {
                 "x": ValuesAxis[float](values=[lon]),
@@ -215,10 +242,10 @@ def covjson_from_resp(dats, metadata, collection_name):
                         referencing=referencing,
                     )
                     step_ranges = deepcopy(ranges)
-                    step_ranges[dat["layername"]]["values"] = ranges[dat["layername"]]["values"][
+                    step_ranges[param_id]["values"] = ranges[param_id]["values"][
                         index :: len(time_steps)
                     ]
-                    step_ranges[dat["layername"]]["shape"][1] = 1
+                    step_ranges[param_id]["shape"][1] = 1
 
                     covjson = Coverage(
                         id=f"coverage_{(len(covjson_list)+1)}-{time_step}",
@@ -246,8 +273,8 @@ def covjson_from_resp(dats, metadata, collection_name):
                             **custom,
                         )
                         partial_ranges = {
-                            dat["layername"]: {
-                                "values": ranges[dat["layername"]]["values"][
+                            param_id: {
+                                "values": ranges[param_id]["values"][
                                     custom_dim_value_idx
                                     * step_len : (custom_dim_value_idx + 1)
                                     * step_len
