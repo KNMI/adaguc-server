@@ -12,7 +12,6 @@
 
 class CURUniqueRequests {
 public:
-  bool readDataAsCDFDouble = false;
   void makeRequests(std::map<std::string, CURFileInfo> &fileInfoMap, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
 };
 

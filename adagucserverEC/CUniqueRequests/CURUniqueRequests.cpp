@@ -1,5 +1,6 @@
 #include <vector>
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
@@ -14,6 +15,7 @@
 #include "CDPPInterface.h"
 #include "trajectorySampling.h"
 #include "CDataPostProcessors/CDataPostProcessor.h"
+#include "CDataPostProcessors/CDataPostProcessor_ConvertUnits.h"
 
 static const bool enableLogsForCURUniqueRequests = false;
 
@@ -221,7 +223,6 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
     const auto dataObject = dataSource->getDataObject(dataObjectNr);
     std::map<std::pair<int, int>, std::vector<CURResult>> spatialResults;
     std::string variableName = dataObject->cdfVariable->name;
-    const auto originalNodata = dataObject->dfNodataValue;
     for (const auto &[dimName, fileInfo]: fileInfoMap) {
       if (!outsideGrid) {
         if (isTrajectory) prepareTrajectoryFile(reader, dataSource, fileInfo.representativeStep, sampling);
@@ -310,26 +311,9 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
               }
             }
 
-            /*
-             * In case a scale_factor and add_offset attribute is present, we need to read the data into the same datatype as this attribute
-             * This allows it to be unpacked properly to the final scaled values
-             */
-            CDF::Attribute *scale_factor = variable->getAttributeNE("scale_factor");
-            if (scale_factor != NULL) {
-              variable->setType(CDF_FLOAT);
-              if (scale_factor->getType() == CDF_DOUBLE) {
-                variable->setType(CDF_DOUBLE);
-              }
-            }
-
-            if (readDataAsCDFDouble) {
-              variable->setType(CDF_DOUBLE);
-            }
-
-            if (enableLogsForCURUniqueRequests) {
-              CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
-            }
-            int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
+            // Always read as double: packed data gets unpacked, and the conversions below work on doubles.
+            variable->setType(CDF_DOUBLE);
+            int status = variable->readData(CDF_DOUBLE, start.data(), count.data(), stride.data(), true);
             if (enableLogsForCURUniqueRequests) {
               CDBDebug("Read %lu elements", variable->getSize());
             }
@@ -343,26 +327,24 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
                 CDBDebug("Orig Data value %lu is \t %f", j, ((double *)variable->data)[j]);
               }
             }
-            // Each fresh read needs the unprocessed nodata value, including across files.
-            dataObject->dfNodataValue = originalNodata;
             /**
              * DataPostProc: Here our datapostprocessor comes into action!
              */
             for (const auto &proc: dataSource->cfgLayer->DataPostProc) {
               // Apply units:
               if (proc.attr.units.empty() == false) {
-                dataSource->getDataObject(dataObjectNr)->overruledUnits = proc.attr.units;
+                dataObject->overruledUnits = proc.attr.units;
               }
             }
-            if (readDataAsCDFDouble) {
-              getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
-            }
+            // Unit conversions (ax+b, convert_units, ...) are applied to every read, independent of which file it came from.
+            applyUnitConversions(dataSource->cfgLayer->DataPostProc, dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, (double *)variable->data, variable->getSize());
+            getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
             /* End of data postproc */
             if (enableLogsForCURUniqueRequests) {
               CDBDebug("Read %lu elements", variable->getSize());
 
               for (size_t j = 0; j < variable->getSize(); j++) {
-                CDBDebug("New Data value %lu is \t %f", j, ((float *)variable->data)[j]);
+                CDBDebug("New Data value %lu is \t %f", j, ((double *)variable->data)[j]);
               }
             }
             try {

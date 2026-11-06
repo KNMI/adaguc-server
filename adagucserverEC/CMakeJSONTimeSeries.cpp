@@ -14,12 +14,6 @@ static const bool CMakeJSONTimeSeries_DEBUG = false;
 
 int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
   CURUniqueRequests uniqueRequest;
-  /**
-   * DataPostProc: Here our datapostprocessor comes into action!
-   */
-  if (dataSource->cfgLayer->DataPostProc.size() > 0) {
-    uniqueRequest.readDataAsCDFDouble = true;
-  }
 
   int numberOfDims = dataSource->requiredDims.size();
   int numberOfSteps = dataSource->getNumTimeSteps();
