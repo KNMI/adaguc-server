@@ -37,7 +37,7 @@ class ContentTypeBasedBrotli(BrotliMiddleware):
         if self._is_handler_excluded(scope) or scope["type"] != "http":
             return await self.app(scope, receive, send)
         headers = Headers(scope=scope)
-        if "br" in headers.get("Accept-Encoding", ""):
+        if "br" in [s.strip() for s in headers.get("Accept-Encoding", "").split(",")]:
             br_responder = MyBrotliResponder(
                 self.app,
                 self.quality,
