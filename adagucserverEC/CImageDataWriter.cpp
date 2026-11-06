@@ -57,6 +57,7 @@
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
+#include "CUniqueRequests/trajectorySampling.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
@@ -454,25 +455,36 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   if (CIMAGEDATAWRITER_DEBUG) {
     CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
   }
-  // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
+  if (srvParam->isTrajectory && validateTrajectorySources(dataSources) != 0) return 1;
   for (auto dataSource: dataSources) {
     if (dataSource == NULL) {
       CDBError("dataSource == NULL");
       return 1;
     }
 
-    getFeatureInfoResultList.push_back(GetFeatureInfoResult());
-    GetFeatureInfoResult &getFeatureInfoResult = (getFeatureInfoResultList.back());
+    CDataReader reader;
+    if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) {
+      if (srvParam->isTrajectory) {
+        CDBError("Could not read trajectory grid from %s", dataSource->getFileName().c_str());
+        return 1;
+      }
+      // Let regular feature-info requests handle failures per step
+      CDBDebug("Could not read initial header from %s", dataSource->getFileName().c_str());
+    }
+    if (srvParam->isTrajectory) {
+      status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
+      if (status != 0) return status;
+      continue;
+    }
+    auto &getFeatureInfoResult = getFeatureInfoResultList.emplace_back();
     bool headerIsAvailable = false;
     bool sameHeaderForAll = false;
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
 
-    CDataReader reader;
-    reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSource->getNumDataObjects() > 0) {
       if (dataSource->getFirstAvailableDataObject()->cdfVariable != NULL) {
         if (dataSource->isConfigured) {
@@ -1490,8 +1502,8 @@ int CImageDataWriter::end() {
     if (CT::indexOf(srvParam->InfoFormat, "application/json") != -1) {
 
       try {
-        if (gfiStructure.get("root") != nullptr) {
-          std::string data = xmlListToJSON(gfiStructure.getList("root"), CXMLPARSER_JSONMODE_STANDARD);
+        if (gfiStructure.get("root") != nullptr || srvParam->isTrajectory) {
+          std::string data = gfiStructure.get("root") == nullptr ? "[]" : xmlListToJSON(gfiStructure.getList("root"), CXMLPARSER_JSONMODE_STANDARD);
           if (srvParam->JSONP.length() == 0) {
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {

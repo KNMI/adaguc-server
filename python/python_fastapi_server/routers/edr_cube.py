@@ -21,15 +21,14 @@ from .utils.edr_exception import exc_failed_call
 
 from .covjsonresponse import CovJSONResponse
 from .utils.edr_utils import (
-    generate_max_age,
     get_custom,
     get_dataset_from_collection,
     get_instance,
     get_parameters,
-    get_trace_timings_from_adaguc_headers,
-    get_ttl_from_adaguc_headers,
-    get_vertical,
+    get_vertical_query,
     instance_to_iso,
+    encode_native_query,
+    propagate_data_headers,
     get_metadata,
 )
 
@@ -116,11 +115,6 @@ async def get_coll_inst_cube(
         allowed_params,
     )
 
-    if resolution_x is not None and resolution_y is not None:
-        res_queryterm = [f"resx={resolution_x}", f"resy={resolution_y}"]
-    else:
-        res_queryterm = []
-
     logger.info("callADAGUC by dataset")
 
     translate_names = get_translate_names(metadata[collection_name])
@@ -128,35 +122,32 @@ async def get_coll_inst_cube(
 
     coveragejsons = []
     parameters = {}
-    trace_timings = []
     datetime_arg = datetime_par
     if datetime_par is None:
         datetime_arg = "*"
     for parameter_name in parameter_names:
-        _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
+        vertical_dim = get_vertical_query(metadata, collection_name, parameter_name, z_par)
 
-        urlrequest = "&".join(
-            [
-                f"dataset={dataset_name}",
-                "service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326",
-                f"coverage={parameter_name}",
-                f"bbox={bbox}",
-                f"time={datetime_arg}",
-                f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
-                *custom_dims,
-                f"{vertical_dim}" if len(vertical_dim) > 0 else "",
-                *res_queryterm,
-            ]
-        )
+        query = {
+            "dataset": dataset_name,
+            "service": "wcs",
+            "version": "1.1.1",
+            "request": "getcoverage",
+            "format": "NetCDF4",
+            "crs": "EPSG:4326",
+            "coverage": parameter_name,
+            "bbox": bbox,
+            "time": datetime_arg,
+        }
+        if instance:
+            query["dim_reference_time"] = instance_to_iso(instance)
+        if resolution_x is not None and resolution_y is not None:
+            query.update(resx=resolution_x, resy=resolution_y)
+        urlrequest = encode_native_query(query, [*custom_dims, vertical_dim])
 
         start = time.time()
-        status, wcs_response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
-        ttl = get_ttl_from_adaguc_headers(headers)
-        if ttl is not None:
-            response.headers["cache-control"] = generate_max_age(ttl)
-        trace_timing = get_trace_timings_from_adaguc_headers(headers)
-        if trace_timing is not None:
-            trace_timings.append(trace_timing)
+        status, wcs_response, headers = await call_adaguc(url=urlrequest)
+        propagate_data_headers(response, headers)
 
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
@@ -168,10 +159,6 @@ async def get_coll_inst_cube(
             coveragejsons.extend(coveragejson)
             for covjson in coveragejson:
                 parameters = parameters | covjson.parameters
-
-    # Propagate the trace timings of every internal ADAGUC call as separate response headers
-    for trace_timing in trace_timings:
-        response.headers.append("X-Trace-Timings", trace_timing)
 
     if len(coveragejsons) == 0:
         raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")

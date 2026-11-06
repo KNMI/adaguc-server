@@ -92,3 +92,45 @@ You can also try pasting your EDR endpoint https://yourhostname/edr/collections 
 See:
 
 ![](2023-11-23-AdagucServer_EDR_In_MetOffice_EDR_Viewer.png)
+
+## Trajectory queries
+
+Use `/trajectory` on a collection or instance with a 2D WKT `LINESTRING`:
+
+```text
+/edr/collections/edr.mycollection/trajectory?coords=LINESTRING(4.7%2052.1,5.5%2052.5)&parameter-name=my_temperature&z=*
+```
+
+The response is a CoverageJSON Section with selected levels in `z` and
+`[time, longitude, latitude]` tuples along the path. It returns native cell centres
+and values without interpolation. Consecutive duplicate cells are suppressed;
+later revisits remain. Omitted `z` selects all visible levels; hidden heights keep
+their configured selection and are reported in `z`. Omitted `datetime` uses the
+configured default, as for position. Without `parameter-name`, only parameters
+with time and an explicitly typed vertical dimension are selected. Explicitly
+requesting an unsuitable parameter returns HTTP 400. A path outside the grid
+returns HTTP 404.
+
+Supported: numeric parameters with time and a vertical dimension configured with `type="vertical"`,
+on regular grids with matching one-dimensional axes across source files,
+including rotated-pole grids. Each axis needs at least two cells; spatial
+dimensions must be the final two variable dimensions. Layers requiring multiple
+source variables or `orgname` renaming are unsupported.
+
+Only `EPSG:4326` and CoverageJSON are supported. `resolution_x` and `resolution_y`
+are rejected; rendering stride is ignored. Vertical coordinates must be finite
+numbers. Failed trajectory data calls return HTTP 400.
+
+The current fixed limits are:
+
+- **1,000 input vertices:** coordinate pairs supplied in the `LINESTRING`.
+- **2,000 path samples per layer:** crossed grid cells in path order, including
+  later revisits. Consecutive duplicates do not count again.
+- **1 million sample/dimension combinations per layer:** path samples multiplied
+  by the number of selected time/level/member/other dimension combinations.
+  For example, 500 samples × 20 times × 90 levels counts as 900,000.
+
+The value limit applies separately to each parameter, not to the whole response.
+The existing database `maxquerylimit` also restricts dimension selections, and
+source files across all requested parameters must fit the file store's open-file
+capacity. Complex projected paths can hit a separate subdivision limit.

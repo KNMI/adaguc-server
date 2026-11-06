@@ -1,4 +1,6 @@
 #include "CDataPostProcessor_ConvertUnits.h"
+#include <algorithm>
+#include <cmath>
 #include <map>
 #include <vector>
 #include <cstddef>
@@ -42,7 +44,7 @@ int CDPPConvertUnits::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CData
 
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
-LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
+LookupUnits getLookupUnits(const CServerConfig::XMLE_DataPostProc &proc) {
   // If the ID is recognized in the lookup, always return those a an b values (ignore the configured a and b )
   if (lookUp.find(proc.attr.algorithm) != lookUp.end()) {
     auto lookedUp = lookUp[proc.attr.algorithm];
@@ -152,24 +154,15 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   return 0;
 }
 
-int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *data, size_t numDataPoints) {
-  if (isApplicable(proc, dataSource, mode) == CDATAPOSTPROCESSOR_NOTAPPLICABLE) {
-    return -1;
+int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *, size_t) {
+  // Time series values are converted by applyUnitConversions, directly after each read.
+  return isApplicable(proc, dataSource, mode) == CDATAPOSTPROCESSOR_NOTAPPLICABLE ? -1 : 0;
+}
+
+void applyUnitConversions(const std::vector<CServerConfig::XMLE_DataPostProc> &procs, double noDataValue, double *data, size_t numValues) {
+  for (const auto &proc: procs) {
+    if (std::find(listOfProcs.begin(), listOfProcs.end(), proc.attr.algorithm) == listOfProcs.end()) continue;
+    auto lookupUnit = getLookupUnits(proc);
+    do_convert<double>(noDataValue, numValues, data, lookupUnit.a, lookupUnit.b);
   }
-  size_t l = numDataPoints;
-  auto lookupUnit = getLookupUnits(*proc);
-  for (const auto &dataObject: dataSource->dataObjects) {
-    if (adagucPostProcVerboseLog) {
-      CDBDebug("Using var %s", dataObject.cdfVariable->name.c_str());
-    }
-    auto attrNeedsConversion = dataObject.cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
-    // Check if we need to convert the data
-    if (attrNeedsConversion != nullptr && attrNeedsConversion->toString() == "true") {
-      if (adagucPostProcVerboseLog) {
-        CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
-      }
-      do_convert<double>(dataObject.hasNodataValue ? dataObject.dfNodataValue : NAN, l, (double *)data, lookupUnit.a, lookupUnit.b);
-    }
-  }
-  return 0;
 }

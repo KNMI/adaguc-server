@@ -31,11 +31,13 @@
 
 struct i4point {
   int x, y;
+  bool operator==(const i4point &) const = default;
   double distance(i4point point);
 };
 
 struct f8point {
   double x, y;
+  bool operator==(const f8point &) const = default;
   f8point rad();
 };
 

@@ -32,6 +32,8 @@
 #include "./Types/GeoParameters.h"
 #include <tuple>
 #include <string>
+#include <utility>
+#include <vector>
 
 // #define MAX_DIMS 10
 
@@ -87,6 +89,8 @@ public:
   double dfResY = 0;
   double dX = 0;
   double dY = 0;
+  bool isTrajectory = false;
+  std::vector<f8point> trajectoryCoords;
   std::string Format;
   std::string InfoFormat;
   std::string BGColor;

@@ -16,6 +16,7 @@
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "CImageOperators/smoothRasterField.h"
+#include "CUniqueRequests/trajectory.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
@@ -23,6 +24,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <unistd.h>
 #include "CXMLSerializerInterface.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
@@ -39,6 +41,73 @@ int main() {
     return 1;
   }
   return 0;
+}
+
+TEST(crossedCells, Trajectory) {
+  std::vector<i4point> cells;
+  traverseTrajectoryCells({0.2, 1.2}, {3.2, 1.2}, 4, 3, cells);
+  CHECK((cells == std::vector<i4point>{{0, 1}, {1, 1}, {2, 1}, {3, 1}}));
+  cells.clear();
+  traverseTrajectoryCells({3.2, 1.2}, {0.2, 1.2}, 4, 3, cells);
+  CHECK((cells == std::vector<i4point>{{3, 1}, {2, 1}, {1, 1}, {0, 1}}));
+}
+
+TEST(clippingAndCorners, Trajectory) {
+  std::vector<i4point> cells;
+  traverseTrajectoryCells({-10, 0.5}, {10, 0.5}, 3, 3, cells);
+  CHECK((cells == std::vector<i4point>{{0, 0}, {1, 0}, {2, 0}}));
+  cells.clear();
+  traverseTrajectoryCells({0.2, 0.2}, {2.8, 2.8}, 3, 3, cells);
+  CHECK((cells == std::vector<i4point>{{0, 0}, {1, 1}, {2, 2}}));
+  cells.clear();
+  traverseTrajectoryCells({-5, -5}, {-1, -1}, 3, 3, cells);
+  CHECK(cells.empty());
+  traverseTrajectoryCells({1.2, 1.2}, {1.2, 1.2}, 3, 3, cells);
+  CHECK((cells == std::vector<i4point>{{1, 1}}));
+}
+
+TEST(boundariesAndRevisits, Trajectory) {
+  std::vector<i4point> cells;
+  traverseTrajectoryCells({0.2, 1}, {2.8, 1}, 3, 3, cells);
+  traverseTrajectoryCells({2.8, 1}, {0.2, 1}, 3, 3, cells);
+  CHECK((cells == std::vector<i4point>{{0, 1}, {1, 1}, {2, 1}, {1, 1}, {0, 1}}));
+}
+
+TEST(subdivisionAtCorners, Trajectory) {
+  std::vector<i4point> whole, subdivided;
+  traverseTrajectoryCells({0.2, 2.8}, {2.8, 0.2}, 3, 3, whole);
+  traverseTrajectoryCells({0.2, 2.8}, {1, 2}, 3, 3, subdivided);
+  traverseTrajectoryCells({1, 2}, {2, 1}, 3, 3, subdivided);
+  traverseTrajectoryCells({2, 1}, {2.8, 0.2}, 3, 3, subdivided);
+  CHECK((whole == std::vector<i4point>{{0, 2}, {1, 1}, {2, 0}}));
+  CHECK(whole == subdivided);
+}
+
+TEST(longitudeSeam, Trajectory) {
+  std::vector<i4point> cells;
+  traverseTrajectoryCells({-1.5, 1.5}, {2.5, 1.5}, 360, 3, cells, 360);
+  CHECK((cells == std::vector<i4point>{{358, 1}, {359, 1}, {0, 1}, {1, 1}, {2, 1}}));
+  cells.clear();
+  traverseTrajectoryCells({2.5, 1.5}, {-1.5, 1.5}, 360, 3, cells, 360);
+  CHECK((cells == std::vector<i4point>{{2, 1}, {1, 1}, {0, 1}, {359, 1}, {358, 1}}));
+}
+
+TEST(float32GridSpacing, Trajectory) {
+  for (const auto &[origin, count, spacing]: std::vector<std::tuple<double, size_t, double>>{{-13.5, 676, 0.05}, {-13.6, 564, 0.05}, {14.55, 564, -0.05}, {50, 1001, 0.01}, {65, 401, 0.025}}) {
+    std::vector<double> values(count);
+    for (size_t i = 0; i < count; ++i) values[i] = float(origin + i * spacing);
+    const auto [first, step] = regularTrajectoryAxis(values.data(), values.size(), true);
+    CHECK(first == values.front());
+    CHECK(std::abs(step - spacing) < 1e-8);
+    values[count / 2] += 0.01;
+    bool rejected = false;
+    try {
+      regularTrajectoryAxis(values.data(), values.size(), true);
+    } catch (int) {
+      rejected = true;
+    }
+    CHECK(rejected);
+  }
 }
 
 TEST(alreadyMeter, CImageWarper) {

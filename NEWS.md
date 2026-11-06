@@ -4,6 +4,7 @@
 - New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only.
 - `adagucserver --lint` now also checks the values in configured `Style` and `Legend` elements with the `STYLESHEET` rules .
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
+- EDR position queries on layers that return several variables (for example `convert_uv_components`, which returns speed, direction and the wind components) now label each coverage with its own parameter id (`<layer>.<variable>`), unit and observed property. Previously all coverages used the layer name and the unit of the first variable, so wind direction was reported in `kts`. Layers that return a single variable are unchanged.
 - Fixed a `baselayers.xml` in your own dataset directory clashing with the internal baselayers dataset of the Docker image. The internal dataset is now named `adaguc-internal-baselayers`.
 - Reduced SQL queries when scanning dataset
 - Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
@@ -11,6 +12,7 @@
 - Fixed wind direction in GetFeatureInfo and EDR point queries for grid-relative wind (`uvcomponents`). The bounding box of the queried cell had X and Y swapped, so the rotation to true north was computed about two cells too far east. Directions and eastward/northward components can change by several degrees on coarse grids; speed is unchanged.
 - Grid-relative wind (`uvcomponents`) is now rotated to true north with the angle at the grid point itself, where the value is defined and where barbs and vectors are drawn, measured in the tangent plane of the earth's surface. Previously the angle was taken at a cell corner over a full-cell step, which also added a spurious rotation of half a cell's arc (about 0.1 degree on a 0.25 degree lat/lon grid, where the correct rotation is 0). Barb, vector and direction output change by a few degrees on coarse grids; on fine grids the change is hardly visible.
 - GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
+- Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
 
 **Version 9.2.0 - 2026-10-28**
 

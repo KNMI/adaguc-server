@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <!-- Two hourly 0..359 grids: values 1 and 2, with nodata at longitude 359.
+       The conversion must produce 12 and 14 while preserving nodata. -->
+  <Layer type="database">
+    <Name>data</Name>
+    <Variable>data</Variable>
+    <FilePath filter="^grid[01]\.nc$">{ADAGUC_PATH}/data/datasets/trajectory_global/</FilePath>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+    <Dimension name="height" units="m" type="vertical">height</Dimension>
+    <DataPostProc algorithm="ax+b" a="2" b="10"/>
+  </Layer>
+</Configuration>
