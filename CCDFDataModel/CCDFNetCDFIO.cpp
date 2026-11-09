@@ -40,24 +40,26 @@ static const bool CCDFNETCDFWRITER_DEBUG = false;
 
 // Files stay open during a request (see CDFObjectStore), and so do their chunk caches. All enlarged caches together stay below this.
 static const size_t MAX_TOTAL_CHUNK_CACHE_BYTES = 256 * 1024 * 1024;
+// What is left of MAX_TOTAL_CHUNK_CACHE_BYTES for all readers (one per file) in this process. Never given back: a request is one
+// process, and its files stay open until it ends.
+static size_t chunkCacheBytesLeft = MAX_TOTAL_CHUNK_CACHE_BYTES;
 
 /**
  * Makes the chunk cache of a variable large enough for all chunks a read with start/count/stride touches. Otherwise reading part
  * of these chunks again decompresses all of them again: for chunks with all levels, every level read decompresses the whole variable.
- * Returns the size the cache was enlarged to, or 0 when it was left as it is: when it is large enough already, or when the
- * chunks do not fit in budgetBytes.
+ * Only enlarges the cache when the chunks fit in bytesLeft, the cache memory that is left. Returns what is left after this read.
  */
-static size_t fitChunkCacheToRead(int groupId, int varId, size_t numDims, const size_t *start, const size_t *count, const ptrdiff_t *stride, size_t budgetBytes) {
+static size_t fitChunkCacheToRead(int groupId, int varId, size_t numDims, const size_t *start, const size_t *count, const ptrdiff_t *stride, size_t bytesLeft) {
   int storage;
   std::vector<size_t> chunkSizes(numDims);
-  if (numDims == 0 || nc_inq_var_chunking(groupId, varId, &storage, chunkSizes.data()) != NC_NOERR || storage != NC_CHUNKED) return 0;
+  if (numDims == 0 || nc_inq_var_chunking(groupId, varId, &storage, chunkSizes.data()) != NC_NOERR || storage != NC_CHUNKED) return bytesLeft;
   nc_type xtype;
   size_t typeSize;
-  if (nc_inq_vartype(groupId, varId, &xtype) != NC_NOERR || nc_inq_type(groupId, xtype, nullptr, &typeSize) != NC_NOERR) return 0;
+  if (nc_inq_vartype(groupId, varId, &xtype) != NC_NOERR || nc_inq_type(groupId, xtype, nullptr, &typeSize) != NC_NOERR) return bytesLeft;
   size_t numChunks = 1;
   size_t chunkBytes = typeSize;
   for (size_t i = 0; i < numDims; i++) {
-    if (chunkSizes[i] == 0 || count[i] == 0) return 0;
+    if (chunkSizes[i] == 0 || count[i] == 0) return bytesLeft;
     size_t last = start[i] + (count[i] - 1) * (stride != nullptr ? stride[i] : 1);
     numChunks *= last / chunkSizes[i] - start[i] / chunkSizes[i] + 1;
     chunkBytes *= chunkSizes[i];
@@ -65,10 +67,10 @@ static size_t fitChunkCacheToRead(int groupId, int varId, size_t numDims, const 
   size_t neededBytes = numChunks * chunkBytes;
   size_t cacheBytes, cacheSlots;
   float preemption;
-  if (neededBytes > budgetBytes || nc_get_var_chunk_cache(groupId, varId, &cacheBytes, &cacheSlots, &preemption) != NC_NOERR || neededBytes <= cacheBytes) return 0;
+  if (neededBytes > bytesLeft || nc_get_var_chunk_cache(groupId, varId, &cacheBytes, &cacheSlots, &preemption) != NC_NOERR || neededBytes <= cacheBytes) return bytesLeft;
   // HDF5 advises about 100 hash slots per chunk in the cache
-  if (nc_set_var_chunk_cache(groupId, varId, neededBytes, std::max(cacheSlots, numChunks * 100 + 1), preemption) != NC_NOERR) return 0;
-  return neededBytes;
+  if (nc_set_var_chunk_cache(groupId, varId, neededBytes, std::max(cacheSlots, numChunks * 100 + 1), preemption) != NC_NOERR) return bytesLeft;
+  return bytesLeft - neededBytes;
 }
 
 CDFNetCDFReader::CDFNetCDFReader() : CDFReader() {
@@ -182,10 +184,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   var->setSize(totalVariableSize);
 
   if (useStartCount) {
-    // Shared by all readers, one per file. Counted until the process ends: a request is one process, and closing a file does not
-    // need to give its share back.
-    static size_t totalChunkCacheBytes = 0;
-    totalChunkCacheBytes += fitChunkCacheToRead(varGroupId, var->id, var->dimensionlinks.size(), start, count, stride, MAX_TOTAL_CHUNK_CACHE_BYTES - totalChunkCacheBytes);
+    chunkCacheBytesLeft = fitChunkCacheToRead(varGroupId, var->id, var->dimensionlinks.size(), start, count, stride, chunkCacheBytesLeft);
   }
 
   if (CCDFNETCDFIO_DEBUG) {
