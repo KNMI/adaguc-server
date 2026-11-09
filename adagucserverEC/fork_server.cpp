@@ -2,6 +2,7 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
+#include <cstring>
 #include <ctime>
 #include <fcntl.h>
 #include <map>
@@ -30,6 +31,10 @@ const int DEFAULT_MAX_CHILD_PROC_TIMEOUT = 60;
 
 // Maximum size of a request message, matches MAX_FORK_REQUEST_BYTES in python/lib/adaguc/fork_settings.py.
 const size_t MAX_FORK_REQUEST_BYTES = 65536;
+
+// Written before the exit status, matches FORK_EXIT_STATUS_MARKER in python/lib/adaguc/fork_settings.py. Without it, the client could
+// not tell an exit status from the last bytes of a response that was cut off, for example when the fork server is restarted.
+const char FORK_EXIT_STATUS_MARKER[] = "ADAGUC_EXIT:";
 
 typedef std::chrono::steady_clock steady_clock;
 
@@ -268,9 +273,12 @@ void mother_handle_child_exited_events() {
       else
         child_status = 1;
 
-      // Write exit status to child socket fd and then close it
+      // Write the marker and exit status to child socket fd and then close it
       // If python already gave up on this request the write fails, which is fine: there is nobody left to inform.
-      ssize_t result = write(child_socket_fd, &child_status, sizeof(child_status));
+      char trailer[sizeof(FORK_EXIT_STATUS_MARKER) - 1 + sizeof(child_status)];
+      memcpy(trailer, FORK_EXIT_STATUS_MARKER, sizeof(FORK_EXIT_STATUS_MARKER) - 1);
+      memcpy(trailer + sizeof(FORK_EXIT_STATUS_MARKER) - 1, &child_status, sizeof(child_status));
+      ssize_t result = write(child_socket_fd, trailer, sizeof(trailer));
       (void)result;
       close(child_socket_fd);
     }

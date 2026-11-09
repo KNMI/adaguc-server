@@ -98,6 +98,12 @@ async def rest_get_edr_collections(request: Request, response: Response):
     response_model=Collection,
     response_model_exclude_none=True,
 )
+# Slash redirects are disabled for the app, so the URL with a trailing slash needs its own route
+@edrApiApp.get(
+    "/collections/{collection_name}/",
+    response_model=Collection,
+    response_model_exclude_none=True,
+)
 async def rest_get_edr_collection_by_id(collection_name: str, req: Request, response: Response):
     """
     GET Returns the most recent EDR collection for given collection id

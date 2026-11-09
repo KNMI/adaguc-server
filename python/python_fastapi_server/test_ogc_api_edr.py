@@ -1201,3 +1201,10 @@ def test_edr_untyped_or_named_height():
         with pytest.raises(EdrException) as exc:
             convert([sample], {"data": layer}, "collection")
         assert exc.value.status_code == 400
+
+
+def test_collection_with_trailing_slash(client: TestClient):
+    """Slash redirects are disabled, so /collections/{id}/ has its own route"""
+    resp = client.get("/edr/collections/netcdf_5d.data_5d/")
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["id"] == "netcdf_5d.data_5d"

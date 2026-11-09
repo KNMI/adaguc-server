@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import netCDF4
+import numpy as np
 from netCDF4 import Dataset
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import make_adaguc_env, update_db
@@ -217,6 +218,29 @@ class TestWCS:
         )
         assert status == 0
         assert data[0:6] == b"\x89HDF\r\n"
+
+    def test_WCSGetCoverageNetCDF4_packed_data_levels(self):
+        """
+        Packed data (scale_factor 0.1) over several levels:
+        - Every level must be scaled. Only the first level was: the variable is reused for the next level and was marked as scaled.
+        - Cells outside the source grid must have the _FillValue. They got the unscaled _FillValue (-9999), while the _FillValue
+          attribute was scaled (-999.9), so they were not seen as nodata.
+        """
+        AdagucTestTools().cleanTempDir()
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=testdata_packed_fillvalue.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=packed&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-5,45,15,60&RESX=1&RESY=1&elevation=1/3",
+            env=self.env,
+        )
+        assert status == 0
+        values = netCDF4.Dataset("filename.nc", memory=data).variables["packed"][:]
+        assert values.shape == (3, 15, 20)
+        # netCDF4 applies the scale_factor and masks the _FillValue, so these are the values the output must have
+        source = netCDF4.Dataset(ADAGUC_PATH + "/data/datasets/testdata_packed_fillvalue.nc").variables["packed"][:]
+        for level in range(3):
+            # The output grid is larger than the source grid: the cells outside it, and the nodata cell of the source, must be nodata.
+            # What is left are exactly the source values of this level.
+            assert values[level].count() == source[level].count()
+            assert np.allclose(sorted(values[level].compressed()), sorted(source[level].compressed()))
 
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         """

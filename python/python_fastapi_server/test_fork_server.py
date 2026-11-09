@@ -13,7 +13,13 @@ import pytest_asyncio
 
 import adaguc.CGIRunner as cgi_runner_module
 from adaguc.CGIRunner import CGIRunner
+from adaguc.fork_settings import FORK_EXIT_STATUS_BYTES, FORK_EXIT_STATUS_MARKER
 from fork_server_supervisor import ForkServerSupervisor
+
+
+def exit_status_trailer(status: int) -> bytes:
+    """What the fork server writes after the response of a child"""
+    return FORK_EXIT_STATUS_MARKER + status.to_bytes(FORK_EXIT_STATUS_BYTES, sys.byteorder, signed=True)
 
 ADAGUC_PATH = Path(os.environ["ADAGUC_PATH"])
 ADAGUC_BINARY = ADAGUC_PATH / "bin" / "adagucserver"
@@ -141,7 +147,7 @@ async def test_fork_server_rejects_oversized_request(fork_server, fork_connectio
         writer.write(prefix + b"x" * (cgi_runner_module.MAX_FORK_REQUEST_BYTES + 1 - len(prefix)))
         await writer.drain()
         writer.write_eof()
-        assert await reader.read() == (1).to_bytes(4, sys.byteorder, signed=True)
+        assert await reader.read() == exit_status_trailer(1)
 
 
 @pytest.mark.asyncio
@@ -168,7 +174,7 @@ async def test_fork_server_times_out_and_reaps_blocked_child(fork_server, fork_c
         response = await asyncio.wait_for(reader.read(), timeout=4)
 
     # The mother returns the signal that terminated the child as its exit status.
-    assert int.from_bytes(response, sys.byteorder, signed=True) == -signal.SIGKILL
+    assert response == exit_status_trailer(-signal.SIGKILL)
     await wait_for_child_count(fork_server.process.pid, 0)
     assert await fork_server.health_check_mother()
 
@@ -196,7 +202,7 @@ async def test_fork_server_keeps_health_check_headroom(fork_server, fork_connect
             await asyncio.gather(*(writer.drain() for _, writer in ping_connections))
 
             responses = await asyncio.gather(*(reader.read() for reader, _ in ping_connections))
-            assert responses == [b"PONG\n" + (0).to_bytes(4, sys.byteorder)] * 5
+            assert responses == [b"PONG\n" + exit_status_trailer(0)] * 5
 
         await wait_for_child_count(fork_server.process.pid, 2)
 
@@ -217,7 +223,7 @@ async def test_fork_server_child_does_not_keep_other_client_socket_open(fork_ser
             await writer_a.drain()
             response = await asyncio.wait_for(reader_a.read(), timeout=1)
 
-            assert response == b"PONG\n" + (0).to_bytes(4, sys.byteorder)
+            assert response == b"PONG\n" + exit_status_trailer(0)
             assert not reader_b.at_eof()
 
     await wait_for_child_count(fork_server.process.pid, 0)
@@ -336,3 +342,65 @@ async def test_fork_client_rejects_response_without_exit_status(monkeypatch):
 
     writer.close.assert_called_once()
     writer.wait_closed.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("data", [b"Content-Type: application/json\n\n{" + b"x" * 100, b"Content-Type: application/netcdf\n\n" + bytes(100)])
+async def test_fork_client_rejects_response_with_invalid_exit_status(monkeypatch, data):
+    # When the connection closes before the fork server wrote the exit status (for example because the fork server was
+    # restarted), the last bytes are response data. That must be an error, also when they look like a status, like zero bytes.
+    reader = asyncio.StreamReader()
+    reader.feed_data(data)
+    reader.feed_eof()
+    writer = Mock(write=Mock(), drain=AsyncMock(), close=Mock(), wait_closed=AsyncMock())
+    monkeypatch.setattr(cgi_runner_module.asyncio, "open_unix_connection", AsyncMock(return_value=(reader, writer)))
+
+    with pytest.raises(RuntimeError, match="missing exit status"):
+        await cgi_runner_module.socket_communicate("SERVICE=WMS", {})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [0, 1, 255, -9, -64])
+async def test_fork_client_accepts_valid_exit_status(monkeypatch, status):
+    reader = asyncio.StreamReader()
+    reader.feed_data(b"data" + exit_status_trailer(status))
+    reader.feed_eof()
+    writer = Mock(write=Mock(), drain=AsyncMock(), close=Mock(), wait_closed=AsyncMock())
+    monkeypatch.setattr(cgi_runner_module.asyncio, "open_unix_connection", AsyncMock(return_value=(reader, writer)))
+
+    response = await cgi_runner_module.socket_communicate("SERVICE=WMS", {})
+    assert response.status_code == status
+    assert response.process_output == b"data"
+
+
+@pytest.mark.asyncio
+async def test_supervisor_does_not_restart_after_one_failed_health_check(monkeypatch):
+    # A health check can fail while the event loop is busy. Only failures in a row restart the mother, which kills
+    # all requests in progress.
+    supervisor = ForkServerSupervisor(interval=0.01, max_failed_health_checks=3)
+    checks = iter([False, True, False, False, True] + [True] * 1000)
+    restart_process = AsyncMock()
+    monkeypatch.setattr(supervisor, "start_process", AsyncMock())
+    monkeypatch.setattr(supervisor, "wait_until_ready", AsyncMock(return_value=True))
+    monkeypatch.setattr(supervisor, "health_check_mother", AsyncMock(side_effect=lambda: next(checks)))
+    monkeypatch.setattr(supervisor, "restart_process", restart_process)
+
+    await supervisor.start_monitoring()
+    try:
+        await asyncio.sleep(0.2)
+    finally:
+        await supervisor.stop_monitoring()
+    restart_process.assert_not_awaited()
+
+    # Three failures in a row do restart it
+    supervisor = ForkServerSupervisor(interval=0.01, max_failed_health_checks=3)
+    restarted = asyncio.Event()
+    monkeypatch.setattr(supervisor, "start_process", AsyncMock())
+    monkeypatch.setattr(supervisor, "wait_until_ready", AsyncMock(return_value=True))
+    monkeypatch.setattr(supervisor, "health_check_mother", AsyncMock(return_value=False))
+    monkeypatch.setattr(supervisor, "restart_process", AsyncMock(side_effect=lambda: restarted.set()))
+    await supervisor.start_monitoring()
+    try:
+        await asyncio.wait_for(restarted.wait(), timeout=1)
+    finally:
+        await supervisor.stop_monitoring()
