@@ -82,8 +82,8 @@ The following examples test the `/collections`, `/instances`, `/position` and th
 - https://yourhostname/edr/collections/edr.mycollection
 - https://yourhostname/edr/collections/edr.mycollection/instances
 - https://yourhostname/edr/collections/edr.mycollection/instances/201712150900
-- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/position?coords=POINT(4.782%2052.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=my_temperature&crs=EPSG:4326&f=CoverageJSON
-- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=my_temperature&crs=EPSG:4326&f=CoverageJSON
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/position?coords=POINT(4.782%2052.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
 
 
 You can also try pasting your EDR endpoint https://yourhostname/edr/collections in https://labs.metoffice.gov.uk/edr/static/html/query.html.
@@ -118,6 +118,53 @@ also be left out. With `crs=native` the cube returns the cells of the source gri
 Without `crs`, or with any spelling of EPSG:4326 (`EPSG:4326`, `CRS84`, `OGC:CRS84` or their URIs), the cube returns
 EPSG:4326 as before. Other values return HTTP 400.
 
+The response to the example above, shortened. The `x` and `y` values are the cell centres of the RD grid in metres,
+and the `referencing` names the grid by its EPSG id:
+
+```json
+{
+  "type": "Coverage",
+  "domain": {
+    "type": "Domain",
+    "domainType": "Grid",
+    "axes": {
+      "x": { "values": [89358.73, 140129.71, 190900.69, 241671.67] },
+      "y": { "values": [526168.54, 477279.61, 428390.67, 379501.74] },
+      "t": { "values": ["2017-12-15T09:00:00Z"] }
+    },
+    "referencing": [
+      {
+        "coordinates": ["x", "y"],
+        "system": { "type": "ProjectedCRS", "id": "http://www.opengis.net/def/crs/EPSG/0/28992" }
+      },
+      {
+        "coordinates": ["t"],
+        "system": { "type": "TemporalRS", "calendar": "Gregorian" }
+      }
+    ]
+  },
+  "ranges": {
+    "my_temperature": {
+      "type": "NdArray",
+      "dataType": "float",
+      "axisNames": ["t", "y", "x"],
+      "shape": [1, 4, 4],
+      "values": [6.22, 1.46, 2.07, 1.86, 3.79, 2.20, 1.87, 2.23, 2.09, 2.32, 2.70, 2.27, 2.72, 2.72, 2.53, 2.57]
+    }
+  }
+}
+```
+
+A grid without an EPSG id, like a rotated pole grid, is given by its WKT instead (shortened here). The `x` and `y`
+values are then rotated longitudes and latitudes:
+
+```json
+"system": {
+  "type": "GeographicCRS",
+  "wkt": "GEOGCRS[\"undefined\",BASEGEOGCRS[\"unnamed\",DATUM[\"World Geodetic System 1984\",...]],DERIVINGCONVERSION[\"Pole rotation (netCDF CF convention)\",METHOD[\"Pole rotation (netCDF CF convention)\"],PARAMETER[\"Grid north pole latitude (netCDF CF convention)\",37.25,...],PARAMETER[\"Grid north pole longitude (netCDF CF convention)\",-174.55,...],...]"
+}
+```
+
 ## Trajectory queries
 
 Use `/trajectory` on a collection or instance with a 2D WKT `LINESTRING`:
@@ -142,7 +189,7 @@ including rotated-pole grids. Each axis needs at least two cells; spatial
 dimensions must be the final two variable dimensions. Layers requiring multiple
 source variables or `orgname` renaming are unsupported.
 
-Only `EPSG:4326` (in any spelling, like `CRS84`) and CoverageJSON are supported. `resolution_x` and `resolution_y`
+Only `EPSG:4326` and CoverageJSON are supported. `resolution_x` and `resolution_y`
 are rejected; rendering stride is ignored. Vertical coordinates must be finite
 numbers. Failed trajectory data calls return HTTP 400.
 
