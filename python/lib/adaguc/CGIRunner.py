@@ -11,7 +11,14 @@ from asyncio.subprocess import Process
 from subprocess import PIPE
 from typing import NamedTuple
 
-from adaguc.fork_settings import FORK_EXIT_STATUS_MARKER, MAX_FORK_REQUEST_BYTES, get_fork_socket_path, is_fork_enabled
+from adaguc.fork_settings import (
+    FORK_EXIT_STATUS_BYTES,
+    FORK_EXIT_STATUS_MARKER,
+    FORK_EXIT_TRAILER_BYTES,
+    MAX_FORK_REQUEST_BYTES,
+    get_fork_socket_path,
+    is_fork_enabled,
+)
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
@@ -102,13 +109,12 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
 
     # The response ends with the marker and the 4-byte exit status. Without the marker the connection was closed before the fork
     # server wrote the status, for example because it was restarted while the child was running: the response is incomplete.
-    trailer_size = len(FORK_EXIT_STATUS_MARKER) + 4
-    if len(process_output) < trailer_size or process_output[-trailer_size:-4] != FORK_EXIT_STATUS_MARKER:
+    if len(process_output) < FORK_EXIT_TRAILER_BYTES or process_output[-FORK_EXIT_TRAILER_BYTES:-FORK_EXIT_STATUS_BYTES] != FORK_EXIT_STATUS_MARKER:
         raise RuntimeError("Invalid response from ADAGUC fork server: missing exit status")
 
     # The status is negative when the child was killed by a signal
-    status_code = int.from_bytes(process_output[-4:], sys.byteorder, signed=True)
-    process_output = process_output[:-trailer_size]
+    status_code = int.from_bytes(process_output[-FORK_EXIT_STATUS_BYTES:], sys.byteorder, signed=True)
+    process_output = process_output[:-FORK_EXIT_TRAILER_BYTES]
     return AdagucResponse(status_code=status_code, process_output=process_output, process_error=b"")
 
 

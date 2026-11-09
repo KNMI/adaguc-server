@@ -13,13 +13,13 @@ import pytest_asyncio
 
 import adaguc.CGIRunner as cgi_runner_module
 from adaguc.CGIRunner import CGIRunner
-from adaguc.fork_settings import FORK_EXIT_STATUS_MARKER
+from adaguc.fork_settings import FORK_EXIT_STATUS_BYTES, FORK_EXIT_STATUS_MARKER
 from fork_server_supervisor import ForkServerSupervisor
 
 
 def exit_status_trailer(status: int) -> bytes:
     """What the fork server writes after the response of a child"""
-    return FORK_EXIT_STATUS_MARKER + status.to_bytes(4, sys.byteorder, signed=True)
+    return FORK_EXIT_STATUS_MARKER + status.to_bytes(FORK_EXIT_STATUS_BYTES, sys.byteorder, signed=True)
 
 ADAGUC_PATH = Path(os.environ["ADAGUC_PATH"])
 ADAGUC_BINARY = ADAGUC_PATH / "bin" / "adagucserver"
