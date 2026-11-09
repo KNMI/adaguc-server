@@ -58,50 +58,6 @@ CImageWarper::~CImageWarper() {
   }
 }
 
-std::string floatToString(int numdigits, float number) {
-  // Interpret numdigits as "number of decimals"
-  int decimals = numdigits;
-
-  // Clamp
-  if (decimals < 0) decimals = 0;
-  if (decimals > 6) decimals = 6;
-
-  // Round to requested number of decimals
-  float factor = powf(10.0f, (float)decimals);
-  float rounded = roundf(number * factor) / factor;
-
-  // Corner case to avoid "-0.000" and similar
-  if (fabsf(rounded) < 1e-12f) rounded = 0.0f;
-
-  return CT::printf("%.*f", decimals, rounded);
-}
-
-std::string floatToString(float number) {
-  int numdigits = 0;
-
-  if (number == 0.0f)
-    numdigits = 0;
-  else {
-    float tempp = number;
-    if (tempp < 0.00000001 && tempp > -0.00000001) tempp += 0.00000001;
-    numdigits = int(log10(fabs(tempp))) + 1;
-  }
-  return floatToString(numdigits, number);
-}
-
-std::string floatToString(float min, float max, float number) {
-  float range = fabsf(max - min);
-
-  // Estimate precision from range magnitude only
-  int magnitude = int(floor(log10(range)));
-  int decimals = std::max(0, -magnitude);
-
-  // Clamp
-  if (decimals > 6) decimals = 6;
-
-  return floatToString(decimals, number);
-}
-
 int CImageWarper::closereproj() {
   if (initialized) {
     // Nothing to do since we switched to caching the projections for performance

@@ -35,9 +35,6 @@
 #include "Types/GeoParameters.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-std::string floatToString(float number);
-std::string floatToString(int numdigits, float number);
-std::string floatToString(float min, float max, float number);
 
 class CImageWarper {
 private:

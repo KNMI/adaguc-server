@@ -55,8 +55,8 @@ template <typename T> static void computeSmoothedTile(int tileX, int tileY, T *s
   std::vector<double> columnSum(tileWidth);
   std::vector<int32_t> columnCount(tileWidth);
   for (int y = y0; y < y1; y++) {
-    std::fill(columnSum.begin(), columnSum.end(), 0.0);
-    std::fill(columnCount.begin(), columnCount.end(), 0);
+    std::ranges::fill(columnSum, 0.0);
+    std::ranges::fill(columnCount, 0);
     int a = std::max(0, y - r);
     int b = std::min(height - 1, y + r);
     for (int sy = a; sy <= b; sy++) {

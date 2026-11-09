@@ -1,7 +1,7 @@
-#include <Types/GeoParameters.h>
-
 #ifndef CIMGRENDERFIELDVECTORS_H
 #define CIMGRENDERFIELDVECTORS_H
+
+#include <Types/GeoParameters.h>
 
 class CImageWarper;
 class CDataSource;

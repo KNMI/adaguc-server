@@ -1,8 +1,39 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
-#include "CImageWarper.h"
 #include <algorithm>
+#include <cmath>
+
+static std::string floatToString(int numdigits, float number) {
+  // Interpret numdigits as "number of decimals"
+  int decimals = numdigits;
+
+  // Clamp
+  if (decimals < 0) decimals = 0;
+  if (decimals > 6) decimals = 6;
+
+  // Round to requested number of decimals
+  float factor = powf(10.0f, (float)decimals);
+  float rounded = roundf(number * factor) / factor;
+
+  // Corner case to avoid "-0.000" and similar
+  if (fabsf(rounded) < 1e-12f) rounded = 0.0f;
+
+  return CT::printf("%.*f", decimals, rounded);
+}
+
+static std::string floatToString(float min, float max, float number) {
+  float range = fabsf(max - min);
+
+  // Estimate precision from range magnitude only
+  int magnitude = int(floor(log10(range)));
+  int decimals = std::max(0, -magnitude);
+
+  // Clamp
+  if (decimals > 6) decimals = 6;
+
+  return floatToString(decimals, number);
+}
 
 double CCreateLegend::nextTick(double prev) {
   double prevLog = log10(prev);
