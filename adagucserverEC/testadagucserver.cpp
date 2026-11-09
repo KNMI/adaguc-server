@@ -15,10 +15,12 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
+#include "CImageOperators/smoothRasterField.h"
 #include "CUniqueRequests/trajectory.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -702,6 +704,107 @@ TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
   drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesQuad, W, H, -9.4, -7.2, outOfRange, false);
   drawSkewedMeshAndCountWrites(14, 14, 6.3, 1.7, 0.8, writesTriangles, W, H, -9.4, -7.2, outOfRange, true);
   CHECK(writesQuad == writesTriangles);
+}
+
+// Smooths a width x height grid with radius r and returns the smoothed value of every cell.
+static std::vector<float> smoothGrid(std::vector<float> grid, int width, int height, int r, double nodataValue = -9999) {
+  GDWState state = {};
+  state.sourceGridWidth = width;
+  state.sourceGridHeight = height;
+  GDWDrawFunctionSettings settings{};
+  settings.smoothingFiter = r;
+  settings.hasNodataValue = true;
+  settings.dfNodataValue = nodataValue;
+  std::vector<float> result(grid.size());
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      result[x + y * width] = smoothingAtLocation<float>(x, y, grid.data(), state, settings);
+    }
+  }
+  return result;
+}
+
+TEST(smoothRasterField, averagesWindowClippedAtEdges) {
+  // 1 2 3 / 4 5 6 / 7 8 9 with radius 1: corners average 4 cells, edges 6 and the center 9.
+  std::vector<float> expected = {3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7};
+  CHECK(smoothGrid({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3, 1) == expected);
+}
+
+TEST(smoothRasterField, skipsNodataAndNaN) {
+  std::vector<float> expected = {1, 1, 3, 4, 4};
+  CHECK(smoothGrid({1, NAN, -9999, 3, 5}, 5, 1, 1) == expected);
+}
+
+TEST(smoothRasterField, nodataWhenWindowHasNoValues) {
+  std::vector<float> expected = {-9999, -9999, -9999, 7, 7};
+  CHECK(smoothGrid({-9999, -9999, -9999, -9999, 7}, 5, 1, 1) == expected);
+}
+
+TEST(smoothRasterField, radiusLargerThanGridAveragesEverything) {
+  std::vector<float> expected(9, 5);
+  CHECK(smoothGrid({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3, 40) == expected);
+}
+
+TEST(smoothRasterField, linearFieldUnchangedInInterior) {
+  // Away from the edges, smoothing a linear field gives the field itself. Integer values keep the sums exact.
+  const int width = 300, height = 200, r = 12;
+  std::vector<float> grid(width * height);
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      grid[x + y * width] = x + 1000 * y;
+    }
+  }
+  auto smoothed = smoothGrid(grid, width, height, r);
+  int differences = 0;
+  for (int y = r; y < height - r; y++) {
+    for (int x = r; x < width - r; x++) {
+      if (smoothed[x + y * width] != grid[x + y * width]) differences++;
+    }
+  }
+  CHECK(differences == 0);
+}
+
+TEST(smoothRasterField, infAndHugeValuesOnlyAffectTheirOwnWindow) {
+  // Inf is skipped like nodata, and a huge undeclared fill value only changes the cells whose window contains it.
+  std::vector<float> grid(200, 1);
+  grid[10] = INFINITY;
+  grid[100] = 9.96921e36f;
+  auto smoothed = smoothGrid(grid, 200, 1, 2);
+  int wrongOutsideWindows = 0;
+  for (int x = 0; x < 200; x++) {
+    bool nearHuge = x >= 98 && x <= 102;
+    if (!nearHuge && smoothed[x] != 1) wrongOutsideWindows++;
+  }
+  CHECK(wrongOutsideWindows == 0);
+}
+
+TEST(smoothRasterField, matchesBruteForceAcrossTileBorders) {
+  // Grid spans several 64x64 tiles, does not divide evenly, and contains nodata.
+  const int width = 150, height = 97, r = 3;
+  const float nodata = -9999;
+  std::vector<float> grid(width * height);
+  for (int i = 0; i < width * height; i++) {
+    grid[i] = (i * 7919) % 13 == 0 ? nodata : (float)((i * 31) % 101) / 7.f;
+  }
+  auto smoothed = smoothGrid(grid, width, height, r, nodata);
+  int mismatches = 0;
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      double sum = 0;
+      int count = 0;
+      for (int sy = std::max(0, y - r); sy <= std::min(height - 1, y + r); sy++) {
+        for (int sx = std::max(0, x - r); sx <= std::min(width - 1, x + r); sx++) {
+          float v = grid[sx + sy * width];
+          if (v == nodata) continue;
+          sum += v;
+          count++;
+        }
+      }
+      float expected = count > 0 ? (float)(sum / count) : nodata;
+      if (std::fabs(smoothed[x + y * width] - expected) > 1e-4) mismatches++;
+    }
+  }
+  CHECK(mismatches == 0);
 }
 
 TEST(CT, isSafeFloatFormat) {
