@@ -238,7 +238,7 @@
 <BoundingBox CRS="EPSG:900913" minx="333958.472380" miny="6446275.841017" maxx="890555.926346" maxy="7361866.113051" />
 <BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bdatum%3DWGS84%20%2Bno_defs%20%2Btype%3Dcrs" minx="3.000000" miny="55.000000" maxx="8.000000" maxy="50.000000" />
 <Dimension name="time" units="ISO8601" default="2026-02-13T04:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z/2026-02-13T04:00:00Z/PT1H</Dimension>
-<Dimension name="reference_time" units="hours since 2026-02-13T00:00:00Z" default="2026-02-13T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z</Dimension>
+<Dimension name="reference_time" units="ISO8601" default="2026-02-13T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z</Dimension>
    <Style>
     <Name>auto/nearest</Name>
     <Title>Auto style blue-white-red</Title>
@@ -278,7 +278,7 @@
 <BoundingBox CRS="EPSG:900913" minx="333958.472380" miny="6446275.841017" maxx="890555.926346" maxy="7361866.113051" />
 <BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bdatum%3DWGS84%20%2Bno_defs%20%2Btype%3Dcrs" minx="3.000000" miny="55.000000" maxx="8.000000" maxy="50.000000" />
 <Dimension name="time" units="ISO8601" default="2026-02-13T04:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z/2026-02-13T04:00:00Z/PT1H</Dimension>
-<Dimension name="reference_time" units="hours since 2026-02-13T00:00:00Z" default="2026-02-13T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z</Dimension>
+<Dimension name="reference_time" units="ISO8601" default="2026-02-13T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z</Dimension>
    <Style>
     <Name>auto/nearest</Name>
     <Title>Auto style blue-white-red</Title>

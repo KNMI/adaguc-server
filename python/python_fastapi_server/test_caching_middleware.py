@@ -1,12 +1,16 @@
 """
 Tests that the caching middleware only caches GET requests: the cache key is the url, a POST has parameters in the body.
+Also tests that cached responses are stored brotli compressed for content types which need compression.
 """
 
+import asyncio
+import json
 import os
 from unittest.mock import patch
 from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.testclient import TestClient
+from starlette.requests import Request as StarletteRequest
 import pytest
 from routers import caching_middleware
 
@@ -65,3 +69,56 @@ def test_post_is_not_served_from_cache(client, cache):
     response = client.post("/wms?LAYERS=testdata", data={"STYLESHEET": "<Style/>"})
     assert response.text == "POST STYLESHEET=%3CStyle%2F%3E"
     assert "adaguc-cache" not in response.headers
+
+
+class FakeRedis:
+    """Replaces redis.Redis, stores the values in a dict"""
+
+    store = {}
+
+    def __init__(self, connection_pool):  # pylint: disable=unused-argument
+        pass
+
+    async def get(self, key):
+        return self.store.get(key)
+
+    async def set(self, key, value, ex):  # pylint: disable=unused-argument
+        self.store[key] = value
+
+    async def aclose(self):
+        pass
+
+
+def make_request(path):
+    return StarletteRequest({"type": "http", "method": "GET", "path": path, "query_string": b"", "headers": []})
+
+
+@pytest.fixture(name="fake_redis")
+def fixture_fake_redis():
+    FakeRedis.store = {}
+    with patch.object(caching_middleware.redis, "Redis", FakeRedis):
+        yield FakeRedis.store
+
+
+COVJSON = json.dumps({"type": "Coverage", "ranges": {"ta": {"values": [12.5] * 100}}}).encode("utf-8")
+COVJSON_HEADERS = {"content-type": "application/prs.coverage+json"}
+
+
+def test_covjson_is_cached_compressed(fake_redis):
+    request = make_request("/edr/collections/test/position")
+    asyncio.run(caching_middleware.response_to_cache(None, request, COVJSON_HEADERS, COVJSON, ex=60))
+    (cached,) = fake_redis.values()
+    assert len(cached) < len(COVJSON)
+
+    _, headers, data = asyncio.run(caching_middleware.get_cached_response(None, request))
+    assert headers == COVJSON_HEADERS
+    assert data == COVJSON
+
+
+def test_uncompressed_covjson_in_cache_is_a_miss(fake_redis):
+    """CoverageJSON cached by a version which did not compress it"""
+    request = make_request("/edr/collections/test/position")
+    headers_json = json.dumps(COVJSON_HEADERS).encode("utf-8")
+    fake_redis[caching_middleware.generate_key(request)] = f"{0:10d}{len(headers_json):06d}".encode("utf-8") + headers_json + COVJSON
+
+    assert asyncio.run(caching_middleware.get_cached_response(None, request)) == (None, None, None)
