@@ -17,8 +17,10 @@
 - GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
 - Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
 - Faster WCS GetCoverage and EDR cube requests over several levels.
-- Fixed nodata of packed data (`scale_factor`/`add_offset`) in WCS NetCDF output and fixed packed data over several levels in WCS and EDR cube requests: only the first level was scaled, the others were returned unscaled.
+- Fixed packed data (`scale_factor`/`add_offset`) in WCS and EDR cube output: levels after the first were not scaled, and nodata in WCS NetCDF output was not recognized.
+- Faster gzip responses (level 6 instead of 9). `Accept-Encoding` is parsed per coding: `br;q=1.0` now gets brotli, and a coding with `q=0` is not used.
 - The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
+- The fork server is only restarted after three failed health checks in a row, so a single slow check does not end the requests in progress.
 
 **Version 9.2.0 - 2026-10-28**
 

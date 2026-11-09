@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import netCDF4
+import numpy as np
 from netCDF4 import Dataset
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import make_adaguc_env, update_db
@@ -233,11 +234,13 @@ class TestWCS:
         assert status == 0
         values = netCDF4.Dataset("filename.nc", memory=data).variables["packed"][:]
         assert values.shape == (3, 15, 20)
+        # netCDF4 applies the scale_factor and masks the _FillValue, so these are the values the output must have
+        source = netCDF4.Dataset(ADAGUC_PATH + "/data/datasets/testdata_packed_fillvalue.nc").variables["packed"][:]
         for level in range(3):
-            # The source grid covers 10 by 5 of the 20 by 15 cells, one of them is nodata. Level n has the values 10n to 10n + 4.9.
-            assert values[level].count() == 49
-            expected = [round(10 * level + i * 0.1, 1) for i in range(50) if i != 23]
-            assert sorted(round(float(value), 1) for value in values[level].compressed()) == expected
+            # The output grid is larger than the source grid: the cells outside it, and the nodata cell of the source, must be nodata.
+            # What is left are exactly the source values of this level.
+            assert values[level].count() == source[level].count()
+            assert np.allclose(sorted(values[level].compressed()), sorted(source[level].compressed()))
 
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         """
