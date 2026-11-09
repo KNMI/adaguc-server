@@ -6,6 +6,28 @@ from starlette.middleware.gzip import GZipResponder
 from starlette.types import Message, Receive, Scope, Send
 from .is_br_encoding_needed import requires_encoding
 
+# The default level 9 is about ten times slower than 6 for a few percent smaller responses, e.g. 2.6s instead of 0.23s for 13MB of CoverageJSON
+GZIP_COMPRESSLEVEL = 6
+
+
+def get_accepted_encodings(headers: Headers) -> set[str]:
+    """The content codings of the Accept-Encoding header, like {"br", "gzip"}, in lower case and without parameters like q=0.5.
+    A coding with q=0 is refused by the client, so it is left out."""
+    encodings = set()
+    for item in headers.get("Accept-Encoding", "").split(","):
+        coding, *params = (part.strip() for part in item.split(";"))
+        quality = 1.0
+        for param in params:
+            name, _, value = param.partition("=")
+            if name.strip().lower() == "q":
+                try:
+                    quality = float(value)
+                except ValueError:
+                    pass
+        if coding and quality > 0:
+            encodings.add(coding.lower())
+    return encodings
+
 
 class MyBrotliResponder(BrotliResponder):
     """This middleware extends the BrotliResponder but makes it content type aware"""
@@ -36,8 +58,8 @@ class ContentTypeBasedBrotli(BrotliMiddleware):
         """Only difference is use of MyBrotliResponder"""
         if self._is_handler_excluded(scope) or scope["type"] != "http":
             return await self.app(scope, receive, send)
-        headers = Headers(scope=scope)
-        if "br" in [s.strip() for s in headers.get("Accept-Encoding", "").split(",")]:
+        accepted_encodings = get_accepted_encodings(Headers(scope=scope))
+        if "br" in accepted_encodings:
             br_responder = MyBrotliResponder(
                 self.app,
                 self.quality,
@@ -48,8 +70,8 @@ class ContentTypeBasedBrotli(BrotliMiddleware):
             )
             await br_responder(scope, receive, send)
             return
-        if self.gzip_fallback and "gzip" in headers.get("Accept-Encoding", ""):
-            gzip_responder = GZipResponder(self.app, self.minimum_size)
+        if self.gzip_fallback and "gzip" in accepted_encodings:
+            gzip_responder = GZipResponder(self.app, self.minimum_size, compresslevel=GZIP_COMPRESSLEVEL)
             await gzip_responder(scope, receive, send)
             return
         await self.app(scope, receive, send)
