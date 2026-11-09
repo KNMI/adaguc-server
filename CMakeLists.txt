@@ -15,7 +15,7 @@ endif()
 MESSAGE(STATUS "Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 MESSAGE(STATUS "*Note ==============> build type: ${CMAKE_BUILD_TYPE}")
 IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -pedantic -Werror")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -ffp-contract=off -Wall -Wextra -pedantic -Werror")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off -Wall -Wextra -pedantic -Werror")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -Wall -Wextra -pedantic -Werror -ffp-contract=off -g -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS_SANITIZE "-g -Wall -Wextra -pedantic -Werror -ffp-contract=off -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
