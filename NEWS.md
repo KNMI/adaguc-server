@@ -16,7 +16,6 @@
 - Grid-relative wind (`uvcomponents`) is now rotated to true north with the angle at the grid point itself, where the value is defined and where barbs and vectors are drawn, measured in the tangent plane of the earth's surface. Previously the angle was taken at a cell corner over a full-cell step, which also added a spurious rotation of half a cell's arc (about 0.1 degree on a 0.25 degree lat/lon grid, where the correct rotation is 0). Barb, vector and direction output change by a few degrees on coarse grids; on fine grids the change is hardly visible.
 - GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
 - Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
-- Faster WCS GetCoverage and EDR cube requests over several levels.
 - Fixed packed data (`scale_factor`/`add_offset`) in WCS and EDR cube output: levels after the first were not scaled, and nodata in WCS NetCDF output was not recognized.
 - Faster gzip responses (level 6 instead of 9). `Accept-Encoding` is parsed per coding: `br;q=1.0` now gets brotli, and a coding with `q=0` is not used.
 - The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
