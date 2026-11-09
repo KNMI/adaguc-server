@@ -34,7 +34,6 @@ from .utils.edr_utils import (
 
 
 from .netcdf_to_covjson import netcdf_to_covjson
-from .utils.native_grid import NATIVE_CRS, check_crs, get_native_grid_query
 from .utils.ogcapi_tools import call_adaguc
 
 router = APIRouter()
@@ -59,7 +58,6 @@ async def get_collection_cube(
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
-    crs: str | None = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection and position"""
     return await get_coll_inst_cube(
@@ -73,7 +71,6 @@ async def get_collection_cube(
         z_par=z_par,
         resolution_x=resolution_x,
         resolution_y=resolution_y,
-        crs=crs,
     )
 
 
@@ -94,10 +91,8 @@ async def get_coll_inst_cube(
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
-    crs: str | None = None,
 ) -> CoverageCollection | Coverage:
-    """Returns information in EDR format for a given collection, instance and position.
-    With crs=native the data is returned on the grid of the source data, for example a rotated pole grid, instead of in EPSG:4326."""
+    """Returns information in EDR format for a given collection, instance and position"""
     allowed_params = [
         "bbox",
         "datetime",
@@ -108,10 +103,6 @@ async def get_coll_inst_cube(
         "resolution_x",
         "resolution_y",
     ]
-
-    check_crs(crs, allow_native=True, query_type="cube")
-    if crs == NATIVE_CRS and (resolution_x is not None or resolution_y is not None):
-        raise exc_failed_call("resolution_x and resolution_y cannot be combined with crs=native, which returns the cells of the native grid")
 
     metadata = await get_metadata(collection_name, response=response)
 
@@ -150,9 +141,7 @@ async def get_coll_inst_cube(
         }
         if instance:
             query["dim_reference_time"] = instance_to_iso(instance)
-        if crs == NATIVE_CRS:
-            query.update(get_native_grid_query(metadata[collection_name][parameter_name]["layer"].get("gridspec"), bbox))
-        elif resolution_x is not None and resolution_y is not None:
+        if resolution_x is not None and resolution_y is not None:
             query.update(resx=resolution_x, resy=resolution_y)
         urlrequest = encode_native_query(query, [*custom_dims, vertical_dim])
 

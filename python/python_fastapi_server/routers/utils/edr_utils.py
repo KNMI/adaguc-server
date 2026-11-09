@@ -44,7 +44,6 @@ from .edr_exception import (
 )
 
 from .ogcapi_tools import call_adaguc
-from .native_grid import EPSG_4326_CRS_DETAILS, NATIVE_CRS, get_collection_native_crs_wkt
 
 logger = logging.getLogger(__name__)
 
@@ -292,7 +291,12 @@ def get_collectioninfo_from_md(
         query_type="position",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
-        crs_details=[EPSG_4326_CRS_DETAILS],
+        crs_details=[
+            {
+                "crs": "EPSG:4326",
+                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+            }
+        ],
     )
     position_link = EDRQueryLink(
         href=f"{base_url}/position",
@@ -301,22 +305,16 @@ def get_collectioninfo_from_md(
         title="Position query",
         variables=position_variables,
     )
-    cube_crs_details = [EPSG_4326_CRS_DETAILS]
-    # The cube can also return the grid of the data itself, like a rotated pole grid, with crs=native
-    native_crs_wkt = get_collection_native_crs_wkt(
-        [
-            metadata[param]["layer"].get("gridspec")
-            for param in metadata
-            if param not in ["baselayer", "overlay"] and metadata[param]["layer"].get("enable_edr") is True
-        ]
-    )
-    if native_crs_wkt is not None:
-        cube_crs_details.append({"crs": NATIVE_CRS, "wkt": native_crs_wkt})
     cube_variables = Variables(
         query_type="cube",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
-        crs_details=cube_crs_details,
+        crs_details=[
+            {
+                "crs": "EPSG:4326",
+                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
+            }
+        ],
     )
     cube_link = EDRQueryLink(
         href=f"{base_url}/cube",
@@ -397,10 +395,7 @@ def get_collectioninfo_from_md(
     parameter_info = get_params_for_dataset(metadata, collection_name, primary_extent)
     collections = []
 
-    # The crs values a query accepts; EDR requires the crs parameter to be one of these
     crs = ["EPSG:4326"]
-    if native_crs_wkt is not None:
-        crs.append(NATIVE_CRS)
 
     output_formats = ["CoverageJSON"]
     if subcollection_name is not None:

@@ -18,7 +18,6 @@
 - Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
 - Faster WCS GetCoverage and EDR cube requests over several levels.
 - Fixed nodata of packed data (`scale_factor`/`add_offset`) in WCS NetCDF output and fixed packed data over several levels in WCS and EDR cube requests: only the first level was scaled, the others were returned unscaled.
-- EDR cube requests accept `crs=native` to return the grid of the data itself, like a rotated pole grid, without resampling. The CRS is given as WKT. The default is still EPSG:4326. Position and trajectory requests refuse `crs=native` and accept every spelling of EPSG:4326, like CRS84.
 - The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
 
 **Version 9.2.0 - 2026-10-28**
