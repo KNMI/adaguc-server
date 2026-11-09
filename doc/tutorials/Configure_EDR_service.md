@@ -82,8 +82,8 @@ The following examples test the `/collections`, `/instances`, `/position` and th
 - https://yourhostname/edr/collections/edr.mycollection
 - https://yourhostname/edr/collections/edr.mycollection/instances
 - https://yourhostname/edr/collections/edr.mycollection/instances/201712150900
-- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/position?coords=POINT(4.782%2052.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
-- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/position?coords=POINT(4.782%2052.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=my_temperature&crs=EPSG:4326&f=CoverageJSON
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=my_temperature&crs=EPSG:4326&f=CoverageJSON
 
 
 You can also try pasting your EDR endpoint https://yourhostname/edr/collections in https://labs.metoffice.gov.uk/edr/static/html/query.html.
@@ -92,6 +92,31 @@ You can also try pasting your EDR endpoint https://yourhostname/edr/collections 
 See:
 
 ![](2023-11-23-AdagucServer_EDR_In_MetOffice_EDR_Viewer.png)
+
+## Cube queries on the native grid (`crs=native`)
+
+By default `/cube` resamples the data to a regular EPSG:4326 grid with nearest neighbour. The values are real values,
+but they are not at the cell centres of the source grid. For a rotated pole or projected grid, some source cells can
+also be left out. With `crs=native` the cube returns the cells of the source grid itself, without resampling:
+
+```text
+/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=100000,400000,250000,550000&datetime=2017-12-15T09:00Z&parameter-name=my_temperature&crs=native
+```
+
+- **Availability:** a collection offers `native` only when all its EDR parameters share one grid, and that grid is
+  not EPSG:4326. It is then listed in the `crs` list of the collection, and in the `crs_details` of the cube query
+  with the WKT of the grid.
+- **bbox:** the values are in the coordinates of the native grid, not in longitude/latitude. In this example these
+  are metres in the Dutch RD grid (EPSG:28992). For a rotated pole grid they are rotated degrees. Use the WKT to
+  convert, for example with pyproj. Every cell that intersects the bbox is returned.
+- **Response:** the `x` and `y` axes are the cell centres of the native grid. The CoverageJSON `referencing` gives the
+  EPSG id of the grid when there is one, otherwise its WKT. A rotated pole grid is given as a CF rotated pole.
+- **Errors (HTTP 400):** `crs=native` cannot be combined with `resolution_x`/`resolution_y`, because it returns the
+  cells of the native grid. A bbox outside the grid and a collection without `native` also return 400.
+  `/position` and `/trajectory` refuse `crs=native`, because their coordinates are longitude/latitude.
+
+Without `crs`, or with any spelling of EPSG:4326 (`EPSG:4326`, `CRS84`, `OGC:CRS84` or their URIs), the cube returns
+EPSG:4326 as before. Other values return HTTP 400.
 
 ## Trajectory queries
 
@@ -117,7 +142,7 @@ including rotated-pole grids. Each axis needs at least two cells; spatial
 dimensions must be the final two variable dimensions. Layers requiring multiple
 source variables or `orgname` renaming are unsupported.
 
-Only `EPSG:4326` and CoverageJSON are supported. `resolution_x` and `resolution_y`
+Only `EPSG:4326` (in any spelling, like `CRS84`) and CoverageJSON are supported. `resolution_x` and `resolution_y`
 are rejected; rendering stride is ignored. Vertical coordinates must be finite
 numbers. Failed trajectory data calls return HTTP 400.
 
