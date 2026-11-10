@@ -26,6 +26,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "CXMLSerializerInterface.h"
+#include "utils/StyleSheetJson.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -1040,3 +1041,88 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }
+
+static std::string jsonToXml(const std::string &json) {
+  std::string xml;
+  return styleSheetJsonToXml(json, xml) ? xml : "invalid";
+}
+
+TEST(StyleSheetJson, jsonToXml) {
+  // Attributes with @, text with #text or as the value of an element with only text, arrays for repeated elements
+  CHECK(jsonToXml(R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": [{"@index": 0, "@color": "#2B83BA"}, {"@index": 240, "@color": "#7A3B10"}]}})") ==
+        R"(<Configuration><Legend name="l" type="colorRange"><palette index="0" color="#2B83BA"></palette><palette index="240" color="#7A3B10"></palette></Legend></Configuration>)");
+  CHECK(jsonToXml(R"({"Style": {"@name": "s", "Legend": {"@fixedclasses": "true", "#text": "l"}, "Min": -5, "Max": 7.5, "Log": "10"}})") ==
+        R"(<Configuration><Style name="s"><Legend fixedclasses="true">l</Legend><Min>-5</Min><Max>7.5</Max><Log>10</Log></Style></Configuration>)");
+  // Wrapped in Configuration, like XML
+  CHECK(jsonToXml(R"({"Configuration": {"Style": {"@name": "s"}}})") == R"(<Configuration><Style name="s"></Style></Configuration>)");
+  // Markup in values is escaped, so it stays a value
+  CHECK(jsonToXml(R"({"Style": {"@name": "a\"><Layer/>", "ContourLine": {"@textformatting": "%.1f & <b>"}}})") ==
+        R"(<Configuration><Style name="a&quot;&gt;&lt;Layer/&gt;"><ContourLine textformatting="%.1f &amp; &lt;b&gt;"></ContourLine></Style></Configuration>)");
+}
+
+TEST(StyleSheetJson, jsonToXmlRefusesInvalidJson) {
+  for (const char *json: {
+           R"(not json)",
+           R"(["Style"])",
+           R"({"Style": {"@name": "s")",
+           // Names that are not element or attribute names
+           R"({"Style><Layer": {}})",
+           R"({"Style": {"@na me": "s"}})",
+           R"({"": {}})",
+           // Values that are no text
+           R"({"Style": {"@name": {"x": 1}}})",
+           R"({"Style": {"@name": null}})",
+           R"({"Style": null})",
+           R"({"Style": {"#text": []}})",
+           R"({"Style": [[{"@name": "s"}]]})",
+           // Attributes and text belong to an element
+           R"({"@name": "s"})",
+           R"({"#text": "s"})",
+           // Too deep
+           R"({"a": {"b": {"c": {"d": {"e": {"f": {"g": {"h": {"i": {"j": 1}}}}}}}}}})",
+       }) {
+    if (jsonToXml(json) != "invalid") FAIL(json);
+  }
+}
+
+// Converting XML to JSON and back gives the same stylesheet: converting it to JSON again gives the same JSON
+TEST(StyleSheetJson, roundTrip) {
+  for (const char *xml: {
+           R"(<Legend name="terrain" type="colorRange"><palette index="0" color="#2B83BA"/><palette index="240" color="#7A3B10"/></Legend>
+              <Style name="terrain"><Legend fixedclasses="true" tickinterval="10">terrain</Legend><Min>-5</Min><Max>75</Max><RenderSettings interpolationmethod="bilinear"/>
+                <SmoothingFilter>2</SmoothingFilter><ContourLine width="0.6" linecolor="#5A3A1A80" interval="5"/>
+                <ContourLine width="1.6" textcolor="#3A2008" textformatting="%.0f m &amp; more" interval="20"/></Style>)",
+           R"(<?xml version="1.0"?><Configuration><Style name="classes"><ShadeInterval min="-100" max="0" label="Below 0 m" fillcolor="#4A90C8"/></Style></Configuration>)",
+           R"(<Style name="s"><IncludeStyle name="a"/><IncludeStyle name="b"/></Style>)",
+       }) {
+    std::string json, xmlAgain, jsonAgain;
+    if (!styleSheetXmlToJson(xml, json) || !styleSheetJsonToXml(json, xmlAgain) || !styleSheetXmlToJson(xmlAgain, jsonAgain) || json != jsonAgain) {
+      FAIL((json + "\n" + jsonAgain).c_str());
+    }
+  }
+  std::string json;
+  CHECK(styleSheetXmlToJson(R"(<Style name="s"><Legend fixedclasses="true">l</Legend><Min>-5</Min><ContourLine interval="5"/><ContourLine interval="20"/></Style>)", json));
+  CHECK(json == R"({"Style":{"@name":"s","Legend":{"@fixedclasses":"true","#text":"l"},"Min":"-5","ContourLine":[{"@interval":"5"},{"@interval":"20"}]}})");
+  CHECK(!styleSheetXmlToJson("<Style name=", json));
+}
+
+// A JSON stylesheet is checked like the same stylesheet in XML
+TEST(CServerParams, applyStyleSheetJson) {
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        R"({"Style": {"@name": "s", "Legend": "rainbow", "Min": 0, "Max": 0.5}})",
+                        R"( {"Legend": {"@name": "l", "@type": "colorRange", "palette": {"@index": 0, "@color": "#000000"}}, "Style": {"@name": "s", "Legend": "l"}})",
+                        R"({"Configuration": {"Style": {"@name": "s", "ContourLine": [{"@interval": 0.1}, {"@interval": 1}]}}})",
+                    }),
+                    true);
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        R"({"Layer": {"@type": "database", "FilePath": "/etc"}})",
+                        R"({"Style": [{"@name": "a"}, {"@name": "b"}]})",
+                        R"({"Style": {"@name": "s", "Point": {"@fontfile": "/etc/passwd"}}})",
+                        R"({"Style": {"@name": "s", "Min": "abc"}})",
+                        R"({"Style": {"@name": "s", "Legend": "does_not_exist"}})",
+                        R"({"Configuration": {"@foo": 1, "Style": {"@name": "s"}}})",
+                        R"({"Style": {"@name": "s")",
+                    }),
+                    false);
+}
+

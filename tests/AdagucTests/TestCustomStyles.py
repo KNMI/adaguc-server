@@ -4,6 +4,7 @@ The posted Style is used for the requested layer (only one allowed), regardless 
 A posted Legend replaces the configured one with the same name.
 """
 
+import json
 import os
 import sys
 from importlib import reload
@@ -52,6 +53,31 @@ VARIANT_STYLE = """
     <ContourLine width="0.5" linecolor="#00FF00" textcolor="#FFFFFF" textformatting="%2.3f" classes="0.025"/>
   </Style>
 """
+
+# VARIANT_STYLE in JSON: attributes with @, element text with #text or as the value of an element with only text
+VARIANT_STYLE_JSON = {
+    "Legend": {
+        "@name": "customstyles_bluegreen",
+        "@type": "colorRange",
+        "palette": [
+            {"@index": 0, "@red": 0, "@green": 0, "@blue": 128},
+            {"@index": 120, "@red": 0, "@green": 160, "@blue": 255},
+            {"@index": 240, "@red": 220, "@green": 255, "@blue": 200},
+        ],
+    },
+    "Style": {
+        "@name": "my_custom_style",
+        "@title": "Blue green",
+        "@abstract": "Drawing with blue and green colors",
+        "Legend": {"@fixedclasses": "true", "@tickinterval": 0.1, "@tickround": ".01", "#text": "customstyles_bluegreen"},
+        "Min": 0.0,
+        "Max": 0.5,
+        "ContourLine": [
+            {"@width": 2, "@linecolor": "#FFFF00", "@textcolor": "#FFFFFF", "@textformatting": "%2.2f", "@classes": "0.05"},
+            {"@width": 0.5, "@linecolor": "#00FF00", "@textcolor": "#FFFFFF", "@textformatting": "%2.3f", "@classes": "0.025"},
+        ],
+    },
+}
 
 
 @pytest.fixture(name="client")
@@ -113,6 +139,25 @@ def test_CustomStyles_post_same_style(client):
 def test_CustomStyles_post_variant_style_ignores_styles(client, styles):
     """The posted style is used whatever STYLES is set to, None keeps the configured style testdata_style_manycontours"""
     assert_image(post_getmap(client, VARIANT_STYLE, styles=styles), "test_CustomStyles_post_variant_style.png")
+
+
+def test_CustomStyles_json_gives_the_same_image(client):
+    """A STYLESHEET in JSON is the same stylesheet as in XML: as a JSON body, and as JSON text in a form url encoded POST"""
+    xml = post_getmap(client, VARIANT_STYLE)
+    assert xml.status_code == 200, xml.text
+    params = dict(parse_qsl(GET_MAP_QUERY)) | {"STYLESHEET": VARIANT_STYLE_JSON}
+    json_body = client.post("/wms", json=params)
+    assert json_body.status_code == 200, json_body.text
+    assert json_body.content == xml.content
+    json_text = post_getmap(client, json.dumps(VARIANT_STYLE_JSON))
+    assert json_text.status_code == 200, json_text.text
+    assert json_text.content == xml.content
+
+
+def test_CustomStyles_json_is_checked_like_xml(client):
+    """A refused stylesheet is also refused in JSON"""
+    params = dict(parse_qsl(GET_MAP_QUERY)) | {"STYLESHEET": {"Layer": {"@type": "database", "FilePath": "/etc", "Variable": "x"}}}
+    assert client.post("/wms", json=params).status_code == 422
 
 
 @pytest.mark.parametrize("value", [None, "FALSE", "true"])

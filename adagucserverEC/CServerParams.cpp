@@ -33,6 +33,7 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include "utils/StyleSheetValidation.h"
+#include "utils/StyleSheetJson.h"
 #include "utils/lintDataset.h"
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
@@ -373,6 +374,12 @@ static bool resolveStyleSheetPngFile(std::string &file) {
 int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   if (cfg == nullptr) return 1;
   std::string xml = CT::trim(styleSheetXml);
+  // A stylesheet in JSON is converted to the same XML, which is then checked and parsed like a posted XML stylesheet
+  if (xml.starts_with("{")) {
+    std::string converted;
+    if (!styleSheetJsonToXml(xml, converted)) return 1;
+    xml = converted;
+  }
   if (xml.starts_with("<?xml")) {
     size_t declarationEnd = xml.find("?>");
     xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));

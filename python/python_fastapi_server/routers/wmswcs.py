@@ -1,6 +1,7 @@
 """wmsWcsRouter"""
 
 import asyncio
+import json
 import logging
 import os
 from urllib.parse import parse_qsl, quote, urlencode
@@ -51,6 +52,28 @@ def merge_params(query_params, body_params):
     return list(merged.values())
 
 
+def json_body_params(body: str) -> list[tuple[str, str]]:
+    """
+    The (key, value) pairs of a JSON object with WMS parameters, like {"SERVICE": "WMS", "WIDTH": 256, "STYLESHEET": {...}}.
+    A STYLESHEET object is passed on as JSON text, adaguc-server converts it to the same XML as a posted XML stylesheet.
+    Raises ValueError for anything else than an object of strings, numbers, booleans and a STYLESHEET object.
+    """
+    data = json.loads(body)
+    if not isinstance(data, dict):
+        raise ValueError("The JSON body must be an object with the request parameters")
+    params = []
+    for key, value in data.items():
+        if key.upper() == "STYLESHEET" and isinstance(value, dict):
+            params.append((key, json.dumps(value, separators=(",", ":"))))
+        elif isinstance(value, bool):
+            params.append((key, "TRUE" if value else "FALSE"))
+        elif isinstance(value, (str, int, float)):
+            params.append((key, str(value)))
+        else:
+            raise ValueError(f"Parameter {key} must be a string, number or boolean")
+    return params
+
+
 async def read_limited_body(req: Request, limit: int) -> bytes | None:
     """
     Returns the request body, or None when it is larger than limit. Stops reading as soon as the limit is exceeded,
@@ -73,19 +96,26 @@ async def read_limited_body(req: Request, limit: int) -> bytes | None:
 @wmsWcsRouter.api_route("/adaguc-server", methods=["GET", "POST"])
 async def handle_wms(req: Request):
     """
-    Handle /wms endpoint. POST accepts the same parameters form url encoded in the body.
+    Handle /wms endpoint. POST accepts the same parameters in the body, form url encoded or as a JSON object.
     """
     params = list(req.query_params.items())
     if req.method == "POST":
         content_type = req.headers.get("content-type", "").split(";")[0].strip().lower()
-        if content_type != "application/x-www-form-urlencoded":
-            return Response(content="POST requires Content-Type application/x-www-form-urlencoded", status_code=415)
+        if content_type not in ("application/x-www-form-urlencoded", "application/json"):
+            return Response(content="POST requires Content-Type application/x-www-form-urlencoded or application/json", status_code=415)
         body = await read_limited_body(req, MAX_REQUEST_BYTES)
         if body is None:
             return Response(content=f"Request body too large, maximum is {MAX_REQUEST_BYTES} bytes", status_code=413)
         body = body.decode("utf-8", errors="replace")
+        if content_type == "application/json":
+            try:
+                body_params = json_body_params(body)
+            except ValueError as exc:
+                return Response(content=f"Invalid JSON body: {exc}", status_code=400)
+        else:
+            body_params = parse_qsl(body, keep_blank_values=True)
         # Last value wins for repeated keys, also across query and body
-        params = merge_params(params, parse_qsl(body, keep_blank_values=True))
+        params = merge_params(params, body_params)
 
     adaguc_instance = setup_adaguc()
 

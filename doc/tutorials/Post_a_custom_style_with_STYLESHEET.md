@@ -217,9 +217,80 @@ document.getElementById("map").src = URL.createObjectURL(await response.blob());
 
 `STYLESHEET` also works in a GET query string, but POST avoids URL length limits.
 
-## 10. What can be posted
+## 10. Post the style as JSON
 
-The XML is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
+Some firewalls (WAFs) refuse requests that contain XML. A stylesheet can also be written as JSON. It is the same stylesheet: the server converts it to the XML above, element by element, and then checks and uses it the same way.
+
+- A key is an element name. Its value is an object, a value for an element with only text (`"Min": -5` is `<Min>-5</Min>`), or an array for a repeated element.
+- A key starting with `@` is an attribute. `#text` is the text of an element that also has attributes, like the legend name in `Style`.
+- The elements may be wrapped in `{"Configuration": {...}}`, like `<Configuration>` in XML.
+
+[style_terrain.json](./data/STYLESHEET/style_terrain.json) is the style of step 4:
+
+```json
+{
+  "Legend": {
+    "@name": "terrain",
+    "@type": "colorRange",
+    "palette": [
+      {"@index": 0, "@color": "#2B83BA"},
+      {"@index": 20, "@color": "#ABDDA4"},
+      {"@index": 60, "@color": "#FFFFBF"},
+      {"@index": 140, "@color": "#D7A35B"},
+      {"@index": 240, "@color": "#7A3B10"}
+    ]
+  },
+  "Style": {
+    "@name": "terrain",
+    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
+    "Min": -5,
+    "Max": 75,
+    "RenderSettings": {"@interpolationmethod": "bilinear"}
+  }
+}
+```
+
+Post it in the `STYLESHEET` parameter, like the XML. The image is the same as in step 4:
+
+```bash
+curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.json"
+```
+
+Or post all parameters as one JSON object with `Content-Type: application/json`, with the stylesheet as an object in it. Numbers and booleans in the parameters are passed on as text (`true` as `TRUE`). From Python:
+
+```python
+import json
+import requests
+
+with open("style_terrain.json", encoding="utf-8") as f:
+    stylesheet = json.load(f)
+
+params = {
+    "DATASET": "ahn_utrechtse_heuvelrug",
+    "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap",
+    "LAYERS": "ahn_utrechtseheuvelrug_500m",
+    "CRS": "EPSG:3857", "BBOX": "590360,6784100,707370,6894820",
+    "WIDTH": 600, "HEIGHT": 568, "FORMAT": "image/png",
+    "STYLESHEET": stylesheet,
+}
+response = requests.post("http://localhost:8080/wms", json=params, timeout=60)
+```
+
+And from JavaScript:
+
+```javascript
+const response = await fetch("http://localhost:8080/wms", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ ...params, STYLESHEET: stylesheet }), // stylesheet is an object like the one above
+});
+```
+
+Values the server reads as whole numbers must be whole numbers in JSON too: `20`, not `20.0`. Python's `json` writes `20.0` for a float, JavaScript writes `20`.
+
+## 11. What can be posted
+
+The XML, or the XML converted from JSON, is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
 
 - Allowed: `Legend` with `palette`, and one `Style` with the usual styling elements: `Min`, `Max`, `ShadeInterval`, `ContourLine`, `SmoothingFilter`, `RenderSettings`, `RenderMethod`, `Point`, `Vector`, `Thinning`, `SymbolInterval`, `FeatureInterval`, `Stippling`, `IncludeStyle`, and so on.
 - Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`.
@@ -229,7 +300,7 @@ The XML is checked against an allowlist before it is used. See [StyleSheetValida
 
 A refused stylesheet gets status 422, and the body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. A stylesheet that is too large gets 413. See [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes) for all statuses.
 
-## 11. Notes for server administrators
+## 12. Notes for server administrators
 
 - POST responses are not stored in the Redis response cache (`ADAGUC_REDIS`). Only GET requests are cached.
 - A valid style can still be expensive to render. Put a rate or concurrency limit in front of a public server, see [Environment variables](../EnvironmentVariablesAndExitCodes.md).
