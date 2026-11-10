@@ -1,7 +1,7 @@
 """Tests for the image comparison used by the functional tests (adaguc.imagecompare).
 
-The images are synthetic: antialiased discs, drawn by supersampling. Computing the coverage with a
-different number of samples per pixel mimics a different version of the rasterizer (pixman).
+The images are synthetic: antialiased discs and text labels, drawn by supersampling. Computing the coverage with a
+different number of samples per pixel mimics a different version of the rasterizer (pixman, FreeType).
 """
 
 import itertools
@@ -62,9 +62,11 @@ ALL_TOLERANCES = pytest.mark.parametrize("tolerance", ["exact", "geometry", "ant
 LOOSE_TOLERANCES = pytest.mark.parametrize("tolerance", ["geometry", "antialiasing"])
 
 
-@ALL_TOLERANCES
-def test_identical(tmp_path, tolerance):
-    assert compare(tmp_path, REFERENCE, render(), tolerance=tolerance)
+# Basics
+
+
+def test_identical(tmp_path):
+    assert compare(tmp_path, REFERENCE, render(), tolerance="antialiasing")
     assert not os.path.exists(imagecompare.diff_image_path(str(tmp_path / "actual.png")))
 
 
@@ -80,11 +82,72 @@ def test_unknown_tolerance(tmp_path):
         compare(tmp_path, REFERENCE, render(shift=1), tolerance="loose")
 
 
+# Antialiasing differences must pass
+
+
 def test_other_rasterizer(tmp_path):
     """Differences in antialiasing coverage only: accepted by the antialiasing tolerance only."""
     for samples in (3, 4, 5):
         assert compare(tmp_path, REFERENCE, render(samples), tolerance="antialiasing")
         assert not compare(tmp_path, REFERENCE, render(samples))
+
+
+@LOOSE_TOLERANCES
+def test_few_scattered_pixels_on_edges_pass(tmp_path, tolerance):
+    """Scattered single pixels on the edges of the discs, where antialiasing differences occur."""
+    actual = render()
+    for y, x in [(60, 20), (120, 165), (135, 120)]:
+        actual[y, x] = (0, 0, 0)
+    assert compare(tmp_path, REFERENCE, actual, tolerance=tolerance)
+    assert not compare(tmp_path, REFERENCE, actual)
+
+
+# Rule flat area
+
+
+@LOOSE_TOLERANCES
+def test_small_colour_change_in_flat_area_fails(tmp_path, tolerance):
+    discs = list(DISCS)
+    discs[3] = (120, 160, 25, (0, 128, 247))
+    assert not compare(tmp_path, REFERENCE, render(discs=discs), tolerance=tolerance)
+
+
+@LOOSE_TOLERANCES
+def test_seam_blended_twice_fails(tmp_path, tolerance):
+    """A 1 pixel wide line that is a few colour units off, like a seam between triangles that is blended twice."""
+    actual = render()
+    actual[:, 100] = np.clip(actual[:, 100].astype(int) + 5, 0, 255)
+    assert not compare(tmp_path, REFERENCE, actual, tolerance=tolerance)
+
+
+def extra_pixel(img):
+    img[10, 10] = (0, 0, 0)
+
+
+def marker_2x2(img):
+    img[20:22, 150:152] = (0, 0, 0)
+
+
+def dotted_line(img):
+    """Single-pixel dots, 2 pixels apart: no dot has a flagged neighbour, so the cluster rule alone would accept it."""
+    img[190, 20:70:2] = (0, 0, 0)
+
+
+@LOOSE_TOLERANCES
+@pytest.mark.parametrize(
+    "draw, in_expected",
+    [(extra_pixel, False), (marker_2x2, True), (dotted_line, True)],
+    ids=["extra_single_pixel", "missing_2x2_marker", "missing_dotted_line"],
+)
+def test_small_shape_on_plain_background_fails(tmp_path, tolerance, draw, in_expected):
+    """Small shapes on a plain background, also a single pixel. The missing ones are drawn in the expected image only,
+    so the flat area has to be recognised in the actual image."""
+    expected, actual = render(), render()
+    draw(expected if in_expected else actual)
+    assert not compare(tmp_path, expected, actual, tolerance=tolerance)
+
+
+# Rule cluster
 
 
 def two_halves():
@@ -96,35 +159,72 @@ def two_halves():
 
 def moderate_change(img, rows, cols):
     """Changes pixels by 70 (green side of the edge) or 55 (blue side): outside the colour range of the neighbourhood
-    plus MARGIN, but within STRONG_MARGIN, so only the cluster filter applies."""
+    plus MARGIN, but within STRONG_MARGIN, so only the cluster rule applies."""
     changed = np.where(np.arange(img.shape[1])[None, :, None] < 100, (230, 240, 128), (60, 90, 255))
     img[rows, cols] = np.broadcast_to(changed, img.shape)[rows, cols]
 
 
+def strong_change(img, rows, cols):
+    img[rows, cols] = (0, 0, 0)
+
+
 @LOOSE_TOLERANCES
 @pytest.mark.parametrize(
-    "rows, cols, passes",
+    "change, rows, cols, passes",
     [
-        (slice(50, 60), 100, True),  # 1 px line of 10 px along the edge: the end pixels have 1 flagged neighbour, 8 count
-        (slice(50, 61), 100, False),  # 11 px: 9 count, more than MAX_FLAGGED_PIXELS
-        (slice(50, 52), slice(99, 101), True),  # 2x2 block on the edge: 4 count
-        (slice(50, 53), slice(98, 101), False),  # 3x3 block on the edge: its outer column lies in a flat area
+        (moderate_change, slice(50, 60), 100, True),  # 1 px line of 10 px along the edge: the end pixels have 1 flagged neighbour, 8 count
+        (moderate_change, slice(50, 61), 100, False),  # 11 px: 9 count, more than MAX_FLAGGED_PIXELS
+        (moderate_change, slice(50, 52), slice(99, 101), True),  # 2x2 block on the edge: 4 count
+        (moderate_change, slice(50, 53), slice(98, 101), False),  # 3x3 block on the edge: its outer column lies in a flat area
+        (strong_change, slice(50, 52), slice(99, 101), False),  # 2x2 block on the edge, but black: rule strong
     ],
-    ids=["line_10px", "line_11px", "block_2x2", "block_3x3"],
+    ids=["line_10px", "line_11px", "block_2x2", "block_3x3", "block_2x2_strong"],
 )
-def test_limit_near_an_edge(tmp_path, tolerance, rows, cols, passes):
-    """Near an edge, only the cluster filter applies to a moderate colour change. This pins where its limit is."""
+def test_limit_near_an_edge(tmp_path, tolerance, change, rows, cols, passes):
+    """Near an edge, only the cluster rule applies to a moderate colour change. This pins where its limit is."""
     actual = two_halves()
-    moderate_change(actual, rows, cols)
+    change(actual, rows, cols)
     assert compare(tmp_path, two_halves(), actual, tolerance=tolerance) == passes
 
 
 @LOOSE_TOLERANCES
-def test_strong_change_near_an_edge_fails(tmp_path, tolerance):
-    """A 2x2 block on the edge that differs strongly fails, while the moderate one in test_limit_near_an_edge passes."""
-    actual = two_halves()
-    actual[50:52, 99:101] = (0, 0, 0)
-    assert not compare(tmp_path, two_halves(), actual, tolerance=tolerance)
+def test_missing_line_near_an_edge_fails(tmp_path, tolerance):
+    """The line of test_limit_near_an_edge, but in the expected image only. For antialiasing, the colours of the actual
+    image lie within the neighbourhood range of the expected image, so only the check in the other direction sees it."""
+    expected = two_halves()
+    moderate_change(expected, slice(50, 70), 100)
+    assert not compare(tmp_path, expected, two_halves(), tolerance=tolerance)
+
+
+# Shifts
+
+
+@ALL_TOLERANCES
+def test_shift_of_one_pixel_fails_and_writes_diff_image(tmp_path, tolerance):
+    """A shift of one pixel of high-contrast edges: rule strong for antialiasing."""
+    assert not compare(tmp_path, REFERENCE, render(shift=1), tolerance=tolerance)
+    diff_path = imagecompare.diff_image_path(str(tmp_path / "actual.png"))
+    assert os.path.exists(diff_path)
+    diff = np.asarray(Image.open(diff_path))
+    assert ((diff == [255, 0, 0]).all(axis=2)).sum() > 100
+
+
+def test_diff_image_removed_when_passing_again(tmp_path):
+    assert not compare(tmp_path, REFERENCE, render(shift=2))
+    assert compare(tmp_path, REFERENCE, render())
+    assert not os.path.exists(imagecompare.diff_image_path(str(tmp_path / "actual.png")))
+
+
+def test_shift_of_one_pixel_of_medium_contrast_edges(tmp_path):
+    """Known limitation: an edge whose sides differ by less than STRONG_MARGIN (here about 50) that moves by one pixel
+    is accepted by antialiasing, geometry detects it."""
+    discs = [(x, y, r, (160, 240, 40)) for x, y, r, _ in DISCS]
+    expected = render(discs=discs)
+    assert compare(tmp_path, expected, render(discs=discs, shift=1), tolerance="antialiasing")
+    assert not compare(tmp_path, expected, render(discs=discs, shift=1), tolerance="geometry")
+
+
+# Text: rule strong
 
 
 FONT = os.path.join(os.path.dirname(__file__), "..", "..", "data", "fonts", "FreeSans.ttf")
@@ -135,6 +235,7 @@ TEXTURED = np.random.default_rng(0).integers(100, 200, (40, 80, 3)).astype(np.ui
 # about 125 from it. Then a changed digit gives fewer and smaller strong differences.
 _y, _x = np.mgrid[0:40, 0:80]
 GRADIENT = np.clip(np.array([40, 90, 220]) + (_x + _y)[..., None] * np.array([1.5, 1.2, -1.5]), 0, 255).astype(np.uint8)
+BACKGROUNDS = pytest.mark.parametrize("background", [None, TEXTURED, GRADIENT], ids=["plain", "textured", "gradient"])
 
 
 def render_label(text, background=None, samples=8, size=12, offset=(0, 0)):
@@ -151,13 +252,6 @@ def render_label(text, background=None, samples=8, size=12, offset=(0, 0)):
     coverage = points.mean(axis=(1, 3))[..., None]
     img = np.tile(np.array(BACKGROUND, float), (40, 80, 1)) if background is None else background.astype(float)
     return np.round(img * (1 - coverage)).astype(np.uint8)
-
-
-@LOOSE_TOLERANCES
-@pytest.mark.parametrize("background", [None, TEXTURED, GRADIENT], ids=["plain", "textured", "gradient"])
-@pytest.mark.parametrize("other", ["12.6", "12.8", "12.3", "12.0", "17.5"])
-def test_label_with_other_digit_fails(tmp_path, tolerance, background, other):
-    assert not compare(tmp_path, render_label("12.5", background), render_label(other, background), tolerance=tolerance)
 
 
 _LABELS = {}
@@ -190,7 +284,7 @@ LETTER_CHANGES = [(f"x{a}x", f"x{b}x") for a, b in itertools.permutations("aceos
 WORD_CHANGES = [("hPa", "kPa"), ("°C", "°F"), ("mm", "cm"), ("m/s", "km/s"), ("max", "min"), ("NNE", "NNW"), ("Temp", "Tamp")]
 
 
-@pytest.mark.parametrize("background", [None, TEXTURED, GRADIENT], ids=["plain", "textured", "gradient"])
+@BACKGROUNDS
 @pytest.mark.parametrize(
     "size, min_digits, min_letters_and_words",
     [(11, 0.9, 0.85), (14, 1.0, 0.98), (18, 1.0, 1.0)],
@@ -201,7 +295,7 @@ def test_text_changes_are_detected(background, size, min_digits, min_letters_and
     assert detection_rate(LETTER_CHANGES + WORD_CHANGES, background, size) >= min_letters_and_words
 
 
-@pytest.mark.parametrize("background", [None, TEXTURED, GRADIENT], ids=["plain", "textured", "gradient"])
+@BACKGROUNDS
 def test_label_with_other_antialiasing_passes(tmp_path, background):
     """Coverage from 4x4 instead of 8x8 points per pixel: as large as the differences between real FreeType builds.
     (2x2 points is coarser than any real rasterizer: it gives neighbouring pixels that both differ by more than 80.)"""
@@ -210,113 +304,17 @@ def test_label_with_other_antialiasing_passes(tmp_path, background):
     assert compare(tmp_path, expected, actual, tolerance="antialiasing")
 
 
-@ALL_TOLERANCES
-def test_shift_of_two_pixels_fails_and_writes_diff_image(tmp_path, tolerance):
-    assert not compare(tmp_path, REFERENCE, render(shift=2), tolerance=tolerance)
-    diff_path = imagecompare.diff_image_path(str(tmp_path / "actual.png"))
-    assert os.path.exists(diff_path)
-    diff = np.asarray(Image.open(diff_path))
-    assert ((diff == [255, 0, 0]).all(axis=2)).sum() > 100
+# Checks before the pixels are compared. They do not depend on the tolerance, so each test uses the loosest one.
 
 
-def test_diff_image_removed_when_passing_again(tmp_path):
-    assert not compare(tmp_path, REFERENCE, render(shift=2))
-    assert compare(tmp_path, REFERENCE, render())
-    assert not os.path.exists(imagecompare.diff_image_path(str(tmp_path / "actual.png")))
+def test_size_mismatch_fails(tmp_path):
+    assert not compare(tmp_path, REFERENCE, render(size=(200, 201)), tolerance="antialiasing")
 
 
-@LOOSE_TOLERANCES
-def test_shift_of_one_pixel_of_high_contrast_edges_fails(tmp_path, tolerance):
-    assert not compare(tmp_path, REFERENCE, render(shift=1), tolerance=tolerance)
-
-
-def test_shift_of_one_pixel_of_medium_contrast_edges(tmp_path):
-    """Known limitation: an edge whose sides differ by less than STRONG_MARGIN (here about 50) that moves by one pixel
-    is accepted by antialiasing, geometry detects it."""
-    discs = [(x, y, r, (160, 240, 40)) for x, y, r, _ in DISCS]
-    expected = render(discs=discs)
-    assert compare(tmp_path, expected, render(discs=discs, shift=1), tolerance="antialiasing")
-    assert not compare(tmp_path, expected, render(discs=discs, shift=1), tolerance="geometry")
-
-
-@LOOSE_TOLERANCES
-def test_changed_colour_fails(tmp_path, tolerance):
-    discs = list(DISCS)
-    discs[3] = (120, 160, 25, (0, 160, 255))
-    assert not compare(tmp_path, REFERENCE, render(discs=discs), tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_small_colour_change_in_flat_area_fails(tmp_path, tolerance):
-    discs = list(DISCS)
-    discs[3] = (120, 160, 25, (0, 128, 247))
-    assert not compare(tmp_path, REFERENCE, render(discs=discs), tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_seam_blended_twice_fails(tmp_path, tolerance):
-    """A 1 pixel wide line that is a few colour units off, like a seam between triangles that is blended twice."""
-    actual = render()
-    actual[:, 100] = np.clip(actual[:, 100].astype(int) + 5, 0, 255)
-    assert not compare(tmp_path, REFERENCE, actual, tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_missing_small_shape_fails(tmp_path, tolerance):
-    actual = render()
-    actual[20:24, 150:154] = (0, 0, 0)
-    assert not compare(tmp_path, REFERENCE, actual, tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_missing_thin_line_fails(tmp_path, tolerance):
-    expected = render()
-    expected[180, 20:50] = (0, 0, 0)
-    assert not compare(tmp_path, expected, render(), tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_few_scattered_pixels_on_edges_pass(tmp_path, tolerance):
-    """Scattered single pixels on the edges of the discs, where antialiasing differences occur."""
-    actual = render()
-    for y, x in [(60, 20), (120, 165), (135, 120)]:
-        actual[y, x] = (0, 0, 0)
-    assert compare(tmp_path, REFERENCE, actual, tolerance=tolerance)
-    assert not compare(tmp_path, REFERENCE, actual)
-
-
-@LOOSE_TOLERANCES
-def test_single_pixel_in_flat_area_fails(tmp_path, tolerance):
-    actual = render()
-    actual[10, 10] = (0, 0, 0)
-    assert not compare(tmp_path, REFERENCE, actual, tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_missing_marker_of_two_by_two_pixels_fails(tmp_path, tolerance):
-    expected = render()
-    expected[20:22, 150:152] = (0, 0, 0)
-    assert not compare(tmp_path, expected, render(), tolerance=tolerance)
-
-
-@LOOSE_TOLERANCES
-def test_missing_dotted_line_fails(tmp_path, tolerance):
-    """Single-pixel dots, 2 pixels apart: no dot has a flagged neighbour, so the cluster filter alone would accept it."""
-    expected = render()
-    expected[190, 20:70:2] = (0, 0, 0)
-    assert not compare(tmp_path, expected, render(), tolerance=tolerance)
-
-
-@ALL_TOLERANCES
-def test_size_mismatch_fails(tmp_path, tolerance):
-    assert not compare(tmp_path, REFERENCE, render(size=(200, 201)), tolerance=tolerance)
-
-
-@ALL_TOLERANCES
-def test_mode_mismatch_fails(tmp_path, tolerance):
+def test_mode_mismatch_fails(tmp_path):
     expected_path = save(tmp_path / "expected.png", render())
     actual_path = save(tmp_path / "actual.png", render(), mode="P")
-    assert not AdagucTestTools().compareImage(expected_path, actual_path, tolerance=tolerance)
+    assert not AdagucTestTools().compareImage(expected_path, actual_path, tolerance="antialiasing")
 
 
 def test_palette_images_are_compared_by_colour(tmp_path):
@@ -339,27 +337,25 @@ def save_gif(path, frames):
     return str(path)
 
 
-@ALL_TOLERANCES
-def test_animation_is_not_supported(tmp_path, tolerance, capsys):
+def test_animation_is_not_supported(tmp_path, capsys):
     """adagucserver produces no animations; comparing only the first frame would silently ignore the others."""
     expected = save_gif(tmp_path / "expected.gif", [render(), render(shift=5)])
     other = save_gif(tmp_path / "other.gif", [render(), render(shift=10)])
     single = save_gif(tmp_path / "single.gif", [render()])
-    assert not AdagucTestTools().compareImage(expected, other, tolerance=tolerance)
+    assert not AdagucTestTools().compareImage(expected, other, tolerance="antialiasing")
     assert "Animated images are not supported" in capsys.readouterr().out
-    assert not AdagucTestTools().compareImage(single, other, tolerance=tolerance)
+    assert not AdagucTestTools().compareImage(single, other, tolerance="antialiasing")
     assert "Animated images are not supported" in capsys.readouterr().out
 
 
-@ALL_TOLERANCES
-def test_png_with_other_chunks_fails(tmp_path, tolerance, capsys):
+def test_png_with_other_chunks_fails(tmp_path, capsys):
     """The same pixels, but an extra metadata chunk: a change in how the encoder is called."""
     im = Image.fromarray(REFERENCE)
     im.save(tmp_path / "expected.png")
     info = PngImagePlugin.PngInfo()
     info.add_text("Software", "adagucserver")
     im.save(tmp_path / "actual.png", pnginfo=info)
-    assert not AdagucTestTools().compareImage(str(tmp_path / "expected.png"), str(tmp_path / "actual.png"), tolerance=tolerance)
+    assert not AdagucTestTools().compareImage(str(tmp_path / "expected.png"), str(tmp_path / "actual.png"), tolerance="antialiasing")
     assert "Encoding of expected and actual image do not match" in capsys.readouterr().out
 
 
