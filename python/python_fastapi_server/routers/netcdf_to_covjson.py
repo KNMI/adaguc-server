@@ -9,6 +9,7 @@ from typing import List
 import math
 
 import netCDF4
+import numpy as np
 from numpy import ma
 from covjson_pydantic.coverage import Coverage
 from covjson_pydantic.domain import Domain
@@ -96,6 +97,31 @@ def get_dim(metadata: dict, dimname: str):
             if dimname == metadata["dims"][dim]["cdfName"]:
                 return metadata["dims"][dim]
     return {}
+
+
+def coverage_values(values):
+    """Flatten in C order, preserving masks and mapping non-finite values to null.
+
+    Work on views where possible. Use direct numeric list conversion for valid
+    or sparsely masked data; retain NumPy's bulk conversion for dense masks.
+    """
+    flat = ma.asarray(values).ravel(order="C")
+    missing = np.isfinite(flat.data)
+    np.logical_not(missing, out=missing)
+    np.logical_or(missing, ma.getmask(flat), out=missing)
+    missing_count = np.count_nonzero(missing)
+    if missing_count == 0:
+        return flat.data.tolist()
+    if missing_count == flat.size:
+        return [None] * flat.size
+    # Assigning many list entries in Python costs more than NumPy's object-array
+    # conversion. Keep that path for dense masks, without copying numeric data.
+    if missing_count > flat.size // 8:
+        return ma.array(flat.data, mask=missing, copy=False).tolist()
+    result = flat.data.tolist()
+    for index in np.flatnonzero(missing):
+        result[index] = None
+    return result
 
 
 def netcdf_to_covjson(
@@ -214,7 +240,7 @@ def netcdf_to_covjson(
                 ndarray = NdArrayFloat(
                     axisNames=axisnames,
                     shape=shape,
-                    values=ma.masked_invalid(variable[:].flatten(order="C")).tolist(),
+                    values=coverage_values(variable[:]),
                 )
 
                 # Make the ranges object
@@ -309,16 +335,15 @@ def netcdf_to_covjson(
                 )
             else:
                 step_len = math.prod(shape)
+                # Read and flatten once, rather than rereading the entire variable
+                # for every custom-dimension value.
+                flat_values = variable[:].ravel(order="C")
                 for cnt, custom_dim_value in enumerate(custom_dim_values):
                     # Create the ndarray for the ranges object
                     ndarray = NdArrayFloat(
                         axisNames=axisnames,
                         shape=shape,
-                        values=ma.masked_invalid(
-                            variable[:].flatten(order="C")[
-                                cnt * step_len : (cnt + 1) * step_len
-                            ]
-                        ).tolist(),
+                        values=coverage_values(flat_values[cnt * step_len : (cnt + 1) * step_len]),
                     )
 
                     cnt = cnt + 1

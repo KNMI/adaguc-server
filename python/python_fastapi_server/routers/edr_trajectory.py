@@ -2,10 +2,10 @@
 
 import json
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 from typing_extensions import Annotated
 
-from .covjsonresponse import CovJSONResponse
+from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .trajectory_covjson import SectionCoverage, SectionCoverageCollection, sections_from_response
 from .utils.edr_exception import EdrException, exc_failed_call
 from .utils.edr_utils import (
@@ -41,7 +41,7 @@ router = APIRouter()
 async def get_trajectory(
     collection_name: str,
     request: Request,
-    response: CovJSONResponse,
+    response: Response,
     coords: str | None = None,
     instance: str | None = None,
     datetime_par: str | None = Query(default=None, alias="datetime"),
@@ -49,7 +49,7 @@ async def get_trajectory(
     z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
     crs: str = "EPSG:4326",
     f: str = "CoverageJSON",
-):
+) -> CovJSONResponse:
     points = parse_coordinates(coords, "LineString")
     if len(points) > 1000:
         raise EdrException(400, "Trajectory supports at most 1000 vertices")
@@ -103,4 +103,5 @@ async def get_trajectory(
     except (ValueError, TypeError) as exc:
         raise exc_failed_call("Trajectory call returned invalid data") from exc
     propagate_data_headers(response, headers)
-    return sections_from_response(data, metadata[collection_name], collection_name)
+    coverage = sections_from_response(data, metadata[collection_name], collection_name)
+    return create_coveragejson_response(coverage, response=response)
