@@ -12,7 +12,6 @@ import itertools
 from collections import Counter
 import math
 from datetime import datetime, timezone
-from copy import deepcopy
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
@@ -76,7 +75,7 @@ def covjson_from_resp(dats, metadata, collection_name):
             print("SKIPPING layername named ", dat["layername"])
             break
         if len(dat["data"]):
-            (lon, lat) = dat["point"]["coords"].split(",")
+            lon, lat = dat["point"]["coords"].split(",")
             custom_name = None
             vertical_name = None
             reference_time_name = None
@@ -115,9 +114,8 @@ def covjson_from_resp(dats, metadata, collection_name):
             for dim_name in dims:
                 vals = getdimvals(dims, dim_name)
                 valstack.append(vals)
-            tuples = list(itertools.product(*valstack))
             values = []
-            for mytuple in tuples:
+            for mytuple in itertools.product(*valstack):
                 value = multi_get(dat["data"], mytuple)
                 if value:
                     try:
@@ -134,9 +132,7 @@ def covjson_from_resp(dats, metadata, collection_name):
             param_id = dat["layername"]
             if entries_per_layer[dat["layername"]] > 1:
                 param_id, param_metadata = get_entry_param_metadata(dat, param_metadata)
-            symbol = CovJsonSymbol(
-                value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
-            )
+            symbol = CovJsonSymbol(value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL)
             unit = CovJsonUnit(symbol=symbol)
             observed_property = CovJsonObservedProperty(
                 id=param_metadata["observed_property_id"],
@@ -176,23 +172,14 @@ def covjson_from_resp(dats, metadata, collection_name):
                 axes["z"] = ValuesAxis[float](values=vertical_steps)
             if time_steps:
                 axes["t"] = ValuesAxis[AwareDatetime](
-                    values=[
-                        datetime.strptime(t, DATETIME_ISO8601_FMT).replace(
-                            tzinfo=timezone.utc
-                        )
-                        for t in time_steps
-                    ]
+                    values=[datetime.strptime(t, DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc) for t in time_steps]
                 )
                 if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
                     domain_type = "VerticalProfile"
                     separate_timesteps = True
-                elif (
-                    len(time_steps) == 1 and vertical_steps and len(vertical_steps) > 1
-                ):
+                elif len(time_steps) == 1 and vertical_steps and len(vertical_steps) > 1:
                     domain_type = "VerticalProfile"
-                elif (
-                    len(time_steps) == 1 and vertical_steps and len(vertical_steps) == 1
-                ):
+                elif len(time_steps) == 1 and vertical_steps and len(vertical_steps) == 1:
                     domain_type = "Point"
                 elif len(time_steps) > 1:
                     domain_type = "PointSeries"
@@ -222,18 +209,13 @@ def covjson_from_resp(dats, metadata, collection_name):
             ]
 
             if separate_timesteps:
-                index = 0
-                for time_step in time_steps:
+                for index, time_step in enumerate(time_steps):
                     time_step_axes: dict[str, ValuesAxis] = {
                         "x": ValuesAxis[float](values=[lon]),
                         "y": ValuesAxis[float](values=[lat]),
                         "z": axes["z"] if vertical_steps else None,
                         "t": ValuesAxis[AwareDatetime](
-                            values=[
-                                datetime.strptime(
-                                    time_step, DATETIME_ISO8601_FMT
-                                ).replace(tzinfo=timezone.utc)
-                            ]
+                            values=[datetime.strptime(time_step, DATETIME_ISO8601_FMT).replace(tzinfo=timezone.utc)]
                         ),
                     }
                     time_step_domain = Domain(
@@ -241,11 +223,13 @@ def covjson_from_resp(dats, metadata, collection_name):
                         axes=time_step_axes,
                         referencing=referencing,
                     )
-                    step_ranges = deepcopy(ranges)
-                    step_ranges[param_id]["values"] = ranges[param_id]["values"][
-                        index :: len(time_steps)
-                    ]
-                    step_ranges[param_id]["shape"][1] = 1
+                    step_ranges = {
+                        param_id: {
+                            **ranges[param_id],
+                            "values": ranges[param_id]["values"][index :: len(time_steps)],
+                            "shape": [len(vertical_steps), 1],
+                        }
+                    }
 
                     covjson = Coverage(
                         id=f"coverage_{(len(covjson_list)+1)}-{time_step}",
@@ -254,18 +238,13 @@ def covjson_from_resp(dats, metadata, collection_name):
                         parameters=parameters,
                     )
                     covjson_list.append(covjson)
-                    index += 1
             else:
                 if len(custom_dim_values) > 0:
                     step_len = math.prod(shape)
-                    for custom_dim_value_idx, custom_dim_value in enumerate(
-                        custom_dim_values
-                    ):
+                    for custom_dim_value_idx, custom_dim_value in enumerate(custom_dim_values):
                         custom = {f"custom:{custom_name}": custom_dim_value}
                         if reference_time_name is not None:
-                            custom[f"custom:{reference_time_name}"] = (
-                                reference_time_value
-                            )
+                            custom[f"custom:{reference_time_name}"] = reference_time_value
                         domain = Domain(
                             domainType=domain_type,
                             axes=axes,
@@ -275,9 +254,7 @@ def covjson_from_resp(dats, metadata, collection_name):
                         partial_ranges = {
                             param_id: {
                                 "values": ranges[param_id]["values"][
-                                    custom_dim_value_idx
-                                    * step_len : (custom_dim_value_idx + 1)
-                                    * step_len
+                                    custom_dim_value_idx * step_len : (custom_dim_value_idx + 1) * step_len
                                 ],
                                 "dataType": "float",
                                 "axisNames": axis_names,

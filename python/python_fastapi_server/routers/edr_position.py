@@ -8,7 +8,6 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-import json
 from typing import Union
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -18,6 +17,7 @@ from typing_extensions import Annotated
 from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .edr_covjson import covjson_from_resp
 from .utils.edr_exception import EdrException
+from .utils.json_utils import loads_native_json
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -137,7 +137,7 @@ async def handle_coll_inst_position(
         custom_dims,
     )
     if resp:
-        dat = json.loads(resp)
+        dat = loads_native_json(resp)
         propagate_data_headers(response, headers)
         return covjson_from_resp(dat, metadata[collection_name], collection_name)
 

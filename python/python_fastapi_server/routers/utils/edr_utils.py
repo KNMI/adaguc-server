@@ -9,7 +9,6 @@ KNMI
 """
 
 from __future__ import annotations
-import json
 import logging
 import math
 import re
@@ -44,6 +43,7 @@ from .edr_exception import (
 )
 
 from .ogcapi_tools import call_adaguc
+from .json_utils import loads_native_json
 
 logger = logging.getLogger(__name__)
 
@@ -597,10 +597,9 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
     if trace_timing is not None and response is not None:
         response.headers.append("X-Trace-Timings-Metadata", trace_timing)
 
-    raw_response = metadata_response.decode("UTF-8")
     try:
-        parsed_json = json.loads(raw_response)
-    except json.JSONDecodeError:
+        parsed_json = loads_native_json(metadata_response)
+    except ValueError:
         raise exc_failed_call("Failed to query metadata: couldn't parse json response")
 
     # If metadata call failed, try to decipher response

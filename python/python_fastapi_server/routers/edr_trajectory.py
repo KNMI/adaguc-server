@@ -1,13 +1,12 @@
 """EDR 2D trajectories sampled in one native ADAGUC data request."""
 
-import json
-
 from fastapi import APIRouter, Query, Request, Response
 from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .trajectory_covjson import SectionCoverage, SectionCoverageCollection, sections_from_response
 from .utils.edr_exception import EdrException, exc_failed_call
+from .utils.json_utils import loads_native_json
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -97,7 +96,7 @@ async def get_trajectory(
     if status != 0:
         raise exc_failed_call("Trajectory call failed")
     try:
-        data = json.loads(body)
+        data = loads_native_json(body)
         if not isinstance(data, list):
             raise ValueError
     except (ValueError, TypeError) as exc:
