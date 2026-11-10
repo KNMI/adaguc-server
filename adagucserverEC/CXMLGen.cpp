@@ -643,11 +643,15 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
           }
           if (layer->hasError == 0) {
 
-            // Look wether and which dimension is a time dimension
+            // The time axis of the coverage: the time dimension, otherwise an ISO8601 dimension which is not a reference time
             int timeDimIndex = -1;
             int d = 0;
             for (const auto &dim: layer->layerMetadata.dimList) {
-              if (dim.units == "ISO8601") {
+              if (dim.serviceName == "time") {
+                timeDimIndex = d;
+                break;
+              }
+              if (dim.units == "ISO8601" && !dim.serviceName.ends_with("reference_time") && timeDimIndex < 0) {
                 timeDimIndex = d;
               }
               d++;

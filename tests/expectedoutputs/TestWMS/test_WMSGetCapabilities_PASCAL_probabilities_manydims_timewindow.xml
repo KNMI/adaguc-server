@@ -127,7 +127,7 @@
 <BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs" minx="-0.014500" miny="48.991000" maxx="11.295500" maxy="56.011000" />
 <Dimension name="time_window" units="1" default="1" multipleValues="1" nearestValue="0" current="1">1</Dimension>
 <Dimension name="time" units="ISO8601" default="2025-07-02T10:00:00Z" multipleValues="1" nearestValue="0" current="1">2025-07-02T10:00:00Z</Dimension>
-<Dimension name="reference_time" units="seconds since 1970-01-01" default="2025-07-02T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2025-07-02T00:00:00Z</Dimension>
+<Dimension name="reference_time" units="ISO8601" default="2025-07-02T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2025-07-02T00:00:00Z</Dimension>
 <Dimension name="radius" units="1" default="0.12" multipleValues="1" nearestValue="0" >0.12</Dimension>
 <Dimension name="condition" units="1" default="greater_than_or_equal_to_36" multipleValues="1" nearestValue="0" >greater_than_or_equal_to_36</Dimension>
    <Style>

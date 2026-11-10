@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <memory>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
@@ -109,14 +111,9 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     return; // Already traced while following another line that passed through this pixel.
   }
 
-  bool foundLine = true;   /* This iteration starts at the beginning of a line segment */
   int maxLineDistance = 5; /* Maximum length of each line segment */
-  int currentLineDistance = maxLineDistance;
   std::vector<i4point> lineSegments;
   lineSegments.reserve(500);
-
-  /* Push the beginning of this line*/
-  lineSegments.push_back({.x = lineX, .y = lineY});
 
   double lineSegmentsValue = valueField[p];
   double binnedLineSegmentsValue;
@@ -147,64 +144,109 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     }
   }
 
-  /* Use the distance field and walk the line */
-  while (foundLine) {
-    p = lineX + lineY * dImageWidth; // Recomputed: inner loops left p stale.
-    distance[p] &= ~lineMask; /* Indicate found, set to false */
-    /* Search around using the small search window and find the continuation of this line */
-    foundLine = false;
-    int nextLineX = lineX;
-    int nextLineY = lineY;
-    for (int j = 0; j < 8; j++) {
-      int tx = lineX + xdir[j];
-      int ty = lineY + ydir[j];
-      if (tx >= 0 && tx < dImageWidth && ty >= 0 && ty < dImageHeight) {
-        p = tx + ty * dImageWidth;
-        if (distance[p] & lineMask) {
-          if (!foundLine) {
-            nextLineX = tx;
-            nextLineY = ty;
-            foundLine = true;
-          }
-          distance[p] &= ~lineMask; // Clear only this definition's bit.
-        }
-      }
-    }
-
-    /* Search line with outer window. */
-    if (!foundLine) {
-      // Try to find the line with an outer window...
-      for (int j = 0; j < 16; j++) {
-        int tx = lineX + xdirOuter[j];
-        int ty = lineY + ydirOuter[j];
+  // Walks the line from (x, y), clearing all neighbours but following only the first. Returns true when the line closed.
+  auto walkLine = [&](int x, int y, std::vector<i4point> &segments, i4point *firstFollowed, std::vector<i4point> *firstCleared, bool closeLoop) {
+    bool foundLine = true; /* This iteration starts at the beginning of a line segment */
+    bool firstStep = true;
+    bool closed = false;
+    int currentLineDistance = maxLineDistance;
+    while (foundLine) {
+      size_t p = x + y * dImageWidth;
+      distance[p] &= ~lineMask; /* Indicate found, set to false */
+      /* Search around using the small search window and find the continuation of this line */
+      foundLine = false;
+      int nextX = x;
+      int nextY = y;
+      for (int j = 0; j < 8; j++) {
+        int tx = x + xdir[j];
+        int ty = y + ydir[j];
         if (tx >= 0 && tx < dImageWidth && ty >= 0 && ty < dImageHeight) {
           p = tx + ty * dImageWidth;
           if (distance[p] & lineMask) {
             if (!foundLine) {
-              nextLineX = tx;
-              nextLineY = ty;
+              nextX = tx;
+              nextY = ty;
               foundLine = true;
+            } else if (firstStep && firstCleared != nullptr) {
+              firstCleared->push_back({.x = tx, .y = ty});
             }
-            distance[p] &= ~lineMask;
+            distance[p] &= ~lineMask; // Clear only this definition's bit.
           }
         }
       }
-    }
-    if (!foundLine) {
-      if (lineSegments[0].distance(lineSegments.back()) < 8) {
-        lineSegments.push_back({.x = lineSegments[0].x, .y = lineSegments[0].y});
+
+      /* Search line with outer window. */
+      if (!foundLine) {
+        // Try to find the line with an outer window...
+        for (int j = 0; j < 16; j++) {
+          int tx = x + xdirOuter[j];
+          int ty = y + ydirOuter[j];
+          if (tx >= 0 && tx < dImageWidth && ty >= 0 && ty < dImageHeight) {
+            p = tx + ty * dImageWidth;
+            if (distance[p] & lineMask) {
+              if (!foundLine) {
+                nextX = tx;
+                nextY = ty;
+                foundLine = true;
+              }
+              distance[p] &= ~lineMask;
+            }
+          }
+        }
+      }
+      if (firstStep && foundLine && firstFollowed != nullptr) *firstFollowed = {.x = nextX, .y = nextY};
+      if (!foundLine && closeLoop) {
+        if (segments[0].distance(segments.back()) < 8) {
+          segments.push_back({.x = segments[0].x, .y = segments[0].y});
+          closed = true;
+        }
+      }
+      x = nextX;
+      y = nextY;
+      firstStep = false;
+      /* Decrease the max currentLineDist counter,
+         when zero, the max line distance is reached
+         and we should add a line segment */
+      currentLineDistance--;
+      if (currentLineDistance <= 0 || foundLine == false) {
+        currentLineDistance = maxLineDistance;
+
+        segments.push_back({.x = x, .y = y});
       }
     }
-    lineX = nextLineX;
-    lineY = nextLineY;
-    /* Decrease the max currentLineDist counter,
-       when zero, the max line distance is reached
-       and we should add a line segment */
-    currentLineDistance--;
-    if (currentLineDistance <= 0 || foundLine == false) {
-      currentLineDistance = maxLineDistance;
+    return closed;
+  };
 
-      lineSegments.push_back({.x = lineX, .y = lineY});
+  /* Push the beginning of this line and walk it */
+  lineSegments.push_back({.x = lineX, .y = lineY});
+  i4point firstFollowed = {.x = lineX, .y = lineY};
+  std::vector<i4point> firstCleared;
+  bool closed = walkLine(lineX, lineY, lineSegments, &firstFollowed, &firstCleared, true);
+
+  // A trace starting halfway along a line followed only one side. Walk the opposite side too and prepend it, to avoid a gap.
+  if (!closed) {
+    int followedDx = firstFollowed.x - lineX;
+    int followedDy = firstFollowed.y - lineY;
+    // Candidates at 90 degrees or more from the followed direction, most opposite first. Perpendicular ones count too,
+    // so the second arm is found at an apex (followed (-1,1), other (1,1)) or a right-angle corner.
+    std::vector<std::pair<int, i4point>> candidates;
+    for (const auto &other: firstCleared) {
+      int dot = (other.x - lineX) * followedDx + (other.y - lineY) * followedDy;
+      if (dot <= 0) candidates.push_back({dot, other});
+    }
+    std::stable_sort(candidates.begin(), candidates.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
+    for (const auto &[dot, other]: candidates) {
+      std::vector<i4point> otherHalf = {other};
+      walkLine(other.x, other.y, otherHalf, nullptr, nullptr, false);
+      // A neighbour with no continuation is just a thick part of the line: try the next one.
+      if (otherHalf.back().x == other.x && otherHalf.back().y == other.y) continue;
+      // Without the neighbour itself, which would put a kink at the join.
+      lineSegments.insert(lineSegments.begin(), otherHalf.rbegin(), otherHalf.size() > 1 ? otherHalf.rend() - 1 : otherHalf.rend());
+      break;
+    }
+    // Close a contour whose two halves meet.
+    if (lineSegments.size() > 2 && lineSegments.front().distance(lineSegments.back()) < 8) {
+      lineSegments.push_back(lineSegments.front());
     }
   }
 
@@ -216,11 +258,12 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   bool textSkip = false;
 
   int drawTextAtEveryNPixels = 60 * int(scaling);
-  int startAtStep = 0; // drawTextAtEveryNPixels / 2;
   int spaceForTextNr = 5 * int(scaling) * (contourDefinition.fontSize / 8);
 
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
   int numLineSegments = (int)lineSegments.size();
+  // Keep the first label away from the line ends.
+  int startAtStep = std::min(drawTextAtEveryNPixels / 2, std::max(0, (numLineSegments - spaceForTextNr) / 2));
 
   // textLocations is shared across contour definitions: gaps around any label, not just this one's.
   bool inTextGap = false;
@@ -240,8 +283,8 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   if (doDrawText && numLineSegments > 20) {
     for (int j = 0; j < numLineSegments; j++) {
       auto &lineSegment = lineSegments[j];
-      int matchModulo = j % drawTextAtEveryNPixels;
-      bool startText = matchModulo == startAtStep;
+      int matchModulo = j < startAtStep ? -1 : (j - startAtStep) % drawTextAtEveryNPixels;
+      bool startText = matchModulo == 0;
       if (startText && j + spaceForTextNr < numLineSegments) {
         if (textLocations.isTooClose(lineSegment.x, lineSegment.y) == false) {
           textSkip = false;
@@ -257,8 +300,10 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
         } else {
           textSkip = true;
         }
+      } else if (startText) {
+        textSkip = true; // No room left for the label, so no gap for it either.
       }
-      bool ownTextGap = matchModulo <= spaceForTextNr && !textSkip;
+      bool ownTextGap = matchModulo >= 0 && matchModulo <= spaceForTextNr && !textSkip;
       drawOrGap(lineSegment, ownTextGap || textLocations.isTooClose(lineSegment.x, lineSegment.y));
     }
 
