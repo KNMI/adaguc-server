@@ -1,9 +1,10 @@
 """JSON decoding for native ADAGUC responses, without caching response data."""
 
+from pydantic import JsonValue
 from pydantic_core import from_json
 
 
-def loads_native_json(data: str | bytes | bytearray):
+def loads_native_json(data: str | bytes | bytearray) -> JsonValue:
     # Reuse repeated short dictionary keys (dimension names/timestamps), as the
     # stdlib decoder does within a document. Do not cache measurement strings.
     # Preserve json.loads' acceptance of NaN/Infinity in native responses.

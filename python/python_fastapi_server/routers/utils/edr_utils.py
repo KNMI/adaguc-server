@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import math
 import re
+from typing import Any
 from urllib.parse import urlencode
 from datetime import datetime, timezone
 
@@ -572,7 +573,7 @@ def handle_metadata(metadata: dict):
     return collections
 
 
-async def get_metadata(collection_name: str = "", instance: str = "", response: Response = None) -> dict:
+async def get_metadata(collection_name: str = "", instance: str = "", response: Response | None = None) -> dict[str, Any]:
     """Get metadata from ADAGUC.
 
     This method will either return a dictionary representing the metadata, or throw an exception

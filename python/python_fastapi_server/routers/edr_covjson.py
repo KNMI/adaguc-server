@@ -12,6 +12,7 @@ import itertools
 from collections import Counter
 import math
 from datetime import datetime, timezone
+from typing import Any
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
@@ -63,7 +64,9 @@ def get_entry_param_metadata(dat: dict, param_metadata: dict) -> tuple[str, dict
     return param_id, entry_metadata
 
 
-def covjson_from_resp(dats, metadata, collection_name):
+def covjson_from_resp(
+    dats: list[dict[str, Any]], metadata: dict[str, Any], collection_name: str
+) -> Coverage | CoverageCollection:
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """

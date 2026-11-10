@@ -8,7 +8,7 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-from typing import Union
+from typing import Any, Union
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import APIRouter, Query, Request, Response
@@ -46,9 +46,9 @@ async def get_collection_position(
     request: Request,
     coords: str,
     response: Response,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
 ) -> CovJSONResponse:
     """Returns information in EDR format for a given collection, instance and position"""
     return await get_coll_inst_position(
@@ -74,10 +74,10 @@ async def get_coll_inst_position(
     request: Request,
     coords: str,
     response: Response,
-    instance: str = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    instance: str | None = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
 ) -> CovJSONResponse:
     """
     returns data for the EDR /position endpoint
@@ -106,14 +106,14 @@ async def get_coll_inst_position(
 
 async def handle_coll_inst_position(
     collection_name: str,
-    custom_dims,
+    custom_dims: list[str],
     coords: str,
     response: Response,
-    metadata: dict,
-    instance: str = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    metadata: dict[str, Any],
+    instance: str | None = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
 ) -> Coverage | CoverageCollection:
     """
     Handle the EDR position endpoint call
