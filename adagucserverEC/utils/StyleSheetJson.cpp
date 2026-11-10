@@ -1,49 +1,30 @@
 #include <algorithm>
-#include <cctype>
+#include <set>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "json.hpp"
 #include "CDebugger.h"
-#include "CTString.h"
 #include "StyleSheetJson.h"
 
 using ordered_json = nlohmann::ordered_json;
 
 namespace {
 
-  // A stylesheet is at most Configuration/Style/Element; deeper JSON is refused before it is converted
+  // A stylesheet is at most Configuration/Style/Element in an array; deeper JSON is refused while it is parsed
   const int MAX_DEPTH = 8;
+  // Larger than any request adagucserver accepts through the Python server
+  const size_t MAX_JSON_BYTES = 64 * 1024;
 
+  bool isLetter(char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_'; }
+
+  // Element and attribute names, ASCII only: no ':' (namespaces), '!' or '?'
   bool isName(std::string_view name) {
-    if (name.empty() || !(std::isalpha((unsigned char)name[0]) || name[0] == '_')) return false;
-    return std::all_of(name.begin(), name.end(), [](char c) { return std::isalnum((unsigned char)c) || c == '_' || c == '-' || c == '.'; });
+    if (name.empty() || !isLetter(name[0])) return false;
+    return std::all_of(name.begin(), name.end(), [](char c) { return isLetter(c) || (c >= '0' && c <= '9') || c == '-' || c == '.'; });
   }
 
-  std::string escape(std::string_view text) {
-    std::string escaped;
-    escaped.reserve(text.size());
-    for (char c: text) {
-      switch (c) {
-      case '&':
-        escaped += "&amp;";
-        break;
-      case '<':
-        escaped += "&lt;";
-        break;
-      case '>':
-        escaped += "&gt;";
-        break;
-      case '"':
-        escaped += "&quot;";
-        break;
-      case '\'':
-        escaped += "&apos;";
-        break;
-      default:
-        escaped += c;
-      }
-    }
-    return escaped;
+  bool hasControlCharacters(std::string_view text) {
+    return std::any_of(text.begin(), text.end(), [](char c) { return (unsigned char)c < 0x20 && c != '\t' && c != '\n' && c != '\r'; });
   }
 
   // The text of a string, number or boolean; false for objects, arrays and null
@@ -55,142 +36,109 @@ namespace {
     } else {
       return false;
     }
+    return !hasControlCharacters(text);
+  }
+
+  bool addElements(xmlNode *parent, const std::string &name, const ordered_json &value);
+
+  // Adds the attributes, text and children of a JSON object to an element. The XML library escapes the values.
+  // The text goes first, wherever #text is in the JSON: adaguc reads only a text node that is the first child.
+  bool fillElement(xmlNode *element, const ordered_json &object) {
+    std::string text;
+    for (const auto &[key, value]: object.items()) {
+      if (key.starts_with("@")) {
+        if (!isName(std::string_view(key).substr(1)) || !toText(value, text)) {
+          CDBError("STYLESHEET JSON: invalid attribute in [%s]", (const char *)element->name);
+          return false;
+        }
+        xmlNewProp(element, BAD_CAST key.c_str() + 1, BAD_CAST text.c_str());
+      } else if (key == "#text") {
+        if (!toText(value, text)) {
+          CDBError("STYLESHEET JSON: invalid #text in [%s]", (const char *)element->name);
+          return false;
+        }
+        xmlNodeAddContent(element, BAD_CAST text.c_str());
+      }
+    }
+    for (const auto &[key, value]: object.items()) {
+      if (!key.starts_with("@") && key != "#text" && !addElements(element, key, value)) return false;
+    }
     return true;
   }
 
-  bool appendElements(const std::string &name, const ordered_json &value, std::string &xml, int depth);
-
-  bool appendElement(const std::string &name, const ordered_json &value, std::string &xml, int depth) {
-    if (depth > MAX_DEPTH) {
-      CDBError("STYLESHEET JSON is nested too deep");
-      return false;
-    }
+  // Adds an element for an object or text, or one element per item for an array (a repeated element)
+  bool addElements(xmlNode *parent, const std::string &name, const ordered_json &value) {
     if (!isName(name)) {
-      CDBError("STYLESHEET JSON: [%s] is not a valid element name", name.c_str());
+      CDBError("STYLESHEET JSON: invalid element name in [%s]", (const char *)parent->name);
       return false;
     }
+    if (value.is_array()) {
+      for (const auto &item: value) {
+        if (item.is_array() || !addElements(parent, name, item)) return false;
+      }
+      return true;
+    }
+    // Created without content: content passed to xmlNewChild would be parsed for entity references
+    xmlNode *element = xmlNewChild(parent, nullptr, BAD_CAST name.c_str(), nullptr);
     std::string text;
     if (toText(value, text)) {
-      xml += "<" + name + ">" + escape(text) + "</" + name + ">";
+      xmlNodeAddContent(element, BAD_CAST text.c_str());
       return true;
     }
     if (!value.is_object()) {
       CDBError("STYLESHEET JSON: element [%s] must be an object, array, string, number or boolean", name.c_str());
       return false;
     }
-    xml += "<" + name;
-    for (const auto &[key, item]: value.items()) {
-      if (!key.starts_with("@")) continue;
-      if (!isName(std::string_view(key).substr(1)) || !toText(item, text)) {
-        CDBError("STYLESHEET JSON: attribute [%s] of [%s] must have a valid name and a string, number or boolean value", key.c_str(), name.c_str());
-        return false;
-      }
-      xml += " " + key.substr(1) + "=\"" + escape(text) + "\"";
-    }
-    xml += ">";
-    for (const auto &[key, item]: value.items()) {
-      if (key.starts_with("@")) continue;
-      if (key == "#text") {
-        if (!toText(item, text)) {
-          CDBError("STYLESHEET JSON: #text of [%s] must be a string, number or boolean", name.c_str());
-          return false;
-        }
-        xml += escape(text);
-      } else if (!appendElements(key, item, xml, depth + 1)) {
-        return false;
-      }
-    }
-    xml += "</" + name + ">";
-    return true;
-  }
-
-  // An array is a repeated element, anything else one element
-  bool appendElements(const std::string &name, const ordered_json &value, std::string &xml, int depth) {
-    if (!value.is_array()) return appendElement(name, value, xml, depth);
-    for (const auto &item: value) {
-      if (item.is_array()) {
-        CDBError("STYLESHEET JSON: [%s] contains an array in an array", name.c_str());
-        return false;
-      }
-      if (!appendElement(name, item, xml, depth)) return false;
-    }
-    return true;
-  }
-
-  ordered_json elementToJson(xmlNode *element) {
-    ordered_json object = ordered_json::object();
-    for (xmlAttr *attribute = element->properties; attribute != nullptr; attribute = attribute->next) {
-      xmlChar *value = xmlNodeGetContent((xmlNode *)attribute);
-      object["@" + std::string((const char *)attribute->name)] = value != nullptr ? std::string((const char *)value) : "";
-      xmlFree(value);
-    }
-    std::string text;
-    bool hasChildren = false;
-    for (xmlNode *child = element->children; child != nullptr; child = child->next) {
-      if (child->type == XML_TEXT_NODE || child->type == XML_CDATA_SECTION_NODE) {
-        text += (const char *)child->content;
-      } else if (child->type == XML_ELEMENT_NODE) {
-        hasChildren = true;
-      }
-    }
-    text = CT::trim(text);
-    if (object.empty() && !hasChildren) return text;
-    if (!text.empty()) object["#text"] = text;
-    for (xmlNode *child = element->children; child != nullptr; child = child->next) {
-      if (child->type != XML_ELEMENT_NODE) continue;
-      const std::string name = (const char *)child->name;
-      ordered_json value = elementToJson(child);
-      if (!object.contains(name)) {
-        object[name] = std::move(value);
-      } else {
-        // A repeated element becomes an array
-        if (!object[name].is_array()) object[name] = ordered_json::array({std::move(object[name])});
-        object[name].push_back(std::move(value));
-      }
-    }
-    return object;
+    return fillElement(element, value);
   }
 
 } // namespace
 
 bool styleSheetJsonToXml(const std::string &json, std::string &xml) {
-  const ordered_json root = ordered_json::parse(json, nullptr, false);
-  if (root.is_discarded() || !root.is_object()) {
-    CDBError("STYLESHEET is not a valid JSON object");
+  if (json.size() > MAX_JSON_BYTES) {
+    CDBError("STYLESHEET JSON is larger than %zu bytes", MAX_JSON_BYTES);
     return false;
   }
-  xml.clear();
-  if (root.size() == 1 && root.contains("Configuration")) {
-    return appendElement("Configuration", root["Configuration"], xml, 0);
+  // Refused while parsing: duplicate keys (a repeated element is an array), control characters in keys and deep nesting
+  std::vector<std::set<std::string>> keys;
+  bool refused = false;
+  auto check = [&](int depth, ordered_json::parse_event_t event, ordered_json &parsed) {
+    if (depth > MAX_DEPTH) refused = true;
+    if (event == ordered_json::parse_event_t::object_start) keys.emplace_back();
+    if (event == ordered_json::parse_event_t::object_end) keys.pop_back();
+    if (event == ordered_json::parse_event_t::key) {
+      const auto &key = parsed.get_ref<const std::string &>();
+      if (hasControlCharacters(key) || !keys.back().insert(key).second) refused = true;
+    }
+    return !refused;
+  };
+  const ordered_json root = ordered_json::parse(json, check, false);
+  if (refused || root.is_discarded() || !root.is_object()) {
+    CDBError("STYLESHEET is not a valid JSON object: invalid JSON, duplicate keys, control characters in keys or nested too deep");
+    return false;
   }
-  xml = "<Configuration>";
-  for (const auto &[key, item]: root.items()) {
+  // The elements, optionally wrapped in {"Configuration": {...}}
+  const ordered_json &content = root.size() == 1 && root.contains("Configuration") ? root["Configuration"] : root;
+  if (!content.is_object()) {
+    CDBError("STYLESHEET JSON: Configuration must be an object");
+    return false;
+  }
+  for (const auto &[key, value]: content.items()) {
     if (key.starts_with("@") || key.starts_with("#")) {
-      CDBError("STYLESHEET JSON: [%s] is not allowed at the top level", key.c_str());
+      CDBError("STYLESHEET JSON: attributes and #text are not allowed at the top level");
       return false;
     }
-    if (!appendElements(key, item, xml, 1)) return false;
   }
-  xml += "</Configuration>";
-  return true;
-}
-
-bool styleSheetXmlToJson(const std::string &styleSheetXml, std::string &json, int indent) {
-  std::string xml = CT::trim(styleSheetXml);
-  if (xml.starts_with("<?xml")) {
-    size_t declarationEnd = xml.find("?>");
-    xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));
+  xmlDoc *doc = xmlNewDoc(BAD_CAST "1.0");
+  xmlNode *configuration = xmlNewNode(nullptr, BAD_CAST "Configuration");
+  xmlDocSetRootElement(doc, configuration);
+  bool converted = fillElement(configuration, content);
+  if (converted) {
+    xmlBuffer *buffer = xmlBufferCreate();
+    xmlNodeDump(buffer, doc, configuration, 0, 0);
+    xml = (const char *)xmlBufferContent(buffer);
+    xmlBufferFree(buffer);
   }
-  if (!xml.starts_with("<Configuration")) xml = "<Configuration>" + xml + "</Configuration>";
-  xmlDoc *doc = xmlReadMemory(xml.c_str(), xml.length(), nullptr, nullptr, XML_PARSE_NONET);
-  if (doc == nullptr) {
-    CDBError("STYLESHEET is not valid XML");
-    return false;
-  }
-  ordered_json result = elementToJson(xmlDocGetRootElement(doc));
   xmlFreeDoc(doc);
-  // The Configuration wrapper is left out; an empty stylesheet is an empty object
-  if (!result.is_object()) result = ordered_json::object();
-  json = result.dump(indent);
-  return true;
+  return converted;
 }

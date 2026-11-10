@@ -52,25 +52,45 @@ def merge_params(query_params, body_params):
     return list(merged.values())
 
 
-def json_body_params(body: str) -> list[tuple[str, str]]:
+def _without_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
+    """A JSON object. A duplicate key would silently replace the earlier value, so it is refused."""
+    keys = [key for key, _ in pairs]
+    if len(set(keys)) != len(keys):
+        raise ValueError("Duplicate key, use an array for repeated elements")
+    return dict(pairs)
+
+
+def _refuse_constant(name: str):
+    raise ValueError(f"{name} is not allowed")
+
+
+def json_body_params(body: bytes) -> list[tuple[str, str]]:
     """
     The (key, value) pairs of a JSON object with WMS parameters, like {"SERVICE": "WMS", "WIDTH": 256, "STYLESHEET": {...}}.
-    A STYLESHEET object is passed on as JSON text, adaguc-server converts it to the same XML as a posted XML stylesheet.
-    Raises ValueError for anything else than an object of strings, numbers, booleans and a STYLESHEET object.
+    Numbers are kept as their text. A STYLESHEET object is passed on as JSON text, adaguc-server converts it to the same XML
+    as a posted XML stylesheet. Raises ValueError for invalid UTF-8 or JSON, duplicate keys, NaN and Infinity, and anything
+    else than an object of strings, numbers, booleans and a STYLESHEET object.
     """
-    data = json.loads(body)
+    try:
+        data = json.loads(
+            body.decode("utf-8"), parse_int=str, parse_float=str, parse_constant=_refuse_constant, object_pairs_hook=_without_duplicate_keys
+        )
+    except RecursionError as exc:
+        raise ValueError("The JSON body is nested too deep") from exc
     if not isinstance(data, dict):
         raise ValueError("The JSON body must be an object with the request parameters")
     params = []
     for key, value in data.items():
         if key.upper() == "STYLESHEET" and isinstance(value, dict):
-            params.append((key, json.dumps(value, separators=(",", ":"))))
+            value = json.dumps(value, separators=(",", ":"), ensure_ascii=False)
         elif isinstance(value, bool):
-            params.append((key, "TRUE" if value else "FALSE"))
-        elif isinstance(value, (str, int, float)):
-            params.append((key, str(value)))
-        else:
+            value = "TRUE" if value else "FALSE"
+        elif not isinstance(value, str):
             raise ValueError(f"Parameter {key} must be a string, number or boolean")
+        # A lone surrogate like \ud800 can not be url encoded
+        key.encode("utf-8")
+        value.encode("utf-8")
+        params.append((key, value))
     return params
 
 
@@ -106,14 +126,13 @@ async def handle_wms(req: Request):
         body = await read_limited_body(req, MAX_REQUEST_BYTES)
         if body is None:
             return Response(content=f"Request body too large, maximum is {MAX_REQUEST_BYTES} bytes", status_code=413)
-        body = body.decode("utf-8", errors="replace")
         if content_type == "application/json":
             try:
                 body_params = json_body_params(body)
             except ValueError as exc:
                 return Response(content=f"Invalid JSON body: {exc}", status_code=400)
         else:
-            body_params = parse_qsl(body, keep_blank_values=True)
+            body_params = parse_qsl(body.decode("utf-8", errors="replace"), keep_blank_values=True)
         # Last value wins for repeated keys, also across query and body
         params = merge_params(params, body_params)
 

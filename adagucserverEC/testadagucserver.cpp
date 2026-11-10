@@ -1050,14 +1050,17 @@ static std::string jsonToXml(const std::string &json) {
 TEST(StyleSheetJson, jsonToXml) {
   // Attributes with @, text with #text or as the value of an element with only text, arrays for repeated elements
   CHECK(jsonToXml(R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": [{"@index": 0, "@color": "#2B83BA"}, {"@index": 240, "@color": "#7A3B10"}]}})") ==
-        R"(<Configuration><Legend name="l" type="colorRange"><palette index="0" color="#2B83BA"></palette><palette index="240" color="#7A3B10"></palette></Legend></Configuration>)");
+        R"(<Configuration><Legend name="l" type="colorRange"><palette index="0" color="#2B83BA"/><palette index="240" color="#7A3B10"/></Legend></Configuration>)");
   CHECK(jsonToXml(R"({"Style": {"@name": "s", "Legend": {"@fixedclasses": "true", "#text": "l"}, "Min": -5, "Max": 7.5, "Log": "10"}})") ==
         R"(<Configuration><Style name="s"><Legend fixedclasses="true">l</Legend><Min>-5</Min><Max>7.5</Max><Log>10</Log></Style></Configuration>)");
   // Wrapped in Configuration, like XML
-  CHECK(jsonToXml(R"({"Configuration": {"Style": {"@name": "s"}}})") == R"(<Configuration><Style name="s"></Style></Configuration>)");
-  // Markup in values is escaped, so it stays a value
-  CHECK(jsonToXml(R"({"Style": {"@name": "a\"><Layer/>", "ContourLine": {"@textformatting": "%.1f & <b>"}}})") ==
-        R"(<Configuration><Style name="a&quot;&gt;&lt;Layer/&gt;"><ContourLine textformatting="%.1f &amp; &lt;b&gt;"></ContourLine></Style></Configuration>)");
+  CHECK(jsonToXml(R"({"Configuration": {"Style": {"@name": "s"}}})") == R"(<Configuration><Style name="s"/></Configuration>)");
+  // Markup in values is escaped by the XML library, so it stays a value
+  CHECK(jsonToXml(R"({"Style": {"@name": "a\"><Layer/>", "Legend": "<!DOCTYPE x><!-- c --><![CDATA[y]]>&amp;"}})") ==
+        R"(<Configuration><Style name="a&quot;&gt;&lt;Layer/&gt;"><Legend>&lt;!DOCTYPE x&gt;&lt;!-- c --&gt;&lt;![CDATA[y]]&gt;&amp;amp;</Legend></Style></Configuration>)");
+  // #text is the first child wherever it is in the JSON, because adaguc reads only a text node that is the first child
+  CHECK(jsonToXml(R"({"Legend": {"@name": "l", "palette": {"@index": 0}, "#text": "rainbow"}})") ==
+        R"(<Configuration><Legend name="l">rainbow<palette index="0"/></Legend></Configuration>)");
 }
 
 TEST(StyleSheetJson, jsonToXmlRefusesInvalidJson) {
@@ -1078,32 +1081,23 @@ TEST(StyleSheetJson, jsonToXmlRefusesInvalidJson) {
            // Attributes and text belong to an element
            R"({"@name": "s"})",
            R"({"#text": "s"})",
-           // Too deep
+           // Too deep or too large
            R"({"a": {"b": {"c": {"d": {"e": {"f": {"g": {"h": {"i": {"j": 1}}}}}}}}}})",
+           R"({"a": [[[[[[[[[[1]]]]]]]]]]})",
+           // A duplicate key would silently drop an element: repeated elements are arrays
+           R"({"Style": {"ContourLine": {"@interval": 1}, "ContourLine": {"@interval": 2}}})",
+           R"({"Style": {"@name": "a", "@name": "b"}})",
+           // Names that the XML library would accept or interpret otherwise
+           R"({"!DOCTYPE": {}})",
+           R"({"Style": {"#comment": "x"}})",
+           R"({"Style": {"@xmlns:x": "y"}})",
+           // Control characters, which XML does not allow
+           R"({"Style": {"@name": "a\u0001b"}})",
+           R"({"Style\u0000": {}})",
        }) {
     if (jsonToXml(json) != "invalid") FAIL(json);
   }
-}
-
-// Converting XML to JSON and back gives the same stylesheet: converting it to JSON again gives the same JSON
-TEST(StyleSheetJson, roundTrip) {
-  for (const char *xml: {
-           R"(<Legend name="terrain" type="colorRange"><palette index="0" color="#2B83BA"/><palette index="240" color="#7A3B10"/></Legend>
-              <Style name="terrain"><Legend fixedclasses="true" tickinterval="10">terrain</Legend><Min>-5</Min><Max>75</Max><RenderSettings interpolationmethod="bilinear"/>
-                <SmoothingFilter>2</SmoothingFilter><ContourLine width="0.6" linecolor="#5A3A1A80" interval="5"/>
-                <ContourLine width="1.6" textcolor="#3A2008" textformatting="%.0f m &amp; more" interval="20"/></Style>)",
-           R"(<?xml version="1.0"?><Configuration><Style name="classes"><ShadeInterval min="-100" max="0" label="Below 0 m" fillcolor="#4A90C8"/></Style></Configuration>)",
-           R"(<Style name="s"><IncludeStyle name="a"/><IncludeStyle name="b"/></Style>)",
-       }) {
-    std::string json, xmlAgain, jsonAgain;
-    if (!styleSheetXmlToJson(xml, json) || !styleSheetJsonToXml(json, xmlAgain) || !styleSheetXmlToJson(xmlAgain, jsonAgain) || json != jsonAgain) {
-      FAIL((json + "\n" + jsonAgain).c_str());
-    }
-  }
-  std::string json;
-  CHECK(styleSheetXmlToJson(R"(<Style name="s"><Legend fixedclasses="true">l</Legend><Min>-5</Min><ContourLine interval="5"/><ContourLine interval="20"/></Style>)", json));
-  CHECK(json == R"({"Style":{"@name":"s","Legend":{"@fixedclasses":"true","#text":"l"},"Min":"-5","ContourLine":[{"@interval":"5"},{"@interval":"20"}]}})");
-  CHECK(!styleSheetXmlToJson("<Style name=", json));
+  CHECK(jsonToXml(std::string(R"({"Style": {"@name": ")") + std::string(70 * 1024, 'x') + R"("}})") == "invalid");
 }
 
 // A JSON stylesheet is checked like the same stylesheet in XML
@@ -1122,7 +1116,11 @@ TEST(CServerParams, applyStyleSheetJson) {
                         R"({"Style": {"@name": "s", "Legend": "does_not_exist"}})",
                         R"({"Configuration": {"@foo": 1, "Style": {"@name": "s"}}})",
                         R"({"Style": {"@name": "s")",
+                        // A JSON array is not read as text
+                        R"([{"Style": {"@name": "s"}}])",
                     }),
                     false);
+  // A UTF-8 byte order mark before the JSON
+  CHECK(applyStyleSheet("\xEF\xBB\xBF" R"({"Style": {"@name": "s"}})") == 0);
 }
 

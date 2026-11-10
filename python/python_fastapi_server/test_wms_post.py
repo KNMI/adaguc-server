@@ -9,6 +9,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 import main
 import pytest
+from routers.wmswcs import json_body_params
 
 GET_MAP_QUERY = "source=testdata.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE"
 EXPECTED_GET_MAP = os.path.join(os.environ["ADAGUC_PATH"], "tests", "expectedoutputs", "TestWMS", "test_WMSGetMap_testdatanc.png")
@@ -86,8 +87,28 @@ def test_getmap_post_json_with_stylesheet(client):
         assert response.content == read_expected()
 
 
-@pytest.mark.parametrize("body", ["not json", "[1, 2]", '{"LAYERS": ["a", "b"]}', '{"WIDTH": null}'])
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"not json",
+        b"[1, 2]",
+        b'{"LAYERS": ["a", "b"]}',
+        b'{"WIDTH": null}',
+        b'{"WIDTH": 1, "WIDTH": 2}',
+        b'{"STYLESHEET": {"Style": {"ContourLine": {"@interval": 1}, "ContourLine": {"@interval": 2}}}}',
+        b'{"WIDTH": NaN}',
+        b'{"WIDTH": Infinity}',
+        b'{"LAYERS": "\xff"}',
+        b'{"LAYERS": "\\ud800"}',
+    ],
+)
 def test_post_json_refuses_invalid_body(client, body):
     response = client.post("/wms", content=body, headers={"Content-Type": "application/json"})
     assert response.status_code == 400
+
+
+def test_json_body_keeps_numbers_as_written():
+    """Numbers are passed on as their text, also in the STYLESHEET: a float would print 1e9 as 1000000000.0"""
+    params = json_body_params(b'{"WIDTH": 256, "TRANSPARENT": true, "STYLESHEET": {"Style": {"Min": 1e9, "Max": 0.10}}}')
+    assert params == [("WIDTH", "256"), ("TRANSPARENT", "TRUE"), ("STYLESHEET", '{"Style":{"Min":"1e9","Max":"0.10"}}')]
 

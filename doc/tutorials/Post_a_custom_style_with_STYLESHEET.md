@@ -221,7 +221,7 @@ document.getElementById("map").src = URL.createObjectURL(await response.blob());
 
 Some firewalls (WAFs) refuse requests that contain XML. A stylesheet can also be written as JSON. It is the same stylesheet: the server converts it to the XML above, element by element, and then checks and uses it the same way.
 
-- A key is an element name. Its value is an object, a value for an element with only text (`"Min": -5` is `<Min>-5</Min>`), or an array for a repeated element.
+- A key is an element name. Its value is an object, a value for an element with only text (`"Min": -5` is `<Min>-5</Min>`), or an array for a repeated element. A repeated element keeps the order of its array, which matters for `ShadeInterval` and `ContourLine`. A key may appear only once in an object: use an array instead.
 - A key starting with `@` is an attribute. `#text` is the text of an element that also has attributes, like the legend name in `Style`.
 - The elements may be wrapped in `{"Configuration": {...}}`, like `<Configuration>` in XML.
 
@@ -256,7 +256,7 @@ Post it in the `STYLESHEET` parameter, like the XML. The image is the same as in
 curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.json"
 ```
 
-Or post all parameters as one JSON object with `Content-Type: application/json`, with the stylesheet as an object in it. Numbers and booleans in the parameters are passed on as text (`true` as `TRUE`). From Python:
+Or post all parameters as one JSON object with `Content-Type: application/json`, with the stylesheet as an object in it. Numbers are passed on exactly as written, and the booleans `true` and `false` in the parameters as `TRUE` and `FALSE` (inside the stylesheet they stay `true` and `false`). Duplicate keys, `NaN` and `Infinity` are refused with status 400. From Python:
 
 ```python
 import json
