@@ -26,7 +26,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "CXMLSerializerInterface.h"
-#include "utils/StyleSheetJson.h"
+#include "utils/StyleSheetValidation.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -909,74 +909,91 @@ static std::string repeat(const std::string &text, int times) {
   return result;
 }
 
+// A JSON array of a repeated element
+static std::string repeatArray(const std::string &item, int times) {
+  std::string result = "[";
+  for (int i = 0; i < times; i++) result += (i > 0 ? "," : "") + item;
+  return result + "]";
+}
+
 TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
   CHECK_STYLESHEETS(
       (std::vector<std::string>{
           // Only Style and Legend elements may be posted, and only one Style
-          R"(<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>)",
-          R"(<Style name="a"/><Style name="b"/>)",
-          R"(<Style name=)",
+          R"({"Layer": {"@type": "database", "FilePath": "/etc", "Variable": "x"}})",
+          R"({"Style": [{"@name": "a"}, {"@name": "b"}]})",
+          R"({"Configuration": {"Style": {"@name": "s"}}})",
           // File access and other layers
-          R"(<Style name="s"><DataPostProc algorithm="addfeatures" a="/etc/passwd"/></Style>)",
-          R"(<Style name="s"><DataPostProc algorithm="include_layer" name="testdata"/></Style>)",
-          R"(<Style name="s"><DataPostProc algorithm="pointsfromgrid" name="x"/></Style>)",
-          R"(<Style name="s"><DataPostProc algorithm="convert_units" name="x"/></Style>)",
-          R"(<Style name="s"><Point fontfile="/etc/passwd"/></Style>)",
-          R"(<Style name="s"><Point symbol="/etc/passwd"/></Style>)",
-          R"(<Style name="s"><Point file="{ADAGUC_PATH}data/symbols/marker.png"/></Style>)",
-          R"(<Style name="s"><FeatureInterval labelfontfile="/etc/passwd"/></Style>)",
-          R"(<Legend name="l" type="svg" file="/etc/passwd"/>)",
+          R"({"Style": {"@name": "s", "DataPostProc": {"@algorithm": "addfeatures", "@a": "/etc/passwd"}}})",
+          R"({"Style": {"@name": "s", "DataPostProc": {"@algorithm": "include_layer", "@name": "testdata"}}})",
+          R"({"Style": {"@name": "s", "DataPostProc": {"@algorithm": "pointsfromgrid", "@name": "x"}}})",
+          R"({"Style": {"@name": "s", "DataPostProc": {"@algorithm": "convert_units", "@name": "x"}}})",
+          R"({"Style": {"@name": "s", "Point": {"@fontfile": "/etc/passwd"}}})",
+          R"({"Style": {"@name": "s", "Point": {"@symbol": "/etc/passwd"}}})",
+          R"({"Style": {"@name": "s", "Point": {"@file": "{ADAGUC_PATH}data/symbols/marker.png"}}})",
+          R"({"Style": {"@name": "s", "FeatureInterval": {"@labelfontfile": "/etc/passwd"}}})",
+          R"({"Legend": {"@name": "l", "@type": "svg", "@file": "/etc/passwd"}})",
           // Applied to strings and integers too, so no safe format exists
-          R"(<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>)",
+          R"({"Style": {"@name": "s", "FeatureInterval": {"@labelpropertyformat": "%s"}}})",
           // Posted printf formats are accepted, but their length is limited
-          R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 33) + R"("/></Style>)",
+          R"({"Style": {"@name": "s", "ContourLine": {"@textformatting": ")" + repeat("%f", 33) + R"("}}})",
           // IncludeStyle of a style that is not configured, like the posted style itself
-          R"(<Style name="s"><IncludeStyle name="s"/></Style>)",
-          R"(<Style name="s"><IncludeStyle name="does_not_exist"/></Style>)",
-          // Unknown elements, attributes and markup
-          R"(<Style name="s"><Foo/></Style>)",
-          R"(<Style name="s"><ContourLine foo="1"/></Style>)",
-          R"(<Style name="s"><?php echo 1; ?></Style>)",
-          R"(<Configuration foo="1"><Style name="s"/></Configuration>)",
-          R"(<?xml version="1.0"?><!DOCTYPE Configuration [<!ENTITY x "y">]><Configuration><Style name="&x;"/></Configuration>)",
+          R"({"Style": {"@name": "s", "IncludeStyle": {"@name": "s"}}})",
+          R"({"Style": {"@name": "s", "IncludeStyle": {"@name": "does_not_exist"}}})",
+          // Unknown elements, attributes and keys
+          R"({"Style": {"@name": "s", "Foo": {}}})",
+          R"({"Style": {"@name": "s", "ContourLine": {"@foo": 1}}})",
+          R"({"Style": {"@name": "s", "#comment": "x"}})",
+          R"({"!DOCTYPE": {}})",
+          R"({"@foo": 1, "Style": {"@name": "s"}})",
+          // Text for an element without text, and an element that is not text
+          R"({"Style": {"@name": "s", "RenderSettings": "bilinear"}})",
+          R"({"Style": {"@name": "s", "ContourLine": {"#text": "1"}}})",
+          R"({"Style": {"@name": "s", "Min": {"@value": 1}}})",
+          R"({"Style": {"@name": {"x": 1}}})",
+          R"({"Style": {"@name": "s", "Min": [[1]]}})",
           // Regex with back references
-          R"(<Style name="s"><FeatureInterval match="\(a*\)*\1"/></Style>)",
+          R"({"Style": {"@name": "s", "FeatureInterval": {"@match": "\\(a*\\)*\\1"}}})",
           // Values that make loops endless or huge
-          R"(<Style name="s"><Stippling distancex="-5"/></Style>)",
-          R"(<Style name="s"><SmoothingFilter>1000</SmoothingFilter></Style>)",
-          R"(<Style name="s"><RenderSettings striding="0"/></Style>)",
-          R"(<Style name="s"><ContourLine interval="0"/></Style>)",
-          R"(<Style name="s"><ContourLine interval="-1"/></Style>)",
-          R"(<Style name="s"><ContourLine width="1e9"/></Style>)",
-          R"(<Legend name="l" type="colorRange"><palette index="2000000000" red="0" green="0" blue="0"/></Legend>)",
-          R"(<Legend name="l" type="interval"><palette min="0" max="2000000000" red="0" green="0" blue="0"/></Legend>)",
+          R"({"Style": {"@name": "s", "Stippling": {"@distancex": -5}}})",
+          R"({"Style": {"@name": "s", "SmoothingFilter": 1000}})",
+          R"({"Style": {"@name": "s", "RenderSettings": {"@striding": 0}}})",
+          R"({"Style": {"@name": "s", "ContourLine": {"@interval": 0}}})",
+          R"({"Style": {"@name": "s", "ContourLine": {"@interval": -1}}})",
+          R"({"Style": {"@name": "s", "ContourLine": {"@width": 1e9}}})",
+          R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": {"@index": 2000000000, "@red": 0, "@green": 0, "@blue": 0}}})",
+          R"({"Legend": {"@name": "l", "@type": "interval", "palette": {"@min": 0, "@max": 2000000000, "@red": 0, "@green": 0, "@blue": 0}}})",
           // Every DataPostProc goes over the whole grid, and add_dataobject allocates a grid
-          R"(<Style name="s">)" + repeat(R"(<DataPostProc algorithm="add_dataobject" name="m" a="1"/>)", 9) + "</Style>",
-          R"(<Style name="s"><DataPostProc algorithm="add_dataobject" name="m" a="inf"/></Style>)",
-          // Values read with atoi must be whole numbers: 20000e-3 is 20 as a number, but atoi reads 20000
-          R"(<Style name="s"><SmoothingFilter>20000e-3</SmoothingFilter></Style>)",
-          R"(<Style name="s"><Stippling distancex="100000e-3"/></Style>)",
-          R"(<Style name="s"><RenderSettings striding="0.5"/></Style>)",
-          R"(<Legend name="l" type="colorRange"><palette index="100000e-3" red="0" green="0" blue="0"/></Legend>)",
+          R"({"Style": {"@name": "s", "DataPostProc": )" + repeatArray(R"({"@algorithm": "add_dataobject", "@name": "m", "@a": 1})", 9) + "}}",
+          R"({"Style": {"@name": "s", "DataPostProc": {"@algorithm": "add_dataobject", "@name": "m", "@a": "inf"}}})",
+          // Values read with atoi must be whole numbers: 20000e-3 is 20 as a number, but atoi reads 20000. Numbers are used as written.
+          R"({"Style": {"@name": "s", "SmoothingFilter": "20000e-3"}})",
+          R"({"Style": {"@name": "s", "SmoothingFilter": 20000e-3}})",
+          R"({"Style": {"@name": "s", "SmoothingFilter": 2.0}})",
+          R"({"Style": {"@name": "s", "Stippling": {"@distancex": 100000e-3}}})",
+          R"({"Style": {"@name": "s", "RenderSettings": {"@striding": 0.5}}})",
+          R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": {"@index": "100000e-3", "@red": 0, "@green": 0, "@blue": 0}}})",
           // Malformed values
-          R"(<Style name="s"><ContourLine linecolor="red"/></Style>)",
-          R"(<Style name="s"><Min>abc</Min></Style>)",
-          R"(<Style name="s"><Min>nan</Min></Style>)",
-          R"(<Style name="s"><Max>inf</Max></Style>)",
-          R"(<Style name="s"><ContourLine classes="0.1,abc"/></Style>)",
-          R"(<Style name=")" + std::string(2000, 'x') + R"("/>)",
-          R"(<Style name="s"><ShadeInterval>inf</ShadeInterval></Style>)",
-          R"(<Style name="s"><ShadeInterval>-1</ShadeInterval></Style>)",
-          R"(<Style name="s"><Log>-10</Log></Style>)",
+          R"({"Style": {"@name": "s", "ContourLine": {"@linecolor": "red"}}})",
+          R"({"Style": {"@name": "s", "Min": "abc"}})",
+          R"({"Style": {"@name": "s", "Min": "nan"}})",
+          R"({"Style": {"@name": "s", "Max": "inf"}})",
+          R"({"Style": {"@name": "s", "ContourLine": {"@classes": "0.1,abc"}}})",
+          R"({"Style": {"@name": ")" + std::string(2000, 'x') + R"("}})",
+          R"({"Style": {"@name": "s", "ShadeInterval": "inf"}})",
+          R"({"Style": {"@name": "s", "ShadeInterval": -1}})",
+          R"({"Style": {"@name": "s", "Log": -10}})",
           // drawContour has one bit per ContourLine
-          R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 33) + "</Style>",
+          R"({"Style": {"@name": "s", "ContourLine": )" + repeatArray(R"({"@interval": 0.1})", 33) + "}}",
           // A legend that is neither configured nor posted
-          R"(<Style name="s"><Legend>does_not_exist</Legend></Style>)",
-          // Only the text before a comment is read as value, so it must be the text that is checked
-          R"(<Style name="s"><SmoothingFilter>100000<!---->e-4</SmoothingFilter></Style>)",
-          R"(<Style name="s"><ContourIntervalL>-1<!---->e-999</ContourIntervalL></Style>)",
+          R"({"Style": {"@name": "s", "Legend": "does_not_exist"}})",
           // Every IncludeStyle adds the included elements again
-          R"(<Style name="s">)" + repeat(R"(<IncludeStyle name="testdata_style_manycontours"/>)", 5) + "</Style>",
+          R"({"Style": {"@name": "s", "IncludeStyle": )" + repeatArray(R"({"@name": "testdata_style_manycontours"})", 5) + "}}",
+          // Only JSON objects, and no XML
+          R"([{"Style": {"@name": "s"}}])",
+          R"(<Style name="s"/>)",
+          R"({"Style": {"@name": "s"})",
+          "",
       }),
       false);
 }
@@ -984,22 +1001,27 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
 TEST(CServerParams, applyStyleSheetAcceptsAllowedContent) {
   CHECK_STYLESHEETS(
       (std::vector<std::string>{
-          R"(<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>)",
-          R"(<?xml version="1.0"?><Configuration><Style name="s"/></Configuration>)",
+          R"({"Style": {"@name": "s", "Legend": "rainbow", "Min": 0, "Max": 0.5}})",
+          R"({"Style": {"@name": "s"}})",
+          R"({})",
+          // Values as strings or numbers, and elements without text as empty strings
+          R"({"Style": {"@name": "s", "Min": "0", "Max": "1e2", "RenderSettings": "", "ContourLine": {"@interval": "0.5", "@width": 2}}})",
           // Posted legends may be used by the posted style, and replace a configured legend with the same name
-          R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend><Style name="s"><Legend>l</Legend></Style>)",
-          R"(<Legend name="rainbow" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend>)",
+          R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": {"@index": 0, "@red": 0, "@green": 0, "@blue": 0}}, "Style": {"@name": "s", "Legend": "l"}})",
+          R"({"Legend": {"@name": "rainbow", "@type": "colorRange", "palette": [{"@index": 0, "@color": "#000000"}, {"@index": 240, "@color": "#FFFFFF"}]}})",
           // A configured style may be included, also by a posted style with the same name
-          R"(<Style name="testdata_style_manycontours"><IncludeStyle name="testdata_style_manycontours"/></Style>)",
+          R"({"Style": {"@name": "testdata_style_manycontours", "IncludeStyle": {"@name": "testdata_style_manycontours"}}})",
           // The limits themselves
-          R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 32) + "</Style>",
-          R"(<Style name="s">)" + repeat(R"(<DataPostProc algorithm="add_dataobject" name="m" a="1"/>)", 8) + "</Style>",
-          R"(<Style name="s">)" + repeat(R"(<IncludeStyle name="testdata_style_manycontours"/>)", 4) + "</Style>",
-          R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 32) + R"("/></Style>)",
+          R"({"Style": {"@name": "s", "ContourLine": )" + repeatArray(R"({"@interval": 0.1})", 32) + "}}",
+          R"({"Style": {"@name": "s", "DataPostProc": )" + repeatArray(R"({"@algorithm": "add_dataobject", "@name": "m", "@a": 1})", 8) + "}}",
+          R"({"Style": {"@name": "s", "IncludeStyle": )" + repeatArray(R"({"@name": "testdata_style_manycontours"})", 4) + "}}",
+          R"({"Style": {"@name": "s", "ContourLine": {"@textformatting": ")" + repeat("%f", 32) + R"("}}})",
           // Values read with atoi accept whole numbers with an optional sign and surrounding whitespace
-          R"(<Style name="s"><SmoothingFilter> 20 </SmoothingFilter></Style>)",
-          R"(<Style name="s"><Stippling distancex="+10" distancey="10" discradius="2"/></Style>)",
-          R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0" alpha="-1"/></Legend>)",
+          R"({"Style": {"@name": "s", "SmoothingFilter": " 20 "}})",
+          R"({"Style": {"@name": "s", "Stippling": {"@distancex": "+10", "@distancey": 10, "@discradius": 2}}})",
+          R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": {"@index": 0, "@red": 0, "@green": 0, "@blue": 0, "@alpha": -1}}})",
+          // A UTF-8 byte order mark and whitespace around the JSON
+          "\xEF\xBB\xBF" R"( {"Style": {"@name": "s"}} )",
       }),
       true);
 }
@@ -1023,8 +1045,8 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   auto withFile = [](const std::vector<std::string> &files) {
     std::vector<std::string> styleSheets;
     for (const auto &file: files) {
-      styleSheets.push_back(R"(<Style name="s"><SymbolInterval file=")" + file + R"("/><Point pointstyle="symbol"/></Style>)");
-      styleSheets.push_back(R"(<Style name="s"><LegendGraphic value=")" + file + R"("/></Style>)");
+      styleSheets.push_back(R"({"Style": {"@name": "s", "SymbolInterval": {"@file": ")" + file + R"("}, "Point": {"@pointstyle": "symbol"}}})");
+      styleSheets.push_back(R"({"Style": {"@name": "s", "LegendGraphic": {"@value": ")" + file + R"("}}})");
     }
     return styleSheets;
   };
@@ -1042,87 +1064,42 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }
 
-static std::string jsonToXml(const std::string &json) {
-  std::string xml;
-  return styleSheetJsonToXml(json, xml) ? xml : "invalid";
+// The posted elements, as parseConfig would make them from the same configuration in XML
+TEST(StyleSheetJson, buildsTheConfiguration) {
+  CServerConfig config;
+  CXMLObjectInterface *configuration = config.addElement("Configuration");
+  CHECK(buildPostedStyleSheet(R"({
+      "Legend": {"@name": "l", "@type": "colorRange", "palette": [{"@index": 0, "@color": "#2B83BA"}, {"@index": 240, "@color": "#7A3B10"}]},
+      "Style": {"@name": "s", "ContourLine": [{"@interval": 5}, {"@interval": "20"}], "Legend": {"#text": " l ", "@fixedclasses": true}, "Min": 1e9}})",
+                              configuration));
+  const auto &posted = config.Configuration[0];
+  CHECK(posted.Legend.size() == 1 && posted.Legend[0].attr.name == "l" && posted.Legend[0].palette.size() == 2);
+  CHECK(posted.Legend[0].palette[1].attr.index == 240);
+  CHECK(posted.Style.size() == 1 && posted.Style[0].attr.name == "s");
+  // Repeated elements in the order of the array, numbers as written, text trimmed like parseConfig does
+  CHECK(posted.Style[0].ContourLine.size() == 2 && posted.Style[0].ContourLine[0].attr.interval == "5" && posted.Style[0].ContourLine[1].attr.interval == "20");
+  CHECK(posted.Style[0].Legend[0].elementValue == "l" && posted.Style[0].Legend[0].attr.fixedclasses == "true");
+  CHECK(posted.Style[0].Min[0].elementValue == "1e9");
 }
 
-TEST(StyleSheetJson, jsonToXml) {
-  // Attributes with @, text with #text or as the value of an element with only text, arrays for repeated elements
-  CHECK(jsonToXml(R"({"Legend": {"@name": "l", "@type": "colorRange", "palette": [{"@index": 0, "@color": "#2B83BA"}, {"@index": 240, "@color": "#7A3B10"}]}})") ==
-        R"(<Configuration><Legend name="l" type="colorRange"><palette index="0" color="#2B83BA"></palette><palette index="240" color="#7A3B10"></palette></Legend></Configuration>)");
-  CHECK(jsonToXml(R"({"Style": {"@name": "s", "Legend": {"@fixedclasses": "true", "#text": "l"}, "Min": -5, "Max": 7.5, "Log": "10"}})") ==
-        R"(<Configuration><Style name="s"><Legend fixedclasses="true">l</Legend><Min>-5</Min><Max>7.5</Max><Log>10</Log></Style></Configuration>)");
-  // Wrapped in Configuration, like XML
-  CHECK(jsonToXml(R"({"Configuration": {"Style": {"@name": "s"}}})") == R"(<Configuration><Style name="s"></Style></Configuration>)");
-  // Markup in values is escaped, so it stays a value
-  CHECK(jsonToXml(R"({"Style": {"@name": "a\"><Layer/>", "ContourLine": {"@textformatting": "%.1f & <b>"}}})") ==
-        R"(<Configuration><Style name="a&quot;&gt;&lt;Layer/&gt;"><ContourLine textformatting="%.1f &amp; &lt;b&gt;"></ContourLine></Style></Configuration>)");
-}
-
-TEST(StyleSheetJson, jsonToXmlRefusesInvalidJson) {
-  for (const char *json: {
-           R"(not json)",
-           R"(["Style"])",
-           R"({"Style": {"@name": "s")",
-           // Names that are not element or attribute names
-           R"({"Style><Layer": {}})",
-           R"({"Style": {"@na me": "s"}})",
-           R"({"": {}})",
-           // Values that are no text
-           R"({"Style": {"@name": {"x": 1}}})",
-           R"({"Style": {"@name": null}})",
-           R"({"Style": null})",
-           R"({"Style": {"#text": []}})",
-           R"({"Style": [[{"@name": "s"}]]})",
-           // Attributes and text belong to an element
-           R"({"@name": "s"})",
-           R"({"#text": "s"})",
-           // Too deep
-           R"({"a": {"b": {"c": {"d": {"e": {"f": {"g": {"h": {"i": {"j": 1}}}}}}}}}})",
-       }) {
-    if (jsonToXml(json) != "invalid") FAIL(json);
-  }
-}
-
-// Converting XML to JSON and back gives the same stylesheet: converting it to JSON again gives the same JSON
-TEST(StyleSheetJson, roundTrip) {
-  for (const char *xml: {
-           R"(<Legend name="terrain" type="colorRange"><palette index="0" color="#2B83BA"/><palette index="240" color="#7A3B10"/></Legend>
-              <Style name="terrain"><Legend fixedclasses="true" tickinterval="10">terrain</Legend><Min>-5</Min><Max>75</Max><RenderSettings interpolationmethod="bilinear"/>
-                <SmoothingFilter>2</SmoothingFilter><ContourLine width="0.6" linecolor="#5A3A1A80" interval="5"/>
-                <ContourLine width="1.6" textcolor="#3A2008" textformatting="%.0f m &amp; more" interval="20"/></Style>)",
-           R"(<?xml version="1.0"?><Configuration><Style name="classes"><ShadeInterval min="-100" max="0" label="Below 0 m" fillcolor="#4A90C8"/></Style></Configuration>)",
-           R"(<Style name="s"><IncludeStyle name="a"/><IncludeStyle name="b"/></Style>)",
-       }) {
-    std::string json, xmlAgain, jsonAgain;
-    if (!styleSheetXmlToJson(xml, json) || !styleSheetJsonToXml(json, xmlAgain) || !styleSheetXmlToJson(xmlAgain, jsonAgain) || json != jsonAgain) {
-      FAIL((json + "\n" + jsonAgain).c_str());
-    }
-  }
-  std::string json;
-  CHECK(styleSheetXmlToJson(R"(<Style name="s"><Legend fixedclasses="true">l</Legend><Min>-5</Min><ContourLine interval="5"/><ContourLine interval="20"/></Style>)", json));
-  CHECK(json == R"({"Style":{"@name":"s","Legend":{"@fixedclasses":"true","#text":"l"},"Min":"-5","ContourLine":[{"@interval":"5"},{"@interval":"20"}]}})");
-  CHECK(!styleSheetXmlToJson("<Style name=", json));
-}
-
-// A JSON stylesheet is checked like the same stylesheet in XML
-TEST(CServerParams, applyStyleSheetJson) {
+TEST(StyleSheetJson, refusesInvalidJson) {
+  // A stylesheet needs at most 4 nested objects and arrays: root, Style, an array of ContourLines and a ContourLine.
+  // Up to 8 are parsed, the 9th is refused while parsing, before the elements are checked.
   CHECK_STYLESHEETS((std::vector<std::string>{
-                        R"({"Style": {"@name": "s", "Legend": "rainbow", "Min": 0, "Max": 0.5}})",
-                        R"( {"Legend": {"@name": "l", "@type": "colorRange", "palette": {"@index": 0, "@color": "#000000"}}, "Style": {"@name": "s", "Legend": "l"}})",
-                        R"({"Configuration": {"Style": {"@name": "s", "ContourLine": [{"@interval": 0.1}, {"@interval": 1}]}}})",
-                    }),
-                    true);
-  CHECK_STYLESHEETS((std::vector<std::string>{
-                        R"({"Layer": {"@type": "database", "FilePath": "/etc"}})",
-                        R"({"Style": [{"@name": "a"}, {"@name": "b"}]})",
-                        R"({"Style": {"@name": "s", "Point": {"@fontfile": "/etc/passwd"}}})",
-                        R"({"Style": {"@name": "s", "Min": "abc"}})",
-                        R"({"Style": {"@name": "s", "Legend": "does_not_exist"}})",
-                        R"({"Configuration": {"@foo": 1, "Style": {"@name": "s"}}})",
-                        R"({"Style": {"@name": "s")",
+                        R"({"Style": {"@name": "s", "Foo": {"b": {"c": {"d": {"e": {"f": {"g": "x"}}}}}}}})",
+                        R"({"Style": {"@name": "s", "Foo": {"b": {"c": {"d": {"e": {"f": {"g": {"h": "x"}}}}}}}}})",
+                        R"({"Style": [[[[[[[[[[1]]]]]]]]]]})",
+                        std::string(R"({"Style": {"@name": ")") + std::string(70 * 1024, 'x') + R"("}})",
+                        "not json",
+                        R"({"Style": {"@name": "s"} trailing)",
+                        // A duplicate key would silently drop an element: repeated elements are arrays
+                        R"({"Style": {"@name": "s", "ContourLine": {"@interval": 1}, "ContourLine": {"@interval": 2}}})",
+                        R"({"Style": {"@name": "a", "@name": "b"}})",
+                        R"({"Style": null})",
+                        R"({"Style": NaN})",
+                        R"({"Style": {"@name": "s", "Min": 1e400}})",
+                        R"({"Style": {"@name": "a\u0001b"}})",
+                        R"({"Style\u0000": {}})",
                     }),
                     false);
 }
-

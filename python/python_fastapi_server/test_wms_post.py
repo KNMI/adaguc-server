@@ -1,5 +1,5 @@
 """
-Tests WMS GetMap via POST with form url encoded or JSON parameters, and the STYLESHEET parameter.
+Tests WMS GetMap via POST with form url encoded parameters, and the STYLESHEET parameter.
 """
 
 import os
@@ -12,9 +12,9 @@ import pytest
 
 GET_MAP_QUERY = "source=testdata.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE"
 EXPECTED_GET_MAP = os.path.join(os.environ["ADAGUC_PATH"], "tests", "expectedoutputs", "TestWMS", "test_WMSGetMap_testdatanc.png")
-# Valid stylesheet xml with characters that would break naive query string handling: &, =, %, + and a newline.
+# A valid stylesheet with characters that would break naive query string handling: &, =, %, + and a newline.
 # Only a Legend that no style uses, so the image does not change.
-STYLESHEET = '<Legend name="x a&amp;b">\n  &amp;WIDTH=1 100%+</Legend>'
+STYLESHEET = '{"Legend": {"@name": "x a&b", "#text": "\\n  &WIDTH=1 100%+"}}'
 
 
 @pytest.fixture(autouse=True)
@@ -68,26 +68,3 @@ def test_getmap_post_merges_query_and_body(client):
 def test_post_requires_form_urlencoded(client):
     response = client.post("/wms", content=GET_MAP_QUERY, headers={"Content-Type": "text/plain"})
     assert response.status_code == 415
-
-
-def test_getmap_post_json(client):
-    """The parameters as a JSON object, numbers and booleans are passed on as text"""
-    params = dict(parse_qsl(GET_MAP_QUERY)) | {"WIDTH": 256, "HEIGHT": 256, "TRANSPARENT": False}
-    response = client.post("/wms", json=params)
-    assert response.status_code == 200, response.text
-    assert response.content == read_expected()
-
-
-def test_getmap_post_json_with_stylesheet(client):
-    """STYLESHEET as a JSON object, and as XML text in a JSON body. Only a Legend that no style uses, so the image does not change."""
-    for stylesheet in ({"Legend": {"@name": "x a&b", "#text": "&WIDTH=1 100%+"}}, STYLESHEET):
-        response = client.post("/wms", json=dict(parse_qsl(GET_MAP_QUERY)) | {"STYLESHEET": stylesheet})
-        assert response.status_code == 200, response.text
-        assert response.content == read_expected()
-
-
-@pytest.mark.parametrize("body", ["not json", "[1, 2]", '{"LAYERS": ["a", "b"]}', '{"WIDTH": null}'])
-def test_post_json_refuses_invalid_body(client, body):
-    response = client.post("/wms", content=body, headers={"Content-Type": "application/json"})
-    assert response.status_code == 400
-

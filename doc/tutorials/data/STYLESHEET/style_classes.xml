@@ -1,9 +1,0 @@
-<Style name="classes">
-  <ShadeInterval min="-100" max="0"   label="Below 0 m"       fillcolor="#4A90C8"/>
-  <ShadeInterval min="0"    max="5"   label="0 - 5 m"         fillcolor="#C8E6A0"/>
-  <ShadeInterval min="5"    max="20"  label="5 - 20 m"        fillcolor="#F0E68C"/>
-  <ShadeInterval min="20"   max="40"  label="20 - 40 m"       fillcolor="#E0A050"/>
-  <ShadeInterval min="40"   max="200" label="Above 40 m"      fillcolor="#A0522D"/>
-  <RenderSettings interpolationmethod="bilinear"/>
-  <ContourLine width="1.2" linecolor="#000000" classes="0,5,20,40"/>
-</Style>

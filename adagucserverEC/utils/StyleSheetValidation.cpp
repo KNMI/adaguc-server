@@ -1,5 +1,6 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -9,6 +10,7 @@
 #include "CColor.h"
 #include "CDebugger.h"
 #include "CTString.h"
+#include "json.hpp"
 #include "StyleSheetValidation.h"
 
 namespace {
@@ -286,32 +288,192 @@ namespace {
     }
   };
 
+  // A posted STYLESHEET is at most root, Style, an array of elements and an element; deeper JSON is refused while it is parsed
+  const size_t MAX_JSON_DEPTH = 8;
+  const size_t MAX_JSON_BYTES = 64 * 1024;
+
+  // A name from the request as it may appear in a log message: printable ASCII, at most 64 characters
+  std::string printable(std::string_view name) {
+    std::string result;
+    for (char c: name.substr(0, 64)) result += (c >= 0x20 && c < 0x7f) ? c : '?';
+    return result;
+  }
+
+  bool hasControlCharacters(std::string_view text) {
+    return std::any_of(text.begin(), text.end(), [](char c) { return (unsigned char)c < 0x20 && c != '\t' && c != '\n' && c != '\r'; });
+  }
+
+  // A parsed JSON value. Strings, numbers and booleans are text, numbers exactly as written: 1e9 stays 1e9.
+  struct JsonValue {
+    enum class Type { Text, Object, Array } type = Type::Text;
+    std::string text;
+    std::vector<std::pair<std::string, JsonValue>> members; // In the order of the JSON
+    std::vector<JsonValue> items;
+  };
+
+  // Parses JSON into a JsonValue. Refuses null, duplicate keys (a repeated element is an array), control characters and
+  // nesting deeper than MAX_JSON_DEPTH while parsing.
+  class JsonParser : public nlohmann::json_sax<nlohmann::json> {
+  public:
+    JsonValue root;
+    std::string error;
+
+    bool null() override { return fail("null is not allowed"); }
+    bool boolean(bool value) override { return addText(value ? "true" : "false"); }
+    bool number_integer(number_integer_t value) override { return addText(std::to_string(value)); }
+    bool number_unsigned(number_unsigned_t value) override { return addText(std::to_string(value)); }
+    bool number_float(number_float_t, const string_t &text) override { return addText(text); }
+    bool string(string_t &value) override { return hasControlCharacters(value) ? fail("control characters are not allowed") : addText(value); }
+    bool binary(binary_t &) override { return fail("binary values are not allowed"); }
+    bool start_object(std::size_t) override { return open(JsonValue::Type::Object); }
+    bool end_object() override { return close(); }
+    bool start_array(std::size_t) override { return open(JsonValue::Type::Array); }
+    bool end_array() override { return close(); }
+    bool key(string_t &key) override {
+      if (hasControlCharacters(key)) return fail("control characters are not allowed");
+      const auto &members = open_.back().members;
+      if (std::any_of(members.begin(), members.end(), [&key](const auto &member) { return member.first == key; })) {
+        return fail("duplicate key [" + printable(key) + "], use an array for repeated elements");
+      }
+      keys_.back() = key;
+      return true;
+    }
+    bool parse_error(std::size_t position, const std::string &, const nlohmann::detail::exception &) override {
+      return fail("not valid JSON at position " + std::to_string(position));
+    }
+
+  private:
+    std::vector<JsonValue> open_; // Objects and arrays that are being parsed, innermost last
+    std::vector<std::string> keys_;
+
+    bool fail(const std::string &reason) {
+      if (error.empty()) error = reason;
+      return false;
+    }
+    bool open(JsonValue::Type type) {
+      if (open_.size() >= MAX_JSON_DEPTH) return fail("nested too deep");
+      open_.emplace_back();
+      open_.back().type = type;
+      keys_.emplace_back();
+      return true;
+    }
+    bool close() {
+      JsonValue value = std::move(open_.back());
+      open_.pop_back();
+      keys_.pop_back();
+      return add(std::move(value));
+    }
+    bool addText(std::string text) {
+      JsonValue value;
+      value.text = std::move(text);
+      return add(std::move(value));
+    }
+    bool add(JsonValue value) {
+      if (open_.empty()) {
+        root = std::move(value);
+      } else if (open_.back().type == JsonValue::Type::Object) {
+        open_.back().members.emplace_back(keys_.back(), std::move(value));
+      } else {
+        open_.back().items.push_back(std::move(value));
+      }
+      return true;
+    }
+  };
+
+  // Checks a posted STYLESHEET against the rules and adds its elements to a configuration, as parseConfig does for XML:
+  // element text (trimmed), handleValue, the attributes, then the children. Nothing is added that the rules do not allow.
+  struct PostedStyleSheetBuilder {
+    StyleChecker checker{.configured = false};
+
+    bool refuse(const std::string &message) {
+      CDBError("STYLESHEET: %s", message.c_str());
+      return false;
+    }
+
+    // An element, or one element per item for an array (a repeated element)
+    bool addElements(CXMLObjectInterface *parent, const std::string &parentName, const std::string &name, const JsonValue &value) {
+      auto parentRule = elementRules().find(parentName);
+      if (parentRule == elementRules().end() || !parentRule->second.children.contains(name)) {
+        return refuse(CT::printf("[%s] is not allowed in [%s]", printable(name).c_str(), parentName.c_str()));
+      }
+      if (value.type != JsonValue::Type::Array) return addElement(parent, name, value);
+      for (const auto &item: value.items) {
+        if (item.type == JsonValue::Type::Array) return refuse(CT::printf("[%s] contains an array in an array", name.c_str()));
+        if (!addElement(parent, name, item)) return false;
+      }
+      return true;
+    }
+
+    bool addElement(CXMLObjectInterface *parent, const std::string &name, const JsonValue &value) {
+      auto ruleIt = elementRules().find(name);
+      if (ruleIt == elementRules().end()) return refuse(CT::printf("element [%s] is not allowed", name.c_str()));
+      const ElementRule &rule = ruleIt->second;
+      static const std::vector<std::pair<std::string, JsonValue>> noMembers;
+      const auto &members = value.type == JsonValue::Type::Object ? value.members : noMembers;
+
+      // Check the text and the attributes before anything is added
+      std::string text = value.type == JsonValue::Type::Text ? value.text : "";
+      for (const auto &[key, member]: members) {
+        if (key == "#text") {
+          if (member.type != JsonValue::Type::Text) return refuse(CT::printf("#text of [%s] must be a string or number", name.c_str()));
+          text = member.text;
+        } else if (key.starts_with("@")) {
+          auto attributeIt = rule.attributes.find(std::string_view(key).substr(1));
+          if (attributeIt == rule.attributes.end()) {
+            return refuse(CT::printf("attribute [%s] in [%s] is not allowed", printable(std::string_view(key).substr(1)).c_str(), name.c_str()));
+          }
+          if (member.type != JsonValue::Type::Text || !checker.isValidValue(member.text, attributeIt->second)) {
+            return refuse(CT::printf("invalid value for attribute [%s] in [%s]", attributeIt->first.c_str(), name.c_str()));
+          }
+        } else if (key.starts_with("#")) {
+          return refuse(CT::printf("[%s] is not allowed in [%s]", printable(key).c_str(), name.c_str()));
+        }
+      }
+      text = CT::trim(text);
+      if (!text.empty()) {
+        if (!rule.text.has_value()) return refuse(CT::printf("[%s] has no text, use an object with attributes", name.c_str()));
+        if (!checker.isValidValue(text, *rule.text)) return refuse(CT::printf("invalid value for [%s]", name.c_str()));
+      }
+
+      CXMLObjectInterface *element = parent->addElement(name);
+      if (element == nullptr) return refuse(CT::printf("element [%s] can not be added", name.c_str()));
+      element->elementValue = text;
+      element->handleValue();
+      for (const auto &[key, member]: members) {
+        if (!key.starts_with("@")) continue;
+        if (!element->addAttribute({.name = key.substr(1), .value = member.text})) {
+          return refuse(CT::printf("attribute [%s] in [%s] can not be added", key.c_str() + 1, name.c_str()));
+        }
+      }
+      for (const auto &[key, member]: members) {
+        if (key.starts_with("@") || key.starts_with("#")) continue;
+        if (!addElements(element, name, key, member)) return false;
+      }
+      return true;
+    }
+  };
+
 } // namespace
 
-bool isAllowedStyleSheet(const std::string &xml) {
-  xmlDoc *doc = xmlReadMemory(xml.c_str(), xml.length(), nullptr, nullptr, XML_PARSE_NONET);
-  if (doc == nullptr) {
-    CDBError("STYLESHEET is not valid XML");
+bool buildPostedStyleSheet(const std::string &json, CXMLObjectInterface *configuration) {
+  if (json.size() > MAX_JSON_BYTES) {
+    CDBError("STYLESHEET is larger than %zu bytes", MAX_JSON_BYTES);
     return false;
   }
-  bool allowed = true;
-  // A DOCTYPE could declare entities
-  if (doc->intSubset != nullptr || doc->extSubset != nullptr) {
-    CDBError("STYLESHEET: DOCTYPE is not allowed");
-    allowed = false;
+  JsonParser parser;
+  if (!nlohmann::json::sax_parse(json, &parser)) {
+    CDBError("STYLESHEET: %s", parser.error.c_str());
+    return false;
   }
-  xmlNode *root = xmlDocGetRootElement(doc);
-  if (allowed && (root == nullptr || std::string_view((const char *)root->name) != "Configuration")) {
-    CDBError("STYLESHEET: root element must be Configuration");
-    allowed = false;
+  if (parser.root.type != JsonValue::Type::Object) {
+    CDBError("STYLESHEET must be a JSON object with Style and Legend");
+    return false;
   }
-  if (allowed) {
-    StyleChecker checker{.configured = false};
-    checker.checkElement(root);
-    allowed = checker.issues == 0;
+  PostedStyleSheetBuilder builder;
+  for (const auto &[key, value]: parser.root.members) {
+    if (!builder.addElements(configuration, "Configuration", key, value)) return false;
   }
-  xmlFreeDoc(doc);
-  return allowed;
+  return true;
 }
 
 int lintConfiguredStyles(const std::string &xml, const std::string &datasetName) {

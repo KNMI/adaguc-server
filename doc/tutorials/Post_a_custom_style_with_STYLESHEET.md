@@ -3,7 +3,7 @@ Post a custom style with STYLESHEET
 
 [Back to readme](./Readme.md)
 
-A WMS client can send its own `<Style>` with a GetMap request in the `STYLESHEET` parameter. The server draws the layer with that style instead of a configured one, for that request only. Nothing is stored on the server, and other users keep seeing the configured styles.
+A WMS client can send its own style as JSON with a GetMap request in the `STYLESHEET` parameter. The server draws the layer with that style instead of a configured one, for that request only. Nothing is stored on the server, and other users keep seeing the configured styles.
 
 This tutorial uses the elevation map of the Utrechtse Heuvelrug that comes with this repository ([ahn_utrechtse_heuvelrug_500m.nc](../../data/datasets/ahn_utrechtse_heuvelrug_500m.nc)) and its dataset configuration ([adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](../../data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)). All style files and images are in [data/STYLESHEET](./data/STYLESHEET/).
 
@@ -52,28 +52,41 @@ curl -o 01_configured_style.png "$WMS&$MAP&STYLES=style_colormapped_bilinear_ele
 
 ## 4. Post your own colours
 
-[style_terrain.xml](./data/STYLESHEET/style_terrain.xml) defines a `Legend` (the colour palette) and a `Style` that uses it, with its own range:
+[style_terrain.json](./data/STYLESHEET/style_terrain.json) defines a `Legend` (the colour palette) and a `Style` that uses it, with its own range:
 
-```xml
-<Legend name="terrain" type="colorRange">
-  <palette index="0"   color="#2B83BA"/>
-  <palette index="20"  color="#ABDDA4"/>
-  <palette index="60"  color="#FFFFBF"/>
-  <palette index="140" color="#D7A35B"/>
-  <palette index="240" color="#7A3B10"/>
-</Legend>
-<Style name="terrain">
-  <Legend fixedclasses="true" tickinterval="10">terrain</Legend>
-  <Min>-5</Min>
-  <Max>75</Max>
-  <RenderSettings interpolationmethod="bilinear"/>
-</Style>
+```json
+{
+  "Legend": {
+    "@name": "terrain",
+    "@type": "colorRange",
+    "palette": [
+      {"@index": 0, "@color": "#2B83BA"},
+      {"@index": 20, "@color": "#ABDDA4"},
+      {"@index": 60, "@color": "#FFFFBF"},
+      {"@index": 140, "@color": "#D7A35B"},
+      {"@index": 240, "@color": "#7A3B10"}
+    ]
+  },
+  "Style": {
+    "@name": "terrain",
+    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
+    "Min": -5,
+    "Max": 75,
+    "RenderSettings": {"@interpolationmethod": "bilinear"}
+  }
+}
 ```
+
+A stylesheet uses the same elements and attributes as a [Style in the server configuration](../configuration/Style.md), written as JSON:
+
+- A key is an element name. Its value is an object, just the value for an element with only text (`"Min": -5`), or an array for a repeated element like `palette`. A repeated element keeps the order of its array, which matters for `ShadeInterval` and `ContourLine`. A key may appear only once in an object: use an array instead.
+- A key starting with `@` is an attribute. `#text` is the text of an element that also has attributes, like the legend name in the `Style`.
+- Values may be strings or numbers. Numbers are used exactly as written (`1e9` stays `1e9`), so `"-5"` and `-5` are the same. `true` and `false` are the text `true` and `false`. `null` is not allowed.
 
 Post it as a form url encoded parameter. `--data` sends the normal WMS parameters and `--data-urlencode` encodes the file contents:
 
 ```bash
-curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.xml"
+curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.json"
 ```
 
 ![Posted terrain style](./data/STYLESHEET/02_terrain.png)
@@ -82,70 +95,82 @@ Points to note:
 
 - The posted style is used whatever `STYLES` is set to, and its name does not matter. You can leave `STYLES` out.
 - A posted `Legend` replaces a configured legend with the same name, for this request only.
-- The XML can be a bare list of `Legend` and `Style` elements, or wrapped in `<Configuration>`. An `<?xml ...?>` declaration is allowed.
 - The layer's legend (here drawn in the map with `SHOWLEGEND=true`) follows the posted style. `REQUEST=GetLegendGraphic` accepts `STYLESHEET` as well.
 
 ## 5. Contour lines with labels
 
-[style_terrain_contours.xml](./data/STYLESHEET/style_terrain_contours.xml) adds smoothing and two sets of contour lines: thin lines every 5 m and labelled lines every 20 m.
+[style_terrain_contours.json](./data/STYLESHEET/style_terrain_contours.json) adds smoothing and two sets of contour lines: thin lines every 5 m and labelled lines every 20 m.
 
-```xml
-<Style name="terrain_contours">
-  <Legend fixedclasses="true" tickinterval="10">terrain</Legend>
-  <Min>-5</Min>
-  <Max>75</Max>
-  <RenderSettings interpolationmethod="bilinear"/>
-  <SmoothingFilter>2</SmoothingFilter>
-  <ContourLine width="0.6" linecolor="#5A3A1A80" interval="5"/>
-  <ContourLine width="1.6" linecolor="#3A2008" textcolor="#3A2008" textstrokecolor="#FFFFFFC0" textstrokewidth="3" textsize="11" textformatting="%.0f m" interval="20"/>
-</Style>
+```json
+{
+  "Style": {
+    "@name": "terrain_contours",
+    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
+    "Min": -5,
+    "Max": 75,
+    "RenderSettings": {"@interpolationmethod": "bilinear"},
+    "SmoothingFilter": 2,
+    "ContourLine": [
+      {"@width": 0.6, "@linecolor": "#5A3A1A80", "@interval": 5},
+      {"@width": 1.6, "@linecolor": "#3A2008", "@textcolor": "#3A2008", "@textstrokecolor": "#FFFFFFC0", "@textstrokewidth": 3, "@textsize": 11, "@textformatting": "%.0f m", "@interval": 20}
+    ]
+  }
+}
 ```
 
 (The file also contains the `terrain` legend from step 4.)
 
 ```bash
-curl -o 03_terrain_contours.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain_contours.xml"
+curl -o 03_terrain_contours.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain_contours.json"
 ```
 
 ![Terrain with contour lines](./data/STYLESHEET/03_terrain_contours.png)
 
 ## 6. Discrete classes
 
-[style_classes.xml](./data/STYLESHEET/style_classes.xml) uses `ShadeInterval` elements. Their labels appear in the legend:
+[style_classes.json](./data/STYLESHEET/style_classes.json) uses `ShadeInterval` elements. Their labels appear in the legend:
 
-```xml
-<Style name="classes">
-  <ShadeInterval min="-100" max="0"   label="Below 0 m"       fillcolor="#4A90C8"/>
-  <ShadeInterval min="0"    max="5"   label="0 - 5 m"         fillcolor="#C8E6A0"/>
-  <ShadeInterval min="5"    max="20"  label="5 - 20 m"        fillcolor="#F0E68C"/>
-  <ShadeInterval min="20"   max="40"  label="20 - 40 m"       fillcolor="#E0A050"/>
-  <ShadeInterval min="40"   max="200" label="Above 40 m"      fillcolor="#A0522D"/>
-  <RenderSettings interpolationmethod="bilinear"/>
-  <ContourLine width="1.2" linecolor="#000000" classes="0,5,20,40"/>
-</Style>
+```json
+{
+  "Style": {
+    "@name": "classes",
+    "ShadeInterval": [
+      {"@min": -100, "@max": 0, "@label": "Below 0 m", "@fillcolor": "#4A90C8"},
+      {"@min": 0, "@max": 5, "@label": "0 - 5 m", "@fillcolor": "#C8E6A0"},
+      {"@min": 5, "@max": 20, "@label": "5 - 20 m", "@fillcolor": "#F0E68C"},
+      {"@min": 20, "@max": 40, "@label": "20 - 40 m", "@fillcolor": "#E0A050"},
+      {"@min": 40, "@max": 200, "@label": "Above 40 m", "@fillcolor": "#A0522D"}
+    ],
+    "RenderSettings": {"@interpolationmethod": "bilinear"},
+    "ContourLine": {"@width": 1.2, "@linecolor": "#000000", "@classes": "0,5,20,40"}
+  }
+}
 ```
 
 ```bash
-curl -o 04_classes.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_classes.xml"
+curl -o 04_classes.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_classes.json"
 ```
 
 ![Elevation classes](./data/STYLESHEET/04_classes.png)
 
 ## 7. Build on a configured style
 
-`IncludeStyle` reuses a style from the server configuration. The posted elements are added to it. [style_include.xml](./data/STYLESHEET/style_include.xml) takes the configured `style_colormapped_bilinear_multicolor`, uses fewer legend ticks and adds white contour lines at 10, 30 and 50 m:
+`IncludeStyle` reuses a style from the server configuration. The posted elements are added to it. [style_include.json](./data/STYLESHEET/style_include.json) takes the configured `style_colormapped_bilinear_multicolor`, uses fewer legend ticks and adds white contour lines at 10, 30 and 50 m:
 
-```xml
-<Style name="multicolor_with_my_contours">
-  <IncludeStyle name="style_colormapped_bilinear_multicolor"/>
-  <Legend tickinterval="20">multicolor</Legend>
-  <SmoothingFilter>3</SmoothingFilter>
-  <ContourLine width="2.5" linecolor="#FFFFFF" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="2" textformatting="%.0f" classes="10,30,50"/>
-</Style>
+```json
+{
+  "Style": {
+    "@name": "multicolor_with_my_contours",
+    "IncludeStyle": {"@name": "style_colormapped_bilinear_multicolor"},
+    "Legend": {"@tickinterval": 20, "#text": "multicolor"},
+    "SmoothingFilter": 3,
+    "ContourLine": {"@width": 2.5, "@linecolor": "#FFFFFF", "@textcolor": "#000000", "@textstrokecolor": "#FFFFFF", "@textstrokewidth": 2, "@textformatting": "%.0f", "@classes": "10,30,50"}
+  }
+}
 ```
 
 ```bash
-curl -o 05_include.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_include.xml"
+curl -o 05_include.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_include.json"
 ```
 
 ![Configured style with posted contour lines](./data/STYLESHEET/05_include.png)
@@ -154,26 +179,29 @@ curl -o 05_include.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_i
 
 ## 8. Values as points
 
-The `pointsfromgrid` DataPostProc samples the grid at regular distances (`a`, in pixels). A `Point` element draws the values as text. [style_spotheights.xml](./data/STYLESHEET/style_spotheights.xml) puts them on the terrain colours from step 4:
+The `pointsfromgrid` DataPostProc samples the grid at regular distances (`@a`, in pixels). A `Point` element draws the values as text. [style_spotheights.json](./data/STYLESHEET/style_spotheights.json) puts them on the terrain colours from step 4:
 
-```xml
-<Style name="terrain_spot_heights">
-  <Legend fixedclasses="true" tickinterval="10">terrain</Legend>
-  <Min>-5</Min>
-  <Max>75</Max>
-  <RenderSettings interpolationmethod="bilinear"/>
-  <DataPostProc algorithm="pointsfromgrid" a="75" select="depth"/>
-  <Point pointstyle="point" discradius="3" fillcolor="#000000" linecolor="#FFFFFF" textcolor="#000000" textoutlinecolor="#FFFFFF" textradius="12" fontsize="11" textformat="%.0f m"/>
-</Style>
+```json
+{
+  "Style": {
+    "@name": "terrain_spot_heights",
+    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
+    "Min": -5,
+    "Max": 75,
+    "RenderSettings": {"@interpolationmethod": "bilinear"},
+    "DataPostProc": {"@algorithm": "pointsfromgrid", "@a": 75, "@select": "depth"},
+    "Point": {"@pointstyle": "point", "@discradius": 3, "@fillcolor": "#000000", "@linecolor": "#FFFFFF", "@textcolor": "#000000", "@textoutlinecolor": "#FFFFFF", "@textradius": 12, "@fontsize": 11, "@textformat": "%.0f m"}
+  }
+}
 ```
 
 ```bash
-curl -o 06_spot_heights.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_spotheights.xml"
+curl -o 06_spot_heights.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_spotheights.json"
 ```
 
 ![Spot heights](./data/STYLESHEET/06_spot_heights.png)
 
-`SymbolInterval` can draw `.png` symbols instead. The files must be in `{ADAGUC_PATH}data/symbols`, `{ADAGUC_PATH}data/resources` or `{ADAGUC_DATASET_DIR}` (or a subdirectory), for example `<SymbolInterval file="{ADAGUC_PATH}data/resources/icons/helicopter.png"/>`.
+`SymbolInterval` can draw `.png` symbols instead. The files must be in `{ADAGUC_PATH}data/symbols`, `{ADAGUC_PATH}data/resources` or `{ADAGUC_DATASET_DIR}` (or a subdirectory), for example `"SymbolInterval": {"@file": "{ADAGUC_PATH}data/resources/icons/helicopter.png"}`.
 
 ## 9. From Python and JavaScript
 
@@ -182,7 +210,7 @@ Python, with `requests`:
 ```python
 import requests
 
-with open("style_terrain.xml", encoding="utf-8") as f:
+with open("style_terrain.json", encoding="utf-8") as f:
     stylesheet = f.read()
 
 params = {
@@ -208,7 +236,7 @@ const params = new URLSearchParams({
   LAYERS: "ahn_utrechtseheuvelrug_500m",
   CRS: "EPSG:3857", BBOX: "590360,6784100,707370,6894820",
   WIDTH: "600", HEIGHT: "568", FORMAT: "image/png",
-  STYLESHEET: stylesheetXml, // e.g. the contents of a textarea
+  STYLESHEET: JSON.stringify(stylesheet), // an object like the one in step 4
 });
 const response = await fetch("http://localhost:8080/wms", { method: "POST", body: params });
 if (!response.ok) throw new Error(await response.text()); // 422 explains what is wrong
@@ -217,90 +245,20 @@ document.getElementById("map").src = URL.createObjectURL(await response.blob());
 
 `STYLESHEET` also works in a GET query string, but POST avoids URL length limits.
 
-## 10. Post the style as JSON
+## 10. What can be posted
 
-Some firewalls (WAFs) refuse requests that contain XML. A stylesheet can also be written as JSON. It is the same stylesheet: the server converts it to the XML above, element by element, and then checks and uses it the same way.
-
-- A key is an element name. Its value is an object, a value for an element with only text (`"Min": -5` is `<Min>-5</Min>`), or an array for a repeated element.
-- A key starting with `@` is an attribute. `#text` is the text of an element that also has attributes, like the legend name in `Style`.
-- The elements may be wrapped in `{"Configuration": {...}}`, like `<Configuration>` in XML.
-
-[style_terrain.json](./data/STYLESHEET/style_terrain.json) is the style of step 4:
-
-```json
-{
-  "Legend": {
-    "@name": "terrain",
-    "@type": "colorRange",
-    "palette": [
-      {"@index": 0, "@color": "#2B83BA"},
-      {"@index": 20, "@color": "#ABDDA4"},
-      {"@index": 60, "@color": "#FFFFBF"},
-      {"@index": 140, "@color": "#D7A35B"},
-      {"@index": 240, "@color": "#7A3B10"}
-    ]
-  },
-  "Style": {
-    "@name": "terrain",
-    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
-    "Min": -5,
-    "Max": 75,
-    "RenderSettings": {"@interpolationmethod": "bilinear"}
-  }
-}
-```
-
-Post it in the `STYLESHEET` parameter, like the XML. The image is the same as in step 4:
-
-```bash
-curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.json"
-```
-
-Or post all parameters as one JSON object with `Content-Type: application/json`, with the stylesheet as an object in it. Numbers and booleans in the parameters are passed on as text (`true` as `TRUE`). From Python:
-
-```python
-import json
-import requests
-
-with open("style_terrain.json", encoding="utf-8") as f:
-    stylesheet = json.load(f)
-
-params = {
-    "DATASET": "ahn_utrechtse_heuvelrug",
-    "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap",
-    "LAYERS": "ahn_utrechtseheuvelrug_500m",
-    "CRS": "EPSG:3857", "BBOX": "590360,6784100,707370,6894820",
-    "WIDTH": 600, "HEIGHT": 568, "FORMAT": "image/png",
-    "STYLESHEET": stylesheet,
-}
-response = requests.post("http://localhost:8080/wms", json=params, timeout=60)
-```
-
-And from JavaScript:
-
-```javascript
-const response = await fetch("http://localhost:8080/wms", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ ...params, STYLESHEET: stylesheet }), // stylesheet is an object like the one above
-});
-```
-
-Values the server reads as whole numbers must be whole numbers in JSON too: `20`, not `20.0`. Python's `json` writes `20.0` for a float, JavaScript writes `20`.
-
-## 11. What can be posted
-
-The XML, or the XML converted from JSON, is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
+The stylesheet is checked against an allowlist while it is read. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
 
 - Allowed: `Legend` with `palette`, and one `Style` with the usual styling elements: `Min`, `Max`, `ShadeInterval`, `ContourLine`, `SmoothingFilter`, `RenderSettings`, `RenderMethod`, `Point`, `Vector`, `Thinning`, `SymbolInterval`, `FeatureInterval`, `Stippling`, `IncludeStyle`, and so on.
-- Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`.
-- Not allowed: other elements such as `Layer`, font files, any file except the `.png` symbols above, `labelpropertyformat`, DOCTYPEs, and `DataPostProc` other than `pointsfromgrid`, `beaufort`, `clipminmax`, `convert_units` (also as `ax+b`, `toknots` and `windspeed_knots_to_ms`), `add_dataobject`, `dbztorr` and `filter_dataobjects`. The `name` attribute of a `DataPostProc` is only allowed for `add_dataobject`, see [Styling of vector with rotation and add_dataobject datapostproc](./Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
-- printf formats such as `textformatting="%.1f"` are accepted. A format that is not a single float conversion (for example `%s`) is printed with `%g` instead.
-- Only one layer per request, at most one `Style`, and at most 8 `DataPostProc` elements in it.
+- Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`. Python's `json` writes a float as `20.0`, JavaScript writes `20`.
+- Not allowed: other elements such as `Layer`, font files, any file except the `.png` symbols above, `labelpropertyformat`, and `DataPostProc` other than `pointsfromgrid`, `beaufort`, `clipminmax`, `convert_units` (also as `ax+b`, `toknots` and `windspeed_knots_to_ms`), `add_dataobject`, `dbztorr` and `filter_dataobjects`. The `name` attribute of a `DataPostProc` is only allowed for `add_dataobject`, see [Styling of vector with rotation and add_dataobject datapostproc](./Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
+- printf formats such as `"@textformatting": "%.1f"` are accepted. A format that is not a single float conversion (for example `%s`) is printed with `%g` instead.
+- Only one layer per request, at most one `Style`, and in it at most 32 `ContourLine`, 8 `DataPostProc` and 4 `IncludeStyle` elements.
+- Only JSON: a stylesheet in XML is refused.
 
 A refused stylesheet gets status 422, and the body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. A stylesheet that is too large gets 413. See [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes) for all statuses.
 
-## 12. Notes for server administrators
+## 11. Notes for server administrators
 
 - POST responses are not stored in the Redis response cache (`ADAGUC_REDIS`). Only GET requests are cached.
 - A valid style can still be expensive to render. Put a rate or concurrency limit in front of a public server, see [Environment variables](../EnvironmentVariablesAndExitCodes.md).

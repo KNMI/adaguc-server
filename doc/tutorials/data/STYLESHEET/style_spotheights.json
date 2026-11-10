@@ -1,0 +1,22 @@
+{
+  "Legend": {
+    "@name": "terrain",
+    "@type": "colorRange",
+    "palette": [
+      {"@index": 0, "@color": "#2B83BA"},
+      {"@index": 20, "@color": "#ABDDA4"},
+      {"@index": 60, "@color": "#FFFFBF"},
+      {"@index": 140, "@color": "#D7A35B"},
+      {"@index": 240, "@color": "#7A3B10"}
+    ]
+  },
+  "Style": {
+    "@name": "terrain_spot_heights",
+    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
+    "Min": -5,
+    "Max": 75,
+    "RenderSettings": {"@interpolationmethod": "bilinear"},
+    "DataPostProc": {"@algorithm": "pointsfromgrid", "@a": 75, "@select": "depth"},
+    "Point": {"@pointstyle": "point", "@discradius": 3, "@fillcolor": "#000000", "@linecolor": "#FFFFFF", "@textcolor": "#000000", "@textoutlinecolor": "#FFFFFF", "@textradius": 12, "@fontsize": 11, "@textformat": "%.0f m"}
+  }
+}

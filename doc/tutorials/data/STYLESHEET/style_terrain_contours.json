@@ -1,0 +1,25 @@
+{
+  "Legend": {
+    "@name": "terrain",
+    "@type": "colorRange",
+    "palette": [
+      {"@index": 0, "@color": "#2B83BA"},
+      {"@index": 20, "@color": "#ABDDA4"},
+      {"@index": 60, "@color": "#FFFFBF"},
+      {"@index": 140, "@color": "#D7A35B"},
+      {"@index": 240, "@color": "#7A3B10"}
+    ]
+  },
+  "Style": {
+    "@name": "terrain_contours",
+    "Legend": {"@fixedclasses": "true", "@tickinterval": 10, "#text": "terrain"},
+    "Min": -5,
+    "Max": 75,
+    "RenderSettings": {"@interpolationmethod": "bilinear"},
+    "SmoothingFilter": 2,
+    "ContourLine": [
+      {"@width": 0.6, "@linecolor": "#5A3A1A80", "@interval": 5},
+      {"@width": 1.6, "@linecolor": "#3A2008", "@textcolor": "#3A2008", "@textstrokecolor": "#FFFFFFC0", "@textstrokewidth": 3, "@textsize": 11, "@textformatting": "%.0f m", "@interval": 20}
+    ]
+  }
+}

@@ -33,7 +33,6 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include "utils/StyleSheetValidation.h"
-#include "utils/StyleSheetJson.h"
 #include "utils/lintDataset.h"
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
@@ -371,29 +370,11 @@ static bool resolveStyleSheetPngFile(std::string &file) {
   return true;
 }
 
-int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
+int CServerParams::applyStyleSheet(const std::string &styleSheetJson) {
   if (cfg == nullptr) return 1;
-  std::string xml = CT::trim(styleSheetXml);
-  // A stylesheet in JSON is converted to the same XML, which is then checked and parsed like a posted XML stylesheet
-  if (xml.starts_with("{")) {
-    std::string converted;
-    if (!styleSheetJsonToXml(xml, converted)) return 1;
-    xml = converted;
-  }
-  if (xml.starts_with("<?xml")) {
-    size_t declarationEnd = xml.find("?>");
-    xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));
-  }
-  if (!xml.starts_with("<Configuration")) {
-    xml = "<Configuration>" + xml + "</Configuration>";
-  }
-  if (!isAllowedStyleSheet(xml)) return 1;
-
   CServerConfig styleSheetConfig;
-  if (parseConfig(&styleSheetConfig, xml, "STYLESHEET") != 0 || styleSheetConfig.Configuration.size() != 1) {
-    CDBError("Unable to parse STYLESHEET");
-    return 1;
-  }
+  CXMLObjectInterface *configuration = styleSheetConfig.addElement("Configuration");
+  if (configuration == nullptr || !buildPostedStyleSheet(styleSheetJson, configuration)) return 1;
   auto &posted = styleSheetConfig.Configuration[0];
   if (posted.Style.size() > 1) {
     CDBError("STYLESHEET may contain at most one Style, got %zu", posted.Style.size());

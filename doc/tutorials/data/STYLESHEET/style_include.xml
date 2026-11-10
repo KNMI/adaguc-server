@@ -1,6 +1,0 @@
-<Style name="multicolor_with_my_contours">
-  <IncludeStyle name="style_colormapped_bilinear_multicolor"/>
-  <Legend tickinterval="20">multicolor</Legend>
-  <SmoothingFilter>3</SmoothingFilter>
-  <ContourLine width="2.5" linecolor="#FFFFFF" textcolor="#000000" textstrokecolor="#FFFFFF" textstrokewidth="2" textformatting="%.0f" classes="10,30,50"/>
-</Style>
