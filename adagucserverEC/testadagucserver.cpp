@@ -1040,3 +1040,28 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }
+
+// A base64 encoded STYLESHEET is checked like the same stylesheet in XML
+TEST(CServerParams, applyStyleSheetBase64) {
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        // <?xml version="1.0"?><Configuration><Style name="s"/></Configuration>
+                        "PD94bWwgdmVyc2lvbj0iMS4wIj8+PENvbmZpZ3VyYXRpb24+PFN0eWxlIG5hbWU9InMiLz48L0NvbmZpZ3VyYXRpb24+",
+                        // The first one URL safe without padding, and with spaces for the '+' characters a client did not url encode
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ-cmFpbmJvdzwvTGVnZW5kPjxNaW4-MDwvTWluPjxNYXg-MC41PC9NYXg-PC9TdHlsZT4",
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ cmFpbmJvdzwvTGVnZW5kPjxNaW4 MDwvTWluPjxNYXg MC41PC9NYXg PC9TdHlsZT4=",
+                    }),
+                    true);
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>
+                        "PExheWVyIHR5cGU9ImRhdGFiYXNlIj48RmlsZVBhdGg+L2V0YzwvRmlsZVBhdGg+PFZhcmlhYmxlPng8L1ZhcmlhYmxlPjwvTGF5ZXI+",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style>
+                        "PFN0eWxlIG5hbWU9InMiPjxQb2ludCBmb250ZmlsZT0iL2V0Yy9wYXNzd2QiLz48L1N0eWxlPg==",
+                        // Not base64, and base64 that is no XML
+                        "Style name=s",
+                        "bm90IHhtbA==",
+                    }),
+                    false);
+}
+

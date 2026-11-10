@@ -217,9 +217,21 @@ document.getElementById("map").src = URL.createObjectURL(await response.blob());
 
 `STYLESHEET` also works in a GET query string, but POST avoids URL length limits.
 
-## 10. What can be posted
+## 10. Post the style base64 encoded
 
-The XML is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
+Some firewalls (WAFs) refuse requests that contain XML. The stylesheet can also be sent base64 encoded. The server decodes it and then uses it like the XML itself: a value that does not start with `<` is read as base64.
+
+```bash
+curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET=$(base64 -w0 style_terrain.xml)"
+```
+
+The image is the same as in step 4. Both the standard and the URL safe base64 alphabet are accepted (`+/` or `-_`), with or without `=` padding, and line breaks are skipped. In Python, `base64.b64encode(xml.encode()).decode()`, in JavaScript `btoa(xml)` for ASCII XML.
+
+A value that is neither XML nor base64 encoded XML is refused with status 422.
+
+## 11. What can be posted
+
+The XML, also when it was base64 encoded, is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
 
 - Allowed: `Legend` with `palette`, and one `Style` with the usual styling elements: `Min`, `Max`, `ShadeInterval`, `ContourLine`, `SmoothingFilter`, `RenderSettings`, `RenderMethod`, `Point`, `Vector`, `Thinning`, `SymbolInterval`, `FeatureInterval`, `Stippling`, `IncludeStyle`, and so on.
 - Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`.
@@ -229,7 +241,7 @@ The XML is checked against an allowlist before it is used. See [StyleSheetValida
 
 A refused stylesheet gets status 422, and the body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. A stylesheet that is too large gets 413. See [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes) for all statuses.
 
-## 11. Notes for server administrators
+## 12. Notes for server administrators
 
 - POST responses are not stored in the Redis response cache (`ADAGUC_REDIS`). Only GET requests are cached.
 - A valid style can still be expensive to render. Put a rate or concurrency limit in front of a public server, see [Environment variables](../EnvironmentVariablesAndExitCodes.md).

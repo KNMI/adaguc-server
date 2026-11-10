@@ -373,6 +373,16 @@ static bool resolveStyleSheetPngFile(std::string &file) {
 int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   if (cfg == nullptr) return 1;
   std::string xml = CT::trim(styleSheetXml);
+  // XML starts with '<'. Anything else is read as base64 encoded XML. A '+' that was not url encoded arrives as a space, base64 has no spaces.
+  if (!xml.empty() && !xml.starts_with("<")) {
+    std::string decoded;
+    if (!CT::decodeBase64(CT::replace(xml, " ", "+"), decoded)) decoded.clear();
+    xml = CT::trim(decoded);
+    if (!xml.starts_with("<")) {
+      CDBError("STYLESHEET is neither XML nor base64 encoded XML");
+      return 1;
+    }
+  }
   if (xml.starts_with("<?xml")) {
     size_t declarationEnd = xml.find("?>");
     xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));

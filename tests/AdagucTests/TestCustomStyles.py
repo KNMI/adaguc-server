@@ -4,6 +4,7 @@ The posted Style is used for the requested layer (only one allowed), regardless 
 A posted Legend replaces the configured one with the same name.
 """
 
+import base64
 import os
 import sys
 from importlib import reload
@@ -113,6 +114,30 @@ def test_CustomStyles_post_same_style(client):
 def test_CustomStyles_post_variant_style_ignores_styles(client, styles):
     """The posted style is used whatever STYLES is set to, None keeps the configured style testdata_style_manycontours"""
     assert_image(post_getmap(client, VARIANT_STYLE, styles=styles), "test_CustomStyles_post_variant_style.png")
+
+
+def test_CustomStyles_base64_gives_the_same_image(client):
+    """A base64 encoded STYLESHEET is the same stylesheet: posted, URL safe, and in a GET query string with '+' not url encoded"""
+    xml = post_getmap(client, VARIANT_STYLE)
+    assert xml.status_code == 200, xml.text
+    encoded = base64.b64encode(VARIANT_STYLE.encode()).decode()
+    url_safe = base64.urlsafe_b64encode(VARIANT_STYLE.encode()).decode().rstrip("=")
+    assert "+" in encoded
+    for response in (
+        post_getmap(client, encoded),
+        post_getmap(client, url_safe),
+        # A client that does not url encode '+', it arrives as a space
+        client.get("/wms?" + GET_MAP_QUERY + "&STYLESHEET=" + encoded.replace("/", "%2F").replace("=", "%3D")),
+    ):
+        assert response.status_code == 200, response.text
+        assert response.content == xml.content
+
+
+@pytest.mark.parametrize("stylesheet", ["not base64!", base64.b64encode(b"not xml").decode()])
+def test_CustomStyles_base64_must_be_xml(client, stylesheet):
+    response = post_getmap(client, stylesheet)
+    assert response.status_code == 422
+    assert "neither XML nor base64" in response.text
 
 
 @pytest.mark.parametrize("value", [None, "FALSE", "true"])
