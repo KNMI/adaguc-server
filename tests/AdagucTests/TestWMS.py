@@ -165,9 +165,10 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_testdatanc_webp_small_odd_size(self):
-        """WebP output for an image with an odd width and height, checked byte-for-byte against a known-good baseline"""
+        """WebP output for an image with an odd width and height. compareImage also checks the WebP chunks, compareFileSizes the compression."""
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc_webp_small_odd_size.webp"
         # pylint: disable=unused-variable
@@ -178,6 +179,7 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_testdatanc_withplus(self):
         AdagucTestTools().cleanTempDir()
@@ -1051,6 +1053,7 @@ class TestWMS(unittest.TestCase):
         self.assertTrue(
             AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
         filename = "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS_MAX_TEXT.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
@@ -1678,6 +1681,7 @@ class TestWMS(unittest.TestCase):
         self.assertTrue(
             AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
         )
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_dashed_contour_lines(self):
         AdagucTestTools().cleanTempDir()

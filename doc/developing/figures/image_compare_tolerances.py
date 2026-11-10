@@ -85,18 +85,20 @@ def main(output):
     expected = render()
     recoloured = list(DISCS)
     recoloured[1] = (95, 80, 30, (0, 0, 247))
+    # Discs that differ by about 50 from the background: less than STRONG_MARGIN.
+    faint = [(x, y, r, (160, 240, 40)) for x, y, r, _ in DISCS]
     cases = [
-        ("Antialiasing noise\n(other rasterizer)", render(samples=4)),
-        ("Edge moved 1 px", render(shift=1)),
-        ("Edge moved 2 px", render(shift=2)),
-        ("Colour 8 units off\n(blue disc)", render(discs=recoloured)),
+        ("Antialiasing noise\n(other rasterizer)", expected, render(samples=4)),
+        ("Edge moved 1 px", expected, render(shift=1)),
+        ("Medium-contrast\nedge moved 1 px", render(discs=faint), render(discs=faint, shift=1)),
+        ("Colour 8 units off\n(blue disc)", expected, render(discs=recoloured)),
     ]
 
     fig, axes = plt.subplots(len(cases), 2 + len(TOLERANCES), figsize=(11, 10.4), gridspec_kw=dict(wspace=0.08, hspace=0.42))
     headings = ["Expected", "Actual"] + [f'tolerance=\n"{t}"' for t in TOLERANCES]
     for j, heading in enumerate(headings):
         axes[0, j].set_title(heading, fontsize=11, color=INK, pad=10, family="monospace" if j > 1 else None)
-    for i, (label, actual) in enumerate(cases):
+    for i, (label, expected, actual) in enumerate(cases):
         axes[i, 0].imshow(crop(expected), interpolation="nearest")
         axes[i, 1].imshow(crop(actual), interpolation="nearest")
         axes[i, 0].set_ylabel(label, fontsize=11, color=INK, rotation=0, ha="right", va="center", labelpad=12)

@@ -207,6 +207,17 @@ class AdagucTestTools:
             print(("" if result.match else "Error: ") + message, flush=True)
         return result.match
 
+    def compareFileSizes(self, expectedImagePath, returnedImagePath):
+        """Checks that the returned image is not much larger than the expected one, to detect a change in the
+        compression, which compareImage does not see. Use it in a few tests per output format.
+
+        Returns:
+            bool: True if the returned file is at most imagecompare.MAX_FILE_SIZE_RATIO times as large
+        """
+        ok, message = imagecompare.compare_file_sizes(expectedImagePath, returnedImagePath)
+        print(("" if ok else "Error: ") + message, flush=True)
+        return ok
+
     def compareGetCapabilitiesXML(self, testresultFileLocation, expectedOutputFileLocation):
         expectedxml = self.readfromfile(expectedOutputFileLocation)
         testxml = self.readfromfile(testresultFileLocation)

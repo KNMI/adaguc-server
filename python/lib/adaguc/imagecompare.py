@@ -4,33 +4,42 @@ Text, lines and shape edges are drawn by cairo, pixman and FreeType. Different v
 libraries compute antialiasing coverage slightly differently, so the same code can produce edge
 pixels with different colours on different machines. See doc/developing/antialiasing-differences.md.
 
-Each comparison uses one of three tolerances, from strict to loose:
+All tolerances work the same way: rules flag pixels, and each rule allows a number of flagged
+pixels. The images match if no rule flags more pixels than it allows.
 
-- EXACT: all pixels must be identical (after converting both images to RGBA). Size and image mode
-  must match as well. This is the default.
-- GEOMETRY: each pixel is compared with the same pixel in the other image. A pixel is flagged if it
-  differs by more than MARGIN. Detects shifts of one pixel, but fails on most images with text or
-  antialiased lines when the libraries differ.
-- ANTIALIASING: a pixel is only flagged if its colour, in either image, lies outside the range of
-  colours in the 3x3 neighbourhood of the same pixel in the other image, plus MARGIN. At an edge the
-  neighbourhood holds the colours of both sides, so a different coverage value is accepted.
-  Limitation: an edge that moves by one pixel or less looks the same as an antialiasing difference,
-  so it is not detected. Shifts of two pixels and more are.
+- EXACT (the default): one rule, every pixel that differs is flagged, none allowed.
+- GEOMETRY and ANTIALIASING: three rules.
 
-For GEOMETRY and ANTIALIASING two more rules apply:
+  Rule       A pixel is flagged when                                              Allowed
+  ---------  -------------------------------------------------------------------  ------------------
+  flat area  its 3x3 neighbourhood is flat (colour range <= FLAT_RANGE) in either  0
+             image, and it differs by more than FLAT_MARGIN
+  strong     it differs by more than STRONG_MARGIN, and at least                   0
+             MIN_FLAGGED_NEIGHBOURS of its 8 neighbours do too
+  cluster    it is off by more than MARGIN, and at least MIN_FLAGGED_NEIGHBOURS    MAX_FLAGGED_PIXELS
+             of its 8 neighbours are too
 
-- Flat areas: if the 3x3 neighbourhood is (nearly) flat in either image, a pixel is flagged when it
-  differs by more than FLAT_MARGIN. Antialiasing only changes pixels near edges, so this catches
-  small colour changes (a slightly different palette, a seam that is blended twice).
-- Cluster filter: a flagged pixel only counts if at least MIN_FLAGGED_NEIGHBOURS of its 8 neighbours
-  are flagged as well, and the images match if no more than MAX_FLAGGED_PIXELS pixels remain.
-  Antialiasing differences are scattered, real rendering changes are not.
+  The two tolerances only differ in what "off" means in the cluster rule. GEOMETRY compares a pixel
+  with the same pixel in the other image. ANTIALIASING compares it with the colour range of the 3x3
+  neighbourhood around the same pixel in the other image, in both directions: at an edge that range
+  holds the colours of both sides, so a different antialiasing coverage is accepted.
 
-Animated images (more than one frame) are not supported: adagucserver does not produce them, and
-comparing only the first frame would silently ignore the rest.
+Why each rule: antialiasing only changes pixels at edges (flat area), changes them by a limited
+amount (strong), and the changed pixels are scattered (cluster). Real rendering changes break at
+least one of these. Each comparison is symmetric: swapping expected and actual gives the same result.
+
+Known limitations: ANTIALIASING accepts a 1 pixel shift of an edge with a contrast below
+STRONG_MARGIN, and both loose tolerances accept a change of a few pixels next to an edge or text by
+less than STRONG_MARGIN, such as a 2x2 dot in a similar colour drawn on a line.
+
+Before the pixels are compared, the size, the image mode and the encoding structure must match
+(see encoding_structure). Animated images are not supported: adagucserver does not produce them, and
+comparing only the first frame would silently ignore the rest. The compression is not compared;
+compare_file_sizes checks it in a few tests per format.
 """
 
 import os
+import struct
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -46,8 +55,14 @@ MARGIN = 16
 # so the pixel must match within FLAT_MARGIN.
 FLAT_RANGE = 4
 FLAT_MARGIN = 2
+# Between cairo/pixman/FreeType builds (Mac vs Linux), text pixels differed by at most 86 and other pixels by at most 142,
+# but never two neighbouring pixels both by more than 80. A changed digit in a 12 px label does produce such pixels,
+# also on a darker background where the text differs by only about 125 from it.
+STRONG_MARGIN = 80
 MIN_FLAGGED_NEIGHBOURS = 2
 MAX_FLAGGED_PIXELS = 8
+# Room for other zlib/libwebp versions; switching the compression off makes files several times larger.
+MAX_FILE_SIZE_RATIO = 1.5
 
 
 @dataclass
@@ -88,6 +103,24 @@ def _clustered(mask):
     return mask & (neighbours >= MIN_FLAGGED_NEIGHBOURS)
 
 
+def _rules(expected, actual, absdiff, tolerance):
+    """The rules of a tolerance, as a list of (name, mask of the pixels the rule flags, number of pixels allowed)."""
+    if tolerance == EXACT:
+        return [("differing", absdiff > 0, 0)]
+    elo, ehi = _neighbourhood_range(expected)
+    alo, ahi = _neighbourhood_range(actual)
+    flat = ((ehi - elo).max(axis=2) <= FLAT_RANGE) | ((ahi - alo).max(axis=2) <= FLAT_RANGE)
+    if tolerance == GEOMETRY:
+        off = absdiff > MARGIN
+    else:
+        off = _outside(actual, elo, ehi, MARGIN) | _outside(expected, alo, ahi, MARGIN)
+    return [
+        ("flat area", flat & (absdiff > FLAT_MARGIN), 0),
+        ("strong", _clustered(absdiff > STRONG_MARGIN), 0),
+        ("cluster", _clustered(off), MAX_FLAGGED_PIXELS),
+    ]
+
+
 def compare_arrays(expected, actual, tolerance=EXACT):
     """Compares two RGBA int16 arrays of the same shape. Returns an ImageComparison."""
     if tolerance not in TOLERANCES:
@@ -95,35 +128,21 @@ def compare_arrays(expected, actual, tolerance=EXACT):
     result = ImageComparison(match=True, expected=expected, actual=actual)
     absdiff = np.abs(expected - actual).max(axis=2)
     result.differing = absdiff > 0
+    result.flagged = np.zeros_like(result.differing)
     n_differing = int(result.differing.sum())
     if n_differing == 0:
-        result.flagged = result.differing
         return result
-    summary = (
+    counts = []
+    for name, mask, allowed in _rules(expected, actual, absdiff, tolerance):
+        n = int(mask.sum())
+        counts.append(f"{name} {n} (allowed {allowed})")
+        if n > allowed:
+            result.match = False
+            result.flagged |= mask
+    result.messages.append(
         f"{n_differing} of {absdiff.size} pixels differ ({n_differing * 100.0 / absdiff.size:.4f} %), "
-        f"max channel difference {int(absdiff.max())}."
+        f"max channel difference {int(absdiff.max())}. Tolerance {tolerance}, flagged pixels per rule: {', '.join(counts)}."
     )
-
-    if tolerance == EXACT:
-        result.flagged = result.differing
-        result.messages.append(f"{summary} Tolerance {EXACT}: no differences allowed.")
-        result.match = False
-    else:
-        elo, ehi = _neighbourhood_range(expected)
-        alo, ahi = _neighbourhood_range(actual)
-        if tolerance == GEOMETRY:
-            candidates = absdiff > MARGIN
-        else:
-            candidates = _outside(actual, elo, ehi, MARGIN) | _outside(expected, alo, ahi, MARGIN)
-        flat = ((ehi - elo).max(axis=2) <= FLAT_RANGE) | ((ahi - alo).max(axis=2) <= FLAT_RANGE)
-        candidates |= flat & (absdiff > FLAT_MARGIN)
-        result.flagged = _clustered(candidates)
-        n_flagged = int(result.flagged.sum())
-        result.messages.append(
-            f"{summary} Tolerance {tolerance}, margin {MARGIN} ({FLAT_MARGIN} in flat areas): "
-            f"{int(candidates.sum())} pixels outside the margin, {n_flagged} of them clustered (allowed: {MAX_FLAGGED_PIXELS})."
-        )
-        result.match = n_flagged <= MAX_FLAGGED_PIXELS
     if not result.match:
         ys, xs = np.nonzero(result.flagged)
         result.messages.append(f"Failing pixels in the area x={xs.min()}..{xs.max()}, y={ys.min()}..{ys.max()}.")
@@ -146,6 +165,42 @@ def diff_image_path(actual_path):
     return os.path.splitext(actual_path)[0] + ".diff.png"
 
 
+def encoding_structure(path):
+    """Describes how a PNG or WebP file is encoded, independent of the encoder library version: for PNG the bit
+    depth, colour type, interlacing and chunk types (consecutive IDAT chunks counted as one, because their number
+    depends on the zlib output), for WebP the chunk types. Returns None for other formats."""
+    with open(path, "rb") as f:
+        data = f.read()
+    chunks = []
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        pos, header = 8, ""
+        while pos + 8 <= len(data):
+            length, chunk_type = struct.unpack(">I4s", data[pos : pos + 8])
+            chunk_type = chunk_type.decode("latin-1")
+            if chunk_type == "IHDR":
+                header = f"bit depth {data[pos + 16]}, colour type {data[pos + 17]}, interlace {data[pos + 20]}"
+            if not (chunk_type == "IDAT" and chunks and chunks[-1] == "IDAT"):
+                chunks.append(chunk_type)
+            pos += 12 + length
+        return f"PNG ({header}), chunks {' '.join(chunks)}"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        pos = 12
+        while pos + 8 <= len(data):
+            size = struct.unpack("<I", data[pos + 4 : pos + 8])[0]
+            chunks.append(data[pos : pos + 4].decode("latin-1").strip())
+            pos += 8 + size + (size & 1)
+        return f"WebP, chunks {' '.join(chunks)}"
+    return None
+
+
+def compare_file_sizes(expected_path, actual_path, max_ratio=MAX_FILE_SIZE_RATIO):
+    """Checks that the actual file is at most max_ratio times as large as the expected one, to detect a change in
+    the compression. Returns (ok, message)."""
+    expected_size, actual_size = os.path.getsize(expected_path), os.path.getsize(actual_path)
+    ok = actual_size <= max_ratio * expected_size
+    return ok, f"File size {actual_size} bytes, expected {expected_size} (allowed: up to {max_ratio} times as large)."
+
+
 def compare_image_files(expected_path, actual_path, tolerance=EXACT):
     """Compares two image files. On failure, writes a diff image next to the actual image (see diff_image_path).
     Returns an ImageComparison."""
@@ -163,6 +218,9 @@ def compare_image_files(expected_path, actual_path, tolerance=EXACT):
             return ImageComparison(False, [f"Size of expected and actual image do not match: {e.size} vs {a.size}"])
         if e.mode != a.mode:
             return ImageComparison(False, [f"Mode of expected and actual image do not match: {e.mode} vs {a.mode}"])
+    expected_encoding, actual_encoding = encoding_structure(expected_path), encoding_structure(actual_path)
+    if expected_encoding != actual_encoding:
+        return ImageComparison(False, [f"Encoding of expected and actual image do not match: {expected_encoding} vs {actual_encoding}"])
 
     result = compare_arrays(load_image(expected_path), load_image(actual_path), tolerance)
     if not result.match:
