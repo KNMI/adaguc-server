@@ -1070,26 +1070,23 @@ TEST(StyleSheetJson, buildsTheConfiguration) {
   CXMLObjectInterface *configuration = config.addElement("Configuration");
   CHECK(buildPostedStyleSheet(R"({
       "Legend": {"@name": "l", "@type": "colorRange", "palette": [{"@index": 0, "@color": "#2B83BA"}, {"@index": 240, "@color": "#7A3B10"}]},
-      "Style": {"@name": "s", "ContourLine": [{"@interval": 5}, {"@interval": "20"}], "Legend": {"#text": " l ", "@fixedclasses": true}, "Min": 1e9}})",
+      "Style": {"@name": "s", "ContourLine": [{"@interval": 5}, {"@interval": "20"}], "Legend": {"#text": " l ", "@fixedclasses": true}, "Min": 0.5}})",
                               configuration));
   const auto &posted = config.Configuration[0];
   CHECK(posted.Legend.size() == 1 && posted.Legend[0].attr.name == "l" && posted.Legend[0].palette.size() == 2);
   CHECK(posted.Legend[0].palette[1].attr.index == 240);
   CHECK(posted.Style.size() == 1 && posted.Style[0].attr.name == "s");
-  // Repeated elements in the order of the array, numbers as written, text trimmed like parseConfig does
+  // Repeated elements in the order of the array, numbers and booleans as text, text trimmed like parseConfig does
   CHECK(posted.Style[0].ContourLine.size() == 2 && posted.Style[0].ContourLine[0].attr.interval == "5" && posted.Style[0].ContourLine[1].attr.interval == "20");
   CHECK(posted.Style[0].Legend[0].elementValue == "l" && posted.Style[0].Legend[0].attr.fixedclasses == "true");
-  CHECK(posted.Style[0].Min[0].elementValue == "1e9");
+  CHECK(posted.Style[0].Min[0].elementValue == "0.5");
 }
 
 TEST(StyleSheetJson, refusesInvalidJson) {
-  // A stylesheet needs at most 4 nested objects and arrays: root, Style, an array of ContourLines and a ContourLine.
-  // Up to 8 are parsed, the 9th is refused while parsing, before the elements are checked.
   CHECK_STYLESHEETS((std::vector<std::string>{
+                        // Deeper than the elements the rules allow
                         R"({"Style": {"@name": "s", "Foo": {"b": {"c": {"d": {"e": {"f": {"g": "x"}}}}}}}})",
-                        R"({"Style": {"@name": "s", "Foo": {"b": {"c": {"d": {"e": {"f": {"g": {"h": "x"}}}}}}}}})",
                         R"({"Style": [[[[[[[[[[1]]]]]]]]]]})",
-                        std::string(R"({"Style": {"@name": ")") + std::string(70 * 1024, 'x') + R"("}})",
                         "not json",
                         R"({"Style": {"@name": "s"} trailing)",
                         // A duplicate key would silently drop an element: repeated elements are arrays

@@ -81,7 +81,7 @@ A stylesheet uses the same elements and attributes as a [Style in the server con
 
 - A key is an element name. Its value is an object, just the value for an element with only text (`"Min": -5`), or an array for a repeated element like `palette`. A repeated element keeps the order of its array, which matters for `ShadeInterval` and `ContourLine`. A key may appear only once in an object: use an array instead.
 - A key starting with `@` is an attribute. `#text` is the text of an element that also has attributes, like the legend name in the `Style`.
-- Values may be strings or numbers. Numbers are used exactly as written (`1e9` stays `1e9`), so `"-5"` and `-5` are the same. `true` and `false` are the text `true` and `false`. `null` is not allowed.
+- Values may be strings or numbers, so `"-5"` and `-5` are the same. `true` and `false` are the text `true` and `false`. `null` is not allowed.
 
 Post it as a form url encoded parameter. `--data` sends the normal WMS parameters and `--data-urlencode` encodes the file contents:
 
