@@ -77,9 +77,11 @@ def test_exact_is_the_default(tmp_path):
     assert compare(tmp_path, REFERENCE, actual, tolerance="geometry")
 
 
-def test_unknown_tolerance(tmp_path):
+@pytest.mark.parametrize("shift", [0, 1], ids=["identical", "different"])
+def test_unknown_tolerance(tmp_path, shift):
+    """Also for identical files, so that a misspelled tolerance does not pass until the images happen to differ."""
     with pytest.raises(ValueError):
-        compare(tmp_path, REFERENCE, render(shift=1), tolerance="loose")
+        compare(tmp_path, REFERENCE, render(shift=shift), tolerance="antialias")
 
 
 # Antialiasing differences must pass

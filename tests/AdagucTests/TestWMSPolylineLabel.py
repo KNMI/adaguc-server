@@ -42,7 +42,9 @@ class TestWMSPolylineLabel(unittest.TestCase):
         self.assertEqual(status, 0)
         # The labels are text; the style without labels only has antialiased lines.
         tolerance = "geometry" if stylename == "polyline_black_0.5px" else "antialiasing"
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance=tolerance))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance=tolerance)
+        )
 
     def test_WMSPolyLineLabel_borderwidth_0_5px(self):
         self.dotest("polyline_black_0.5px")

@@ -45,7 +45,9 @@ class TestCSV:
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_CSV_reference_time(self):
         AdagucTestTools().cleanTempDir()
@@ -109,7 +111,9 @@ class TestCSV:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_CSV_radiusandvalue(self):
         AdagucTestTools().cleanTempDir()
@@ -156,4 +160,6 @@ class TestCSV:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )

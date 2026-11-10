@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import filecmp
 import json
 import logging
 import os
@@ -197,11 +196,6 @@ class AdagucTestTools:
             bool: True if the images match within the tolerance
         """
 
-        if filecmp.cmp(returnedImagePath, expectedImagePath, shallow=False):
-            diff_path = imagecompare.diff_image_path(returnedImagePath)
-            if os.path.exists(diff_path):
-                os.remove(diff_path)
-            return True
         result = imagecompare.compare_image_files(expectedImagePath, returnedImagePath, tolerance)
         for message in result.messages:
             print(("" if result.match else "Error: ") + message, flush=True)

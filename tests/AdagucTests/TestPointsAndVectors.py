@@ -66,7 +66,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
@@ -134,7 +136,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature(self):
         AdagucTestTools().cleanTempDir()
@@ -148,7 +152,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned(self):
         AdagucTestTools().cleanTempDir()
@@ -162,7 +168,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMap_select_temperature_as_point_from_grid(self):
         AdagucTestTools().cleanTempDir()
@@ -240,7 +248,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMap_warning_vectors_per_feature(self):
         AdagucTestTools().cleanTempDir()
@@ -255,7 +265,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_warning_vectors_per_feature_thumbnail(self):
         AdagucTestTools().cleanTempDir()
@@ -270,7 +282,9 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMap_warning_points_and_features(self):
         AdagucTestTools().cleanTempDir()
@@ -285,4 +299,6 @@ class TestPointsAndVectors:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )

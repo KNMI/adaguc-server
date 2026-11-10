@@ -106,6 +106,8 @@ Known limitations of the loose tolerances:
 
 - `"antialiasing"` accepts an edge with a contrast below 80 that moves by **1 pixel or less**: its new colour already occurs in the neighbourhood, so it looks the same as an antialiasing difference. `"geometry"` detects it.
 - Both accept a change of a few pixels right next to an edge or text, by less than 80. For example a 2x2 dot in a similar colour drawn on a line, or a 1 pixel wide line shorter than about 10 pixels along an edge.
+- Both accept a single pixel or a pair of pixels that changes by any amount, even from black to white, if it is not in a flat area: the strong and cluster rules need at least 2 flagged neighbours. For example a 1 pixel dot that disappears next to a line or a coastline.
+- Both accept a raster whose colours are all off by up to 16 where it is not flat, that is, where its colour changes by more than about 2 per pixel. For example a slightly different colour map on a steep bilinear field under contour lines. In smooth areas the flat area rule detects it.
 - Not every change in small text is detected; see the detection rates below.
 
 What each tolerance does with four kinds of differences, computed with the real comparison on a synthetic test image (two overlapping, semi-transparent discs). Antialiasing noise only fails `"exact"`. An edge moved by one pixel fails all three, unless its contrast is lower than 80: then it passes `"antialiasing"`. A small colour change fails all three:

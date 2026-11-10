@@ -150,7 +150,9 @@ class TestGeoJSON:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_GetMAP_GeoJSON_point_rendering(self):
         AdagucTestTools().cleanTempDir()

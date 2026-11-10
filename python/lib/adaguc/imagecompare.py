@@ -28,9 +28,11 @@ Why each rule: antialiasing only changes pixels at edges (flat area), changes th
 amount (strong), and the changed pixels are scattered (cluster). Real rendering changes break at
 least one of these. Each comparison is symmetric: swapping expected and actual gives the same result.
 
-Known limitations: ANTIALIASING accepts a 1 pixel shift of an edge with a contrast below
-STRONG_MARGIN, and both loose tolerances accept a change of a few pixels next to an edge or text by
-less than STRONG_MARGIN, such as a 2x2 dot in a similar colour drawn on a line.
+Known limitations, outside flat areas: ANTIALIASING accepts a 1 pixel shift of an edge with a contrast
+below STRONG_MARGIN. Both loose tolerances accept a change of a few pixels next to an edge or text by
+less than STRONG_MARGIN (such as a 2x2 dot in a similar colour drawn on a line), a single pixel or a
+pair of pixels that changes by any amount, and a raster whose colours are all off by up to MARGIN.
+See doc/developing/antialiasing-differences.md, also for the detection rates of changes in text.
 
 Before the pixels are compared, the size, the image mode and the encoding structure must match
 (see encoding_structure). Animated images are not supported: adagucserver does not produce them, and
@@ -38,6 +40,7 @@ comparing only the first frame would silently ignore the rest. The compression i
 compare_file_sizes checks it in a few tests per format.
 """
 
+import filecmp
 import os
 import struct
 from dataclasses import dataclass, field
@@ -87,8 +90,13 @@ def _neighbourhood_range(img):
     """Per-pixel minimum and maximum of each channel over the 3x3 neighbourhood (edge-padded)."""
     h, w = img.shape[:2]
     pad = np.pad(img, ((1, 1), (1, 1), (0, 0)), mode="edge")
-    windows = np.stack([pad[dy : dy + h, dx : dx + w] for dy in range(3) for dx in range(3)])
-    return windows.min(axis=0), windows.max(axis=0)
+    lo, hi = pad[1 : 1 + h, 1 : 1 + w].copy(), pad[1 : 1 + h, 1 : 1 + w].copy()
+    for dy in range(3):
+        for dx in range(3):
+            window = pad[dy : dy + h, dx : dx + w]
+            np.minimum(lo, window, out=lo)
+            np.maximum(hi, window, out=hi)
+    return lo, hi
 
 
 def _outside(img, lo, hi, margin):
@@ -121,10 +129,14 @@ def _rules(expected, actual, absdiff, tolerance):
     ]
 
 
-def compare_arrays(expected, actual, tolerance=EXACT):
-    """Compares two RGBA int16 arrays of the same shape. Returns an ImageComparison."""
+def _check_tolerance(tolerance):
     if tolerance not in TOLERANCES:
         raise ValueError(f"Unknown tolerance {tolerance!r}, use one of {TOLERANCES}")
+
+
+def compare_arrays(expected, actual, tolerance=EXACT):
+    """Compares two RGBA int16 arrays of the same shape. Returns an ImageComparison."""
+    _check_tolerance(tolerance)
     result = ImageComparison(match=True, expected=expected, actual=actual)
     absdiff = np.abs(expected - actual).max(axis=2)
     result.differing = absdiff > 0
@@ -202,13 +214,14 @@ def compare_file_sizes(expected_path, actual_path, max_ratio=MAX_FILE_SIZE_RATIO
 
 
 def compare_image_files(expected_path, actual_path, tolerance=EXACT):
-    """Compares two image files. On failure, writes a diff image next to the actual image (see diff_image_path).
-    Returns an ImageComparison."""
-    if tolerance not in TOLERANCES:
-        raise ValueError(f"Unknown tolerance {tolerance!r}, use one of {TOLERANCES}")
+    """Compares two image files. On failure, writes a diff image next to the actual image (see diff_image_path), and
+    removes an old one otherwise. Returns an ImageComparison."""
+    _check_tolerance(tolerance)  # also when the files are identical, so that a misspelled tolerance fails right away
     diff_path = diff_image_path(actual_path)
     if os.path.exists(diff_path):
         os.remove(diff_path)
+    if filecmp.cmp(expected_path, actual_path, shallow=False):
+        return ImageComparison(True)
 
     with Image.open(expected_path) as e, Image.open(actual_path) as a:
         for path, im in ((expected_path, e), (actual_path, a)):

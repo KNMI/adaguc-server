@@ -90,7 +90,9 @@ class TestConvertUnits(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        )
         filename = "test_convert_units_wind_components_barbs.json"
 
         status, data, headers = AdagucTestTools().runADAGUCServer(

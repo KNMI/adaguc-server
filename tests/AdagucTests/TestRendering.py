@@ -78,7 +78,9 @@ class TestRendering:
         filename = "test_GeoJSON_CTR_EHAM_Schiphol_GetMap_AutoWMS.png"
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapNoPoints(self):
         AdagucTestTools().cleanTempDir()
@@ -123,7 +125,9 @@ class TestRendering:
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapLinesPointsAndNearest.png"
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapOnlyPoints(self):
         AdagucTestTools().cleanTempDir()
@@ -138,7 +142,9 @@ class TestRendering:
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapOnlyPoints.png"
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoNoPoints(self):
         AdagucTestTools().cleanTempDir()

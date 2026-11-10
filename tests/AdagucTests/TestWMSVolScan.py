@@ -81,5 +81,7 @@ class TestWMSVolScan:
         )
         assert status == 0
         assert AdagucTestTools().compareImage(
-            self.expectedoutputsspath + f"{file_type}_{filename}", self.testresultspath + f"{file_type}_{filename}", tolerance="antialiasing"
+            self.expectedoutputsspath + f"{file_type}_{filename}",
+            self.testresultspath + f"{file_type}_{filename}",
+            tolerance="antialiasing",
         )
