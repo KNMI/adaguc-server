@@ -1183,7 +1183,7 @@ def test_trajectory_hidden_height_and_members(client):
 
 
 def test_edr_untyped_or_named_height():
-    from routers.edr_covjson import covjson_from_resp
+    from routers.edr_covjson import point_response_to_covjson
     from routers.trajectory_covjson import sections_from_response
     from routers.utils.edr_exception import EdrException
     from routers.utils.edr_utils import get_vertical_query, supports_section
@@ -1197,7 +1197,7 @@ def test_edr_untyped_or_named_height():
     layer["dims"]["height"].update({"cdfName": "height", "type": "dimtype_vertical"})
     layer["dims"]["time"]["cdfName"] = "time"
     assert supports_section(layer)
-    for convert in (covjson_from_resp, sections_from_response):
+    for convert in (point_response_to_covjson, sections_from_response):
         with pytest.raises(EdrException) as exc:
             convert([sample], {"data": layer}, "collection")
         assert exc.value.status_code == 400

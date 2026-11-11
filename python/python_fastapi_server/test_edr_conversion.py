@@ -12,6 +12,7 @@ import numpy as np
 from numpy import ma
 import pytest
 from numpy.typing import ArrayLike
+from routers.edr_covjson import point_response_to_covjson
 from routers.netcdf_to_covjson import coverage_values, netcdf_to_covjson
 
 
@@ -92,3 +93,62 @@ def test_custom_dimension_preserves_slices() -> None:
             assert coverage.ranges["v"].shape == [1, 2, 2]
     finally:
         dataset.close()
+
+
+@pytest.fixture
+def point_layer() -> dict:
+    return {
+        "dims": {"time": {"cdfName": "time"}},
+        "layer": {
+            "layername": "temperature",
+            "title": "Temperature",
+            "abstract": "",
+            "variables": [{"units": "K", "label": "Temperature", "standard_name": "air_temperature"}],
+        },
+    }
+
+
+@pytest.mark.parametrize("members", [False, True])
+def test_point_response_time_series_and_members(point_layer: dict, members: bool) -> None:
+    times = ["2024-01-01T00:00:00Z", "2024-01-01T01:00:00Z"]
+    data = dict(zip(times, ["1", "2"]))
+    if members:
+        point_layer["dims"]["member"] = {
+            "cdfName": "member", "serviceName": "member", "hidden": False, "type": "dimtype_custom"
+        }
+        data = {"1": data, "2": dict(zip(times, ["nodata", "4"]))}
+    entry = {
+        "layername": "temperature",
+        "point": {"coords": "5,52"},
+        "dims": ["member", "time"] if members else "time",
+        "data": data,
+    }
+    result = point_response_to_covjson([entry], {"temperature": point_layer}, "dataset.collection")
+    coverages = result.coverages if members else [result]
+    assert len(coverages) == (2 if members else 1)
+    for index, coverage in enumerate(coverages):
+        assert coverage.domain.domainType == "PointSeries"
+        assert coverage.ranges["temperature"].values == ([1, 2] if index == 0 else [None, 4])
+        if members:
+            assert coverage.domain.model_dump()["custom:member"] == index + 1
+
+
+def test_point_response_splits_profiles_by_time(point_layer: dict) -> None:
+    point_layer["dims"]["level"] = {
+        "cdfName": "level", "serviceName": "level", "hidden": False, "type": "dimtype_vertical"
+    }
+    times = ["2024-01-01T00:00:00Z", "2024-01-01T01:00:00Z"]
+    entry = {
+        "layername": "temperature",
+        "point": {"coords": "5,52"},
+        "dims": ["level", "time"],
+        "data": {"850": dict(zip(times, ["1", "2"])), "500": dict(zip(times, ["3", "nodata"]))},
+    }
+    result = point_response_to_covjson([entry], {"temperature": point_layer}, "dataset.collection")
+    assert len(result.coverages) == 2
+    for coverage, expected in zip(result.coverages, ([1, 3], [2, None])):
+        assert coverage.domain.domainType == "VerticalProfile"
+        assert coverage.domain.axes.z.values == [850, 500]
+        assert len(coverage.domain.axes.t.values) == 1
+        assert coverage.ranges["temperature"].shape == [2, 1]
+        assert coverage.ranges["temperature"].values == expected

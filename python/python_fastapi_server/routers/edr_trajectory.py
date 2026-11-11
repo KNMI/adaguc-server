@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .trajectory_covjson import SectionCoverage, SectionCoverageCollection, sections_from_response
 from .utils.edr_exception import EdrException, exc_failed_call
-from .utils.json_utils import loads_native_json
+from .utils.json_utils import pydantic_json_loads
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -96,7 +96,7 @@ async def get_trajectory(
     if status != 0:
         raise exc_failed_call("Trajectory call failed")
     try:
-        data = loads_native_json(body)
+        data = pydantic_json_loads(body)
         if not isinstance(data, list):
             raise ValueError
     except (ValueError, TypeError) as exc:

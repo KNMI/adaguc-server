@@ -28,6 +28,8 @@ from pydantic import AnyUrl
 from pydantic import AwareDatetime
 from pydantic import BaseModel
 
+from .utils.edr_utils import SYMBOL_TYPE_URL
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -220,7 +222,7 @@ def netcdf_to_covjson(
             axes[coverage_axis_name] = netcdf_coordinate_axis(ncvar, dimname)
 
         unit_of_measurement = variable.getncattr("unit") if "unit" in variable.ncattrs() else "unknown"
-        unit = Unit(symbol=Symbol(value=unit_of_measurement, type="http://www.opengis.net/def/uom/UCUM/"))
+        unit = Unit(symbol=Symbol(value=unit_of_measurement, type=SYMBOL_TYPE_URL))
         parameter_name = getattr(variable, "long_name", getattr(variable, "standard_name", variablename))
 
         if len(custom_dim_values) == 0:

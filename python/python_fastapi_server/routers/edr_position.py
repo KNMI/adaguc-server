@@ -15,9 +15,9 @@ from fastapi import APIRouter, Query, Request, Response
 from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse, create_coveragejson_response
-from .edr_covjson import covjson_from_resp
+from .edr_covjson import point_response_to_covjson
 from .utils.edr_exception import EdrException
-from .utils.json_utils import loads_native_json
+from .utils.json_utils import pydantic_json_loads
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -137,9 +137,9 @@ async def handle_coll_inst_position(
         custom_dims,
     )
     if resp:
-        dat = loads_native_json(resp)
+        dat = pydantic_json_loads(resp)
         propagate_data_headers(response, headers)
-        return covjson_from_resp(dat, metadata[collection_name], collection_name)
+        return point_response_to_covjson(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
 

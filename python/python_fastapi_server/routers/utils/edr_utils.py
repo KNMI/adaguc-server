@@ -44,7 +44,7 @@ from .edr_exception import (
 )
 
 from .ogcapi_tools import call_adaguc
-from .json_utils import loads_native_json
+from .json_utils import pydantic_json_loads
 
 logger = logging.getLogger(__name__)
 
@@ -550,7 +550,7 @@ def get_params_for_dataset(metadata: dict, dataset_name: str, primary_extent: Ex
     return parameter_names
 
 
-def handle_metadata(metadata: dict):
+def handle_metadata(metadata: dict) -> dict:
     collections = {}
     for dataset in metadata:
         # Check if there is something configured for this dataset, otherwise continue.
@@ -599,7 +599,7 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
         response.headers.append("X-Trace-Timings-Metadata", trace_timing)
 
     try:
-        parsed_json = loads_native_json(metadata_response)
+        parsed_json = pydantic_json_loads(metadata_response)
     except ValueError:
         raise exc_failed_call("Failed to query metadata: couldn't parse json response")
 
