@@ -1,4 +1,4 @@
-Post a custom style with STYLESHEET
+Send a custom style with STYLESHEET
 ===================================
 
 [Back to readme](./Readme.md)
@@ -50,7 +50,7 @@ curl -o 01_configured_style.png "$WMS&$MAP&STYLES=style_colormapped_bilinear_ele
 
 ![Configured style](./data/STYLESHEET/01_configured_style.png)
 
-## 4. Post your own colours
+## 4. Send your own colours
 
 [style_terrain.xml](./data/STYLESHEET/style_terrain.xml) defines a `Legend` (the colour palette) and a `Style` that uses it, with its own range:
 
@@ -70,20 +70,20 @@ curl -o 01_configured_style.png "$WMS&$MAP&STYLES=style_colormapped_bilinear_ele
 </Style>
 ```
 
-Post it as a form url encoded parameter. `--data` sends the normal WMS parameters and `--data-urlencode` encodes the file contents:
+Send it in the query string. `-G` puts the `--data` parameters in the URL, and `--data-urlencode` encodes the file contents:
 
 ```bash
-curl -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.xml"
+curl -G -o 02_terrain.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain.xml"
 ```
 
-![Posted terrain style](./data/STYLESHEET/02_terrain.png)
+![Terrain style](./data/STYLESHEET/02_terrain.png)
 
 Points to note:
 
-- The posted style is used whatever `STYLES` is set to, and its name does not matter. You can leave `STYLES` out.
-- A posted `Legend` replaces a configured legend with the same name, for this request only.
+- The style in `STYLESHEET` is used whatever `STYLES` is set to, and its name does not matter. You can leave `STYLES` out.
+- A `Legend` in `STYLESHEET` replaces a configured legend with the same name, for this request only.
 - The XML can be a bare list of `Legend` and `Style` elements, or wrapped in `<Configuration>`. An `<?xml ...?>` declaration is allowed.
-- The layer's legend (here drawn in the map with `SHOWLEGEND=true`) follows the posted style. `REQUEST=GetLegendGraphic` accepts `STYLESHEET` as well.
+- The layer's legend (here drawn in the map with `SHOWLEGEND=true`) follows the style in `STYLESHEET`. `REQUEST=GetLegendGraphic` accepts `STYLESHEET` as well.
 
 ## 5. Contour lines with labels
 
@@ -104,7 +104,7 @@ Points to note:
 (The file also contains the `terrain` legend from step 4.)
 
 ```bash
-curl -o 03_terrain_contours.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain_contours.xml"
+curl -G -o 03_terrain_contours.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_terrain_contours.xml"
 ```
 
 ![Terrain with contour lines](./data/STYLESHEET/03_terrain_contours.png)
@@ -126,14 +126,14 @@ curl -o 03_terrain_contours.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEE
 ```
 
 ```bash
-curl -o 04_classes.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_classes.xml"
+curl -G -o 04_classes.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_classes.xml"
 ```
 
 ![Elevation classes](./data/STYLESHEET/04_classes.png)
 
 ## 7. Build on a configured style
 
-`IncludeStyle` reuses a style from the server configuration. The posted elements are added to it. [style_include.xml](./data/STYLESHEET/style_include.xml) takes the configured `style_colormapped_bilinear_multicolor`, uses fewer legend ticks and adds white contour lines at 10, 30 and 50 m:
+`IncludeStyle` reuses a style from the server configuration. The elements in `STYLESHEET` are added to it. [style_include.xml](./data/STYLESHEET/style_include.xml) takes the configured `style_colormapped_bilinear_multicolor`, uses fewer legend ticks and adds white contour lines at 10, 30 and 50 m:
 
 ```xml
 <Style name="multicolor_with_my_contours">
@@ -145,10 +145,10 @@ curl -o 04_classes.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_c
 ```
 
 ```bash
-curl -o 05_include.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_include.xml"
+curl -G -o 05_include.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_include.xml"
 ```
 
-![Configured style with posted contour lines](./data/STYLESHEET/05_include.png)
+![Configured style with added contour lines](./data/STYLESHEET/05_include.png)
 
 `IncludeStyle` can only name styles that are configured on the server.
 
@@ -168,7 +168,7 @@ The `pointsfromgrid` DataPostProc samples the grid at regular distances (`a`, in
 ```
 
 ```bash
-curl -o 06_spot_heights.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_spotheights.xml"
+curl -G -o 06_spot_heights.png "$WMS" --data "$MAP" --data-urlencode "STYLESHEET@style_spotheights.xml"
 ```
 
 ![Spot heights](./data/STYLESHEET/06_spot_heights.png)
@@ -193,13 +193,13 @@ params = {
     "WIDTH": 600, "HEIGHT": 568, "FORMAT": "image/png",
     "STYLESHEET": stylesheet,
 }
-response = requests.post("http://localhost:8080/wms", data=params, timeout=60)
+response = requests.get("http://localhost:8080/wms", params=params, timeout=60)
 response.raise_for_status()
 with open("terrain.png", "wb") as f:
     f.write(response.content)
 ```
 
-JavaScript in a browser. `URLSearchParams` as body sends the parameters form url encoded. Show the image with an object URL:
+JavaScript in a browser. `URLSearchParams` encodes the parameters for the query string. Show the image with an object URL:
 
 ```javascript
 const params = new URLSearchParams({
@@ -210,16 +210,47 @@ const params = new URLSearchParams({
   WIDTH: "600", HEIGHT: "568", FORMAT: "image/png",
   STYLESHEET: stylesheetXml, // e.g. the contents of a textarea
 });
-const response = await fetch("http://localhost:8080/wms", { method: "POST", body: params });
+const response = await fetch(`http://localhost:8080/wms?${params}`);
 if (!response.ok) throw new Error(await response.text()); // 422 explains what is wrong
 document.getElementById("map").src = URL.createObjectURL(await response.blob());
 ```
 
-`STYLESHEET` also works in a GET query string, but POST avoids URL length limits.
+Url encoded XML makes a long URL: every `<`, `>`, `"` and space takes three characters. Step 10 makes it much shorter.
 
-## 10. What can be posted
+## 10. Compress the style
 
-The XML is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
+The stylesheet can also be sent compressed and base64 encoded: a value that does not start with `<` is read this way. The server decodes and decompresses it and then uses it like the XML itself. This makes the value 4 to 7 times shorter than the url encoded XML: a style with 140 labelled classes goes from about 18 KB to 2.5 KB. It also passes firewalls (WAFs) that refuse XML in requests.
+
+```bash
+STYLESHEET=$(python3 -c 'import base64, sys, zlib; c = zlib.compressobj(9, zlib.DEFLATED, -15); print(base64.urlsafe_b64encode(c.compress(sys.stdin.buffer.read()) + c.flush()).decode().rstrip("="))' < style_terrain.xml)
+curl -o 02_terrain.png "$WMS&$MAP&STYLESHEET=$STYLESHEET"
+```
+
+The image is the same as in step 4. The value is raw deflate data (RFC 1951, without header), base64url encoded (`-_`) without `=` padding, so it needs no url encoding. The server also accepts:
+
+- percent encoded values and `=` padding,
+- standard base64 (`+/`), also with a `+` that was not url encoded and arrives as a space,
+- zlib or gzip instead of raw deflate,
+- base64 without compression.
+
+In a browser, `CompressionStream("deflate-raw")` compresses to raw deflate:
+
+```javascript
+async function compressStyleSheet(xml) {
+  const stream = new Blob([xml]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+const url = `http://localhost:8080/wms?${params}&STYLESHEET=${await compressStyleSheet(stylesheetXml)}`;
+```
+
+The decompressed stylesheet may be at most 64 KB; decompressing stops as soon as it is larger. Invalid base64, broken compressed data, a larger stylesheet or a result that is not XML is refused with status 422, and the body says why, for example `STYLESHEET: invalid base64` or `STYLESHEET: decompressed size exceeds 65536 bytes`.
+
+## 11. What is allowed
+
+The XML, also when it was sent compressed, is checked against an allowlist before it is used. See [StyleSheetValidation.cpp](../../adagucserverEC/utils/StyleSheetValidation.cpp) for the full list.
 
 - Allowed: `Legend` with `palette`, and one `Style` with the usual styling elements: `Min`, `Max`, `ShadeInterval`, `ContourLine`, `SmoothingFilter`, `RenderSettings`, `RenderMethod`, `Point`, `Vector`, `Thinning`, `SymbolInterval`, `FeatureInterval`, `Stippling`, `IncludeStyle`, and so on.
 - Values are typed and bounded: colours must be `#RRGGBB` or `#RRGGBBAA`, numbers must be finite and within a range (for example `SmoothingFilter` 0 to 20, palette indices 0 to 255), and class lists must be numbers. Values the server reads as whole numbers, such as `SmoothingFilter`, palette values, `striding` and the `Stippling` distances, must be written as whole numbers: `20`, not `20.0` or `2e1`.
@@ -229,8 +260,9 @@ The XML is checked against an allowlist before it is used. See [StyleSheetValida
 
 A refused stylesheet gets status 422, and the body says why, for example `STYLESHEET: invalid value for attribute [linecolor] in [ContourLine]`. A stylesheet that is too large gets 413. See [HTTP status codes](../EnvironmentVariablesAndExitCodes.md#http-status-codes) for all statuses.
 
-## 11. Notes for server administrators
+## 12. Notes for server administrators
 
-- POST responses are not stored in the Redis response cache (`ADAGUC_REDIS`). Only GET requests are cached.
+- The whole style is in the URL, so the Redis response cache (`ADAGUC_REDIS`) caches these responses like other GET requests.
+- Proxies in front of the server must allow long request lines. nginx's default `large_client_header_buffers 4 8k` allows about 8 KB, 16 KB gives more room. The server itself accepts query strings up to 64 KB.
 - A valid style can still be expensive to render. Put a rate or concurrency limit in front of a public server, see [Environment variables](../EnvironmentVariablesAndExitCodes.md).
 - `adagucserver --lint` checks the configured styles with the same value rules.

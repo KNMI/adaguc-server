@@ -1040,3 +1040,51 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }
+
+// A base64 encoded STYLESHEET, optionally zlib compressed, is checked like the same stylesheet in XML
+TEST(CServerParams, applyStyleSheetBase64) {
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlays/FJTU/NS7ErSszMS8ovt9GH8m18M/PsDGz0QZSNb2KFnYGeKZAHZNjog42wAwClDRhL",
+                        // <?xml version="1.0"?><Configuration><Style name="s"/></Configuration>
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwg==",
+                        // The same URL safe without padding, and with spaces for the '+' characters a client did not url encode
+                        "eNqzsa_IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK-nb2eijKgAAMMIXwg",
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK nb2eijKgAAMMIXwg==",
+                        // The same gzip compressed
+                        "H4sIAAAAAAAC/7Oxr8jNUShLLSrOzM+zVTLUM1Cyt7Nxzs9Ly0wvLUosAYra2QSXVOakKuQl5qbaKhUr6dvZ6KMqAADtmytARQAAAA==",
+                        // The first one raw deflate compressed (as CompressionStream("deflate-raw") in a browser) and base64url encoded
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY6IONsAMA",
+                        // <Style name="x"><RenderSettings renderhint="discreteclasses"/></Style> raw deflate, without and with '=' padding
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA",
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA=",
+                        // The first one without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                    }),
+                    true);
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>
+                        "eNqz8UmsTC1SKKksSLVVSkksSUxKLE5VsrNxy8xJDUgsybDTTy1JttGHc23CEosyE5NyUu0qbPThbBt9sDF2ADYMG0U=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlayswnIz8wrUUjLzytJy8wBiumnliTrFyQWF5enKOnb2eiD1dsBABFyEtI=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style> without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxQb2ludCBmb250ZmlsZT0iL2V0Yy9wYXNzd2QiLz48L1N0eWxlPg==",
+                        // Not base64, base64 that is no XML, and compressed data that is no XML
+                        "Style name=s",
+                        "bm90IHhtbA==",
+                        "eNrLyy9RqMjNAQALFQLD",
+                        // Raw deflate: no XML, truncated, invalid UTF-8 (<Style name="s\xff"/>) and 70000 spaces after <Style name="s"/>
+                        "y8svUajIzQEA",
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY",
+                        "swkuqcxJVchLzE21VSr-r6RvBwA",
+                        "7cExFUARAADAKp4CCnxKSPAHGxYW7ZUw3t1X9-ktzH-0HFdMJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz10",
+                        // Data that is no deflate data
+                        "AAAA",
+                        // The second valid one truncated, and with data after the compressed stream
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKg==",
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwng=",
+                        // <Style name="s"/> followed by 70000 spaces: 152 characters that decompress to more than 64 KB
+                        "eNrtwTEVQBEAAMAqngIKfEpI8AcbFhbtlTDe3Vf36S3Mf7QcV0wlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADPXWRCNW4=",
+                    }),
+                    false);
+}
