@@ -60,6 +60,8 @@ The tolerances in the tests were chosen that way, by recording which cairo calls
 
 Don't loosen a comparison reflexively to make a failure go away - confirm it against the checklist above first.
 
+**Request true colour (`FORMAT=image/png32`) for images with more than 256 colours,** such as shading with contour lines and a legend. `FORMAT=image/png` then has to quantize the colours to a palette. adagucserver's octree quantizer averages the colours per palette entry, so a few pixels that differ on another machine change the palette, and with it the colours all over the image: by a few units in flat areas, and more in antialiased text. No tolerance can tell that apart from a real colour change. A failing comparison of such an image prints a hint. Most images with a full palette in the tests stay within the tolerances, but it is a margin, not a guarantee.
+
 ### How a comparison works
 
 First, both images must have a single frame, the same size, the same image mode and the same encoding structure (see [Encoding and file size](#encoding-and-file-size)). Then both are decoded to RGBA pixels, and the tolerance applies its rules. The *difference* of a pixel is the largest difference over its red, green, blue and alpha values, compared with the same pixel in the other image (0 to 255). **Each rule flags pixels and allows a number of them. The images match if no rule flags more pixels than it allows.**

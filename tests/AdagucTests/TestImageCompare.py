@@ -333,6 +333,18 @@ def test_palette_images_are_compared_by_colour(tmp_path):
     assert AdagucTestTools().compareImage(str(tmp_path / "expected.png"), str(tmp_path / "actual.png"))
 
 
+def test_quantized_palette_image_gets_a_hint(tmp_path, capsys):
+    """A failing palette image with a full palette: the message suggests true colour output."""
+    noise = np.random.default_rng(0).integers(-8, 9, REFERENCE.shape)  # more than 256 colours to quantize
+    with_noise = lambda img: np.clip(img.astype(int) + noise, 0, 255).astype(np.uint8)
+    for name, colours in (("quantized", 255), ("few_colours", 16)):
+        expected, actual = tmp_path / f"{name}_expected.png", tmp_path / f"{name}_actual.png"
+        Image.fromarray(with_noise(REFERENCE)).quantize(colors=colours).save(expected)
+        Image.fromarray(with_noise(render(shift=2))).quantize(colors=colours).save(actual)
+        assert not AdagucTestTools().compareImage(str(expected), str(actual), tolerance="antialiasing")
+        assert ("FORMAT=image/png32" in capsys.readouterr().out) == (name == "quantized")
+
+
 def save_gif(path, frames):
     images = [Image.fromarray(f, "RGB").quantize(colors=128) for f in frames]
     images[0].save(path, save_all=True, append_images=images[1:], duration=100, loop=0)

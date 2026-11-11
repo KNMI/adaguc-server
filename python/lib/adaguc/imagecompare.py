@@ -66,6 +66,9 @@ MIN_FLAGGED_NEIGHBOURS = 2
 MAX_FLAGGED_PIXELS = 8
 # Room for other zlib/libwebp versions; switching the compression off makes files several times larger.
 MAX_FILE_SIZE_RATIO = 1.5
+# A palette image that uses this many entries was quantized from more colours. adagucserver's octree quantizer averages
+# the colours per entry, so a few pixels that differ can change the palette, and with it the colours all over the image.
+QUANTIZED_PALETTE_ENTRIES = 250
 
 
 @dataclass
@@ -239,4 +242,14 @@ def compare_image_files(expected_path, actual_path, tolerance=EXACT):
     if not result.match:
         write_diff_image(result, diff_path)
         result.messages.append(f"Diff image written to {diff_path} (red: failing pixels, yellow: accepted differences).")
+        if any(_is_quantized_palette(path) for path in (expected_path, actual_path)):
+            result.messages.append(
+                "Hint: this palette image was quantized from more than 256 colours. Small rendering differences can change the "
+                "palette, and with it the colours all over the image. For a test of rendering, request FORMAT=image/png32."
+            )
     return result
+
+
+def _is_quantized_palette(path):
+    with Image.open(path) as im:
+        return im.mode == "P" and len(np.unique(np.asarray(im))) >= QUANTIZED_PALETTE_ENTRIES
