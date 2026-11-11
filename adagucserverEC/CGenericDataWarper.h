@@ -91,7 +91,7 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
   i4box newpixelspan = {.left = (int)floor(newbox.left * wh.x), .bottom = (int)floor(newbox.bottom * wh.y), .right = (int)ceil(newbox.right * wh.x), .top = (int)ceil(newbox.top * wh.y)};
   newpixelspan.sort();
-  newpixelspan = {
+  newpixelspan = i4box{
       .left = newpixelspan.left - 1,
       .bottom = newpixelspan.bottom - 1,
       .right = newpixelspan.right + 1,
