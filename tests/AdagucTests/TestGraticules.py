@@ -45,4 +45,4 @@ class TestGraticules:
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")

@@ -147,11 +147,11 @@ class TestWMS(unittest.TestCase):
             + stylesheet,
             env={**self.env, "ADAGUC_STYLESHEET_ENABLE": "TRUE"},
         )
+        actual = "test_WMSGetMap_testdatanc_stylesheet_with_encoded_ampersand.png"
+        AdagucTestTools().writetofile(self.testresultspath + actual, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        # Must be the same image as without the STYLESHEET parameter
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + actual))
 
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -164,13 +164,11 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_testdatanc_webp_small_odd_size(self):
-        """WebP output for an image with an odd width and height, checked byte-for-byte against a known-good baseline"""
+        """WebP output for an image with an odd width and height. compareImage also checks the WebP chunks, compareFileSizes the compression."""
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc_webp_small_odd_size.webp"
         # pylint: disable=unused-variable
@@ -180,10 +178,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_testdatanc_withplus(self):
         AdagucTestTools().cleanTempDir()
@@ -196,10 +192,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_geos(self):
         AdagucTestTools().cleanTempDir()
@@ -213,10 +206,7 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_testdatanc_autoheight(self):
         AdagucTestTools().cleanTempDir()
@@ -229,9 +219,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMap_Report_env(self):
@@ -265,10 +254,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_testdatanc_customprojectionstring_proj4namespace(self):
         AdagucTestTools().cleanTempDir()
@@ -281,10 +267,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetCapabilitiesGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -301,10 +284,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -316,10 +296,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
         filename = "test_WMSGetMapGetCapabilities_testdatanc_WMSGetCapabilities_testdatanc.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
@@ -378,10 +355,7 @@ class TestWMS(unittest.TestCase):
                     status, data, headers = AdagucTestTools().runADAGUCServer(url, env=self.env)
                     AdagucTestTools().writetofile(self.testresultspath + filename, data)
                     self.assertEqual(status, 0)
-                    self.assertEqual(
-                        data,
-                        AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-                    )
+                    self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
         l = []
 
@@ -628,10 +602,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile(self):
         AdagucTestTools().cleanTempDir()
@@ -643,10 +614,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetCapabilities_testdatanc_autostyle(self):
         AdagucTestTools().cleanTempDir()
@@ -714,9 +682,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMapWithManyContourDefinitions_testdatanc(self):
@@ -744,8 +711,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                19,
-                0.6,
+                tolerance="geometry",
             )
         )
 
@@ -799,9 +765,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMapWithShowLegendNothing_testdatanc(self):
@@ -826,9 +791,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMapWithShowLegendSecondLayer_testdatanc(self):
@@ -852,7 +816,9 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
+        )
 
     def test_WMSGetMapWithShowLegendAllLayers_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -875,9 +841,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMapRobinsonProjection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(
@@ -902,10 +867,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapCustomCRSEPSG3412Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(
         self,
@@ -929,7 +891,9 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
+        )
 
     def test_WMSGetMapCustomCRSEPSG3413Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(
         self,
@@ -953,7 +917,9 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
+        )
 
     def test_WMSGetMapRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
         AdagucTestTools().cleanTempDir()
@@ -975,10 +941,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapCustomCRSEPSG3412Projection_ipcc_cmip5_tas_historical_subset_nc(
         self,
@@ -1002,7 +965,9 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
+        )
 
     def test_WMSGetMapCustomCRSEPSG3413Projection_ipcc_cmip5_tas_historical_subset_nc(
         self,
@@ -1026,7 +991,9 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
+        )
 
     # def test_WMSGetMapCustomCRSClippedRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
     #     AdagucTestTools().cleanTempDir()
@@ -1075,9 +1042,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_GRID(self):
@@ -1095,10 +1061,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     # FIXME: these tests all use style=auto, they fail without <RenderMethod>point</RenderMethod>
     def test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS(self):
@@ -1116,10 +1079,10 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
         filename = "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS_MAX_TEXT.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
@@ -1128,9 +1091,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
         # Tops Outline
@@ -1141,9 +1103,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetCapabilities_KMDS_PointNetCDF_pointstylepoint(self):
@@ -1183,9 +1144,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ffdd_windspeed_arrow_barb.png"
@@ -1196,9 +1156,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ffdd_windspeed_barb_barb.png"
@@ -1209,9 +1168,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
         )
 
         # Test no outline
@@ -1223,9 +1181,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
         )
 
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ta_volume.png"
@@ -1236,10 +1193,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ta_disc.png"
 
@@ -1249,9 +1203,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMap_KMDS_With_Nan_PointNetCDF_pointstylepoint(self):
@@ -1274,9 +1227,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
         filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ffdd_windspeed_arrow_barb.png"
@@ -1287,9 +1239,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
         filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ffdd_windspeed_barb_barb.png"
@@ -1300,9 +1251,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
         )
 
         # Test no outline
@@ -1314,9 +1264,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
         )
 
         filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ta_volume.png"
@@ -1327,10 +1276,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
         filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ta_disc.png"
 
@@ -1340,9 +1286,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetCapabilities_KMDS_PointNetCDF_dimension_filetimedate(self):
@@ -1378,9 +1323,8 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing")
         )
 
     def test_WMSGetMapQuantizeLow(self):
@@ -1456,10 +1400,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_DBScannerCleanFiles(self):
         """Testing cleanup system of filescanner using the retentionperiod function."""
@@ -1572,10 +1513,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNGFile_colortype2_bitdepth16(self):
         AdagucTestTools().cleanTempDir()
@@ -1588,10 +1526,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNGFile_colortype3_bitdepth1(self):
         AdagucTestTools().cleanTempDir()
@@ -1604,10 +1539,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNGFile_colortype3_bitdepth4(self):
         AdagucTestTools().cleanTempDir()
@@ -1620,10 +1552,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNGFile_colortype3_bitdepth8(self):
         AdagucTestTools().cleanTempDir()
@@ -1636,10 +1565,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNGFile_colortyp6_bitdepth8(self):
         AdagucTestTools().cleanTempDir()
@@ -1652,10 +1578,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNGFile_colortyp6_bitdepth16(self):
         AdagucTestTools().cleanTempDir()
@@ -1668,10 +1591,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_NearestRenderWithShadeIntervalFast(self):
         AdagucTestTools().cleanTempDir()
@@ -1693,10 +1613,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_NearestRenderWithShadeIntervalPrecise(self):
         AdagucTestTools().cleanTempDir()
@@ -1718,10 +1635,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PNG_with_time(self):
         ### This tests a PNG file with a time dim set ###
@@ -1766,10 +1680,7 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_rotated_pole_RACMO(self):
         ### This tests the rotated_pole projection ###
@@ -1796,10 +1707,10 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
         )
+        self.assertTrue(AdagucTestTools().compareFileSizes(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_dashed_contour_lines(self):
         AdagucTestTools().cleanTempDir()
@@ -1824,8 +1735,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                4,
-                0.02,
+                tolerance="antialiasing",
             )
         )  # Allowed pixel difference is huge, but only for very small number of pixels
 
@@ -1852,8 +1762,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                30,
-                0.02,
+                tolerance="antialiasing",
             )
         )
 
@@ -1870,10 +1779,7 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSCMDUpdateDBPathFileInSubfolders(self):
         """
@@ -1966,8 +1872,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="geometry",
             )
         )
 
@@ -1997,8 +1902,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="antialiasing",
             )
         )
 
@@ -2027,8 +1931,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                maxAllowedColorDifference=35,
-                maxAllowedColorPercentage=0.13,
+                tolerance="geometry",
             )
         )
 
@@ -2058,8 +1961,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="geometry",
             )
         )
 
@@ -2089,8 +1991,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="geometry",
             )
         )
 
@@ -2106,10 +2007,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_Issue311_WMSGetCapabilities_DimensionUnits(self):
         """
@@ -2288,10 +2186,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_IrregularGrid_1Dimensional_latlon_nextdimensionstep(self):
         """
@@ -2324,10 +2219,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_IrregularGrid_2Dimensional_latlon_nextdimensionstep(self):
         """
@@ -2360,10 +2252,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_IrregularGrid_issue_316_double_precision_type(self):
         """
@@ -2387,10 +2276,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_error_on_wrong_dataset(self):
         AdagucTestTools().cleanTempDir()
@@ -2501,10 +2387,7 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_PASCAL_probabilities_manydims_timewindow(self):
         AdagucTestTools().cleanTempDir()
@@ -2541,10 +2424,7 @@ class TestWMS(unittest.TestCase):
         )
 
         self.assertEqual(status_getmap, 0)
-        self.assertEqual(
-            data_getmap,
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename_getmap),
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename_getmap, self.testresultspath + filename_getmap))
 
     def test_wms_getmap_symbolinterval_northseastations(self):
         """
@@ -2556,6 +2436,7 @@ class TestWMS(unittest.TestCase):
             env,
             "test_wms_getmap_symbolinterval_northseastations.png",
             "DATASET=adaguc.tests.symbolinterval&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=helicopter&WIDTH=300&HEIGHT=400&CRS=EPSG%3A3857&BBOX=119648.22240617475,6471500.3895983845,902354.9593630233,7715343.987244269&STYLES=helicopter%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE",
+            tolerance="antialiasing",
         )
 
     def test_wms_getmap_palette_overwrite_erases_background(self):

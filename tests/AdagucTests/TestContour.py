@@ -25,7 +25,7 @@ class TestContour:
                 668,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE",
+                "FORMAT=image/png&TRANSPARENT=FALSE",
                 id="plain",
             ),
             pytest.param(
@@ -35,7 +35,7 @@ class TestContour:
                 1336,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE",
+                "FORMAT=image/png&TRANSPARENT=FALSE",
                 # Another pixel density for the contour tracer
                 id="2x",
             ),
@@ -46,7 +46,9 @@ class TestContour:
                 1336,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
+                # True colour: shading, contours and legend need more than 256 colours. In a palette image, the colour
+                # quantization amplifies small rendering differences into colour changes over the whole image.
+                "FORMAT=image/png32&TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
                 # Classed shading with SmoothingFilter 6 and contour lines
                 id="2x_shaded_extrasmooth",
             ),
@@ -57,7 +59,7 @@ class TestContour:
                 1336,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE",
+                "FORMAT=image/png&TRANSPARENT=FALSE",
                 # SmoothingFilter removes the many small loops from grid-scale noise
                 id="smoothed",
             ),
@@ -68,7 +70,7 @@ class TestContour:
                 1336,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=TRUE",
+                "FORMAT=image/png&TRANSPARENT=TRUE",
                 # Two dashed ContourLine definitions, like the pressure_cwk style
                 id="dashed",
             ),
@@ -79,7 +81,7 @@ class TestContour:
                 1336,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF",
+                "FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF",
                 id="dashed_opaque",
             ),
             pytest.param(
@@ -89,7 +91,7 @@ class TestContour:
                 1057,
                 "EPSG:3857",
                 "849140.1753254525,7851535.092767621,888288.2674508916,7911855.112267022",
-                "TRANSPARENT=TRUE",
+                "FORMAT=image/png&TRANSPARENT=TRUE",
                 # Zoomed in on a sharp turn of a contour line, in EPSG:3857
                 id="dashed_zoomed_mercator",
             ),
@@ -100,7 +102,7 @@ class TestContour:
                 1057,
                 "EPSG:3857",
                 "849140.1753254525,7851535.092767621,888288.2674508916,7911855.112267022",
-                "TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF",
+                "FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF",
                 id="dashed_zoomed_mercator_opaque",
             ),
             pytest.param(
@@ -110,7 +112,9 @@ class TestContour:
                 668,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
+                # True colour: shading, contours and legend need more than 256 colours. In a palette image, the colour
+                # quantization amplifies small rendering differences into colour changes over the whole image.
+                "FORMAT=image/png32&TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
                 # ShadeInterval classes, no contour lines
                 id="shaded",
             ),
@@ -121,7 +125,9 @@ class TestContour:
                 668,
                 "EPSG:32661",
                 "-3384546.659457,1075289.936021,-713528.390451,3374842.088145",
-                "TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
+                # True colour: shading, contours and legend need more than 256 colours. In a palette image, the colour
+                # quantization amplifies small rendering differences into colour changes over the whole image.
+                "FORMAT=image/png32&TRANSPARENT=FALSE&SHOWLEGEND=TRUE",
                 # ShadeInterval classes with SmoothingFilter 4 and contour lines
                 id="shaded_contour",
             ),
@@ -143,5 +149,6 @@ class TestContour:
             f"&LAYERS=air_temperature_hagl_contourtest&STYLES={styles}"
             f"&WIDTH={width}&HEIGHT={height}&CRS={crs}"
             f"&BBOX={bbox}"
-            f"&FORMAT=image/png&{tail}",
+            f"&{tail}",
+            tolerance="antialiasing",  # contour labels and legend text
         )

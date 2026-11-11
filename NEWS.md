@@ -20,6 +20,7 @@
 - Faster gzip responses (level 6 instead of 9). `Accept-Encoding` is parsed per coding: `br;q=1.0` now gets brotli, and a coding with `q=0` is not used.
 - The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
 - The fork server is only restarted after three failed health checks in a row, so a single slow check does not end the requests in progress.
+- Image comparison in the tests: `compareImage` has a `tolerance` (`exact`, the default, `geometry` or `antialiasing`) instead of `maxAllowedColorDifference`/`maxAllowedColorPercentage`, chosen by what the image contains (raster only, antialiased shapes, or text). It compares the alpha channel too, which the old comparison ignored for palette images, and the PNG/WebP encoding structure; `compareFileSizes` checks the compression. Image tests no longer compare PNG files byte for byte. A failing comparison writes a diff image. See [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
 
 **Version 9.2.0 - 2026-10-28**
 

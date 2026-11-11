@@ -24,7 +24,7 @@ class TestGeoJSON:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_GeoJSON_time_GetCapabilities(self):
         AdagucTestTools().cleanTempDir()
@@ -64,7 +64,7 @@ class TestGeoJSON:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename)
 
     def test_GeoJSON_reference_time_GetCapabilities(self):
         AdagucTestTools().cleanTempDir()
@@ -106,7 +106,9 @@ class TestGeoJSON:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + f"test_GeoJSON_timesupport{expected_box}.png")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + f"test_GeoJSON_timesupport{expected_box}.png", self.testresultspath + filename
+        )
 
     def test_GeoJSON_point_dimensions_GetCapabilities(self):
         AdagucTestTools().cleanTempDir()
@@ -148,7 +150,9 @@ class TestGeoJSON:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_GetMAP_GeoJSON_point_rendering(self):
         AdagucTestTools().cleanTempDir()
@@ -165,7 +169,9 @@ class TestGeoJSON:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_CVE_GHSA_mwgv_59vv_rp2m(self):
         """

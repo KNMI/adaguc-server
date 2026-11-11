@@ -58,7 +58,7 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
   CImageWarper warper;
   if (dataSource->srvParams->geoParams.crs.empty()) {
-    dataSource->srvParams->geoParams.crs = "EPSG:4236";
+    dataSource->srvParams->geoParams.crs = "EPSG:4326";
   }
   warper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
 

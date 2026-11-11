@@ -12,6 +12,7 @@ import pytest
 import pytest_asyncio
 
 import adaguc.CGIRunner as cgi_runner_module
+from adaguc.AdagucTestTools import AdagucTestTools
 from adaguc.CGIRunner import CGIRunner
 from adaguc.fork_settings import FORK_EXIT_STATUS_BYTES, FORK_EXIT_STATUS_MARKER
 from fork_server_supervisor import ForkServerSupervisor
@@ -20,6 +21,7 @@ from fork_server_supervisor import ForkServerSupervisor
 def exit_status_trailer(status: int) -> bytes:
     """What the fork server writes after the response of a child"""
     return FORK_EXIT_STATUS_MARKER + status.to_bytes(FORK_EXIT_STATUS_BYTES, sys.byteorder, signed=True)
+
 
 ADAGUC_PATH = Path(os.environ["ADAGUC_PATH"])
 ADAGUC_BINARY = ADAGUC_PATH / "bin" / "adagucserver"
@@ -91,6 +93,13 @@ def fork_connection():
     return connect
 
 
+def matches_expected_get_map(body, tmp_path):
+    """Compares the returned PNG with the expected image pixel by pixel, like the other image tests."""
+    actual = tmp_path / "getmap.png"
+    actual.write_bytes(body)
+    return AdagucTestTools().compareImage(str(EXPECTED_GET_MAP), str(actual))
+
+
 @pytest.mark.asyncio
 async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypatch, tmp_path):
     # Verify real GetMap output, a stable mother, distinct request children
@@ -112,7 +121,7 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypat
         assert process_error == b""
         assert "Content-Type:image/png" in headers
         if request_number == 0:
-            assert body == EXPECTED_GET_MAP.read_bytes()
+            assert matches_expected_get_map(body, tmp_path)
 
         # The request log should contain the pid of the child
         request_pids = set(re.findall(r"pid(\d+)", log_path.read_text(encoding="utf-8")))
@@ -126,7 +135,7 @@ async def test_fork_server_get_map_uses_distinct_children(fork_server, monkeypat
 
 
 @pytest.mark.asyncio
-async def test_fork_server_reads_large_request_completely(fork_server):
+async def test_fork_server_reads_large_request_completely(fork_server, tmp_path):
     # A request well above a single small recv must arrive complete. The padding parameter goes first, so a
     # truncated read would lose the GetMap parameters instead of only some padding. Unknown parameters are ignored.
     query = "PADDING=" + "x" * 50000 + "&" + GET_MAP_QUERY
@@ -135,7 +144,7 @@ async def test_fork_server_reads_large_request_completely(fork_server):
     assert status == 0
     assert process_error == b""
     assert "Content-Type:image/png" in headers
-    assert body == EXPECTED_GET_MAP.read_bytes()
+    assert matches_expected_get_map(body, tmp_path)
 
 
 @pytest.mark.asyncio
@@ -345,7 +354,9 @@ async def test_fork_client_rejects_response_without_exit_status(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("data", [b"Content-Type: application/json\n\n{" + b"x" * 100, b"Content-Type: application/netcdf\n\n" + bytes(100)])
+@pytest.mark.parametrize(
+    "data", [b"Content-Type: application/json\n\n{" + b"x" * 100, b"Content-Type: application/netcdf\n\n" + bytes(100)]
+)
 async def test_fork_client_rejects_response_with_invalid_exit_status(monkeypatch, data):
     # When the connection closes before the fork server wrote the exit status (for example because the fork server was
     # restarted), the last bytes are response data. That must be an error, also when they look like a status, like zero bytes.

@@ -597,7 +597,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                 GeoOptions geoOptions;
                 geoOptions.level = -1;
-                geoOptions.proj4 = "EPSG:4236";
+                geoOptions.proj4 = "EPSG:4326";
                 geoOptions.bbox[0] = -1000;
                 geoOptions.bbox[1] = -1000;
                 geoOptions.bbox[2] = 1000;

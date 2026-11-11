@@ -2,7 +2,6 @@ import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
     make_adaguc_env,
-    run_adaguc_and_compare_file,
     run_adaguc_and_compare_image,
     update_db,
 )
@@ -90,8 +89,7 @@ class TestGenericImageWarper:
             env,
             filetocheck,
             f"LAYERS={layers}&STYLES={styles}&DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=590359.2826213799,6784102.0088095935,707368.84890462,6894816.225400406&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF&SHOWLEGEND=true",
-            maxAllowedColorDifference=1,
-            maxAllowedColorPercentage=0.02,
+            tolerance="antialiasing",
         )
 
     @pytest.mark.parametrize(
@@ -103,13 +101,15 @@ class TestGenericImageWarper:
         ],
     )
     def test_GenericImageWarperOnAHNDataset_large(self, filetocheck: str, styles: str):
-        """Regression test for rendering images larger than one megapixel (bilinear, nearest, and contour-line styles), checked byte-for-byte against a known-good baseline"""
+        """Regression test for rendering images larger than one megapixel (bilinear, nearest, and contour-line styles), checked against a known-good baseline.
+        The raster styles must match exactly; contour lines are antialiased."""
         env = make_adaguc_env("adaguc.tests.ahn_utrechtse_heuvelrug_500m", self.testresultspath, self.expectedoutputsspath)
         update_db(env)
-        run_adaguc_and_compare_file(
+        run_adaguc_and_compare_image(
             env,
             filetocheck,
             f"LAYERS=ahn_utrechtseheuvelrug_500m&STYLES={styles}&DATASET=adaguc.tests.ahn_utrechtse_heuvelrug_500m&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=1200&HEIGHT=1000&CRS=EPSG%3A3857&BBOX=590359.2826213799,6784102.0088095935,707368.84890462,6894816.225400406&FORMAT=image/png&TRANSPARENT=TRUE",
+            tolerance="geometry" if "contours" in filetocheck else "exact",
         )
 
     def test_GenericImageWarperOnAHNDataset_contour_tight_curve_no_gap(self):
