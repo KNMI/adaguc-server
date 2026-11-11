@@ -1,0 +1,17 @@
+#ifndef STYLESHEET_HANDLER_H
+#define STYLESHEET_HANDLER_H
+
+#include <string>
+
+/**
+ * Decodes a STYLESHEET value that is base64 encoded XML, optionally compressed: raw deflate (as CompressionStream("deflate-raw")
+ * in a browser), zlib or gzip. Base64 may be standard or URL safe, with or without padding.
+ * Decompressing stops as soon as the XML is larger than 64 KB, so a small value can not expand into a huge one.
+ * Logs the reason with CDBError.
+ * @param value The STYLESHEET value, not starting with '<'
+ * @param xml Receives the decoded XML
+ * @return true when the value decodes to XML
+ */
+bool decodeStyleSheet(std::string value, std::string &xml);
+
+#endif

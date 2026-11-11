@@ -82,6 +82,8 @@ add_library(
     utils/LayerMetadataStore.cpp
     utils/StyleSheetValidation.h
     utils/StyleSheetValidation.cpp
+    utils/StyleSheetHandler.h
+    utils/StyleSheetHandler.cpp
     utils/XMLGenUtils.h
     utils/XMLGenUtils.cpp
     utils/CXMLTemplates.h
