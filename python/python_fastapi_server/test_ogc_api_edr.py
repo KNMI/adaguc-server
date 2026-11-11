@@ -748,6 +748,10 @@ def test_cube_custom_dim(client: TestClient):
     # We did not query a specific member, it should show the highest
     assert cube_json["domain"]["custom:member"] == 50.0
 
+    filename = "cube_single_member.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(cube_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
 
 def test_point_custom_dim_request_all_members(client: TestClient):
     # position call on data which includes a custom dimension, should mention dimension even if we don't query it specifically
