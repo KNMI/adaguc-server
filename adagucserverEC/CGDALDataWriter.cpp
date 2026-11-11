@@ -231,7 +231,8 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
 
   currentBandNr = 0;
   if (InputProducts != NULL) delete[] InputProducts;
-  InputProducts = new std::string[NrOfBands + 1];
+  // Use the parameter that was checked to be non-negative above: the compiler cannot prove that for the member after the intermediate calls.
+  InputProducts = new std::string[static_cast<size_t>(_NrOfBands) + 1];
 
   if (CGDALDATAWRITER_DEBUG) {
     CDBDebug("/INIT");
