@@ -30,5 +30,15 @@
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   
+  <Layer type="database">
+    <Group collection="testcollection"/>
+    <Title>Packed data with fill values</Title>
+    <Name>packed_fillvalue</Name>
+    <FilePath>{ADAGUC_PATH}/data/datasets/testdata_packed_fillvalue.nc</FilePath>
+    <Variable>packed</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="level" units="1" type="vertical">elevation</Dimension>
+  </Layer>
+
 </Configuration>
 

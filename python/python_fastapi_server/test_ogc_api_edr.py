@@ -805,6 +805,23 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
     assert data["shape"] == [4, 3, 3]
 
 
+def test_cube_packed_fill_values(client: TestClient) -> None:
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/cube",
+        params={
+            "parameter-name": "packed_fillvalue",
+            "bbox": "-1,49,11,56",
+            "z": "1/3",
+            "resolution_x": 1,
+            "resolution_y": 1,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    filename = "cube_packed_fill_values.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(resp.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
 @pytest.mark.parametrize(
     "url, status_code, description",
     [
