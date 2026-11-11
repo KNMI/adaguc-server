@@ -331,14 +331,14 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
 }
 
 pthread_mutex_t CImageWarper_findExtent;
-int CImageWarper::findExtent(CDataSource *dataSource, double *dfBBOX) {
+int CImageWarper::findExtent(CDataSource *dataSource, double (&dfBBOX)[4]) {
   pthread_mutex_lock(&CImageWarper_findExtent);
   int status = findExtentUnSynchronized(dataSource, dfBBOX);
   pthread_mutex_unlock(&CImageWarper_findExtent);
   return status;
 }
 
-int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX) {
+int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double (&dfBBOX)[4]) {
   // Find the outermost corners of the image
 
   bool useLatLonSourceProj = false;
