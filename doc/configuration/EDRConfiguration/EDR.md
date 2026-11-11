@@ -6,7 +6,7 @@ The EDR service by ADAGUC currently supports:
 
 - `/instances` to retrieve the model_runs (treating the forecast_reference_time as instance name)
 - `/position` for timeseries and point data
-- `/cube` for extracting 2d/3d data slices
+- `/cube` for extracting 2d/3d data slices, in EPSG:4326 or on the native grid of the data with `crs=native` (see [Cube queries on the native grid](../../tutorials/Configure_EDR_service.md#cube-queries-on-the-native-grid-crsnative))
 
 Data output is in CoverageJSON.
 

@@ -7,6 +7,7 @@ import logging
 from datetime import timezone
 from typing import List
 import math
+from functools import lru_cache
 
 import netCDF4
 from numpy import ma
@@ -26,6 +27,11 @@ from pydantic import AnyUrl
 from pydantic import AwareDatetime
 from pydantic import BaseModel
 
+from pyproj import CRS
+from pyproj.exceptions import CRSError
+
+from .utils.native_grid import get_crs, get_crs_wkt, get_epsg
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -36,9 +42,10 @@ class GeoReferenceInfo(BaseModel):
     """GeoReference object"""
 
     proj: str
-    crsid: str
+    crsid: str | None = None
     crstype: str
     axes: list[str]
+    wkt: str | None = None
 
 
 GeoReferenceInfos = List[GeoReferenceInfo]
@@ -86,8 +93,38 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     for georeferenceinfo in georeferenceinfos:
         if georeferenceinfo.proj == projstring:
             return georeferenceinfo
-    # TODO Maybe indicate that the correct georeference info system was not found.
-    return georeferenceinfos[0]
+    crs = get_crs(projstring)
+    epsg = get_epsg(projstring)
+    if crs is None or epsg == 4326:
+        return georeferenceinfos[0]
+    # Other projections, like the rotated pole grid of crs=native: with the EPSG id when there is one, otherwise only the WKT
+    return GeoReferenceInfo(
+        proj=projstring,
+        crsid=f"http://www.opengis.net/def/crs/EPSG/0/{epsg}" if epsg is not None else None,
+        crstype="GeographicCRS" if crs.is_geographic else "ProjectedCRS",
+        axes=get_epsg_axis_order(epsg),
+        wkt=get_crs_wkt(projstring),
+    )
+
+
+@lru_cache(maxsize=64)
+def get_epsg_axis_order(epsg: int | None) -> list[str]:
+    """The axis order of an EPSG CRS, like ["y", "x"] for geographic CRSs with latitude first. ["x", "y"] without EPSG code."""
+    if epsg is not None:
+        try:
+            axis_info = CRS.from_epsg(epsg).axis_info
+            if axis_info and axis_info[0].direction in ("north", "south"):
+                return ["y", "x"]
+        except CRSError:
+            pass
+    return ["x", "y"]
+
+
+def get_reference_system(georeferenceinfo: GeoReferenceInfo) -> ReferenceSystem:
+    """The CoverageJSON reference system, with the WKT for a CRS without id"""
+    if georeferenceinfo.wkt is not None and georeferenceinfo.crsid is None:
+        return ReferenceSystem(type=georeferenceinfo.crstype, wkt=georeferenceinfo.wkt)
+    return ReferenceSystem(type=georeferenceinfo.crstype, id=georeferenceinfo.crsid)
 
 
 def get_dim(metadata: dict, dimname: str):
@@ -280,9 +317,7 @@ def netcdf_to_covjson(
                         crsvar.proj4_params
                     )
 
-                georeferencesystem = ReferenceSystem(
-                    type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid
-                )
+                georeferencesystem = get_reference_system(georeferencesysteminfo)
 
                 georeferencing = ReferenceSystemConnectionObject(
                     system=georeferencesystem, coordinates=georeferencesysteminfo.axes
@@ -367,10 +402,7 @@ def netcdf_to_covjson(
                             crsvar.proj4_params
                         )
 
-                    georeferencesystem = ReferenceSystem(
-                        type=georeferencesysteminfo.crstype,
-                        id=georeferencesysteminfo.crsid,
-                    )
+                    georeferencesystem = get_reference_system(georeferencesysteminfo)
 
                     georeferencing = ReferenceSystemConnectionObject(
                         system=georeferencesystem,
