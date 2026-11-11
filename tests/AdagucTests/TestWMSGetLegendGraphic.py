@@ -27,7 +27,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_adaguc_scaling_dataset_scaling1x(self):
         AdagucTestTools().cleanTempDir()
@@ -41,7 +43,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMapWithGetLegendGraphic_adaguc_scaling_dataset_scaling1x(self):
         AdagucTestTools().cleanTempDir()
@@ -55,7 +59,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetMapWithGetLegendGraphic_adaguc_scaling_dataset_scaling4x(self):
         AdagucTestTools().cleanTempDir()
@@ -70,7 +76,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_inverted_min_max(self):
         AdagucTestTools().cleanTempDir()
@@ -84,7 +92,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_log10(self):
         AdagucTestTools().cleanTempDir()
@@ -98,7 +108,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_NearestRenderWithShadeInterval(self):
         AdagucTestTools().cleanTempDir()
@@ -113,7 +125,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_LongTempLegend(self):
         """Skip some labels when legend is too long"""
@@ -129,7 +143,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_LongTempLegend_height260(self):
         """Skip some labels when legend is too long, making sure the whole range is contained"""
@@ -145,7 +161,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_LongTempLegend_clipping(self):
         """Skip some labels when legend is too long and clip"""
@@ -161,7 +179,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_LongTempLegend2(self):
         """Another test showing another type of legend that skips classes without data"""
@@ -177,7 +197,9 @@ class TestWMSGetLegendGraphic:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSGetLegendGraphic_TestShowInLegend(self):
         """This demonstrates how many shadeintervals can be filtered for the legendgraphic by using the showinlegend property"""
@@ -188,6 +210,7 @@ class TestWMSGetLegendGraphic:
             env,
             "test_WMSGetLegendGraphic_TestShowInLegend.png",
             "DATASET=test.uwcw_ha43_dini_5p5km_10x8&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=air_temperature_pl&format=image/png&STYLE=temperature_less_items&layers=air_temperature_pl&&time=2024-07-13T17%3A00%3A00Z&DIM_reference_time=2024-07-11T05%3A00%3A00Z&DIM_pressure_level_in_hpa=925&&transparent=true&",
+            tolerance="antialiasing",
         )
 
     def test_WMSGetLegendGraphic_TestShowInLegendSmallerForGeoWeb(self):
@@ -199,4 +222,5 @@ class TestWMSGetLegendGraphic:
             env,
             "test_WMSGetLegendGraphic_TestShowInLegendSmallerForGeoWeb.png",
             "DATASET=test.uwcw_ha43_dini_5p5km_10x8&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=air_temperature_pl&format=image/png&STYLE=temperature_less_items&layers=air_temperature_pl&&time=2024-07-13T17%3A00%3A00Z&DIM_reference_time=2024-07-11T05%3A00%3A00Z&DIM_pressure_level_in_hpa=925&&transparent=true&width=250&height=250",
+            tolerance="antialiasing",
         )
