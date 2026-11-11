@@ -1041,7 +1041,7 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }
 
-// A base64 encoded STYLESHEET, optionally zlib compressed, is checked like the same stylesheet in XML
+// A base64 encoded STYLESHEET, optionally raw deflate, zlib or gzip compressed, is checked like the same stylesheet in XML
 TEST(CServerParams, applyStyleSheetBase64) {
   CHECK_STYLESHEETS((std::vector<std::string>{
                         // <Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>
@@ -1058,6 +1058,9 @@ TEST(CServerParams, applyStyleSheetBase64) {
                         // <Style name="x"><RenderSettings renderhint="discreteclasses"/></Style> raw deflate, without and with '=' padding
                         "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA",
                         "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA=",
+                        // The first one after an XML comment, raw deflate in two blocks: the compressed data starts with '<' (0x3C, a
+                        // non-final dynamic block), so it must not be taken for uncompressed XML
+                        "PE2HDYBACFwFB2AD4y72Xt6u03uA_wkh1zjiiJmGcaKyovt5Pex6mhfZ-0Fpps66CT8vjYgAKy-UIQEXG1wcFzLQBOLKCcbUTasSovjzv7Mq5w38CSJOgVFvxZZhTj4AAAD__7MJLqnMSVXIS8xNtVUqVrKz8UlNT81LsStKzMxLyi-30YfybXwz8-wMbPRBlI1vYoWdgZ4pkAdk2OiDjbADAA",
                         // The first one without compression
                         "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
                     }),

@@ -31,29 +31,25 @@ static Inflated inflateStyleSheet(std::string_view compressed, int windowBits, s
   return status == Z_STREAM_END && stream.avail_in == 0 ? Inflated::ok : Inflated::invalid;
 }
 
-// A '+' that was not url encoded arrives as a space, base64 has no spaces.
-bool decodeStyleSheet(std::string value, std::string &xml) {
+bool decodeStyleSheet(std::string_view value, std::string &xml) {
+  // value may refer to xml, it is only read before xml is written.
+  // A '+' that was not url encoded arrives as a space, base64 has no spaces.
   std::string decoded;
   if (!CT::decodeBase64(CT::replace(value, " ", "+"), decoded)) {
     CDBError("STYLESHEET: invalid base64");
     return false;
   }
-  xml = CT::trim(decoded);
-  // Not compressed: compressed data never starts with '<'
-  if (xml.starts_with("<")) return true;
+  // Decompress first: compressed data can also start with '<', for example raw deflate starting with a non-final dynamic
+  // block (byte 0x3C). Only when it is no compressed data, it can be uncompressed XML.
   Inflated result = inflateStyleSheet(decoded, 15 + 32, xml);
   if (result == Inflated::invalid) result = inflateStyleSheet(decoded, -15, xml);
   if (result == Inflated::tooLarge) {
     CDBError("STYLESHEET: decompressed size exceeds %zu bytes", MAX_STYLESHEET_BYTES);
     return false;
   }
-  if (result == Inflated::invalid) {
-    CDBError("STYLESHEET: invalid compressed data");
-    return false;
-  }
-  xml = CT::trim(xml);
+  xml = CT::trim(result == Inflated::ok ? xml : decoded);
   if (!xml.starts_with("<")) {
-    CDBError("STYLESHEET: decoded value is not XML");
+    CDBError(result == Inflated::ok ? "STYLESHEET: decoded value is not XML" : "STYLESHEET: invalid compressed data");
     return false;
   }
   return true;

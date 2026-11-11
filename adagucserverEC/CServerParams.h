@@ -178,8 +178,8 @@ public:
    * The posted Style (at most one) is used for the layer, regardless of its name and of STYLES; see styleSheetStyleIndex.
    * A request with a STYLESHEET may only have one layer, CRequest::process_querystring enforces this.
    * A posted Legend replaces the configured one with the same name, otherwise it is added with the provided name.
-   * The xml may be bare elements or wrapped in <Configuration>, or base64 encoded XML, optionally zlib (or gzip)
-   * compressed (anything not starting with '<').
+   * The xml may be bare elements or wrapped in <Configuration>, or base64 encoded XML, optionally compressed as raw
+   * deflate, zlib or gzip (anything not starting with '<'), see decodeStyleSheet in utils/StyleSheetHandler.h.
    * It must pass the allowlist in isAllowedStyleSheet
    * (utils/StyleSheetValidation.h); png files (SymbolInterval file, LegendGraphic value) must be in a symbol directory.
    * returns zero on success
