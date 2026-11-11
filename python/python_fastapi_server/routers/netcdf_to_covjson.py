@@ -92,31 +92,65 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     return georeferenceinfos[0]
 
 
-def get_dim(metadata: dict, dimname: str):
-    if "dims" in metadata and metadata["dims"] is not None:
-        for dim in metadata["dims"]:
-            if dimname == metadata["dims"][dim]["cdfName"]:
-                return metadata["dims"][dim]
-    return {}
+def netcdf_coordinate_axis(ncvar: netCDF4.Variable, dimname: str) -> ValuesAxis[AwareDatetime] | ValuesAxis[str] | ValuesAxis[float]:
+    """Convert a NetCDF coordinate variable to a CoverageJSON axis."""
+    if dimname == "time":
+        # num2date does not accept None for optional arguments such as calendar.
+        date_options = {
+            key: value
+            for key, value in {
+                "times": ncvar[:],
+                "units": ncvar.units,
+                "only_use_cftime_datetimes": False,
+                "only_use_python_datetimes": True,
+                "calendar": getattr(ncvar, "calendar", None),
+            }.items()
+            if value is not None
+        }
+        values = netCDF4.num2date(**date_options)
+        # NetCDF dates are UTC but timezone-naive; CoverageJSON needs aware dates.
+        return ValuesAxis[AwareDatetime](values=[value.replace(tzinfo=timezone.utc) for value in values.tolist()])
+
+    if "str" in str(ncvar.dtype):
+        return ValuesAxis[str](values=[str(value) for value in ncvar[:]])
+
+    return ValuesAxis[float](values=ncvar[:].data.tolist())
+
+
+def netcdf_coverage_referencing(dataset: netCDF4.Dataset) -> list[ReferenceSystemConnectionObject]:
+    """Build spatial and temporal references, defaulting to latitude/longitude."""
+    info = georeferenceinfos[0]
+    if "crs" in dataset.variables:
+        info = get_proj_info_from_proj_string(dataset.variables["crs"].proj4_params)
+    return [
+        ReferenceSystemConnectionObject(
+            system=ReferenceSystem(type=info.crstype, id=info.crsid),
+            coordinates=info.axes,
+        ),
+        ReferenceSystemConnectionObject(
+            system=ReferenceSystem(type="TemporalRS", calendar="Gregorian"),
+            coordinates=["t"],
+        ),
+    ]
 
 
 def coverage_values(values: ArrayLike) -> list[float | None]:
     """Flatten in C order, replacing masked or non-finite values with None."""
     flat = ma.asarray(values).ravel(order="C")
+
+    # Find invalid/masked values
     missing = ~np.isfinite(flat.data) | ma.getmask(flat)
     missing_count = np.count_nonzero(missing)
+
+    # All values are valid, shortcut to immediately return data
     if missing_count == 0:
         return flat.data.tolist()
+
+    # All invalid/missing values, shortcut to return all None.
     if missing_count == flat.size:
         return [None] * flat.size
 
-    # Sparse masks are faster to apply to a numeric list; use NumPy for dense masks.
-    if missing_count > flat.size // 8:
-        return ma.array(flat.data, mask=missing, copy=False).tolist()
-    result = flat.data.tolist()
-    for index in np.flatnonzero(missing):
-        result[index] = None
-    return result
+    return ma.array(flat.data, mask=missing, copy=False).tolist()
 
 
 def netcdf_to_covjson(
@@ -133,16 +167,12 @@ def netcdf_to_covjson(
         list[Coverage]: CoverageJSON objects for the variables and custom-dimension values
     """
 
-    axes: dict[str, ValuesAxis] = {}
+    axes: dict[str, ValuesAxis[AwareDatetime] | ValuesAxis[str] | ValuesAxis[float]] = {}
     ranges: dict[str, NdArrayFloat | TiledNdArrayFloat | AnyUrl] = {}
     parameters: dict[str, Parameter] = {}
 
     # float ta(time, height, y, x) ;
-    netcdfdimname_to_covdimname = {
-        "x": "x",
-        "y": "y",
-        "time": "t",
-    }
+    netcdfdimname_to_covdimname = {"x": "x", "y": "y", "time": "t"}
     netcdfdimname_to_covdimname.update(translate_dims)
     netcdfdimname_to_covdimname["time"] = "t"
 
@@ -150,168 +180,95 @@ def netcdf_to_covjson(
     custom_dim_values = []
     custom_dim_name = None
     coverages = []
+    referencing: list[ReferenceSystemConnectionObject] | None = None
+
     for variablename in netcdfdataset.variables:
         variable = netcdfdataset.variables[variablename]
         layer_name = translate_names.get(variablename, variablename)
 
-        # Find a variable with a grid_mapping attribute, this is a grid
-        if "grid_mapping" in variable.ncattrs():
-            # Get the names of the variable
-            axisnames = []
-            shape = []
-            for _, dimname in enumerate(variable.dimensions):
-                layer_dim_name = get_dim(metadata[layer_name], dimname).get("serviceName")
-                if dimname not in ["x", "y", "time"]:
-                    if (
-                        layer_dim_name in metadata[layer_name]["dims"]
-                        and "hidden" in metadata[layer_name]["dims"][layer_dim_name]
-                        and metadata[layer_name]["dims"][layer_dim_name]["hidden"]
-                    ):
-                        continue
-                ncvar = netcdfdataset.variables[dimname]
-                if ncvar.size >= 1 and dimname not in ["x", "y", "time"]:
-                    if not metadata[layer_name]["dims"][layer_dim_name]["type"] == "dimtype_vertical":
-                        custom_dim_name = netcdfdimname_to_covdimname.get(dimname, dimname)
-                        custom_dim_values = ncvar[:].tolist()
-                        continue
-                coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
-                if dimname not in ["x", "y", "time"] and metadata[layer_name]["dims"][layer_dim_name]["type"] == "dimtype_vertical":
-                    coverage_axis_name = "z"
-                axisnames.append(coverage_axis_name)
-                # Fill in the shape object for the NdArray
-                shape.append(ncvar.size)
+        # Skip non-grid variables.
+        if "grid_mapping" not in variable.ncattrs():
+            continue
 
-                # Fill in the dimension values for the NdArray
-                if dimname == "time":
-                    # Convert the date values to datetime objects.
-                    # Optional arguments are not handled by netCDF4.num2date therefore we remove them and pass a dict
-                    # as parameters.
-                    not_none_parameters = {
-                        keyword: value
-                        for keyword, value in {
-                            "times": ncvar[:],
-                            "units": ncvar.units,
-                            "only_use_cftime_datetimes": False,
-                            "only_use_python_datetimes": True,
-                            "calendar": getattr(ncvar, "calendar", None),
-                        }.items()
-                        if value is not None
-                    }
-                    values = netCDF4.num2date(**not_none_parameters)
-                    # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
-                    # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
-                    # https://github.com/Unidata/netcdf4-python/issues/357
-                    values_tz = [v.replace(tzinfo=timezone.utc) for v in values.tolist()]
-                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](values=values_tz)
-                elif "str" in str(ncvar.dtype):
-                    # Assign str values
-                    vals = [str(val) for val in ncvar[:]]
-                    axes[coverage_axis_name] = ValuesAxis[str](values=vals)
-                else:
-                    # Assign float values
-                    axes[coverage_axis_name] = ValuesAxis[float](values=ncvar[:].data.tolist())
+        if referencing is None:
+            referencing = netcdf_coverage_referencing(netcdfdataset)
+        layer_metadata = metadata[layer_name]
+        layer_dimensions = layer_metadata.get("dims") or {}
+        dimensions_by_cdf_name = {dim["cdfName"]: dim for dim in layer_dimensions.values()}
 
-            # Define the referencing system, defaulting to latlon
-            georeferencesysteminfo = georeferenceinfos[0]
+        # Get the names of the variable
+        axisnames = []
+        shape = []
+        for dimname in variable.dimensions:
+            dimension_metadata = dimensions_by_cdf_name.get(dimname, {})
+            is_spatial_or_time = dimname in ("x", "y", "time")
+            if not is_spatial_or_time and dimension_metadata.get("hidden", False):
+                continue
 
-            # Try to detect the georeferencesysteminfo based on the proj string in the crs variable of the netcdf file.
-            if "crs" in netcdfdataset.variables:
-                crsvar = netcdfdataset.variables["crs"]
-                georeferencesysteminfo = get_proj_info_from_proj_string(crsvar.proj4_params)
+            ncvar = netcdfdataset.variables[dimname]
+            is_vertical = not is_spatial_or_time and dimension_metadata["type"] == "dimtype_vertical"
+            if ncvar.size >= 1 and not is_spatial_or_time and not is_vertical:
+                custom_dim_name = netcdfdimname_to_covdimname.get(dimname, dimname)
+                custom_dim_values = ncvar[:].tolist()
+                continue
 
-            georeferencesystem = ReferenceSystem(type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid)
-            georeferencing = ReferenceSystemConnectionObject(system=georeferencesystem, coordinates=georeferencesysteminfo.axes)
-            temporalreferencesystem = ReferenceSystem(type="TemporalRS", calendar="Gregorian")
-            temporalreferencing = ReferenceSystemConnectionObject(system=temporalreferencesystem, coordinates=["t"])
+            coverage_axis_name = "z" if is_vertical else netcdfdimname_to_covdimname.get(dimname, dimname)
+            axisnames.append(coverage_axis_name)
+            # Fill in the shape object for the NdArray
+            shape.append(ncvar.size)
 
-            unit_of_measurement = variable.getncattr("unit") if "unit" in variable.ncattrs() else "unknown"
-            parameter_name = getattr(variable, "long_name", getattr(variable, "standard_name", variablename))
+            axes[coverage_axis_name] = netcdf_coordinate_axis(ncvar, dimname)
 
-            if len(custom_dim_values) == 0:
-                # Create the ndarray for the ranges object
-                ndarray = NdArrayFloat(
-                    axisNames=axisnames,
-                    shape=shape,
-                    values=coverage_values(variable[:]),
-                )
+        unit_of_measurement = variable.getncattr("unit") if "unit" in variable.ncattrs() else "unknown"
+        unit = Unit(symbol=Symbol(value=unit_of_measurement, type="http://www.opengis.net/def/uom/UCUM/"))
+        parameter_name = getattr(variable, "long_name", getattr(variable, "standard_name", variablename))
 
-                # Make the ranges object
-                ranges[layer_name] = ndarray
-
-                # Add the parameter
-                if "label" in metadata[layer_name]["layer"]:
-                    parameter_name = metadata[layer_name]["layer"]["variables"][0]["label"]
-                    parameter_standard_name = metadata[layer_name]["layer"]["variables"][0]["standard_name"]
-                elif "long_name" in variable.ncattrs():
-                    parameter_standard_name = metadata[layer_name]["layer"]["variables"][0].get(
-                        "standard_name", getattr(variable, "long_name")
-                    )
-                elif "standard_name" in variable.ncattrs():
-                    parameter_standard_name = getattr(variable, "standard_name")
-                else:
-                    parameter_standard_name = variablename
-
-                parameters[layer_name] = Parameter(
-                    # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
-                    #  Adaguc Config and the NetCDF values
-                    id=parameter_name,
-                    observedProperty=ObservedProperty(
-                        id=f"{VOCAB_ENDPOINT_URL}{parameter_standard_name}",
-                        label={"en": parameter_name},
-                    ),
-                    description={"en": parameter_name},
-                    unit=Unit(
-                        symbol=Symbol(
-                            value=unit_of_measurement,
-                            type="http://www.opengis.net/def/uom/UCUM",
-                        )
-                    ),
-                )
-                # Create the domain based on the axes object
-                domain = Domain(domainType=DomainType.grid, axes=axes, referencing=[georeferencing, temporalreferencing])
-
-                # Assemble and return the coveragejson based on the domain and the ranges
-                coverages.append(Coverage(domain=domain, ranges=ranges, parameters=parameters))
+        if len(custom_dim_values) == 0:
+            # Add the parameter
+            layer = layer_metadata["layer"]
+            if "label" in layer or "long_name" in variable.ncattrs():
+                parameter_metadata = layer["variables"][0]
+            if "label" in layer:
+                parameter_name = parameter_metadata["label"]
+                parameter_standard_name = parameter_metadata["standard_name"]
+            elif "long_name" in variable.ncattrs():
+                parameter_standard_name = parameter_metadata.get("standard_name", getattr(variable, "long_name"))
+            elif "standard_name" in variable.ncattrs():
+                parameter_standard_name = getattr(variable, "standard_name")
             else:
-                # Add the parameter
-                parameters[layer_name] = Parameter(
-                    # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
-                    #  Adaguc Config and the NetCDF values
-                    observedProperty=ObservedProperty(label={"en": parameter_name}),
-                    description={"en": parameter_name},
-                    unit=Unit(
-                        symbol=Symbol(
-                            value=unit_of_measurement,
-                            type="http://www.opengis.net/def/uom/UCUM/",
-                        )
-                    ),
-                )
+                parameter_standard_name = variablename
 
-                step_len = math.prod(shape)
-                # Read and flatten once, rather than rereading the entire variable
-                # for every custom-dimension value.
-                flat_values = variable[:].ravel(order="C")
-                for cnt, custom_dim_value in enumerate(custom_dim_values):
-                    # Create the ndarray for the ranges object
-                    ndarray = NdArrayFloat(
-                        axisNames=axisnames,
-                        shape=shape,
-                        values=coverage_values(flat_values[cnt * step_len : (cnt + 1) * step_len]),
-                    )
+            parameters[layer_name] = Parameter(
+                # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
+                #  Adaguc Config and the NetCDF values
+                id=parameter_name,
+                observedProperty=ObservedProperty(
+                    id=f"{VOCAB_ENDPOINT_URL}{parameter_standard_name}",
+                    label={"en": parameter_name},
+                ),
+                description={"en": parameter_name},
+                unit=unit,
+            )
+        else:
+            parameters[layer_name] = Parameter(
+                # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
+                #  Adaguc Config and the NetCDF values
+                observedProperty=ObservedProperty(label={"en": parameter_name}),
+                description={"en": parameter_name},
+                unit=unit,
+            )
 
-                    # Make the ranges object
-                    ranges[layer_name] = ndarray
+        flat_values = variable[:].ravel(order="C")
+        step_len = math.prod(shape)
+        for index, custom_dim_value in enumerate(custom_dim_values or [None]):
+            values = flat_values
+            custom = {}
+            if custom_dim_values:
+                values = flat_values[index * step_len : (index + 1) * step_len]
+                custom = {f"custom:{custom_dim_name}": custom_dim_value}
 
-                    custom = {f"custom:{custom_dim_name}": custom_dim_value}
-                    # Create the domain based on the axes object
-                    domain = Domain(
-                        domainType=DomainType.grid,
-                        axes=axes,
-                        referencing=[georeferencing, temporalreferencing],
-                        **custom,
-                    )
-
-                    # Assemble and return the coveragejson based on the domain and the ranges
-                    coverages.append(Coverage(domain=domain, ranges=ranges, parameters=parameters))
+            ranges[layer_name] = NdArrayFloat(axisNames=axisnames, shape=shape, values=coverage_values(values))
+            domain = Domain(domainType=DomainType.grid, axes=axes, referencing=referencing, **custom)
+            coverages.append(Coverage(domain=domain, ranges=ranges, parameters=parameters))
 
     return coverages

@@ -64,9 +64,7 @@ def get_entry_param_metadata(dat: dict, param_metadata: dict) -> tuple[str, dict
     return param_id, entry_metadata
 
 
-def covjson_from_resp(
-    dats: list[dict[str, Any]], metadata: dict[str, Any], collection_name: str
-) -> Coverage | CoverageCollection:
+def covjson_from_resp(dats: list[dict[str, Any]], metadata: dict[str, Any], collection_name: str) -> Coverage | CoverageCollection:
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
