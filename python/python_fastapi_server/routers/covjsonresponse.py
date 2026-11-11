@@ -7,13 +7,7 @@ class CovJSONResponse(Response):
 
 
 def create_coveragejson_response(coverage: BaseModel, response: Response | None = None) -> CovJSONResponse:
-    """Serialize a constructed Pydantic model, preserving backend response headers.
-
-    Return a Response directly so FastAPI does not serialize the model again.
-    Passing Headers without converting to dict preserves repeated trace headers.
-    """
-    return CovJSONResponse(
-        coverage.model_dump_json(exclude_none=True, by_alias=True),
-        headers=response.headers if response is not None else None,
-        status_code=response.status_code if response is not None and response.status_code is not None else 200,
-    )
+    """Serialize a constructed Pydantic model, otherwise Pydantic uses the slower json.dumps.
+    Setting headers is necessary to preserve Cache-Control and X-Trace-Timings"""
+    headers = response.headers if response is not None else None
+    return CovJSONResponse(coverage.model_dump_json(exclude_none=True, by_alias=True), headers=headers)
