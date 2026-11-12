@@ -262,12 +262,12 @@ def netcdf_to_covjson(
             )
 
         variable_values = variable[:]
-        selection = [slice(None)] * variable.ndim
+        selection: list[slice | int] = [slice(None)] * variable.ndim
         for index, custom_dim_value in enumerate(custom_dim_values or [None]):
             values = variable_values
             custom = {}
-            if custom_dim_values:
-                # A member doesn't need to be the outermost dimension (for example, time, member, y, x).
+            if custom_dim_axis is not None:
+                # A member doesn't have to be the outermost dimension (for example, time, member, y, x).
                 # Select the custom dim value before flattening the other axes.
                 selection[custom_dim_axis] = index
                 values = variable_values[tuple(selection)]
