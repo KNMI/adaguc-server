@@ -43,6 +43,7 @@ struct GDWDrawFunctionSettings {
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
   double smoothingFiter = 0;
+  int smoothingWrapWidth = 0; // Unique longitude columns; zero means no wrapping.
   // Smoothed values per 64x64 tile of the source grid, filled on first use. An empty tile is not computed yet.
   std::vector<std::vector<double>> smoothingMemo;
 

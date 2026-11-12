@@ -5,6 +5,9 @@
 #ifndef CGEOMETRYUTILS_H
 #define CGEOMETRYUTILS_H
 
+/** Return the number of unique longitude columns, or zero for a regional grid. */
+int getLongitudeWrapWidth(const CDataSource &dataSource);
+
 f8point compute2DPolygonCentroid(const std::vector<f8point> &vertices);
 f8point getCentroid(const float *polyX, const float *polyY, const int numPoints);
 f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSource);

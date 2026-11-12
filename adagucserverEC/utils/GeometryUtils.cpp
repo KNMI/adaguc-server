@@ -1,6 +1,22 @@
 
 #include "GeometryUtils.h"
 #include "Types/GeoParameters.h"
+#include "projectionUtils.h"
+
+int getLongitudeWrapWidth(const CDataSource &dataSource) {
+  if (!isLonLatProjection(dataSource.nativeProj4)) return 0;
+  double step = std::abs(dataSource.dfCellSizeX);
+  auto period = [step](int width) {
+    if (width < 2 || step == 0) return 0;
+    if (std::abs(width * step - 360) < step * 0.001) return width;
+    // Some grids store the first longitude again in the last column.
+    if (std::abs((width - 1) * step - 360) < step * 0.001) return width - 1;
+    return 0;
+  };
+  // The reader can pad a regional source to a full-world buffer.
+  if (dataSource.lonTransformDone && period(dataSource.dOrigWidth) == 0) return 0;
+  return period(dataSource.dWidth);
+}
 
 f8point compute2DPolygonCentroid(const std::vector<f8point> &vertices) {
   f8point centroid = {0, 0};

@@ -148,3 +148,14 @@ class TestGenericImageWarper:
             "test_getmap_latlon_latdecreasing_and_increasing_genericnearest.png",
             "DATASET=adaguc.tests.genericrender&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=latlon_latdecreasing_and_increasing_genericnearest&WIDTH=256&HEIGHT=512&CRS=EPSG%3A3857&BBOX=471070.27730388555,6649427.860630986,982084.0646480684,7697681.648355679&STYLES=autogeneric&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A53Z&0.9458434770354436",
         )
+
+    def test_global_smoothing_wraps_longitude(self):
+        """Smooth across the longitude seam, keeping latitude edges clipped."""
+        env = make_adaguc_env("adaguc.tests.genericrender.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        # Include both longitude edges and both poles.
+        run_adaguc_and_compare_image(
+            env,
+            "global_temperature_smoothed.png",
+            "DATASET=adaguc.tests.genericrender&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=global_temperature_smoothed&STYLES=global_temperature_smoothed&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=720&HEIGHT=360&FORMAT=image/png&TRANSPARENT=FALSE&TIME=2026-11-11T11:00:00Z",
+        )

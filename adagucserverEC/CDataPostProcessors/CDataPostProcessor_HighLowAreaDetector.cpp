@@ -5,7 +5,7 @@
 #include <array>
 #include <cmath>
 #include <map>
-#include <span>
+#include <CImageOperators/smoothRasterField.h>
 #include <CDebugger.h>
 
 /************************/
@@ -45,19 +45,21 @@ int CDPPHighLowAreaDetector::execute(CServerConfig::XMLE_DataPostProc *proc, CDa
   return 1;
 }
 
-constexpr int smoothWindow = 32;
+constexpr int smoothingRadius = 16;
 constexpr int clusterRadius = 48;
 
 // Check the center first so equal values do not cause a move.
 const std::array<i4point, 9> searchWindow = {
     {{.x = 0, .y = 0}, {.x = -1, .y = 1}, {.x = 0, .y = 1}, {.x = 1, .y = 1}, {.x = 1, .y = 0}, {.x = 1, .y = -1}, {.x = 0, .y = -1}, {.x = -1, .y = -1}, {.x = -1, .y = 0}}};
 
-/** Find the cell index, wrapping at the grid edges. */
-int getGridPointer(int x, int y, size_t w, size_t h) {
-  int mx = x % (int)w;
-  int my = y % (int)h;
-  x = mx < 0 ? mx + (int)w : mx;
-  y = my < 0 ? my + (int)h : my;
+/** Find a cell index. Only connected longitude edges wrap; other outside cells give -1. */
+int getGridPointer(int x, int y, int w, int h, int wrapWidth) {
+  if (y < 0 || y >= h) return -1;
+  if (wrapWidth > 0) {
+    x = (x % wrapWidth + wrapWidth) % wrapWidth;
+  } else if (x < 0 || x >= w) {
+    return -1;
+  }
   return x + y * w;
 }
 
@@ -86,14 +88,14 @@ PointDVWithLatLon projectGridPointToScreen(i4point p, CDataSource *dataSource, C
 
 struct PointCluster {
   i4point location;
-  float value;
+  double value;
 };
 
 /** Keep the strongest point in each nearby group. */
-std::vector<PointCluster> clusterPoints(const std::vector<i4point> &walkedPoints, const std::vector<float> &data, int w, int h, int clusterRadius, bool preferLower) {
+std::vector<PointCluster> clusterPoints(const std::vector<i4point> &walkedPoints, const std::vector<double> &data, int w, int h, int wrapWidth, int clusterRadius, bool preferLower) {
   std::vector<PointCluster> candidates;
   for (const auto &p: walkedPoints) {
-    float value = data[getGridPointer(p.x, p.y, w, h)];
+    double value = data[getGridPointer(p.x, p.y, w, h, wrapWidth)];
     if (std::isfinite(value)) candidates.push_back({.location = p, .value = value});
   }
   // Check stronger points first; use position to break ties.
@@ -113,85 +115,27 @@ std::vector<PointCluster> clusterPoints(const std::vector<i4point> &walkedPoints
     int bx = bucketCoordinate(p.x);
     int by = bucketCoordinate(p.y);
     // Only this area and its eight neighbors can contain a close point.
-    bool nearby = false;
-    for (int y = by - 1; y <= by + 1 && !nearby; y++) {
-      for (int x = bx - 1; x <= bx + 1 && !nearby; x++) {
-        auto bucket = buckets.find({x, y});
-        if (bucket == buckets.end()) continue;
-        nearby = std::ranges::any_of(bucket->second, [&](const i4point &accepted) { return std::abs(p.x - accepted.x) <= clusterRadius && std::abs(p.y - accepted.y) <= clusterRadius; });
+    auto hasNearbyPoint = [&](int candidateX) {
+      int candidateBucket = bucketCoordinate(candidateX);
+      for (int y = by - 1; y <= by + 1; y++) {
+        for (int x = candidateBucket - 1; x <= candidateBucket + 1; x++) {
+          auto bucket = buckets.find({x, y});
+          if (bucket == buckets.end()) continue;
+          if (std::ranges::any_of(bucket->second, [&](const i4point &accepted) { return std::abs(candidateX - accepted.x) <= clusterRadius && std::abs(p.y - accepted.y) <= clusterRadius; }))
+            return true;
+        }
       }
-    }
+      return false;
+    };
+    bool nearby = hasNearbyPoint(p.x);
+    // Also check across the longitude seam on global grids.
+    if (wrapWidth > 0 && !nearby) nearby = hasNearbyPoint(p.x - wrapWidth) || hasNearbyPoint(p.x + wrapWidth);
     if (!nearby) {
       pointClusters.push_back(candidate);
       buckets[{bx, by}].push_back(p);
     }
   }
   return pointClusters;
-}
-
-/** Average each 32x32 window. Leave edges and windows with missing data as NaN.
- * Return no data if the grid is too small.
- */
-std::vector<float> smoothPressureField(std::span<const float> source, int w, int h, bool hasNodataValue, float nodataValue) {
-  const int smoothHalf = smoothWindow / 2;
-
-  if (w <= smoothWindow || h <= smoothWindow) return {};
-  std::vector<float> data(size_t(w) * size_t(h), NAN);
-
-  // Count valid cells separately so missing values do not spoil later sums.
-  auto isValid = [hasNodataValue, nodataValue](float value) { return std::isfinite(value) && (!hasNodataValue || value != nodataValue); };
-  std::vector<double> rowSum(size_t(w) * size_t(h), 0.0);
-  std::vector<int> rowCount(size_t(w) * size_t(h), 0);
-  // First, add values across each row.
-  for (int y = 0; y < h; y++) {
-    auto rowData = source.subspan(size_t(y) * w, w);
-    double sum = 0;
-    int count = 0;
-    for (int wx = -smoothHalf; wx < smoothHalf; wx++) {
-      float value = rowData[smoothHalf + wx];
-      if (isValid(value)) {
-        sum += value;
-        count++;
-      }
-    }
-    rowSum[size_t(smoothHalf) + size_t(y) * w] = sum;
-    rowCount[size_t(smoothHalf) + size_t(y) * w] = count;
-    // Slide right: add the new cell and remove the old one.
-    for (int x = smoothHalf + 1; x < w - smoothHalf; x++) {
-      float entering = rowData[x + smoothHalf - 1];
-      float leaving = rowData[x - smoothHalf - 1];
-      if (isValid(entering)) {
-        sum += entering;
-        count++;
-      }
-      if (isValid(leaving)) {
-        sum -= leaving;
-        count--;
-      }
-      rowSum[size_t(x) + size_t(y) * w] = sum;
-      rowCount[size_t(x) + size_t(y) * w] = count;
-    }
-  }
-
-  // Then add the row sums down each column to get the full window average.
-  for (int x = smoothHalf; x < w - smoothHalf; x++) {
-    double sum = 0;
-    int count = 0;
-    for (int wy = -smoothHalf; wy < smoothHalf; wy++) {
-      size_t index = size_t(x) + size_t(smoothHalf + wy) * w;
-      sum += rowSum[index];
-      count += rowCount[index];
-    }
-    if (count == smoothWindow * smoothWindow) data[size_t(x) + size_t(smoothHalf) * w] = sum / count;
-    for (int y = smoothHalf + 1; y < h - smoothHalf; y++) {
-      size_t entering = size_t(x) + size_t(y + smoothHalf - 1) * w;
-      size_t leaving = size_t(x) + size_t(y - smoothHalf - 1) * w;
-      sum += rowSum[entering] - rowSum[leaving];
-      count += rowCount[entering] - rowCount[leaving];
-      if (count == smoothWindow * smoothWindow) data[size_t(x) + size_t(y) * w] = sum / count;
-    }
-  }
-  return data;
 }
 
 /** Place starting points at regular grid intervals. */
@@ -210,12 +154,18 @@ std::vector<i4point> createGridSeeds(int w, int h, int stride) {
  * Return true if a value passed the pressure threshold, even if the walk hit the limit.
  * Pressure thresholds use hPa.
  */
-bool walkToExtremum(i4point &point, const std::vector<float> &data, int w, int h, float threshold, bool preferLower) {
+bool walkToExtremum(i4point &point, const std::vector<double> &data, int w, int h, int wrapWidth, float threshold, bool preferLower) {
+  // Keep positions inside the grid, including grids with a repeated last longitude.
+  int start = getGridPointer(point.x, point.y, w, h, wrapWidth);
+  point = {.x = start % w, .y = start / w};
   bool accepted = false;
   for (size_t i = 0; i < 100; i++) {
-    std::array<float, 9> values;
+    std::array<double, 9> values;
+    std::array<int, 9> indices;
     for (size_t j = 0; j < searchWindow.size(); j++) {
-      values[j] = data[getGridPointer(point.x + searchWindow[j].x, point.y + searchWindow[j].y, w, h)];
+      indices[j] = getGridPointer(point.x + searchWindow[j].x, point.y + searchWindow[j].y, w, h, wrapWidth);
+      // Outside neighbors cannot win the search.
+      values[j] = indices[j] < 0 ? (preferLower ? INFINITY : -INFINITY) : data[indices[j]];
     }
     // Stop if the current value is outside the requested pressure range.
     if (!(preferLower ? values[0] < threshold : values[0] > threshold)) break;
@@ -224,8 +174,8 @@ bool walkToExtremum(i4point &point, const std::vector<float> &data, int w, int h
     size_t bestIndex = std::distance(values.begin(), best);
     // Stop when no neighbor is better than the current cell.
     if (bestIndex == 0) break;
-    point.x += searchWindow[bestIndex].x;
-    point.y += searchWindow[bestIndex].y;
+    point.x = indices[bestIndex] % w;
+    point.y = indices[bestIndex] / w;
   }
   return accepted;
 }
@@ -260,6 +210,7 @@ int CDPPHighLowAreaDetector::execute(CServerConfig::XMLE_DataPostProc *proc, CDa
     if (value < 1) value = 1;
     stride = value;
   }
+  const int wrapWidth = getLongitudeWrapWidth(*dataSource);
   auto gridIndexPoint = createGridSeeds((int)dataSource->dWidth, (int)dataSource->dHeight, stride);
 
   int id = 0; // TODO check if not grows besided number of available objects
@@ -285,21 +236,18 @@ int CDPPHighLowAreaDetector::execute(CServerConfig::XMLE_DataPostProc *proc, CDa
     const int w = (int)dataSource->dWidth;
     const int h = (int)dataSource->dHeight;
     // Smooth the field before looking for highs and lows.
-    auto data = smoothPressureField({orgVardata, size_t(w) * h}, w, h, ob->hasNodataValue, ob->hasNodataValue ? (float)ob->dfNodataValue : NAN);
-    if (data.empty()) {
-      id++;
-      continue;
-    }
+    auto data = smoothRasterRegion<float>(orgVardata, w, h, {0, 0, w, h}, smoothingRadius, wrapWidth, ob->hasNodataValue, ob->hasNodataValue ? ob->dfNodataValue : NAN);
     std::vector<i4point> walkedLowPoints;
     std::vector<i4point> walkedHighPoints;
-    for (auto &pLowest: gridIndexPoint) {
-      i4point pHighest = pLowest;
-      if (walkToExtremum(pLowest, data, w, h, 1010, true)) walkedLowPoints.push_back(pLowest);
-      if (walkToExtremum(pHighest, data, w, h, 1030, false)) walkedHighPoints.push_back(pHighest);
+    for (const auto &seed: gridIndexPoint) {
+      i4point pLowest = seed;
+      i4point pHighest = seed;
+      if (walkToExtremum(pLowest, data, w, h, wrapWidth, 1010, true)) walkedLowPoints.push_back(pLowest);
+      if (walkToExtremum(pHighest, data, w, h, wrapWidth, 1030, false)) walkedHighPoints.push_back(pHighest);
     }
     // Several walks may reach the same high or low; keep nearby results together.
-    auto lowClusters = clusterPoints(walkedLowPoints, data, w, h, clusterRadius, true);
-    auto highClusters = clusterPoints(walkedHighPoints, data, w, h, clusterRadius, false);
+    auto lowClusters = clusterPoints(walkedLowPoints, data, w, h, wrapWidth, clusterRadius, true);
+    auto highClusters = clusterPoints(walkedHighPoints, data, w, h, wrapWidth, clusterRadius, false);
     CDBDebug("Found %lu low clusters and %lu high clusters", lowClusters.size(), highClusters.size());
 
     // Styles use category 0 for lows and 2 for highs.
