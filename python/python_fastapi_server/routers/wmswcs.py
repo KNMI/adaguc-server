@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import os
-from urllib.parse import parse_qsl, quote, urlencode
+from urllib.parse import quote, urlencode
 from adaguc.CGIRunner import HTTP_STATUSCODE_400_BAD_REQUEST
 from adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 from adaguc.CGIRunner import HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY
@@ -19,7 +19,7 @@ wmsWcsRouter = APIRouter(responses={404: {"description": "Not found"}})
 
 logger = logging.getLogger(__name__)
 
-# Maximum size of the POST body, and of the query string passed to adaguc-server. The query string must fit in one fork
+# Maximum size of the query string passed to adaguc-server. The query string must fit in one fork
 # server request, and without fork server in one environment variable of the subprocess (128 KiB on Linux).
 MAX_REQUEST_BYTES = MAX_FORK_REQUEST_BYTES
 
@@ -40,52 +40,15 @@ def build_query_string(params) -> str:
     return "&" + urlencode(pairs, quote_via=quote) if pairs else ""
 
 
-def merge_params(query_params, body_params):
-    """
-    Merges POST body parameters over the query parameters. Keys are case insensitive for adaguc-server,
-    so a key in the body replaces the same key in any case from the query.
-    """
-    merged = {}
-    for k, v in list(query_params) + list(body_params):
-        merged[k.upper()] = (k, v)
-    return list(merged.values())
-
-
-async def read_limited_body(req: Request, limit: int) -> bytes | None:
-    """
-    Returns the request body, or None when it is larger than limit. Stops reading as soon as the limit is exceeded,
-    so a huge body is never held in memory.
-    """
-    content_length = req.headers.get("content-length", "")
-    if content_length.isdigit() and int(content_length) > limit:
-        return None
-    body = bytearray()
-    async for chunk in req.stream():
-        body += chunk
-        if len(body) > limit:
-            return None
-    return bytes(body)
-
-
-@wmsWcsRouter.api_route("/wms", methods=["GET", "POST"])
-@wmsWcsRouter.api_route("/wcs", methods=["GET", "POST"])
-@wmsWcsRouter.api_route("/adagucserver", methods=["GET", "POST"])
-@wmsWcsRouter.api_route("/adaguc-server", methods=["GET", "POST"])
+@wmsWcsRouter.get("/wms")
+@wmsWcsRouter.get("/wcs")
+@wmsWcsRouter.get("/adagucserver")
+@wmsWcsRouter.get("/adaguc-server")
 async def handle_wms(req: Request):
     """
-    Handle /wms endpoint. POST accepts the same parameters form url encoded in the body.
+    Handle /wms endpoint
     """
     params = list(req.query_params.items())
-    if req.method == "POST":
-        content_type = req.headers.get("content-type", "").split(";")[0].strip().lower()
-        if content_type != "application/x-www-form-urlencoded":
-            return Response(content="POST requires Content-Type application/x-www-form-urlencoded", status_code=415)
-        body = await read_limited_body(req, MAX_REQUEST_BYTES)
-        if body is None:
-            return Response(content=f"Request body too large, maximum is {MAX_REQUEST_BYTES} bytes", status_code=413)
-        body = body.decode("utf-8", errors="replace")
-        # Last value wins for repeated keys, also across query and body
-        params = merge_params(params, parse_qsl(body, keep_blank_values=True))
 
     adaguc_instance = setup_adaguc()
 
@@ -97,7 +60,7 @@ async def handle_wms(req: Request):
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     query_string = build_query_string(params)
-    # Encoding can make the query string up to three times as long as the body
+    # Encoding again can make the query string longer than the request url
     if len(query_string) > MAX_REQUEST_BYTES:
         return Response(content=f"Request parameters too large, maximum is {MAX_REQUEST_BYTES} bytes encoded", status_code=413)
 

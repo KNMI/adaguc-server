@@ -17,6 +17,7 @@
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "CImageOperators/smoothRasterField.h"
 #include "CUniqueRequests/trajectory.h"
+#include "utils/SldHandler.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
@@ -1040,3 +1041,134 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
 }
+
+// A base64 encoded STYLESHEET, optionally raw deflate, zlib or gzip compressed, is checked like the same stylesheet in XML
+TEST(CServerParams, applyStyleSheetBase64) {
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlays/FJTU/NS7ErSszMS8ovt9GH8m18M/PsDGz0QZSNb2KFnYGeKZAHZNjog42wAwClDRhL",
+                        // <?xml version="1.0"?><Configuration><Style name="s"/></Configuration>
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwg==",
+                        // The same URL safe without padding, and with spaces for the '+' characters a client did not url encode
+                        "eNqzsa_IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK-nb2eijKgAAMMIXwg",
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK nb2eijKgAAMMIXwg==",
+                        // The same gzip compressed
+                        "H4sIAAAAAAAC/7Oxr8jNUShLLSrOzM+zVTLUM1Cyt7Nxzs9Ly0wvLUosAYra2QSXVOakKuQl5qbaKhUr6dvZ6KMqAADtmytARQAAAA==",
+                        // The first one raw deflate compressed (as CompressionStream("deflate-raw") in a browser) and base64url encoded
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY6IONsAMA",
+                        // <Style name="x"><RenderSettings renderhint="discreteclasses"/></Style> raw deflate, without and with '=' padding
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA",
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA=",
+                        // The first one after an XML comment, raw deflate in two blocks: the compressed data starts with '<' (0x3C, a
+                        // non-final dynamic block), so it must not be taken for uncompressed XML
+                        "PE2HDYBACFwFB2AD4y72Xt6u03uA_wkh1zjiiJmGcaKyovt5Pex6mhfZ-0Fpps66CT8vjYgAKy-UIQEXG1wcFzLQBOLKCcbUTasSovjzv7Mq5w38CSJOgVFvxZZhTj4AAAD__7MJLqnMSVXIS8xNtVUqVrKz8UlNT81LsStKzMxLyi-30YfybXwz8-wMbPRBlI1vYoWdgZ4pkAdk2OiDjbADAA",
+                        // The first one without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                    }),
+                    true);
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>
+                        "eNqz8UmsTC1SKKksSLVVSkksSUxKLE5VsrNxy8xJDUgsybDTTy1JttGHc23CEosyE5NyUu0qbPThbBt9sDF2ADYMG0U=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlayswnIz8wrUUjLzytJy8wBiumnliTrFyQWF5enKOnb2eiD1dsBABFyEtI=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style> without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxQb2ludCBmb250ZmlsZT0iL2V0Yy9wYXNzd2QiLz48L1N0eWxlPg==",
+                        // Not base64, base64 that is no XML, and compressed data that is no XML
+                        "Style name=s",
+                        "bm90IHhtbA==",
+                        "eNrLyy9RqMjNAQALFQLD",
+                        // Raw deflate: no XML, truncated, invalid UTF-8 (<Style name="s\xff"/>) and 70000 spaces after <Style name="s"/>
+                        "y8svUajIzQEA",
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY",
+                        "swkuqcxJVchLzE21VSr-r6RvBwA",
+                        "7cExFUARAADAKp4CCnxKSPAHGxYW7ZUw3t1X9-ktzH-0HFdMJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz10",
+                        // Data that is no deflate data
+                        "AAAA",
+                        // The second valid one truncated, and with data after the compressed stream
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKg==",
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwng=",
+                        // <Style name="s"/> followed by 70000 spaces: 152 characters that decompress to more than 64 KB
+                        "eNrtwTEVQBEAAMAqngIKfEpI8AcbFhbtlTDe3Vf36S3Mf7QcV0wlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADPXWRCNW4=",
+                    }),
+                    false);
+}
+
+// For CHECK_EQUAL with std::string, so a failure shows both strings
+static SimpleString StringFrom(const std::string &value) { return StringFrom(value.c_str()); }
+
+static std::string sldResult(const std::string &namedLayerContent, std::string_view layerName, std::string_view styleName) {
+  std::string sld = R"(<StyledLayerDescriptor version="1.1.0" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se"><NamedLayer><se:Name>layer</se:Name>)" +
+                    namedLayerContent + "</NamedLayer></StyledLayerDescriptor>";
+  SldStyle sldStyle;
+  SldResult result = readSldBody(sld, "1.1.0", layerName, styleName, sldStyle);
+  return result == SldResult::ok ? sldStyle.layerName + ":" + sldStyle.styleSheet : result == SldResult::notForLayer ? "notForLayer" : "invalid";
+}
+
+static std::string sldUserStyle(const std::string &name, const std::string &isDefault, const std::string &adagucStyle) {
+  return "<UserStyle><se:Name>" + name + "</se:Name>" + isDefault + R"(<se:CoverageStyle><se:Rule><a:AdagucSymbolizer xmlns:a="https://github.com/KNMI/adaguc-server">)" + adagucStyle +
+         "</a:AdagucSymbolizer></se:Rule></se:CoverageStyle></UserStyle>";
+}
+
+TEST(SldHandler, symbolizerContentIsTheStyleSheet) {
+  // Namespaces are left out, escaped characters stay escaped, comments are left out
+  CHECK_EQUAL(sldResult(sldUserStyle("s", "", R"(<a:Style name="x &amp; y"><!-- c --><a:Min>0</a:Min><Legend>a&lt;b</Legend></a:Style>)"), "", ""),
+              std::string(R"(layer:<Style name="x &amp; y"><Min>0</Min><Legend>a&lt;b</Legend></Style>)"));
+  CHECK_EQUAL(sldResult(R"(<NamedStyle><se:Name>configured"</se:Name></NamedStyle>)", "", ""),
+              std::string(R"(layer:<Style name="configured&quot;"><IncludeStyle name="configured&quot;"/></Style>)"));
+  CHECK_EQUAL(sldResult("", "", ""), std::string("layer:"));
+}
+
+TEST(SldHandler, libraryModeSelectsTheStyle) {
+  std::string styles = sldUserStyle("first", "", "<Style/>") + sldUserStyle("second", "<IsDefault>true</IsDefault>", "<Style>2</Style>");
+  CHECK_EQUAL(sldResult(styles, "layer", ""), std::string("layer:<Style>2</Style>"));
+  CHECK_EQUAL(sldResult(styles, "layer", "first"), std::string("layer:<Style></Style>"));
+  CHECK_EQUAL(sldResult(styles, "layer", "third"), std::string("notForLayer"));
+  CHECK_EQUAL(sldResult(styles, "other", ""), std::string("notForLayer"));
+  // Without IsDefault the server's default style is used
+  CHECK_EQUAL(sldResult(sldUserStyle("first", "", "<Style/>"), "layer", ""), std::string("notForLayer"));
+  // Literal mode supports one style
+  CHECK_EQUAL(sldResult(styles, "", ""), std::string("invalid"));
+}
+
+static std::string sldColorMap(const std::string &rasterSymbolizerContent, const std::string &version = "1.1.0") {
+  std::string se = version == "1.0.0" ? "" : "se:";
+  std::string sld = R"(<StyledLayerDescriptor version=")" + version + R"(" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se"><NamedLayer><)" + se + "Name>layer</" + se +
+                    "Name><UserStyle><" + se + "FeatureTypeStyle><" + se + "Rule><" + se + "RasterSymbolizer>" + rasterSymbolizerContent + "</" + se + "RasterSymbolizer></" + se + "Rule></" + se +
+                    "FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>";
+  SldStyle sldStyle;
+  return readSldBody(sld, version, "", "", sldStyle) == SldResult::ok ? sldStyle.styleSheet : "invalid";
+}
+
+TEST(SldHandler, colorMapEntries) {
+  // QGIS writes ColorMapEntry in SLD 1.1.0, GeoServer in SLD 1.0.0. intervals: an entry colours the values below its quantity.
+  std::string intervals = R"(<se:ColorMap type="intervals"><se:ColorMapEntry color="#FF0000" quantity="1" label="low"/><se:ColorMapEntry color="#00ff00" quantity="2" opacity="0.5"/></se:ColorMap>)";
+  CHECK_EQUAL(sldColorMap(intervals), std::string(R"(<Style name="sld_colormap"><ShadeInterval min="-1e+30" max="1" label="low" fillcolor="#FF0000FF"/>)"
+                                                  R"(<ShadeInterval min="1" max="2" label="1 - 2" fillcolor="#00FF0080"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  // values: one value per class. The Opacity of the symbolizer applies to entries without opacity.
+  CHECK_EQUAL(sldColorMap(R"(<Opacity>0.2</Opacity><ColorMap type="values"><ColorMapEntry color="#000000" quantity="3"/></ColorMap>)", "1.0.0"),
+              std::string(R"(<Style name="sld_colormap"><ShadeInterval min="3" max="3.0000000000000004" label="3" fillcolor="#00000033"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  // ramp (the default type): palette indices proportional to the quantities
+  CHECK_EQUAL(sldColorMap(R"(<ColorMap><ColorMapEntry color="#000000" quantity="-10"/><ColorMapEntry color="#FFFFFF" quantity="0" opacity="0"/><ColorMapEntry color="#FF0000" quantity="10"/></ColorMap>)",
+                          "1.0.0"),
+              std::string(R"(<Legend name="sld_colormap" type="colorRange"><palette index="0" red="0" green="0" blue="0" alpha="255"/><palette index="120" red="255" green="255" blue="255" alpha="0"/>)"
+                          R"(<palette index="240" red="255" green="0" blue="0" alpha="255"/></Legend><Style name="sld_colormap"><Legend>sld_colormap</Legend><Min>-10</Min><Max>10</Max></Style>)"));
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap type="exact"><se:ColorMapEntry color="#000000" quantity="1"/></se:ColorMap>)"), std::string("invalid"));
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap><se:ColorMapEntry color="red" quantity="1"/><se:ColorMapEntry color="#000000" quantity="2"/></se:ColorMap>)"), std::string("invalid"));
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap><se:ColorMapEntry color="#000000" quantity="1"/></se:ColorMap>)"), std::string("invalid"));
+}
+
+TEST(SldHandler, categorizeAndInterpolate) {
+  std::string categorize = "<se:Value>#FF0000</se:Value><se:Threshold>1</se:Threshold><se:Value>#00FF00</se:Value>";
+  CHECK_EQUAL(sldColorMap("<se:ColorMap><se:Categorize>" + categorize + "</se:Categorize></se:ColorMap>"),
+              std::string(R"(<Style name="sld_colormap"><ShadeInterval min="-1e+30" max="1" label="&lt; 1" fillcolor="#FF0000FF"/>)"
+                          R"(<ShadeInterval min="1" max="1e+30" label="&gt;= 1" fillcolor="#00FF00FF"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  // A threshold that belongs to the class below: the bound moves up by the smallest step
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap><se:Categorize threshholdsBelongTo="preceding">)" + categorize + "</se:Categorize></se:ColorMap>"),
+              std::string(R"(<Style name="sld_colormap"><ShadeInterval min="-1e+30" max="1.0000000000000002" label="&lt;= 1" fillcolor="#FF0000FF"/>)"
+                          R"(<ShadeInterval min="1.0000000000000002" max="1e+30" label="&gt; 1" fillcolor="#00FF00FF"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  auto point = [](const char *data, const char *color) { return std::string("<se:InterpolationPoint><se:Data>") + data + "</se:Data><se:Value>" + color + "</se:Value></se:InterpolationPoint>"; };
+  CHECK_EQUAL(sldColorMap("<se:Opacity>0.5</se:Opacity><se:ColorMap><se:Interpolate>" + point("0", "#000000") + point("4", "#FFFFFF") + "</se:Interpolate></se:ColorMap>"),
+              std::string(R"(<Legend name="sld_colormap" type="colorRange"><palette index="0" red="0" green="0" blue="0" alpha="128"/><palette index="240" red="255" green="255" blue="255" alpha="128"/>)"
+                          R"(</Legend><Style name="sld_colormap"><Legend>sld_colormap</Legend><Min>0</Min><Max>4</Max></Style>)"));
+}
+

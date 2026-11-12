@@ -27,6 +27,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
+#include "utils/StyleSheetHandler.h"
 #include "CServerParams.h"
 #include "CServerError.h"
 #include "CDataSource.h"
@@ -294,6 +295,12 @@ int CXMLGen::getWMS_1_3_0_Capabilities(std::string &XMLDoc, const std::vector<Me
   std::string wms130xsi = "xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
   CT::replaceSelf(XMLDoc, "[SCHEMADEFINITION]", wms130xsi.c_str());
   CT::replaceSelf(XMLDoc, "[CONTACTINFORMATION]", "");
+
+  // SLD profile of WMS (OGC 05-078r4 7.3): user styles in SLD_BODY, see CServerParams::applySldBody
+  if (isStyleSheetEnabled()) {
+    XMLDoc += R"(<sld:UserDefinedSymbolization xmlns:sld="http://www.opengis.net/sld" SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0" InlineFeatureData="0" RemoteWCS="0"/>)"
+              "\n";
+  }
 
   XMLDoc += "<Layer>\n";
   CT::printfconcat(XMLDoc, "<Title>%s</Title>\n", srvParam->cfg->WMS[0].RootLayer[0].Title[0].elementValue.c_str());

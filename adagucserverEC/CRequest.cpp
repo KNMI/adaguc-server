@@ -47,6 +47,7 @@ static const bool CREQUEST_DEBUG = false;
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
+#include "utils/StyleSheetHandler.h"
 #include "handleTileRequest.h"
 #include <traceTimings/traceTimings.h>
 #include "utils/serverutils.h"
@@ -948,6 +949,18 @@ int CRequest::process_querystring() {
     if (uriKeyUpperCase == "STYLESHEET") {
       srvParam->styleSheet = uriValue;
     }
+    // SLD profile of WMS (OGC 05-078r4): SLD_BODY with SLD_VERSION, see CServerParams::applySldBody
+    if (uriKeyUpperCase == "SLD_BODY") {
+      srvParam->sldBody = uriValue;
+    }
+    if (uriKeyUpperCase == "SLD_VERSION") {
+      srvParam->sldVersion = uriValue;
+    }
+    if (uriKeyUpperCase == "SLD" && !uriValue.empty()) {
+      CDBError("ADAGUC Server: SLD with a URL is not supported, send the SLD in SLD_BODY");
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    }
     if (!uriValue.empty()) {
       if (uriKeyUpperCase == "COORDS") trajectoryCoords = uriValue;
       // BBOX Parameters
@@ -1306,22 +1319,29 @@ int CRequest::process_querystring() {
   }
   StopWatch_Measure("query string processed");
 
-  if (!srvParam->styleSheet.empty()) {
-    const char *styleSheetEnable = getenv("ADAGUC_STYLESHEET_ENABLE");
-    if (styleSheetEnable == nullptr || std::string_view(styleSheetEnable) != "TRUE") {
-      CDBError("ADAGUC Server: STYLESHEET is not enabled on this server");
+  if (!srvParam->styleSheet.empty() || !srvParam->sldBody.empty()) {
+    const char *parameter = srvParam->sldBody.empty() ? "STYLESHEET" : "SLD_BODY";
+    if (!isStyleSheetEnabled()) {
+      CDBError("ADAGUC Server: %s is not enabled on this server", parameter);
+      dErrorOccured = 1;
+      setExceptionType(ServiceExceptionType::UnprocessableEntity);
+    } else if (!srvParam->styleSheet.empty() && !srvParam->sldBody.empty()) {
+      CDBError("ADAGUC Server: STYLESHEET and SLD_BODY can not be used together");
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
     } else if (srvParam->requestedLayerNames.size() > 1) {
-      // The posted style applies to every layer, so only one layer is allowed
-      CDBError("ADAGUC Server: STYLESHEET can only be used with one layer, got %zu", srvParam->requestedLayerNames.size());
+      // The style applies to every layer, so only one layer is allowed
+      CDBError("ADAGUC Server: %s can only be used with one layer, got %zu", parameter, srvParam->requestedLayerNames.size());
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
-    } else if (srvParam->applyStyleSheet(srvParam->styleSheet) != 0) {
-      CDBError("ADAGUC Server: Invalid STYLESHEET");
+    } else if (srvParam->sldBody.empty() ? srvParam->applyStyleSheet(srvParam->styleSheet) != 0
+                                         : srvParam->applySldBody(srvParam->sldBody, srvParam->Styles.empty() ? srvParam->Style : srvParam->Styles) != 0) {
+      CDBError("ADAGUC Server: Invalid %s", parameter);
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
     }
+    // Without LAYERS, the layer comes from the SLD (05-078r4 9.2.1)
+    if (!srvParam->requestedLayerNames.empty()) dFound_WMSLAYERS = 1;
   }
 
   if (dFound_Service == 0) {

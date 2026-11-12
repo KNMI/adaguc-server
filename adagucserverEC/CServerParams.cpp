@@ -33,6 +33,8 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include "utils/StyleSheetValidation.h"
+#include "utils/StyleSheetHandler.h"
+#include "utils/SldHandler.h"
 #include "utils/lintDataset.h"
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
@@ -370,9 +372,29 @@ static bool resolveStyleSheetPngFile(std::string &file) {
   return true;
 }
 
+int CServerParams::applySldBody(const std::string &sldBodyValue, const std::string &styleName) {
+  std::string sld = CT::trim(sldBodyValue);
+  if (!sld.starts_with("<") && !decodeStyleSheet(sld, sld)) return 1;
+  std::string layerName = requestedLayerNames.empty() ? "" : requestedLayerNames[0];
+  SldStyle sldStyle;
+  switch (readSldBody(sld, sldVersion, layerName, styleName, sldStyle)) {
+  case SldResult::invalid:
+    return 1;
+  case SldResult::notForLayer:
+    CDBDebug("SLD_BODY has no style for layer [%s] and style [%s], the server's style is used", layerName.c_str(), styleName.c_str());
+    return 0;
+  case SldResult::ok:
+    break;
+  }
+  if (requestedLayerNames.empty()) requestedLayerNames.push_back(sldStyle.layerName);
+  return sldStyle.styleSheet.empty() ? 0 : applyStyleSheet(sldStyle.styleSheet);
+}
+
 int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   if (cfg == nullptr) return 1;
   std::string xml = CT::trim(styleSheetXml);
+  // XML starts with '<'. Anything else is read as base64 encoded XML, optionally compressed.
+  if (!xml.empty() && !xml.starts_with("<") && !decodeStyleSheet(xml, xml)) return 1;
   if (xml.starts_with("<?xml")) {
     size_t declarationEnd = xml.find("?>");
     xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));
