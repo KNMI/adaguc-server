@@ -16,6 +16,7 @@
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "CImageOperators/smoothRasterField.h"
+#include "utils/GeometryUtils.h"
 #include "CUniqueRequests/trajectory.h"
 #include <vector>
 #include <chrono>
@@ -707,12 +708,13 @@ TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
 }
 
 // Smooths a width x height grid with radius r and returns the smoothed value of every cell.
-static std::vector<float> smoothGrid(std::vector<float> grid, int width, int height, int r, double nodataValue = -9999) {
+static std::vector<float> smoothGrid(std::vector<float> grid, int width, int height, int r, double nodataValue = -9999, int wrapWidth = 0) {
   GDWState state = {};
   state.sourceGridWidth = width;
   state.sourceGridHeight = height;
   GDWDrawFunctionSettings settings{};
   settings.smoothingFiter = r;
+  settings.smoothingWrapWidth = wrapWidth;
   settings.hasNodataValue = true;
   settings.dfNodataValue = nodataValue;
   std::vector<float> result(grid.size());
@@ -722,6 +724,74 @@ static std::vector<float> smoothGrid(std::vector<float> grid, int width, int hei
     }
   }
   return result;
+}
+
+TEST(smoothRasterField, onlyGlobalLongitudeGridsWrap) {
+  CDataSource source;
+  source.nativeProj4 = "+proj=longlat +datum=WGS84";
+  source.dfCellSizeX = 0.5;
+  source.dWidth = 720;
+  CHECK(getLongitudeWrapWidth(source) == 720);
+  source.dfCellSizeX = -0.5;
+  CHECK(getLongitudeWrapWidth(source) == 720);
+  source.dWidth = 721;
+  CHECK(getLongitudeWrapWidth(source) == 720);
+  source.dWidth = 719;
+  CHECK(getLongitudeWrapWidth(source) == 0);
+  source.dWidth = 720;
+  source.nativeProj4 = "+proj=merc";
+  CHECK(getLongitudeWrapWidth(source) == 0);
+  source.nativeProj4 = "EPSG:4326";
+  source.lonTransformDone = true;
+  source.dOrigWidth = 200; // A regional source padded to 720 columns.
+  CHECK(getLongitudeWrapWidth(source) == 0);
+  source.dOrigWidth = 720;
+  CHECK(getLongitudeWrapWidth(source) == 720);
+}
+
+TEST(smoothRasterField, wrapsLongitudeButClipsLatitude) {
+  auto regional = smoothGrid({1, 2, 3, 4, 10}, 5, 1, 1);
+  auto global = smoothGrid({1, 2, 3, 4, 10}, 5, 1, 1, -9999, 5);
+  CHECK(regional.front() == 1.5f);
+  CHECK(global.front() == 13.0f / 3);
+  CHECK(global.back() == 5);
+  CHECK(smoothGrid({1, 1, 10, 10, 100, 100}, 2, 3, 1, -9999, 2) == (std::vector<float>{5.5, 5.5, 37, 37, 55, 55}));
+}
+
+TEST(smoothRasterField, repeatedLongitudeAndLargeRadiusUseEachColumnOnce) {
+  CHECK(smoothGrid({1, 2, 3, 4, 10, 1}, 6, 1, 40, -9999, 5) == std::vector<float>(6, 4));
+  auto values = smoothGrid({1, 2, 3, 4, 10, 1}, 6, 1, 1, -9999, 5);
+  CHECK(values.front() == values.back());
+}
+
+TEST(smoothRasterField, wrappedRegionsMatchTileCacheAndBruteForce) {
+  const int width = 150, height = 97, radius = 16;
+  std::vector<float> grid(width * height);
+  for (int i = 0; i < width * height; i++) grid[i] = i % 17 == 0 ? NAN : float(i % 101);
+  auto tiled = smoothGrid(grid, width, height, radius, -9999, width);
+  auto full = smoothRasterRegion<float>(grid.data(), width, height, {0, 0, width, height}, radius, width, false, NAN);
+  auto region = smoothRasterRegion<float>(grid.data(), width, height, {63, 60, 70, 69}, radius, width, false, NAN);
+  int mismatches = 0;
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      double sum = 0;
+      int count = 0;
+      for (int sy = std::max(0, y - radius); sy <= std::min(height - 1, y + radius); sy++) {
+        for (int dx = -radius; dx <= radius; dx++) {
+          float value = grid[(x + dx + width) % width + sy * width];
+          if (std::isfinite(value)) {
+            sum += value;
+            count++;
+          }
+        }
+      }
+      float expected = sum / count;
+      size_t index = size_t(x) + size_t(y) * width;
+      if (tiled[index] != expected || (float)full[index] != expected) mismatches++;
+      if (x >= 63 && x < 70 && y >= 60 && y < 69 && (float)region[(x - 63) + (y - 60) * 7] != expected) mismatches++;
+    }
+  }
+  CHECK(mismatches == 0);
 }
 
 TEST(smoothRasterField, averagesWindowClippedAtEdges) {

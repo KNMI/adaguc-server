@@ -26,4 +26,20 @@
     <AdditionalLayer replace="false" style="autogeneric">latlon_latincreasing</AdditionalLayer>
   </Layer>
 
+  <Style name="global_temperature_smoothed">
+    <Legend>bluewhitered</Legend>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <Min>-45</Min>
+    <Max>45</Max>
+    <SmoothingFilter>16</SmoothingFilter>
+  </Style>
+
+  <Layer type="database">
+    <Name>global_temperature_smoothed</Name>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/global_smoothing/ecmwf-temperature-0p5.nc</FilePath>
+    <Variable>air-temperature-hagl</Variable>
+    <Styles>global_temperature_smoothed</Styles>
+  </Layer>
+
 </Configuration>

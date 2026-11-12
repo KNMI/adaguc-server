@@ -29,6 +29,7 @@
 #include "CGenericDataWarper.h"
 #include <CImageOperators/drawContour.h>
 #include <CImageOperators/smoothRasterField.h>
+#include <utils/GeometryUtils.h>
 #include <string>
 #include <vector>
 #include "CCDFTypes.h"
@@ -178,6 +179,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+  settings.smoothingWrapWidth = getLongitudeWrapWidth(*dataSource);
   MemoizationForDeterminePixelColorFromValue memo; // scoped to this render() call only
 
   int destDataWidth = drawImage->geoParams.width;
