@@ -1,5 +1,6 @@
 **Version X.Y.Z**
 
+- Fixed an uninitialized udunits unit in `CTime`, which could make the first time conversion of a request fail (seen as `NETCDF_DIM_time` `0` in the GeoTIFF band metadata).
 - The FastAPI server now brotli compresses all content types except binary or already compressed ones, like images, NetCDF and `application/octet-stream`. Before, only a fixed list of content types was compressed, so for example CoverageJSON (`application/prs.coverage+json`), GeoJSON and `application/json; charset=utf-8` were not. Responses of these types cached in Redis by an older version are handled as not cached.
 - WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.
 - New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only.
