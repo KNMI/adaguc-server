@@ -12,4 +12,4 @@ psutil~=7.2
 pylint~=4.0
 pytest~=9.0
 pytest-asyncio~=1.4
-psycopg2~=2.9
+psycopg[binary]~=3.3

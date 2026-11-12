@@ -61,8 +61,10 @@ pre-commit==4.7.0
     # via -r requirements-dev.in
 psutil==7.2.2
     # via -r requirements-dev.in
-psycopg2==2.9.13
+psycopg[binary]==3.3.9
     # via -r requirements-dev.in
+psycopg-binary==3.3.9
+    # via psycopg
 pygments==2.21.0
     # via pytest
 pylint==4.1.3

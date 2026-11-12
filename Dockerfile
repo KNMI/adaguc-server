@@ -99,6 +99,16 @@ RUN apt-get -q -y update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# The sanitize build (BUILD_TYPE=--sanitize) links the AddressSanitizer runtime dynamically, so the
+# binary does not start without it. It used to be installed as a dependency of libgdal-dev.
+ARG BUILD_TYPE
+RUN if [ "$BUILD_TYPE" = "--sanitize" ]; then \
+    apt-get -q -y update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -q -y install libasan8 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*; \
+    fi
+
 # Install the netcdf-c build with the full-file-read-on-open fix (see build
 # stage above), registering it with the dynamic linker the same way.
 COPY --from=build /opt/netcdf-c /opt/netcdf-c
@@ -115,14 +125,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 ######### Third stage, test dependencies ############
 FROM deps AS test-deps
-
-# psycopg2 in requirements-dev.txt is built from source: it needs a C compiler and the libpq headers
-RUN apt-get -q -y update \
-    && DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
-    gcc \
-    libpq-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
