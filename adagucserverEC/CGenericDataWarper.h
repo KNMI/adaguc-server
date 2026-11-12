@@ -89,8 +89,10 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
   i4point wh = {.x = sourceGeoParams.width, .y = sourceGeoParams.height};
   f8box newbox = {
       .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
+  // The source bbox can be upside down (for example when the latitudes ascend), which inverts newbox. Sort it before rounding, so that floor
+  // rounds the lower end down and ceil the upper end up. Rounding first and sorting afterwards shrinks the range by up to a cell on each side.
+  newbox.sort();
   i4box newpixelspan = {.left = (int)floor(newbox.left * wh.x), .bottom = (int)floor(newbox.bottom * wh.y), .right = (int)ceil(newbox.right * wh.x), .top = (int)ceil(newbox.top * wh.y)};
-  newpixelspan.sort();
   newpixelspan = i4box{
       .left = newpixelspan.left - 1,
       .bottom = newpixelspan.bottom - 1,
