@@ -1,0 +1,4505 @@
+{
+  "type": "CoverageCollection",
+  "coverages": [
+    {
+      "id": "coverage_1",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 1.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050001.0,
+            152050101.0,
+            152050201.0,
+            152050301.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_2",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 2.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050002.0,
+            152050102.0,
+            152050202.0,
+            152050302.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_3",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 3.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050003.0,
+            152050103.0,
+            152050203.0,
+            152050303.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_4",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 4.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050004.0,
+            152050104.0,
+            152050204.0,
+            152050304.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_5",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 5.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050005.0,
+            152050105.0,
+            152050205.0,
+            152050305.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_6",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 6.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050006.0,
+            152050106.0,
+            152050206.0,
+            152050306.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_7",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 7.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050007.0,
+            152050107.0,
+            152050207.0,
+            152050307.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_8",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 8.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050008.0,
+            152050108.0,
+            152050208.0,
+            152050308.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_9",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 9.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050009.0,
+            152050109.0,
+            152050209.0,
+            152050309.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_10",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 10.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050010.0,
+            152050110.0,
+            152050210.0,
+            152050310.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_11",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 11.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050011.0,
+            152050111.0,
+            152050211.0,
+            152050311.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_12",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 12.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050012.0,
+            152050112.0,
+            152050212.0,
+            152050312.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_13",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 13.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050013.0,
+            152050113.0,
+            152050213.0,
+            152050313.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_14",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 14.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050014.0,
+            152050114.0,
+            152050214.0,
+            152050314.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_15",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 15.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050015.0,
+            152050115.0,
+            152050215.0,
+            152050315.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_16",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 16.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050016.0,
+            152050116.0,
+            152050216.0,
+            152050316.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_17",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 17.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050017.0,
+            152050117.0,
+            152050217.0,
+            152050317.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_18",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 18.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050018.0,
+            152050118.0,
+            152050218.0,
+            152050318.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_19",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 19.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050019.0,
+            152050119.0,
+            152050219.0,
+            152050319.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_20",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 20.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050020.0,
+            152050120.0,
+            152050220.0,
+            152050320.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_21",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 21.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050021.0,
+            152050121.0,
+            152050221.0,
+            152050321.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_22",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 22.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050022.0,
+            152050122.0,
+            152050222.0,
+            152050322.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_23",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 23.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050023.0,
+            152050123.0,
+            152050223.0,
+            152050323.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_24",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 24.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050024.0,
+            152050124.0,
+            152050224.0,
+            152050324.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_25",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 25.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050025.0,
+            152050125.0,
+            152050225.0,
+            152050325.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_26",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 26.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050026.0,
+            152050126.0,
+            152050226.0,
+            152050326.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_27",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 27.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050027.0,
+            152050127.0,
+            152050227.0,
+            152050327.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_28",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 28.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050028.0,
+            152050128.0,
+            152050228.0,
+            152050328.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_29",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 29.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050029.0,
+            152050129.0,
+            152050229.0,
+            152050329.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_30",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 30.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050030.0,
+            152050130.0,
+            152050230.0,
+            152050330.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_31",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 31.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050031.0,
+            152050131.0,
+            152050231.0,
+            152050331.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_32",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 32.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050032.0,
+            152050132.0,
+            152050232.0,
+            152050332.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_33",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 33.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050033.0,
+            152050133.0,
+            152050233.0,
+            152050333.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_34",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 34.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050034.0,
+            152050134.0,
+            152050234.0,
+            152050334.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_35",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 35.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050035.0,
+            152050135.0,
+            152050235.0,
+            152050335.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_36",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 36.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050036.0,
+            152050136.0,
+            152050236.0,
+            152050336.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_37",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 37.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050037.0,
+            152050137.0,
+            152050237.0,
+            152050337.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_38",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 38.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050038.0,
+            152050138.0,
+            152050238.0,
+            152050338.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_39",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 39.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050039.0,
+            152050139.0,
+            152050239.0,
+            152050339.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_40",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 40.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050040.0,
+            152050140.0,
+            152050240.0,
+            152050340.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_41",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 41.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050041.0,
+            152050141.0,
+            152050241.0,
+            152050341.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_42",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 42.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050042.0,
+            152050142.0,
+            152050242.0,
+            152050342.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_43",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 43.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050043.0,
+            152050143.0,
+            152050243.0,
+            152050343.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_44",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 44.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050044.0,
+            152050144.0,
+            152050244.0,
+            152050344.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_45",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 45.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050045.0,
+            152050145.0,
+            152050245.0,
+            152050345.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_46",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 46.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050046.0,
+            152050146.0,
+            152050246.0,
+            152050346.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_47",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 47.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050047.0,
+            152050147.0,
+            152050247.0,
+            152050347.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_48",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 48.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050048.0,
+            152050148.0,
+            152050248.0,
+            152050348.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_49",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 49.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050049.0,
+            152050149.0,
+            152050249.0,
+            152050349.0
+          ]
+        }
+      }
+    },
+    {
+      "id": "coverage_50",
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "PointSeries",
+        "axes": {
+          "x": {
+            "values": [
+              5.0
+            ]
+          },
+          "y": {
+            "values": [
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z",
+              "2025-03-01T02:00:00Z",
+              "2025-03-01T03:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 50.0,
+        "custom:reference_time": "2025-03-01T00:00:00Z"
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "id": "mymemberdata",
+          "label": {
+            "en:": "mydata"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/mydata",
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "testunits",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t"
+          ],
+          "shape": [
+            4
+          ],
+          "values": [
+            152050050.0,
+            152050150.0,
+            152050250.0,
+            152050350.0
+          ]
+        }
+      }
+    }
+  ]
+}

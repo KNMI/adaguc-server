@@ -780,6 +780,10 @@ def test_point_custom_dim_request_all_members(client: TestClient):
     assert data["axisNames"] == ["t"]
     assert data["shape"] == [4]
 
+    filename = "position_all_members.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(position_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
 
 def test_cube_custom_dim_request_all_members(client: TestClient):
     # position call on data which includes a custom dimension, should mention dimension even if we don't query it specifically
@@ -807,6 +811,34 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
     assert data["type"] == "NdArray"
     assert data["axisNames"] == ["t", "y", "x"]
     assert data["shape"] == [4, 3, 3]
+
+    filename = "cube_all_members.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(cube_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+@pytest.mark.parametrize("query_type", ["cube", "position"])
+@pytest.mark.parametrize(
+    "datetime, suffix",
+    [
+        ("2025-03-01T00:00:00Z/2025-03-01T01:00:00Z", "two_times"),
+        ("2025-03-01T00:00:00Z", "single_time"),
+    ],
+)
+def test_custom_dim_two_members_and_timesteps_selects_correct_values(client: TestClient, query_type, datetime, suffix):
+    params = {"parameter-name": "mymemberdata", "datetime": datetime, "member": "1,2"}
+    if query_type == "cube":
+        extra_params = {"bbox": "4.5,51.5,7.5,54.5", "resolution_x": 1, "resolution_y": 1}
+    else:
+        extra_params = {"coords": "POINT(5 52)"}
+    params |= extra_params
+
+    resp = client.get(f"/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/{query_type}", params=params)
+    assert resp.status_code == 200, resp.text
+
+    filename = f"{query_type}_two_members_{suffix}.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(resp.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
 def test_cube_packed_fill_values(client: TestClient) -> None:
@@ -1185,22 +1217,33 @@ def test_trajectory_rotated_grid(client):
     assert len(points) > 2
 
 
-def test_trajectory_hidden_height_and_members(client):
+@pytest.mark.parametrize(
+    "member, datetime, count, filename",
+    [
+        ("*", "2024-05-23T01:00:00Z/2024-05-23T02:00:00Z", 5, "trajectory_all_members.json"),
+        ("1,2", "2024-05-23T01:00:00Z/2024-05-23T02:00:00Z", 2, "trajectory_two_members_two_times.json"),
+        ("1,2", "2024-05-23T01:00:00Z", 2, "trajectory_two_members_single_time.json"),
+    ],
+)
+def test_trajectory_hidden_height_and_members(client, member, datetime, count, filename):
     base = "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances/202405230000"
     response = client.get(
         base + "/trajectory",
         params={
             "coords": "LINESTRING(3.4 52.5,7.9 52.5)",
             "parameter-name": "air_temperature_hagl",
-            "member": "*",
+            "member": member,
+            "datetime": datetime,
             "z": "3",
         },
     )
     assert response.status_code == 200, response.text
     coverages = response.json()["coverages"]
-    assert len(coverages) == 5
-    assert len({coverage["domain"]["custom:member"] for coverage in coverages}) == 5
+    assert len(coverages) == count
+    assert len({coverage["domain"]["custom:member"] for coverage in coverages}) == count
     assert all(coverage["domain"]["axes"]["z"]["values"] == [2] for coverage in coverages)
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(response.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
 def test_edr_untyped_or_named_height():
