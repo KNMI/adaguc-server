@@ -24,6 +24,7 @@
 - Reduce all EDR response times and reduce python memory usage for cube call.
 - EDR Cube query with multiple members and multiple times could select wrong values, this is now fixed. Fixes [#851](https://github.com/KNMI/adaguc-server/issues/851).
 - Check metadata layer existence once per autosync run, instead of per layer
+- Fixed missing rows at the south edge of a GetMap image when data with ascending latitudes (south to north) is drawn with bilinear interpolation or a shaded style in the CRS of the data. Depending on how the requested area lines up with the grid, up to a cell of data at the bottom of the image was left transparent. Data with descending latitudes was not affected.
 
 **Version 9.2.0 - 2026-10-28**
 
