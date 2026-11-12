@@ -19,7 +19,7 @@ from netCDF4 import Dataset
 
 from .utils.edr_exception import exc_failed_call
 
-from .covjsonresponse import CovJSONResponse
+from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .utils.edr_utils import (
     get_custom,
     get_dataset_from_collection,
@@ -53,12 +53,12 @@ async def get_collection_cube(
     request: Request,
     response: Response,
     bbox: str,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
-) -> Coverage:
+) -> CovJSONResponse:
     """Returns information in EDR format for a given collection and position"""
     return await get_coll_inst_cube(
         collection_name,
@@ -86,12 +86,12 @@ async def get_coll_inst_cube(
     response: Response,
     bbox: str,
     instance: str | None = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
+    datetime_par: str | None = Query(default=None, alias="datetime"),
     parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
-) -> CoverageCollection | Coverage:
+) -> CovJSONResponse:
     """Returns information in EDR format for a given collection, instance and position"""
     allowed_params = [
         "bbox",
@@ -152,9 +152,8 @@ async def get_coll_inst_cube(
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             continue
-        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response)
-
-        coveragejson = netcdf_to_covjson(metadata[collection_name], result_dataset, translate_names, translate_dims)
+        with Dataset(f"{parameter_name}.nc", memory=wcs_response) as result_dataset:
+            coveragejson = netcdf_to_covjson(metadata[collection_name], result_dataset, translate_names, translate_dims)
         if coveragejson is not None:
             coveragejsons.extend(coveragejson)
             for covjson in coveragejson:
@@ -163,9 +162,9 @@ async def get_coll_inst_cube(
     if len(coveragejsons) == 0:
         raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")
     if len(coveragejsons) == 1:
-        return coveragejsons[0]
+        return create_coveragejson_response(coveragejsons[0], response=response)
 
-    return CoverageCollection(coverages=coveragejsons, parameters=parameters)
+    return create_coveragejson_response(CoverageCollection(coverages=coveragejsons, parameters=parameters), response=response)
 
 
 def get_translate_names(metadata: dict) -> dict:

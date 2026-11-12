@@ -748,6 +748,10 @@ def test_cube_custom_dim(client: TestClient):
     # We did not query a specific member, it should show the highest
     assert cube_json["domain"]["custom:member"] == 50.0
 
+    filename = "cube_single_member.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(cube_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
 
 def test_point_custom_dim_request_all_members(client: TestClient):
     # position call on data which includes a custom dimension, should mention dimension even if we don't query it specifically
@@ -803,6 +807,23 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
     assert data["type"] == "NdArray"
     assert data["axisNames"] == ["t", "y", "x"]
     assert data["shape"] == [4, 3, 3]
+
+
+def test_cube_packed_fill_values(client: TestClient) -> None:
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/cube",
+        params={
+            "parameter-name": "packed_fillvalue",
+            "bbox": "-1,49,11,56",
+            "z": "1/3",
+            "resolution_x": 1,
+            "resolution_y": 1,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    filename = "cube_packed_fill_values.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(resp.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
 @pytest.mark.parametrize(
@@ -1183,7 +1204,7 @@ def test_trajectory_hidden_height_and_members(client):
 
 
 def test_edr_untyped_or_named_height():
-    from routers.edr_covjson import covjson_from_resp
+    from routers.edr_covjson import point_response_to_covjson
     from routers.trajectory_covjson import sections_from_response
     from routers.utils.edr_exception import EdrException
     from routers.utils.edr_utils import get_vertical_query, supports_section
@@ -1197,7 +1218,7 @@ def test_edr_untyped_or_named_height():
     layer["dims"]["height"].update({"cdfName": "height", "type": "dimtype_vertical"})
     layer["dims"]["time"]["cdfName"] = "time"
     assert supports_section(layer)
-    for convert in (covjson_from_resp, sections_from_response):
+    for convert in (point_response_to_covjson, sections_from_response):
         with pytest.raises(EdrException) as exc:
             convert([sample], {"data": layer}, "collection")
         assert exc.value.status_code == 400

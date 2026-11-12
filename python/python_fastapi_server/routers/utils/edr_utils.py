@@ -9,10 +9,10 @@ KNMI
 """
 
 from __future__ import annotations
-import json
 import logging
 import math
 import re
+from typing import Any
 from urllib.parse import urlencode
 from datetime import datetime, timezone
 
@@ -44,6 +44,7 @@ from .edr_exception import (
 )
 
 from .ogcapi_tools import call_adaguc
+from .json_utils import pydantic_json_loads
 
 logger = logging.getLogger(__name__)
 
@@ -549,7 +550,7 @@ def get_params_for_dataset(metadata: dict, dataset_name: str, primary_extent: Ex
     return parameter_names
 
 
-def handle_metadata(metadata: dict):
+def handle_metadata(metadata: dict) -> dict:
     collections = {}
     for dataset in metadata:
         # Check if there is something configured for this dataset, otherwise continue.
@@ -572,7 +573,7 @@ def handle_metadata(metadata: dict):
     return collections
 
 
-async def get_metadata(collection_name: str = "", instance: str = "", response: Response = None) -> dict:
+async def get_metadata(collection_name: str = "", instance: str = "", response: Response | None = None) -> dict[str, Any]:
     """Get metadata from ADAGUC.
 
     This method will either return a dictionary representing the metadata, or throw an exception
@@ -597,10 +598,9 @@ async def get_metadata(collection_name: str = "", instance: str = "", response: 
     if trace_timing is not None and response is not None:
         response.headers.append("X-Trace-Timings-Metadata", trace_timing)
 
-    raw_response = metadata_response.decode("UTF-8")
     try:
-        parsed_json = json.loads(raw_response)
-    except json.JSONDecodeError:
+        parsed_json = pydantic_json_loads(metadata_response)
+    except ValueError:
         raise exc_failed_call("Failed to query metadata: couldn't parse json response")
 
     # If metadata call failed, try to decipher response

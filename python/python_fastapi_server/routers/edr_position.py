@@ -8,16 +8,16 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-import json
-from typing import Union
+from typing import Any, Union
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 from typing_extensions import Annotated
 
-from .covjsonresponse import CovJSONResponse
-from .edr_covjson import covjson_from_resp
+from .covjsonresponse import CovJSONResponse, create_coveragejson_response
+from .edr_covjson import point_response_to_covjson
 from .utils.edr_exception import EdrException
+from .utils.json_utils import pydantic_json_loads
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -45,11 +45,11 @@ async def get_collection_position(
     collection_name: str,
     request: Request,
     coords: str,
-    response: CovJSONResponse,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
-) -> Coverage:
+    response: Response,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
+) -> CovJSONResponse:
     """Returns information in EDR format for a given collection, instance and position"""
     return await get_coll_inst_position(
         collection_name,
@@ -73,12 +73,12 @@ async def get_coll_inst_position(
     collection_name: str,
     request: Request,
     coords: str,
-    response: CovJSONResponse,
-    instance: str = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
-) -> Coverage:
+    response: Response,
+    instance: str | None = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
+) -> CovJSONResponse:
     """
     returns data for the EDR /position endpoint
     """
@@ -90,7 +90,7 @@ async def get_coll_inst_position(
 
     metadata = await get_metadata(collection_name, response=response)
 
-    return await handle_coll_inst_position(
+    coverage = await handle_coll_inst_position(
         collection_name,
         custom_dims,
         coords,
@@ -101,19 +101,20 @@ async def get_coll_inst_position(
         parameter_name_par,
         z_par,
     )
+    return create_coveragejson_response(coverage, response=response)
 
 
 async def handle_coll_inst_position(
     collection_name: str,
-    custom_dims,
+    custom_dims: list[str],
     coords: str,
-    response: CovJSONResponse,
-    metadata: dict,
-    instance: str = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
-) -> Coverage:
+    response: Response,
+    metadata: dict[str, Any],
+    instance: str | None = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
+) -> Coverage | CoverageCollection:
     """
     Handle the EDR position endpoint call
     """
@@ -136,9 +137,9 @@ async def handle_coll_inst_position(
         custom_dims,
     )
     if resp:
-        dat = json.loads(resp)
+        dat = pydantic_json_loads(resp)
         propagate_data_headers(response, headers)
-        return covjson_from_resp(dat, metadata[collection_name], collection_name)
+        return point_response_to_covjson(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
 
