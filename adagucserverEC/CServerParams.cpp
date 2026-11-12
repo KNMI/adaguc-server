@@ -35,8 +35,6 @@
 #include "utils/StyleSheetValidation.h"
 #include "utils/lintDataset.h"
 
-void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
-
 CWMSExtensions::CWMSExtensions() {
   opacity = 100;
   colorScaleRangeSet = false;

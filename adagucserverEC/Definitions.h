@@ -113,8 +113,6 @@
 // at file scope instead of relying on macros defined here.
 
 // #define ENABLE_CURL in Makefile
-
-// #define ADAGUC_USE_GDAL
 #endif
 
 #define SCAN_EXITCODE_FILENOMATCH 64

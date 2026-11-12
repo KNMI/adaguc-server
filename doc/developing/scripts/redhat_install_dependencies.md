@@ -23,6 +23,7 @@ yum update -y && yum install -y \
     gd-devel \
     postgresql-devel \
     postgresql-server \
-    gdal-devel
+    libtiff-devel \
+    libgeotiff-devel
 
 ```

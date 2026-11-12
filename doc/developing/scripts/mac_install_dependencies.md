@@ -11,7 +11,7 @@ We will use Homebrew to install Unix tools and packages, see: https://brew.sh/
 
 ```shell
 brew update
-brew install netcdf postgresql@14 udunits proj gdal cmake
+brew install netcdf postgresql@14 udunits proj libtiff libgeotiff cairo gd webp cmake
 ```
 
 Compile Adaguc using the provided script:

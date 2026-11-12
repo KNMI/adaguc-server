@@ -1,5 +1,11 @@
 **Version X.Y.Z**
 
+- Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).
+  - `<WCSFormat driver="...">` supports `ADAGUCNetCDF`, `GTiff` and `AAIGrid`. A `WCSFormat` with any other GDAL driver now gives the error `driver "..." is not supported` on GetCoverage. The GDAL `NetCDF` driver name is written by the ADAGUC NetCDF writer (as `ADAGUCNetCDF`), so its output is CF NetCDF with the original variable names instead of GDAL's `Band1`.
+  - The `options` attribute of `WCSFormat` (GDAL creation options) is ignored, with a warning in the log. GeoTIFF output is uncompressed, as with GDAL's default options.
+  - GeoTIFF: CRSs that GeoTIFF cannot describe (for example geostationary) are written as WKT in the `PCSCitationGeoKey`, as GDAL did; a rotated pole CRS is still written without CRS. CRS identifiers that PROJ does not know (like `EPSG:50001`) are now resolved with the configured `<Projection>` instead of failing.
+  - AAIGrid: for integer data without nodata value the `NODATA_value` line is left out (GDAL wrote a platform dependent value).
+  - WCS now always works, it no longer depends on compiling with `ADAGUC_USE_GDAL`.
 - Fixed an uninitialized udunits unit in `CTime`, which could make the first time conversion of a request fail (seen as `NETCDF_DIM_time` `0` in the GeoTIFF band metadata).
 - The FastAPI server now brotli compresses all content types except binary or already compressed ones, like images, NetCDF and `application/octet-stream`. Before, only a fixed list of content types was compressed, so for example CoverageJSON (`application/prs.coverage+json`), GeoJSON and `application/json; charset=utf-8` were not. Responses of these types cached in Redis by an older version are handled as not cached.
 - WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.

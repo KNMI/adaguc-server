@@ -11,7 +11,8 @@ find_package(GD REQUIRED)
 find_package(CURL)
 find_package(HDF5 REQUIRED)
 find_package(PostgreSQL REQUIRED)
-find_package(GDAL REQUIRED)
+find_package(TIFF REQUIRED)
+find_package(GeoTIFF REQUIRED)
 find_package(WebP REQUIRED)
 
 add_library(
@@ -172,8 +173,15 @@ add_library(
     CDrawImage.h
     CFillTriangle.cpp
     CFillTriangle.h
-    CGDALDataWriter.cpp
-    CGDALDataWriter.h
+    CGridFileDataWriter.cpp
+    CGridFileDataWriter.h
+    GridFileWriters/GridFileData.h
+    GridFileWriters/AAIGridWriter.cpp
+    GridFileWriters/AAIGridWriter.h
+    GridFileWriters/GeoTiffGeoKeys.cpp
+    GridFileWriters/GeoTiffGeoKeys.h
+    GridFileWriters/GeoTiffWriter.cpp
+    GridFileWriters/GeoTiffWriter.h
     CGeoJSONData.cpp
     CGeoJSONData.h
     CGetFileInfo.cpp
@@ -273,8 +281,8 @@ add_library(
     fork_server.cpp
 )
 
-target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
-target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
+target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GeoTIFF_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
+target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GeoTIFF_LIBRARIES} TIFF::TIFF ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)

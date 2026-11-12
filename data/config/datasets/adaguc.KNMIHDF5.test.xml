@@ -14,8 +14,6 @@
     <Title>RADNL_OPER_R___25PCPRR_L3_WCS</Title>
     
     <WCSFormat name="netcdf" driver="ADAGUCNetCDF" mimetype="Content-Type:application/netcdf" options=""/>
-    <WCSFormat name="NetCDF3" title="GDAL NetCDF3" driver="ADAGUC"   mimetype="Content-Type:text/plain" options="FORCENC3=TRUE"/>
-    <WCSFormat name="NetCDF4" driver="ADAGUC"   mimetype="Content-Type:text/plain"/>
   </WCS>
 
 

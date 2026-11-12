@@ -243,11 +243,6 @@ bool checkIfPathHasValidTokens(const std::string &path);
  */
 bool checkForValidTokens(const std::string &path, const std::string &validTokens);
 /**
- * Generic function which will be showed when a WCS is requested while it is not compiled in
- */
-void showWCSNotEnabledErrorMessage();
-
-/**
  * Returns a stringlist with all possible legends available for this Legend config object.
  * This is usually a configured legend element in a layer, or a configured legend element in a style.
  * @param Legend a XMLE_Legend object configured in a style or in a layer

@@ -827,21 +827,11 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, std::string &XMLDocume
   }
   try {
     if (srvParam->requestType == REQUEST_WCS_GETCAPABILITIES) {
-#ifndef ADAGUC_USE_GDAL
-      CServerParams::showWCSNotEnabledErrorMessage();
-      throw(__LINE__);
-#else
       status = getWCS_1_0_0_Capabilities(XMLDoc, metadataLayerList);
-#endif
     }
 
     if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
-#ifndef ADAGUC_USE_GDAL
-      CServerParams::showWCSNotEnabledErrorMessage();
-      throw(__LINE__);
-#else
       status = getWCS_1_0_0_DescribeCoverage(XMLDoc, metadataLayerList);
-#endif
     }
   } catch (int e) {
     status = 1;
