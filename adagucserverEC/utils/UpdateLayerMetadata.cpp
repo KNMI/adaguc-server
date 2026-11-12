@@ -6,6 +6,7 @@
 #include <CDBStore.h>
 #include <json_adaguc.h>
 #include "LayerUtils.h"
+#include "DimensionAsLayers.h"
 #include <set>
 #include "CDBFileScanner.h"
 #include "CServerParams.h"
@@ -47,12 +48,19 @@ int updateLayerMetadata(CRequest &request) {
     } else {
       CDBDebug("Found %lu layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
     }
-    for (auto &layer : requestPerDataset.getServerParams()->cfg->Layer) {
-      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(&layer)));
-    }
     std::string layerPathToScan;
     std::string tailPath;
     status = requestPerDataset.updatedb(tailPath, layerPathToScan, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
+    // Collect the layer names after the update, the layers generated from aslayers dimensions depend on the database contents.
+    for (auto &layer : requestPerDataset.getServerParams()->cfg->Layer) {
+      if (layerHasDimensionAsLayers(layer)) {
+        for (auto &generatedLayer : makeLayersForDimensionValues(requestPerDataset.getServerParams(), layer)) {
+          dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(&generatedLayer)));
+        }
+      } else {
+        dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(&layer)));
+      }
+    }
     if (status != 0) {
       CDBError("Error occured in updating the database");
       continue;

@@ -86,6 +86,8 @@ add_library(
     utils/CXMLTemplates.h
     utils/LayerUtils.h
     utils/LayerUtils.cpp
+    utils/DimensionAsLayers.h
+    utils/DimensionAsLayers.cpp
     utils/LayerMetadataToJson.h
     utils/LayerMetadataToJson.cpp
     utils/UpdateLayerMetadata.h
