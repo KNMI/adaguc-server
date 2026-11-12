@@ -71,15 +71,27 @@ function build {
 
 }
 
-# --measuretime can be combined with the other build options, e.g. ./compile.sh --debug --measuretime
+# --measuretime and --gdal-prefix <dir> can be combined with the other build options, e.g. ./compile.sh --debug --measuretime
+# --gdal-prefix uses a GDAL installed in <dir> (see scripts/build-slim-gdal.sh) instead of the system GDAL.
 MEASURETIME=OFF
+GDAL_CMAKE_ARGS=()
 ARGS=()
-for arg in "$@"; do
-  if [ "$arg" = "--measuretime" ]; then
-    MEASURETIME=ON
-  else
-    ARGS+=("$arg")
-  fi
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --measuretime)
+      MEASURETIME=ON
+      ;;
+    --gdal-prefix)
+      if [ $# -lt 2 ]; then echo "--gdal-prefix needs a directory"; exit 1; fi
+      # First in CMAKE_PREFIX_PATH, so this GDAL wins over the system one
+      GDAL_CMAKE_ARGS=(-DCMAKE_PREFIX_PATH="$2")
+      shift
+      ;;
+    *)
+      ARGS+=("$1")
+      ;;
+  esac
+  shift
 done
 set -- "${ARGS[@]+"${ARGS[@]}"}"
 
@@ -91,19 +103,19 @@ if [ "$*" = "--clean" ]; then
   clean
 elif [ "$*" = "--debug" ]; then
   echo "Making Debug build"
-  cmake -DCMAKE_BUILD_TYPE=Debug -DADAGUC_MEASURETIME=${MEASURETIME} -S .. -B .
+  cmake ${GDAL_CMAKE_ARGS[@]+"${GDAL_CMAKE_ARGS[@]}"} -DCMAKE_BUILD_TYPE=Debug -DADAGUC_MEASURETIME=${MEASURETIME} -S .. -B .
   build; res=$?; exit $res;
 elif [ "$*" = "--sanitize" ]; then
   echo "Making sanitize build"
-  cmake -DCMAKE_BUILD_TYPE=Sanitize  -S .. -B .
+  cmake ${GDAL_CMAKE_ARGS[@]+"${GDAL_CMAKE_ARGS[@]}"} -DCMAKE_BUILD_TYPE=Sanitize  -S .. -B .
   build; res=$?; exit $res;
 elif [ "$*" = "--profile" ]; then
   echo "Making profile build"
-  cmake -DCMAKE_BUILD_TYPE=Profile -S .. -B .
+  cmake ${GDAL_CMAKE_ARGS[@]+"${GDAL_CMAKE_ARGS[@]}"} -DCMAKE_BUILD_TYPE=Profile -S .. -B .
   build 
 elif [ "$*" = "" ]; then
   echo "Making Release build!"
-  cmake -DCMAKE_BUILD_TYPE=Release -DADAGUC_MEASURETIME=${MEASURETIME} -S .. -B .
+  cmake ${GDAL_CMAKE_ARGS[@]+"${GDAL_CMAKE_ARGS[@]}"} -DCMAKE_BUILD_TYPE=Release -DADAGUC_MEASURETIME=${MEASURETIME} -S .. -B .
   build; res=$?; exit $res;
 else
   echo "Unrecognized build type"
