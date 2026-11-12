@@ -17,6 +17,7 @@
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "CImageOperators/smoothRasterField.h"
 #include "CUniqueRequests/trajectory.h"
+#include "utils/SldHandler.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
@@ -1091,3 +1092,41 @@ TEST(CServerParams, applyStyleSheetBase64) {
                     }),
                     false);
 }
+
+// For CHECK_EQUAL with std::string, so a failure shows both strings
+static SimpleString StringFrom(const std::string &value) { return StringFrom(value.c_str()); }
+
+static std::string sldResult(const std::string &namedLayerContent, std::string_view layerName, std::string_view styleName) {
+  std::string sld = R"(<StyledLayerDescriptor version="1.1.0" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se"><NamedLayer><se:Name>layer</se:Name>)" +
+                    namedLayerContent + "</NamedLayer></StyledLayerDescriptor>";
+  SldStyle sldStyle;
+  SldResult result = readSldBody(sld, layerName, styleName, sldStyle);
+  return result == SldResult::ok ? sldStyle.layerName + ":" + sldStyle.styleSheet : result == SldResult::notForLayer ? "notForLayer" : "invalid";
+}
+
+static std::string sldUserStyle(const std::string &name, const std::string &isDefault, const std::string &adagucStyle) {
+  return "<UserStyle><se:Name>" + name + "</se:Name>" + isDefault + R"(<se:CoverageStyle><se:Rule><a:AdagucSymbolizer xmlns:a="https://github.com/KNMI/adaguc-server">)" + adagucStyle +
+         "</a:AdagucSymbolizer></se:Rule></se:CoverageStyle></UserStyle>";
+}
+
+TEST(SldHandler, symbolizerContentIsTheStyleSheet) {
+  // Namespaces are left out, escaped characters stay escaped, comments are left out
+  CHECK_EQUAL(sldResult(sldUserStyle("s", "", R"(<a:Style name="x &amp; y"><!-- c --><a:Min>0</a:Min><Legend>a&lt;b</Legend></a:Style>)"), "", ""),
+              std::string(R"(layer:<Style name="x &amp; y"><Min>0</Min><Legend>a&lt;b</Legend></Style>)"));
+  CHECK_EQUAL(sldResult(R"(<NamedStyle><se:Name>configured"</se:Name></NamedStyle>)", "", ""),
+              std::string(R"(layer:<Style name="configured&quot;"><IncludeStyle name="configured&quot;"/></Style>)"));
+  CHECK_EQUAL(sldResult("", "", ""), std::string("layer:"));
+}
+
+TEST(SldHandler, libraryModeSelectsTheStyle) {
+  std::string styles = sldUserStyle("first", "", "<Style/>") + sldUserStyle("second", "<IsDefault>true</IsDefault>", "<Style>2</Style>");
+  CHECK_EQUAL(sldResult(styles, "layer", ""), std::string("layer:<Style>2</Style>"));
+  CHECK_EQUAL(sldResult(styles, "layer", "first"), std::string("layer:<Style></Style>"));
+  CHECK_EQUAL(sldResult(styles, "layer", "third"), std::string("notForLayer"));
+  CHECK_EQUAL(sldResult(styles, "other", ""), std::string("notForLayer"));
+  // Without IsDefault the server's default style is used
+  CHECK_EQUAL(sldResult(sldUserStyle("first", "", "<Style/>"), "layer", ""), std::string("notForLayer"));
+  // Literal mode supports one style
+  CHECK_EQUAL(sldResult(styles, "", ""), std::string("invalid"));
+}
+

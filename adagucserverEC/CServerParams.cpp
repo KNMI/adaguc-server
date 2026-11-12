@@ -34,6 +34,7 @@
 #include <cstring>
 #include "utils/StyleSheetValidation.h"
 #include "utils/StyleSheetHandler.h"
+#include "utils/SldHandler.h"
 #include "utils/lintDataset.h"
 
 void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
@@ -369,6 +370,24 @@ static bool resolveStyleSheetPngFile(std::string &file) {
   }
   file = resolvedPath;
   return true;
+}
+
+int CServerParams::applySldBody(const std::string &sldBodyValue, const std::string &styleName) {
+  std::string sld = CT::trim(sldBodyValue);
+  if (!sld.starts_with("<") && !decodeStyleSheet(sld, sld)) return 1;
+  std::string layerName = requestedLayerNames.empty() ? "" : requestedLayerNames[0];
+  SldStyle sldStyle;
+  switch (readSldBody(sld, layerName, styleName, sldStyle)) {
+  case SldResult::invalid:
+    return 1;
+  case SldResult::notForLayer:
+    CDBDebug("SLD_BODY has no style for layer [%s] and style [%s], the server's style is used", layerName.c_str(), styleName.c_str());
+    return 0;
+  case SldResult::ok:
+    break;
+  }
+  if (requestedLayerNames.empty()) requestedLayerNames.push_back(sldStyle.layerName);
+  return sldStyle.styleSheet.empty() ? 0 : applyStyleSheet(sldStyle.styleSheet);
 }
 
 int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {

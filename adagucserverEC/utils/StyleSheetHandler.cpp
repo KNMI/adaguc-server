@@ -7,6 +7,11 @@
 // The size limit of a request, so a compressed STYLESHEET can not be larger than an uncompressed one
 static const size_t MAX_STYLESHEET_BYTES = 65536;
 
+bool isStyleSheetEnabled() {
+  const char *styleSheetEnable = getenv("ADAGUC_STYLESHEET_ENABLE");
+  return styleSheetEnable != nullptr && std::string_view(styleSheetEnable) == "TRUE";
+}
+
 enum class Inflated { ok, invalid, tooLarge };
 
 // Inflates deflate data with windowBits 15 + 32 (zlib or gzip header) or -15 (raw, no header).

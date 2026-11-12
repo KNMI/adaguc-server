@@ -99,6 +99,8 @@ public:
   std::string Style;
   std::string styleSheet;           // STYLESHEET KVP value, decoded
   int styleSheetStyleIndex = -1;    // Index in cfg->Style of the Style posted in STYLESHEET, used for the (single) layer regardless of STYLES
+  std::string sldBody;              // SLD_BODY KVP value, decoded
+  std::string sldVersion;           // SLD_VERSION KVP value
   std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
   std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter
@@ -185,6 +187,15 @@ public:
    * returns zero on success
    */
   int applyStyleSheet(const std::string &styleSheetXml);
+
+  /**
+   * Applies the style of an SLD_BODY (SLD profile of WMS, OGC 05-078r4), see readSldBody in utils/SldHandler.h.
+   * The value is encoded like a STYLESHEET: XML, or base64 encoded XML, optionally compressed.
+   * Without a requested layer (literal mode), the layer of the SLD is added to requestedLayerNames.
+   * When the SLD has no style for the requested layer and style, nothing is applied and the server's style is used.
+   * returns zero on success
+   */
+  int applySldBody(const std::string &sldBodyValue, const std::string &styleName);
 
   /**
    * Returns cache control header

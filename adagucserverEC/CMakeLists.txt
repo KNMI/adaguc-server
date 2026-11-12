@@ -84,6 +84,8 @@ add_library(
     utils/StyleSheetValidation.cpp
     utils/StyleSheetHandler.h
     utils/StyleSheetHandler.cpp
+    utils/SldHandler.h
+    utils/SldHandler.cpp
     utils/XMLGenUtils.h
     utils/XMLGenUtils.cpp
     utils/CXMLTemplates.h

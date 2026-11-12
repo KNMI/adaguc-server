@@ -266,3 +266,45 @@ A refused stylesheet gets status 422, and the body says why, for example `STYLES
 - Proxies in front of the server must allow long request lines. nginx's default `large_client_header_buffers 4 8k` allows about 8 KB, 16 KB gives more room. The server itself accepts query strings up to 64 KB.
 - A valid style can still be expensive to render. Put a rate or concurrency limit in front of a public server, see [Environment variables](../EnvironmentVariablesAndExitCodes.md).
 - `adagucserver --lint` checks the configured styles with the same value rules.
+
+## 13. Send the style as an SLD with SLD_BODY
+
+`STYLESHEET` is specific to ADAGUC. The [SLD profile of WMS](https://docs.ogc.org/is/05-078r4/05-078r4.pdf) (OGC 05-078r4) defines the standard parameters for a style sent by the client: `SLD_BODY` with a `StyledLayerDescriptor`, and `SLD_VERSION`. ADAGUC accepts the same style XML as `STYLESHEET` in an SLD 1.1.0. Symbology Encoding 1.1 lets a server add its own symbolizers to a `se:Rule`, and ADAGUC's is the `AdagucSymbolizer`, in namespace `https://github.com/KNMI/adaguc-server`. [style_terrain.sld](./data/STYLESHEET/style_terrain.sld) is the style of step 4:
+
+```xml
+<StyledLayerDescriptor version="1.1.0" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se">
+  <NamedLayer>
+    <se:Name>ahn_utrechtseheuvelrug_500m</se:Name>
+    <UserStyle>
+      <se:Name>terrain</se:Name>
+      <IsDefault>1</IsDefault>
+      <se:CoverageStyle>
+        <se:Rule>
+          <AdagucSymbolizer xmlns="https://github.com/KNMI/adaguc-server">
+            <Legend name="terrain" type="colorRange">...</Legend>
+            <Style name="terrain">...</Style>
+          </AdagucSymbolizer>
+        </se:Rule>
+      </se:CoverageStyle>
+    </UserStyle>
+  </NamedLayer>
+</StyledLayerDescriptor>
+```
+
+The layer is in the SLD, so `LAYERS` and `STYLES` can be left out:
+
+```bash
+MAP_WITHOUT_LAYERS="SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:3857&BBOX=590360,6784100,707370,6894820&WIDTH=600&HEIGHT=568&FORMAT=image/png&SHOWLEGEND=true"
+curl -G -o 02_terrain.png "$WMS" --data "$MAP_WITHOUT_LAYERS" --data "SLD_VERSION=1.1.0" --data-urlencode "SLD_BODY@style_terrain.sld"
+```
+
+The image is the same as in step 4.
+
+- `SLD_VERSION=1.1.0` is required, and the `StyledLayerDescriptor` must have `version="1.1.0"`.
+- Without `LAYERS` (literal mode), the SLD must have one `NamedLayer` with at most one style. That style is used, with or without `IsDefault`.
+- With `LAYERS` (library mode), the `NamedLayer` with that name is used. Its style is the one named in `STYLES`, or with an empty `STYLES` the one with `<IsDefault>1</IsDefault>`. When the SLD has no such layer or style, the server's own style is used, as 05-078r4 9.2.2 describes.
+- A `NamedStyle` uses a configured style, like `IncludeStyle`.
+- The content of the `AdagucSymbolizer` is checked like a `STYLESHEET` (step 11). `SLD_BODY` is enabled with `ADAGUC_STYLESHEET_ENABLE`, and can be compressed like a `STYLESHEET` (step 10). `REQUEST=GetLegendGraphic` accepts it as well.
+- Not supported: `SLD` with a URL, `UserLayer`, `LayerFeatureConstraints`, and the standard symbolizers such as `RasterSymbolizer`. Filters and scale denominators in a `se:Rule` are refused rather than ignored.
+- When `ADAGUC_STYLESHEET_ENABLE=TRUE`, WMS 1.3.0 GetCapabilities advertises `<sld:UserDefinedSymbolization SupportSLD="1" UserStyle="1" .../>`.
+

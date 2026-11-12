@@ -13,6 +13,11 @@
  * @param xml Receives the decoded XML
  * @return true when the value decodes to XML
  */
+/**
+ * @return true when ADAGUC_STYLESHEET_ENABLE is TRUE: STYLESHEET and SLD_BODY are allowed
+ */
+bool isStyleSheetEnabled();
+
 bool decodeStyleSheet(std::string_view value, std::string &xml);
 
 #endif
