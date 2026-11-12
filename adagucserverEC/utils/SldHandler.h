@@ -17,14 +17,18 @@ enum class SldResult {
 
 struct SldStyle {
   std::string layerName;  // Name of the NamedLayer
-  std::string styleSheet; // The ADAGUC Legend and Style elements of the AdagucSymbolizer, as for STYLESHEET
+  std::string styleSheet; // ADAGUC Legend and Style elements, as for STYLESHEET
 };
 
 /**
- * Reads an SLD_BODY: a StyledLayerDescriptor 1.1.0 (OGC 05-078r4) whose style is ADAGUC style XML.
+ * Reads an SLD_BODY: a StyledLayerDescriptor 1.0.0 or 1.1.0 (SLD profile of WMS, OGC 05-078r4).
  *
- * ADAGUC styles are not expressed in Symbology Encoding, so a UserStyle carries them in a vendor symbolizer. SE 1.1
- * defines se:Symbolizer as abstract, and a se:Rule takes any element of its substitution group:
+ * A UserStyle has one of two symbolizers:
+ * - RasterSymbolizer with a ColorMap, as QGIS and GeoServer write it. It is translated to ADAGUC style XML:
+ *   ColorMapEntry with type ramp (default), intervals or values, with the meaning GeoServer gives them, and the SE 1.1
+ *   functions Categorize and Interpolate. Opacity of the symbolizer and of the entries is applied.
+ * - AdagucSymbolizer with ADAGUC style XML, the same as a STYLESHEET. SE 1.1 defines se:Symbolizer as abstract, and a
+ *   se:Rule takes any element of its substitution group:
  *
  *   <StyledLayerDescriptor version="1.1.0" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se">
  *     <NamedLayer>
@@ -42,7 +46,6 @@ struct SldStyle {
  *     </NamedLayer>
  *   </StyledLayerDescriptor>
  *
- * The content of the AdagucSymbolizer is the same as a STYLESHEET, its namespace is ignored.
  * A NamedStyle refers to a configured style, it becomes an IncludeStyle.
  *
  * Library mode (05-078r4 9.2.2), when layerName is given: the NamedLayer with that name is used, and its style named
@@ -51,11 +54,12 @@ struct SldStyle {
  * Literal mode, when layerName is empty: the SLD must have one NamedLayer with at most one style.
  *
  * @param sld The SLD XML
+ * @param sldVersion SLD_VERSION. Required for SLD 1.1.0, optional for SLD 1.0.0 (its WMS profile has no SLD_VERSION).
  * @param layerName The requested layer (LAYERS), or empty
  * @param styleName The requested style (STYLES), or empty
  * @param sldStyle Receives the layer name and the ADAGUC style XML when the result is SldResult::ok. The style XML is
  *                 empty when the NamedLayer has no style (literal mode): the layer's default style is used.
  */
-SldResult readSldBody(const std::string &sld, std::string_view layerName, std::string_view styleName, SldStyle &sldStyle);
+SldResult readSldBody(const std::string &sld, std::string_view sldVersion, std::string_view layerName, std::string_view styleName, SldStyle &sldStyle);
 
 #endif

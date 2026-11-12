@@ -377,7 +377,7 @@ int CServerParams::applySldBody(const std::string &sldBodyValue, const std::stri
   if (!sld.starts_with("<") && !decodeStyleSheet(sld, sld)) return 1;
   std::string layerName = requestedLayerNames.empty() ? "" : requestedLayerNames[0];
   SldStyle sldStyle;
-  switch (readSldBody(sld, layerName, styleName, sldStyle)) {
+  switch (readSldBody(sld, sldVersion, layerName, styleName, sldStyle)) {
   case SldResult::invalid:
     return 1;
   case SldResult::notForLayer:

@@ -1100,7 +1100,7 @@ static std::string sldResult(const std::string &namedLayerContent, std::string_v
   std::string sld = R"(<StyledLayerDescriptor version="1.1.0" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se"><NamedLayer><se:Name>layer</se:Name>)" +
                     namedLayerContent + "</NamedLayer></StyledLayerDescriptor>";
   SldStyle sldStyle;
-  SldResult result = readSldBody(sld, layerName, styleName, sldStyle);
+  SldResult result = readSldBody(sld, "1.1.0", layerName, styleName, sldStyle);
   return result == SldResult::ok ? sldStyle.layerName + ":" + sldStyle.styleSheet : result == SldResult::notForLayer ? "notForLayer" : "invalid";
 }
 
@@ -1128,5 +1128,47 @@ TEST(SldHandler, libraryModeSelectsTheStyle) {
   CHECK_EQUAL(sldResult(sldUserStyle("first", "", "<Style/>"), "layer", ""), std::string("notForLayer"));
   // Literal mode supports one style
   CHECK_EQUAL(sldResult(styles, "", ""), std::string("invalid"));
+}
+
+static std::string sldColorMap(const std::string &rasterSymbolizerContent, const std::string &version = "1.1.0") {
+  std::string se = version == "1.0.0" ? "" : "se:";
+  std::string sld = R"(<StyledLayerDescriptor version=")" + version + R"(" xmlns="http://www.opengis.net/sld" xmlns:se="http://www.opengis.net/se"><NamedLayer><)" + se + "Name>layer</" + se +
+                    "Name><UserStyle><" + se + "FeatureTypeStyle><" + se + "Rule><" + se + "RasterSymbolizer>" + rasterSymbolizerContent + "</" + se + "RasterSymbolizer></" + se + "Rule></" + se +
+                    "FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>";
+  SldStyle sldStyle;
+  return readSldBody(sld, version, "", "", sldStyle) == SldResult::ok ? sldStyle.styleSheet : "invalid";
+}
+
+TEST(SldHandler, colorMapEntries) {
+  // QGIS writes ColorMapEntry in SLD 1.1.0, GeoServer in SLD 1.0.0. intervals: an entry colours the values below its quantity.
+  std::string intervals = R"(<se:ColorMap type="intervals"><se:ColorMapEntry color="#FF0000" quantity="1" label="low"/><se:ColorMapEntry color="#00ff00" quantity="2" opacity="0.5"/></se:ColorMap>)";
+  CHECK_EQUAL(sldColorMap(intervals), std::string(R"(<Style name="sld_colormap"><ShadeInterval min="-1e+30" max="1" label="low" fillcolor="#FF0000FF"/>)"
+                                                  R"(<ShadeInterval min="1" max="2" label="1 - 2" fillcolor="#00FF0080"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  // values: one value per class. The Opacity of the symbolizer applies to entries without opacity.
+  CHECK_EQUAL(sldColorMap(R"(<Opacity>0.2</Opacity><ColorMap type="values"><ColorMapEntry color="#000000" quantity="3"/></ColorMap>)", "1.0.0"),
+              std::string(R"(<Style name="sld_colormap"><ShadeInterval min="3" max="3.0000000000000004" label="3" fillcolor="#00000033"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  // ramp (the default type): palette indices proportional to the quantities
+  CHECK_EQUAL(sldColorMap(R"(<ColorMap><ColorMapEntry color="#000000" quantity="-10"/><ColorMapEntry color="#FFFFFF" quantity="0" opacity="0"/><ColorMapEntry color="#FF0000" quantity="10"/></ColorMap>)",
+                          "1.0.0"),
+              std::string(R"(<Legend name="sld_colormap" type="colorRange"><palette index="0" red="0" green="0" blue="0" alpha="255"/><palette index="120" red="255" green="255" blue="255" alpha="0"/>)"
+                          R"(<palette index="240" red="255" green="0" blue="0" alpha="255"/></Legend><Style name="sld_colormap"><Legend>sld_colormap</Legend><Min>-10</Min><Max>10</Max></Style>)"));
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap type="exact"><se:ColorMapEntry color="#000000" quantity="1"/></se:ColorMap>)"), std::string("invalid"));
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap><se:ColorMapEntry color="red" quantity="1"/><se:ColorMapEntry color="#000000" quantity="2"/></se:ColorMap>)"), std::string("invalid"));
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap><se:ColorMapEntry color="#000000" quantity="1"/></se:ColorMap>)"), std::string("invalid"));
+}
+
+TEST(SldHandler, categorizeAndInterpolate) {
+  std::string categorize = "<se:Value>#FF0000</se:Value><se:Threshold>1</se:Threshold><se:Value>#00FF00</se:Value>";
+  CHECK_EQUAL(sldColorMap("<se:ColorMap><se:Categorize>" + categorize + "</se:Categorize></se:ColorMap>"),
+              std::string(R"(<Style name="sld_colormap"><ShadeInterval min="-1e+30" max="1" label="&lt; 1" fillcolor="#FF0000FF"/>)"
+                          R"(<ShadeInterval min="1" max="1e+30" label="&gt;= 1" fillcolor="#00FF00FF"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  // A threshold that belongs to the class below: the bound moves up by the smallest step
+  CHECK_EQUAL(sldColorMap(R"(<se:ColorMap><se:Categorize threshholdsBelongTo="preceding">)" + categorize + "</se:Categorize></se:ColorMap>"),
+              std::string(R"(<Style name="sld_colormap"><ShadeInterval min="-1e+30" max="1.0000000000000002" label="&lt;= 1" fillcolor="#FF0000FF"/>)"
+                          R"(<ShadeInterval min="1.0000000000000002" max="1e+30" label="&gt; 1" fillcolor="#00FF00FF"/><RenderSettings renderhint="discreteclasses"/></Style>)"));
+  auto point = [](const char *data, const char *color) { return std::string("<se:InterpolationPoint><se:Data>") + data + "</se:Data><se:Value>" + color + "</se:Value></se:InterpolationPoint>"; };
+  CHECK_EQUAL(sldColorMap("<se:Opacity>0.5</se:Opacity><se:ColorMap><se:Interpolate>" + point("0", "#000000") + point("4", "#FFFFFF") + "</se:Interpolate></se:ColorMap>"),
+              std::string(R"(<Legend name="sld_colormap" type="colorRange"><palette index="0" red="0" green="0" blue="0" alpha="128"/><palette index="240" red="255" green="255" blue="255" alpha="128"/>)"
+                          R"(</Legend><Style name="sld_colormap"><Legend>sld_colormap</Legend><Min>0</Min><Max>4</Max></Style>)"));
 }
 

@@ -300,11 +300,30 @@ curl -G -o 02_terrain.png "$WMS" --data "$MAP_WITHOUT_LAYERS" --data "SLD_VERSIO
 
 The image is the same as in step 4.
 
-- `SLD_VERSION=1.1.0` is required, and the `StyledLayerDescriptor` must have `version="1.1.0"`.
+- `SLD_VERSION` must be the version of the `StyledLayerDescriptor`. It is required for SLD 1.1.0, and optional for SLD 1.0.0, whose WMS profile has no `SLD_VERSION`.
 - Without `LAYERS` (literal mode), the SLD must have one `NamedLayer` with at most one style. That style is used, with or without `IsDefault`.
 - With `LAYERS` (library mode), the `NamedLayer` with that name is used. Its style is the one named in `STYLES`, or with an empty `STYLES` the one with `<IsDefault>1</IsDefault>`. When the SLD has no such layer or style, the server's own style is used, as 05-078r4 9.2.2 describes.
 - A `NamedStyle` uses a configured style, like `IncludeStyle`.
 - The content of the `AdagucSymbolizer` is checked like a `STYLESHEET` (step 11). `SLD_BODY` is enabled with `ADAGUC_STYLESHEET_ENABLE`, and can be compressed like a `STYLESHEET` (step 10). `REQUEST=GetLegendGraphic` accepts it as well.
-- Not supported: `SLD` with a URL, `UserLayer`, `LayerFeatureConstraints`, and the standard symbolizers such as `RasterSymbolizer`. Filters and scale denominators in a `se:Rule` are refused rather than ignored.
+- Not supported: `SLD` with a URL, `UserLayer`, `LayerFeatureConstraints`, and symbolizers other than `RasterSymbolizer` and `AdagucSymbolizer`. Filters and scale denominators in a rule are refused rather than ignored.
 - When `ADAGUC_STYLESHEET_ENABLE=TRUE`, WMS 1.3.0 GetCapabilities advertises `<sld:UserDefinedSymbolization SupportSLD="1" UserStyle="1" .../>`.
+
+### SLD from QGIS and GeoServer
+
+A `RasterSymbolizer` with a `ColorMap`, as QGIS exports it ("Save Style" as SLD) and as GeoServer uses it, is translated to an ADAGUC style. SLD 1.0.0 (GeoServer) and SLD 1.1.0 (QGIS) are both accepted.
+
+| SLD | Becomes |
+|---|---|
+| `ColorMapEntry` with `type="ramp"` (the default), SE 1.1 `Interpolate` | A palette from the first to the last quantity, with `Min` and `Max`. Values outside get the colour of the nearest end. |
+| `ColorMapEntry` with `type="intervals"` | `ShadeInterval` elements. An entry colours the values from the previous quantity up to its own; the first entry also colours everything below. Values from the last quantity up are not drawn. |
+| `ColorMapEntry` with `type="values"` | One `ShadeInterval` per quantity, for exactly that value |
+| SE 1.1 `Categorize` | `ShadeInterval` elements, the first and last one open ended |
+| `Opacity`, and the `opacity` of a `ColorMapEntry` | The alpha of the colours. The `opacity` of an entry overrides `Opacity`. |
+| The `label` of a `ColorMapEntry` | The label in the legend |
+
+These follow GeoServer's documentation of the `ColorMap` types. `ChannelSelection` and `ContrastEnhancement` are ignored, because ADAGUC draws the layer's variable with the colour map. `ShadedRelief`, `OverlapBehavior` and `ImageOutline` are ignored, as in GeoServer.
+
+The palette has 241 steps from the first to the last quantity of a ramp, so quantities that are spread very unevenly lose detail. For example, an entry at -9999 for no data leaves the real values a few steps of the palette.
+
+QGIS writes a single `UserStyle` without `IsDefault`. Leave out `LAYERS` (literal mode), or set `STYLES` to the name of the `UserStyle`. With `LAYERS` and an empty `STYLES`, the server's own style is used.
 

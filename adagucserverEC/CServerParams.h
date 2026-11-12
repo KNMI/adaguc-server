@@ -189,7 +189,7 @@ public:
   int applyStyleSheet(const std::string &styleSheetXml);
 
   /**
-   * Applies the style of an SLD_BODY (SLD profile of WMS, OGC 05-078r4), see readSldBody in utils/SldHandler.h.
+   * Applies the style of an SLD_BODY with SLD_VERSION (sldVersion), see readSldBody in utils/SldHandler.h.
    * The value is encoded like a STYLESHEET: XML, or base64 encoded XML, optionally compressed.
    * Without a requested layer (literal mode), the layer of the SLD is added to requestedLayerNames.
    * When the SLD has no style for the requested layer and style, nothing is applied and the server's style is used.

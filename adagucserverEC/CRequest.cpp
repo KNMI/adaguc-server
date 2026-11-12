@@ -1329,11 +1329,6 @@ int CRequest::process_querystring() {
       CDBError("ADAGUC Server: STYLESHEET and SLD_BODY can not be used together");
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
-    } else if (!srvParam->sldBody.empty() && srvParam->sldVersion != "1.1.0") {
-      // SLD_VERSION is mandatory with SLD_BODY (05-078r4 table 7)
-      CDBError("ADAGUC Server: SLD_BODY needs SLD_VERSION=1.1.0");
-      dErrorOccured = 1;
-      setExceptionType(ServiceExceptionType::UnprocessableEntity);
     } else if (srvParam->requestedLayerNames.size() > 1) {
       // The style applies to every layer, so only one layer is allowed
       CDBError("ADAGUC Server: %s can only be used with one layer, got %zu", parameter, srvParam->requestedLayerNames.size());
