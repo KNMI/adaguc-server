@@ -1,3 +1,7 @@
+**Version X.Y.Z**
+
+- Fixed packed data (`scale_factor`/`add_offset`) without a `_FillValue`: when one request read the same file more than once, for example WCS GetCoverage over several time steps or levels, or a GetMap animation, the value equal to `add_offset` was nodata from the second read on.
+
 **Version 10.0.0 - 2026-11-16**
 
 - Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).
