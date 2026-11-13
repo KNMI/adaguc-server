@@ -3,7 +3,6 @@
 # Install using:
 # pip-sync
 
-aiocache~=0.12.3
 APScheduler~=3.11
 Brotli~=1.2
 Jinja2~=3.1
@@ -11,9 +10,7 @@ OWSLib~=0.29.2
 Pillow~=13.0
 asgi-logger~=0.1.0
 brotli-asgi~=1.6
-cachetools~=7.1
 cftime~=1.6
-chardet~=7.4
 defusedxml~=0.7.1
 fastapi~=0.136.3
 geojson-pydantic~=1.0

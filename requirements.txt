@@ -4,8 +4,6 @@
 #
 #    pip-compile --no-emit-index-url
 #
-aiocache==0.12.3
-    # via -r requirements.in
 annotated-doc==0.0.5
     # via fastapi
 annotated-types==0.8.0
@@ -24,8 +22,6 @@ brotli==1.2.1
     #   brotli-asgi
 brotli-asgi==1.6.0
     # via -r requirements.in
-cachetools==7.2.5
-    # via -r requirements.in
 certifi==2026.10.23
     # via
     #   netcdf4
@@ -34,8 +30,6 @@ cftime==1.6.6.1
     # via
     #   -r requirements.in
     #   netcdf4
-chardet==7.7.0
-    # via -r requirements.in
 charset-normalizer==3.5.2
     # via requests
 click==8.5.0
