@@ -60,6 +60,8 @@ private:
   std::map<std::string, std::vector<std::string>> fileListPerTable;
 
   CDBStore::Store *layerMetaDataStore = nullptr;
+  bool layerMetadataTableReady = false;
+  int ensureLayerMetadataTable();
 
 public:
   CDBAdapterPostgreSQL();

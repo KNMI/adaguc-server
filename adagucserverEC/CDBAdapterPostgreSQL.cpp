@@ -924,6 +924,9 @@ int CDBAdapterPostgreSQL::dropTable(const char *tablename) {
     CDBError("Query %s failed", query.c_str());
     return 1;
   }
+  if (std::string(tablename) == "layermetadata") {
+    layerMetadataTableReady = false;
+  }
   StopWatch_Measure("<CDBAdapterPostgreSQL::dropTable");
   return 0;
 }
@@ -1104,9 +1107,8 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   return 0;
 }
 
-int CDBAdapterPostgreSQL::storeLayerMetadataBatch(const char *datasetName, const char *layerName, const std::map<std::string, std::string> &metadata) {
-  if (metadata.empty()) return 0;
-  StopWatch_Measure(">CDBAdapterPostgreSQL::storeLayerMetadataBatch");
+int CDBAdapterPostgreSQL::ensureLayerMetadataTable() {
+  if (layerMetadataTableReady) return 0;
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
   if (dataBaseConnection == NULL) {
     return -1;
@@ -1119,6 +1121,16 @@ int CDBAdapterPostgreSQL::storeLayerMetadataBatch(const char *datasetName, const
     CDBError("\nFAIL: Table layermetadata could not be created: %s", tableColumns.c_str());
     throw(__LINE__);
   }
+  layerMetadataTableReady = true;
+  return 0;
+}
+
+int CDBAdapterPostgreSQL::storeLayerMetadataBatch(const char *datasetName, const char *layerName, const std::map<std::string, std::string> &metadata) {
+  if (metadata.empty()) return 0;
+  StopWatch_Measure(">CDBAdapterPostgreSQL::storeLayerMetadataBatch");
+  int status = ensureLayerMetadataTable();
+  if (status != 0) return status;
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
 
   const auto escapedDatasetName = dataBaseConnection->escapeString(datasetName);
   const auto escapedLayerName = dataBaseConnection->escapeString(layerName);
