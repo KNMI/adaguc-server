@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <!-- The same data as in adaguc.tests.genericrender.xml (lat increasing and lat decreasing), as separate layers -->
+  <Layer type="database">
+    <Name>latlon_latincreasing_linear</Name>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/latlon_latincreasing.nc</FilePath>
+    <Variable>data_var_1</Variable>
+    <Styles>autobilinear</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>latlon_latdecreasing_linear</Name>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/latlon_latdecreasing.nc</FilePath>
+    <Variable>data_var_1</Variable>
+    <Styles>autobilinear</Styles>
+  </Layer>
+
+</Configuration>

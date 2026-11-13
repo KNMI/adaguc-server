@@ -16,9 +16,9 @@ from typing import Union
 from geojson_pydantic import Feature, FeatureCollection, Point
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 
-from routers.covjsonresponse import CovJSONResponse
+from routers.covjsonresponse import CovJSONResponse, create_coveragejson_response
 from routers.edr_position import handle_coll_inst_position
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -101,13 +101,13 @@ async def get_locations_for_collection(coll: str, metadata) -> list[Feature]:
 async def get_locations_(
     collection_name: str,
     request: Request,
-    response: CovJSONResponse,
-    location_id: str = None,
-    instance: str = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
-) -> Union[FeatureCollection, Coverage, CoverageCollection]:
+    response: Response,
+    location_id: str | None = None,
+    instance: str | None = None,
+    datetime_par: str | None = Query(default=None, alias="datetime"),
+    parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
+) -> CovJSONResponse:
     """
     Returns locations where you could query data by id
     """
@@ -115,7 +115,7 @@ async def get_locations_(
     location_list = await get_locations_for_collection(collection_name, metadata)
 
     if location_id is None:
-        return FeatureCollection(type="FeatureCollection", features=location_list)
+        return create_coveragejson_response(FeatureCollection(type="FeatureCollection", features=location_list), response=response)
 
     allowed_params = ["datetime", "parameter-name", "z", "f"]
     custom_dims = get_custom(
@@ -127,7 +127,7 @@ async def get_locations_(
         if loc.id == location_id:
             point = loc.geometry
             coords = f"POINT({point.coordinates[0]} {point.coordinates[1]})"
-            return await handle_coll_inst_position(
+            coverage = await handle_coll_inst_position(
                 collection_name,
                 custom_dims,
                 coords,
@@ -138,5 +138,6 @@ async def get_locations_(
                 parameter_name_par,
                 z_par,
             )
+            return create_coveragejson_response(coverage, response=response)
 
     raise HTTPException(status_code=404, detail=f"location {location_id} not found")

@@ -21,6 +21,9 @@
 - The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
 - The fork server is only restarted after three failed health checks in a row, so a single slow check does not end the requests in progress.
 - Image comparison in the tests: `compareImage` has a `tolerance` (`exact`, the default, `geometry` or `antialiasing`) instead of `maxAllowedColorDifference`/`maxAllowedColorPercentage`, chosen by what the image contains (raster only, antialiased shapes, or text). It compares the alpha channel too, which the old comparison ignored for palette images, and the PNG/WebP encoding structure; `compareFileSizes` checks the compression. Image tests no longer compare PNG files byte for byte. A failing comparison writes a diff image. See [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
+- Reduce all EDR response times and reduce python memory usage for cube call.
+- EDR Cube query with multiple members and multiple times could select wrong values, this is now fixed. Fixes [#851](https://github.com/KNMI/adaguc-server/issues/851).
+- Fixed missing rows at the south edge of a GetMap image when data with ascending latitudes (south to north) is drawn with bilinear interpolation or a shaded style in the CRS of the data. Depending on how the requested area lines up with the grid, up to a cell of data at the bottom of the image was left transparent. Data with descending latitudes was not affected.
 
 **Version 9.2.0 - 2026-10-28**
 

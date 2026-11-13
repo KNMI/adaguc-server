@@ -1,0 +1,236 @@
+{
+  "type": "CoverageCollection",
+  "coverages": [
+    {
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "Grid",
+        "axes": {
+          "x": {
+            "values": [
+              5.0,
+              6.0,
+              7.0
+            ]
+          },
+          "y": {
+            "values": [
+              54.0,
+              53.0,
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "y",
+              "x"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/EPSG/0/4326"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 1.0
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "description": {
+            "en": "mydata"
+          },
+          "observedProperty": {
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "unknown",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t",
+            "y",
+            "x"
+          ],
+          "shape": [
+            2,
+            3,
+            3
+          ],
+          "values": [
+            154050001.0,
+            154060001.0,
+            154070001.0,
+            153050001.0,
+            153060001.0,
+            153070001.0,
+            152050001.0,
+            152060001.0,
+            152070001.0,
+            154050101.0,
+            154060101.0,
+            154070101.0,
+            153050101.0,
+            153060101.0,
+            153070101.0,
+            152050101.0,
+            152060101.0,
+            152070101.0
+          ]
+        }
+      }
+    },
+    {
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "Grid",
+        "axes": {
+          "x": {
+            "values": [
+              5.0,
+              6.0,
+              7.0
+            ]
+          },
+          "y": {
+            "values": [
+              54.0,
+              53.0,
+              52.0
+            ]
+          },
+          "t": {
+            "values": [
+              "2025-03-01T00:00:00Z",
+              "2025-03-01T01:00:00Z"
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "y",
+              "x"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/EPSG/0/4326"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          }
+        ],
+        "custom:member": 2.0
+      },
+      "parameters": {
+        "mymemberdata": {
+          "type": "Parameter",
+          "description": {
+            "en": "mydata"
+          },
+          "observedProperty": {
+            "label": {
+              "en": "mydata"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "unknown",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "mymemberdata": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "t",
+            "y",
+            "x"
+          ],
+          "shape": [
+            2,
+            3,
+            3
+          ],
+          "values": [
+            154050002.0,
+            154060002.0,
+            154070002.0,
+            153050002.0,
+            153060002.0,
+            153070002.0,
+            152050002.0,
+            152060002.0,
+            152070002.0,
+            154050102.0,
+            154060102.0,
+            154070102.0,
+            153050102.0,
+            153060102.0,
+            153070102.0,
+            152050102.0,
+            152060102.0,
+            152070102.0
+          ]
+        }
+      }
+    }
+  ],
+  "parameters": {
+    "mymemberdata": {
+      "type": "Parameter",
+      "description": {
+        "en": "mydata"
+      },
+      "observedProperty": {
+        "label": {
+          "en": "mydata"
+        }
+      },
+      "unit": {
+        "symbol": {
+          "value": "unknown",
+          "type": "http://www.opengis.net/def/uom/UCUM"
+        }
+      }
+    }
+  }
+}

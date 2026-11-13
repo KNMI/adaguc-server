@@ -1,5 +1,9 @@
+import io
+
+import numpy as np
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
+from PIL import Image
 from conftest import (
     make_adaguc_env,
     run_adaguc_and_compare_image,
@@ -148,3 +152,36 @@ class TestGenericImageWarper:
             "test_getmap_latlon_latdecreasing_and_increasing_genericnearest.png",
             "DATASET=adaguc.tests.genericrender&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=latlon_latdecreasing_and_increasing_genericnearest&WIDTH=256&HEIGHT=512&CRS=EPSG%3A3857&BBOX=471070.27730388555,6649427.860630986,982084.0646480684,7697681.648355679&STYLES=autogeneric&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A53Z&0.9458434770354436",
         )
+
+    @pytest.mark.parametrize(
+        ("layer", "bbox"),
+        [
+            # Ascending latitudes, data between 51 and 54 degrees north. The south edge of the first window is 0.8 of a cell away
+            # from a cell border: the last rows of the image used to stay empty.
+            pytest.param("latlon_latincreasing_linear", "52.2,5.3,53.3,7.8", id="latincreasing_south_edge_0.8_cell"),
+            pytest.param("latlon_latincreasing_linear", "52.7,5.3,53.3,7.8", id="latincreasing_south_edge_0.3_cell"),
+            # Descending latitudes, data between 54 and 57 degrees north, windows with the same alignment
+            pytest.param("latlon_latdecreasing_linear", "55.2,5.3,56.3,7.8", id="latdecreasing_south_edge_0.8_cell"),
+            pytest.param("latlon_latdecreasing_linear", "55.7,5.3,56.3,7.8", id="latdecreasing_south_edge_0.3_cell"),
+        ],
+    )
+    def test_getmap_bilinear_same_crs_has_no_gaps_inside_the_data(self, layer, bbox):
+        """
+        With the CRS of the data (no reprojection, so the linear transform is used) and bilinear interpolation, every pixel
+        of a window between the centres of the outermost grid cells has four source neighbours, so it must be drawn.
+        This must hold for data with ascending and with descending latitudes, and for any alignment of the window with the grid.
+        """
+        env = make_adaguc_env("adaguc.tests.linearpixelspan.xml", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.linearpixelspan&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+            f"&LAYERS={layer}&WIDTH=100&HEIGHT=44&CRS=EPSG%3A4326&BBOX={bbox}"
+            "&STYLES=autobilinear&FORMAT=image/png&TRANSPARENT=TRUE&time=2017-10-15T07%3A31%3A53Z",
+            env=env,
+        )
+        assert status == 0
+        assert data[:4] == b"\x89PNG"
+        alpha = np.array(Image.open(io.BytesIO(data)).convert("RGBA").getchannel("A"))
+        empty_rows = np.flatnonzero((alpha == 0).all(axis=1)).tolist()
+        empty_columns = np.flatnonzero((alpha == 0).all(axis=0)).tolist()
+        assert (alpha == 255).all(), f"{(alpha == 0).sum()} transparent pixels, empty rows {empty_rows}, empty columns {empty_columns}"
