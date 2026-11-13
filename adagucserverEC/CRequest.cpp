@@ -44,6 +44,9 @@ static const bool CREQUEST_DEBUG = false;
 #include <stdexcept>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
+#include "utils/DimensionAsLayers.h"
+#include "utils/LayerMetadataStore.h"
+#include "utils/XMLGenUtils.h"
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
@@ -67,6 +70,8 @@ int CRequest::CGI = 0;
 
 // Entry point for all runs
 int CRequest::runRequest() {
+  // Layers with a Dimension configured as aslayers are split into one layer per dimension value
+  expandDimensionsAsLayers(srvParam);
   int status = process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
   CConvertGeoJSON::clearFeatureStore();
@@ -2006,6 +2011,25 @@ int CRequest::updatedb(std::string tailPath, std::string layerPathToScan, int sc
     // We need to populate the metadata to be able to use EDR with live update datasets
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
       status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
+    }
+  }
+
+  // Layers with a Dimension configured as aslayers are advertised as one layer per dimension value: store the metadata of those layers.
+  if ((scanFlags & CDBFILESCANNER_UPDATEDB) && !srvParam->datasetLocation.empty()) {
+    for (auto *dataSource: dataSources) {
+      if (!layerHasDimensionAsLayers(*dataSource->cfgLayer)) continue;
+      auto generatedLayers = makeLayersForDimensionValues(srvParam, *dataSource->cfgLayer);
+      for (auto &generatedLayer: generatedLayers) {
+        if (generatedLayer.attr.hidden == "true") continue;
+        MetadataLayer metadataLayer;
+        metadataLayer.layer = &generatedLayer;
+        metadataLayer.srvParams = srvParam;
+        if (populateMetadataLayerStruct(&metadataLayer, false) != 0 || storemetadataLayerIntoMetadataDb(&metadataLayer) != 0) {
+          CDBError("Unable to update the metadata for layer %s", makeUniqueLayerName(&generatedLayer).c_str());
+          errorHasOccured++;
+        }
+        delete metadataLayer.dataSource;
+      }
     }
   }
   if (errorHasOccured) {

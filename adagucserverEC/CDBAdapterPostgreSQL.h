@@ -44,6 +44,13 @@ struct DimInfo {
 };
 typedef struct DimInfo DimInfo;
 
+/** A dimension with a fixed value, used to restrict queries on other dimensions to files with this value */
+struct FixedDimensionFilter {
+  std::string columnName;
+  std::string tableName;
+  std::string value;
+};
+
 struct GeoOptions {
   double bbox[4];
   int indices[4];
@@ -123,6 +130,8 @@ public:
   std::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table);
+  /** Unique values of a dimension, restricted to the files which match all fixed dimension values. Ordered by value, or by index when orderByIndex is set. */
+  CDBStore::Store *getUniqueValuesForFixedDimensions(const std::string &name, bool orderByIndex, const std::string &table, const std::vector<FixedDimensionFilter> &fixedDimensions);
 
   /**
    * Returns a pointer to a store with files and their corresponding indices
