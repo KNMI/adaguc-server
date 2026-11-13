@@ -41,7 +41,7 @@ private:
   }
 
   CServerParams *srvParam = nullptr;
-  WCSDriver driver = WCSDriver::Unsupported;
+  WCSDriver driver;
   double dfDstBBOX[4];
   double dfSrcBBOX[4];
   CDataReader reader;
@@ -55,13 +55,15 @@ private:
 
   std::string generateGetCoverageFileName();
   std::string getDimensionValue(int d, CCDFDims *dims);
-  int initOutputFormat();
   int initCRS();
   void addDatasetMetadata();
   int writeFile(const std::string &fileName);
   int streamFile(const std::string &fileName);
 
 public:
+  /** driver must be GeoTiff or AAIGrid, mimeType is the one configured for the WCSFormat */
+  CGridFileDataWriter(WCSDriver driver, const std::string &mimeType) : driver(driver), mimeType(mimeType) {}
+
   // Virtual functions
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);
   int addData(std::vector<CDataSource *> &dataSources);

@@ -424,6 +424,17 @@ class TestWCS:
         status, data, _ = AdagucTestTools().runADAGUCServer(query + "&FORMAT=aaigrid", env=self.env)
         assert b"This WCS format ('aaigrid') does not support multiple bands" in data
 
+    def test_WCSDescribeCoverage_lists_only_supported_formats(self):
+        """A WCSFormat with a driver that GetCoverage cannot write is not offered in DescribeCoverage"""
+        env = make_adaguc_env("adaguc.tests.wcsdrivers")
+        update_db(env)
+        query = "dataset=adaguc.tests.wcsdrivers&SERVICE=WCS&REQUEST=DescribeCoverage&COVERAGE=testdata"
+        status, data, _ = AdagucTestTools().runADAGUCServer(query, env=env)
+        assert status == 0
+        assert b"<formats>gdalnetcdf</formats>" in data
+        assert b"<formats>geotiffwithoptions</formats>" in data
+        assert b"<formats>png</formats>" not in data
+
     def test_WCSGetCoverage_unsupported_driver(self):
         """
         Check that a WCSFormat with a driver other than ADAGUCNetCDF, GTiff or AAIGrid gives a clear error,

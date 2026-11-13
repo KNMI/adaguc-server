@@ -27,6 +27,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
+#include "CGridFileDataWriter.h"
 #include "CServerParams.h"
 #include "CServerError.h"
 #include "CDataSource.h"
@@ -768,8 +769,10 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(std::string &XMLDoc, const std::vecto
                         "      <formats>GeoTIFF</formats>\n"
                         "      <formats>AAIGRID</formats>\n";
 
-              for (size_t p = 0; p < srvParam->cfg->WCS[0].WCSFormat.size(); p++) {
-                CT::printfconcat(XMLDoc, "      <formats>%s</formats>\n", srvParam->cfg->WCS[0].WCSFormat[p].attr.name.c_str());
+              for (const auto &wcsFormat: srvParam->cfg->WCS[0].WCSFormat) {
+                // Do not offer formats that GetCoverage cannot write
+                if (getWCSDriver(wcsFormat.attr.driver, wcsFormat.attr.name) == WCSDriver::Unsupported) continue;
+                CT::printfconcat(XMLDoc, "      <formats>%s</formats>\n", wcsFormat.attr.name.c_str());
               }
               XMLDoc += "    </supportedFormats>\n";
               CT::printfconcat(XMLDoc, "    <supportedInterpolations default=\"nearest neighbor\">\n"

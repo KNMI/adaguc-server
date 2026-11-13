@@ -84,7 +84,6 @@ int CGridFileDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource,
     srvParam->geoParams.width = dataSource->dWidth;
     srvParam->geoParams.height = dataSource->dHeight;
     srvParam->geoParams.crs = dataSource->nativeProj4;
-    if (srvParam->Format.length() == 0) srvParam->Format = "NetCDF4";
   } else {
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
@@ -129,7 +128,10 @@ int CGridFileDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource,
   grid.width = srvParam->geoParams.width;
   grid.height = srvParam->geoParams.height;
 
-  if (initOutputFormat() != 0) return 1;
+  if (driver == WCSDriver::AAIGrid && NrOfBands > 1) {
+    CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.", srvParam->Format.c_str());
+    return 1;
+  }
 
   // Setup data types
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
@@ -147,32 +149,6 @@ int CGridFileDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource,
   if (initCRS() != 0) return 1;
   grid.bands.clear();
   grid.metadata.clear();
-  return 0;
-}
-
-int CGridFileDataWriter::initOutputFormat() {
-  std::string driverName;
-  std::string customOptions;
-  for (const auto &wcsFormat: srvParam->cfg->WCS[0].WCSFormat) {
-    if (srvParam->Format == wcsFormat.attr.name) {
-      driverName = wcsFormat.attr.driver;
-      mimeType = wcsFormat.attr.mimetype;
-      customOptions = wcsFormat.attr.options;
-      break;
-    }
-  }
-  driver = getWCSDriver(driverName, srvParam->Format);
-  if (driver != WCSDriver::GeoTiff && driver != WCSDriver::AAIGrid) {
-    CDBError("%s", getUnsupportedWCSDriverMessage(driverName, srvParam->Format).c_str());
-    return 1;
-  }
-  if (!customOptions.empty()) {
-    CDBWarning("WCSFormat \"%s\": options=\"%s\" are not supported for driver %s and are ignored", srvParam->Format.c_str(), customOptions.c_str(), driverName.c_str());
-  }
-  if (driver == WCSDriver::AAIGrid && NrOfBands > 1) {
-    CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.", srvParam->Format.c_str());
-    return 1;
-  }
   return 0;
 }
 
@@ -212,6 +188,12 @@ int CGridFileDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   }
 
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
+  if (dataType != grid.type) {
+    // All bands are written with the data type of the first one
+    CDBError("The data type of %s (%s) differs from the first band (%s)", dataSource->getFileName().c_str(), CDF::getCDFDataTypeName(dataType).c_str(), CDF::getCDFDataTypeName(grid.type).c_str());
+    reader.close();
+    return 1;
+  }
   size_t numValues = static_cast<size_t>(srvParam->geoParams.width) * srvParam->geoParams.height;
   GridFileBand band;
   band.data.resize(numValues * CDF::getTypeSize(dataType));
@@ -283,10 +265,6 @@ void CGridFileDataWriter::addDatasetMetadata() {
   for (size_t d = 0; d < _dataSource->requiredDims.size(); d++) {
     std::string dimName = dims->at(d).name;
     if (dimName == "forecast_reference_time") continue;
-    if (first == false) {
-      extraDimNames += ",";
-    }
-    first = false;
 
     CDFType cdf_type = -1;
     try {
@@ -295,6 +273,8 @@ void CGridFileDataWriter::addDatasetMetadata() {
       CDBDebug("Exception code %d for dimension name %s", e, dimName.c_str());
     }
     if (cdf_type == -1) continue;
+    if (!first) extraDimNames += ",";
+    first = false;
     extraDimNames += dimName;
     std::string dimDef = CT::printf("{%zu,%d}", _dataSource->requiredDims[d].uniqueValues.size(), CDFNetCDFWriter::NCtypeConversion(cdf_type));
     grid.metadata.push_back({CT::printf("NETCDF_DIM_%s_DEF", dimName.c_str()), dimDef});
@@ -382,28 +362,7 @@ std::string CGridFileDataWriter::generateGetCoverageFileName() {
   CT::replaceSelf(humanReadableString, ":", "_");
   CT::replaceSelf(humanReadableString, ".", "_");
 
-  std::string extension = ".bin";
-  std::string formatUpperCase = CT::toUpperCase(srvParam->Format);
-  if (formatUpperCase == "AAIGRID") {
-    extension = ".asc";
-  }
-  if (CT::indexOf(formatUpperCase, "NETCDF") != -1) {
-    extension = ".nc";
-  }
-  if (CT::indexOf(formatUpperCase, "TIF") != -1) {
-    extension = ".tif";
-  }
-
-  if (CT::indexOf(formatUpperCase, "IMAGE/PNG") != -1) {
-    extension = ".png";
-  }
-  if (CT::indexOf(formatUpperCase, "IMAGE/BMP") != -1) {
-    extension = ".bmp";
-  }
-  if (CT::indexOf(formatUpperCase, "IMAGE/JPG") != -1) {
-    extension = ".jpg";
-  }
-  humanReadableString += extension;
+  humanReadableString += driver == WCSDriver::AAIGrid ? ".asc" : ".tif";
 
   return humanReadableString;
 }

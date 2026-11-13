@@ -18,6 +18,9 @@
 #endif
 
 namespace {
+  // Classic TIFF has 32 bit file offsets. Above this size of pixel data use BigTIFF, like GDAL does by default.
+  const uint64_t CLASSIC_TIFF_MAX_DATA_BYTES = 4000000000ULL;
+
   TIFFExtendProc parentTagExtender = nullptr;
 
   void extendWithGDALTags(TIFF *tif) {
@@ -244,7 +247,8 @@ int writeGeoTiff(const GridFileData &grid, const std::string &fileName) {
     return 1;
   }
   initLibTIFF();
-  TIFF *tif = XTIFFOpen(fileName.c_str(), "w");
+  uint64_t dataBytes = static_cast<uint64_t>(grid.width) * grid.height * grid.bands.size() * (sampleType.bitsPerSample / 8);
+  TIFF *tif = XTIFFOpen(fileName.c_str(), dataBytes > CLASSIC_TIFF_MAX_DATA_BYTES ? "w8" : "w");
   if (tif == nullptr) {
     CDBError("Unable to open %s for writing", fileName.c_str());
     return 1;

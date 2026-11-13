@@ -2466,34 +2466,31 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   CBaseDataWriterInterface *wcsWriter = NULL;
   std::string driverName = "ADAGUCNetCDF";
   std::string options;
+  std::string mimeType;
   setDimValuesForDataSource(firstDataSource, srvParam);
 
   for (const auto &WCSFormat: srvParam->cfg->WCS[0].WCSFormat) {
     if (srvParam->Format == WCSFormat.attr.name) {
       driverName = WCSFormat.attr.driver;
       options = WCSFormat.attr.options;
+      mimeType = WCSFormat.attr.mimetype;
       break;
     }
   }
 
-  switch (getWCSDriver(driverName, srvParam->Format)) {
-  case WCSDriver::NetCDF:
-    if (!CT::equalsIgnoreCase(driverName, "ADAGUCNetCDF")) {
-      CDBDebug("WCSFormat \"%s\": driver \"%s\" is handled by the ADAGUCNetCDF writer", srvParam->Format.c_str(), driverName.c_str());
-      if (!options.empty()) {
-        CDBWarning("WCSFormat \"%s\": options=\"%s\" are not supported for driver %s and are ignored", srvParam->Format.c_str(), options.c_str(), driverName.c_str());
-      }
-    }
-    CDBDebug("Creating CNetCDFDataWriter");
-    wcsWriter = new CNetCDFDataWriter();
-    break;
-  case WCSDriver::GeoTiff:
-  case WCSDriver::AAIGrid:
-    wcsWriter = new CGridFileDataWriter();
-    break;
-  case WCSDriver::Unsupported:
+  WCSDriver driver = getWCSDriver(driverName, srvParam->Format);
+  if (driver == WCSDriver::Unsupported) {
     CDBError("%s", getUnsupportedWCSDriverMessage(driverName, srvParam->Format).c_str());
     return 1;
+  }
+  if (!options.empty() && !CT::equalsIgnoreCase(driverName, "ADAGUCNetCDF")) {
+    CDBWarning("WCSFormat \"%s\": options=\"%s\" are not supported for driver %s and are ignored", srvParam->Format.c_str(), options.c_str(), driverName.c_str());
+  }
+  if (driver == WCSDriver::NetCDF) {
+    CDBDebug("Creating CNetCDFDataWriter");
+    wcsWriter = new CNetCDFDataWriter();
+  } else {
+    wcsWriter = new CGridFileDataWriter(driver, mimeType);
   }
   try {
     try {
