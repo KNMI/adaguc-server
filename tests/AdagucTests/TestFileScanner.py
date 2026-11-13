@@ -15,7 +15,7 @@ from adaguc.CGIRunner import (
     SCAN_EXITCODE_FILENOMATCH_ISDELETED,
     SCAN_EXITCODE_SCANERROR,
 )
-import psycopg2
+import psycopg
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import clean_postgres
 
@@ -75,7 +75,7 @@ class TestFileScanner(unittest.TestCase):
         )
         self.assertEqual(status, 0)
         # Check if tables are empty
-        connection = psycopg2.connect(os.getenv("ADAGUC_DB")).cursor()
+        connection = psycopg.connect(os.getenv("ADAGUC_DB")).cursor()
         connection.execute(
             "SELECT tablename from pathfiltertablelookup_v2_0_23 where filter = 'F_uwcw_ha43_dini_testfile_multivar_5x6_clean.*.nc$' and dimension != '';"
         )
@@ -141,7 +141,7 @@ class TestFileScanner(unittest.TestCase):
         )
         self.assertEqual(status, 0)
         # Check if tables are empty
-        connection = psycopg2.connect(os.getenv("ADAGUC_DB")).cursor()
+        connection = psycopg.connect(os.getenv("ADAGUC_DB")).cursor()
         connection.execute(
             "SELECT tablename from pathfiltertablelookup_v2_0_23 where filter = 'F_uwcw_ha43_dini_testfile_multivar_5x6_clean.*.nc$' and dimension != '';"
         )
