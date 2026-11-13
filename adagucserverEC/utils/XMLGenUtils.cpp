@@ -1,5 +1,6 @@
 #include "LayerMetadataStore.h"
 #include "XMLGenUtils.h"
+#include "DimensionKind.h"
 #include "CStopWatch.h"
 #include <CDBStore.h>
 #include <CDBFactory.h>
@@ -192,7 +193,7 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   const auto &cfgDims = dataSource->cfgLayer->Dimension; // Layer configuration dimensions
 
   // Find time dimension in Layer configuration dimensions
-  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension &d) -> bool { return d.elementValue == "time"; });
+  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension &d) -> bool { return getDimKindForServiceName(d.elementValue) == DimKind::Time; });
   if (xmleDimTimeIt == cfgDims.end()) {
     // There is no time dim. Do nothing, all OK.
     return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_TIME;
@@ -207,13 +208,13 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
 
   // Find time dimensions in the layerMetadata dimList
   auto &lmDims = layerMetadataDimList; // Layer metadata dimensions, referenced by & so we can adjust the value in the object of the vector
-  auto lmDimTimeIt = std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return d.serviceName == "time"; });
+  auto lmDimTimeIt = std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return getDimKindForServiceName(d.serviceName) == DimKind::Time; });
   if (lmDimTimeIt == lmDims.end()) {
     // There is no metadata dimension named time
     return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA;
   }
   // Find reference_time dimensions in the layerMetadata dimList
-  auto lmDimRefTimeIt = std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return d.serviceName == "reference_time" || d.serviceName == "forecast_reference_time"; });
+  auto lmDimRefTimeIt = std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return getDimKindForServiceName(d.serviceName) == DimKind::ReferenceTime; });
   if (lmDimRefTimeIt == lmDims.end()) {
     lmDimTimeIt->defaultValue = "";
     return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA;
@@ -237,23 +238,11 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   }
 }
 
-// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units.
-// Their values are stored as timestamps (CDBFileScanner, for standard_name time or forecast_reference_time), so they are ordered
-// by value and returned as ISO8601. Autoconfigure names them time or reference_time with ISO8601 units, whatever the NetCDF name.
-bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
-  const auto &name = cfgDim->attr.name;
-  const auto &type = cfgDim->attr.type;
-  const auto &serviceName = cfgDim->elementValue;
-  bool isIso8601 = cfgDim->attr.units == "ISO8601";
-  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" || (CT::indexOf(name, "time") >= 0 && isIso8601) ||
-         ((serviceName == "time" || serviceName.ends_with("reference_time")) && isIso8601);
-}
-
 LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap,
                                         const std::string &tableName) {
   // Get all dimension values from the db
   auto srvParam = dataSource->srvParams;
-  bool isTimeDim = isATimeDimension(cfgLayerDim);
+  bool isTimeDim = getDimKind(*cfgLayerDim) != DimKind::Normal;
 
   auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->elementValue);
   std::vector<std::string> queryValues;
@@ -435,7 +424,7 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
 std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim, const std::string &tableName) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!isATimeDimension(cfgDim)) {
+  if (getDimKind(*cfgDim) == DimKind::Normal) {
     return timeStampList;
   }
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
@@ -489,7 +478,7 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
         CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
       }
       // Only time dimensions can get an auto calculated interval
-      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
+      const std::string interval = getDimKind(*cfgDim) != DimKind::Normal ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;
