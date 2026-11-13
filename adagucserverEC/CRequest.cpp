@@ -1313,7 +1313,7 @@ int CRequest::process_querystring() {
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);
     } else if (srvParam->requestedLayerNames.size() > 1) {
-      // The posted style applies to every layer, so only one layer is allowed
+      // The STYLESHEET style applies to every layer, so only one layer is allowed
       CDBError("ADAGUC Server: STYLESHEET can only be used with one layer, got %zu", srvParam->requestedLayerNames.size());
       dErrorOccured = 1;
       setExceptionType(ServiceExceptionType::UnprocessableEntity);

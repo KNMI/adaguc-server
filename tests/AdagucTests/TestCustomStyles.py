@@ -1,7 +1,7 @@
 """
 Tests custom styles sent with the STYLESHEET parameter in the query string, through the FastAPI server.
-The posted Style is used for the requested layer (only one allowed), regardless of its name and of STYLES, for that request only.
-A posted Legend replaces the configured one with the same name.
+The Style is used for the requested layer (only one allowed), regardless of its name and of STYLES, for that request only.
+Its Legend replaces the configured one with the same name.
 """
 
 import base64
@@ -99,22 +99,22 @@ def short_id(value):
     return str(value)[:80]
 
 
-def test_CustomStyles_post_variant_style(client):
-    """A posted style overrides the configured one for its own request only: the requests before and after it use the dataset style"""
+def test_CustomStyles_variant_style(client):
+    """A STYLESHEET style overrides the configured one for its own request only: the requests before and after it use the dataset style"""
     assert_image(getmap(client), "test_CustomStyles_dataset_style.png")
-    assert_image(getmap(client, VARIANT_STYLE), "test_CustomStyles_post_variant_style.png")
+    assert_image(getmap(client, VARIANT_STYLE), "test_CustomStyles_variant_style.png")
     assert_image(getmap(client), "test_CustomStyles_dataset_style.png")
 
 
-def test_CustomStyles_post_same_style(client):
-    """Posting the configured style again gives the same image as the dataset style"""
+def test_CustomStyles_same_style(client):
+    """Sending the configured style again gives the same image as the dataset style"""
     assert_image(getmap(client, SAME_STYLE), "test_CustomStyles_dataset_style.png")
 
 
 @pytest.mark.parametrize("styles", [None, "", "default", "testdata_style_manycontours/nearest", "does_not_exist"])
-def test_CustomStyles_post_variant_style_ignores_styles(client, styles):
-    """The posted style is used whatever STYLES is set to, None keeps the configured style testdata_style_manycontours"""
-    assert_image(getmap(client, VARIANT_STYLE, styles=styles), "test_CustomStyles_post_variant_style.png")
+def test_CustomStyles_variant_style_ignores_styles(client, styles):
+    """The STYLESHEET style is used whatever STYLES is set to, None keeps the configured style testdata_style_manycontours"""
+    assert_image(getmap(client, VARIANT_STYLE, styles=styles), "test_CustomStyles_variant_style.png")
 
 
 def compress(xml, wbits=-15):
@@ -173,11 +173,17 @@ def test_CustomStyles_example_value_from_geoweb(client):
 
 
 def test_CustomStyles_other_encodings_give_the_same_image(client):
-    """zlib, gzip, standard base64 with '+' not url encoded, and base64 without compression are accepted too"""
+    """zlib, gzip, standard base64 with '+' not url encoded, base64 without compression and a byte order mark are accepted too"""
     expected = getmap(client, VARIANT_STYLE)
     assert expected.status_code == 200, expected.text
     encoded = base64.b64encode(zlib.compress(VARIANT_STYLE.encode(), 9)).decode()
     assert "+" in encoded
+    # XML ends with '>' (0x3E): with a length that is a multiple of 3, its base64 has no padding and ends with '+'
+    xml = VARIANT_STYLE.strip()
+    xml = " " * (-len(xml.encode()) % 3) + xml
+    ends_with_plus = base64.b64encode(xml.encode()).decode()
+    assert ends_with_plus.endswith("+")
+    byte_order_mark = "﻿"
     for response in (
         get_with_stylesheet(client, GET_MAP_QUERY, compress(VARIANT_STYLE, 15)),
         get_with_stylesheet(client, GET_MAP_QUERY, compress(VARIANT_STYLE, 31)),
@@ -185,6 +191,11 @@ def test_CustomStyles_other_encodings_give_the_same_image(client):
         getmap(client, base64.b64encode(VARIANT_STYLE.encode()).decode()),
         # A client that does not url encode '+', it arrives as a space
         get_with_stylesheet(client, GET_MAP_QUERY, encoded.replace("/", "%2F").replace("=", "%3D")),
+        # Also at the end of the value
+        get_with_stylesheet(client, GET_MAP_QUERY, ends_with_plus.replace("/", "%2F")),
+        # XML after a UTF-8 byte order mark, as is and compressed
+        getmap(client, byte_order_mark + VARIANT_STYLE),
+        getmap(client, compress(byte_order_mark + VARIANT_STYLE)),
     ):
         assert response.status_code == 200, response.text
         assert response.content == expected.content
@@ -284,7 +295,7 @@ def test_CustomStyles_large_stylesheet(client):
 
 
 def vector_getmap(client, monkeypatch, vector):
-    """GetMap of wind_wave_direction, drawn with the posted Vector from directions and a constant magnitude of 1"""
+    """GetMap of wind_wave_direction, drawn with the Vector from the STYLESHEET from directions and a constant magnitude of 1"""
     env = make_adaguc_env("adaguc.tests.vectorrendering")
     update_db(env)
     monkeypatch.setenv("ADAGUC_CONFIG", env["ADAGUC_CONFIG"])
@@ -314,7 +325,7 @@ def vector_getmap(client, monkeypatch, vector):
     return client.get("/wms", params=params)
 
 
-# One case per kind of text that is printed with a posted format
+# One case per kind of text that is printed with a format from a STYLESHEET
 FORMAT_CASES = {
     "contour": lambda client, monkeypatch, fmt: getmap(client, contour_style(fmt)),
     "continuous_legend": lambda client, monkeypatch, fmt: getlegendgraphic(
@@ -333,7 +344,7 @@ FORMAT_CASES = {
 
 @pytest.mark.parametrize("case", FORMAT_CASES)
 def test_CustomStyles_unsafe_format_falls_back_to_g(client, monkeypatch, case):
-    """A posted format is accepted, but CT::formatFloat prints anything but one float conversion with %g instead.
+    """A format from a STYLESHEET is accepted, but CT::formatFloat prints anything but one float conversion with %g instead.
     Which formats are safe is tested in C++ (CT isSafeFloatFormat), this checks that the text of every renderer goes through it."""
     render = lambda fmt: FORMAT_CASES[case](client, monkeypatch, fmt)
     unsafe, fallback, other = render("%s%s%s%s"), render("%g"), render("%.4f")
@@ -355,7 +366,7 @@ def test_CustomStyles_unsafe_format_falls_back_to_g(client, monkeypatch, case):
     ],
 )
 def test_CustomStyles_convert_units(client, dataPostProc, expected):
-    """A posted style can convert units, the value at this location is 0.197693 with units 1"""
+    """A STYLESHEET style can convert units, the value at this location is 0.197693 with units 1"""
     params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
     params["STYLESHEET"] = f'<Style name="s">{dataPostProc}</Style>'
     response = client.get("/wms", params=params)
@@ -425,10 +436,10 @@ def test_CustomStyles_accepts_32_contourlines(client):
     assert response.status_code == 200, response.text
 
 
-def test_CustomStyles_layer_settings_do_not_override_posted_style(client):
+def test_CustomStyles_layer_settings_do_not_override_stylesheet(client):
     """Style settings in the layer (RenderMethod, Legend, Min, Max, ContourLine) apply to configured styles only"""
     assert getmap(client, layers="testdata_layer_overrides").content != getmap(client).content
-    assert_image(getmap(client, VARIANT_STYLE, layers="testdata_layer_overrides"), "test_CustomStyles_post_variant_style.png")
+    assert_image(getmap(client, VARIANT_STYLE, layers="testdata_layer_overrides"), "test_CustomStyles_variant_style.png")
 
 
 def test_CustomStyles_legend_with_many_classes(client):
@@ -460,6 +471,6 @@ def test_CustomStyles_legend_loops_end(client, stylesheet):
 
 @pytest.mark.parametrize("name", ["included", "testdata_style_manycontours"])
 def test_CustomStyles_include_configured_style(client, name):
-    """A posted style can include a configured style, also when it has the same name"""
+    """A STYLESHEET style can include a configured style, also when it has the same name"""
     response = getmap(client, f'<Style name="{name}"><IncludeStyle name="testdata_style_manycontours"/></Style>')
     assert_image(response, "test_CustomStyles_dataset_style.png")

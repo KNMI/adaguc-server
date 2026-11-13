@@ -911,7 +911,7 @@ static std::string repeat(const std::string &text, int times) {
 TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
   CHECK_STYLESHEETS(
       (std::vector<std::string>{
-          // Only Style and Legend elements may be posted, and only one Style
+          // Only Style and Legend elements may be sent, and only one Style
           R"(<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>)",
           R"(<Style name="a"/><Style name="b"/>)",
           R"(<Style name=)",
@@ -927,9 +927,9 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
           R"(<Legend name="l" type="svg" file="/etc/passwd"/>)",
           // Applied to strings and integers too, so no safe format exists
           R"(<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>)",
-          // Posted printf formats are accepted, but their length is limited
+          // printf formats from a STYLESHEET are accepted, but their length is limited
           R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 33) + R"("/></Style>)",
-          // IncludeStyle of a style that is not configured, like the posted style itself
+          // IncludeStyle of a style that is not configured, like the STYLESHEET style itself
           R"(<Style name="s"><IncludeStyle name="s"/></Style>)",
           R"(<Style name="s"><IncludeStyle name="does_not_exist"/></Style>)",
           // Unknown elements, attributes and markup
@@ -969,7 +969,7 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
           R"(<Style name="s"><Log>-10</Log></Style>)",
           // drawContour has one bit per ContourLine
           R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 33) + "</Style>",
-          // A legend that is neither configured nor posted
+          // A legend that is neither configured nor in the STYLESHEET
           R"(<Style name="s"><Legend>does_not_exist</Legend></Style>)",
           // Only the text before a comment is read as value, so it must be the text that is checked
           R"(<Style name="s"><SmoothingFilter>100000<!---->e-4</SmoothingFilter></Style>)",
@@ -985,10 +985,10 @@ TEST(CServerParams, applyStyleSheetAcceptsAllowedContent) {
       (std::vector<std::string>{
           R"(<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>)",
           R"(<?xml version="1.0"?><Configuration><Style name="s"/></Configuration>)",
-          // Posted legends may be used by the posted style, and replace a configured legend with the same name
+          // Legends in the STYLESHEET may be used by its style, and replace a configured legend with the same name
           R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend><Style name="s"><Legend>l</Legend></Style>)",
           R"(<Legend name="rainbow" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend>)",
-          // A configured style may be included, also by a posted style with the same name
+          // A configured style may be included, also by a STYLESHEET style with the same name
           R"(<Style name="testdata_style_manycontours"><IncludeStyle name="testdata_style_manycontours"/></Style>)",
           // The limits themselves
           R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 32) + "</Style>",
@@ -1063,6 +1063,12 @@ TEST(CServerParams, applyStyleSheetBase64) {
                         "PE2HDYBACFwFB2AD4y72Xt6u03uA_wkh1zjiiJmGcaKyovt5Pex6mhfZ-0Fpps66CT8vjYgAKy-UIQEXG1wcFzLQBOLKCcbUTasSovjzv7Mq5w38CSJOgVFvxZZhTj4AAAD__7MJLqnMSVXIS8xNtVUqVrKz8UlNT81LsStKzMxLyi-30YfybXwz8-wMbPRBlI1vYoWdgZ4pkAdk2OiDjbADAA",
                         // The first one without compression
                         "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        // <Style name="s0">... without compression and padding, ending with a '+' that was not url encoded
+                        "PFN0eWxlIG5hbWU9InMwIj48TGVnZW5kPnJhaW5ib3c8L0xlZ2VuZD48TWluPjA8L01pbj48TWF4PjAuNTwvTWF4PjwvU3R5bGU ",
+                        // The first one after a UTF-8 byte order mark: as XML, base64 encoded, and raw deflate compressed
+                        "\xEF\xBB\xBF<Style name=\"s\"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>",
+                        "77u/PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        "e797v01wSWVOqkJeYm6qrVKxkp2NT2p6al6KXVFiZl5SfrmNPpRv45uZZ2dgow-ibHwTK-wM9EyBPCDDRh9shB0A",
                     }),
                     true);
   CHECK_STYLESHEETS((std::vector<std::string>{

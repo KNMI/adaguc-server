@@ -23,6 +23,12 @@ logger = logging.getLogger(__name__)
 # server request, and without fork server in one environment variable of the subprocess (128 KiB on Linux).
 MAX_REQUEST_BYTES = MAX_FORK_REQUEST_BYTES
 
+# Largest request line plus headers that uvicorn accepts, set as h11_max_incomplete_event_size. Its HTTP parser h11
+# refuses a request with 400 when more than 16 KB of it has arrived without the end of the headers. Whether that
+# happens depends on how the request is split over network reads, so a long STYLESHEET would fail at random.
+# This leaves room for a query string of MAX_REQUEST_BYTES plus the headers.
+MAX_REQUEST_HEAD_BYTES = MAX_REQUEST_BYTES + 16384
+
 
 def build_query_string(params) -> str:
     """

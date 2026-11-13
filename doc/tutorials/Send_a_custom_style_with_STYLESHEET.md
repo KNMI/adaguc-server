@@ -231,7 +231,8 @@ The image is the same as in step 4. The value is raw deflate data (RFC 1951, wit
 - percent encoded values and `=` padding,
 - standard base64 (`+/`), also with a `+` that was not url encoded and arrives as a space,
 - zlib or gzip instead of raw deflate,
-- base64 without compression.
+- base64 without compression,
+- XML that starts with a UTF-8 byte order mark, as some editors on Windows save it.
 
 In a browser, `CompressionStream("deflate-raw")` compresses to raw deflate:
 
@@ -262,7 +263,7 @@ A refused stylesheet gets status 422, and the body says why, for example `STYLES
 
 ## 12. Notes for server administrators
 
-- The whole style is in the URL, so the Redis response cache (`ADAGUC_REDIS`) caches these responses like other GET requests.
-- Proxies in front of the server must allow long request lines. nginx's default `large_client_header_buffers 4 8k` allows about 8 KB, 16 KB gives more room. The server itself accepts query strings up to 64 KB.
+- The Redis response cache (`ADAGUC_REDIS`) does not cache responses to requests with a `STYLESHEET`: such a style is usually used once, and its URL can be up to 64 KB.
+- Proxies in front of the server must allow long request lines. nginx's default `large_client_header_buffers 4 8k` allows about 8 KB, 16 KB gives more room. The server itself accepts query strings up to 64 KB, its HTTP parser takes request lines plus headers up to 80 KB.
 - A valid style can still be expensive to render. Put a rate or concurrency limit in front of a public server, see [Environment variables](../EnvironmentVariablesAndExitCodes.md).
 - `adagucserver --lint` checks the configured styles with the same value rules.
