@@ -2,7 +2,7 @@ import calendar
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
 import brotli
@@ -27,7 +27,7 @@ async def get_cached_response(redis_pool, request):
         return None, None, None
 
     entrytime = int(cached[:10].decode("utf-8"))
-    currenttime = calendar.timegm(datetime.utcnow().utctimetuple())
+    currenttime = calendar.timegm(datetime.now(timezone.utc).utctimetuple())
     age = currenttime - entrytime
 
     headers_len = int(cached[10:16].decode("utf-8"))
@@ -53,7 +53,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
             fixed_headers[k] = headers[k]
     headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode("utf-8")
 
-    entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode("utf-8")
+    entrytime = f"{calendar.timegm(datetime.now(timezone.utc).utctimetuple()):10d}".encode("utf-8")
     is_compression_needed = requires_encoding(headers)
     compressed_data = brotli.compress(data, quality=4) if is_compression_needed else data
     if len(compressed_data) < MAX_SIZE_FOR_CACHING:

@@ -4,6 +4,10 @@
 #
 #    pip-compile --no-emit-index-url requirements-dev.in
 #
+anyio==4.15.1
+    # via
+    #   -c requirements.txt
+    #   httpx2
 astroid==4.3.4
     # via pylint
 black==26.10.1
@@ -26,8 +30,21 @@ filelock==4.2.4
     # via
     #   python-discovery
     #   virtualenv
+h11==0.16.0
+    # via
+    #   -c requirements.txt
+    #   httpcore2
+httpcore2==2.16.0
+    # via httpx2
+httpx2==2.16.0
+    # via -r requirements-dev.in
 identify==2.6.20
     # via pre-commit
+idna==3.20
+    # via
+    #   -c requirements.txt
+    #   anyio
+    #   httpx2
 iniconfig==2.3.1
     # via pytest
 isort==8.0.1
@@ -83,5 +100,13 @@ pyyaml==6.0.3
     #   pre-commit
 tomlkit==0.15.2
     # via pylint
+truststore==0.10.5
+    # via
+    #   httpcore2
+    #   httpx2
+typing-extensions==4.16.0
+    # via
+    #   -c requirements.txt
+    #   anyio
 virtualenv==21.14.13
     # via pre-commit
