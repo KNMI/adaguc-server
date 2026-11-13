@@ -98,7 +98,7 @@ public:
   std::string Styles;
   std::string Style;
   std::string styleSheet;           // STYLESHEET KVP value, decoded
-  int styleSheetStyleIndex = -1;    // Index in cfg->Style of the Style posted in STYLESHEET, used for the (single) layer regardless of STYLES
+  int styleSheetStyleIndex = -1;    // Index in cfg->Style of the Style from STYLESHEET, used for the (single) layer regardless of STYLES
   std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
   std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter
@@ -175,10 +175,12 @@ public:
 
   /**
    * Adds the Style and Legend elements of a STYLESHEET to the configuration, for this request only.
-   * The posted Style (at most one) is used for the layer, regardless of its name and of STYLES; see styleSheetStyleIndex.
+   * Its Style (at most one) is used for the layer, regardless of its name and of STYLES; see styleSheetStyleIndex.
    * A request with a STYLESHEET may only have one layer, CRequest::process_querystring enforces this.
-   * A posted Legend replaces the configured one with the same name, otherwise it is added with the provided name.
-   * The xml may be bare elements or wrapped in <Configuration>. It must pass the allowlist in isAllowedStyleSheet
+   * Its Legend replaces the configured one with the same name, otherwise it is added with the provided name.
+   * The xml may be bare elements or wrapped in <Configuration>, or base64 encoded XML, optionally compressed as raw
+   * deflate, zlib or gzip (anything not starting with '<'), see styleSheetToXml in utils/StyleSheetHandler.h.
+   * It must pass the allowlist in isAllowedStyleSheet
    * (utils/StyleSheetValidation.h); png files (SymbolInterval file, LegendGraphic value) must be in a symbol directory.
    * returns zero on success
    */

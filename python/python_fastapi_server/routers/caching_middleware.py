@@ -66,6 +66,15 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
         await redis_client.aclose()
 
 
+def has_stylesheet(request):
+    """
+    A STYLESHEET is a style for one request, for example from a style editor that sends a request for every change.
+    Its responses are not cached: they are rarely requested again, the key holds the whole style (up to 64 KB),
+    and every encoding of the same style (XML, base64, compressed) would be stored again.
+    """
+    return any(key.upper() == "STYLESHEET" for key in request.query_params.keys())
+
+
 def generate_key(request):
     key = request.url.path.encode("utf-8")
     if len(request["query_string"]) > 0:
@@ -88,8 +97,8 @@ class CachingMiddleware(BaseHTTPMiddleware):
             self.redis_pool = redis.ConnectionPool.from_url(ADAGUC_REDIS)
 
     async def dispatch(self, request, call_next):
-        # Only GET: the key is the url, so a POST (with its parameters in the body) would be served for the GET url
-        if self.shortcut or request.method != "GET":
+        # Only GET: the key is the url, so the response to a request with a body would be served for the url alone
+        if self.shortcut or request.method != "GET" or has_stylesheet(request):
             return await call_next(request)
 
         # Check if request is in cache, if so return that

@@ -50,7 +50,7 @@ namespace {
   ValueRule range(double min, double max) { return {ValueType::Number, min, max}; }
   ValueRule intRange(double min, double max) { return {ValueType::Integer, min, max}; }
 
-  // Every element and attribute a client may post. Missing on purpose: file and font attributes, symbol,
+  // Every element and attribute a client may send. Missing on purpose: file and font attributes, symbol,
   // labelpropertyformat (applied to strings and integers too) and most DataPostProc algorithms and attributes.
   // IncludeStyle may only name a configured style, see CServerParams::applyStyleSheet.
   // Element and attribute names follow CServerConfig_CPPXSD.h. An attribute added there is refused for STYLESHEET until it is added here.
@@ -181,7 +181,7 @@ namespace {
     return child != nullptr && child->type == XML_TEXT_NODE && child->content != nullptr ? (const char *)child->content : "";
   }
 
-  // Walks the Style and Legend elements. A posted STYLESHEET is untrusted: everything must be allowed, and the walk stops at the first issue.
+  // Walks the Style and Legend elements. A STYLESHEET is untrusted: everything must be allowed, and the walk stops at the first issue.
   // Configured styles are trusted: only the values of known elements and attributes are checked, and every issue is reported.
   struct StyleChecker {
     bool configured;
@@ -229,7 +229,7 @@ namespace {
       case ValueType::Color:
         return CColor::isValid(value);
       case ValueType::FloatFormat:
-        // Posted formats are accepted, CT::formatFloat falls back to %g. A configured one should print as intended.
+        // Formats from a STYLESHEET are accepted, CT::formatFloat falls back to %g. A configured one should print as intended.
         return configured ? CT::isSafeFloatFormat(value) : value.size() <= 64;
       case ValueType::Pattern:
         return configured || (value.size() <= 256 && value.find('\\') == std::string_view::npos);

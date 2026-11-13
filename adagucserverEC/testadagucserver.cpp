@@ -911,7 +911,7 @@ static std::string repeat(const std::string &text, int times) {
 TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
   CHECK_STYLESHEETS(
       (std::vector<std::string>{
-          // Only Style and Legend elements may be posted, and only one Style
+          // Only Style and Legend elements may be sent, and only one Style
           R"(<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>)",
           R"(<Style name="a"/><Style name="b"/>)",
           R"(<Style name=)",
@@ -927,9 +927,9 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
           R"(<Legend name="l" type="svg" file="/etc/passwd"/>)",
           // Applied to strings and integers too, so no safe format exists
           R"(<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>)",
-          // Posted printf formats are accepted, but their length is limited
+          // printf formats from a STYLESHEET are accepted, but their length is limited
           R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 33) + R"("/></Style>)",
-          // IncludeStyle of a style that is not configured, like the posted style itself
+          // IncludeStyle of a style that is not configured, like the STYLESHEET style itself
           R"(<Style name="s"><IncludeStyle name="s"/></Style>)",
           R"(<Style name="s"><IncludeStyle name="does_not_exist"/></Style>)",
           // Unknown elements, attributes and markup
@@ -969,7 +969,7 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
           R"(<Style name="s"><Log>-10</Log></Style>)",
           // drawContour has one bit per ContourLine
           R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 33) + "</Style>",
-          // A legend that is neither configured nor posted
+          // A legend that is neither configured nor in the STYLESHEET
           R"(<Style name="s"><Legend>does_not_exist</Legend></Style>)",
           // Only the text before a comment is read as value, so it must be the text that is checked
           R"(<Style name="s"><SmoothingFilter>100000<!---->e-4</SmoothingFilter></Style>)",
@@ -985,10 +985,10 @@ TEST(CServerParams, applyStyleSheetAcceptsAllowedContent) {
       (std::vector<std::string>{
           R"(<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>)",
           R"(<?xml version="1.0"?><Configuration><Style name="s"/></Configuration>)",
-          // Posted legends may be used by the posted style, and replace a configured legend with the same name
+          // Legends in the STYLESHEET may be used by its style, and replace a configured legend with the same name
           R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend><Style name="s"><Legend>l</Legend></Style>)",
           R"(<Legend name="rainbow" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend>)",
-          // A configured style may be included, also by a posted style with the same name
+          // A configured style may be included, also by a STYLESHEET style with the same name
           R"(<Style name="testdata_style_manycontours"><IncludeStyle name="testdata_style_manycontours"/></Style>)",
           // The limits themselves
           R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 32) + "</Style>",
@@ -1039,4 +1039,61 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   datasetDir.empty() ? unsetenv("ADAGUC_DATASET_DIR") : setenv("ADAGUC_DATASET_DIR", datasetDir.c_str(), 1);
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
+}
+
+// A base64 encoded STYLESHEET, optionally raw deflate, zlib or gzip compressed, is checked like the same stylesheet in XML
+TEST(CServerParams, applyStyleSheetBase64) {
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlays/FJTU/NS7ErSszMS8ovt9GH8m18M/PsDGz0QZSNb2KFnYGeKZAHZNjog42wAwClDRhL",
+                        // <?xml version="1.0"?><Configuration><Style name="s"/></Configuration>
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwg==",
+                        // The same URL safe without padding, and with spaces for the '+' characters a client did not url encode
+                        "eNqzsa_IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK-nb2eijKgAAMMIXwg",
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK nb2eijKgAAMMIXwg==",
+                        // The same gzip compressed
+                        "H4sIAAAAAAAC/7Oxr8jNUShLLSrOzM+zVTLUM1Cyt7Nxzs9Ly0wvLUosAYra2QSXVOakKuQl5qbaKhUr6dvZ6KMqAADtmytARQAAAA==",
+                        // The first one raw deflate compressed (as CompressionStream("deflate-raw") in a browser) and base64url encoded
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY6IONsAMA",
+                        // <Style name="x"><RenderSettings renderhint="discreteclasses"/></Style> raw deflate, without and with '=' padding
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA",
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA=",
+                        // The first one after an XML comment, raw deflate in two blocks: the compressed data starts with '<' (0x3C, a
+                        // non-final dynamic block), so it must not be taken for uncompressed XML
+                        "PE2HDYBACFwFB2AD4y72Xt6u03uA_wkh1zjiiJmGcaKyovt5Pex6mhfZ-0Fpps66CT8vjYgAKy-UIQEXG1wcFzLQBOLKCcbUTasSovjzv7Mq5w38CSJOgVFvxZZhTj4AAAD__7MJLqnMSVXIS8xNtVUqVrKz8UlNT81LsStKzMxLyi-30YfybXwz8-wMbPRBlI1vYoWdgZ4pkAdk2OiDjbADAA",
+                        // The first one without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        // <Style name="s0">... without compression and padding, ending with a '+' that was not url encoded
+                        "PFN0eWxlIG5hbWU9InMwIj48TGVnZW5kPnJhaW5ib3c8L0xlZ2VuZD48TWluPjA8L01pbj48TWF4PjAuNTwvTWF4PjwvU3R5bGU ",
+                        // The first one after a UTF-8 byte order mark: as XML, base64 encoded, and raw deflate compressed
+                        "\xEF\xBB\xBF<Style name=\"s\"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>",
+                        "77u/PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        "e797v01wSWVOqkJeYm6qrVKxkp2NT2p6al6KXVFiZl5SfrmNPpRv45uZZ2dgow-ibHwTK-wM9EyBPCDDRh9shB0A",
+                    }),
+                    true);
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>
+                        "eNqz8UmsTC1SKKksSLVVSkksSUxKLE5VsrNxy8xJDUgsybDTTy1JttGHc23CEosyE5NyUu0qbPThbBt9sDF2ADYMG0U=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlayswnIz8wrUUjLzytJy8wBiumnliTrFyQWF5enKOnb2eiD1dsBABFyEtI=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style> without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxQb2ludCBmb250ZmlsZT0iL2V0Yy9wYXNzd2QiLz48L1N0eWxlPg==",
+                        // Not base64, base64 that is no XML, and compressed data that is no XML
+                        "Style name=s",
+                        "bm90IHhtbA==",
+                        "eNrLyy9RqMjNAQALFQLD",
+                        // Raw deflate: no XML, truncated, invalid UTF-8 (<Style name="s\xff"/>) and 70000 spaces after <Style name="s"/>
+                        "y8svUajIzQEA",
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY",
+                        "swkuqcxJVchLzE21VSr-r6RvBwA",
+                        "7cExFUARAADAKp4CCnxKSPAHGxYW7ZUw3t1X9-ktzH-0HFdMJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz10",
+                        // Data that is no deflate data
+                        "AAAA",
+                        // The second valid one truncated, and with data after the compressed stream
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKg==",
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwng=",
+                        // <Style name="s"/> followed by 70000 spaces: 152 characters that decompress to more than 64 KB
+                        "eNrtwTEVQBEAAMAqngIKfEpI8AcbFhbtlTDe3Vf36S3Mf7QcV0wlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADPXWRCNW4=",
+                    }),
+                    false);
 }

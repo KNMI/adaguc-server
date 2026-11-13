@@ -257,7 +257,7 @@ std::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, in
  * @return stringlist with the list of available legends.
  */
 
-// Settings in the layer apply to configured styles only, not to a style posted in STYLESHEET
+// Settings in the layer apply to configured styles only, not to a style from STYLESHEET
 bool CDataSource::isStyleSheetStyle(const CServerConfig::XMLE_Style *style) const {
   return style != nullptr && srvParams->styleSheetStyleIndex != -1 && style == &cfg->Style[srvParams->styleSheetStyleIndex];
 }
@@ -502,7 +502,7 @@ CStyleConfiguration *CDataSource::getStyle() {
   std::string styleName = "default";
 
   if (srvParams->styleSheetStyleIndex != -1) {
-    // A Style posted in STYLESHEET is used regardless of STYLES, same setup as a style from getStyleListForDataSource
+    // A Style from STYLESHEET is used regardless of STYLES, same setup as a style from getStyleListForDataSource
     CServerConfig::XMLE_Style *style = &cfg->Style[srvParams->styleSheetStyleIndex];
     std::vector<std::string> renderMethods = getRenderMethodListForDataSource(style);
     std::vector<std::string> legendList = getLegendListForDataSource(style);
