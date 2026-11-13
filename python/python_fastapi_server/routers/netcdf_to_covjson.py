@@ -6,7 +6,6 @@ from __future__ import annotations
 import logging
 from datetime import timezone
 from typing import Any, List
-import math
 
 import netCDF4
 import numpy as np
@@ -179,8 +178,6 @@ def netcdf_to_covjson(
     netcdfdimname_to_covdimname["time"] = "t"
 
     # Loop through the variables in the NetCDF file
-    custom_dim_values = []
-    custom_dim_name = None
     coverages = []
     referencing: list[ReferenceSystemConnectionObject] | None = None
 
@@ -201,7 +198,10 @@ def netcdf_to_covjson(
         # Get the names of the variable
         axisnames = []
         shape = []
-        for dimname in variable.dimensions:
+        custom_dim_values = []
+        custom_dim_name = None
+        custom_dim_axis = None
+        for dim_index, dimname in enumerate(variable.dimensions):
             dimension_metadata = dimensions_by_cdf_name.get(dimname, {})
             is_spatial_or_time = dimname in ("x", "y", "time")
             if not is_spatial_or_time and dimension_metadata.get("hidden", False):
@@ -211,6 +211,7 @@ def netcdf_to_covjson(
             is_vertical = not is_spatial_or_time and dimension_metadata["type"] == "dimtype_vertical"
             if ncvar.size >= 1 and not is_spatial_or_time and not is_vertical:
                 custom_dim_name = netcdfdimname_to_covdimname.get(dimname, dimname)
+                custom_dim_axis = dim_index
                 custom_dim_values = ncvar[:].tolist()
                 continue
 
@@ -260,13 +261,16 @@ def netcdf_to_covjson(
                 unit=unit,
             )
 
-        flat_values = variable[:].ravel(order="C")
-        step_len = math.prod(shape)
+        variable_values = variable[:]
+        selection: list[slice | int] = [slice(None)] * variable.ndim
         for index, custom_dim_value in enumerate(custom_dim_values or [None]):
-            values = flat_values
+            values = variable_values
             custom = {}
-            if custom_dim_values:
-                values = flat_values[index * step_len : (index + 1) * step_len]
+            if custom_dim_axis is not None:
+                # A member doesn't have to be the outermost dimension (for example, time, member, y, x).
+                # Select the custom dim value before flattening the other axes.
+                selection[custom_dim_axis] = index
+                values = variable_values[tuple(selection)]
                 custom = {f"custom:{custom_dim_name}": custom_dim_value}
 
             ranges[layer_name] = NdArrayFloat(axisNames=axisnames, shape=shape, values=coverage_values(values))

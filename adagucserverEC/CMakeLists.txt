@@ -14,6 +14,7 @@ find_package(PostgreSQL REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(GeoTIFF REQUIRED)
 find_package(WebP REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_library(
     adagucserverEC
@@ -82,6 +83,8 @@ add_library(
     utils/LayerMetadataStore.cpp
     utils/StyleSheetValidation.h
     utils/StyleSheetValidation.cpp
+    utils/StyleSheetHandler.h
+    utils/StyleSheetHandler.cpp
     utils/XMLGenUtils.h
     utils/XMLGenUtils.cpp
     utils/CXMLTemplates.h
@@ -282,7 +285,7 @@ add_library(
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GeoTIFF_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
-target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GeoTIFF_LIBRARIES} TIFF::TIFF ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
+target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GeoTIFF_LIBRARIES} TIFF::TIFF ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES} ZLIB::ZLIB)
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)

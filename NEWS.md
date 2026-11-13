@@ -8,8 +8,9 @@
   - WCS now always works, it no longer depends on compiling with `ADAGUC_USE_GDAL`.
 - Fixed an uninitialized udunits unit in `CTime`, which could make the first time conversion of a request fail (seen as `NETCDF_DIM_time` `0` in the GeoTIFF band metadata).
 - The FastAPI server now brotli compresses all content types except binary or already compressed ones, like images, NetCDF and `application/octet-stream`. Before, only a fixed list of content types was compressed, so for example CoverageJSON (`application/prs.coverage+json`), GeoJSON and `application/json; charset=utf-8` were not. Responses of these types cached in Redis by an older version are handled as not cached.
-- WMS/WCS endpoints (`/wms`, `/wcs`, `/adagucserver`, `/adaguc-server`) now also accept `POST` with `application/x-www-form-urlencoded` parameters.
-- New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Post a `<Style>` (and optional `<Legend>` elements) as XML. The posted style is used for the requested layer regardless of `STYLES`, for that request only.
+- New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Send a `<Style>` (and optional `<Legend>` elements) as XML in the query string. The style is used for the requested layer regardless of `STYLES`, for that request only. Responses to requests with a `STYLESHEET` are not cached in Redis.
+- The FastAPI server (uvicorn) now accepts request lines plus headers up to 80 KB, so query strings up to 64 KB work. Before, a request whose first 16 KB arrived without the end of its headers was refused with 400.
+- `STYLESHEET` can also be sent compressed and base64 encoded, which makes the URL 4 to 7 times shorter and passes firewalls that refuse XML: a value that does not start with `<` is decoded as base64url (or standard base64) and decompressed (raw deflate as `CompressionStream("deflate-raw")` makes it, zlib or gzip, at most 64 KB), then used like the XML. See [Send a custom style with STYLESHEET](doc/tutorials/Send_a_custom_style_with_STYLESHEET.md#10-compress-the-style).
 - `adagucserver --lint` now also checks the values in configured `Style` and `Legend` elements with the `STYLESHEET` rules .
 - Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
 - EDR position queries on layers that return several variables (for example `convert_uv_components`, which returns speed, direction and the wind components) now label each coverage with its own parameter id (`<layer>.<variable>`), unit and observed property. Previously all coverages used the layer name and the unit of the first variable, so wind direction was reported in `kts`. Layers that return a single variable are unchanged.
@@ -29,6 +30,9 @@
 - The fork server is only restarted after three failed health checks in a row, so a single slow check does not end the requests in progress.
 - Image comparison in the tests: `compareImage` has a `tolerance` (`exact`, the default, `geometry` or `antialiasing`) instead of `maxAllowedColorDifference`/`maxAllowedColorPercentage`, chosen by what the image contains (raster only, antialiased shapes, or text). It compares the alpha channel too, which the old comparison ignored for palette images, and the PNG/WebP encoding structure; `compareFileSizes` checks the compression. Image tests no longer compare PNG files byte for byte. A failing comparison writes a diff image. See [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
 - Reduce all EDR response times and reduce python memory usage for cube call.
+- EDR Cube query with multiple members and multiple times could select wrong values, this is now fixed. Fixes [#851](https://github.com/KNMI/adaguc-server/issues/851).
+- Check metadata layer existence once per autosync run, instead of per layer
+- Fixed missing rows at the south edge of a GetMap image when data with ascending latitudes (south to north) is drawn with bilinear interpolation or a shaded style in the CRS of the data. Depending on how the requested area lines up with the grid, up to a cell of data at the bottom of the image was left transparent. Data with descending latitudes was not affected.
 
 **Version 9.2.0 - 2026-10-28**
 

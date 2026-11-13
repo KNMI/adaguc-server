@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 
 ADAGUC_FORK_SOCKET_NAME = "adaguc.socket"
-# Large enough for a STYLESHEET with many SymbolIntervals, url encoded in QUERY_STRING
+# Large enough for a STYLESHEET with many SymbolIntervals, url encoded in QUERY_STRING.
+# Change together with MAX_FORK_REQUEST_BYTES in fork_server.cpp and MAX_STYLESHEET_BYTES in utils/StyleSheetHandler.cpp.
 MAX_FORK_REQUEST_BYTES = 65536
 # The fork server ends every response with this marker and a 4-byte exit status, see FORK_EXIT_STATUS_MARKER in fork_server.cpp
 FORK_EXIT_STATUS_MARKER = b"ADAGUC_EXIT:"

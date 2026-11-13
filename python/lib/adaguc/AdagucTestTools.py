@@ -335,7 +335,7 @@ class AdagucTestTools:
 
         return ok_days and ok_interval
 
-    def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str, significantDigits=6) -> bool:
+    def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str, significantDigits=12) -> bool:
         with open(expectedOutputFileLocation, "r") as fp:
             expected = json.load(fp)
         with open(testresultFileLocation, "r") as fp:

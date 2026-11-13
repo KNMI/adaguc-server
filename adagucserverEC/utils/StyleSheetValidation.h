@@ -4,7 +4,7 @@
 #include <string>
 
 /**
- * Checks a STYLESHEET, wrapped in <Configuration>, against the allowlist of what a client may post:
+ * Checks a STYLESHEET, wrapped in <Configuration>, against the allowlist of what a client may send:
  * only known Style/Legend elements and attributes, each with a typed and bounded value.
  * Refused are, amongst others: file paths (except png files, which applyStyleSheet resolves), fonts,
  * DataPostProc other than pointsfromgrid/beaufort/clipminmax, and DOCTYPEs. printf formats are accepted,

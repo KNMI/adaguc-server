@@ -33,6 +33,7 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 #include "utils/StyleSheetValidation.h"
+#include "utils/StyleSheetHandler.h"
 #include "utils/lintDataset.h"
 
 CWMSExtensions::CWMSExtensions() {
@@ -370,7 +371,10 @@ static bool resolveStyleSheetPngFile(std::string &file) {
 
 int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   if (cfg == nullptr) return 1;
-  std::string xml = CT::trim(styleSheetXml);
+  // XML starts with '<'. Anything else is read as base64 encoded XML, optionally compressed.
+  std::optional<std::string> decoded = styleSheetToXml(styleSheetXml);
+  if (!decoded) return 1;
+  std::string xml = std::move(*decoded);
   if (xml.starts_with("<?xml")) {
     size_t declarationEnd = xml.find("?>");
     xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));
@@ -385,12 +389,12 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
     CDBError("Unable to parse STYLESHEET");
     return 1;
   }
-  auto &posted = styleSheetConfig.Configuration[0];
-  if (posted.Style.size() > 1) {
-    CDBError("STYLESHEET may contain at most one Style, got %zu", posted.Style.size());
+  auto &received = styleSheetConfig.Configuration[0];
+  if (received.Style.size() > 1) {
+    CDBError("STYLESHEET may contain at most one Style, got %zu", received.Style.size());
     return 1;
   }
-  for (auto &style: posted.Style) {
+  for (auto &style: received.Style) {
     // Every IncludeStyle adds the elements of the included style again
     if (style.IncludeStyle.size() > 4) {
       CDBError("STYLESHEET may contain at most 4 IncludeStyle elements, got %zu", style.IncludeStyle.size());
@@ -420,7 +424,7 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
     for (auto &legendGraphic: style.LegendGraphic) {
       if (!legendGraphic.attr.value.empty() && !resolveStyleSheetPngFile(legendGraphic.attr.value)) return 1;
     }
-    // Only configured styles may be included. Checked before the posted style is appended, so it cannot include
+    // Only configured styles may be included. Checked before the STYLESHEET style is appended, so it cannot include
     // itself: including itself several times would multiply at every level of nesting.
     for (const auto &includeStyle: style.IncludeStyle) {
       if (getServerStyleIndexByName(includeStyle.attr.name) < 0) {
@@ -431,26 +435,26 @@ int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
   }
 
   // Replace in place, so indices into cfg->Legend stay valid
-  for (const auto &postedLegend: posted.Legend) {
-    auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), [&postedLegend](const auto &legend) { return legend.attr.name == postedLegend.attr.name; });
+  for (const auto &receivedLegend: received.Legend) {
+    auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), [&receivedLegend](const auto &legend) { return legend.attr.name == receivedLegend.attr.name; });
     if (it != cfg->Legend.end()) {
-      *it = postedLegend;
+      *it = receivedLegend;
     } else {
-      cfg->Legend.push_back(postedLegend);
+      cfg->Legend.push_back(receivedLegend);
     }
   }
-  // A Legend of the posted style must be configured or posted
-  for (const auto &style: posted.Style) {
+  // A Legend of the STYLESHEET style must be configured or in the STYLESHEET
+  for (const auto &style: received.Style) {
     for (const auto &legend: style.Legend) {
       if (!legend.elementValue.empty() && getServerLegendIndexByName(legend.elementValue) < 0) {
-        CDBError("STYLESHEET: Legend [%s] is not configured or posted", legend.elementValue.c_str());
+        CDBError("STYLESHEET: Legend [%s] is not configured or in the STYLESHEET", legend.elementValue.c_str());
         return 1;
       }
     }
   }
   // Appended, not looked up by name: CDataSource::getStyle uses it for every layer
-  if (posted.Style.size() == 1) {
-    cfg->Style.push_back(posted.Style[0]);
+  if (received.Style.size() == 1) {
+    cfg->Style.push_back(received.Style[0]);
     styleSheetStyleIndex = cfg->Style.size() - 1;
   }
   return 0;

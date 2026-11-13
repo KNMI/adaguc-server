@@ -206,6 +206,48 @@ namespace CT {
     return result;
   }
 
+  bool decodeBase64(std::string_view input, std::string &output) {
+    output.clear();
+    output.reserve(input.size() / 4 * 3);
+    unsigned int bits = 0;
+    int numBits = 0;
+    size_t numChars = 0;
+    size_t numPadding = 0;
+    for (char c: input) {
+      if (c == '\r' || c == '\n' || c == '\t') continue;
+      if (c == '=') {
+        numPadding++;
+        continue;
+      }
+      // Characters after padding
+      if (numPadding > 0) return false;
+      int value;
+      if (c >= 'A' && c <= 'Z') {
+        value = c - 'A';
+      } else if (c >= 'a' && c <= 'z') {
+        value = c - 'a' + 26;
+      } else if (c >= '0' && c <= '9') {
+        value = c - '0' + 52;
+      } else if (c == '+' || c == '-') {
+        value = 62;
+      } else if (c == '/' || c == '_') {
+        value = 63;
+      } else {
+        return false;
+      }
+      numChars++;
+      bits = (bits << 6) | value;
+      numBits += 6;
+      if (numBits >= 8) {
+        numBits -= 8;
+        output += (char)((bits >> numBits) & 0xFF);
+      }
+    }
+    // One character of a group of four can not encode a byte, and padding only completes the last group
+    if (numChars % 4 == 1 || numPadding > 2 || (numPadding > 0 && (numChars + numPadding) % 4 != 0)) return false;
+    return true;
+  }
+
   std::string trim(std::string_view input) {
     auto isSpace = [](unsigned char ch) { return std::isspace(ch) != 0; };
     size_t start = 0, end = input.size();
