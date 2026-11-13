@@ -112,6 +112,10 @@ int CGridFileDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource,
       srvParam->geoParams.height = int(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY));
       srvParam->geoParams.height = abs(srvParam->geoParams.height);
     }
+    if (srvParam->geoParams.width < 1 || srvParam->geoParams.height < 1) {
+      CDBError("Requested Width or Height is smaller than 1 pixel, check BBOX and RESX/RESY. Aborting request.");
+      return 1;
+    }
     if (srvParam->geoParams.width > 20000 || srvParam->geoParams.height > 20000) {
       CDBError("Requested Width or Height is larger than 20000 pixels. Aborting request.");
       return 1;

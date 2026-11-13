@@ -424,6 +424,15 @@ class TestWCS:
         status, data, _ = AdagucTestTools().runADAGUCServer(query + "&FORMAT=aaigrid", env=self.env)
         assert b"This WCS format ('aaigrid') does not support multiple bands" in data
 
+    def test_WCSGetCoverage_size_smaller_than_one_pixel(self):
+        """A RESX/RESY larger than the BBOX, or an inverted BBOX, gives a clear error for every format"""
+        query = "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&BBOX={}&RESX={}&RESY={}&FORMAT={}"
+        for fmt in ("geotiff", "aaigrid"):
+            for bbox, resx, resy in (("-180,-90,180,90", 1000, 1), ("-180,-90,180,90", 1, 1000), ("180,-90,-180,90", 1, 1)):
+                status, data, _ = AdagucTestTools().runADAGUCServer(query.format(bbox, resx, resy, fmt), env=self.env)
+                assert status == 0, (fmt, bbox, resx, resy)
+                assert b"Requested Width or Height is smaller than 1 pixel, check BBOX and RESX/RESY" in data, (fmt, bbox, resx, resy)
+
     def test_WCSDescribeCoverage_lists_only_supported_formats(self):
         """A WCSFormat with a driver that GetCoverage cannot write is not offered in DescribeCoverage"""
         env = make_adaguc_env("adaguc.tests.wcsdrivers")
