@@ -96,6 +96,23 @@ After the dependencies have been installed you need to execute a script to start
 bash compile.sh
 ```
 
+## Optional: faster process start with a slim GDAL (mainly macOS)
+
+adaguc-server starts a new process for every request, and every start loads libgdal. Homebrew's libgdal depends on a huge tree of optional drivers (Arrow, KML, ODBC, ...), which costs around 100 ms per process start on macOS, versus around 15 ms for a slim libgdal. This makes the test suite several times slower than on Linux.
+
+adaguc only uses GDAL for the WCS output formats (`CGDALDataWriter.cpp`: GTiff, AAIGrid and optionally NetCDF, plus the MEM driver). You can build a GDAL with just these drivers from source, into a private directory, and let the adaguc build use it:
+
+```
+bash scripts/build-slim-gdal.sh $HOME/gdal-slim       # downloads and builds GDAL, takes a few minutes
+bash compile.sh --gdal-prefix $HOME/gdal-slim         # use an absolute path
+```
+
+The install directory must be empty or a previous install of this script; the script refuses to install into a directory with other software (such as `/opt/homebrew`).
+
+The script links against the PROJ, netCDF and HDF5 of your system (on macOS Homebrew, `/opt/homebrew`, override with `GDAL_DEPS_PREFIX`), so there is only one copy of these libraries in the process. The GDAL version can be set with `GDAL_VERSION`, use the same version as your system GDAL. `--gdal-prefix` can be combined with the other options of `compile.sh`. The path to the slim libgdal is stored as an rpath in the binaries, so no `DYLD_LIBRARY_PATH` or `LD_LIBRARY_PATH` is needed.
+
+This is optional: without `--gdal-prefix` the system GDAL is used, as before. The Docker build always uses the GDAL of the distribution. If you add a WCS output format with another GDAL driver, enable that driver in `scripts/build-slim-gdal.sh` (`-DGDAL_ENABLE_DRIVER_<NAME>=ON`) and rebuild.
+
 # 5. Start adaguc-server
 
 ```
