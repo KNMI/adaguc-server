@@ -6,6 +6,7 @@
 -c requirements.txt
 black~=26.5
 deepdiff~=9.1
+httpx2~=2.16
 isort~=8.0
 pre-commit~=4.6
 psutil~=7.2
