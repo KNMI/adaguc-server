@@ -32,7 +32,7 @@ from pyproj import CRS
 from pyproj.exceptions import CRSError
 
 from .utils.edr_utils import SYMBOL_TYPE_URL
-from .utils.native_grid import get_crs, get_crs_wkt, get_epsg
+from .utils.native_grid import get_crs, get_epsg
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -47,7 +47,6 @@ class GeoReferenceInfo(BaseModel):
     crsid: str | None = None
     crstype: str
     axes: list[str]
-    wkt: str | None = None
 
 
 GeoReferenceInfos = List[GeoReferenceInfo]
@@ -99,13 +98,13 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     epsg = get_epsg(projstring)
     if crs is None or epsg == 4326:
         return georeferenceinfos[0]
-    # Other projections, like the rotated pole grid of crs=native: with the EPSG id when there is one, otherwise only the WKT
+    # Other projections, like the rotated pole grid of crs=native: with the EPSG id when there is one. Without one the id is
+    # left out, as CoverageJSON prescribes for an undefined CRS. The WKT is in the crs_details of the collection.
     return GeoReferenceInfo(
         proj=projstring,
         crsid=f"http://www.opengis.net/def/crs/EPSG/0/{epsg}" if epsg is not None else None,
         crstype="GeographicCRS" if crs.is_geographic else "ProjectedCRS",
         axes=get_epsg_axis_order(epsg),
-        wkt=get_crs_wkt(projstring),
     )
 
 
@@ -120,13 +119,6 @@ def get_epsg_axis_order(epsg: int | None) -> list[str]:
         except CRSError:
             pass
     return ["x", "y"]
-
-
-def get_reference_system(georeferenceinfo: GeoReferenceInfo) -> ReferenceSystem:
-    """The CoverageJSON reference system, with the WKT for a CRS without id"""
-    if georeferenceinfo.wkt is not None and georeferenceinfo.crsid is None:
-        return ReferenceSystem(type=georeferenceinfo.crstype, wkt=georeferenceinfo.wkt)
-    return ReferenceSystem(type=georeferenceinfo.crstype, id=georeferenceinfo.crsid)
 
 
 def netcdf_coordinate_axis(ncvar: netCDF4.Variable, dimname: str) -> ValuesAxis[AwareDatetime] | ValuesAxis[str] | ValuesAxis[float]:
@@ -161,7 +153,7 @@ def netcdf_coverage_referencing(dataset: netCDF4.Dataset) -> list[ReferenceSyste
         info = get_proj_info_from_proj_string(dataset.variables["crs"].proj4_params)
     return [
         ReferenceSystemConnectionObject(
-            system=get_reference_system(info),
+            system=ReferenceSystem(type=info.crstype, id=info.crsid),
             coordinates=info.axes,
         ),
         ReferenceSystemConnectionObject(

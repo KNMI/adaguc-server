@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from routers.netcdf_to_covjson import get_epsg_axis_order
-from routers.utils.native_grid import get_collection_native_crs_wkt
+from routers.utils.native_grid import get_collection_native_crs_details, get_collection_native_crs_wkt
 
 logger = logging.getLogger(__name__)
 
@@ -1299,8 +1299,8 @@ def test_cube_native_grid(client: TestClient):
     resp = client.get(ROTATED_POLE_NATIVE_CUBE_URL)
     assert resp.status_code == 200, resp.text
     coverage = resp.json()
-    # Without an EPSG id the grid is given by its WKT only, as in the example in Configure_EDR_service.md
-    assert coverage["domain"]["referencing"][0] == {"coordinates": ["x", "y"], "system": {"type": "GeographicCRS", "wkt": wkt}}
+    # Without an EPSG id the id is left out, as CoverageJSON prescribes for an undefined CRS. The WKT is only in crs_details.
+    assert coverage["domain"]["referencing"][0] == {"coordinates": ["x", "y"], "system": {"type": "GeographicCRS"}}
 
     # The x and y values are cell centers of the source grid, and every value is the value of that source cell
     source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "test_rotated_pole_RACMO.nc"))
@@ -1320,6 +1320,25 @@ def test_cube_native_grid(client: TestClient):
     values = np.array([np.nan if value is None else value for value in coverage["ranges"]["pr_adjust"]["values"]])
     assert np.allclose(values, expected, equal_nan=True)
     assert np.count_nonzero(~np.isnan(values)) > 10
+
+
+def test_cube_native_grid_extent(client: TestClient):
+    """The crs_details of crs=native give the extent of the native grid, and that bbox returns the whole grid"""
+    collection = client.get("/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole").json()
+    native = collection["data_queries"]["cube"]["link"]["variables"]["crs_details"][1]
+    source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "test_rotated_pole_RACMO.nc"))
+    source_x, source_y = source.variables["x"][:], source.variables["y"][:]
+    cellsize_x, cellsize_y = abs(source_x[1] - source_x[0]), abs(source_y[1] - source_y[0])
+    # The outer cell edges of the grid, in rotated degrees
+    expected_bbox = [source_x.min() - cellsize_x / 2, source_y.min() - cellsize_y / 2, source_x.max() + cellsize_x / 2, source_y.max() + cellsize_y / 2]
+    assert native["bbox"] == pytest.approx(expected_bbox, abs=1e-4)
+    assert native["cellsize"] == pytest.approx([cellsize_x, cellsize_y], abs=1e-6)
+    assert native["size"] == [len(source_x), len(source_y)]
+
+    resp = client.get(ROTATED_POLE_NATIVE_CUBE_URL.replace(",".join(str(v) for v in NATIVE_BBOX), ",".join(str(v) for v in native["bbox"])))
+    assert resp.status_code == 200, resp.text
+    axes = resp.json()["domain"]["axes"]
+    assert len(axes["x"]["values"]) == len(source_x) and len(axes["y"]["values"]) == len(source_y)
 
 
 def test_cube_native_grid_errors(client: TestClient):
@@ -1442,6 +1461,22 @@ def test_collection_native_crs_needs_one_grid():
     assert get_collection_native_crs_wkt([rotated, lambert]) is None
     assert get_collection_native_crs_wkt([rotated, None]) is None
     assert get_collection_native_crs_wkt([]) is None
+
+
+def test_collection_native_crs_details_extent():
+    """The native extent covers all grids; cellsize and size are only given when all parameters have the same grid"""
+    projstring = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs"
+    # A bbox ordered top to bottom, like the gridspec of a grid with descending y
+    grid_a = {"projstring": projstring, "bbox": [-10, 5, 10, -5], "width": 20, "height": 10, "cellsizex": 1, "cellsizey": -1}
+    grid_b = {"projstring": projstring, "bbox": [0, -8, 20, 2], "width": 40, "height": 20, "cellsizex": 0.5, "cellsizey": 0.5}
+    details = get_collection_native_crs_details([grid_a, grid_a])
+    assert details["crs"] == "native" and details["wkt"] == get_collection_native_crs_wkt([grid_a])
+    assert details["bbox"] == [-10, -5, 10, 5]
+    assert details["cellsize"] == [1, 1] and details["size"] == [20, 10]
+    details = get_collection_native_crs_details([grid_a, grid_b])
+    assert details["bbox"] == [-10, -8, 20, 5]
+    assert "cellsize" not in details and "size" not in details
+    assert get_collection_native_crs_details([grid_a, {**grid_b, "projstring": "+proj=longlat +datum=WGS84"}]) is None
 
 
 def test_native_crs_rotated_pole_without_o_lon_p_or_lon_0():

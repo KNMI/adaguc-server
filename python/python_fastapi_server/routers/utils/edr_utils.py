@@ -45,7 +45,7 @@ from .edr_exception import (
 
 from .ogcapi_tools import call_adaguc
 from .json_utils import pydantic_json_loads
-from .native_grid import EPSG_4326_CRS_DETAILS, NATIVE_CRS, get_collection_native_crs_wkt
+from .native_grid import EPSG_4326_CRS_DETAILS, NATIVE_CRS, get_collection_native_crs_details
 
 logger = logging.getLogger(__name__)
 
@@ -308,16 +308,17 @@ def get_collectioninfo_from_md(
         variables=position_variables,
     )
     cube_crs_details = [EPSG_4326_CRS_DETAILS]
-    # The cube can also return the grid of the data itself, like a rotated pole grid, with crs=native
-    native_crs_wkt = get_collection_native_crs_wkt(
+    # The cube can also return the grid of the data itself, like a rotated pole grid, with crs=native.
+    # Its crs_details also give the extent of that grid in native coordinates, to choose a bbox from.
+    native_crs_details = get_collection_native_crs_details(
         [
             metadata[param]["layer"].get("gridspec")
             for param in metadata
             if param not in ["baselayer", "overlay"] and metadata[param]["layer"].get("enable_edr") is True
         ]
     )
-    if native_crs_wkt is not None:
-        cube_crs_details.append({"crs": NATIVE_CRS, "wkt": native_crs_wkt})
+    if native_crs_details is not None:
+        cube_crs_details.append(native_crs_details)
     cube_variables = Variables(
         query_type="cube",
         default_output_format="CoverageJSON",
@@ -405,7 +406,7 @@ def get_collectioninfo_from_md(
 
     # The crs values a query accepts; EDR requires the crs parameter to be one of these
     crs = ["EPSG:4326"]
-    if native_crs_wkt is not None:
+    if native_crs_details is not None:
         crs.append(NATIVE_CRS)
 
     output_formats = ["CoverageJSON"]

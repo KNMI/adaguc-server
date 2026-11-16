@@ -107,10 +107,32 @@ also be left out. With `crs=native` the cube returns the cells of the source gri
   not EPSG:4326. It is then listed in the `crs` list of the collection, and in the `crs_details` of the cube query
   with the WKT of the grid.
 - **bbox:** the values are in the coordinates of the native grid, not in longitude/latitude. In this example these
-  are metres in the Dutch RD grid (EPSG:28992). For a rotated pole grid they are rotated degrees. Use the WKT to
-  convert, for example with pyproj. Every cell that intersects the bbox is returned.
+  are metres in the Dutch RD grid (EPSG:28992). For a rotated pole grid they are rotated degrees. Every cell that
+  intersects the bbox is returned. To choose a bbox without converting coordinates, use the extent of the native grid
+  in its `crs_details` entry (see below). To convert longitude/latitude yourself, use the WKT, for example with pyproj.
+- **Native extent:** the `native` entry in `crs_details` also gives the extent of the grid in native coordinates:
+  - `bbox`: `minx, miny, maxx, maxy` of the outer cell edges. Requesting this bbox returns the whole grid. When the
+    parameters have different grids in the same projection, the bbox covers all of them.
+  - `cellsize`: the cell size in x and y, and `size`: the number of cells in x and y. These are only given when all
+    parameters of the collection have the same grid.
+
+  ```json
+  "crs_details": [
+    { "crs": "EPSG:4326", "wkt": "GEOGCS[\"WGS 84\",...]" },
+    {
+      "crs": "native",
+      "wkt": "GEOGCRS[\"undefined\",...,DERIVINGCONVERSION[\"Pole rotation (netCDF CF convention)\",...]]",
+      "bbox": [-1.475, -2.155, 1.385, 0.925],
+      "cellsize": [0.11, 0.11],
+      "size": [26, 28]
+    }
+  ]
+  ```
+
 - **Response:** the `x` and `y` axes are the cell centres of the native grid. The CoverageJSON `referencing` gives the
-  EPSG id of the grid when there is one, otherwise its WKT. A rotated pole grid is given as a CF rotated pole.
+  EPSG id of the grid when there is one. CoverageJSON has no way to give a CRS as WKT, so a grid without an EPSG id,
+  like a rotated pole grid, has only a `type` and no `id`. Its WKT is in the `native` entry of `crs_details`, given as
+  a CF rotated pole.
 - **Errors (HTTP 400):** `crs=native` cannot be combined with `resolution_x`/`resolution_y`, because it returns the
   cells of the native grid. A bbox outside the grid and a collection without `native` also return 400.
   `/position` and `/trajectory` refuse `crs=native`, because their coordinates are longitude/latitude.
@@ -155,15 +177,15 @@ and the `referencing` names the grid by its EPSG id:
 }
 ```
 
-A grid without an EPSG id, like a rotated pole grid, is given by its WKT instead (shortened here). The `x` and `y`
-values are then rotated longitudes and latitudes:
+A grid without an EPSG id, like a rotated pole grid, has no `id`. The `x` and `y` values are then rotated longitudes
+and latitudes, and the WKT of the `native` entry in `crs_details` tells how to convert them:
 
 ```json
-"system": {
-  "type": "GeographicCRS",
-  "wkt": "GEOGCRS[\"undefined\",BASEGEOGCRS[\"unnamed\",DATUM[\"World Geodetic System 1984\",...]],DERIVINGCONVERSION[\"Pole rotation (netCDF CF convention)\",METHOD[\"Pole rotation (netCDF CF convention)\"],PARAMETER[\"Grid north pole latitude (netCDF CF convention)\",37.25,...],PARAMETER[\"Grid north pole longitude (netCDF CF convention)\",-174.55,...],...]"
-}
+"system": { "type": "GeographicCRS" }
 ```
+
+Generic CoverageJSON clients treat a `GeographicCRS` as plain longitude/latitude, so they draw a rotated pole grid in
+the wrong place. Use the WKT from `crs_details` to convert the coordinates.
 
 ## Trajectory queries
 

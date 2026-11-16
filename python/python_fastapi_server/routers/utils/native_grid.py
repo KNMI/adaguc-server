@@ -121,6 +121,35 @@ def get_collection_native_crs_wkt(gridspecs: list[dict | None]) -> str | None:
     return get_native_crs_wkt(gridspecs[0])
 
 
+def get_collection_native_crs_details(gridspecs: list[dict | None]) -> dict | None:
+    """
+    The crs_details entry of crs=native for the collection metadata, or None when the collection has no native grid.
+    Next to the WKT it gives the extent of the native grid, so a client knows which bbox to use without converting
+    coordinates itself:
+    - bbox: minx, miny, maxx, maxy of the outer cell edges, in native coordinates. When the parameters have different
+      grids in the same projection, this covers all of them.
+    - cellsize and size: the cell size and the number of cells in x and y, only when all parameters have the same grid.
+    """
+    wkt = get_collection_native_crs_wkt(gridspecs)
+    if wkt is None:
+        return None
+    details = {"crs": NATIVE_CRS, "wkt": wkt}
+    try:
+        # The gridspec bbox can be ordered top to bottom
+        bboxes = [
+            (min(bbox[0], bbox[2]), min(bbox[1], bbox[3]), max(bbox[0], bbox[2]), max(bbox[1], bbox[3]))
+            for bbox in (gridspec["bbox"] for gridspec in gridspecs)
+        ]
+    except (KeyError, IndexError, TypeError):
+        return details
+    details["bbox"] = [min(b[0] for b in bboxes), min(b[1] for b in bboxes), max(b[2] for b in bboxes), max(b[3] for b in bboxes)]
+    grids = {(tuple(gridspec["bbox"]), gridspec.get("width"), gridspec.get("height"), gridspec.get("cellsizex"), gridspec.get("cellsizey")) for gridspec in gridspecs}
+    if len(grids) == 1 and None not in next(iter(grids)):
+        details["cellsize"] = [abs(gridspecs[0]["cellsizex"]), abs(gridspecs[0]["cellsizey"])]
+        details["size"] = [gridspecs[0]["width"], gridspecs[0]["height"]]
+    return details
+
+
 def get_native_grid_query(gridspec: dict | None, bbox: str) -> dict:
     """
     WCS parameters for the cells of the native grid that intersect a bbox. As the EDR standard says, the bbox values are
