@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <Style name="temperature_contour" title="Air temperature contours" abstract="Bilinear shaded air temperature with contour lines every 2 degrees">
+    <Legend fixed="true" tickinterval="2">multicolor</Legend>
+    <Min>-10</Min>
+    <Max>25</Max>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="" interval="2"/>
+    <StandardNames standard_name="air_temperature"/>
+  </Style>
+
+  <Style name="temperature_contour_smooth" title="Air temperature contours (smoothed)" abstract="Same as temperature_contour, with a SmoothingFilter applied to reduce grid-scale noise before tracing contour lines">
+    <IncludeStyle name="temperature_contour"/>
+    <SmoothingFilter>2</SmoothingFilter>
+  </Style>
+
+  <Style name="temperature_contour_dashed" title="Dashed contour lines" abstract="Dashed contour lines on a transparent background, no fill - same pattern as the production pressure_cwk style">
+    <ContourLine width="2.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10" dashing="26,2"/>
+    <ContourLine width="1.1" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="2" dashing="2,2"/>
+    <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
+    <StandardNames standard_name="air_temperature"/>
+  </Style>
+
+  <Style name="temperature_shaded" title="Air temperature classes" abstract="Air temperature shaded in fixed 4-degree classes from -52 to 48, using a wide-range multicolor palette">
+    <ShadeInterval min="-52" max="-48" fillcolor="#E133E1"/>
+    <ShadeInterval min="-48" max="-44" fillcolor="#AE33AE"/>
+    <ShadeInterval min="-44" max="-40" fillcolor="#7A337A"/>
+    <ShadeInterval min="-40" max="-36" fillcolor="#473347"/>
+    <ShadeInterval min="-36" max="-32" fillcolor="#330066"/>
+    <ShadeInterval min="-32" max="-28" fillcolor="#590080"/>
+    <ShadeInterval min="-28" max="-24" fillcolor="#8000FF"/>
+    <ShadeInterval min="-24" max="-20" fillcolor="#0080FF"/>
+    <ShadeInterval min="-20" max="-16" fillcolor="#00CCFF"/>
+    <ShadeInterval min="-16" max="-12" fillcolor="#00FFFF"/>
+    <ShadeInterval min="-12" max="-8" fillcolor="#00FF80"/>
+    <ShadeInterval min="-8" max="-4" fillcolor="#80FF00"/>
+    <ShadeInterval min="-4" max="0" fillcolor="#DAFF00"/>
+    <ShadeInterval min="0" max="4" fillcolor="#FFFF80"/>
+    <ShadeInterval min="4" max="8" fillcolor="#FFFF00"/>
+    <ShadeInterval min="8" max="12" fillcolor="#FFDA00"/>
+    <ShadeInterval min="12" max="16" fillcolor="#FFB000"/>
+    <ShadeInterval min="16" max="20" fillcolor="#FF7300"/>
+    <ShadeInterval min="20" max="24" fillcolor="#FF0000"/>
+    <ShadeInterval min="24" max="28" fillcolor="#CC0000"/>
+    <ShadeInterval min="28" max="32" fillcolor="#80002C"/>
+    <ShadeInterval min="32" max="36" fillcolor="#CC3D6E"/>
+    <ShadeInterval min="36" max="40" fillcolor="#FF00FF"/>
+    <ShadeInterval min="40" max="44" fillcolor="#FF80FF"/>
+    <ShadeInterval min="44" max="48" fillcolor="#FFBFFF"/>
+    <StandardNames standard_name="air_temperature"/>
+  </Style>
+
+  <Style name="temperature_shaded_contour" title="Air temperature classes with contour lines" abstract="Same classed palette as temperature_shaded, with a SmoothingFilter of 4 and blue contour lines every 2 degrees overlaid">
+    <IncludeStyle name="temperature_shaded"/>
+    <SmoothingFilter>4</SmoothingFilter>
+    <ContourLine width="1.2" linecolor="#0000FF" textcolor="#0000FF" textformatting="" interval="2"/>
+  </Style>
+
+  <Style name="temperature_shaded_extrasmooth" title="Air temperature classes with extra-smoothed contour lines" abstract="Same classed palette as temperature_shaded, with a heavier SmoothingFilter of 6 and blue contour lines every 2 degrees overlaid">
+    <IncludeStyle name="temperature_shaded"/>
+    <SmoothingFilter>6</SmoothingFilter>
+    <ContourLine width="1.2" linecolor="#0000FF" textcolor="#0000FF" textformatting="" interval="2"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>air_temperature_hagl_contourtest</Name>
+    <Title>UWCW HA43 (DINI) 5.5km air temperature, for contour testing</Title>
+    <Abstract>High resolution (575x668) air temperature field used to test contour line tracing</Abstract>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/uwcw-ha-det-dini-5p5km_air_temp_575x668_for_contourtest.nc</FilePath>
+    <Variable>air-temperature-hagl</Variable>
+    <Styles>temperature_contour,temperature_contour_smooth,temperature_contour_dashed,temperature_shaded,temperature_shaded_contour,temperature_shaded_extrasmooth</Styles>
+  </Layer>
+
+</Configuration>

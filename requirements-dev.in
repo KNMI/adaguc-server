@@ -6,10 +6,11 @@
 -c requirements.txt
 black~=26.5
 deepdiff~=9.1
+httpx2~=2.16
 isort~=8.0
 pre-commit~=4.6
 psutil~=7.2
 pylint~=4.0
 pytest~=9.0
 pytest-asyncio~=1.4
-psycopg2~=2.9
+psycopg[binary]~=3.3

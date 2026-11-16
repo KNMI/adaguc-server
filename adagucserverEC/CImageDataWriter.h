@@ -31,8 +31,9 @@
 #include "CIBaseDataWriterInterface.h"
 #include "Types/GetFeatureInfoResult.h"
 #include "CDrawImage.h"
-#include "CImageWarper.h"
 #include "CXMLParser.h"
+
+class CImageWarper;
 
 class CImageDataWriter : public CBaseDataWriterInterface {
 public:

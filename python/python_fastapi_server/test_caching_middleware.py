@@ -1,5 +1,6 @@
 """
 Tests that the caching middleware only caches GET requests: the cache key is the url, a POST has parameters in the body.
+Requests with a STYLESHEET are not cached.
 Also tests that cached responses are stored brotli compressed for content types which need compression.
 """
 
@@ -69,6 +70,18 @@ def test_post_is_not_served_from_cache(client, cache):
     response = client.post("/wms?LAYERS=testdata", data={"STYLESHEET": "<Style/>"})
     assert response.text == "POST STYLESHEET=%3CStyle%2F%3E"
     assert "adaguc-cache" not in response.headers
+
+
+@pytest.mark.parametrize("key", ["STYLESHEET", "stylesheet"])
+def test_stylesheet_is_not_cached(client, cache, key):
+    """A STYLESHEET is a style for one request, its responses are neither stored nor served from the cache"""
+    client.get("/wms?LAYERS=testdata")
+    assert len(cache) == 1
+
+    response = client.get(f"/wms?LAYERS=testdata&{key}=%3CStyle%2F%3E")
+    assert response.text == "GET "
+    assert "adaguc-cache" not in response.headers
+    assert len(cache) == 1
 
 
 class FakeRedis:

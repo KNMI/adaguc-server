@@ -6,7 +6,8 @@ Keep the additional domain model local to this endpoint.
 
 import math
 from collections import defaultdict
-from typing import Literal
+from collections.abc import Iterator
+from typing import Any, Literal
 
 from covjson_pydantic.base_models import CovJsonBaseModel
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -41,7 +42,7 @@ class SectionCoverageCollection(CoverageCollection):
     coverages: list[SectionCoverage]
 
 
-def leaves(data, dimensions, keys=()):
+def leaves(data: Any, dimensions: list[str], keys: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], Any]]:
     if not dimensions:
         yield keys, data
         return
@@ -49,7 +50,7 @@ def leaves(data, dimensions, keys=()):
         yield from leaves(value, dimensions[1:], (*keys, key))
 
 
-def numeric_value(value):
+def numeric_value(value: str | float | None) -> float | None:
     if value is None or value == "nodata":
         return None
     try:
@@ -59,24 +60,27 @@ def numeric_value(value):
     return number if math.isfinite(number) else None
 
 
-def custom_value(value):
+def custom_value(value: str) -> float | str:
     try:
         return float(value)
     except ValueError:
         return value
 
 
-def sections_from_response(data, metadata, collection_name):
-    by_layer = defaultdict(list)
+def sections_from_response(
+    data: list[dict[str, Any]], metadata: dict[str, Any], collection_name: str
+) -> SectionCoverage | SectionCoverageCollection:
+    by_layer: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for sample in data:
         by_layer[sample["layername"]].append(sample)
 
-    coverages = []
+    coverages: list[SectionCoverage] = []
     for layer_name, samples in by_layer.items():
         layer = metadata[layer_name]
         vertical = vertical_dimension(layer)
         groups = {}
         coords = [tuple(float(v) for v in sample["point"]["coords"].split(",")) for sample in samples]
+
         for sample_index, sample in enumerate(samples):
             dims = sample["dims"]
             dims = [dims] if isinstance(dims, str) else dims
@@ -131,10 +135,13 @@ def sections_from_response(data, metadata, collection_name):
                     ranges={layer_name: NdArrayFloat(axisNames=["z", "composite"], shape=[len(levels), len(composite)], values=values)},
                 )
             )
+
     if not coverages:
         raise EdrException(404, "No data along trajectory")
+
     if len(coverages) == 1:
         return coverages[0]
+
     return SectionCoverageCollection(
         coverages=coverages, parameters={name: p for coverage in coverages for name, p in coverage.parameters.items()}
     )

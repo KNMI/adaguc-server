@@ -17,7 +17,7 @@ from routers.autowms import autowms_router
 from routers.edr import edrApiApp
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
-from routers.wmswcs import testadaguc, wmsWcsRouter
+from routers.wmswcs import MAX_REQUEST_HEAD_BYTES, testadaguc, wmsWcsRouter
 from routers.caching_middleware import CachingMiddleware
 from configure_logging import configure_logging
 from fork_server_supervisor import ForkServerSupervisor
@@ -135,4 +135,11 @@ logging.info("Starting server on 0.0.0.0")
 
 if __name__ == "__main__":
     testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True, proxy_headers=True)
+    uvicorn.run(
+        app="main:app",
+        host="0.0.0.0",
+        port=8080,
+        reload=True,
+        proxy_headers=True,
+        h11_max_incomplete_event_size=MAX_REQUEST_HEAD_BYTES,
+    )

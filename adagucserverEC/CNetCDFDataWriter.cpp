@@ -91,6 +91,12 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     CDBDebug(">CNetCDFDataWriter::init");
   }
 
+  // WCS_GoNative defaults to -1 and must have been set to 0 or 1 by the request handling, otherwise the destination grid is undefined.
+  if (srvParam->WCS_GoNative != 0 && srvParam->WCS_GoNative != 1) {
+    CDBError("WCS_GoNative is not set (value %d), cannot determine the destination grid", srvParam->WCS_GoNative);
+    return 1;
+  }
+
   // The destination CDF object structure will be based on the baseDataSource. After that, more variables will be added.
   if (baseDataSource == nullptr) {
     baseDataSource = dataSource;
@@ -119,8 +125,9 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double dfDstBBOX[4];
     double dfSrcBBOX[4];
     // Setup projection
-    //  Set up geo parameters
-    if (srvParam->WCS_GoNative == 1) {
+    //  Set up geo parameters. WCS_GoNative is checked to be 0 or 1 at the start of init, so exactly one of the two branches below sets dfDstBBOX.
+    const bool goNative = srvParam->WCS_GoNative == 1;
+    if (goNative) {
       if (CNetCDFDataWriter_DEBUG) {
         CDBDebug("GO NATIVE");
       }
@@ -149,7 +156,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       CDBDebug("Found srvParamGridProj4Params [%s]", srvParamGridProj4Params.c_str());
     }
 
-    if (srvParam->WCS_GoNative == 0) {
+    if (!goNative) {
       if (CNetCDFDataWriter_DEBUG) {
         CDBDebug("GO NON NATIVE");
       }

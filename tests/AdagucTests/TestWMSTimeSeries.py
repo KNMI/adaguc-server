@@ -257,8 +257,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="antialiasing",
             )
         )
 
@@ -321,7 +320,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         # Do getmap request on the NetCDF file we just obtained via WCS, query the direction_component
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_GetMapOnWCSCoverage_direction_component.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=direction_component&WIDTH=512HEIGHT=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
+            "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=direction_component&WIDTH=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml", "ADAGUC_AUTOWMS_DIR": self.testresultspath},
             showLog=False,
         )
@@ -331,15 +330,14 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="antialiasing",
             )
         )
 
         # Do getmap request on the NetCDF file we just obtained via WCS, query the speed_component
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_GetMapOnWCSCoverage_speed_component.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=speed_component&WIDTH=512HEIGHT=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
+            "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=speed_component&WIDTH=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml", "ADAGUC_AUTOWMS_DIR": self.testresultspath},
             showLog=False,
         )
@@ -349,8 +347,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                37,
-                0.1,
+                tolerance="antialiasing",
             )
         )
 

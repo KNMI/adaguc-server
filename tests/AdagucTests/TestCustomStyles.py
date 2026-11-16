@@ -1,13 +1,15 @@
 """
-Tests custom styles posted with the STYLESHEET parameter (form url encoded POST through the FastAPI server).
-The posted Style is used for the requested layer (only one allowed), regardless of its name and of STYLES, for that request only.
-A posted Legend replaces the configured one with the same name.
+Tests custom styles sent with the STYLESHEET parameter in the query string, through the FastAPI server.
+The Style is used for the requested layer (only one allowed), regardless of its name and of STYLES, for that request only.
+Its Legend replaces the configured one with the same name.
 """
 
+import base64
 import os
 import sys
+import zlib
 from importlib import reload
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, quote
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
@@ -65,7 +67,7 @@ def fixture_client(monkeypatch):
     return TestClient(main.app)
 
 
-def post_getmap(client, stylesheet=None, styles=None, layers=None):
+def getmap(client, stylesheet=None, styles=None, layers=None):
     params = dict(parse_qsl(GET_MAP_QUERY))
     if styles is not None:
         params["STYLES"] = styles
@@ -73,13 +75,13 @@ def post_getmap(client, stylesheet=None, styles=None, layers=None):
         params["LAYERS"] = layers
     if stylesheet is not None:
         params["STYLESHEET"] = stylesheet
-    return client.post("/wms", data=params)
+    return client.get("/wms", params=params)
 
 
-def post_getlegendgraphic(client, stylesheet):
+def getlegendgraphic(client, stylesheet):
     params = dict(parse_qsl(GET_LEGEND_GRAPHIC_QUERY))
     params["STYLESHEET"] = stylesheet
-    return client.post("/wms", data=params)
+    return client.get("/wms", params=params)
 
 
 def assert_image(response, filename, expected=None):
@@ -97,22 +99,137 @@ def short_id(value):
     return str(value)[:80]
 
 
-def test_CustomStyles_post_variant_style(client):
-    """A posted style overrides the configured one for its own request only: the requests before and after it use the dataset style"""
-    assert_image(post_getmap(client), "test_CustomStyles_dataset_style.png")
-    assert_image(post_getmap(client, VARIANT_STYLE), "test_CustomStyles_post_variant_style.png")
-    assert_image(post_getmap(client), "test_CustomStyles_dataset_style.png")
+def test_CustomStyles_variant_style(client):
+    """A STYLESHEET style overrides the configured one for its own request only: the requests before and after it use the dataset style"""
+    assert_image(getmap(client), "test_CustomStyles_dataset_style.png")
+    assert_image(getmap(client, VARIANT_STYLE), "test_CustomStyles_variant_style.png")
+    assert_image(getmap(client), "test_CustomStyles_dataset_style.png")
 
 
-def test_CustomStyles_post_same_style(client):
-    """Posting the configured style again gives the same image as the dataset style"""
-    assert_image(post_getmap(client, SAME_STYLE), "test_CustomStyles_dataset_style.png")
+def test_CustomStyles_same_style(client):
+    """Sending the configured style again gives the same image as the dataset style"""
+    assert_image(getmap(client, SAME_STYLE), "test_CustomStyles_dataset_style.png")
 
 
 @pytest.mark.parametrize("styles", [None, "", "default", "testdata_style_manycontours/nearest", "does_not_exist"])
-def test_CustomStyles_post_variant_style_ignores_styles(client, styles):
-    """The posted style is used whatever STYLES is set to, None keeps the configured style testdata_style_manycontours"""
-    assert_image(post_getmap(client, VARIANT_STYLE, styles=styles), "test_CustomStyles_post_variant_style.png")
+def test_CustomStyles_variant_style_ignores_styles(client, styles):
+    """The STYLESHEET style is used whatever STYLES is set to, None keeps the configured style testdata_style_manycontours"""
+    assert_image(getmap(client, VARIANT_STYLE, styles=styles), "test_CustomStyles_variant_style.png")
+
+
+def compress(xml, wbits=-15):
+    """Compressed and base64url encoded without padding, as a client puts it in a GET query string.
+    wbits -15 is raw deflate, as CompressionStream("deflate-raw") in a browser, 15 is zlib, 31 is gzip"""
+    data = xml if isinstance(xml, bytes) else xml.encode()
+    compressor = zlib.compressobj(9, zlib.DEFLATED, wbits)
+    return base64.urlsafe_b64encode(compressor.compress(data) + compressor.flush()).decode().rstrip("=")
+
+
+# A full size style: 140 classes with labels, about 10 KB, as GeoWeb's style configurator makes them
+COLORS = ["#FFB1B1", "#E47E7E", "#CC5050", "#B12B2B", "#990E0E", "#BFB1FF", "#8E7EE4", "#6450CC", "#422BB1", "#260E99"]
+LARGE_STYLE = (
+    '<Style name="large" title="Filled contours and lines" abstract="Contour lines with filled background">'
+    + "".join(
+        f'<ShadeInterval min="{i * 0.004:.3f}" max="{(i + 1) * 0.004:.3f}" label="{i * 0.004:.3f}-{(i + 1) * 0.004:.3f}" fillcolor="{COLORS[i % len(COLORS)]}"/>'
+        for i in range(140)
+    )
+    + '<ContourLine width="0.6" linecolor="#000000" textcolor="#000000" textformatting="%2.2f" interval="0.05"/>'
+    + '<RenderSettings renderhint="discreteclasses" settings="auto" interpolationmethod="bilinear"/></Style>'
+)
+
+
+def get_with_stylesheet(client, query, value):
+    return client.get("/wms?" + query + "&STYLESHEET=" + value)
+
+
+@pytest.mark.parametrize("query", [GET_MAP_QUERY, GET_LEGEND_GRAPHIC_QUERY], ids=["GetMap", "GetLegendGraphic"])
+@pytest.mark.parametrize(
+    "xml",
+    [VARIANT_STYLE, '<Style name="x"><RenderSettings renderhint="discreteclasses"/></Style>', LARGE_STYLE],
+    ids=["variant", "small", "large"],
+)
+def test_CustomStyles_compressed_get_gives_the_same_image(client, query, xml):
+    """A raw deflate compressed, base64url encoded STYLESHEET in a GET query string gives the same image as the plain XML,
+    also when it is percent encoded or has '=' padding"""
+    expected = client.get("/wms", params={**dict(parse_qsl(query)), "STYLESHEET": xml})
+    assert expected.status_code == 200, expected.text
+    value = compress(xml)
+    if xml == LARGE_STYLE:
+        assert len(LARGE_STYLE) > 10000 and len(value) < 3000
+    for response in (
+        get_with_stylesheet(client, query, value),
+        get_with_stylesheet(client, query, quote(value, safe="")),
+        get_with_stylesheet(client, query, quote(value + "=" * (-len(value) % 4), safe="")),
+    ):
+        assert response.status_code == 200, response.text
+        assert response.content == expected.content
+
+
+def test_CustomStyles_example_value_from_geoweb(client):
+    """The example value decodes to <Style name="x"><RenderSettings renderhint="discreteclasses"/></Style>"""
+    value = "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA"
+    expected = getmap(client, '<Style name="x"><RenderSettings renderhint="discreteclasses"/></Style>')
+    assert get_with_stylesheet(client, GET_MAP_QUERY, value).content == expected.content
+
+
+def test_CustomStyles_other_encodings_give_the_same_image(client):
+    """zlib, gzip, standard base64 with '+' not url encoded, base64 without compression and a byte order mark are accepted too"""
+    expected = getmap(client, VARIANT_STYLE)
+    assert expected.status_code == 200, expected.text
+    encoded = base64.b64encode(zlib.compress(VARIANT_STYLE.encode(), 9)).decode()
+    assert "+" in encoded
+    # XML ends with '>' (0x3E): with a length that is a multiple of 3, its base64 has no padding and ends with '+'
+    xml = VARIANT_STYLE.strip()
+    xml = " " * (-len(xml.encode()) % 3) + xml
+    ends_with_plus = base64.b64encode(xml.encode()).decode()
+    assert ends_with_plus.endswith("+")
+    byte_order_mark = "﻿"
+    for response in (
+        get_with_stylesheet(client, GET_MAP_QUERY, compress(VARIANT_STYLE, 15)),
+        get_with_stylesheet(client, GET_MAP_QUERY, compress(VARIANT_STYLE, 31)),
+        getmap(client, compress(VARIANT_STYLE)),
+        getmap(client, base64.b64encode(VARIANT_STYLE.encode()).decode()),
+        # A client that does not url encode '+', it arrives as a space
+        get_with_stylesheet(client, GET_MAP_QUERY, encoded.replace("/", "%2F").replace("=", "%3D")),
+        # Also at the end of the value
+        get_with_stylesheet(client, GET_MAP_QUERY, ends_with_plus.replace("/", "%2F")),
+        # XML after a UTF-8 byte order mark, as is and compressed
+        getmap(client, byte_order_mark + VARIANT_STYLE),
+        getmap(client, compress(byte_order_mark + VARIANT_STYLE)),
+    ):
+        assert response.status_code == 200, response.text
+        assert response.content == expected.content
+
+
+@pytest.mark.parametrize(
+    "value, message",
+    [
+        ("not base64!", "STYLESHEET: invalid base64"),
+        ("swkuq=cxJV", "STYLESHEET: invalid base64"),
+        ("AAAA", "STYLESHEET: invalid compressed data"),
+        (compress(VARIANT_STYLE)[:-8], "STYLESHEET: invalid compressed data"),
+        (compress(VARIANT_STYLE) + "AAAA", "STYLESHEET: invalid compressed data"),
+        # 10 MB of zeros compresses to about 10 KB. Decompressing stops at 64 KB.
+        (compress(bytes(10_000_000)), "STYLESHEET: decompressed size exceeds 65536 bytes"),
+        (compress(bytes(10_000_000), 15), "STYLESHEET: decompressed size exceeds 65536 bytes"),
+        (compress("not xml"), "STYLESHEET: decoded value is not XML"),
+        # Base64 that does not decode to XML is read as compressed
+        (base64.b64encode(b"not xml").decode(), "STYLESHEET: invalid compressed data"),
+        (compress(b'<Style name="s\xff"/>'), "STYLESHEET is not valid XML"),
+    ],
+    ids=["not base64", "padding inside", "garbage", "truncated", "trailing data", "bomb raw", "bomb zlib", "compressed no xml", "no xml", "invalid utf-8"],
+)
+def test_CustomStyles_compressed_refused(client, value, message):
+    response = get_with_stylesheet(client, GET_MAP_QUERY, value)
+    assert response.status_code == 422
+    assert message in response.text
+
+
+def test_CustomStyles_compressed_disabled(client, monkeypatch):
+    monkeypatch.delenv("ADAGUC_STYLESHEET_ENABLE")
+    response = get_with_stylesheet(client, GET_MAP_QUERY, compress(VARIANT_STYLE))
+    assert response.status_code == 422
+    assert "STYLESHEET is not enabled" in response.text
 
 
 @pytest.mark.parametrize("value", [None, "FALSE", "true"])
@@ -121,20 +238,20 @@ def test_CustomStyles_disabled_by_default(client, monkeypatch, value):
     monkeypatch.delenv("ADAGUC_STYLESHEET_ENABLE", raising=False)
     if value is not None:
         monkeypatch.setenv("ADAGUC_STYLESHEET_ENABLE", value)
-    response = post_getmap(client, VARIANT_STYLE)
+    response = getmap(client, VARIANT_STYLE)
     assert response.status_code == 422
     assert "STYLESHEET is not enabled" in response.text
 
 
 def test_CustomStyles_rejects_layer(client):
     """A refused STYLESHEET gives 422. What is refused is tested in C++, see the CServerParams applyStyleSheet tests in testadagucserver.cpp"""
-    response = post_getmap(client, '<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>')
+    response = getmap(client, '<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>')
     assert response.status_code == 422
 
 
 def test_CustomStyles_rejects_multiple_layers(client):
     """A STYLESHEET applies to the one requested layer, more layers are refused"""
-    response = post_getmap(client, VARIANT_STYLE, layers="testdata,testdata")
+    response = getmap(client, VARIANT_STYLE, layers="testdata,testdata")
     assert response.status_code == 422
 
 
@@ -150,7 +267,7 @@ def test_CustomStyles_symbol_from_symbol_dir(client):
         <Point pointstyle="symbol" discradius="0" textradius="0" dot="false" fontsize="8" textformat=" "/>
       </Style>
     """
-    assert_image(post_getmap(client, symbol_style), "test_CustomStyles_symbol_from_symbol_dir.png")
+    assert_image(getmap(client, symbol_style), "test_CustomStyles_symbol_from_symbol_dir.png")
 
 
 def test_CustomStyles_symbol_from_dataset_dir(client):
@@ -165,7 +282,7 @@ def test_CustomStyles_symbol_from_dataset_dir(client):
         <Point pointstyle="symbol" discradius="0" textradius="0" dot="false" fontsize="8" textformat=" "/>
       </Style>
     """
-    assert_image(post_getmap(client, symbol_style), "test_CustomStyles_symbol_from_dataset_dir.png")
+    assert_image(getmap(client, symbol_style), "test_CustomStyles_symbol_from_dataset_dir.png")
 
 
 def test_CustomStyles_large_stylesheet(client):
@@ -173,12 +290,12 @@ def test_CustomStyles_large_stylesheet(client):
     intervals = "".join(f'<ShadeInterval min="{i / 1000}" max="{(i + 1) / 1000}" fillcolor="#{i % 256:02x}0000"/>' for i in range(200))
     stylesheet = f'<Style name="large"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max><RenderMethod>shaded</RenderMethod>{intervals}</Style>'
     assert len(stylesheet) > 8192
-    response = post_getmap(client, stylesheet)
+    response = getmap(client, stylesheet)
     assert response.status_code == 200, response.text
 
 
-def post_vector_getmap(client, monkeypatch, vector):
-    """GetMap of wind_wave_direction, drawn with the posted Vector from directions and a constant magnitude of 1"""
+def vector_getmap(client, monkeypatch, vector):
+    """GetMap of wind_wave_direction, drawn with the Vector from the STYLESHEET from directions and a constant magnitude of 1"""
     env = make_adaguc_env("adaguc.tests.vectorrendering")
     update_db(env)
     monkeypatch.setenv("ADAGUC_CONFIG", env["ADAGUC_CONFIG"])
@@ -205,29 +322,29 @@ def post_vector_getmap(client, monkeypatch, vector):
           </Style>
         """,
     }
-    return client.post("/wms", data=params)
+    return client.get("/wms", params=params)
 
 
-# One case per kind of text that is printed with a posted format
+# One case per kind of text that is printed with a format from a STYLESHEET
 FORMAT_CASES = {
-    "contour": lambda client, monkeypatch, fmt: post_getmap(client, contour_style(fmt)),
-    "continuous_legend": lambda client, monkeypatch, fmt: post_getlegendgraphic(
+    "contour": lambda client, monkeypatch, fmt: getmap(client, contour_style(fmt)),
+    "continuous_legend": lambda client, monkeypatch, fmt: getlegendgraphic(
         client, f'<Style name="s"><Legend textformatting="{fmt}">rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>'
     ),
-    "discrete_legend": lambda client, monkeypatch, fmt: post_getlegendgraphic(
+    "discrete_legend": lambda client, monkeypatch, fmt: getlegendgraphic(
         client,
         f'<Style name="s"><Legend fixedclasses="true" textformatting="{fmt}">rainbow</Legend><RenderMethod>shaded</RenderMethod><Min>0</Min><Max>0.5</Max><ShadeInterval>0.1</ShadeInterval></Style>',
     ),
-    "point": lambda client, monkeypatch, fmt: post_getmap(
+    "point": lambda client, monkeypatch, fmt: getmap(
         client, f'<Style name="s"><Legend>rainbow</Legend><DataPostProc algorithm="pointsfromgrid" a="40" select="testdata"/><Point textformat="{fmt}"/></Style>'
     ),
-    "vector": lambda client, monkeypatch, fmt: post_vector_getmap(client, monkeypatch, f'<Vector vectorstyle="disc" textformat="{fmt}"/>'),
+    "vector": lambda client, monkeypatch, fmt: vector_getmap(client, monkeypatch, f'<Vector vectorstyle="disc" textformat="{fmt}"/>'),
 }
 
 
 @pytest.mark.parametrize("case", FORMAT_CASES)
 def test_CustomStyles_unsafe_format_falls_back_to_g(client, monkeypatch, case):
-    """A posted format is accepted, but CT::formatFloat prints anything but one float conversion with %g instead.
+    """A format from a STYLESHEET is accepted, but CT::formatFloat prints anything but one float conversion with %g instead.
     Which formats are safe is tested in C++ (CT isSafeFloatFormat), this checks that the text of every renderer goes through it."""
     render = lambda fmt: FORMAT_CASES[case](client, monkeypatch, fmt)
     unsafe, fallback, other = render("%s%s%s%s"), render("%g"), render("%.4f")
@@ -249,10 +366,10 @@ def test_CustomStyles_unsafe_format_falls_back_to_g(client, monkeypatch, case):
     ],
 )
 def test_CustomStyles_convert_units(client, dataPostProc, expected):
-    """A posted style can convert units, the value at this location is 0.197693 with units 1"""
+    """A STYLESHEET style can convert units, the value at this location is 0.197693 with units 1"""
     params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
     params["STYLESHEET"] = f'<Style name="s">{dataPostProc}</Style>'
-    response = client.post("/wms", data=params)
+    response = client.get("/wms", params=params)
     assert response.status_code == 200, response.text
     assert expected in response.text
 
@@ -271,7 +388,7 @@ def test_CustomStyles_datapostproc_getfeatureinfo(client, dataPostProcs, expecte
     """Other DataPostProc algorithms without file or layer access"""
     params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
     params["STYLESHEET"] = f'<Style name="s">{dataPostProcs}</Style>'
-    response = client.post("/wms", data=params)
+    response = client.get("/wms", params=params)
     assert response.status_code == 200, response.text
     assert [line.strip(" -") for line in response.text.splitlines() if line.startswith("  ")] == expected
 
@@ -281,7 +398,7 @@ def test_CustomStyles_add_dataobject_getfeatureinfo(client):
     a second object that was never filled: its value was uninitialized memory."""
     params = dict(parse_qsl(GET_FEATURE_INFO_QUERY))
     params["STYLESHEET"] = '<Style name="s"><DataPostProc algorithm="add_dataobject" name="m1" a="1"/><DataPostProc algorithm="add_dataobject" name="m2" a="2"/></Style>'
-    response = client.post("/wms", data=params)
+    response = client.get("/wms", params=params)
     assert response.status_code == 200, response.text
     values = [line.strip(" -") for line in response.text.splitlines() if line.startswith("  ")]
     assert values == ["m2 2.000000 1", "m1 1.000000 1", "Testdata 0.197693 1"]
@@ -290,19 +407,13 @@ def test_CustomStyles_add_dataobject_getfeatureinfo(client):
 def test_CustomStyles_add_dataobject(client, monkeypatch):
     """add_dataobject adds a constant magnitude to draw vectors from directions only, as the configured style wind_wave_direction does"""
     filename = "test_WMSGetMap_wave_direction_vector_with_add_dataobject.png"
-    response = post_vector_getmap(client, monkeypatch, '<Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="40.0"/>')
+    response = vector_getmap(client, monkeypatch, '<Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="40.0"/>')
     assert_image(response, filename, expected=f"expectedoutputs/TestPointsAndVectors/{filename}")
 
 
-def test_CustomStyles_rejects_too_large_body(client):
-    """The POST body is limited, it is refused before it is read completely"""
-    response = post_getmap(client, "<!--" + "x" * 70000 + "-->")
-    assert response.status_code == 413
-
-
 def test_CustomStyles_rejects_too_large_query_string(client):
-    """The forwarded query string is encoded again: a space in the body becomes three bytes"""
-    response = post_getmap(client, "<!--" + " " * 30000 + "-->")
+    """The forwarded query string is encoded again: a space (+ in the url) becomes three bytes"""
+    response = getmap(client, "<!--" + " " * 30000 + "-->")
     assert response.status_code == 413
 
 
@@ -315,25 +426,25 @@ def test_CustomStyles_rejects_too_large_query_string(client):
 )
 def test_CustomStyles_point_cells_stay_in_bounds(client, point):
     """The point cell matrix is indexed at the text position, which can be far outside the image"""
-    response = post_getmap(client, f'<Style name="s"><DataPostProc algorithm="pointsfromgrid" a="40" select="testdata"/>{point}</Style>')
+    response = getmap(client, f'<Style name="s"><DataPostProc algorithm="pointsfromgrid" a="40" select="testdata"/>{point}</Style>')
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "image/png"
 
 
 def test_CustomStyles_accepts_32_contourlines(client):
-    response = post_getmap(client, '<Style name="s"><Legend>rainbow</Legend>' + '<ContourLine interval="0.1"/>' * 32 + "</Style>")
+    response = getmap(client, '<Style name="s"><Legend>rainbow</Legend>' + '<ContourLine interval="0.1"/>' * 32 + "</Style>")
     assert response.status_code == 200, response.text
 
 
-def test_CustomStyles_layer_settings_do_not_override_posted_style(client):
+def test_CustomStyles_layer_settings_do_not_override_stylesheet(client):
     """Style settings in the layer (RenderMethod, Legend, Min, Max, ContourLine) apply to configured styles only"""
-    assert post_getmap(client, layers="testdata_layer_overrides").content != post_getmap(client).content
-    assert_image(post_getmap(client, VARIANT_STYLE, layers="testdata_layer_overrides"), "test_CustomStyles_post_variant_style.png")
+    assert getmap(client, layers="testdata_layer_overrides").content != getmap(client).content
+    assert_image(getmap(client, VARIANT_STYLE, layers="testdata_layer_overrides"), "test_CustomStyles_variant_style.png")
 
 
 def test_CustomStyles_legend_with_many_classes(client):
     """A discrete legend with thousands of classes draws the first ones, like for a configured style"""
-    response = post_getlegendgraphic(
+    response = getlegendgraphic(
         client,
         '<Style name="s"><Legend fixedclasses="true">rainbow</Legend><RenderMethod>shaded</RenderMethod><Min>0</Min><Max>0.5</Max><ShadeInterval>0.0001</ShadeInterval></Style>',
     )
@@ -353,13 +464,13 @@ def test_CustomStyles_legend_with_many_classes(client):
 )
 def test_CustomStyles_legend_loops_end(client, stylesheet):
     """Values that used to make the legend loops endless give an error instead of a timeout"""
-    response = post_getlegendgraphic(client, stylesheet)
+    response = getlegendgraphic(client, stylesheet)
     assert response.status_code == 200, response.text
     assert "GetLegendGraphic Request failed" in response.text
 
 
 @pytest.mark.parametrize("name", ["included", "testdata_style_manycontours"])
 def test_CustomStyles_include_configured_style(client, name):
-    """A posted style can include a configured style, also when it has the same name"""
-    response = post_getmap(client, f'<Style name="{name}"><IncludeStyle name="testdata_style_manycontours"/></Style>')
+    """A STYLESHEET style can include a configured style, also when it has the same name"""
+    response = getmap(client, f'<Style name="{name}"><IncludeStyle name="testdata_style_manycontours"/></Style>')
     assert_image(response, "test_CustomStyles_dataset_style.png")

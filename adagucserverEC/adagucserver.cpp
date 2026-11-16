@@ -41,6 +41,9 @@
 #include "CServerError.h"
 #include "fork_server.h"
 
+// PROJ writes warnings such as failed grid lookups to stderr, also when the transformation still works
+static void projLogFunction(void *, int /*level*/, const char * /*message*/) {}
+
 int processQueryStringRequest() {
   /* Process the OGC request */
   setErrorFunction(serverErrorFunction);
@@ -92,6 +95,8 @@ int run_adaguc_once(int argc, char **argv, char **envp) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  proj_log_func(PJ_DEFAULT_CTX, nullptr, projLogFunction);
+
   const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
   bool use_fork_server = fork_enable && std::string(fork_enable) == "TRUE" && argc == 1;
   if (use_fork_server) {

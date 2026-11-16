@@ -292,3 +292,30 @@ TEST(string, parseInt) {
   CHECK(!CT::parseInt("").has_value());
   CHECK(!CT::parseInt("-").has_value());
 }
+
+static std::string base64(std::string_view input) {
+  std::string output;
+  return CT::decodeBase64(input, output) ? output : "invalid";
+}
+
+TEST(string, decodeBase64) {
+  CHECK(base64("") == "");
+  CHECK(base64("TWFu") == "Man");
+  CHECK(base64("TWE=") == "Ma");
+  CHECK(base64("TWE") == "Ma");
+  CHECK(base64("TQ==") == "M");
+  CHECK(base64("TQ") == "M");
+  // Standard and URL safe alphabet: 0xfb 0xff 0xbf
+  CHECK(base64("+/+/") == "\xfb\xff\xbf");
+  CHECK(base64("-_-_") == "\xfb\xff\xbf");
+  // Line breaks are skipped
+  CHECK(base64("PFN0eWxl\r\nIG5hbWU9\nInMiLz4=") == R"(<Style name="s"/>)");
+  // Invalid characters, padding and lengths
+  CHECK(base64("TWF u") == "invalid");
+  CHECK(base64("<Style/>") == "invalid");
+  CHECK(base64("TWE=u") == "invalid");
+  CHECK(base64("TQ===") == "invalid");
+  CHECK(base64("TWFuT") == "invalid");
+  CHECK(base64("TWE==") == "invalid");
+}
+

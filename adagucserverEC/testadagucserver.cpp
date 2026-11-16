@@ -15,15 +15,19 @@
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
+#include "CImageOperators/smoothRasterField.h"
 #include "CUniqueRequests/trajectory.h"
 #include <vector>
 #include <chrono>
 #include <cstdint>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <unistd.h>
 #include "CXMLSerializerInterface.h"
+#include "GridFileWriters/AAIGridWriter.h"
+#include "GridFileWriters/GeoTiffWriter.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -39,6 +43,73 @@ int main() {
     return 1;
   }
   return 0;
+}
+
+static inline SimpleString StringFrom(const std::string &value) { return SimpleString(value.c_str()); }
+
+static GridFileData makeFloatGrid(int width, int height, const std::vector<float> &values, double noDataValue) {
+  GridFileData grid;
+  grid.width = width;
+  grid.height = height;
+  grid.type = CDF_FLOAT;
+  grid.noDataValue = noDataValue;
+  GridFileBand band;
+  band.data.resize(values.size() * sizeof(float));
+  memcpy(band.data.data(), values.data(), band.data.size());
+  grid.bands.push_back(band);
+  return grid;
+}
+
+TEST(squareCellsAndDecimalDot, AAIGrid) {
+  GridFileData grid = makeFloatGrid(2, 2, {NAN, 3, 0.5, 4}, NAN);
+  double geoTransform[6] = {10, 1, 0, 50, 0, -1};
+  std::copy(geoTransform, geoTransform + 6, grid.geoTransform);
+  std::string output;
+  CHECK(formatAAIGrid(grid, output) == 0);
+  // Like GDAL: nan nodata, and .0 appended only to the first integral value
+  CHECK_EQUAL(std::string("ncols        2\nnrows        2\nxllcorner    10.000000000000\nyllcorner    48.000000000000\ncellsize     1.000000000000\nNODATA_value nan\n"
+                          "nan 3.0 \n0.5 4 \n"),
+              output);
+}
+
+TEST(nonSquareBottomUpCells, AAIGrid) {
+  GridFileData grid = makeFloatGrid(2, 2, {1, 2, 3, 4}, -1);
+  double geoTransform[6] = {0, 2, 0, 40, 0, 1}; // South up: the first row is the southern one
+  std::copy(geoTransform, geoTransform + 6, grid.geoTransform);
+  std::string output;
+  CHECK(formatAAIGrid(grid, output) == 0);
+  CHECK_EQUAL(std::string("ncols        2\nnrows        2\nxllcorner    0.000000000000\nyllcorner    40.000000000000\ndx           2.000000000000\ndy           1.000000000000\nNODATA_value -1\n"
+                          "3.0 4 \n1 2 \n"),
+              output);
+}
+
+TEST(integerWithoutNoData, AAIGrid) {
+  GridFileData grid;
+  grid.width = 3;
+  grid.height = 1;
+  grid.type = CDF_UBYTE;
+  grid.noDataValue = NAN;
+  grid.bands.push_back({.data = {0, 7, 255}, .metadata = {}});
+  std::string output;
+  CHECK(formatAAIGrid(grid, output) == 0);
+  CHECK(output.find("NODATA_value") == std::string::npos);
+  CHECK(output.find("\n0 7 255 \n") != std::string::npos);
+  grid.bands.push_back(grid.bands[0]);
+  CHECK(formatAAIGrid(grid, output) != 0);
+}
+
+TEST(noDataAndMetadataTags, GeoTiff) {
+  CHECK_EQUAL(std::string("-0.0099999997764825821"), formatGDALNoData(-0.01f));
+  CHECK_EQUAL(std::string("nan"), formatGDALNoData(NAN));
+  CHECK_EQUAL(std::string("255"), formatGDALNoData(255));
+  GridFileData grid = makeFloatGrid(1, 1, {1}, NAN);
+  CHECK_EQUAL(std::string(""), formatGDALMetadataXML(grid));
+  grid.metadata = {{"var#units", "m<s"}, {"NETCDF_DIM_EXTRA", "{time}"}, {"var#_FillValue", "1"}};
+  grid.bands[0].metadata = {{"NETCDF_VARNAME", "var"}};
+  // Sorted like GDAL (case insensitive, '_' after letters), escaped, band items with their sample number
+  CHECK_EQUAL(std::string("<GDALMetadata>\n  <Item name=\"NETCDF_DIM_EXTRA\">{time}</Item>\n  <Item name=\"var#units\">m&lt;s</Item>\n  <Item name=\"var#_FillValue\">1</Item>\n"
+                          "  <Item name=\"NETCDF_VARNAME\" sample=\"0\">var</Item>\n</GDALMetadata>\n"),
+              formatGDALMetadataXML(grid));
 }
 
 TEST(crossedCells, Trajectory) {
@@ -704,6 +775,107 @@ TEST(gdwDrawQuadDrawsTheSamePixelsAsTwoTriangles, GenericDataWarper) {
   CHECK(writesQuad == writesTriangles);
 }
 
+// Smooths a width x height grid with radius r and returns the smoothed value of every cell.
+static std::vector<float> smoothGrid(std::vector<float> grid, int width, int height, int r, double nodataValue = -9999) {
+  GDWState state = {};
+  state.sourceGridWidth = width;
+  state.sourceGridHeight = height;
+  GDWDrawFunctionSettings settings{};
+  settings.smoothingFiter = r;
+  settings.hasNodataValue = true;
+  settings.dfNodataValue = nodataValue;
+  std::vector<float> result(grid.size());
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      result[x + y * width] = smoothingAtLocation<float>(x, y, grid.data(), state, settings);
+    }
+  }
+  return result;
+}
+
+TEST(smoothRasterField, averagesWindowClippedAtEdges) {
+  // 1 2 3 / 4 5 6 / 7 8 9 with radius 1: corners average 4 cells, edges 6 and the center 9.
+  std::vector<float> expected = {3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7};
+  CHECK(smoothGrid({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3, 1) == expected);
+}
+
+TEST(smoothRasterField, skipsNodataAndNaN) {
+  std::vector<float> expected = {1, 1, 3, 4, 4};
+  CHECK(smoothGrid({1, NAN, -9999, 3, 5}, 5, 1, 1) == expected);
+}
+
+TEST(smoothRasterField, nodataWhenWindowHasNoValues) {
+  std::vector<float> expected = {-9999, -9999, -9999, 7, 7};
+  CHECK(smoothGrid({-9999, -9999, -9999, -9999, 7}, 5, 1, 1) == expected);
+}
+
+TEST(smoothRasterField, radiusLargerThanGridAveragesEverything) {
+  std::vector<float> expected(9, 5);
+  CHECK(smoothGrid({1, 2, 3, 4, 5, 6, 7, 8, 9}, 3, 3, 40) == expected);
+}
+
+TEST(smoothRasterField, linearFieldUnchangedInInterior) {
+  // Away from the edges, smoothing a linear field gives the field itself. Integer values keep the sums exact.
+  const int width = 300, height = 200, r = 12;
+  std::vector<float> grid(width * height);
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      grid[x + y * width] = x + 1000 * y;
+    }
+  }
+  auto smoothed = smoothGrid(grid, width, height, r);
+  int differences = 0;
+  for (int y = r; y < height - r; y++) {
+    for (int x = r; x < width - r; x++) {
+      if (smoothed[x + y * width] != grid[x + y * width]) differences++;
+    }
+  }
+  CHECK(differences == 0);
+}
+
+TEST(smoothRasterField, infAndHugeValuesOnlyAffectTheirOwnWindow) {
+  // Inf is skipped like nodata, and a huge undeclared fill value only changes the cells whose window contains it.
+  std::vector<float> grid(200, 1);
+  grid[10] = INFINITY;
+  grid[100] = 9.96921e36f;
+  auto smoothed = smoothGrid(grid, 200, 1, 2);
+  int wrongOutsideWindows = 0;
+  for (int x = 0; x < 200; x++) {
+    bool nearHuge = x >= 98 && x <= 102;
+    if (!nearHuge && smoothed[x] != 1) wrongOutsideWindows++;
+  }
+  CHECK(wrongOutsideWindows == 0);
+}
+
+TEST(smoothRasterField, matchesBruteForceAcrossTileBorders) {
+  // Grid spans several 64x64 tiles, does not divide evenly, and contains nodata.
+  const int width = 150, height = 97, r = 3;
+  const float nodata = -9999;
+  std::vector<float> grid(width * height);
+  for (int i = 0; i < width * height; i++) {
+    grid[i] = (i * 7919) % 13 == 0 ? nodata : (float)((i * 31) % 101) / 7.f;
+  }
+  auto smoothed = smoothGrid(grid, width, height, r, nodata);
+  int mismatches = 0;
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      double sum = 0;
+      int count = 0;
+      for (int sy = std::max(0, y - r); sy <= std::min(height - 1, y + r); sy++) {
+        for (int sx = std::max(0, x - r); sx <= std::min(width - 1, x + r); sx++) {
+          float v = grid[sx + sy * width];
+          if (v == nodata) continue;
+          sum += v;
+          count++;
+        }
+      }
+      float expected = count > 0 ? (float)(sum / count) : nodata;
+      if (std::fabs(smoothed[x + y * width] - expected) > 1e-4) mismatches++;
+    }
+  }
+  CHECK(mismatches == 0);
+}
+
 TEST(CT, isSafeFloatFormat) {
   for (const char *safe: {"", " ", "%f", "%2.2f", "%.1f", "%0.0f", "%+08.3e", "%g", "%G", "%a", "%.1f degC", "100%%", "%% %5.1f %%"}) {
     CHECK(CT::isSafeFloatFormat(safe));
@@ -808,7 +980,7 @@ static std::string repeat(const std::string &text, int times) {
 TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
   CHECK_STYLESHEETS(
       (std::vector<std::string>{
-          // Only Style and Legend elements may be posted, and only one Style
+          // Only Style and Legend elements may be sent, and only one Style
           R"(<Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>)",
           R"(<Style name="a"/><Style name="b"/>)",
           R"(<Style name=)",
@@ -824,9 +996,9 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
           R"(<Legend name="l" type="svg" file="/etc/passwd"/>)",
           // Applied to strings and integers too, so no safe format exists
           R"(<Style name="s"><FeatureInterval labelpropertyformat="%s"/></Style>)",
-          // Posted printf formats are accepted, but their length is limited
+          // printf formats from a STYLESHEET are accepted, but their length is limited
           R"(<Style name="s"><ContourLine textformatting=")" + repeat("%f", 33) + R"("/></Style>)",
-          // IncludeStyle of a style that is not configured, like the posted style itself
+          // IncludeStyle of a style that is not configured, like the STYLESHEET style itself
           R"(<Style name="s"><IncludeStyle name="s"/></Style>)",
           R"(<Style name="s"><IncludeStyle name="does_not_exist"/></Style>)",
           // Unknown elements, attributes and markup
@@ -866,7 +1038,7 @@ TEST(CServerParams, applyStyleSheetRefusesDisallowedContent) {
           R"(<Style name="s"><Log>-10</Log></Style>)",
           // drawContour has one bit per ContourLine
           R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 33) + "</Style>",
-          // A legend that is neither configured nor posted
+          // A legend that is neither configured nor in the STYLESHEET
           R"(<Style name="s"><Legend>does_not_exist</Legend></Style>)",
           // Only the text before a comment is read as value, so it must be the text that is checked
           R"(<Style name="s"><SmoothingFilter>100000<!---->e-4</SmoothingFilter></Style>)",
@@ -882,10 +1054,10 @@ TEST(CServerParams, applyStyleSheetAcceptsAllowedContent) {
       (std::vector<std::string>{
           R"(<Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>)",
           R"(<?xml version="1.0"?><Configuration><Style name="s"/></Configuration>)",
-          // Posted legends may be used by the posted style, and replace a configured legend with the same name
+          // Legends in the STYLESHEET may be used by its style, and replace a configured legend with the same name
           R"(<Legend name="l" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend><Style name="s"><Legend>l</Legend></Style>)",
           R"(<Legend name="rainbow" type="colorRange"><palette index="0" red="0" green="0" blue="0"/></Legend>)",
-          // A configured style may be included, also by a posted style with the same name
+          // A configured style may be included, also by a STYLESHEET style with the same name
           R"(<Style name="testdata_style_manycontours"><IncludeStyle name="testdata_style_manycontours"/></Style>)",
           // The limits themselves
           R"(<Style name="s">)" + repeat(R"(<ContourLine interval="0.1"/>)", 32) + "</Style>",
@@ -936,4 +1108,61 @@ TEST(CServerParams, applyStyleSheetOnlyAllowsPngFilesInSymbolDirectories) {
   datasetDir.empty() ? unsetenv("ADAGUC_DATASET_DIR") : setenv("ADAGUC_DATASET_DIR", datasetDir.c_str(), 1);
   fs::remove_all(root);
   if (!(refused + allowed).empty()) FAIL((refused + allowed).c_str());
+}
+
+// A base64 encoded STYLESHEET, optionally raw deflate, zlib or gzip compressed, is checked like the same stylesheet in XML
+TEST(CServerParams, applyStyleSheetBase64) {
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Style name="s"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlays/FJTU/NS7ErSszMS8ovt9GH8m18M/PsDGz0QZSNb2KFnYGeKZAHZNjog42wAwClDRhL",
+                        // <?xml version="1.0"?><Configuration><Style name="s"/></Configuration>
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwg==",
+                        // The same URL safe without padding, and with spaces for the '+' characters a client did not url encode
+                        "eNqzsa_IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK-nb2eijKgAAMMIXwg",
+                        "eNqzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK nb2eijKgAAMMIXwg==",
+                        // The same gzip compressed
+                        "H4sIAAAAAAAC/7Oxr8jNUShLLSrOzM+zVTLUM1Cyt7Nxzs9Ly0wvLUosAYra2QSXVOakKuQl5qbaKhUr6dvZ6KMqAADtmytARQAAAA==",
+                        // The first one raw deflate compressed (as CompressionStream("deflate-raw") in a browser) and base64url encoded
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY6IONsAMA",
+                        // <Style name="x"><RenderSettings renderhint="discreteclasses"/></Style> raw deflate, without and with '=' padding
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA",
+                        "swkuqcxJVchLzE21VapQsrMJSs1LSS0KTi0pycxLL1YoAnMzMvNKbJVSMouTi1JLUpNzEouLU4uV9O1s9MHa7QA=",
+                        // The first one after an XML comment, raw deflate in two blocks: the compressed data starts with '<' (0x3C, a
+                        // non-final dynamic block), so it must not be taken for uncompressed XML
+                        "PE2HDYBACFwFB2AD4y72Xt6u03uA_wkh1zjiiJmGcaKyovt5Pex6mhfZ-0Fpps66CT8vjYgAKy-UIQEXG1wcFzLQBOLKCcbUTasSovjzv7Mq5w38CSJOgVFvxZZhTj4AAAD__7MJLqnMSVXIS8xNtVUqVrKz8UlNT81LsStKzMxLyi-30YfybXwz8-wMbPRBlI1vYoWdgZ4pkAdk2OiDjbADAA",
+                        // The first one without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        // <Style name="s0">... without compression and padding, ending with a '+' that was not url encoded
+                        "PFN0eWxlIG5hbWU9InMwIj48TGVnZW5kPnJhaW5ib3c8L0xlZ2VuZD48TWluPjA8L01pbj48TWF4PjAuNTwvTWF4PjwvU3R5bGU ",
+                        // The first one after a UTF-8 byte order mark: as XML, base64 encoded, and raw deflate compressed
+                        "\xEF\xBB\xBF<Style name=\"s\"><Legend>rainbow</Legend><Min>0</Min><Max>0.5</Max></Style>",
+                        "77u/PFN0eWxlIG5hbWU9InMiPjxMZWdlbmQ+cmFpbmJvdzwvTGVnZW5kPjxNaW4+MDwvTWluPjxNYXg+MC41PC9NYXg+PC9TdHlsZT4=",
+                        "e797v01wSWVOqkJeYm6qrVKxkp2NT2p6al6KXVFiZl5SfrmNPpRv45uZZ2dgow-ibHwTK-wM9EyBPCDDRh9shB0A",
+                    }),
+                    true);
+  CHECK_STYLESHEETS((std::vector<std::string>{
+                        // <Layer type="database"><FilePath>/etc</FilePath><Variable>x</Variable></Layer>
+                        "eNqz8UmsTC1SKKksSLVVSkksSUxKLE5VsrNxy8xJDUgsybDTTy1JttGHc23CEosyE5NyUu0qbPThbBt9sDF2ADYMG0U=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style>
+                        "eNqzCS6pzElVyEvMTbVVKlayswnIz8wrUUjLzytJy8wBiumnliTrFyQWF5enKOnb2eiD1dsBABFyEtI=",
+                        // <Style name="s"><Point fontfile="/etc/passwd"/></Style> without compression
+                        "PFN0eWxlIG5hbWU9InMiPjxQb2ludCBmb250ZmlsZT0iL2V0Yy9wYXNzd2QiLz48L1N0eWxlPg==",
+                        // Not base64, base64 that is no XML, and compressed data that is no XML
+                        "Style name=s",
+                        "bm90IHhtbA==",
+                        "eNrLyy9RqMjNAQALFQLD",
+                        // Raw deflate: no XML, truncated, invalid UTF-8 (<Style name="s\xff"/>) and 70000 spaces after <Style name="s"/>
+                        "y8svUajIzQEA",
+                        "swkuqcxJVchLzE21VSpWsrPxSU1PzUuxK0rMzEvKL7fRh_JtfDPz7Axs9EGUjW9ihZ2BnimQB2TY",
+                        "swkuqcxJVchLzE21VSr-r6RvBwA",
+                        "7cExFUARAADAKp4CCnxKSPAHGxYW7ZUw3t1X9-ktzH-0HFdMJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAz10",
+                        // Data that is no deflate data
+                        "AAAA",
+                        // The second valid one truncated, and with data after the compressed stream
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKg==",
+                        "eJyzsa/IzVEoSy0qzszPs1Uy1DNQsrezcc7PS8tMLy1KLAGK2tkEl1TmpCrkJeam2ioVK+nb2eijKgAAMMIXwng=",
+                        // <Style name="s"/> followed by 70000 spaces: 152 characters that decompress to more than 64 KB
+                        "eNrtwTEVQBEAAMAqngIKfEpI8AcbFhbtlTDe3Vf36S3Mf7QcV0wlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADPXWRCNW4=",
+                    }),
+                    false);
 }

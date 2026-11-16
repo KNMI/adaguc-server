@@ -49,9 +49,9 @@ class TestKMDS:
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
 
         assert status == 0
-        assert AdagucTestTools().compareImage(
-            self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2
-        )
+        # All of these draw text (values, labels), except the okta symbols.
+        tolerance = "geometry" if filename == "test_kmds_alle_stations_10001_10M_nc_symbolinterval_okta.png" else "antialiasing"
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance=tolerance)
 
     def test_kmds_alle_stations_10001_labels_do_not_connect_to_next_circle(self):
         """A label's text end point must not leak into the next circle's path as a stray line."""
@@ -69,7 +69,7 @@ class TestKMDS:
 
         assert status == 0
         assert AdagucTestTools().compareImage(
-            self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
         )
 
     @pytest.mark.parametrize(

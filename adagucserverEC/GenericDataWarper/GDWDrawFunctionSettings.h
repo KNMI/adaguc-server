@@ -43,7 +43,8 @@ struct GDWDrawFunctionSettings {
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
   double smoothingFiter = 0;
-  std::vector<double> smoothingMemo;
+  // Smoothed values per 64x64 tile of the source grid, filled on first use. An empty tile is not computed yet.
+  std::vector<std::vector<double>> smoothingMemo;
 
   const CStyleConfiguration *styleConfiguration = nullptr; // avoids copying the 256-entry palette
 

@@ -237,7 +237,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 
   parseStyleInfo(this, dataSource, this->styleIndex, 0);
 
-  // Legend settings can always be overriden in the layer itself, except for a style posted in STYLESHEET
+  // Legend settings can always be overriden in the layer itself, except for a style from STYLESHEET
   static const CServerConfig::XMLE_Layer noLayerSettings;
   const CServerConfig::XMLE_Layer *layer = this->styleIndex == dataSource->srvParams->styleSheetStyleIndex ? &noLayerSettings : dataSource->cfgLayer;
   if (layer->Scale.size() > 0) this->legendScale = atof(layer->Scale[0].elementValue.c_str());

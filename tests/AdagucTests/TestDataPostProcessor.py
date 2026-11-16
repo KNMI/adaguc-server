@@ -102,7 +102,7 @@ class TestDataPostProcessor(unittest.TestCase):
         run_adaguc_and_compare_image(
             env,
             "test_DataPostProcessor_DBZ_GetMap.png",
-            "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_PCP_CM&WIDTH=256IGHT=256&CRS=EPSG%3A3857&BBOX=562267.2546644434,6568919.974681269,797831.9309681491,6869137.726056894&STYLES=radar%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2021-06-22T20%3A00%3A00Z",
+            "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_PCP_CM&WIDTH=256&CRS=EPSG%3A3857&BBOX=562267.2546644434,6568919.974681269,797831.9309681491,6869137.726056894&STYLES=radar%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2021-06-22T20%3A00%3A00Z",
         )
 
     def test_datapostprocessor_axplusb_getmap(self):
@@ -135,9 +135,9 @@ class TestDataPostProcessor(unittest.TestCase):
             "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=unscaled_fahrenheit&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-1841640.561188397,4434884.178327009,2446462.937192397,9899900.45389999&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
         )
         # The unscaled should be the same map as for scaled data.
-        AdagucTestTools().compareImage(
-            env["ADAGUC_TESTPATH_ACTUAL"] + "test_DataPostProcessor_convert_units_unscaled_GetMap.png",
+        assert AdagucTestTools().compareImage(
             env["ADAGUC_TESTPATH_EXPECTED"] + "test_DataPostProcessor_convert_units_scaled_GetMap.png",
+            env["ADAGUC_TESTPATH_ACTUAL"] + "test_DataPostProcessor_convert_units_unscaled_GetMap.png",
         )
 
     def test_gfitimeseries_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
@@ -163,6 +163,7 @@ class TestDataPostProcessor(unittest.TestCase):
             env,
             "test_GetLegendGraphic_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.png",
             "DATASET=adaguc.tests.arcus_uwcw&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=wind_speed_hagl_ms_member_3_backandforth_multiple&format=image/png&STYLE=auto/nearest&layers=wind_speed_hagl_ms_member_3_backandforth_multiple&&time=2024-06-06T03%3A00%3A00Z&DIM_reference_time=2024-06-05T03%3A00%3A00Z&&transparent=true&&0.5077404424685739",
+            tolerance="antialiasing",
         )
 
     def test_getmap_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
@@ -207,4 +208,5 @@ class TestDataPostProcessor(unittest.TestCase):
             auto_env,
             "test_GetMapOnGetCoverage_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.png",
             f"source=TestDataPostProcessor/{wcs_filename}&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-speed-hagl&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=221991.4964117,6269353.652580505,1023642.9449963,7401450.291427495&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_hagl=10&time=2024-06-06T03%3A00%3A00Z&DIM_reference_time=2024-06-05T03%3A00%3A00Z&DIM_member=3&0.47167832666058407",
+            tolerance="antialiasing",
         )

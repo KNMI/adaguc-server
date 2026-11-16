@@ -173,8 +173,6 @@ void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawF
 
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
 
-  std::string color;
-  void *sourceData;
   bool debug = false;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -189,7 +187,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
 
   CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
-  sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
+  auto *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   GeoParameters sourceGeo;
   sourceGeo.width = dataSource->dWidth;
   sourceGeo.height = dataSource->dHeight;

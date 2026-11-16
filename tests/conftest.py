@@ -154,7 +154,7 @@ def update_db(adaguc_env: dict, *, filepath: str | None = None, force_update: bo
         DATASETS_LOADED.add(adaguc_config)
 
 
-def run_adaguc_and_compare_image(env, filename, query_string, maxAllowedColorDifference=1, maxAllowedColorPercentage=0.01):
+def run_adaguc_and_compare_image(env, filename, query_string, tolerance="exact"):
     """
     Compares a image for a given query_string to a filename in the expected testresult folder.
     """
@@ -168,10 +168,9 @@ def run_adaguc_and_compare_image(env, filename, query_string, maxAllowedColorDif
 
     AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data)
     assert AdagucTestTools().compareImage(
-        env["ADAGUC_TESTPATH_ACTUAL"] + filename,
         env["ADAGUC_TESTPATH_EXPECTED"] + filename,
-        maxAllowedColorDifference=maxAllowedColorDifference,
-        maxAllowedColorPercentage=maxAllowedColorPercentage,
+        env["ADAGUC_TESTPATH_ACTUAL"] + filename,
+        tolerance=tolerance,
     )
 
 

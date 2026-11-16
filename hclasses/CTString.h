@@ -195,6 +195,13 @@ namespace CT {
   std::string decodeURL(const std::string &input);
 
   /**
+   * Decodes base64, in the standard (+/) or the URL safe (-_) alphabet, with or without '=' padding.
+   * Line breaks and tabs are skipped, so base64 split over lines is accepted.
+   * @return false for other characters, misplaced padding or an impossible length
+   */
+  bool decodeBase64(std::string_view input, std::string &output);
+
+  /**
    * Converts to hex string from int.
    */
   std::string getHex(unsigned int number);

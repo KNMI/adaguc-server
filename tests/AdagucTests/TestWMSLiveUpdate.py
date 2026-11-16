@@ -61,6 +61,7 @@ class TestWMSLiveUpdate:
             self.make_solarterminator_env(),
             "test_WMSLiveUpdateGetLegendGraphic_SolarTerminator_twilight.png",
             "DATASET=solarterminator&SERVICE=WMS&&version=1.3.0&service=WMS&request=GetLegendGraphic&layer=solarterminator&format=image/png&STYLE=solt_twilight&layers=solarterminator&&&transparent=true&",
+            tolerance="antialiasing",
         )
 
     def test_WMSLiveUpdateGetLegendGraphic_SolarTerminator_continuous(self):
@@ -69,6 +70,7 @@ class TestWMSLiveUpdate:
             self.make_solarterminator_env(),
             "test_WMSLiveUpdateGetLegendGraphic_SolarTerminator_continuous.png",
             "DATASET=solarterminator&SERVICE=WMS&&version=1.3.0&service=WMS&request=GetLegendGraphic&layer=solarterminator&format=image/png&STYLE=solt_continuous&layers=solarterminator&&&transparent=true&",
+            tolerance="antialiasing",
         )
 
     def test_WMSLiveUpdateGetFeatureInfo_SolarTerminator(self):

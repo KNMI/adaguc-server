@@ -1,0 +1,252 @@
+{
+  "type": "CoverageCollection",
+  "coverages": [
+    {
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "Section",
+        "axes": {
+          "z": {
+            "values": [
+              2.0
+            ]
+          },
+          "composite": {
+            "dataType": "tuple",
+            "coordinates": [
+              "t",
+              "x",
+              "y"
+            ],
+            "values": [
+              [
+                "2024-05-23T01:00:00Z",
+                3.3785,
+                52.501
+              ],
+              [
+                "2024-05-23T01:00:00Z",
+                5.6405,
+                52.501
+              ],
+              [
+                "2024-05-23T01:00:00Z",
+                7.9025,
+                52.501
+              ]
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          },
+          {
+            "coordinates": [
+              "z"
+            ],
+            "system": {
+              "type": "VerticalCRS",
+              "description": {
+                "en": "height_above_ground_level_in_m"
+              }
+            }
+          }
+        ],
+        "custom:reference_time": "2024-05-23T00:00:00Z",
+        "custom:member": 1.0
+      },
+      "parameters": {
+        "air_temperature_hagl": {
+          "type": "Parameter",
+          "id": "air_temperature_hagl",
+          "label": {
+            "en": "UWCW_HA43ENS(NL) Air temperature at 2 m"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+            "label": {
+              "en": "Air temperature at height above ground level"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "C",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "air_temperature_hagl": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "z",
+            "composite"
+          ],
+          "shape": [
+            1,
+            3
+          ],
+          "values": [
+            12.743561,
+            11.73111,
+            11.31778
+          ]
+        }
+      }
+    },
+    {
+      "type": "Coverage",
+      "domain": {
+        "type": "Domain",
+        "domainType": "Section",
+        "axes": {
+          "z": {
+            "values": [
+              2.0
+            ]
+          },
+          "composite": {
+            "dataType": "tuple",
+            "coordinates": [
+              "t",
+              "x",
+              "y"
+            ],
+            "values": [
+              [
+                "2024-05-23T01:00:00Z",
+                3.3785,
+                52.501
+              ],
+              [
+                "2024-05-23T01:00:00Z",
+                5.6405,
+                52.501
+              ],
+              [
+                "2024-05-23T01:00:00Z",
+                7.9025,
+                52.501
+              ]
+            ]
+          }
+        },
+        "referencing": [
+          {
+            "coordinates": [
+              "x",
+              "y"
+            ],
+            "system": {
+              "type": "GeographicCRS",
+              "id": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+            }
+          },
+          {
+            "coordinates": [
+              "t"
+            ],
+            "system": {
+              "type": "TemporalRS",
+              "calendar": "Gregorian"
+            }
+          },
+          {
+            "coordinates": [
+              "z"
+            ],
+            "system": {
+              "type": "VerticalCRS",
+              "description": {
+                "en": "height_above_ground_level_in_m"
+              }
+            }
+          }
+        ],
+        "custom:reference_time": "2024-05-23T00:00:00Z",
+        "custom:member": 2.0
+      },
+      "parameters": {
+        "air_temperature_hagl": {
+          "type": "Parameter",
+          "id": "air_temperature_hagl",
+          "label": {
+            "en": "UWCW_HA43ENS(NL) Air temperature at 2 m"
+          },
+          "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+            "label": {
+              "en": "Air temperature at height above ground level"
+            }
+          },
+          "unit": {
+            "symbol": {
+              "value": "C",
+              "type": "http://www.opengis.net/def/uom/UCUM"
+            }
+          }
+        }
+      },
+      "ranges": {
+        "air_temperature_hagl": {
+          "type": "NdArray",
+          "dataType": "float",
+          "axisNames": [
+            "z",
+            "composite"
+          ],
+          "shape": [
+            1,
+            3
+          ],
+          "values": [
+            13.030426,
+            12.115875,
+            13.224274
+          ]
+        }
+      }
+    }
+  ],
+  "parameters": {
+    "air_temperature_hagl": {
+      "type": "Parameter",
+      "id": "air_temperature_hagl",
+      "label": {
+        "en": "UWCW_HA43ENS(NL) Air temperature at 2 m"
+      },
+      "observedProperty": {
+        "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+        "label": {
+          "en": "Air temperature at height above ground level"
+        }
+      },
+      "unit": {
+        "symbol": {
+          "value": "C",
+          "type": "http://www.opengis.net/def/uom/UCUM"
+        }
+      }
+    }
+  }
+}

@@ -32,7 +32,8 @@ RUN apt-get -q -y update \
     m4 \
     libhdf5-dev \
     libproj-dev \
-    libgdal-dev \
+    libtiff-dev \
+    libgeotiff-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -41,7 +42,6 @@ RUN apt-get -q -y update \
 # - nc_open reads 4MB regardless of file size:  https://github.com/Unidata/netcdf-c/issues/3469
 # - Memory leak in SIZE_MAX allocation when getxattr() is used - https://github.com/Unidata/netcdf-c/issues/3474
 # Therefore we fallback to v4.9.0 which does not have these issues - https://github.com/KNMI/adaguc-server/issues/812
-# Note, gdal still uses the stock one shipped by trixie, but this does not seem to cause harm.
 RUN mkdir -p /tmp/netcdf-c \
     && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.9.0.tar.gz', '/tmp/netcdf-c.tar.gz')" \
     && tar xzf /tmp/netcdf-c.tar.gz -C /tmp/netcdf-c --strip-components=1 \
@@ -84,7 +84,11 @@ RUN apt-get -q -y update \
     postgresql-client \
     udunits-bin \
     libcairo2 \
-    libgdal-dev \
+    libtiff6 \
+    libgeotiff5 \
+    libhdf5-310 \
+    libhdf5-hl-310 \
+    libxml2 \
     libcurl4-openssl-dev \
     libproj-dev \
     libudunits2-0 \
@@ -94,6 +98,16 @@ RUN apt-get -q -y update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# The sanitize build (BUILD_TYPE=--sanitize) links the AddressSanitizer runtime dynamically, so the
+# binary does not start without it. It used to be installed as a dependency of libgdal-dev.
+ARG BUILD_TYPE
+RUN if [ "$BUILD_TYPE" = "--sanitize" ]; then \
+    apt-get -q -y update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -q -y install libasan8 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # Install the netcdf-c build with the full-file-read-on-open fix (see build
 # stage above), registering it with the dynamic linker the same way.
