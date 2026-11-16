@@ -25,6 +25,8 @@ Graphical representations of the data can be made using contour lines, shading, 
 * [Quick Tips](./doc/overview/QuickTips.md)
 * [Profiling](./doc/developing/profiling.md)
 * [Testing](./doc/developing/testing.md)
+* [GetMap and GetCapabilities: code flow and data flow](./doc/developing/dataflow/getmap-request-flow.md)
+* [Proposal: an explicit request pipeline](./doc/developing/dataflow/request-pipeline-proposal.md) and the [plan](./doc/developing/dataflow/request-pipeline-plan.md)
 
 
 For our detailed paper please read https://doi.org/10.5334/jors.382
