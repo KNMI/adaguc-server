@@ -93,6 +93,100 @@ See:
 
 ![](2023-11-23-AdagucServer_EDR_In_MetOffice_EDR_Viewer.png)
 
+## Cube queries on the native grid (`crs=native`)
+
+By default `/cube` resamples the data to a regular EPSG:4326 grid with nearest neighbour. The values are real values,
+but they are not at the cell centres of the source grid. For a rotated pole or projected grid, some source cells can
+also be left out. With `crs=native` the cube returns the cells of the source grid itself, without resampling:
+
+```text
+/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=100000,400000,250000,550000&datetime=2017-12-15T09:00Z&parameter-name=my_temperature&crs=native
+```
+
+- **Availability:** a collection offers `native` only when all its EDR parameters share one grid, and that grid is
+  not EPSG:4326. It is then listed in the `crs` list of the collection, and in the `crs_details` of the cube query
+  with the WKT of the grid.
+- **bbox:** the values are in the coordinates of the native grid, not in longitude/latitude. In this example these
+  are metres in the Dutch RD grid (EPSG:28992). For a rotated pole grid they are rotated degrees. Every cell that
+  intersects the bbox is returned. To choose a bbox without converting coordinates, use the extent of the native grid
+  in its `crs_details` entry (see below). To convert longitude/latitude yourself, use the WKT, for example with pyproj.
+- **Native extent:** the `native` entry in `crs_details` also gives the extent of the grid in native coordinates:
+  - `bbox`: `minx, miny, maxx, maxy` of the outer cell edges. Requesting this bbox returns the whole grid. When the
+    parameters have different grids in the same projection, the bbox covers all of them.
+  - `cellsize`: the cell size in x and y, and `size`: the number of cells in x and y. These are only given when all
+    parameters of the collection have the same grid.
+
+  ```json
+  "crs_details": [
+    { "crs": "EPSG:4326", "wkt": "GEOGCS[\"WGS 84\",...]" },
+    {
+      "crs": "native",
+      "wkt": "GEOGCRS[\"undefined\",...,DERIVINGCONVERSION[\"Pole rotation (netCDF CF convention)\",...]]",
+      "bbox": [-1.475, -2.155, 1.385, 0.925],
+      "cellsize": [0.11, 0.11],
+      "size": [26, 28]
+    }
+  ]
+  ```
+
+- **Response:** the `x` and `y` axes are the cell centres of the native grid. The CoverageJSON `referencing` gives the
+  EPSG id of the grid when there is one. CoverageJSON has no way to give a CRS as WKT, so a grid without an EPSG id,
+  like a rotated pole grid, has only a `type` and no `id`. Its WKT is in the `native` entry of `crs_details`, given as
+  a CF rotated pole.
+- **Errors (HTTP 400):** `crs=native` cannot be combined with `resolution_x`/`resolution_y`, because it returns the
+  cells of the native grid. A bbox outside the grid and a collection without `native` also return 400.
+  `/position` and `/trajectory` refuse `crs=native`, because their coordinates are longitude/latitude.
+
+Without `crs`, or with any spelling of EPSG:4326 (`EPSG:4326`, `CRS84`, `OGC:CRS84` or their URIs), the cube returns
+EPSG:4326 as before. Other values return HTTP 400.
+
+The response to the example above, shortened. The `x` and `y` values are the cell centres of the RD grid in metres,
+and the `referencing` names the grid by its EPSG id:
+
+```json
+{
+  "type": "Coverage",
+  "domain": {
+    "type": "Domain",
+    "domainType": "Grid",
+    "axes": {
+      "x": { "values": [89358.73, 140129.71, 190900.69, 241671.67] },
+      "y": { "values": [526168.54, 477279.61, 428390.67, 379501.74] },
+      "t": { "values": ["2017-12-15T09:00:00Z"] }
+    },
+    "referencing": [
+      {
+        "coordinates": ["x", "y"],
+        "system": { "type": "ProjectedCRS", "id": "http://www.opengis.net/def/crs/EPSG/0/28992" }
+      },
+      {
+        "coordinates": ["t"],
+        "system": { "type": "TemporalRS", "calendar": "Gregorian" }
+      }
+    ]
+  },
+  "ranges": {
+    "my_temperature": {
+      "type": "NdArray",
+      "dataType": "float",
+      "axisNames": ["t", "y", "x"],
+      "shape": [1, 4, 4],
+      "values": [6.22, 1.46, 2.07, 1.86, 3.79, 2.20, 1.87, 2.23, 2.09, 2.32, 2.70, 2.27, 2.72, 2.72, 2.53, 2.57]
+    }
+  }
+}
+```
+
+A grid without an EPSG id, like a rotated pole grid, has no `id`. The `x` and `y` values are then rotated longitudes
+and latitudes, and the WKT of the `native` entry in `crs_details` tells how to convert them:
+
+```json
+"system": { "type": "GeographicCRS" }
+```
+
+Generic CoverageJSON clients treat a `GeographicCRS` as plain longitude/latitude, so they draw a rotated pole grid in
+the wrong place. Use the WKT from `crs_details` to convert the coordinates.
+
 ## Trajectory queries
 
 Use `/trajectory` on a collection or instance with a 2D WKT `LINESTRING`:

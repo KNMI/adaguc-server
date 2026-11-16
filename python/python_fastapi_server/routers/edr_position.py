@@ -18,6 +18,7 @@ from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .edr_covjson import point_response_to_covjson
 from .utils.edr_exception import EdrException
 from .utils.json_utils import pydantic_json_loads
+from .utils.native_grid import check_crs
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -49,6 +50,7 @@ async def get_collection_position(
     datetime_par: str | None = Query(default=None, alias="datetime"),
     parameter_name: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
     z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
+    crs: str | None = None,
 ) -> CovJSONResponse:
     """Returns information in EDR format for a given collection, instance and position"""
     return await get_coll_inst_position(
@@ -60,6 +62,7 @@ async def get_collection_position(
         datetime_par,
         parameter_name,
         z_par,
+        crs,
     )
 
 
@@ -78,10 +81,13 @@ async def get_coll_inst_position(
     datetime_par: str | None = Query(default=None, alias="datetime"),
     parameter_name_par: Annotated[str | None, Query(alias="parameter-name", min_length=1)] = None,
     z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
+    crs: str | None = None,
 ) -> CovJSONResponse:
     """
     returns data for the EDR /position endpoint
     """
+    # coords are always lon/lat: crs=native, which the collection lists for cube queries, would give the wrong location
+    check_crs(crs, allow_native=False, query_type="position")
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
     custom_dims = get_custom(
         request.query_params,

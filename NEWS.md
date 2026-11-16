@@ -26,6 +26,7 @@
 - Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
 - Fixed packed data (`scale_factor`/`add_offset`) in WCS and EDR cube output: levels after the first were not scaled, and nodata in WCS NetCDF output was not recognized.
 - Faster gzip responses (level 6 instead of 9). `Accept-Encoding` is parsed per coding: `br;q=1.0` now gets brotli, and a coding with `q=0` is not used.
+- EDR cube requests accept `crs=native` to return the grid of the data itself, like a rotated pole grid, without resampling. The CRS is given as WKT in the `crs_details` of the collection, with the extent of the native grid (`bbox`, `cellsize` and `size` in native coordinates) to choose a bbox from. The default is still EPSG:4326. Position and trajectory requests refuse `crs=native`.
 - The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
 - The fork server is only restarted after three failed health checks in a row, so a single slow check does not end the requests in progress.
 - Image comparison in the tests: `compareImage` has a `tolerance` (`exact`, the default, `geometry` or `antialiasing`) instead of `maxAllowedColorDifference`/`maxAllowedColorPercentage`, chosen by what the image contains (raster only, antialiased shapes, or text). It compares the alpha channel too, which the old comparison ignored for palette images, and the PNG/WebP encoding structure; `compareFileSizes` checks the compression. Image tests no longer compare PNG files byte for byte. A failing comparison writes a diff image. See [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
@@ -33,6 +34,7 @@
 - EDR Cube query with multiple members and multiple times could select wrong values, this is now fixed. Fixes [#851](https://github.com/KNMI/adaguc-server/issues/851).
 - Check metadata layer existence once per autosync run, instead of per layer
 - Fixed missing rows at the south edge of a GetMap image when data with ascending latitudes (south to north) is drawn with bilinear interpolation or a shaded style in the CRS of the data. Depending on how the requested area lines up with the grid, up to a cell of data at the bottom of the image was left transparent. Data with descending latitudes was not affected.
+- Fixed EDR collection metadata failing for a rotated pole `proj4_params` without `+o_lon_p` or `+lon_0` (like `+proj=ob_tran +o_proj=longlat +o_lat_p=35.0 +lon_0=-8.0`). PROJ uses 0 for both when they are left out, but pyproj's CF conversion stopped with a `KeyError`. The missing parameters are now added with value 0, and a CRS that pyproj cannot write as CF falls back to its plain WKT.
 
 **Version 9.2.0 - 2026-10-28**
 

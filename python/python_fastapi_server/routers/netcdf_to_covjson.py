@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 from datetime import timezone
 from typing import Any, List
+from functools import lru_cache
 
 import netCDF4
 import numpy as np
@@ -27,7 +28,11 @@ from pydantic import AnyUrl
 from pydantic import AwareDatetime
 from pydantic import BaseModel
 
+from pyproj import CRS
+from pyproj.exceptions import CRSError
+
 from .utils.edr_utils import SYMBOL_TYPE_URL
+from .utils.native_grid import get_crs, get_epsg
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -39,7 +44,7 @@ class GeoReferenceInfo(BaseModel):
     """GeoReference object"""
 
     proj: str
-    crsid: str
+    crsid: str | None = None
     crstype: str
     axes: list[str]
 
@@ -89,8 +94,31 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     for georeferenceinfo in georeferenceinfos:
         if georeferenceinfo.proj == projstring:
             return georeferenceinfo
-    # TODO Maybe indicate that the correct georeference info system was not found.
-    return georeferenceinfos[0]
+    crs = get_crs(projstring)
+    epsg = get_epsg(projstring)
+    if crs is None or epsg == 4326:
+        return georeferenceinfos[0]
+    # Other projections, like the rotated pole grid of crs=native: with the EPSG id when there is one. Without one the id is
+    # left out, as CoverageJSON prescribes for an undefined CRS. The WKT is in the crs_details of the collection.
+    return GeoReferenceInfo(
+        proj=projstring,
+        crsid=f"http://www.opengis.net/def/crs/EPSG/0/{epsg}" if epsg is not None else None,
+        crstype="GeographicCRS" if crs.is_geographic else "ProjectedCRS",
+        axes=get_epsg_axis_order(epsg),
+    )
+
+
+@lru_cache(maxsize=64)
+def get_epsg_axis_order(epsg: int | None) -> list[str]:
+    """The axis order of an EPSG CRS, like ["y", "x"] for geographic CRSs with latitude first. ["x", "y"] without EPSG code."""
+    if epsg is not None:
+        try:
+            axis_info = CRS.from_epsg(epsg).axis_info
+            if axis_info and axis_info[0].direction in ("north", "south"):
+                return ["y", "x"]
+        except CRSError:
+            pass
+    return ["x", "y"]
 
 
 def netcdf_coordinate_axis(ncvar: netCDF4.Variable, dimname: str) -> ValuesAxis[AwareDatetime] | ValuesAxis[str] | ValuesAxis[float]:
