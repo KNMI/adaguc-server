@@ -38,11 +38,30 @@ def check_crs(crs: str | None, allow_native: bool, query_type: str) -> None:
     raise EdrException(code=400, description=f"Unsupported crs {crs} for {query_type} queries, use {supported}")
 
 
+# Parameters that PROJ defaults to 0 when they are left out, but that pyproj's to_cf needs for a rotated pole (ob_tran)
+OB_TRAN_DEFAULTS = ("o_lon_p", "lon_0")
+
+
+def add_missing_proj_defaults(projstring: str) -> str:
+    """
+    Adds the parameters that PROJ defaults, but that pyproj needs to describe the CRS. A rotated pole (ob_tran) without
+    +o_lon_p or +lon_0, like "+proj=ob_tran +o_proj=longlat +o_lat_p=35.0 +lon_0=-8.0", is valid for PROJ, which uses 0,
+    but pyproj's to_cf fails on it with a KeyError.
+    """
+    params = projstring.split()
+    if "+proj=ob_tran" not in params:
+        return projstring
+    for key in OB_TRAN_DEFAULTS:
+        if not any(param.startswith(f"+{key}=") for param in params):
+            projstring += f" +{key}=0"
+    return projstring
+
+
 @lru_cache(maxsize=64)
 def get_crs(projstring: str) -> CRS | None:
     """The pyproj CRS for a proj string, or None when it cannot be parsed"""
     try:
-        return CRS.from_proj4(projstring)
+        return CRS.from_proj4(add_missing_proj_defaults(projstring))
     except CRSError:
         return None
 
@@ -66,7 +85,11 @@ def get_crs_wkt(projstring: str) -> str | None:
     crs = get_crs(projstring)
     if crs is None:
         return None
-    cf = crs.to_cf()
+    try:
+        cf = crs.to_cf()
+    except (KeyError, CRSError):
+        # pyproj cannot write every CRS as CF, for example when it misses a parameter that PROJ defaults
+        return crs.to_wkt()
     if cf.get("grid_mapping_name") == "rotated_latitude_longitude":
         cf.pop("crs_wkt", None)  # Otherwise from_cf returns the ob_tran CRS again
         # ob_tran gives the pole longitude as lon_0 - 180, which can be below -180

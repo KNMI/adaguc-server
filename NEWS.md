@@ -34,6 +34,7 @@
 - EDR Cube query with multiple members and multiple times could select wrong values, this is now fixed. Fixes [#851](https://github.com/KNMI/adaguc-server/issues/851).
 - Check metadata layer existence once per autosync run, instead of per layer
 - Fixed missing rows at the south edge of a GetMap image when data with ascending latitudes (south to north) is drawn with bilinear interpolation or a shaded style in the CRS of the data. Depending on how the requested area lines up with the grid, up to a cell of data at the bottom of the image was left transparent. Data with descending latitudes was not affected.
+- Fixed EDR collection metadata and CoverageJSON failing for a rotated pole `proj4_params` without `+o_lon_p` or `+lon_0` (like `+proj=ob_tran +o_proj=longlat +o_lat_p=35.0 +lon_0=-8.0`). PROJ uses 0 for both when they are left out, but pyproj's CF conversion stopped with a `KeyError`. The missing parameters are now added with value 0, and a CRS that pyproj cannot write as CF falls back to its plain WKT.
 
 **Version 9.2.0 - 2026-10-28**
 

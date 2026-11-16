@@ -1444,6 +1444,21 @@ def test_collection_native_crs_needs_one_grid():
     assert get_collection_native_crs_wkt([]) is None
 
 
+def test_native_crs_rotated_pole_without_o_lon_p_or_lon_0():
+    """A rotated pole proj string without +o_lon_p or +lon_0 is valid for PROJ, which uses 0, and gives the same CF rotated pole"""
+    without_o_lon_p = {"projstring": "+proj=ob_tran +o_proj=longlat +o_lat_p=35.0 +lon_0=-8.0 +a=6367470.0 +e=0 +no_defs"}
+    with_o_lon_p = {"projstring": "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs"}
+    wkt = get_collection_native_crs_wkt([without_o_lon_p])
+    assert "Pole rotation (netCDF CF convention)" in wkt
+    assert wkt == get_collection_native_crs_wkt([with_o_lon_p])
+
+    without_lon_0 = {"projstring": "+proj=ob_tran +o_proj=longlat +o_lat_p=35.0 +a=6367470.0 +e=0 +no_defs"}
+    with_lon_0 = {"projstring": "+proj=ob_tran +o_proj=longlat +lon_0=0 +o_lat_p=35.0 +o_lon_p=0 +a=6367470.0 +e=0 +no_defs"}
+    wkt = get_collection_native_crs_wkt([without_lon_0])
+    assert "Pole rotation (netCDF CF convention)" in wkt
+    assert wkt == get_collection_native_crs_wkt([with_lon_0])
+
+
 def test_covjson_axis_order_follows_epsg():
     """Geographic EPSG CRSs have latitude first, like EPSG:4326; projected ones and CRSs without EPSG code have x first"""
     assert get_epsg_axis_order(4258) == ["y", "x"]
