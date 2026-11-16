@@ -17,10 +17,10 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-  adaguc-data-explorer:
-    image: knmiadaguc/adaguc-data-explorer
-    container_name: adaguc-data-explorer
-    hostname: adaguc-data-explorer
+  adaguc-workbench:
+    image: knmiadaguc/adaguc-workbench
+    container_name: adaguc-workbench
+    hostname: adaguc-workbench
     networks:
       - adaguc-network
     environment:
