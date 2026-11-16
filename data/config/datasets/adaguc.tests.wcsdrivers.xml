@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- WCS formats with driver names that are not GTiff, AAIGrid or ADAGUCNetCDF, see TestWCS.py -->
+  <WCS>
+    <WCSFormat name="png" driver="PNG" mimetype="Content-Type:image/png"/>
+    <WCSFormat name="gdalnetcdf" driver="NetCDF" mimetype="Content-Type:application/netcdf" options="WRITE_GDAL_TAGS=FALSE,FORMAT=NC4C"/>
+    <WCSFormat name="geotiffwithoptions" driver="GTiff" mimetype="Content-Type:image/tiff" options="COMPRESS=DEFLATE"/>
+  </WCS>
+
+  <Layer type="database">
+    <Name>testdata</Name>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+  </Layer>
+</Configuration>

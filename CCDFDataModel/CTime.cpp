@@ -118,6 +118,8 @@ CTime::CTime() {
   currentUnit = "";
   scanUnits = "";
   mode = CTIME_MODE_UTCALENDAR;
+  // utScan replaces (and frees) the unit already in dataunits, so it must not start as uninitialized memory
+  utIni(&dataunits);
 }
 CTime::~CTime() { reset(); }
 

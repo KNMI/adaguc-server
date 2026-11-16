@@ -26,6 +26,8 @@
 #include <fstream>
 #include <unistd.h>
 #include "CXMLSerializerInterface.h"
+#include "GridFileWriters/AAIGridWriter.h"
+#include "GridFileWriters/GeoTiffWriter.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -41,6 +43,73 @@ int main() {
     return 1;
   }
   return 0;
+}
+
+static inline SimpleString StringFrom(const std::string &value) { return SimpleString(value.c_str()); }
+
+static GridFileData makeFloatGrid(int width, int height, const std::vector<float> &values, double noDataValue) {
+  GridFileData grid;
+  grid.width = width;
+  grid.height = height;
+  grid.type = CDF_FLOAT;
+  grid.noDataValue = noDataValue;
+  GridFileBand band;
+  band.data.resize(values.size() * sizeof(float));
+  memcpy(band.data.data(), values.data(), band.data.size());
+  grid.bands.push_back(band);
+  return grid;
+}
+
+TEST(squareCellsAndDecimalDot, AAIGrid) {
+  GridFileData grid = makeFloatGrid(2, 2, {NAN, 3, 0.5, 4}, NAN);
+  double geoTransform[6] = {10, 1, 0, 50, 0, -1};
+  std::copy(geoTransform, geoTransform + 6, grid.geoTransform);
+  std::string output;
+  CHECK(formatAAIGrid(grid, output) == 0);
+  // Like GDAL: nan nodata, and .0 appended only to the first integral value
+  CHECK_EQUAL(std::string("ncols        2\nnrows        2\nxllcorner    10.000000000000\nyllcorner    48.000000000000\ncellsize     1.000000000000\nNODATA_value nan\n"
+                          "nan 3.0 \n0.5 4 \n"),
+              output);
+}
+
+TEST(nonSquareBottomUpCells, AAIGrid) {
+  GridFileData grid = makeFloatGrid(2, 2, {1, 2, 3, 4}, -1);
+  double geoTransform[6] = {0, 2, 0, 40, 0, 1}; // South up: the first row is the southern one
+  std::copy(geoTransform, geoTransform + 6, grid.geoTransform);
+  std::string output;
+  CHECK(formatAAIGrid(grid, output) == 0);
+  CHECK_EQUAL(std::string("ncols        2\nnrows        2\nxllcorner    0.000000000000\nyllcorner    40.000000000000\ndx           2.000000000000\ndy           1.000000000000\nNODATA_value -1\n"
+                          "3.0 4 \n1 2 \n"),
+              output);
+}
+
+TEST(integerWithoutNoData, AAIGrid) {
+  GridFileData grid;
+  grid.width = 3;
+  grid.height = 1;
+  grid.type = CDF_UBYTE;
+  grid.noDataValue = NAN;
+  grid.bands.push_back({.data = {0, 7, 255}, .metadata = {}});
+  std::string output;
+  CHECK(formatAAIGrid(grid, output) == 0);
+  CHECK(output.find("NODATA_value") == std::string::npos);
+  CHECK(output.find("\n0 7 255 \n") != std::string::npos);
+  grid.bands.push_back(grid.bands[0]);
+  CHECK(formatAAIGrid(grid, output) != 0);
+}
+
+TEST(noDataAndMetadataTags, GeoTiff) {
+  CHECK_EQUAL(std::string("-0.0099999997764825821"), formatGDALNoData(-0.01f));
+  CHECK_EQUAL(std::string("nan"), formatGDALNoData(NAN));
+  CHECK_EQUAL(std::string("255"), formatGDALNoData(255));
+  GridFileData grid = makeFloatGrid(1, 1, {1}, NAN);
+  CHECK_EQUAL(std::string(""), formatGDALMetadataXML(grid));
+  grid.metadata = {{"var#units", "m<s"}, {"NETCDF_DIM_EXTRA", "{time}"}, {"var#_FillValue", "1"}};
+  grid.bands[0].metadata = {{"NETCDF_VARNAME", "var"}};
+  // Sorted like GDAL (case insensitive, '_' after letters), escaped, band items with their sample number
+  CHECK_EQUAL(std::string("<GDALMetadata>\n  <Item name=\"NETCDF_DIM_EXTRA\">{time}</Item>\n  <Item name=\"var#units\">m&lt;s</Item>\n  <Item name=\"var#_FillValue\">1</Item>\n"
+                          "  <Item name=\"NETCDF_VARNAME\" sample=\"0\">var</Item>\n</GDALMetadata>\n"),
+              formatGDALMetadataXML(grid));
 }
 
 TEST(crossedCells, Trajectory) {

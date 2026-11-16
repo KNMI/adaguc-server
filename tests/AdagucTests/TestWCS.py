@@ -6,16 +6,76 @@
 Run test for WCS Server system of adaguc-server
 """
 
+import io
 import os
 from pathlib import Path
 import re
 import netCDF4
 import numpy as np
 from netCDF4 import Dataset
+from PIL import Image, TiffImagePlugin
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import make_adaguc_env, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
+
+# TIFF tags and GeoTIFF keys and values used in the GeoTIFF tests
+TIFFTAG_BITS_PER_SAMPLE = 258
+TIFFTAG_SAMPLES_PER_PIXEL = 277
+TIFFTAG_PLANAR_CONFIG = 284
+PLANARCONFIG_SEPARATE = 2
+TIFFTAG_MODELPIXELSCALE = 33550
+TIFFTAG_MODELTIEPOINT = 33922
+TIFFTAG_GEOKEYDIRECTORY = 34735
+TIFFTAG_GEODOUBLEPARAMS = 34736
+TIFFTAG_GEOASCIIPARAMS = 34737
+TIFFTAG_GDAL_METADATA = 42112
+TIFFTAG_GDAL_NODATA = 42113
+GT_MODEL_TYPE = 1024
+GT_RASTER_TYPE = 1025
+GEOGRAPHIC_TYPE = 2048
+GEOG_SEMI_MAJOR_AXIS = 2057
+GEOG_TOWGS84 = 2062
+PROJECTED_CS_TYPE = 3072
+PROJ_COORD_TRANS = 3075
+PROJ_LINEAR_UNITS = 3076
+PROJ_NAT_ORIGIN_LONG = 3080
+PROJ_NAT_ORIGIN_LAT = 3081
+PROJ_FALSE_EASTING = 3082
+PROJ_FALSE_NORTHING = 3083
+PROJ_SCALE_AT_NAT_ORIGIN = 3092
+MODEL_TYPE_PROJECTED = 1
+MODEL_TYPE_GEOGRAPHIC = 2
+RASTER_PIXEL_IS_AREA = 1
+USER_DEFINED = 32767
+CT_OBLIQUE_STEREOGRAPHIC = 16
+LINEAR_METER = 9001
+
+
+def read_geotiff(data: bytes):
+    """
+    Returns the image, the TIFF tags and the GeoTIFF keys of a GeoTIFF. Short keys are ints, double and ascii keys tuples and strings.
+    """
+    image = Image.open(io.BytesIO(data))
+    tags = image.tag_v2
+    directory = tags[TIFFTAG_GEOKEYDIRECTORY]
+    doubles = tags.get(TIFFTAG_GEODOUBLEPARAMS, ())
+    ascii_params = tags.get(TIFFTAG_GEOASCIIPARAMS, "")
+    geokeys = {}
+    for i in range(1, directory[3] + 1):
+        key, location, count, offset = directory[4 * i : 4 * i + 4]
+        if location == 0:
+            geokeys[key] = offset
+        elif location == TIFFTAG_GEODOUBLEPARAMS:
+            geokeys[key] = tuple(doubles[offset : offset + count])
+        else:
+            geokeys[key] = ascii_params[offset : offset + count]
+    return image, tags, geokeys
+
+
+def read_source_values(filename: str, variable: str):
+    with Dataset(f"{ADAGUC_PATH}/data/datasets/{filename}") as dataset:
+        return np.array(dataset.variables[variable][:])
 
 
 class TestWCS:
@@ -150,7 +210,7 @@ class TestWCS:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        # Different gdal versions give different spaces in the output.
+        # The expected output was written by an older GDAL version, which used other spaces than the current output.
         # Compare in a way where any sequence of whitespace characters is equivalent
         # This means that newlines (which are important?) are not compared
         test_output = data
@@ -253,10 +313,167 @@ class TestWCS:
             env=self.env,
             args=["--report"],
         )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
+        # Little endian TIFF, with the directory of 18 tags directly after the header, like GDAL writes it
         assert data[0:10] == b"II*\x00\x08\x00\x00\x00\x12\x00"
 
-    # TODO: This test (which uses GDAL) produces incorrect results. Made a ticket in backlog.
+        image, tags, geokeys = read_geotiff(data)
+        assert image.size == (360, 180)
+        assert image.mode == "F"
+        assert tags[TIFFTAG_MODELPIXELSCALE] == (1.0, 1.0, 0.0)
+        assert tags[TIFFTAG_MODELTIEPOINT] == (0.0, 0.0, 0.0, -180.0, 90.0, 0.0)
+        assert geokeys[GT_MODEL_TYPE] == MODEL_TYPE_GEOGRAPHIC
+        assert geokeys[GT_RASTER_TYPE] == RASTER_PIXEL_IS_AREA
+        assert geokeys[GEOGRAPHIC_TYPE] == 4326
+        assert tags[TIFFTAG_GDAL_NODATA] == "-0.0099999997764825821"
+        assert '<Item name="NETCDF_VARNAME" sample="0">testdata</Item>' in tags[TIFFTAG_GDAL_METADATA]
+
+        # The warper copies values of source cells (nearest neighbour), the rest of the globe is nodata
+        values = np.array(image)
+        source = read_source_values("testdata.nc", "testdata")
+        nodata = np.float32(-0.01)
+        assert np.count_nonzero(values == nodata) > 0
+        valid = values[values != nodata]
+        assert valid.size > 0
+        assert set(valid.tolist()) <= set(source.ravel().tolist())
+
+    def test_WCSGetCoverageGeoTiff_NATIVE_testdatanc(self):
+        """
+        Check that a GeoTIFF on the native grid (a proj string with +towgs84) has the source values and a user defined CRS
+        """
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WCSGetCoverageGeoTiff_NATIVE_testdatanc.tiff"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=geotiff&", env=self.env, args=["--report"]
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+
+        image, tags, geokeys = read_geotiff(data)
+        assert image.size == (29, 31)
+        assert np.allclose(tags[TIFFTAG_MODELPIXELSCALE], (103448.276786, 96774.191667, 0.0))
+        assert np.allclose(tags[TIFFTAG_MODELTIEPOINT], (0.0, 0.0, 0.0, -1500000.013393, 1999999.970833, 0.0))
+        assert geokeys[GT_MODEL_TYPE] == MODEL_TYPE_PROJECTED
+        assert geokeys[PROJECTED_CS_TYPE] == USER_DEFINED
+        assert geokeys[PROJ_COORD_TRANS] == CT_OBLIQUE_STEREOGRAPHIC
+        assert np.allclose(geokeys[PROJ_NAT_ORIGIN_LAT], 52.15616055555555)
+        assert np.allclose(geokeys[PROJ_NAT_ORIGIN_LONG], 5.38763888888889)
+        assert geokeys[PROJ_SCALE_AT_NAT_ORIGIN] == (0.9999079,)
+        assert geokeys[PROJ_FALSE_EASTING] == (155000.0,)
+        assert geokeys[PROJ_FALSE_NORTHING] == (463000.0,)
+        assert geokeys[GEOG_SEMI_MAJOR_AXIS] == (6377397.155,)
+        assert np.allclose(geokeys[GEOG_TOWGS84], (565.417, 50.3319, 465.552, -0.398957, 0.343988, -1.8774, 4.0725))
+
+        # The native grid has the source values as they are, the file has the y dimension first
+        source = read_source_values("testdata.nc", "testdata")
+        assert np.array_equal(np.array(image), source.T)
+
+    def test_WCSGetCoverageGeoTiff_EPSG3857_testdatanc(self):
+        """
+        Check if WCS GetCoverage for testdata.nc as GeoTIFF in a projected CRS has the EPSG code and the requested grid
+        """
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WCSGetCoverageGeoTiff_EPSG3857_testdatanc.tiff"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A3857&FORMAT=geotiff&BBOX=-1000000,5000000,2000000,8000000&WIDTH=60&HEIGHT=60",
+            env=self.env,
+            args=["--report"],
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data)
+        assert status == 0
+
+        image, tags, geokeys = read_geotiff(data)
+        assert image.size == (60, 60)
+        assert tags[TIFFTAG_MODELPIXELSCALE] == (50000.0, 50000.0, 0.0)
+        assert tags[TIFFTAG_MODELTIEPOINT] == (0.0, 0.0, 0.0, -1000000.0, 8000000.0, 0.0)
+        assert geokeys[GT_MODEL_TYPE] == MODEL_TYPE_PROJECTED
+        assert geokeys[PROJECTED_CS_TYPE] == 3857
+        assert geokeys[PROJ_LINEAR_UNITS] == LINEAR_METER
+        assert GEOGRAPHIC_TYPE not in geokeys
+
+        values = np.array(image)
+        source = read_source_values("testdata.nc", "testdata")
+        valid = values[values != np.float32(-0.01)]
+        assert valid.size > 0
+        assert set(valid.tolist()) <= set(source.ravel().tolist())
+
+    def test_WCSGetCoverageGeoTiff_multiple_bands(self):
+        """
+        Check that a GeoTIFF of three time steps has three bands with their time in the band metadata, and that AAIGrid refuses it
+        """
+        AdagucTestTools().cleanTempDir()
+        query = "source=multi_dim.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&BBOX=0,50,10,60&WIDTH=20&HEIGHT=20&TIME=2024-06-01T00:00:00Z/2024-06-01T03:00:00Z"
+        status, data, _ = AdagucTestTools().runADAGUCServer(query + "&FORMAT=geotiff", env=self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + "test_WCSGetCoverageGeoTiff_multiple_bands.tiff", data)
+        assert status == 0
+
+        # Pillow cannot decode three float64 samples per pixel, but it can read the tags
+        tags = TiffImagePlugin.ImageFileDirectory_v2(data[0:8])
+        stream = io.BytesIO(data)
+        stream.seek(8)
+        tags.load(stream)
+        assert tags[TIFFTAG_SAMPLES_PER_PIXEL] == 3
+        assert tags[TIFFTAG_BITS_PER_SAMPLE] == (64, 64, 64)
+        assert tags[TIFFTAG_PLANAR_CONFIG] == PLANARCONFIG_SEPARATE
+        assert tags[TIFFTAG_GDAL_NODATA] == "nan"
+        for sample, time in enumerate(["1.000000", "2.000000", "3.000000"]):
+            assert f'<Item name="NETCDF_DIM_time" sample="{sample}">{time}</Item>' in tags[TIFFTAG_GDAL_METADATA]
+        assert '<Item name="NETCDF_DIM_time_VALUES">{1.000000,2.000000,3.000000}</Item>' in tags[TIFFTAG_GDAL_METADATA]
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(query + "&FORMAT=aaigrid", env=self.env)
+        assert b"This WCS format ('aaigrid') does not support multiple bands" in data
+
+    def test_WCSGetCoverage_size_smaller_than_one_pixel(self):
+        """A RESX/RESY larger than the BBOX, or an inverted BBOX, gives a clear error for every format"""
+        query = "source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&BBOX={}&RESX={}&RESY={}&FORMAT={}"
+        for fmt in ("geotiff", "aaigrid"):
+            for bbox, resx, resy in (("-180,-90,180,90", 1000, 1), ("-180,-90,180,90", 1, 1000), ("180,-90,-180,90", 1, 1)):
+                status, data, _ = AdagucTestTools().runADAGUCServer(query.format(bbox, resx, resy, fmt), env=self.env)
+                assert status == 0, (fmt, bbox, resx, resy)
+                assert b"Requested Width or Height is smaller than 1 pixel, check BBOX and RESX/RESY" in data, (fmt, bbox, resx, resy)
+
+    def test_WCSDescribeCoverage_lists_only_supported_formats(self):
+        """A WCSFormat with a driver that GetCoverage cannot write is not offered in DescribeCoverage"""
+        env = make_adaguc_env("adaguc.tests.wcsdrivers")
+        update_db(env)
+        query = "dataset=adaguc.tests.wcsdrivers&SERVICE=WCS&REQUEST=DescribeCoverage&COVERAGE=testdata"
+        status, data, _ = AdagucTestTools().runADAGUCServer(query, env=env)
+        assert status == 0
+        assert b"<formats>gdalnetcdf</formats>" in data
+        assert b"<formats>geotiffwithoptions</formats>" in data
+        assert b"<formats>png</formats>" not in data
+
+    def test_WCSGetCoverage_unsupported_driver(self):
+        """
+        Check that a WCSFormat with a driver other than ADAGUCNetCDF, GTiff or AAIGrid gives a clear error,
+        that the GDAL NetCDF driver name maps to the ADAGUC NetCDF writer, and that unsupported options give a warning.
+        """
+        env = make_adaguc_env("adaguc.tests.wcsdrivers")
+        update_db(env)
+        query = "dataset=adaguc.tests.wcsdrivers&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&BBOX=0,48,10,58&WIDTH=40&HEIGHT=50"
+
+        # Like other failing GetCoverage requests, the error is reported in the response body
+        status, data, _ = AdagucTestTools().runADAGUCServer(query + "&FORMAT=png", env=env)
+        assert status == 0
+        assert b'WCSFormat "png": driver "PNG" is not supported. Supported drivers are ADAGUCNetCDF, GTiff and AAIGrid' in data
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(query + "&FORMAT=gdalnetcdf", env=env)
+        assert status == 0
+        assert "Content-Type:application/netcdf" in headers
+        assert data[0:4] == b"\x89HDF"
+        assert (
+            'options="WRITE_GDAL_TAGS=FALSE,FORMAT=NC4C" are not supported for driver NetCDF and are ignored'
+            in AdagucTestTools().getLogFile()
+        )
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(query + "&FORMAT=geotiffwithoptions", env=env)
+        assert status == 0
+        assert "Content-Type:image/tiff" in headers
+        assert data[0:4] == b"II*\x00"
+        assert 'options="COMPRESS=DEFLATE" are not supported for driver GTiff and are ignored' in AdagucTestTools().getLogFile()
+
+    # TODO: This test produces incorrect results. Made a ticket in backlog.
     def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
         """
         Check if WCS GetCoverage for testdata.nc as Native grid is OK

@@ -42,6 +42,7 @@ static const bool CREQUEST_DEBUG = false;
 #include <CReadFile.h>
 #include <cmath>
 #include <stdexcept>
+#include <unistd.h>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
 #include <json_adaguc.h>
@@ -59,9 +60,7 @@ static const bool CREQUEST_DEBUG = false;
 #include "CStopWatch.h"
 #include "CTime.h"
 #include "CCDFStore.h"
-#ifdef ADAGUC_USE_GDAL
-#include "CGDALDataWriter.h"
-#endif
+#include "CGridFileDataWriter.h"
 
 int CRequest::CGI = 0;
 
@@ -88,14 +87,7 @@ int CRequest::generateGetReferenceTimesDoc(std::string &result, CDataSource *dat
 int CRequest::process_wms_getlegendgraphic_request() { return process_all_layers(); }
 int CRequest::process_wms_getfeatureinfo_request() { return process_all_layers(); }
 
-int CRequest::process_wcs_getcoverage_request() {
-#ifndef ADAGUC_USE_GDAL
-  CServerParams::showWCSNotEnabledErrorMessage();
-  return 1;
-#else
-  return process_all_layers();
-#endif
-}
+int CRequest::process_wcs_getcoverage_request() { return process_all_layers(); }
 
 int CRequest::generateOGCGetCapabilities(std::string &XMLdocument) {
   CXMLGen XMLGen;
@@ -2473,28 +2465,32 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
 
   CBaseDataWriterInterface *wcsWriter = NULL;
   std::string driverName = "ADAGUCNetCDF";
+  std::string options;
+  std::string mimeType;
   setDimValuesForDataSource(firstDataSource, srvParam);
 
   for (const auto &WCSFormat: srvParam->cfg->WCS[0].WCSFormat) {
     if (srvParam->Format == WCSFormat.attr.name) {
       driverName = WCSFormat.attr.driver;
+      options = WCSFormat.attr.options;
+      mimeType = WCSFormat.attr.mimetype;
       break;
     }
   }
 
-  if (driverName == "ADAGUCNetCDF") {
+  WCSDriver driver = getWCSDriver(driverName, srvParam->Format);
+  if (driver == WCSDriver::Unsupported) {
+    CDBError("%s", getUnsupportedWCSDriverMessage(driverName, srvParam->Format).c_str());
+    return 1;
+  }
+  if (!options.empty() && !CT::equalsIgnoreCase(driverName, "ADAGUCNetCDF")) {
+    CDBWarning("WCSFormat \"%s\": options=\"%s\" are not supported for driver %s and are ignored", srvParam->Format.c_str(), options.c_str(), driverName.c_str());
+  }
+  if (driver == WCSDriver::NetCDF) {
     CDBDebug("Creating CNetCDFDataWriter");
     wcsWriter = new CNetCDFDataWriter();
-  }
-
-#ifdef ADAGUC_USE_GDAL
-  if (wcsWriter == NULL) {
-    wcsWriter = new CGDALDataWriter();
-  }
-#endif
-  if (wcsWriter == NULL) {
-    CDBError("No WCS Writer found");
-    return 1;
+  } else {
+    wcsWriter = new CGridFileDataWriter(driver, mimeType);
   }
   try {
     try {
