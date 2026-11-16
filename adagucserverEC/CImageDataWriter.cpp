@@ -23,9 +23,11 @@
  *
  ******************************************************************************/
 
-#include <set>
 
 #include <vector>
+#include <iterator>
+#include <limits>
+#include <tuple>
 #include <sstream>
 #include <algorithm>
 #include <cmath>
@@ -38,8 +40,6 @@
 #include "CStopWatch.h"
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpNearestRGBA.h"
-#include "CImgWarpBilinear.h"
-#include "CImgWarpBoolean.h"
 #include "CImgRenderers/CImgRenderPoints.h"
 #include "CImgRenderStippling.h"
 #include "CImgRenderPolylines.h"
@@ -52,16 +52,16 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include "CDataPostProcessors/CDataPostProcessor_PointsFromGrid.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
+#include "CUniqueRequests/trajectorySampling.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"
-#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "Types/GeoParameters.h"
 #include "utils/projectionUtils.h"
 #include "CServerError.h"
@@ -231,13 +231,21 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawI
   return 0;
 }
 
-void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance) {
+CImageDataWriter::GFIValueKind CImageDataWriter::getGFIValueKind(const DataObject *dataObject, double value) {
+  if (dataObject->hasNodataValue && (value == dataObject->dfNodataValue || (std::isnan(value) && std::isnan(dataObject->dfNodataValue)))) {
+    return GFIValueKind::Missing;
+  }
+  return std::isnan(value) ? GFIValueKind::NotANumber : GFIValueKind::Valid;
+}
+
+double CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance,
+                                                            size_t elementIndex, GFIValueKind &valueKind) {
   if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size() == 0 || dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS") != NULL) {
-    return;
+    return -1;
   }
   int closestIndex = findClosestPoint(dataSource->getDataObject(dataObjectNrInDataSource)->points, getFeatureInfoResult.lon_coordinate, getFeatureInfoResult.lat_coordinate);
   if (closestIndex == -1) {
-    return;
+    return -1;
   }
   /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
   double pointPX = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lon, pointPY = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lat;
@@ -253,13 +261,15 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
 
   if (pixelDistance > maxPixelDistance) {
-    return;
+    return -1;
   }
 
   auto dataObject = dataSource->getDataObject(dataObjectNrInDataSource);
   auto &point = dataObject->points[closestIndex];
-  auto &element = getFeatureInfoResult.elements.back();
-  if (element.value.empty() || element.value == "nodata" || (dataObject->hasNodataValue && element.value == CT::printf("%f", dataObject->dfNodataValue))) {
+  // The element of the data object, not elements.back(): feature properties can follow it
+  auto &element = getFeatureInfoResult.elements[elementIndex];
+  if (valueKind == GFIValueKind::Missing) {
+    valueKind = getGFIValueKind(dataObject, point.v);
     if (dataObject->hasStatusFlag) {
       // Add status flag
       std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, (int)point.v);
@@ -284,6 +294,7 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
     pointID.value = param.value;
     pointID.units = "";
   }
+  return pixelDistance;
 }
 
 int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
@@ -305,19 +316,13 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA) {
-    drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-  }
-
   if (styleConfiguration != NULL) {
 
     if (styleConfiguration->renderMethod & RM_RGBA) {
 
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         writerStatus = initialized;
         drawImage.createImage(40, 20);
-        drawImage.create685Palette();
         return 0;
       }
     }
@@ -326,17 +331,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   // WMS Format in layer always overrides all
   if (dataSource != NULL) {
     if (dataSource->cfgLayer->WMSFormat.size() > 0) {
-      if (dataSource->cfgLayer->WMSFormat[0].attr.name == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png32")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
-      if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/png24")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      }
       if (dataSource->cfgLayer->WMSFormat[0].attr.format == ("image/webp")) {
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
       if (dataSource->cfgLayer->WMSFormat[0].attr.quality.empty() == false) {
@@ -397,20 +392,11 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
-    // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
-      status = drawImage.create685Palette();
-      if (status != 0) {
-        CDBError("Unable to create standard 6-8-5 palette");
-        return 1;
-      }
-    }
-
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -464,32 +450,41 @@ void CImageDataWriter::setValue(CDFType type, void *data, size_t ptr, double pix
 
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
   CImageWarper imageWarper;
-#ifdef MEASURETIME
-  StopWatch_Stop("getFeatureInfo");
-#endif
+  StopWatch_Measure("getFeatureInfo");
 
   if (CIMAGEDATAWRITER_DEBUG) {
     CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
   }
-  // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
+  if (srvParam->isTrajectory && validateTrajectorySources(dataSources) != 0) return 1;
   for (auto dataSource: dataSources) {
     if (dataSource == NULL) {
       CDBError("dataSource == NULL");
       return 1;
     }
 
-    getFeatureInfoResultList.push_back(GetFeatureInfoResult());
-    GetFeatureInfoResult &getFeatureInfoResult = (getFeatureInfoResultList.back());
+    CDataReader reader;
+    if (reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER) != 0) {
+      if (srvParam->isTrajectory) {
+        CDBError("Could not read trajectory grid from %s", dataSource->getFileName().c_str());
+        return 1;
+      }
+      // Let regular feature-info requests handle failures per step
+      CDBDebug("Could not read initial header from %s", dataSource->getFileName().c_str());
+    }
+    if (srvParam->isTrajectory) {
+      status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
+      if (status != 0) return status;
+      continue;
+    }
+    auto &getFeatureInfoResult = getFeatureInfoResultList.emplace_back();
     bool headerIsAvailable = false;
     bool sameHeaderForAll = false;
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
 
-    CDataReader reader;
-    reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSource->getNumDataObjects() > 0) {
       if (dataSource->getFirstAvailableDataObject()->cdfVariable != NULL) {
         if (dataSource->isConfigured) {
@@ -553,7 +548,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     } else {
       CDBDebug("Num time steps for dataSource %d", dataSource->getNumTimeSteps());
 
-      std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
+      // Files can share dimension values, for example point data split over several files with the same time. Per dimension key
+      // (dimension values and data object) one result is kept: a valid value before NaN before a missing value, then the one closest
+      // to the clicked location (a value from the grid, or the nearest point). When equal, the later file wins, as it is drawn on top in GetMap.
+      struct DimKeyResult {
+        GFIValueKind valueKind;
+        double distance;                  // In pixels, 0 for a value from the grid, infinity when there is no value and no point
+        std::vector<GFIElement> elements; // The element of the data object, followed by the parameters of its point or feature
+        bool isPreferredOver(const DimKeyResult &other) const { return std::tie(valueKind, distance) <= std::tie(other.valueKind, other.distance); }
+      };
+      std::vector<std::string> dimKeyOrder;
+      std::map<std::string, DimKeyResult> dimKeyResults;
 
       for (int step = 0; step < dataSource->getNumTimeSteps(); step++) {
         dataSource->setTimeStep(step);
@@ -644,16 +649,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             }
             CT::printfconcat(dimkey, "[dataobject=%lu]", o);
 
-            std::map<std::string, bool>::iterator dimensionKeyValueMapIterator = dimensionKeyValueMap.find(dimkey.c_str());
-            if (dimensionKeyValueMapIterator != dimensionKeyValueMap.end()) {
-              if (dimensionKeyValueMapIterator->second == false) {
-                if (getFeatureInfoResult.elements.size() > 0) {
-                  getFeatureInfoResult.elements.pop_back();
-                }
-              }
-            } else {
-              dimensionKeyValueMap[dimkey.c_str()] = false;
-            }
+            size_t firstElement = getFeatureInfoResult.elements.size();
             getFeatureInfoResult.elements.push_back(GFIElement());
             GFIElement &element = getFeatureInfoResult.elements.back();
 
@@ -690,6 +686,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             element.variable = dataSource->getDataObject(o)->cdfVariable;
             element.value = "nodata";
             element.cdfDims = *dataSource->getCDFDims();
+            GFIValueKind valueKind = GFIValueKind::Missing;
 
             if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight) {
               size_t ptr = 0;
@@ -708,17 +705,16 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
                 if ((pixel != dataSource->getDataObject(o)->dfNodataValue && dataSource->getDataObject(o)->hasNodataValue == true && pixel == pixel && everythingIsInBBOX == true) ||
                     dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
+                  valueKind = getGFIValueKind(dataSource->getDataObject(o), pixel);
                   if (dataSource->getDataObject(o)->hasStatusFlag) {
                     // Add status flag
-                    std::string flagMeaning;
-                    flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
                     element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
                     element.units = "";
                   } else {
                     element.value = CT::printf("%f", pixel);
                   }
                 }
-                dimensionKeyValueMap[dimkey.c_str()] = true;
 
                 if (dataSource->getDataObject(o)->features.empty() == false) {
                   int closestIndex = pixel;
@@ -745,8 +741,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                       warper.closereproj();
 
                       if (pixelDistance > 30) {
+                        // Too far away: no feature in this file, other files or layers can still have one
                         element.value = "nodata";
-                        return 0;
+                        valueKind = GFIValueKind::Missing;
+                        closestIndex = -1;
                       };
                     }
                   }
@@ -775,9 +773,28 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                 element.value = "nodata";
               }
             }
-            getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30);
+            double pointDistance = getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30, firstElement, valueKind);
+
+            // Move the elements of this data object out of the result, they are added back below for the preferred file
+            DimKeyResult result = {.valueKind = valueKind,
+                                   .distance = pointDistance >= 0                       ? pointDistance
+                                               : valueKind == GFIValueKind::Missing ? std::numeric_limits<double>::infinity()
+                                                                                     : 0,
+                                   .elements = {std::make_move_iterator(getFeatureInfoResult.elements.begin() + firstElement), std::make_move_iterator(getFeatureInfoResult.elements.end())}};
+            getFeatureInfoResult.elements.resize(firstElement);
+            auto it = dimKeyResults.find(dimkey);
+            if (it == dimKeyResults.end()) {
+              dimKeyOrder.push_back(dimkey);
+              dimKeyResults.emplace(dimkey, std::move(result));
+            } else if (result.isPreferredOver(it->second)) {
+              it->second = std::move(result);
+            }
           }
         }
+      }
+      for (const auto &dimkey: dimKeyOrder) {
+        auto &elements = dimKeyResults[dimkey].elements;
+        getFeatureInfoResult.elements.insert(getFeatureInfoResult.elements.end(), std::make_move_iterator(elements.begin()), std::make_move_iterator(elements.end()));
       }
     }
   }
@@ -887,6 +904,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if (styleConfiguration == nullptr) {
+    CDBError("Unable to get style for layer %s", dataSource->layerName.c_str());
+    reader.close();
+    return 1;
+  }
   auto renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
@@ -981,145 +1003,42 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
   }
 
-  /**
-   * Use bilinear renderer
-   */
-  if (renderMethod & RM_CONTOUR || renderMethod & RM_BILINEAR || renderMethod & RM_SHADED || renderMethod & RM_VECTOR || renderMethod & RM_BARB || renderMethod & RM_THIN) {
-    if (CIMAGEDATAWRITER_DEBUG) {
-      CDBDebug("Using CImgWarpBilinear");
-    }
-    if (dataSource->hasFieldData && dataSource->getFirstAvailableDataObject()->points.size() == 0) {
-      imageWarperRenderer = new CImgWarpBilinear();
-      std::string bilinearSettings;
-      bool drawMap = false;
-      bool drawContour = false;
-      bool drawVector = false;
-      bool drawBarb = false;
-      bool drawShaded = false;
-      bool drawGridVectors = false;
-
-      if (renderMethod & RM_BILINEAR) drawMap = true;
-      if (renderMethod & RM_CONTOUR) drawContour = true;
-      if (renderMethod & RM_VECTOR) drawVector = true;
-      if (renderMethod & RM_SHADED) drawShaded = true;
-      if (renderMethod & RM_BARB) drawBarb = true;
-      if (renderMethod & RM_THIN) drawGridVectors = true;
-
-      /*
-        Check the if we want to use discrete type with the bilinear rendermethod.
-        The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
-      */
-      if (styleConfiguration != nullptr) {
+  // Generic renderer; also serves legacy bilinear/shaded/contour/vector/barb keywords via getDrawFunctionSettings()/drawContour().
+  if (renderMethod & (RM_CONTOUR | RM_BILINEAR | RM_SHADED | RM_VECTOR | RM_BARB | RM_GENERIC)) {
+    // Backfill a default <Vector>/<Thinning>/pointsfromgrid for old barb/vector styles that relied on CImgWarpBilinear's built-in defaults.
+    // RM_THIN alone is excluded: CImgWarpBilinear's "thin" was a dead no-op, so keep that style a no-op too.
+    if ((renderMethod & RM_VECTOR || renderMethod & RM_BARB) && dataSource->hasFieldData) {
+      if (styleConfiguration->vectorIntervals.empty()) {
+        CServerConfig::XMLE_Vector defaultVector;
+        defaultVector.attr.vectorstyle = (renderMethod & RM_BARB) ? "barb" : "vector";
+        defaultVector.attr.linecolor = "#0000FF";
+        defaultVector.attr.outlinewidth = 0;
         for (const auto &renderSetting: styleConfiguration->renderSettings) {
-          std::string renderHint = renderSetting.attr.renderhint;
-          if (renderHint == RENDERHINT_DISCRETECLASSES) {
-            drawMap = false;   // Don't use continous legends with the bilinear renderer
-            drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+          if (renderSetting.attr.rendertextforvectors == "true") {
+            defaultVector.attr.plotvalue = "true";
           }
         }
+        styleConfiguration->vectorIntervals.push_back(defaultVector);
       }
-
-      if (drawMap == true) CT::printfconcat(bilinearSettings, "drawMap=true;");
-      if (drawVector == true) CT::printfconcat(bilinearSettings, "drawVector=true;");
-      if (drawBarb == true) CT::printfconcat(bilinearSettings, "drawBarb=true;");
-      if (drawShaded == true) CT::printfconcat(bilinearSettings, "drawShaded=true;");
-      if (drawContour == true) CT::printfconcat(bilinearSettings, "drawContour=true;");
-      if (drawGridVectors) CT::printfconcat(bilinearSettings, "drawGridVectors=true;");
-      CT::printfconcat(bilinearSettings, "smoothingFilter=%d;", styleConfiguration->smoothingFilter);
-      if (drawShaded == true || drawContour == true) {
-        CT::printfconcat(bilinearSettings, "shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
-                         styleConfiguration->contourIntervalL);
-
-        for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
-          if (!std::isnan(shadeInterval.attr.min) && !std::isnan(shadeInterval.attr.max)) {
-            CT::printfconcat(bilinearSettings, "shading=min(%g)$max(%g)$", shadeInterval.attr.min, shadeInterval.attr.max);
-            if (shadeInterval.attr.fillcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
-            }
-            if (!shadeInterval.attr.bgcolor.empty()) {
-              CT::printfconcat(bilinearSettings, "$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-        }
+      if (styleConfiguration->thinningList.empty()) {
+        CServerConfig::XMLE_Thinning defaultThinning;
+        defaultThinning.attr.radius = "40";
+        styleConfiguration->thinningList.push_back(defaultThinning);
       }
-      if (drawContour == true) {
-
-        for (size_t j = 0; j < styleConfiguration->contourLines.size(); j++) {
-          CServerConfig::XMLE_ContourLine *contourLine = &styleConfiguration->contourLines[j];
-          // Check if we have a interval contour line or a contourline with separate classes
-          if (contourLine->attr.interval.empty() == false) {
-            // ContourLine interval
-            CT::printfconcat(bilinearSettings, "contourline=");
-            if (contourLine->attr.width.empty() == false) {
-              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
-            }
-            if (contourLine->attr.linecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
-            }
-            if (contourLine->attr.textcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
-            }
-            if (contourLine->attr.textsize.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
-            }
-            if (contourLine->attr.textstrokewidth.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-            }
-
-            if (contourLine->attr.textstrokecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-            }
-            if (contourLine->attr.interval.empty() == false) {
-              CT::printfconcat(bilinearSettings, "interval(%s)$", contourLine->attr.interval.c_str());
-            }
-            if (contourLine->attr.textformatting.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
-            }
-            if (contourLine->attr.dashing.empty() == false) {
-              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-          if (contourLine->attr.classes.empty() == false) {
-            // ContourLine classes
-            CT::printfconcat(bilinearSettings, "contourline=");
-            if (contourLine->attr.width.empty() == false) {
-              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
-            }
-            if (contourLine->attr.linecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
-            }
-            if (contourLine->attr.textcolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
-            }
-            if (contourLine->attr.classes.empty() == false) {
-              CT::printfconcat(bilinearSettings, "classes(%s)$", contourLine->attr.classes.c_str());
-            }
-            if (contourLine->attr.textsize.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
-            }
-            if (contourLine->attr.textstrokewidth.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-            }
-            if (contourLine->attr.textstrokecolor.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-            }
-            if (contourLine->attr.textformatting.empty() == false) {
-              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
-            }
-            if (contourLine->attr.dashing.empty() == false) {
-              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
-            }
-            CT::printfconcat(bilinearSettings, ";");
-          }
-        }
+      if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
+        // CImgWarpBilinear always required speed_component/direction_component from pointsfromgrid.
+        CServerConfig::XMLE_DataPostProc pointsFromGridProc;
+        pointsFromGridProc.attr.algorithm = CDATAPOSTPROCESSOR_PointsFromGrid_ID;
+        pointsFromGridProc.attr.select = "speed_component,direction_component";
+        CDPPointsFromGrid().execute(&pointsFromGridProc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
       }
-      if (CIMAGEDATAWRITER_DEBUG) {
-        CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
-      }
-      imageWarperRenderer->set(bilinearSettings.c_str());
+    }
+
+    if (CIMAGEDATAWRITER_DEBUG) {
+      CDBDebug("Using CImgWarpGeneric");
+    }
+    if (dataSource->hasFieldData) {
+      imageWarperRenderer = new CImgWarpGeneric();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1134,20 +1053,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
     if (dataSource->hasFieldData) {
       imageWarperRenderer = new CImgWarpHillShaded();
-      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-      delete imageWarperRenderer;
-    }
-  }
-
-  /**
-   * Use New bilinear renderer
-   */
-  if (renderMethod & RM_GENERIC) {
-    if (CIMAGEDATAWRITER_DEBUG) {
-      CDBDebug("Using CImgWarpGeneric");
-    }
-    if (dataSource->hasFieldData) {
-      imageWarperRenderer = new CImgWarpGeneric();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1193,9 +1098,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       delete imageWarperRenderer;
     }
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("Thread[%d]: warp finished", dataSource->threadNr);
-#endif
+  StopWatch_Measure("Thread[%d]: warp finished", dataSource->threadNr);
 
   traceTimingsSpanEnd(TraceTimingType::WARPIMAGERENDER);
   reader.close();
@@ -1222,17 +1125,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Drawingnormal legend");
       }
       if (j != 0) {
-        /*
-         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
-         * For j==0, the legend is already initialized previously
-         */
         if (CIMAGEDATAWRITER_DEBUG) {
           CDBDebug("REINITLEGEND");
         }
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = styleConfiguration->createPalette(&srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex].attr.name.c_str());
             return 1;
@@ -1302,9 +1201,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       double gridSize = 10;
       double precision = 0.25;
       double numTestSteps = 5;
-      CColor textColor(0, 0, 0, 128);
+      CColor textColor = standardCColorTranslucentBlack;
       float lineWidth = 0.25;
-      int lineColor = 247;
+      CColor lineColor = standardCColorDarkGray;
 
       if (dataSource->cfgLayer->Grid[0].attr.resolution.empty() == false) {
         gridSize = atof(dataSource->cfgLayer->Grid[0].attr.resolution.c_str());
@@ -1603,8 +1502,8 @@ int CImageDataWriter::end() {
     if (CT::indexOf(srvParam->InfoFormat, "application/json") != -1) {
 
       try {
-        if (gfiStructure.get("root") != nullptr) {
-          std::string data = xmlListToJSON(gfiStructure.getList("root"), CXMLPARSER_JSONMODE_STANDARD);
+        if (gfiStructure.get("root") != nullptr || srvParam->isTrajectory) {
+          std::string data = gfiStructure.get("root") == nullptr ? "[]" : xmlListToJSON(gfiStructure.getList("root"), CXMLPARSER_JSONMODE_STANDARD);
           if (srvParam->JSONP.length() == 0) {
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
@@ -1992,9 +1891,7 @@ int CImageDataWriter::end() {
     return 1;
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Drawing finished, start printing image");
-#endif
+  StopWatch_Measure("Drawing finished, start printing image");
 
   // Static image
   int status = 1;
@@ -2048,9 +1945,7 @@ int CImageDataWriter::end() {
     status = drawImage.printImagePng8(true);
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("Image printed");
-#endif
+  StopWatch_Measure("Image printed");
   if (status != 0) {
     CDBError("Errors occured during image printing");
   }
@@ -2112,10 +2007,5 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage) { return CCreateLegend::createLegend(dataSource, legendImage); }
 
 int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendImage, bool rotate) { return CCreateLegend::createLegend(dataSource, legendImage, rotate); }
-
-int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float size, float angle, const char *text, unsigned char colorIndex) {
-  drawImage.drawText(x, y, fontlocation, size, angle, text, colorIndex);
-  return 0;
-}
 
 int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

@@ -25,13 +25,11 @@
 
 #ifndef CDataReader_H
 #define CDataReader_H
-#include <cmath>
 #include <string>
 #include "CDataSource.h"
 
 // #include "CADAGUC_time.h"
 
-#include <sys/stat.h>
 
 
 class CDataReader {

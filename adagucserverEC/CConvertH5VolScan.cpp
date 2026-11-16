@@ -29,7 +29,6 @@
 #include "CDataSource.h"
 #include "CConvertH5VolScanUtils.h"
 #include "CImageWarper.h"
-#include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 #include "CCDFObject.h"
 #include "CServerParams.h"
@@ -485,8 +484,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     }
 
     /*Setting geographical projection parameters of input Cartesian grid.*/
-    std::string scanProj4;
-    scanProj4 = CT::printf("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
+    std::string scanProj4 = CT::printf("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
 

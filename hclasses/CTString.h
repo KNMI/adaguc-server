@@ -25,6 +25,7 @@
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -65,6 +66,17 @@ namespace CT {
    */
 
   std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
+
+  /**
+   * True when format can safely be given one double: plain text and %%, plus at most one
+   * %f/%e/%g/%a conversion (any case) with flags, width and precision of at most 2 digits.
+   */
+  bool isSafeFloatFormat(std::string_view format);
+
+  /**
+   * Formats value with a printf format from configuration or a request. An unsafe format (see isSafeFloatFormat) uses %g.
+   */
+  std::string formatFloat(const std::string &format, double value);
 
   /**
    * Like printf, but concatenates the string and returns a stdstring
@@ -109,6 +121,18 @@ namespace CT {
    * Converts a string to double after trimming whitespace.
    */
   double toDouble(const std::string &input);
+
+  /**
+   * Parses the whole string, after trimming whitespace, as a number in the syntax of atof, like 1e-3 and -inf.
+   * Returns nothing for an empty string, NaN, or text after the number like "1abc", which toDouble reads as 1.
+   */
+  std::optional<double> parseDouble(std::string_view input);
+
+  /**
+   * Parses the whole string, after trimming whitespace, as an int: an optional sign and digits only.
+   * Returns nothing for anything else, like "1.5", "1e3" and "5px" which atoi reads as 1, 1 and 5, and for values beyond int.
+   */
+  std::optional<int> parseInt(std::string_view input);
 
   /**
    * Function which returns a std::vector on the stack with a list of strings allocated on the stack
@@ -169,6 +193,13 @@ namespace CT {
    * URL-decodes a string (percent-encoding), also replacing '+' with a space.
    */
   std::string decodeURL(const std::string &input);
+
+  /**
+   * Decodes base64, in the standard (+/) or the URL safe (-_) alphabet, with or without '=' padding.
+   * Line breaks and tabs are skipped, so base64 split over lines is accepted.
+   * @return false for other characters, misplaced padding or an impossible length
+   */
+  bool decodeBase64(std::string_view input, std::string &output);
 
   /**
    * Converts to hex string from int.

@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 8.0.0, of Jul  6 2026 15:55:12 </Keyword>
+            <Keyword>ADAGUCServer version 9.0.3, of Oct 19 2026 11:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.testmultidimautostyle</Title>
 <CRS>CRS:84</CRS>
@@ -127,39 +126,12 @@
 <Dimension name="member" units="member number" default="member1" multipleValues="1" nearestValue="0" >member6,member5,member4,member3,member2,member1</Dimension>
 <Dimension name="elevation" units="meters" default="9000" multipleValues="1" nearestValue="0" >1000,2000,3000,4000,5000,6000,7000,8000,9000</Dimension>
    <Style>
-    <Name>testdata/nearest</Name>
+    <Name>testdata</Name>
     <Title>Rainbow colors</Title>
     <Abstract>Drawing with rainbow colors</Abstract>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/nearest"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata/bilinear</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/bilinear"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata/nearestcontour</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/nearestcontour"/>
-    </LegendURL>
-  </Style>
-   <Style>
-    <Name>testdata/shadedcontour</Name>
-    <Title>Rainbow colors</Title>
-    <Abstract>Drawing with rainbow colors</Abstract>
-    <LegendURL width="300" height="400">
-       <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/shadedcontour"/>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata"/>
     </LegendURL>
   </Style>
    <Style>
@@ -199,11 +171,11 @@
     </LegendURL>
   </Style>
    <Style>
-    <Name>autobilinear_deprecated/bilinear</Name>
-    <Title>autobilinear_deprecated/bilinear</Title>
+    <Name>autobilinear_deprecated</Name>
+    <Title>autobilinear_deprecated</Title>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>
+       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=autobilinear_deprecated"/>
     </LegendURL>
   </Style>
 </Layer>

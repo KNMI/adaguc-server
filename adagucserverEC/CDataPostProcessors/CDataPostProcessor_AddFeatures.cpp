@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "CCDFObject.h"
 #include "CDebugger.h"
-#include "CTString.h"
 
 /************************/
 /*      CDPPAddFeatures     */

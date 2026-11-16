@@ -57,26 +57,30 @@ CColor &CColor::operator=(const std::string &color) {
 std::string CColor::c_str() {
   return CT::printf("#%s%s%s%s", CT::getHex(this->r).c_str(), CT::getHex(this->g).c_str(), CT::getHex(this->b).c_str(), CT::getHex(this->a).c_str());
 }
+bool CColor::isValid(std::string_view color) {
+  return (color.size() == 7 || color.size() == 9) && color[0] == '#' && color.find_first_not_of("0123456789abcdefABCDEF", 1) == std::string_view::npos;
+}
+
 void CColor::parse(const std::string &color) {
   /**
    * color can have format #RRGGBB or #RRGGBBAA
    */
   size_t l = color.length();
 
-  if (l == 7 && color.at(0) == '#') {
-    r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
-    g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
-    b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
-    a = 255;
-  } else if (l == 9 && color.at(0) == '#') {
-    r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
-    g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
-    b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
-    a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
-  } else {
+  if (!isValid(color)) {
     r = 0;
     g = 0;
     b = 0;
     a = 255;
+  } else if (l == 7) {
+    r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+    g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+    b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+    a = 255;
+  } else {
+    r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+    g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+    b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+    a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
   }
 }

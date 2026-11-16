@@ -26,7 +26,6 @@
 #ifndef CFILLTRIANGLE_H
 #define CFILLTRIANGLE_H
 #include <cmath>
-#include <cstdlib>
 /**
  * Fills a triangle in a Gouraud way
  * @param data the data field to fill

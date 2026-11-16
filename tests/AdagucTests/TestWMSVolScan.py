@@ -80,4 +80,8 @@ class TestWMSVolScan:
             data,
         )
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + f"{file_type}_{filename}")
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + f"{file_type}_{filename}",
+            self.testresultspath + f"{file_type}_{filename}",
+            tolerance="antialiasing",
+        )

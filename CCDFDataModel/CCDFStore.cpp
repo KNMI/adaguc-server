@@ -1,6 +1,5 @@
 #include "CCDFStore.h"
 #include "CCDFObject.h"
-#include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 
 static const bool CCDFSTORE_DEBUG = false;

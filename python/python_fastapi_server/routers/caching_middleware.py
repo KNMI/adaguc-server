@@ -2,7 +2,7 @@ import calendar
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
 import brotli
@@ -27,13 +27,17 @@ async def get_cached_response(redis_pool, request):
         return None, None, None
 
     entrytime = int(cached[:10].decode("utf-8"))
-    currenttime = calendar.timegm(datetime.utcnow().utctimetuple())
+    currenttime = calendar.timegm(datetime.now(timezone.utc).utctimetuple())
     age = currenttime - entrytime
 
     headers_len = int(cached[10:16].decode("utf-8"))
     headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
     is_compression_needed = requires_encoding(headers)
-    data = brotli.decompress(cached[16 + headers_len :]) if is_compression_needed else cached[16 + headers_len :]
+    try:
+        data = brotli.decompress(cached[16 + headers_len :]) if is_compression_needed else cached[16 + headers_len :]
+    except brotli.error:
+        # Cached before its content type was compressed, handle as not cached
+        return None, None, None
     return age, headers, data
 
 
@@ -49,7 +53,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
             fixed_headers[k] = headers[k]
     headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode("utf-8")
 
-    entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode("utf-8")
+    entrytime = f"{calendar.timegm(datetime.now(timezone.utc).utctimetuple()):10d}".encode("utf-8")
     is_compression_needed = requires_encoding(headers)
     compressed_data = brotli.compress(data, quality=4) if is_compression_needed else data
     if len(compressed_data) < MAX_SIZE_FOR_CACHING:
@@ -60,6 +64,15 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
             ex=ex,
         )
         await redis_client.aclose()
+
+
+def has_stylesheet(request):
+    """
+    A STYLESHEET is a style for one request, for example from a style editor that sends a request for every change.
+    Its responses are not cached: they are rarely requested again, the key holds the whole style (up to 64 KB),
+    and every encoding of the same style (XML, base64, compressed) would be stored again.
+    """
+    return any(key.upper() == "STYLESHEET" for key in request.query_params.keys())
 
 
 def generate_key(request):
@@ -84,7 +97,8 @@ class CachingMiddleware(BaseHTTPMiddleware):
             self.redis_pool = redis.ConnectionPool.from_url(ADAGUC_REDIS)
 
     async def dispatch(self, request, call_next):
-        if self.shortcut:
+        # Only GET: the key is the url, so the response to a request with a body would be served for the url alone
+        if self.shortcut or request.method != "GET" or has_stylesheet(request):
             return await call_next(request)
 
         # Check if request is in cache, if so return that

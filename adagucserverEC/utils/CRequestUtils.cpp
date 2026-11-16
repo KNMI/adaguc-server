@@ -5,9 +5,7 @@
 #include "CRequestUtils.h"
 #include "LayerUtils.h"
 #include <tuple>
-#include <array>
 #include <CDBFactory.h>
-#include <handleTileRequest.h>
 #include "CDebugger.h"
 #include "CTString.h"
 #include "CServerError.h"

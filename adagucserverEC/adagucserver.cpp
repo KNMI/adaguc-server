@@ -36,15 +36,13 @@
 #include "Types/ProjectionStore.h"
 #include <cdfVariableCache.h>
 #include "CDFObjectStore.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
-#include "CTString.h"
 #include "CTime.h"
-#include "CXMLParser.h"
 #include "CStopWatch.h"
 #include "CServerError.h"
 #include "fork_server.h"
+
+// PROJ writes warnings such as failed grid lookups to stderr, also when the transformation still works
+static void projLogFunction(void *, int /*level*/, const char * /*message*/) {}
 
 int processQueryStringRequest() {
   /* Process the OGC request */
@@ -87,9 +85,7 @@ int run_adaguc_once(int argc, char **argv, char **envp) {
 
   proj_clear_cache();
   BBOXProjectionClearCache();
-#ifdef MEASURETIME
-  StopWatch_Stop("Finished");
-#endif
+  StopWatch_Measure("Finished");
   varCacheClear();
   // Free libxml2's global state once at exit. Calling this after every parse would make libxml2 re-initialize for each document.
   xmlCleanupParser();
@@ -99,6 +95,8 @@ int run_adaguc_once(int argc, char **argv, char **envp) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  proj_log_func(PJ_DEFAULT_CTX, nullptr, projLogFunction);
+
   const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
   bool use_fork_server = fork_enable && std::string(fork_enable) == "TRUE" && argc == 1;
   if (use_fork_server) {

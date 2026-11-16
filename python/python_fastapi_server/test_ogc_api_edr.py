@@ -34,6 +34,7 @@ def setup_test_data():
         "adaguc_tests_uwcwdini_windcomponents.xml",
         "adaguc_tests_solarterminator.xml",
         "adaguc.tests.multi_reftime_temporal_extent.xml",
+        "adaguc.tests.arcus_uwcw_manymodelruns.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -77,6 +78,7 @@ def test_collections(client: TestClient):
     collection_ids = [coll["id"] for coll in colls["collections"]]
     assert collection_ids == [
         "adaguc.tests.arcus_uwcw.hagl_member",
+        "adaguc.tests.arcus_uwcw_manymodelruns.hagl",
         "adaguc.tests.members.mycollection",
         "adaguc.tests.multi_reftime_temporal_extent.gl",
         "adaguc_ewclocalclimateinfo_test",
@@ -86,7 +88,7 @@ def test_collections(client: TestClient):
         "testcollection.testcollection",
     ]
 
-    coll_5d = colls["collections"][6]
+    coll_5d = colls["collections"][7]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(ext_name in coll_5d["extent"] for ext_name in ("spatial", "temporal", "vertical", "custom"))
     assert list(coll_5d["extent"]) == [
@@ -165,6 +167,7 @@ def test_hrefs(client: TestClient):
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances",
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/locations",
         "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/position",
+        "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/trajectory",
     ]
 
     for url in urls:
@@ -745,6 +748,10 @@ def test_cube_custom_dim(client: TestClient):
     # We did not query a specific member, it should show the highest
     assert cube_json["domain"]["custom:member"] == 50.0
 
+    filename = "cube_single_member.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(cube_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
 
 def test_point_custom_dim_request_all_members(client: TestClient):
     # position call on data which includes a custom dimension, should mention dimension even if we don't query it specifically
@@ -773,6 +780,10 @@ def test_point_custom_dim_request_all_members(client: TestClient):
     assert data["axisNames"] == ["t"]
     assert data["shape"] == [4]
 
+    filename = "position_all_members.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(position_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
 
 def test_cube_custom_dim_request_all_members(client: TestClient):
     # position call on data which includes a custom dimension, should mention dimension even if we don't query it specifically
@@ -800,6 +811,51 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
     assert data["type"] == "NdArray"
     assert data["axisNames"] == ["t", "y", "x"]
     assert data["shape"] == [4, 3, 3]
+
+    filename = "cube_all_members.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(cube_json))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+@pytest.mark.parametrize("query_type", ["cube", "position"])
+@pytest.mark.parametrize(
+    "datetime, suffix",
+    [
+        ("2025-03-01T00:00:00Z/2025-03-01T01:00:00Z", "two_times"),
+        ("2025-03-01T00:00:00Z", "single_time"),
+    ],
+)
+def test_custom_dim_two_members_and_timesteps_selects_correct_values(client: TestClient, query_type, datetime, suffix):
+    params = {"parameter-name": "mymemberdata", "datetime": datetime, "member": "1,2"}
+    if query_type == "cube":
+        extra_params = {"bbox": "4.5,51.5,7.5,54.5", "resolution_x": 1, "resolution_y": 1}
+    else:
+        extra_params = {"coords": "POINT(5 52)"}
+    params |= extra_params
+
+    resp = client.get(f"/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/{query_type}", params=params)
+    assert resp.status_code == 200, resp.text
+
+    filename = f"{query_type}_two_members_{suffix}.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(resp.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_cube_packed_fill_values(client: TestClient) -> None:
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/cube",
+        params={
+            "parameter-name": "packed_fillvalue",
+            "bbox": "-1,49,11,56",
+            "z": "1/3",
+            "resolution_x": 1,
+            "resolution_y": 1,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    filename = "cube_packed_fill_values.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(resp.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
 @pytest.mark.parametrize(
@@ -849,6 +905,46 @@ def test_adaguc_tests_uwcwdini_windcomponents_position(client: TestClient):
     covjson = resp.json()
 
     filename = "test_adaguc_tests_uwcwdini_windcomponents_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_position_brotli_encoding(client: TestClient):
+    """CoverageJSON responses are brotli encoded when the client accepts it"""
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z",
+        headers={"Accept-Encoding": "br"},
+    )
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/prs.coverage+json"
+    assert resp.headers["content-encoding"] == "br"
+    assert resp.json()["type"] == "CoverageCollection"
+
+
+def test_adaguc_tests_uwcwdini_winddirection_position(client: TestClient):
+    # Same query as above, but on a layer where filter_dataobjects only selects the direction component
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-direction-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z"
+    )
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "test_adaguc_tests_uwcwdini_winddirection_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_adaguc_tests_uwcwdini_windspeed_position(client: TestClient):
+    # Same query as above, but on a layer where filter_dataobjects only selects the speed component
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-speed-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z"
+    )
+    assert resp.status_code == 200
+    covjson = resp.json()
+
+    filename = "test_adaguc_tests_uwcwdini_windspeed_position.json"
     AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
 
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
@@ -965,6 +1061,25 @@ def test_multi_reftime_temporal_extent(client: TestClient):
     assert most_recent_instance["extent"] == covjson["extent"]
 
 
+def test_many_reference_times(client: TestClient):
+    """
+    The reference_time dimension of this dataset is advertised by GetMetadata as an interval
+    (start/end/resolution) instead of a list. EDR must expand it into separate instances.
+    """
+    base_url = "/edr/collections/adaguc.tests.arcus_uwcw_manymodelruns.hagl"
+
+    resp = client.get(base_url)
+    assert resp.status_code == 200
+    assert resp.json()["id"] == "adaguc.tests.arcus_uwcw_manymodelruns.hagl"
+
+    resp = client.get(f"{base_url}/instances")
+    assert resp.status_code == 200
+    instance_ids = [instance["id"] for instance in resp.json()["instances"]]
+    assert len(instance_ids) == 22
+    assert instance_ids[0] == "202610010900"
+    assert instance_ids[-1] == "202609301200"
+
+
 def test_multi_reftime_instanceless_query(client: TestClient):
     """Querying position and cube without selecting an instance should return results for the most recent instance"""
 
@@ -1011,3 +1126,149 @@ def test_wildcard_query(client: TestClient):
     filename = "multi_reftime_instanceless_cube_wildcard.json"
     AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
     assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+@pytest.mark.parametrize("z,filename", [(None, "trajectory_section.json"), ("10", "trajectory_section_z10.json")])
+def test_trajectory_section(client, z, filename):
+    params = {
+        # Exercise the 1,000-vertex boundary without changing the sampled path.
+        "coords": "LINESTRING(" + ",".join(["5.1 52.1"] * 999 + ["8.1 52.1"]) + ")",
+        "parameter-name": "testdata",
+        "datetime": "2024-06-01T01:00:00Z/2024-06-01T02:00:00Z",
+    }
+    if z is not None:
+        params["z"] = z
+    resp = client.get("/edr/collections/testcollection.testcollection/instances/202406010000/trajectory", params=params)
+    assert resp.status_code == 200, resp.text
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(resp.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+@pytest.mark.parametrize(
+    "coords",
+    [
+        None,
+        "POINT(5 52)",
+        "LINESTRING(5.152.1,8 52)",
+        pytest.param("LINESTRING(" + ",".join(["5 52"] * 1001) + ")", id="too-many-vertices"),
+    ],
+)
+def test_trajectory_invalid_coords(client, coords):
+    params = {} if coords is None else {"coords": coords}
+    resp = client.get("/edr/collections/testcollection.testcollection/trajectory", params=params)
+    assert resp.status_code == 400, resp.text
+
+
+def test_trajectory_multiple_parameters(client, monkeypatch):
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/trajectory",
+        params={"coords": "LINESTRING(5 52,7 53)", "parameter-name": "testdata,testdata2", "z": "*"},
+    )
+    assert resp.status_code == 200, resp.text
+    result = resp.json()
+    assert result["type"] == "CoverageCollection"
+    assert len(result["coverages"]) == 2
+    assert [len(c["domain"]["axes"]["z"]["values"]) for c in result["coverages"]] == [4, 3]
+
+    from copy import deepcopy
+    from routers import edr_trajectory
+
+    get_metadata = edr_trajectory.get_metadata
+    surface_layers = ["testdata2"]
+
+    async def mixed_metadata(*args, **kwargs):
+        metadata = deepcopy(await get_metadata(*args, **kwargs))
+        for layer in surface_layers:
+            metadata["testcollection.testcollection"][layer]["dims"].pop("time")
+        return metadata
+
+    monkeypatch.setattr(edr_trajectory, "get_metadata", mixed_metadata)
+    base = "/edr/collections/testcollection.testcollection/trajectory"
+    query = {"coords": "LINESTRING(5 52,7 53)"}
+    resp = client.get(base, params=query)
+    assert resp.status_code == 200, resp.text
+    assert list(resp.json()["parameters"]) == ["testdata"]
+    resp = client.get(base, params=query | {"parameter-name": "testdata2"})
+    assert resp.status_code == 400, resp.text
+    surface_layers.append("testdata")
+    resp = client.get(base, params=query)
+    assert resp.status_code == 400, resp.text
+
+
+def test_trajectory_outside_grid(client):
+    base = "/edr/collections/testcollection.testcollection/trajectory"
+    resp = client.get(base, params={"coords": "LINESTRING(-20 -20,-19 -19)", "parameter-name": "testdata"})
+    assert resp.status_code == 404, resp.text
+
+
+def test_trajectory_rotated_grid(client):
+    service = "adaguc.tests.trajectory"
+    status, *_ = AdagucTestTools().runADAGUCServer(
+        args=["--updatedb", "--config", os.environ["ADAGUC_CONFIG"] + f",{service}.xml"], isCGI=False
+    )
+    assert status == 0
+    base = f"/edr/collections/{service}.pressure/instances/202407110500"
+    query = {"coords": "LINESTRING(0 50,10 55)", "parameter-name": "temperature", "datetime": "2024-07-11T06:00:00Z", "z": "*"}
+    response = client.get(base + "/trajectory", params=query)
+    assert response.status_code == 200, response.text
+    section = response.json()
+    assert section["domain"]["axes"]["z"]["values"] == [500, 700, 850, 925]
+    points = section["domain"]["axes"]["composite"]["values"]
+    assert len(points) > 2
+
+
+@pytest.mark.parametrize(
+    "member, datetime, count, filename",
+    [
+        ("*", "2024-05-23T01:00:00Z/2024-05-23T02:00:00Z", 5, "trajectory_all_members.json"),
+        ("1,2", "2024-05-23T01:00:00Z/2024-05-23T02:00:00Z", 2, "trajectory_two_members_two_times.json"),
+        ("1,2", "2024-05-23T01:00:00Z", 2, "trajectory_two_members_single_time.json"),
+    ],
+)
+def test_trajectory_hidden_height_and_members(client, member, datetime, count, filename):
+    base = "/edr/collections/adaguc.tests.arcus_uwcw.hagl_member/instances/202405230000"
+    response = client.get(
+        base + "/trajectory",
+        params={
+            "coords": "LINESTRING(3.4 52.5,7.9 52.5)",
+            "parameter-name": "air_temperature_hagl",
+            "member": member,
+            "datetime": datetime,
+            "z": "3",
+        },
+    )
+    assert response.status_code == 200, response.text
+    coverages = response.json()["coverages"]
+    assert len(coverages) == count
+    assert len({coverage["domain"]["custom:member"] for coverage in coverages}) == count
+    assert all(coverage["domain"]["axes"]["z"]["values"] == [2] for coverage in coverages)
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(response.json()))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
+
+
+def test_edr_untyped_or_named_height():
+    from routers.edr_covjson import point_response_to_covjson
+    from routers.trajectory_covjson import sections_from_response
+    from routers.utils.edr_exception import EdrException
+    from routers.utils.edr_utils import get_vertical_query, supports_section
+
+    layer = {"dims": {"time": {}, "height": {"type": "dimtype_other", "serviceName": "height", "hidden": False}}}
+    metadata = {"collection": {"data": layer}}
+    for z in (None, "3"):
+        assert get_vertical_query(metadata, "collection", "data", z) == ""
+    assert not supports_section(layer)
+    sample = {"layername": "data", "point": {"coords": "5,52"}, "dims": ["height", "time"], "data": {"surface": {"2024-01-01": "1"}}}
+    layer["dims"]["height"].update({"cdfName": "height", "type": "dimtype_vertical"})
+    layer["dims"]["time"]["cdfName"] = "time"
+    assert supports_section(layer)
+    for convert in (point_response_to_covjson, sections_from_response):
+        with pytest.raises(EdrException) as exc:
+            convert([sample], {"data": layer}, "collection")
+        assert exc.value.status_code == 400
+
+
+def test_collection_with_trailing_slash(client: TestClient):
+    """Slash redirects are disabled, so /collections/{id}/ has its own route"""
+    resp = client.get("/edr/collections/netcdf_5d.data_5d/")
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["id"] == "netcdf_5d.data_5d"

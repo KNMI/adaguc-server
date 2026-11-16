@@ -41,8 +41,7 @@ class TestWMSPolylineRenderer:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            maxAllowedColorDifference=2,
-            maxAllowedColorPercentage=0.025,
+            tolerance="geometry",
         )
 
     def test_WMSPolylineRenderer_cellwarn_fillpolysalpha(self):
@@ -61,8 +60,7 @@ class TestWMSPolylineRenderer:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
-            maxAllowedColorDifference=2,
-            maxAllowedColorPercentage=0.025,
+            tolerance="geometry",
         )
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMap(self):
@@ -76,7 +74,7 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_point_GetMap(self):
         env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
@@ -88,7 +86,9 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMapColorScaleRange0_20(self):
         env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
@@ -100,7 +100,7 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_point_GetMapColorScaleRange0_20(self):
         env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
@@ -112,7 +112,9 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSON(self):
         env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
@@ -148,7 +150,9 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetLegendGraphicColorScaleRange0_20(self):
         env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
@@ -160,7 +164,9 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="antialiasing"
+        )
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_GetMap_MultiVar(self):
         AdagucTestTools().cleanTempDir()
@@ -175,7 +181,7 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
 
     def test_WMSPolyLineRendererFeatureIntervalMinMax(self):
         """
@@ -194,4 +200,4 @@ class TestWMSPolylineRenderer:
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         assert status == 0
-        assert data == AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")

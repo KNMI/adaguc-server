@@ -25,6 +25,5 @@
 
 #ifndef CImgWarpBoolean_H
 #define CImgWarpBoolean_H
-#include <cstdlib>
 
 #endif

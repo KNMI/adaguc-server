@@ -27,11 +27,21 @@
 #define CSTOPWATCH_H
 #include "CDebugger.h"
 
+// Timing output is switched on/off centrally with STOPWATCH_MEASURETIME in CDebugger.h
+
 void StopWatch_Start();
-void _StopWatch_Stop(const char *a, ...);
+void _StopWatch_Measure(const char *a, ...);
 extern unsigned int logMessageNumber;
 extern unsigned long logProcessIdentifier;
-#define StopWatch_Stop                                                                                                                                                                                 \
-  _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
-  _StopWatch_Stop
+#ifdef STOPWATCH_MEASURETIME
+#define StopWatch_Measure(...)                                                                                                                                                                         \
+  do {                                                                                                                                                                                                 \
+    _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                            \
+    _StopWatch_Measure(__VA_ARGS__);                                                                                                                                                                   \
+  } while (0)
+#else
+#define StopWatch_Measure(...)                                                                                                                                                                         \
+  do {                                                                                                                                                                                                 \
+  } while (0)
+#endif
 #endif

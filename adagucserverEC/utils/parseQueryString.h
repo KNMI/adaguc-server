@@ -2,6 +2,6 @@
 #ifndef PARSEQUERYSTRING_H
 #define PARSEQUERYSTRING_H
 
-int getDatasetAndSldFromQueryString(CServerParams &srvParam);
+int getDatasetFromQueryString(CServerParams &srvParam);
 
 #endif

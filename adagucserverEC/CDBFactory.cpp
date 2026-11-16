@@ -25,10 +25,7 @@
 
 #include "CDBFactory.h"
 #include "CDBAdapterPostgreSQL.h"
-#include <map>
-#include "CDataSource.h"
 #include "CServerConfig_CPPXSD.h"
-#include "Types/GeoParameters.h"
 #include "CDebugger.h"
 
 CDBAdapterPostgreSQL *CDBFactory::staticCDBAdapter = NULL;

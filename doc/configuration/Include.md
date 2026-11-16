@@ -34,7 +34,8 @@ Where mystyles.xml can be like:
     <Legend>temperature</Legend>
     <Min>-20</Min>
     <Max>30</Max>
-    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
+    <RenderSettings interpolationmethod="bilinear"/>
   </Style>
 
 </Configuration>

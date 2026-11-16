@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <!-- Four hourly files with values 1, 2, 3 and 4, and nodata at lon 3.
+       Each conversion must be applied exactly once to every file in a time series, not only to the first and last file. -->
+  <Layer type="database">
+    <Name>data</Name>
+    <Variable>data</Variable>
+    <FilePath filter="^grid[0-9]\.nc$">{ADAGUC_PATH}/data/datasets/axplusb_multifile/</FilePath>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+    <DataPostProc algorithm="ax+b" a="2" b="10"/>
+  </Layer>
+  <!-- Conversions run in configured order: (10 * v) * 2 + 10 -->
+  <Layer type="database">
+    <Name>data_chain</Name>
+    <Variable>data</Variable>
+    <FilePath filter="^grid[0-9]\.nc$">{ADAGUC_PATH}/data/datasets/axplusb_multifile/</FilePath>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+    <DataPostProc algorithm="convert_units" a="10" units="dm"/>
+    <DataPostProc algorithm="ax+b" a="2" b="10" units="something"/>
+  </Layer>
+</Configuration>

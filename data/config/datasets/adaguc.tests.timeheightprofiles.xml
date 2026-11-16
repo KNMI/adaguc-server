@@ -9,7 +9,8 @@
         <Min>10000</Min>
         <Log>10</Log>
         <Max>1500000000</Max>
-        <RenderMethod>nearest,bilinear</RenderMethod>
+        <RenderMethod>generic</RenderMethod>
+        <RenderSettings interpolationmethod="bilinear"/>
     </Style>
 
     <Layer type="database" hidden="false">

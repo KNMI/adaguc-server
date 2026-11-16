@@ -4,5 +4,6 @@
         * [Grid format](format_standard/data_format_standard_grid.md)
         * [Vector format](format_standard/data_format_standard_vector.md)
         * [Point format](format_standard/data_format_standard_point.md)
+        * [GeoJSON format](format_standard/data_format_standard_geojson.md)
     * [Metadata format standard](format_standard/metadata_format_standard.md)
 * [Glossary](GLOSSARY.md)

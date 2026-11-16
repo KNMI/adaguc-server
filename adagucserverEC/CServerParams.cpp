@@ -24,7 +24,6 @@
  ******************************************************************************/
 #include <algorithm>
 #include <cstdio>
-#include <random>
 #include "CReadFile.h"
 #include "CServerParams.h"
 #include "CDebugger.h"
@@ -33,8 +32,9 @@
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
 #include <cstring>
-
-void showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }
+#include "utils/StyleSheetValidation.h"
+#include "utils/StyleSheetHandler.h"
+#include "utils/lintDataset.h"
 
 CWMSExtensions::CWMSExtensions() {
   opacity = 100;
@@ -61,20 +61,6 @@ bool CServerParams::isDebugLoggingEnabled() const {
   return true;
 }
 
-bool CServerParams::isAutoOpenDAPResourceEnabled() {
-  if (this->datasetLocation.empty() == false) {
-    return false;
-  }
-  if (autoOpenDAPEnabled == -1) {
-    autoOpenDAPEnabled = 0;
-    if (cfg->AutoResource.size() > 0) {
-      if (cfg->AutoResource[0].attr.enableautoopendap == ("true")) autoOpenDAPEnabled = 1;
-    }
-  }
-  if (autoOpenDAPEnabled == 1) return true;
-  return false;
-}
-
 bool CServerParams::isAutoLocalFileResourceEnabled() {
   /* When a dataset is configured, autoscan should be disabled */
   if (this->datasetLocation.empty() == false) {
@@ -90,10 +76,7 @@ bool CServerParams::isAutoLocalFileResourceEnabled() {
   return false;
 }
 
-bool CServerParams::isAutoResourceEnabled() {
-  if (isAutoOpenDAPResourceEnabled() || isAutoLocalFileResourceEnabled()) return true;
-  return false;
-}
+bool CServerParams::isAutoResourceEnabled() { return isAutoLocalFileResourceEnabled(); }
 
 bool checkIfPathHasValidTokens(const std::string &path) { return checkForValidTokens(path, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]"); }
 
@@ -307,9 +290,7 @@ static void substituteExtraEnvironment(std::string &configFileData, const std::v
 }
 
 int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile start %s", pszConfigFile.c_str());
   std::string configFileData;
   try {
     configFileData = readFile(pszConfigFile);
@@ -317,49 +298,166 @@ int CServerParams::parseConfigFile(const std::string &pszConfigFile) {
     CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
     return 1;
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile: File contents read.");
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile: File contents read.");
   std::string datasetName = CT::basename(pszConfigFile);
 
   try {
     substituteStandardEnvironment(configFileData);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::parseConfigFile: substituteStandardEnvironment done");
-#endif
+    StopWatch_Measure("CServerParams::parseConfigFile: substituteStandardEnvironment done");
 
     // Environment elements declare extra variables to substitute. Finding them requires parsing the XML first,
     // so this extra pass is only done when the file can contain them.
     if (configFileData.find("Environment") != std::string::npos) {
-#ifdef MEASURETIME
-      StopWatch_Stop("CServerParams::parseConfigFile start extra substitutions");
-#endif
+      StopWatch_Measure("CServerParams::parseConfigFile start extra substitutions");
       CServerConfig environmentConfig;
       if (parseConfig(&environmentConfig, configFileData, datasetName) == 0 && !environmentConfig.Configuration.empty()) {
         substituteExtraEnvironment(configFileData, environmentConfig.Configuration[0].Environment, verbose);
       }
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("CServerParams::parseConfigFile: substituteExtraEnvironment done");
-#endif
+    StopWatch_Measure("CServerParams::parseConfigFile: substituteExtraEnvironment done");
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }
 
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile start parseConfig");
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile start parseConfig");
   int status = parseConfig(&configObj, configFileData, datasetName);
-#ifdef MEASURETIME
-  StopWatch_Stop("CServerParams::parseConfigFile done parseConfig");
-#endif
+  StopWatch_Measure("CServerParams::parseConfigFile done parseConfig");
+  if (status == 0 && lintOutputEnabled) {
+    numXMLAttributesNotRecognized += lintConfiguredStyles(configFileData, datasetName);
+  }
 
   if (status == 0 && configObj.Configuration.size() == 1) {
     return 0;
   }
   CDBError("Invalid XML file %s", pszConfigFile.c_str());
   return 1;
+}
+
+// Returns the real path of a directory with a trailing slash, or empty when it does not exist
+static std::string realDirectory(const std::string &path) {
+  char *resolved = realpath(path.c_str(), nullptr);
+  if (resolved == nullptr) return "";
+  std::string directory = std::string(resolved) + "/";
+  free(resolved);
+  return directory;
+}
+
+// Resolves a png file from a STYLESHEET (SymbolInterval file, LegendGraphic value) to its real path. Only existing .png files in the
+// symbol directories (or below) are allowed: {ADAGUC_PATH}data/symbols, {ADAGUC_PATH}data/resources and {ADAGUC_DATASET_DIR}.
+// The error is the same for every refusal, so it does not tell whether a file exists.
+static bool resolveStyleSheetPngFile(std::string &file) {
+  std::vector<std::string> symbolDirs;
+  if (const char *adagucPath = getenv("ADAGUC_PATH")) {
+    symbolDirs.push_back(realDirectory(std::string(adagucPath) + "/data/symbols"));
+    symbolDirs.push_back(realDirectory(std::string(adagucPath) + "/data/resources"));
+  }
+  if (const char *datasetDir = getenv("ADAGUC_DATASET_DIR")) {
+    symbolDirs.push_back(realDirectory(datasetDir));
+  }
+  std::string path = file;
+  substituteStandardEnvironment(path);
+  char *resolved = realpath(path.c_str(), nullptr);
+  std::string resolvedPath = resolved == nullptr ? "" : resolved;
+  free(resolved);
+  bool inSymbolDir = std::any_of(symbolDirs.begin(), symbolDirs.end(), [&](const std::string &dir) { return !dir.empty() && resolvedPath.starts_with(dir); });
+  if (!inSymbolDir || !resolvedPath.ends_with(".png")) {
+    CDBError("STYLESHEET: file [%s] is not a .png in a symbol directory", file.c_str());
+    return false;
+  }
+  file = resolvedPath;
+  return true;
+}
+
+int CServerParams::applyStyleSheet(const std::string &styleSheetXml) {
+  if (cfg == nullptr) return 1;
+  // XML starts with '<'. Anything else is read as base64 encoded XML, optionally compressed.
+  std::optional<std::string> decoded = styleSheetToXml(styleSheetXml);
+  if (!decoded) return 1;
+  std::string xml = std::move(*decoded);
+  if (xml.starts_with("<?xml")) {
+    size_t declarationEnd = xml.find("?>");
+    xml = declarationEnd == std::string::npos ? "" : CT::trim(std::string_view(xml).substr(declarationEnd + 2));
+  }
+  if (!xml.starts_with("<Configuration")) {
+    xml = "<Configuration>" + xml + "</Configuration>";
+  }
+  if (!isAllowedStyleSheet(xml)) return 1;
+
+  CServerConfig styleSheetConfig;
+  if (parseConfig(&styleSheetConfig, xml, "STYLESHEET") != 0 || styleSheetConfig.Configuration.size() != 1) {
+    CDBError("Unable to parse STYLESHEET");
+    return 1;
+  }
+  auto &received = styleSheetConfig.Configuration[0];
+  if (received.Style.size() > 1) {
+    CDBError("STYLESHEET may contain at most one Style, got %zu", received.Style.size());
+    return 1;
+  }
+  for (auto &style: received.Style) {
+    // Every IncludeStyle adds the elements of the included style again
+    if (style.IncludeStyle.size() > 4) {
+      CDBError("STYLESHEET may contain at most 4 IncludeStyle elements, got %zu", style.IncludeStyle.size());
+      return 1;
+    }
+    // drawContour has one bit per contour line
+    if (style.ContourLine.size() > 32) {
+      CDBError("STYLESHEET may contain at most 32 ContourLine elements, got %zu", style.ContourLine.size());
+      return 1;
+    }
+    // Every DataPostProc goes over the whole grid, and add_dataobject allocates a grid
+    if (style.DataPostProc.size() > 8) {
+      CDBError("STYLESHEET may contain at most 8 DataPostProc elements, got %zu", style.DataPostProc.size());
+      return 1;
+    }
+    // Other algorithms use name for a layer or file
+    for (const auto &dataPostProc: style.DataPostProc) {
+      if (!dataPostProc.attr.name.empty() && dataPostProc.attr.algorithm != "add_dataobject") {
+        CDBError("STYLESHEET: DataPostProc attribute [name] is only allowed for add_dataobject");
+        return 1;
+      }
+    }
+    for (auto &symbolInterval: style.SymbolInterval) {
+      if (!resolveStyleSheetPngFile(symbolInterval.attr.file)) return 1;
+    }
+    // The LegendGraphic value is read as an image by CCreateLegend
+    for (auto &legendGraphic: style.LegendGraphic) {
+      if (!legendGraphic.attr.value.empty() && !resolveStyleSheetPngFile(legendGraphic.attr.value)) return 1;
+    }
+    // Only configured styles may be included. Checked before the STYLESHEET style is appended, so it cannot include
+    // itself: including itself several times would multiply at every level of nesting.
+    for (const auto &includeStyle: style.IncludeStyle) {
+      if (getServerStyleIndexByName(includeStyle.attr.name) < 0) {
+        CDBError("STYLESHEET: IncludeStyle [%s] is not a configured style", includeStyle.attr.name.c_str());
+        return 1;
+      }
+    }
+  }
+
+  // Replace in place, so indices into cfg->Legend stay valid
+  for (const auto &receivedLegend: received.Legend) {
+    auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), [&receivedLegend](const auto &legend) { return legend.attr.name == receivedLegend.attr.name; });
+    if (it != cfg->Legend.end()) {
+      *it = receivedLegend;
+    } else {
+      cfg->Legend.push_back(receivedLegend);
+    }
+  }
+  // A Legend of the STYLESHEET style must be configured or in the STYLESHEET
+  for (const auto &style: received.Style) {
+    for (const auto &legend: style.Legend) {
+      if (!legend.elementValue.empty() && getServerLegendIndexByName(legend.elementValue) < 0) {
+        CDBError("STYLESHEET: Legend [%s] is not configured or in the STYLESHEET", legend.elementValue.c_str());
+        return 1;
+      }
+    }
+  }
+  // Appended, not looked up by name: CDataSource::getStyle uses it for every layer
+  if (received.Style.size() == 1) {
+    cfg->Style.push_back(received.Style[0]);
+    styleSheetStyleIndex = cfg->Style.size() - 1;
+  }
+  return 0;
 }
 
 std::string CServerParams::getResponseHeaders(int mode) {

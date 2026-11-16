@@ -69,6 +69,12 @@ int fieldWidthAsPixels(const std::vector<std::string> &column, int dashWidth, in
   }
 }
 
+float convertValueToClass(float val, float interval) {
+  float f = int(val / interval);
+  if (val < 0) f -= 1;
+  return f * interval;
+}
+
 std::vector<std::string> extractColumn(size_t drawIntervals, int minInterval, const std::vector<CServerConfig::XMLE_ShadeInterval> &shadeIntervals, bool isMin) {
   // We calculate the min column
   // Convert the min into an array of std::string

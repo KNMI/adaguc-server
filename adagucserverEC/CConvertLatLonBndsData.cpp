@@ -29,7 +29,6 @@
 #include "CCDFObject.h"
 #include "CCDFTypes.h"
 #include "CDebugger.h"
-#include "CTString.h"
 #include <netcdf.h>
 
 static const bool CConvertLatLonBnds_DEBUG = false;

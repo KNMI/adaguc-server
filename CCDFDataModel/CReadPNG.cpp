@@ -25,13 +25,10 @@
 
 #include "CReadPNG.h"
 
-#include <unistd.h>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <cstdarg>
 #include <algorithm>
-#include <cfenv>
 #include <cmath>
 #define PNG_DEBUG 3
 #include <png.h>

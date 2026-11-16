@@ -26,10 +26,6 @@
 #include "CDataReader.h"
 #include "CDebugger.h"
 #include "CDataSource.h"
-#include "CServerError.h"
-#include "CDirReader.h"
-#include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
 #include "CProj4ToCF.h"
 #include "CStopWatch.h"
 #include "CDFObjectStore.h"
@@ -49,10 +45,7 @@
 #include "CConvertH5VolScan.h"
 #include "CConvertLatLonGrid.h"
 #include "CConvertLatLonBnds.h"
-#include "CDBFactory.h"
 #include "CReporter.h"
-#include "CCDFHDF5IO.h"
-#include "CDBFileScanner.h"
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 #include <string>
@@ -60,7 +53,6 @@
 #include "CTString.h"
 #include "utils/projectionUtils.h"
 
-// #define MEASURETIME
 bool verboseLogging = false;
 
 #define uchar unsigned char
@@ -655,9 +647,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     return 1;
   }
 
-  if (verbose) {
-    StopWatch_Stop("XY dimensions read");
-  }
+  StopWatch_Measure("XY dimensions read");
 
   if (verbose) {
     CDBDebug("PROJ4 = [%s]", dataSource->nativeProj4.c_str());
@@ -749,7 +739,7 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
 
 void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
 
-  if (dataSource->formatConverterActive) {
+  if (dataSource->formatConverterActive || dataSource->srvParams->isTrajectory) {
     dataSource->stride2DMap = 1;
     return;
   }
@@ -838,9 +828,10 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
   if (singleCellMode) {
     double orgX = dfdim_X[0] - dataSource->dfCellSizeX / 2.0f;
     double orgY = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
-    dataSource->dfBBOX[0] = orgY + (x + 2) * dataSource->dfCellSizeX;
-    dataSource->dfBBOX[1] = orgX + (y + 2) * dataSource->dfCellSizeY;
-    dataSource->dfBBOX[2] = orgX + (x + 0) * dataSource->dfCellSizeX;
+    // Bounding box of cell (x, y), using the same edge convention as the whole-grid bbox above.
+    dataSource->dfBBOX[0] = orgX + (x + 0) * dataSource->dfCellSizeX;
+    dataSource->dfBBOX[1] = orgY + (y + 1) * dataSource->dfCellSizeY;
+    dataSource->dfBBOX[2] = orgX + (x + 1) * dataSource->dfCellSizeX;
     dataSource->dfBBOX[3] = orgY + (y + 0) * dataSource->dfCellSizeY;
   }
 
@@ -884,8 +875,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (x != -1 && y != -1) {
     singleCellMode = true;
   }
-  std::string dataSourceFilename;
-  dataSourceFilename = (dataSource->getFileName());
+  std::string dataSourceFilename = dataSource->getFileName();
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   // Use autoscale of legendcolors when the legendscale factor has been set to zero.
@@ -941,9 +931,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
-  if (verbose) {
-    StopWatch_Stop("parseDimensions done");
-  }
+  StopWatch_Measure("parseDimensions done");
   if (dataSource->useLonTransformation != -1 && gridExtent == NULL) {
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
       Proc::swapPixelsAtLocation(dataSource, dataSource->getDataObject(varNr)->cdfVariable, 0);
@@ -1014,9 +1002,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("Working on variable %s, %lu/%lu", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
     }
 
-    if (verbose) {
-      StopWatch_Stop("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
-    }
+    StopWatch_Measure("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
 
     // Get Unit
     CDF::Attribute *varUnits = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
@@ -1046,9 +1032,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
     }
 
-    if (verbose) {
-      StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
-    }
+    StopWatch_Measure("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
   }
 
   if (dataSource->enablePostProcessors) {
@@ -1084,9 +1068,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-    if (verbose) {
-      StopWatch_Stop("Reading _FillValue");
-    }
+    StopWatch_Measure("Reading _FillValue");
     CDF::Attribute *fillValue = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("_FillValue");
     if (fillValue != NULL) {
 
@@ -1102,10 +1084,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDBDebug("CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT");
     }
 
-    if (verbose) {
-      StopWatch_Stop("start reading image data");
-    }
+    StopWatch_Measure("start reading image data");
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
+      // True when the data is read from the file here, so it is not scaled yet
+      bool dataIsRead = false;
 
       if (dataSource->formatConverterActive == false) {
 
@@ -1113,6 +1095,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         if (dataSource->getDataObject(varNr)->cdfVariable->enableCache == false) {
           dataSource->getDataObject(varNr)->cdfVariable->freeData();
         }
+        dataIsRead = dataSource->getDataObject(varNr)->cdfVariable->data == nullptr;
 
         if (dataSource->getDataObject(varNr)->cdfVariable->readData(dataSource->getDataObject(varNr)->cdfVariable->getType(), start.data(), count.data(), stride.data()) != 0) {
           CDBError("Unable to read data for variable %s in file %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), dataSource->getFileName().c_str());
@@ -1136,9 +1119,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
       }
 
-      if (verbose) {
-        StopWatch_Stop("data read");
-      }
+      StopWatch_Measure("data read");
 
       // Swap X, Y dimensions so that pointer x+y*w works correctly
 
@@ -1246,7 +1227,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
       CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
       CDF::Attribute *add_offset = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
-      if (!appliedScaleOffset && scale_factor != nullptr) {
+      // The flag stays on the (cached) variable after an earlier read, for example of another level. Data read again from the
+      // file must be scaled again, but the _FillValue and nodata value were scaled already.
+      bool scaleNodata = !appliedScaleOffset;
+      if ((!appliedScaleOffset || dataIsRead) && scale_factor != nullptr) {
         appliedScaleOffset = true;
         dataSource->getDataObject(varNr)->cdfVariable->setAttribute("ADAGUC_SCALE_OFFSET_APPLIED", CDF_BYTE, appliedScaleOffset);
 
@@ -1267,21 +1251,23 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_FLOAT) {
           // Preserve the original nodata value, so it remains a nice short rounded number.
-          float fNoData = (float)dataSource->getDataObject(varNr)->dfNodataValue;
-          float fscale_factor = (float)dfscale_factor;
-          float fadd_offset = (float)dfadd_offset;
+          auto fNoData = (float)dataSource->getDataObject(varNr)->dfNodataValue;
+          auto fscale_factor = (float)dfscale_factor;
+          auto fadd_offset = (float)dfadd_offset;
           // packed data to be unpacked to FLOAT:
           if (fscale_factor != 1.0f || fadd_offset != 0.0f) {
-            float *_data = (float *)dataSource->getDataObject(varNr)->cdfVariable->data;
+            auto  _data = (float *)dataSource->getDataObject(varNr)->cdfVariable->data;
             size_t l = dataSource->getDataObject(varNr)->cdfVariable->getSize();
             for (size_t j = 0; j < l; j++) {
               _data[j] = _data[j] * fscale_factor + fadd_offset;
             }
           }
           // Convert the nodata type and put it back
-          dataSource->getDataObject(varNr)->dfNodataValue = fNoData * fscale_factor + fadd_offset;
-          float d = dataSource->getDataObject(varNr)->dfNodataValue;
-          dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_FLOAT, d);
+          if (scaleNodata) {
+            dataSource->getDataObject(varNr)->dfNodataValue = fNoData * fscale_factor + fadd_offset;
+            float d = dataSource->getDataObject(varNr)->dfNodataValue;
+            dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_FLOAT, d);
+          }
         }
 
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_DOUBLE) {
@@ -1292,14 +1278,14 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           }
 
           // Convert the nodata type
-          dataSource->getDataObject(varNr)->dfNodataValue = dataSource->getDataObject(varNr)->dfNodataValue * dfscale_factor + dfadd_offset;
-          dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_DOUBLE, dataSource->getDataObject(varNr)->dfNodataValue);
+          if (scaleNodata) {
+            dataSource->getDataObject(varNr)->dfNodataValue = dataSource->getDataObject(varNr)->dfNodataValue * dfscale_factor + dfadd_offset;
+            dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_DOUBLE, dataSource->getDataObject(varNr)->dfNodataValue);
+          }
         }
       }
 
-      if (verbose) {
-        StopWatch_Stop("Scale and offset applied");
-      }
+      StopWatch_Measure("Scale and offset applied");
     }
     if (dataSource->enablePostProcessors) {
       getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
@@ -1322,9 +1308,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       styleConfiguration->stretchLegend(min, max);
     }
 
-    if (verbose) {
-      StopWatch_Stop("all read");
-    }
+    StopWatch_Measure("all read");
   }
 
   if (verbose) {

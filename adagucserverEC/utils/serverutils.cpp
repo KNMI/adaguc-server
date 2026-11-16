@@ -1,13 +1,9 @@
-
 #include "serverutils.h"
 #include "CTString.h"
 #include "CRequest.h"
 #include "ConfigurationUtils.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
 #include "CServerParams.h"
-#include "CXMLParser.h"
+#include <vector>
 
 bool checkIfFileMatchesLayer(std::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
   // Get the directory of the file to scan:
@@ -79,4 +75,16 @@ std::set<std::string> findDataSetsToScan(std::string layerPathToScan, bool verbo
   }
 
   return datasetsToScan;
+}
+
+size_t copyFileToStream(FILE *in, FILE *out) {
+  std::vector<char> buffer(1 << 16);
+  size_t total = 0;
+  size_t n;
+  while ((n = fread(buffer.data(), 1, buffer.size(), in)) > 0) {
+    size_t written = fwrite(buffer.data(), 1, n, out);
+    total += written;
+    if (written != n) break;
+  }
+  return total;
 }

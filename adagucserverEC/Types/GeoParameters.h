@@ -27,37 +27,39 @@
 #define CGeoParams_H
 #include "CTString.h"
 #include <cmath>
-#include <map>
 #include <cstddef>
 
 struct i4point {
   int x, y;
+  bool operator==(const i4point &) const = default;
   double distance(i4point point);
 };
 
 struct f8point {
   double x, y;
+  bool operator==(const f8point &) const = default;
   f8point rad();
 };
 
 struct i4box {
   int left, bottom, right, top;
-  void operator=(const int bbox[4]);
+  i4box &operator=(const int (&bbox)[4]);
   i4point span();
   void sort();
   void clip(i4box clip);
-  void toArray(int box[4]);
+  void toArray(int (&box)[4]);
 };
 
 struct f8box {
   double left, bottom, right, top;
-  void operator=(const double bbox[4]);
+  f8box &operator=(const double (&bbox)[4]);
   f8point span();
   void sort();
   void clip(i4box clip);
-  void toArray(double box[4]);
+  void toArray(double (&box)[4]);
   f8box swapXY();
   double get(size_t index);
+  bool operator==(const f8box &) const = default;
 };
 /**
  * Custom comparison operator for the BBOX
@@ -66,7 +68,7 @@ bool operator<(f8box a, f8box b);
 /**
  * Makes a BBOX from a array of doubles
  */
-f8box makef8box(double *dfBBOX);
+f8box makef8box(const double (&dfBBOX)[4]);
 
 struct f8component {
   double u, v;
@@ -82,6 +84,7 @@ struct GeoParameters {
   double cellsizeX = 0;
   double cellsizeY = 0;
   std::string crs;
+  bool operator==(const GeoParameters &) const = default;
 };
 
 #endif

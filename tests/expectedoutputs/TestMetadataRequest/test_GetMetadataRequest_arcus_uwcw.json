@@ -8,7 +8,7 @@
           "hasMultipleValues": 1,
           "hidden": true,
           "serviceName": "height_above_ground_level_in_m",
-          "type": "dimtype_none",
+          "type": "dimtype_vertical",
           "units": "m",
           "values": "2"
         },

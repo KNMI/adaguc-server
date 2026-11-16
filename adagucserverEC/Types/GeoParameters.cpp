@@ -34,11 +34,12 @@ double i4point::distance(i4point point) {
 
 f8point f8point::rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }
 
-void i4box::operator=(const int bbox[4]) {
+i4box &i4box::operator=(const int (&bbox)[4]) {
   left = bbox[0];
   bottom = bbox[1];
   right = bbox[2];
   top = bbox[3];
+  return *this;
 }
 i4point i4box::span() { return {.x = right - left, .y = top - bottom}; };
 void i4box::sort() {
@@ -51,22 +52,23 @@ void i4box::clip(i4box clip) {
   if (right > clip.right) right = clip.right;
   if (top > clip.top) top = clip.top;
 }
-void i4box::toArray(int box[4]) {
+void i4box::toArray(int (&box)[4]) {
   box[0] = left;
   box[1] = bottom;
   box[2] = right;
   box[3] = top;
 }
-void f8box::operator=(const double bbox[4]) {
+f8box &f8box::operator=(const double (&bbox)[4]) {
   left = bbox[0];
   bottom = bbox[1];
   right = bbox[2];
   top = bbox[3];
+  return *this;
 }
 
 bool operator<(f8box a, f8box b) { return std::make_tuple(a.left, a.bottom, a.right, a.top) < std::make_tuple(b.left, b.bottom, b.right, b.top); }
 
-f8box makef8box(double *dfBBOX) { return {.left = dfBBOX[0], .bottom = dfBBOX[1], .right = dfBBOX[2], .top = dfBBOX[3]}; }
+f8box makef8box(const double (&dfBBOX)[4]) { return {.left = dfBBOX[0], .bottom = dfBBOX[1], .right = dfBBOX[2], .top = dfBBOX[3]}; }
 
 f8point f8box::span() { return {.x = right - left, .y = top - bottom}; }
 
@@ -80,7 +82,7 @@ void f8box::clip(i4box clip) {
   if (right > clip.right) right = clip.right;
   if (top > clip.top) top = clip.top;
 }
-void f8box::toArray(double box[4]) {
+void f8box::toArray(double (&box)[4]) {
   box[0] = left;
   box[1] = bottom;
   box[2] = right;

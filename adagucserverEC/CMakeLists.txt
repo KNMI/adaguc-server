@@ -1,6 +1,7 @@
 find_package(LibXml2 REQUIRED)
 find_package(Cairo REQUIRED)
 find_package(Freetype REQUIRED)
+find_package(Fontconfig REQUIRED)
 find_package(NetCDF REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PNG REQUIRED)
@@ -10,8 +11,10 @@ find_package(GD REQUIRED)
 find_package(CURL)
 find_package(HDF5 REQUIRED)
 find_package(PostgreSQL REQUIRED)
-find_package(GDAL REQUIRED)
+find_package(TIFF REQUIRED)
+find_package(GeoTIFF REQUIRED)
 find_package(WebP REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_library(
     adagucserverEC
@@ -21,8 +24,6 @@ add_library(
     CAutoConfigure.h
     CAutoResource.cpp
     CAutoResource.h
-    CCairoPlotter.cpp
-    CCairoPlotter.h
     CColor.h
     CColor.cpp
     CConvertADAGUCPoint.cpp
@@ -80,6 +81,10 @@ add_library(
     handleTileRequest.cpp
     utils/LayerMetadataStore.h
     utils/LayerMetadataStore.cpp
+    utils/StyleSheetValidation.h
+    utils/StyleSheetValidation.cpp
+    utils/StyleSheetHandler.h
+    utils/StyleSheetHandler.cpp
     utils/XMLGenUtils.h
     utils/XMLGenUtils.cpp
     utils/CXMLTemplates.h
@@ -115,7 +120,7 @@ add_library(
     Types/LayerMetadataType.cpp
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
-    GenericDataWarper/gdwDrawTriangle.cpp
+    GenericDataWarper/GDWState.h
     GenericDataWarper/GDWDrawFunctionSettings.h
     GenericDataWarper/GDWDrawFunctionSettings.cpp   
     CGenericDataWarper.cpp
@@ -166,14 +171,20 @@ add_library(
     CDataReader.h
     CDataSource.cpp
     CDataSource.h
-    CDrawFunction.cpp
     CDrawFunction.h
     CDrawImage.cpp
     CDrawImage.h
     CFillTriangle.cpp
     CFillTriangle.h
-    CGDALDataWriter.cpp
-    CGDALDataWriter.h
+    CGridFileDataWriter.cpp
+    CGridFileDataWriter.h
+    GridFileWriters/GridFileData.h
+    GridFileWriters/AAIGridWriter.cpp
+    GridFileWriters/AAIGridWriter.h
+    GridFileWriters/GeoTiffGeoKeys.cpp
+    GridFileWriters/GeoTiffGeoKeys.h
+    GridFileWriters/GeoTiffWriter.cpp
+    GridFileWriters/GeoTiffWriter.h
     CGeoJSONData.cpp
     CGeoJSONData.h
     CGetFileInfo.cpp
@@ -194,8 +205,6 @@ add_library(
     CImgRenderers/getPointStyle.cpp
     CImgRenderers/getVectorStyle.h
     CImgRenderers/getVectorStyle.cpp
-    CImgWarpBilinear.cpp
-    CImgWarpBilinear.h
     CImgWarpBoolean.cpp
     CImgWarpBoolean.h
     CImgWarpGeneric/CImgWarpGeneric.cpp
@@ -208,8 +217,6 @@ add_library(
     CImgWarpNearestRGBA.h
     CImgRenderFieldVectors.h
     CImgRenderFieldVectors.cpp
-    CInspire.cpp
-    CInspire.h
     CLegendRenderers/CCreateLegend.cpp
     CLegendRenderers/CCreateLegend.h
     CLegendRenderers/numericutils.cpp
@@ -232,8 +239,6 @@ add_library(
     CRectangleText.h
     CRequest.cpp
     CRequest.h
-    CSLD.cpp
-    CSLD.h
     CServerError.cpp
     CServerError.h
     CServerParams.cpp
@@ -245,6 +250,10 @@ add_library(
     CUniqueRequests/requestUtils.cpp
     CUniqueRequests/CURUniqueRequests.h
     CUniqueRequests/CURUniqueRequests.cpp
+    CUniqueRequests/trajectory.cpp
+    CUniqueRequests/trajectory.h
+    CUniqueRequests/trajectorySampling.cpp
+    CUniqueRequests/trajectorySampling.h
     CXMLGen.cpp
     CXMLGen.h
     CXMLSerializerInterface.cpp
@@ -267,12 +276,16 @@ add_library(
     CImageOperators/drawContour.cpp
     write_png.cpp
     write_png.h
+    write_png32.cpp
+    write_png32.h
+    write_webp.cpp
+    write_webp.h
     fork_server.h
     fork_server.cpp
 )
 
-target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
-target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
+target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GeoTIFF_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
+target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} Fontconfig::Fontconfig ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${GeoTIFF_LIBRARIES} TIFF::TIFF ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES} ZLIB::ZLIB)
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)

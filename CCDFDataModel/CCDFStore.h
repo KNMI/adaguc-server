@@ -26,13 +26,7 @@
 #ifndef CCDFSTORE_H
 #define CCDFSTORE_H
 
-#include <cstdio>
-#include <vector>
-#include <iostream>
-#include <sys/stat.h>
-#include "CTString.h"
 #include "CDirReader.h"
-#include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CDebugger.h"
 typedef std::map<std::string, CDFReader *> CDFStore_CDFReadersMap;

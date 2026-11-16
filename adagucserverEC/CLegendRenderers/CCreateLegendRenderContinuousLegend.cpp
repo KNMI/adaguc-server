@@ -2,6 +2,38 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 #include <algorithm>
+#include <cmath>
+
+static std::string floatToString(int numdigits, float number) {
+  // Interpret numdigits as "number of decimals"
+  int decimals = numdigits;
+
+  // Clamp
+  if (decimals < 0) decimals = 0;
+  if (decimals > 6) decimals = 6;
+
+  // Round to requested number of decimals
+  float factor = powf(10.0f, (float)decimals);
+  float rounded = roundf(number * factor) / factor;
+
+  // Corner case to avoid "-0.000" and similar
+  if (fabsf(rounded) < 1e-12f) rounded = 0.0f;
+
+  return CT::printf("%.*f", decimals, rounded);
+}
+
+static std::string floatToString(float min, float max, float number) {
+  float range = fabsf(max - min);
+
+  // Estimate precision from range magnitude only
+  int magnitude = int(floor(log10(range)));
+  int decimals = std::max(0, -magnitude);
+
+  // Clamp
+  if (decimals > 6) decimals = 6;
+
+  return floatToString(decimals, number);
+}
 
 double CCreateLegend::nextTick(double prev) {
   double prevLog = log10(prev);
@@ -26,7 +58,7 @@ double CCreateLegend::nextTick(double prev) {
 
 std::string CCreateLegend::formatTickLabel(const std::string &textformatting, double tick, double min, double max, int tickRound) {
   if (textformatting.empty() == false) {
-    return CT::printf(textformatting.c_str(), tick);
+    return CT::formatFloat(textformatting, tick);
   }
   if (tickRound == 0) {
     return floatToString(min, max, tick);
@@ -84,19 +116,25 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
   int minColor = 239;
   int maxColor = 0;
+  CColor minColorC = styleConfiguration->getCColorFromLegendPaletteIndex(minColor);
+  CColor maxColorC = styleConfiguration->getCColorFromLegendPaletteIndex(maxColor);
 
   int pLeft = 4;
   int pTop = (int)(legendImage->geoParams.height - legendHeight);
   for (int j = 0; j < cbH; j++) {
     int c = int((float(cbH - (j + 1)) / cbH) * 240.0f + 0.5);
-    for (int x = pLeft; x < pLeft + ((int)cbW + 1) * scaling; x++) {
-      legendImage->setPixelIndexed(x, j + 7 + dH + pTop, c);
+    if (c > 239) c = 239; // rounding can push the top row into the reserved 240-255 standard-palette range
+    CColor rampColor = styleConfiguration->getCColorFromLegendPaletteIndex(c);
+    if (rampColor.a > 0) {
+      for (int x = pLeft; x < pLeft + ((int)cbW + 1) * scaling; x++) {
+        legendImage->setPixel(x, j + 7 + dH + pTop, rampColor);
+      }
     }
   }
 
   // TODO: Remove scaling, investigate how scaling factor applies
-  legendImage->line(pLeft, 6 + dH + pTop, pLeft, (int)cbH + 7 + dH + pTop, lineWidth, CColor(0, 0, 0, 255));
-  legendImage->line(((int)cbW + 1) * scaling + pLeft, 6 + dH + pTop, ((int)cbW + 1) * scaling + pLeft, (int)cbH + 7 + dH + pTop, lineWidth, 248);
+  legendImage->line(pLeft, 6 + dH + pTop, pLeft, (int)cbH + 7 + dH + pTop, lineWidth, standardCColorBlack);
+  legendImage->line(((int)cbW + 1) * scaling + pLeft, 6 + dH + pTop, ((int)cbW + 1) * scaling + pLeft, (int)cbH + 7 + dH + pTop, lineWidth, standardCColorBlack);
 
   int triangleLX = pLeft;                         // start X of triangle
   int triangleRX = pLeft + triangleWidth;         // end X of triangle
@@ -114,29 +152,33 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     // Draw upper triangle
     for (int j = 0; j < (triangle1BY - triangle1TY) + 1; j++) {
       for (int x = triangleSlope * float(j); x < triangleWidth / 2 + 1; x++) {
-        legendImage->setPixelIndexed(x + triangleLX, triangle1BY - j, int(minColor));
-        legendImage->setPixelIndexed(triangleRX - x, triangle1BY - j, int(minColor));
+        if (minColorC.a > 0) {
+          legendImage->setPixel(x + triangleLX, triangle1BY - j, minColorC);
+          legendImage->setPixel(triangleRX - x, triangle1BY - j, minColorC);
+        }
       }
     }
-    legendImage->line(triangleLX, triangle1BY, triangleMX, triangle1TY - 1, lineWidth, 248);
-    legendImage->line(triangleRX, triangle1BY, triangleMX, triangle1TY - 1, lineWidth, 248);
+    legendImage->line(triangleLX, triangle1BY, triangleMX, triangle1TY - 1, lineWidth, standardCColorBlack);
+    legendImage->line(triangleRX, triangle1BY, triangleMX, triangle1TY - 1, lineWidth, standardCColorBlack);
   } else {
-    legendImage->line(triangleLX, triangle1BY + 1, triangleRX, triangle1BY + 1, lineWidth, 248);
+    legendImage->line(triangleLX, triangle1BY + 1, triangleRX, triangle1BY + 1, lineWidth, standardCColorBlack);
   }
 
   if (drawLowerTriangle) {
     // Draw lower triangle
     for (int j = 0; j < (triangle2BY - triangle2TY) + 1; j++) {
       for (int x = triangleSlope * float((triangle2BY - triangle2TY) + 1 - j); x < triangleWidth / 2 + 1; x++) {
-        legendImage->setPixelIndexed(x + triangleLX, triangle2BY - j, int(maxColor));
-        legendImage->setPixelIndexed(triangleRX - x, triangle2BY - j, int(maxColor));
+        if (maxColorC.a > 0) {
+          legendImage->setPixel(x + triangleLX, triangle2BY - j, maxColorC);
+          legendImage->setPixel(triangleRX - x, triangle2BY - j, maxColorC);
+        }
       }
     }
 
-    legendImage->line(triangleLX, triangle2TY, triangleMX, triangle2BY + 1, lineWidth, 248);
-    legendImage->line(triangleRX, triangle2TY, triangleMX, triangle2BY + 1, lineWidth, 248);
+    legendImage->line(triangleLX, triangle2TY, triangleMX, triangle2BY + 1, lineWidth, standardCColorBlack);
+    legendImage->line(triangleRX, triangle2TY, triangleMX, triangle2BY + 1, lineWidth, standardCColorBlack);
   } else {
-    legendImage->line(triangleLX, triangle2TY, triangleRX, triangle2TY, lineWidth, 248);
+    legendImage->line(triangleLX, triangle2TY, triangleRX, triangle2TY, lineWidth, standardCColorBlack);
   }
 
   double classes = 6;
@@ -174,6 +216,11 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     std::vector<std::string> logLabels;
     std::vector<double> tickValues;
 
+    // nextTick multiplies, so starting at 0 (for example when min underflows) the ticks would never reach max
+    if (min <= 0 || std::isnan(min)) {
+      CDBError("Log legend needs a minimum above 0, got %g", min);
+      return 1;
+    }
     double tick = min;
     while (tick < max) {
       logLabels.push_back(formatTickLabel(textformatting, tick, min, max, tickRound));
@@ -202,7 +249,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       double c = (difference / (log(max) - log(min))) * cbH;
       int labelY = (int)c + 6 + dH + pTop;
 
-      legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, labelY, lineWidth, 248);
+      legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, labelY, lineWidth, standardCColorBlack);
 
       if (!fontLocation.empty()) {
         const std::string &label = logLabels[i];
@@ -216,7 +263,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         }
 
         int textY = labelY + 4;
-        legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, label.c_str(), 248);
+        legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, label.c_str(), standardCColorBlack);
       }
     }
 
@@ -247,7 +294,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
       std::string label;
       if (!textformatting.empty()) {
-        label = CT::printf(textformatting.c_str(), v);
+        label = CT::formatFloat(textformatting, v);
       } else if (tickRound == 0) {
         label = floatToString(decimals, v);
       } else {
@@ -273,7 +320,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       double lineY = cbH - ((j - loopMin) / (loopMax - loopMin)) * cbH;
       if (lineY < -2 || lineY >= cbH + 2) continue;
 
-      legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
+      legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, standardCColorBlack);
 
       const std::string &label = allLabels[labelIndex++];
 
@@ -286,7 +333,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         textX -= (minusWidth - numberWidth); // Fix for non-monospaced fonts
       }
 
-      legendImage->drawText(textX, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation.c_str(), fontSize * scaling, 0, label.c_str(), 248);
+      legendImage->drawText(textX, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation.c_str(), fontSize * scaling, 0, label.c_str(), standardCColorBlack);
     }
   }
   // Get units
@@ -296,7 +343,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   }
 
   if (!fontLocation.empty()) {
-    legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);
+    legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), standardCColorBlack);
   }
   if (CIMAGEDATAWRITER_DEBUG) {
 

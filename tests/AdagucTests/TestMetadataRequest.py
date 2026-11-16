@@ -2,9 +2,11 @@
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
 
+import json
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
 from conftest import (
+    clean_postgres,
     make_adaguc_env,
     run_adaguc_and_compare_json,
     update_db,
@@ -26,12 +28,36 @@ class TestMetadataRequest:
     reset_datasetsloaded()
     AdagucTestTools().mkdir_p(testresultspath)
 
+    def test_metadata_layer_title_with_apostrophe(self):
+        """A layer title containing an apostrophe is stored and returned intact."""
+        clean_postgres()
+        env = make_adaguc_env("adaguc.testmetadata_quoted_title", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, force_update=True)
+        run_adaguc_and_compare_json(
+            env,
+            "test_metadata_layer_title_with_apostrophe.json",
+            "dataset=adaguc.testmetadata_quoted_title&service=WMS&request=GetMetadata&format=application/json&layer=data",
+        )
+
+    def test_metadata_refresh_after_single_file_scans(self):
+        """Metadata reflects the available times after each file is ingested."""
+        clean_postgres()
+        env = make_adaguc_env("adaguc.testtimeseriescached", self.testresultspath, self.expectedoutputsspath)
+        query = "dataset=adaguc.testtimeseriescached&service=WMS&request=GetMetadata&format=application/json"
+        basepath = ADAGUC_PATH + "/data/datasets/netcdf_5dims/"
+
+        update_db(env, filepath=basepath + "netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc", force_update=True)
+        run_adaguc_and_compare_json(env, "test_metadata_refresh_after_first_file.json", query)
+
+        update_db(env, filepath=basepath + "netcdf_5dims_seq2/nc_5D_20170101001500-20170101002500.nc", force_update=True)
+        run_adaguc_and_compare_json(env, "test_metadata_refresh_after_second_file.json", query)
+
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl(self):
         """
         This checks standard metadata call for arcus uwcw
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_GetMetadataRequest_arcus_uwcw.json",
@@ -44,7 +70,7 @@ class TestMetadataRequest:
         Also note that the maxquerylimit is set to 2 on purpose, to demonstrate that this does have no influence on the metadata result.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_specific_query.json",
@@ -56,7 +82,7 @@ class TestMetadataRequest:
         This checks for correct behavior when passing a invalid reference time, a status OK should be returned with empty dims.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_existing_referencetime.json",
@@ -70,7 +96,7 @@ class TestMetadataRequest:
         env = make_adaguc_env("adaguc.tests.arcus_uwcw", self.testresultspath, self.expectedoutputsspath)
 
         env2 = make_adaguc_env("blabla", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env2,
             "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_non_datasets.json",
@@ -83,7 +109,7 @@ class TestMetadataRequest:
         This checks the metadata call for a specific reference time. The time dimension will then advertise the matching dates for the given model run.
         """
         env = make_adaguc_env("adaguc.tests.arcus_uwcw_ml.xml", self.testresultspath, self.expectedoutputsspath)
-        update_db(env, True)
+        update_db(env, force_update=True)
         run_adaguc_and_compare_json(
             env,
             "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_model_runs.json",
@@ -104,3 +130,20 @@ class TestMetadataRequest:
             "test_metadata_call_adaguc_tests_arcus_uwcw_air_temperature_ml_for_soundings_all_modelruns_080.json",
             "dataset=adaguc.tests.arcus_uwcw_ml&service=WMS&request=Getmetadata&format=application/json&layer=air_temperature_ml&DIM_reference_time=2026-09-28T08:00:00Z",
         )
+
+    def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes(self):
+        """
+        This checks that many reference times are returned as an interval in the GetMetadata response.
+        """
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw_manymodelruns", self.testresultspath, self.expectedoutputsspath)
+        update_db(env, force_update=True)
+        filename = "test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl_many_referencetimes.json"
+        run_adaguc_and_compare_json(
+            env,
+            filename,
+            "dataset=adaguc.tests.arcus_uwcw_manymodelruns&&service=WMS&request=GetMetadata&format=application/json",
+        )
+        with open(self.testresultspath + filename, encoding="utf-8") as f:
+            metadata = json.load(f)
+        reference_time = metadata["adaguc.tests.arcus_uwcw_manymodelruns"]["air_temperature"]["dims"]["reference_time"]
+        assert reference_time["values"] == "2026-09-30T12:00:00Z/2026-10-01T09:00:00Z/PT1H"

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -73,6 +76,33 @@ namespace CT {
     buf.resize(numWritten);
     return buf;
   }
+
+  bool isSafeFloatFormat(std::string_view format) {
+    if (format.size() > 64) return false;
+    auto skipDigits = [&format](size_t &j) {
+      size_t start = j;
+      while (j < format.size() && std::isdigit((unsigned char)format[j])) j++;
+      return j - start <= 2;
+    };
+    int conversions = 0;
+    for (size_t j = 0; j < format.size(); j++) {
+      if (format[j] != '%') continue;
+      j++;
+      if (j < format.size() && format[j] == '%') continue; // Literal %
+      while (j < format.size() && std::string_view("-+ #0").find(format[j]) != std::string_view::npos) j++;
+      if (!skipDigits(j)) return false;
+      if (j < format.size() && format[j] == '.') {
+        j++;
+        if (!skipDigits(j)) return false;
+      }
+      // No length modifiers, *, $, %n, %s, %p or integer conversions
+      if (j >= format.size() || std::string_view("fFeEgGaA").find(format[j]) == std::string_view::npos) return false;
+      conversions++;
+    }
+    return conversions <= 1;
+  }
+
+  std::string formatFloat(const std::string &format, double value) { return printf(isSafeFloatFormat(format) ? format.c_str() : "%g", value); }
 
   void printfconcat(std::string &appendString, const char *a, ...) {
     std::string buf(CT_STRING_PRINT_BUFFER_SIZE + 1, '\0');
@@ -176,14 +206,46 @@ namespace CT {
     return result;
   }
 
-  // Trim from the start (in place)
-  void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-  }
-
-  // Trim from the end (in place)
-  void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+  bool decodeBase64(std::string_view input, std::string &output) {
+    output.clear();
+    output.reserve(input.size() / 4 * 3);
+    unsigned int bits = 0;
+    int numBits = 0;
+    size_t numChars = 0;
+    size_t numPadding = 0;
+    for (char c: input) {
+      if (c == '\r' || c == '\n' || c == '\t') continue;
+      if (c == '=') {
+        numPadding++;
+        continue;
+      }
+      // Characters after padding
+      if (numPadding > 0) return false;
+      int value;
+      if (c >= 'A' && c <= 'Z') {
+        value = c - 'A';
+      } else if (c >= 'a' && c <= 'z') {
+        value = c - 'a' + 26;
+      } else if (c >= '0' && c <= '9') {
+        value = c - '0' + 52;
+      } else if (c == '+' || c == '-') {
+        value = 62;
+      } else if (c == '/' || c == '_') {
+        value = 63;
+      } else {
+        return false;
+      }
+      numChars++;
+      bits = (bits << 6) | value;
+      numBits += 6;
+      if (numBits >= 8) {
+        numBits -= 8;
+        output += (char)((bits >> numBits) & 0xFF);
+      }
+    }
+    // One character of a group of four can not encode a byte, and padding only completes the last group
+    if (numChars % 4 == 1 || numPadding > 2 || (numPadding > 0 && (numChars + numPadding) % 4 != 0)) return false;
+    return true;
   }
 
   std::string trim(std::string_view input) {
@@ -196,6 +258,25 @@ namespace CT {
 
   // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
   double toDouble(const std::string &input) { return atof(trim(input).c_str()); }
+
+  std::optional<double> parseDouble(std::string_view input) {
+    std::string trimmed = trim(input);
+    if (trimmed.empty()) return std::nullopt;
+    char *end = nullptr;
+    double value = strtod(trimmed.c_str(), &end);
+    if (end != trimmed.c_str() + trimmed.size() || std::isnan(value)) return std::nullopt;
+    return value;
+  }
+
+  std::optional<int> parseInt(std::string_view input) {
+    std::string trimmed = trim(input);
+    size_t start = !trimmed.empty() && (trimmed[0] == '-' || trimmed[0] == '+') ? 1 : 0;
+    if (trimmed.size() == start || trimmed.find_first_not_of("0123456789", start) != std::string::npos) return std::nullopt;
+    errno = 0;
+    long long value = strtoll(trimmed.c_str(), nullptr, 10);
+    if (errno == ERANGE || value < INT_MIN || value > INT_MAX) return std::nullopt;
+    return (int)value;
+  }
 
   std::string randomString(const int length) {
     const char charset[] = "0123456789"

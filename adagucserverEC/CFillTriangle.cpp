@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CFillTriangle.h"
+#include <cstddef>
 typedef short disc;
 
 void fillTriangleGouraud(float *data, float *values, int W, int H, int *xP, int *yP) {

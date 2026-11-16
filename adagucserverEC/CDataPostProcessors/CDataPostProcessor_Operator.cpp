@@ -1,7 +1,6 @@
 #include "CDataPostProcessor_Operator.h"
 #include "CCDFObject.h"
 #include "CDebugger.h"
-#include "CTString.h"
 
 /************************/
 /*      CDPPOperator  */

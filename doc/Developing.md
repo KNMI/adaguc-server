@@ -85,6 +85,7 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_TRACE_TIMINGS=FALSE
 export EXTERNALADDRESS=http://localhost:8080
 export ADAGUC_FORK_ENABLE=TRUE
+export ADAGUC_STYLESHEET_ENABLE=TRUE
 ```
 
 # 4. compile adaguc server binaries
@@ -110,6 +111,7 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_TRACE_TIMINGS=TRUE
 export EXTERNALADDRESS=http://localhost:8080
 export ADAGUC_FORK_ENABLE=TRUE
+export ADAGUC_STYLESHEET_ENABLE=TRUE
 
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited

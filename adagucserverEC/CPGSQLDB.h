@@ -25,9 +25,6 @@
 
 #ifndef CPGSQLDB_H
 #define CPGSQLDB_H
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include "libpq-fe.h" /* libpq header file */
 #include "CDBStore.h"
 #define CPGSQLDB_MAX_STR_LEN 8191
@@ -58,6 +55,18 @@ public:
 
   */
   int checkTable(const char *pszTableName, const char *pszColumns);
+
+  /**
+   * Escapes a string so it can be safely embedded inside a single-quoted SQL literal.
+   * Use this for any value that did not originate from this server's own configuration
+   * (e.g. a requested dimension value from the query string) before interpolating it
+   * into a query string with CT::printf/CT::printfconcat.
+   * @param input The raw, unescaped string value
+   * @return The escaped string (without surrounding quotes)
+   * @throws CDB_CONNECTION_ERROR if there is no active database connection
+   */
+  std::string escapeString(const std::string &input);
+
   int query(const char *pszQuery);
   /**
    * Queries to a store

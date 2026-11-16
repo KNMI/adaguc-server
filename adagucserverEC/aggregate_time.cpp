@@ -1,9 +1,7 @@
 #include <vector>
-#include <iterator>
 #include <algorithm>
 #include <cstdio>
 #include <netcdf.h>
-#include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 #include "CDirReader.h"

@@ -13,7 +13,8 @@
         <ContourLine width="2" linecolor="#0000EE" textcolor="#FFFFFF" textstrokecolor="#000000" textsize="20.0" textformatting="%2.2f" classes="0.15" dashing="21,7"/>
         <ContourLine width="3" linecolor="#FF0000" textcolor="#808080" textstrokecolor="#FF0000" textsize="30.0" textformatting="%2.1f" classes="0.10"/>
         <ContourLine width="5" linecolor="#00FF00" textcolor="#00FF00" textstrokecolor="#000000" textsize="40.0" textformatting="%2.2f" classes="0.20" dashing="5,5"/>
-        <RenderMethod>contour</RenderMethod>
+        <RenderMethod>generic</RenderMethod>
+        <RenderSettings interpolationmethod="bilinear" drawgrid="false"/>
     </Style>
 
     <!-- Layers -->

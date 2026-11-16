@@ -2,14 +2,12 @@
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CServerParams.h"
-#include "CDataPostProcessors/CDataPostProcessor.h"
 #include <utils/LayerUtils.h>
 #include "CCDFObject.h"
 #include "CDBFileScanner.h"
 #include "CDFObjectStore.h"
 #include "CDebugger.h"
 #include "CImageDataWriter.h"
-#include "CTString.h"
 #include "CTime.h"
 #include "CImageWarper.h"
 
@@ -139,7 +137,6 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   image->enableTransparency(true);
   image->setTrueColor(true);
   image->createImage(srvParam->geoParams);
-  image->create685Palette();
   image->rectangle(0, 0, srvParam->geoParams.width, srvParam->geoParams.height, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
   std::string fontFile = image->getFontLocation();
   std::string timeValue = "No time dimension specified";

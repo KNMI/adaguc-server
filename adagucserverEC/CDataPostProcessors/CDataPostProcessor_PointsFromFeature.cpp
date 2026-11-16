@@ -1,4 +1,3 @@
-#include <type_traits>
 #include "CDataPostProcessor_PointsFromFeature.h"
 #include <CImageWarper.h>
 #include <CConvertGeoJSON.h>
@@ -6,7 +5,6 @@
 #include <utils/GeometryUtils.h>
 #include "CCDFObject.h"
 #include "CDebugger.h"
-#include "CTString.h"
 
 /************************/
 /*      CDPPointsFromFeature     */

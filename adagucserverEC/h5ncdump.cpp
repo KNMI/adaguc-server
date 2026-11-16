@@ -24,13 +24,8 @@
  ******************************************************************************/
 
 #include <cstdio>
-#include <vector>
-#include <iostream>
-#include <iostream>
-#include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
-#include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 
 int main(int argCount, char **argVars) {

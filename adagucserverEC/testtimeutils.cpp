@@ -18,7 +18,6 @@
 
 #include "CDebugger.h"
 #include "CppUnitLite/TestHarness.h"
-#include "CTString.h"
 #include "timeutils.h"
 #include "Types/LayerMetadataType.h"
 #include "utils/XMLGenUtils.h"

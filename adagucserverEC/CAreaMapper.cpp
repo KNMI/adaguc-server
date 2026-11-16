@@ -35,7 +35,6 @@
 #include "CDrawImage.h"
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include "CDrawFunction.h"
-#include "CTString.h"
 
 void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {
   this->dataSource = dataSource;
@@ -192,10 +191,10 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
             draw2 = true;
           }
           if (draw) {
-            settings.drawImage->setPixelIndexed(destPixelX, destPixelY, 249);
+            settings.drawImage->setPixel(destPixelX, destPixelY, standardCColorPaleYellow);
           }
           if (draw2) {
-            settings.drawImage->setPixelIndexed(destPixelX, destPixelY, 244);
+            settings.drawImage->setPixel(destPixelX, destPixelY, standardCColorLightBlue);
           }
         }
       }

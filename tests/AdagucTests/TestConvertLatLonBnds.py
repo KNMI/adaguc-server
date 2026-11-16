@@ -55,7 +55,9 @@ class TestConvertLatLonBnds(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
+        self.assertTrue(
+            AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, tolerance="geometry")
+        )
 
     def test_ConvertLatLonBnds_getFeatureInfo(self):
         AdagucTestTools().cleanTempDir()

@@ -198,7 +198,7 @@ const char *WMS_1_1_1_GetCapabilities_Header =
     <Format>application/vnd.ogc.se_blank</Format>
   </Exception>
   <VendorSpecificCapabilities />
-  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <UserDefinedSymbolization SupportSLD="0" UserLayer="0" UserStyle="0" RemoteWFS="0"/>
   <Layer>
     <Title>[GLOBALLAYERTITLE]</Title>)"""";
 
@@ -258,5 +258,4 @@ const char *WMS_1_3_0_GetCapabilities_Header = R""""(<?xml version="1.0" encodin
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 )"""";

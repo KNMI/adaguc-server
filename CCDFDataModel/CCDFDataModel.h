@@ -29,9 +29,7 @@
 #define CCDFDATAMODEL_DUMP_STANDARD 0
 #define CCDFDATAMODEL_DUMP_JSON 1
 
-#include "CCDFTypes.h"
 #include "CCDFAttribute.h"
-#include "CCDFDimension.h"
 #include "CCDFVariable.h"
 #include "CCDFObject.h"
 #include "CCDFReader.h"

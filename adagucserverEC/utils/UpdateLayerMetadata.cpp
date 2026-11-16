@@ -8,11 +8,7 @@
 #include "LayerUtils.h"
 #include <set>
 #include "CDBFileScanner.h"
-#include "CDataSource.h"
-#include "CDrawImage.h"
-#include "CImageWarper.h"
 #include "CServerParams.h"
-#include "CXMLParser.h"
 
 typedef std::pair<std::string, std::string> DatasetAndLayerPair;
 

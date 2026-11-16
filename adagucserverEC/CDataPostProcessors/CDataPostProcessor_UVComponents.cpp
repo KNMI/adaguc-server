@@ -1,12 +1,8 @@
 #include "CDataPostProcessor_UVComponents.h"
 #include "CRequest.h"
-#include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 #include <CImgRenderFieldVectors.h>
-#include "CDrawImage.h"
 #include "CImageWarper.h"
-#include "CTString.h"
-#include "CXMLParser.h"
 
 /************************/
 /*      CDDPUVComponents  */
@@ -128,7 +124,7 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
     CImageWarper warper;
     if (dataSource->srvParams->geoParams.crs.empty()) {
-      dataSource->srvParams->geoParams.crs = "EPSG:4236";
+      dataSource->srvParams->geoParams.crs = "EPSG:4326";
     }
     warper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
 

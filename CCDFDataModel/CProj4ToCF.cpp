@@ -385,8 +385,7 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   // Create a list with key value pairs of projection options
 
   std::vector<CKeyValuePair> projKVPList;
-  std::string proj4CTString;
-  proj4CTString = (proj4String);
+  std::string proj4CTString = proj4String;
   auto projElements = CT::split(proj4CTString, " ");
 
   if (projElements.size() < 2) {

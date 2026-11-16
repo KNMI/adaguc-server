@@ -47,8 +47,7 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                1,
-                0.02,
+                tolerance="antialiasing",
             )
         )
 

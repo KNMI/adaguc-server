@@ -3,10 +3,12 @@
 import asyncio
 import logging
 import os
+from urllib.parse import quote, urlencode
 from adaguc.CGIRunner import HTTP_STATUSCODE_400_BAD_REQUEST
 from adaguc.CGIRunner import HTTP_STATUSCODE_404_NOT_FOUND
 from adaguc.CGIRunner import HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY
 from adaguc.CGIRunner import HTTP_STATUSCODE_500_TIMEOUT
+from adaguc.fork_settings import MAX_FORK_REQUEST_BYTES
 
 from fastapi import APIRouter, Request, Response
 
@@ -17,6 +19,32 @@ wmsWcsRouter = APIRouter(responses={404: {"description": "Not found"}})
 
 logger = logging.getLogger(__name__)
 
+# Maximum size of the query string passed to adaguc-server. The query string must fit in one fork
+# server request, and without fork server in one environment variable of the subprocess (128 KiB on Linux).
+MAX_REQUEST_BYTES = MAX_FORK_REQUEST_BYTES
+
+# Largest request line plus headers that uvicorn accepts, set as h11_max_incomplete_event_size. Its HTTP parser h11
+# refuses a request with 400 when more than 16 KB of it has arrived without the end of the headers. Whether that
+# happens depends on how the request is split over network reads, so a long STYLESHEET would fail at random.
+# This leaves room for a query string of MAX_REQUEST_BYTES plus the headers.
+MAX_REQUEST_HEAD_BYTES = MAX_REQUEST_BYTES + 16384
+
+
+def build_query_string(params) -> str:
+    """
+    Builds the QUERY_STRING for adaguc-server from already decoded (key, value) pairs.
+    Keys and values are encoded again: they may contain &, =, %, + and newlines, adaguc-server decodes them per parameter.
+    """
+    pairs = []
+    for k, query_param in params:
+        key, separator, value = k.partition("=")
+        # Hack for an url encoded dataset= parameter (i.e. dataset%3DHARM_N25): the key is then "dataset=HARM_N25"
+        if separator and key.upper() == "DATASET" and "=" not in value:
+            pairs.append((key, value))
+        else:
+            pairs.append((k, query_param))
+    return "&" + urlencode(pairs, quote_via=quote) if pairs else ""
+
 
 @wmsWcsRouter.get("/wms")
 @wmsWcsRouter.get("/wcs")
@@ -26,6 +54,8 @@ async def handle_wms(req: Request):
     """
     Handle /wms endpoint
     """
+    params = list(req.query_params.items())
+
     adaguc_instance = setup_adaguc()
 
     adagucenv = {}
@@ -35,16 +65,10 @@ async def handle_wms(req: Request):
     adagucenv["ADAGUC_ONLINERESOURCE"] = base_url + "adaguc-server?"
     adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
-    query_string = ""
-    for k in req.query_params:
-        param_parts = k.split("=")
-        # Hack for urlencode dataset= parametwer (i.e. dataset%03DHARM_N25)
-        if len(param_parts) == 2 and param_parts[0].upper() == "DATASET":
-            query_string += f"&{param_parts[0]}={param_parts[1]}"
-        else:
-            query_param = req.query_params[k]
-            query_param = query_param.replace("+", "%2B")
-            query_string += f"&{k}={query_param}"
+    query_string = build_query_string(params)
+    # Encoding again can make the query string longer than the request url
+    if len(query_string) > MAX_REQUEST_BYTES:
+        return Response(content=f"Request parameters too large, maximum is {MAX_REQUEST_BYTES} bytes encoded", status_code=413)
 
     # Run adaguc-server
     status, data, headers = await adaguc_instance.runADAGUCServer(query_string, env=adagucenv, showLogOnError=False, showLog=False)

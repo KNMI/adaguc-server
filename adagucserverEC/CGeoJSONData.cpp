@@ -25,9 +25,7 @@
 
 #include "CGeoJSONData.h"
 #include "CDebugger.h"
-#include <iostream>
 
-#include <cstdio>
 #include <cinttypes>
 
 std::string FeatureProperty::toString() {
@@ -70,8 +68,7 @@ float GeoPoint::getLon() { return this->lon; }
 float GeoPoint::getLat() { return this->lat; }
 
 std::string GeoPoint::toString() {
-  std::string s;
-  s = CT::printf("point(%f, %f)", lon, lat);
+  std::string s = CT::printf("point(%f, %f)", lon, lat);
   return s;
 }
 
@@ -100,8 +97,7 @@ void Polygon::newHole() {
 void Polygon::addHolePoint(float lon, float lat) { holes[holes.size() - 1].addPoint(lon, lat); }
 
 std::string Polygon::toString() {
-  std::string s;
-  s = CT::printf("polygon(%d) holes[%zu]\n", points.getSize(), holes.size());
+  std::string s = CT::printf("polygon(%d) holes[%zu]\n", points.getSize(), holes.size());
   return s;
 }
 
@@ -115,8 +111,7 @@ void Feature::newPolygon() {
 }
 
 std::string Polyline::toString() {
-  std::string s;
-  s = CT::printf("polyline(%d)\n", points.getSize());
+  std::string s = CT::printf("polyline(%d)\n", points.getSize());
   return s;
 }
 
@@ -157,8 +152,7 @@ std::vector<Polyline> *Feature::getPolylines() { return &polylines; }
 std::vector<GeoPoint> *Feature::getPoints() { return &points; }
 
 std::string Feature::toString() {
-  std::string s;
-  s = CT::printf("polygons: %zu\n", polygons.size());
+  std::string s = CT::printf("polygons: %zu\n", polygons.size());
   for (unsigned int i = 0; i < polygons.size(); i++) {
     s += polygons[i].toString();
   }

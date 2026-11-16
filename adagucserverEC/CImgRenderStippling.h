@@ -26,10 +26,10 @@
 #ifndef CImgRenderStippling_H
 #define CImgRenderStippling_H
 #include <float.h>
-#include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
 #include "CDataSource.h"
+#include "utils/NodataUtils.h"
 #include "CDrawImage.h"
 
 #define CImgRenderStipplingModeDefault 0
@@ -65,14 +65,7 @@ private:
 
   template <class T> static void drawFunction(int x, int y, T val, GDWState &, CStipplingSettings &settings) {
 
-    bool isNodata = false;
-    if (settings.hasNodataValue) {
-      if ((val) == (T)settings.dfNodataValue) isNodata = true;
-    }
-    if (!(val == val)) isNodata = true;
-    if (!isNodata)
-      if (settings.legendValueRange)
-        if (val < settings.legendLowerRange || val > settings.legendUpperRange) isNodata = true;
+    const bool isNodata = isNodataValue(val, settings);
     if (!isNodata) {
       if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
         settings.dataField[x + y * settings.width] = (float)val;

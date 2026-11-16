@@ -1,41 +1,59 @@
 #include <CImgRenderFieldVectors.h>
-#include "CImgWarpBilinear.h"
 #include "f8vector.h"
+#include <algorithm>
 #include <utils.h>
 #include <string>
-#include <vector>
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CImageWarper.h"
-#include "CTString.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 
 bool verboseLog = false;
 
-f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8point gridCoordUR, CImageWarper *warper, bool gridRelative) {
+/**
+ * Rotates a grid-relative wind vector (u along the grid's x axis, v along its y axis) to eastward/northward components.
+ *
+ * The rotation angle is the angle between grid north (the grid's +y direction) and true north at gridPoint. Grid north is
+ * found by reprojecting gridPoint and a second point gridYStep further along the grid's y axis. The grid is assumed to be
+ * conformal (grid x perpendicular to grid y on the earth), so a single angle describes the whole transformation.
+ *
+ * @param speedVector The u/v components in grid space
+ * @param gridPoint Location in model (grid) coordinates where the angle is evaluated, normally the grid point of the value
+ * @param gridYStep Positive step along the grid's y axis in model coordinates, used to determine grid north. A small fraction of a cell.
+ * @param warper Warper initialised with the model projection
+ * @param gridRelative If false, the vector is already east/north and is returned unchanged
+ */
+f8component jacobianTransform(f8component speedVector, f8point gridPoint, double gridYStep, CImageWarper *warper, bool gridRelative) {
   if (gridRelative) {
-    f8point pnt0 = {.x = gridCoordLL.x, .y = gridCoordLL.y};
+    f8point pnt0 = gridPoint;
     warper->reprojModelToLatLon(pnt0);
     f8point pntRad0 = pnt0.rad();
-    f8point pntN = {.x = gridCoordLL.x, .y = gridCoordUR.y};
+    f8point pntN = {.x = gridPoint.x, .y = gridPoint.y + gridYStep};
     warper->reprojModelToLatLon(pntN);
     f8point pntRadN = pntN.rad();
 
-    // (lon_pntNorth, lat_pntNorth)
+    // pntN = gridPoint moved gridYStep along the grid's y axis (grid north)
     //     ^
-    //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
     //     |
-    // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
-    // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
-    // The vector towards north pole at this location will be (0,1,0)
-    // The tangent plane at this location is XY wil a normal (0, 0, 1)
-    // Nummerical approach using projection onto a unit sphere
+    //     |
+    // pnt0 = gridPoint, where we have (u,v)
+    //
+    // Both points are placed on the unit sphere. Grid north at pnt0 is the direction from pnt0 to pntN, projected onto the
+    // tangent plane at pnt0. Without the projection the chord dips below the tangent plane by half the arc it spans, and
+    // that dip would be read as a rotation (for example on a plain lat/lon grid, where the correct angle is 0).
+    // True north at pnt0 is the earth's axis (0, 0, 1) projected onto the same tangent plane.
 
     f8vector pntNSph = {.x = cos(pntRadN.y) * cos(pntRadN.x), .y = cos(pntRadN.y) * sin(pntRadN.x), .z = sin(pntRadN.y)};
     f8vector pnt0Sph = {.x = cos(pntRad0.y) * cos(pntRad0.x), .y = cos(pntRad0.y) * sin(pntRad0.x), .z = sin(pntRad0.y)};
-    f8vector pntNSphNorm = (pntNSph - pnt0Sph).norm();
     f8vector normSph = pnt0Sph.norm();
+    f8vector chord = pntNSph - pnt0Sph;
+    double chordAlongNormal = dot(chord, normSph);
+    f8vector chordInTangentPlane = {
+        .x = chord.x - chordAlongNormal * normSph.x,
+        .y = chord.y - chordAlongNormal * normSph.y,
+        .z = chord.z - chordAlongNormal * normSph.z,
+    };
+    f8vector pntNSphNorm = chordInTangentPlane.norm();
     f8vector pntNSphRot = {
         .x = -normSph.z * normSph.x,
         .y = -normSph.z * normSph.y,
@@ -43,7 +61,8 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8po
     };
     f8vector pntNSphRotNorm = pntNSphRot.norm();
 
-    double vectorAngle = acos(dot(pntNSphNorm, pntNSphRotNorm));
+    // Both vectors have unit length, but rounding can push their dot product just outside [-1, 1], where acos returns NaN.
+    double vectorAngle = acos(std::clamp(dot(pntNSphNorm, pntNSphRotNorm), -1.0, 1.0));
 
     // Determine the sign of the angle
     if (dot(cross(pntNSphRotNorm, pntNSphNorm), normSph) > 0.0) {
@@ -105,12 +124,17 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
   // Use Jacobians for rotating u and v
   // After calculations
   bool gridRelative = isGridRelative(dataSource);
+  // Step along the grid's y axis used to determine grid north: a small fraction of a cell, so the angle is that at the grid point itself.
+  const double gridYStep = 0.01 * fabs(dataSource->dfCellSizeY);
   for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
       size_t p = size_t(x - dPixelExtent[0]) + ((y - dPixelExtent[1]) * gridWidth);
-      f8point gridCoordLL = {.x = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3]};
-      f8point gridCoordUR = {.x = gridCoordLL.x + fabs(dataSource->dfCellSizeX), .y = gridCoordLL.y + fabs(dataSource->dfCellSizeY)};
-      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordLL, gridCoordUR, warper, gridRelative);
+      // Evaluate the rotation at the grid point (the cell centre), where the u/v value is defined and where barbs are drawn.
+      // This assumes u and v share the grid points given by the coordinate variables (Arakawa A, not staggered). That holds
+      // for HARMONIE output as encoded in its GRIB files: u, v and the mass fields have one grid definition without offsets.
+      // Staggered (e.g. Arakawa C) u/v fields are not supported.
+      f8point gridPoint = {.x = dataSource->dfCellSizeX * (x + 0.5) + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * (y + 0.5) + dataSource->dfBBOX[3]};
+      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridPoint, gridYStep, warper, gridRelative);
       uValues[p] = newSpeed.u;
       vValues[p] = newSpeed.v;
     }
@@ -118,110 +142,3 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
   return 0;
 }
 
-std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponents(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, bool enableShade, bool enableContour,
-                                                                                   bool enableBarb, bool drawMap, bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData,
-                                                                                   float *vValueData, int *dpDestX, int *dpDestY) {
-  float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  std::string units = "m/s";
-  units = dObjgetUnits(*dataSource->getDataObject(0));
-
-  // Wind VECTOR
-  int dImageWidth = drawImage->geoParams.width + 1;
-  int dImageHeight = drawImage->geoParams.height + 1;
-  int dPixelDestW = dPixelExtent[2] - dPixelExtent[0];
-  int dPixelDestH = dPixelExtent[3] - dPixelExtent[1];
-  size_t numDestPixels = (dPixelDestW + 1) * (dPixelDestH + 1);
-
-  std::vector<CalculatedWindVector> windVectors; // holds windVectors after calculation to draw them on top
-  bool convertToKnots = false;                   // default is false
-
-  int firstXPos = 0;
-  int firstYPos = 0;
-
-  double tx = ((-drawImage->geoParams.bbox.left) / (drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left)) * double(dImageWidth);
-  double ty = dImageHeight - ((-drawImage->geoParams.bbox.bottom) / (drawImage->geoParams.bbox.top - drawImage->geoParams.bbox.bottom)) * double(dImageHeight);
-
-  // Are u/v values in m/s? (Should we convert for wind barb drawing?)
-  // Depends on value units
-  // Derive convertToKnots from units
-
-  if (verboseLog) {
-    CDBDebug("units = %s", units.c_str());
-  }
-  if (!(units == "kts" || units == "knots")) convertToKnots = true;
-
-  // Number of pixels between the vectors:
-  int vectorDensityPy = 60; // 22;
-  int vectorDensityPx = 60; // 22;
-  firstXPos = int(tx) % vectorDensityPy;
-  firstYPos = int(ty) % vectorDensityPx;
-
-  int stepx = vectorDensityPx; // Raster stride at barb distances
-  int stepy = vectorDensityPy;
-  // If contouring, drawMap or shading is wanted, step through all destination raster points
-  if (enableContour || enableShade || drawMap) {
-    stepy = 1;
-    stepx = 1;
-  }
-  // Loops through complete destination image in screen coord.
-  if (!drawGridVectors) {
-    for (int y = firstYPos - vectorDensityPx; y < dImageHeight; y = y + stepy) {
-      for (int x = firstXPos - vectorDensityPy; x < dImageWidth; x = x + stepx) {
-        if (x >= 0 && y >= 0) {
-          size_t p = size_t(x + y * dImageWidth); // pointer in dest. image
-          f8component comp = {.u = uValueData[p], .v = vValueData[p]};
-          if (comp.u == comp.u && comp.v == comp.v && comp.u != fNodataValue && comp.v != fNodataValue) {
-
-            if ((int(x - firstXPos) % vectorDensityPy == 0 && (y - firstYPos) % vectorDensityPx == 0) || (enableContour == false && enableShade == false)) {
-              // Calculate coordinates from requested coordinate system
-              double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left)) + drawImage->geoParams.bbox.left;
-              double projectedCoordY = ((double(dImageHeight - y) / double(dImageHeight)) * (drawImage->geoParams.bbox.top - drawImage->geoParams.bbox.bottom)) + drawImage->geoParams.bbox.bottom;
-
-              // Transform view point on screen to lat/lon
-              double coordLon = projectedCoordX;
-              double coordLat = projectedCoordY;
-              warper->reprojToLatLon(coordLon, coordLat);
-
-              //  Create offset coordinate, 0.001 degree higher
-              double projectedCoordXOffset = coordLon;
-              double projectedCoordYOffset = coordLat - 0.001;
-              // Convert back to view coordinate
-              warper->reprojfromLatLon(projectedCoordXOffset, projectedCoordYOffset);
-
-              // Calculate angle correction
-              float viewDirCorrection = ((atan2(projectedCoordYOffset - projectedCoordY, projectedCoordXOffset - projectedCoordX))) + M_PI_2;
-              bool flip = coordLat < 0; // Remember if we have to flip barb dir for southern hemisphere
-              flip = false;
-
-              windVectors.push_back({.x = x, .y = y, .dir = comp.direction(), .viewDirCorrection = viewDirCorrection, .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = flip});
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // TODO: Follow up
-  if (((enableVector || enableBarb) && drawGridVectors)) {
-    int wantedSpacing = 40;
-    float distPoint = hypot(dpDestX[numDestPixels / 2 + 1] - dpDestX[numDestPixels / 2], dpDestY[numDestPixels / 2 + 1] - dpDestY[numDestPixels / 2]);
-
-    int stepx = int(float(wantedSpacing) / distPoint + 0.5);
-    if (stepx < 1) stepx = 1;
-    int stepy = stepx;
-    for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + stepy) { // TODO Refactor to GridExtent
-      for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + stepx) {
-        size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * dPixelDestW));
-        // Skip rest if x,y outside drawArea
-        if ((dpDestX[p] >= 0) && (dpDestX[p] < dImageWidth) && (dpDestY[p] >= 0) && (dpDestY[p] < dImageHeight)) {
-          f8component comp = {.u = uValueData[p], .v = vValueData[p]};
-          if (comp.u != fNodataValue && comp.v != fNodataValue) {
-            // TODO IN FOLLOW UP
-          }
-        }
-      }
-    }
-  }
-
-  return windVectors;
-}

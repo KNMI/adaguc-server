@@ -63,9 +63,9 @@ For example to use discrete legend classes with the nearest neighbour or bilinea
 ```xml
  <Style name="elevation_nl" title="Height map nearest neighbour" abstract="Height map for AHN using nearest neighbour rendering">
 
-    <RenderSettings renderhint="discreteclasses"/>
+    <RenderSettings renderhint="discreteclasses" interpolationmethod="bilinear"/>
 
-    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
 
     <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />

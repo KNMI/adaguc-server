@@ -48,10 +48,10 @@ size="5"/>
 <WCS>
 <Title>DEMO_SERVICE</Title>
 
-<WCSFormat name="NetCDF3" driver="ADAGUC"
-mimetype="Content-Type:text/plain" options="FORCENC3=TRUE"/>
-<WCSFormat name="NetCDF4" driver="ADAGUC"
-mimetype="Content-Type:text/plain"/>
+<WCSFormat name="NetCDF3" driver="ADAGUCNetCDF"
+mimetype="Content-Type:application/netcdf"/>
+<WCSFormat name="NetCDF4" driver="ADAGUCNetCDF"
+mimetype="Content-Type:application/netcdf"/>
 </WCS>
 
 <!-- Projections -->
@@ -93,7 +93,8 @@ mimetype="Content-Type:text/plain"/>
 <Legend>rainbow</Legend>
 <Scale>0</Scale>
 <Offset>0</Offset>
-<RenderMethod>nearest,bilinear,nearestpoint</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 </Style>
 
 <!-- Layer configuration -->

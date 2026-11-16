@@ -27,7 +27,6 @@
 #define CImageWarper_H
 #include "CDataReader.h"
 #include <proj.h>
-#include <cmath>
 #include <string>
 #include <vector>
 #include "CDataSource.h"
@@ -36,9 +35,6 @@
 #include "Types/GeoParameters.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-std::string floatToString(float number);
-std::string floatToString(int numdigits, float number);
-std::string floatToString(float min, float max, float number);
 
 class CImageWarper {
 private:
@@ -52,7 +48,7 @@ private:
   bool initialized;
 
   int _initreprojSynchronized(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection> *_prj);
-  int findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX);
+  int findExtentUnSynchronized(CDataSource *dataSource, double (&dfBBOX)[4]);
 
 public:
   bool requireReprojection;
@@ -91,7 +87,7 @@ public:
 
   int reprojToLatLon(double &dfx, double &dfy);
   int decodeCRS(std::string &outputCRS, const std::string &inputCRS, std::vector<CServerConfig::XMLE_Projection> *prj);
-  int findExtent(CDataSource *dataSource, double *dfBBOX);
+  int findExtent(CDataSource *dataSource, double (&dfBBOX)[4]);
   bool isProjectionRequired() { return requireReprojection; }
   /**
    * @brief Get the Proj4 From EPSG code

@@ -12,11 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 class ForkServerSupervisor:
-    def __init__(self, interval: float = 5.0, startup_timeout: float = 10.0):
+    def __init__(self, interval: float = 5.0, startup_timeout: float = 10.0, max_failed_health_checks: int = 3):
         """Initialize the supervisor and its fork-server environment."""
 
         self.interval = interval
         self.startup_timeout = startup_timeout
+        # A running mother is only restarted after this many failed health checks in a row. The health check runs on the
+        # FastAPI event loop: while that loop is busy, for example converting large responses, a healthy mother can miss the
+        # timeout. A restart kills all requests in progress, so it must not happen because of one late answer.
+        self.max_failed_health_checks = max_failed_health_checks
+        self.failed_health_checks = 0
         self.process: asyncio.subprocess.Process | None = None
 
         self.env = os.environ.copy()
@@ -168,11 +173,20 @@ class ForkServerSupervisor:
 
                     # Restart if process crashed
                     if self.process and self.process.returncode is not None:
+                        self.failed_health_checks = 0
                         await self.restart_process()
 
                     # Health check
                     elif not await self.health_check_mother():
-                        await self.restart_process()
+                        self.failed_health_checks += 1
+                        logger.warning(
+                            "Forkserver health check failed (%d of %d)", self.failed_health_checks, self.max_failed_health_checks
+                        )
+                        if self.failed_health_checks >= self.max_failed_health_checks:
+                            self.failed_health_checks = 0
+                            await self.restart_process()
+                    else:
+                        self.failed_health_checks = 0
                 except Exception:
                     logger.exception("Forkserver supervision failed; retrying")
 

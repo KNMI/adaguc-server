@@ -11,7 +11,14 @@ from asyncio.subprocess import Process
 from subprocess import PIPE
 from typing import NamedTuple
 
-from adaguc.fork_settings import MAX_FORK_REQUEST_BYTES, get_fork_socket_path, is_fork_enabled
+from adaguc.fork_settings import (
+    FORK_EXIT_STATUS_BYTES,
+    FORK_EXIT_STATUS_MARKER,
+    FORK_EXIT_TRAILER_BYTES,
+    MAX_FORK_REQUEST_BYTES,
+    get_fork_socket_path,
+    is_fork_enabled,
+)
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
@@ -62,7 +69,7 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     Send a request to the ADAGUC fork server through a Unix socket.
 
     Environment variables required for request handling are serialized and written to the socket.
-    The response contains the normal ADAGUC output, followed by a 4-byte exit status appended by the fork server.
+    The response contains the normal ADAGUC output, followed by FORK_EXIT_STATUS_MARKER and a 4-byte exit status appended by the fork server.
     """
 
     data = [
@@ -81,13 +88,16 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
     message = "\n".join(data)
     message_bytes = message.encode()
     if len(message_bytes) > MAX_FORK_REQUEST_BYTES:
-        return AdagucResponse(status_code=HTTP_STATUSCODE_400_BAD_REQUEST, process_output=None, process_error=b"")
+        process_error = f"Request too large: {len(message_bytes)} bytes, maximum is {MAX_FORK_REQUEST_BYTES}".encode()
+        return AdagucResponse(status_code=HTTP_STATUSCODE_400_BAD_REQUEST, process_output=None, process_error=process_error)
 
     reader, writer = await asyncio.open_unix_connection(get_fork_socket_path())
 
     try:
         writer.write(message_bytes)
         await writer.drain()
+        # Signals the end of the request, the fork server reads until this end of stream
+        writer.write_eof()
 
         process_output = await reader.read()
     finally:
@@ -97,12 +107,14 @@ async def socket_communicate(url: str, env: dict[str, str]) -> AdagucResponse:
         except OSError:
             pass
 
-    if len(process_output) < 4:
+    # The response ends with the marker and the 4-byte exit status. Without the marker the connection was closed before the fork
+    # server wrote the status, for example because it was restarted while the child was running: the response is incomplete.
+    if len(process_output) < FORK_EXIT_TRAILER_BYTES or process_output[-FORK_EXIT_TRAILER_BYTES:-FORK_EXIT_STATUS_BYTES] != FORK_EXIT_STATUS_MARKER:
         raise RuntimeError("Invalid response from ADAGUC fork server: missing exit status")
 
-    # Status code is stored in the last 4 bytes from the received data. It is negative when the child was killed by a signal.
-    status_code = int.from_bytes(process_output[-4:], sys.byteorder, signed=True)
-    process_output = process_output[:-4]
+    # The status is negative when the child was killed by a signal
+    status_code = int.from_bytes(process_output[-FORK_EXIT_STATUS_BYTES:], sys.byteorder, signed=True)
+    process_output = process_output[:-FORK_EXIT_TRAILER_BYTES]
     return AdagucResponse(status_code=status_code, process_output=process_output, process_error=b"")
 
 
@@ -182,7 +194,7 @@ class CGIRunner:
             if response.status_code == HTTP_STATUSCODE_500_TIMEOUT:
                 return HTTP_STATUSCODE_500_TIMEOUT, [], None, b"Adaguc server processs timed out"
             elif response.status_code == HTTP_STATUSCODE_400_BAD_REQUEST:
-                return HTTP_STATUSCODE_400_BAD_REQUEST, [], None, b"Adaguc server processs could not handle request"
+                return HTTP_STATUSCODE_400_BAD_REQUEST, [], None, response.process_error or b"Adaguc server processs could not handle request"
 
         process_output = response.process_output
         process_error = response.process_error

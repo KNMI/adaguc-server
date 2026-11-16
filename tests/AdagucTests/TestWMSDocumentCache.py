@@ -8,6 +8,7 @@ from lxml import etree
 from lxml import objectify
 import re
 from adaguc.AdagucTestTools import AdagucTestTools
+from conftest import clean_postgres
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -40,7 +41,7 @@ class TestWMSDocumentCache(unittest.TestCase):
 
     def test_WMSCMDUpdateDBTailPath(self):
         AdagucTestTools().cleanTempDir()
-        AdagucTestTools().cleanPostgres()
+        clean_postgres()
 
         ADAGUC_PATH = os.environ["ADAGUC_PATH"]
         config = (

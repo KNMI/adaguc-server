@@ -23,8 +23,6 @@
  *
  ******************************************************************************/
 
-#include "CFillTriangle.h"
-#include "CImageWarper.h"
 #include "CConvertLatLonBnds.h"
 #include <string>
 #include <vector>
@@ -32,9 +30,7 @@
 #include "CDataSource.h"
 #include "CDebugger.h"
 #include "CStopWatch.h"
-#include "CTString.h"
 #include "Types/CPointTypes.h"
-#include "Types/GeoParameters.h"
 
 static const bool CConvertLatLonBnds_DEBUG = false;
 static const bool CConvertLatLonGrid_DEBUG = false;
@@ -64,9 +60,7 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
   pointLon->readData(CDF_DOUBLE, true);
   pointLat->readData(CDF_DOUBLE, true);
 
-  if (CConvertLatLonBnds_DEBUG) {
-    StopWatch_Stop("DATA READ");
-  }
+  StopWatch_Measure("DATA READ");
   MinMax lonMinMax;
   MinMax latMinMax;
   lonMinMax.min = -180; // Initialize to whole world
@@ -77,8 +71,8 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     lonMinMax = getMinMax(pointLon);
     latMinMax = getMinMax(pointLat);
   }
+  StopWatch_Measure("MIN/MAX Calculated");
   if (CConvertLatLonBnds_DEBUG) {
-    StopWatch_Stop("MIN/MAX Calculated");
     CDBDebug("%f,%f %f,%f", latMinMax.min, lonMinMax.min, latMinMax.max, lonMinMax.max);
   }
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};

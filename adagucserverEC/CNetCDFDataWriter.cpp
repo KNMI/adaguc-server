@@ -7,6 +7,8 @@
 #include "CGenericDataWarper.h"
 
 #include "CRequest.h"
+#include "utils/serverutils.h"
+#include <memory>
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "CCDFObject.h"
 #include "CImageWarper.h"
@@ -89,6 +91,12 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     CDBDebug(">CNetCDFDataWriter::init");
   }
 
+  // WCS_GoNative defaults to -1 and must have been set to 0 or 1 by the request handling, otherwise the destination grid is undefined.
+  if (srvParam->WCS_GoNative != 0 && srvParam->WCS_GoNative != 1) {
+    CDBError("WCS_GoNative is not set (value %d), cannot determine the destination grid", srvParam->WCS_GoNative);
+    return 1;
+  }
+
   // The destination CDF object structure will be based on the baseDataSource. After that, more variables will be added.
   if (baseDataSource == nullptr) {
     baseDataSource = dataSource;
@@ -117,8 +125,9 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double dfDstBBOX[4];
     double dfSrcBBOX[4];
     // Setup projection
-    //  Set up geo parameters
-    if (srvParam->WCS_GoNative == 1) {
+    //  Set up geo parameters. WCS_GoNative is checked to be 0 or 1 at the start of init, so exactly one of the two branches below sets dfDstBBOX.
+    const bool goNative = srvParam->WCS_GoNative == 1;
+    if (goNative) {
       if (CNetCDFDataWriter_DEBUG) {
         CDBDebug("GO NATIVE");
       }
@@ -147,7 +156,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       CDBDebug("Found srvParamGridProj4Params [%s]", srvParamGridProj4Params.c_str());
     }
 
-    if (srvParam->WCS_GoNative == 0) {
+    if (!goNative) {
       if (CNetCDFDataWriter_DEBUG) {
         CDBDebug("GO NON NATIVE");
       }
@@ -238,8 +247,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     adagucwcsdestgrid = CT::printf("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->geoParams.width, srvParam->geoParams.height, rx, ry, dfDstBBOX[0], dfDstBBOX[1],
                                    dfDstBBOX[2], dfDstBBOX[3], CT::trim(srvParam->geoParams.crs).c_str());
 
-    std::string newHistoryText;
-    newHistoryText = CT::printf("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
+    std::string newHistoryText = CT::printf("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
     destCDFObject->setAttributeText("history", newHistoryText.c_str());
 
     // Write dest grid attribute
@@ -273,8 +281,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     destCDFObject->removeAttribute("geospatial_lon_min");
     destCDFObject->removeAttribute("domain");
-    std::string software;
-    software = CT::printf("ADAGUC WCS Server version %s", ADAGUCSERVER_VERSION);
+    std::string software = CT::printf("ADAGUC WCS Server version %s", ADAGUCSERVER_VERSION);
     destCDFObject->setAttributeText("software", software.c_str());
     destCDFObject->removeAttribute("software_platform");
     destCDFObject->removeAttribute("time_coverage_end");
@@ -518,6 +525,20 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double dfNoData = NAN;
     if (dataSource->getDataObject(j)->hasNodataValue == 1) {
       dfNoData = dataSource->getDataObject(j)->dfNodataValue;
+      // Only the header is read here. CDataReader applies scale_factor and add_offset to the nodata value when it reads the data,
+      // and that value becomes the _FillValue, so fill with it too: otherwise cells without data do not match the _FillValue.
+      CDF::Attribute *scaleFactor = sourceVar->getAttributeNE("scale_factor");
+      if (scaleFactor != nullptr && sourceVar->getAttributeNE("ADAGUC_SCALE_OFFSET_APPLIED") == nullptr) {
+        double dfScaleFactor = 1, dfAddOffset = 0;
+        scaleFactor->getData(&dfScaleFactor, 1);
+        CDF::Attribute *addOffset = sourceVar->getAttributeNE("add_offset");
+        if (addOffset != nullptr) addOffset->getData(&dfAddOffset, 1);
+        if (destVar->getType() == CDF_FLOAT) {
+          dfNoData = (float)dfNoData * (float)dfScaleFactor + (float)dfAddOffset;
+        } else {
+          dfNoData = dfNoData * dfScaleFactor + dfAddOffset;
+        }
+      }
     }
 
     if (CNetCDFDataWriter_DEBUG) {
@@ -558,6 +579,9 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   }
   int status;
   bool verbose = false;
+  // The projection grid of the warper only depends on the source and destination grid, so data sources with the same source grid (like levels) share it.
+  std::unique_ptr<GenericDataWarper> genericDataWarper;
+  GeoParameters genericDataWarperSourceGeo;
   for (size_t i = 0; i < dataSources.size(); i++) {
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
@@ -899,26 +923,29 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         CDBDebug("Warping from %dx%d to %lux%lu", sourceGeo.width, sourceGeo.height, settings.width, settings.height);
       }
 
+      if (!genericDataWarper || !(genericDataWarperSourceGeo == sourceGeo)) {
+        genericDataWarper = std::make_unique<GenericDataWarper>();
+        genericDataWarperSourceGeo = sourceGeo;
+      }
+
       if (drawFunctionMode == CNetCDFDataWriter_NEAREST) {
-        GenericDataWarper genericDataWarper;
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = srvParam->geoParams};
         auto dataType = variable->getType();
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE)                                                                                                                                                                             \
-    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
+    genericDataWarper->render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
         ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_AVG_RGB) {
-        GenericDataWarper genericDataWarper;
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = srvParam->geoParams};
         auto dataType = variable->getType();
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE)                                                                                                                                                                             \
-    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
+    genericDataWarper->render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
         ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
@@ -1054,6 +1081,16 @@ int CNetCDFDataWriter::end() {
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
 
   if (CT::equalsIgnoreCase(srvParam->Format, "NetCDF3")) {
+    // NetCDF-3 (classic) has no 64-bit integer type, so a variable of that type can't be
+    // written as classic output at all. Report this clearly up front instead of letting it
+    // fail deep inside the netCDF library with a cryptic, generic NC_EBADTYPE message.
+    for (CDF::Variable *variable: destCDFObject->variables) {
+      if (variable->currentType == CDF_INT64 || variable->currentType == CDF_UINT64) {
+        CDBError("Unable to write NetCDF3 (classic) output: variable '%s' is a 64-bit integer, which NetCDF3 does not support. Use FORMAT=NetCDF4 instead.", variable->name.c_str());
+        delete netCDFWriter;
+        return 1;
+      }
+    }
     netCDFWriter->setNetCDFMode(3);
   } else {
     netCDFWriter->setNetCDFMode(4);
@@ -1069,8 +1106,7 @@ int CNetCDFDataWriter::end() {
     return 1;
   }
 
-  std::string humanReadableString;
-  humanReadableString = (srvParam->Format.c_str());
+  std::string humanReadableString = srvParam->Format;
   humanReadableString += "_";
   humanReadableString += dObjgetVariableName(*baseDataSource->getDataObject(0));
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {
@@ -1097,7 +1133,7 @@ int CNetCDFDataWriter::end() {
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n", endPos);
     printf("%s%s\r\n\n", "Content-Type:application/netcdf", srvParam->getResponseHeaders(srvParam->getCacheControlOption()).c_str());
-    for (size_t j = 0; j < endPos; j++) putchar(getc(fp));
+    copyFileToStream(fp, stdout);
     fclose(fp);
     fclose(stdout);
   }

@@ -1,4 +1,3 @@
-#include <CXMLGen.h>
 #include "LayerMetadataStore.h"
 #include "XMLGenUtils.h"
 #include "CStopWatch.h"
@@ -12,7 +11,6 @@
 #include "CAutoConfigure.h"
 #include "CCDFObject.h"
 #include "CDBFileScanner.h"
-#include "CDrawImage.h"
 #include "CTString.h"
 
 static const bool CXMLGEN_DEBUG = false;
@@ -239,23 +237,27 @@ int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<Laye
   }
 }
 
-bool isLayerDimATimeDim(CServerConfig::XMLE_Dimension *cfgLayerDim) {
-  return (cfgLayerDim->attr.name == ("time") || (CT::indexOf(cfgLayerDim->attr.name, "time") >= 0 && cfgLayerDim->attr.units == ("ISO8601")));
+// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units.
+// Their values are stored as timestamps (CDBFileScanner, for standard_name time or forecast_reference_time), so they are ordered
+// by value and returned as ISO8601. Autoconfigure names them time or reference_time with ISO8601 units, whatever the NetCDF name.
+bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
+  const auto &name = cfgDim->attr.name;
+  const auto &type = cfgDim->attr.type;
+  const auto &serviceName = cfgDim->elementValue;
+  bool isIso8601 = cfgDim->attr.units == "ISO8601";
+  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" || (CT::indexOf(name, "time") >= 0 && isIso8601) ||
+         ((serviceName == "time" || serviceName.ends_with("reference_time")) && isIso8601);
 }
 
-LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap) {
+LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap,
+                                        const std::string &tableName) {
   // Get all dimension values from the db
   auto srvParam = dataSource->srvParams;
-  bool isTimeDim = isLayerDimATimeDim(cfgLayerDim);
+  bool isTimeDim = isATimeDimension(cfgLayerDim);
 
   auto dimValueInMapIt = dimValuesMap.find(cfgLayerDim->elementValue);
   std::vector<std::string> queryValues;
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
-
-    // Get the tablename
-    std::string tableName =
-        CDBFactory::getDBAdapter(srvParam->cfg)
-            ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, cfgLayerDim->attr.name.c_str(), dataSource);
 
     auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
                             : CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str());
@@ -332,7 +334,8 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   return layerMetadataDim;
 }
 
-LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap) {
+LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap,
+                                     const std::string &tableName) {
   auto srvParam = dataSource->srvParams;
 
   LayerMetadataDim dim;
@@ -350,21 +353,11 @@ LayerMetadataDim handleRangeBasedDim(CDataSource *dataSource, CServerConfig::XML
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) { //
     // Query the values from the DB if they are not set in the map
     // This is an interval defined as start/stop/resolution
-    // Retrieve the minimum dimension value
-    std::string tableName =
-        CDBFactory::getDBAdapter(srvParam->cfg)
-            ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, cfgLayerDim->attr.name.c_str(), dataSource);
-
-    auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(cfgLayerDim->attr.name.c_str(), tableName.c_str());
+    auto values = CDBFactory::getDBAdapter(srvParam->cfg)->getMinMax(cfgLayerDim->attr.name.c_str(), tableName.c_str());
 
     if (values != nullptr && values->records.size() > 0) {
       minTimeStamp = (makeIsoStringFromDbString(values->records[0].get(0)));
-    }
-    delete values;
-    // Retrieve the max dimension value
-    values = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(cfgLayerDim->attr.name.c_str(), tableName.c_str());
-    if (values != nullptr && values->records.size() > 0) {
-      maxTimeStamp = (makeIsoStringFromDbString(values->records[0].get(0)));
+      maxTimeStamp = (makeIsoStringFromDbString(values->records[0].get(1)));
     }
     delete values;
   } else {
@@ -439,24 +432,12 @@ LayerMetadataDim handleFileTimeDateDim(CDataSource *dataSource) {
   return dim;
 }
 
-// Time dimensions are time, reference_time and forecast_reference_time, or dimensions configured with a time type or ISO8601 units
-bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
-  const auto &name = cfgDim->attr.name;
-  const auto &type = cfgDim->attr.type;
-  return name == "time" || name.ends_with("reference_time") || type == "dimtype_time" || type == "dimtype_reference_time" || (CT::indexOf(name, "time") >= 0 && cfgDim->attr.units == "ISO8601");
-}
-
-std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim) {
+std::vector<std::string> queryTimeStampListFromDb(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgDim, const std::string &tableName) {
   std::vector<std::string> timeStampList;
   auto srvParam = dataSource->srvParams;
-  if (!(cfgDim->attr.name == "time" || (CT::indexOf(cfgDim->attr.name, "time") >= 0 && cfgDim->attr.units == "ISO8601"))) {
+  if (!isATimeDimension(cfgDim)) {
     return timeStampList;
   }
-  // Get the tablename
-  std::string tableName =
-      CDBFactory::getDBAdapter(srvParam->cfg)
-          ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, cfgDim->attr.name.c_str(), dataSource);
-
   // Get the first n values from the database, and determine whether the time resolution is continous or multivalue.
   CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgDim->attr.name.c_str(), 200, true, tableName.c_str());
   if (store == nullptr || store->records.size() == 0) {
@@ -480,6 +461,18 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
     return 0;
   }
 
+  std::vector<std::string> dimensions;
+  for (const auto &dim: dataSource->cfgLayer->Dimension) {
+    if (dim.attr.defaultV == "filetimedate" || (&dim == &dataSource->cfgLayer->Dimension.front() && dim.attr.name == "none")) break;
+    const auto values = dimValuesMap.find(dim.elementValue);
+    if (values == dimValuesMap.end() || values->second.empty()) dimensions.push_back(CT::toLowerCase(dim.attr.name));
+  }
+  std::map<std::string, DimInfo> dimensionTables;
+  if (!dimensions.empty()) {
+    dimensionTables = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
+                          ->getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, dimensions, dataSource);
+  }
+
   for (auto it = dataSource->cfgLayer->Dimension.begin(); it != dataSource->cfgLayer->Dimension.end(); ++it) {
     auto *cfgDim = &(*it);
     // This dimension is a filetimedate type, its values come from the modification date of the file
@@ -488,25 +481,26 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
       break;
     }
     if (it == dataSource->cfgLayer->Dimension.begin() && cfgDim->attr.name == ("none")) break;
+    const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
+    const std::string tableName = valuesFromDimMap.empty() ? dimensionTables.at(CT::toLowerCase(cfgDim->attr.name)).tableName : "";
     if (cfgDim->attr.interval.empty()) {
-      const auto &valuesFromDimMap = dimValuesMap[cfgDim->elementValue];
-      const auto &dimValues = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim) : valuesFromDimMap;
+      const auto &dimValues = valuesFromDimMap.size() == 0 ? queryTimeStampListFromDb(dataSource, cfgDim, tableName) : valuesFromDimMap;
       if (dataSource->srvParams->verbose) {
         CDBDebug("makeIntervalFromTimeList for %s", cfgDim->elementValue.c_str());
       }
       // Only time dimensions can get an auto calculated interval
-      const std::string interval = cfgDim->attr.name == "time" ? makeIntervalFromTimeList(dimValues) : "";
+      const std::string interval = isATimeDimension(cfgDim) ? makeIntervalFromTimeList(dimValues) : "";
       if (!interval.empty()) {
         // Add dimension with auto calculated interval
         cfgDim->attr.interval = interval;
-        layerMetadataDimensionList.push_back(handleRangeBasedDim(dataSource, cfgDim, dimValuesMap));
+        layerMetadataDimensionList.push_back(handleRangeBasedDim(dataSource, cfgDim, dimValuesMap, tableName));
       } else {
         // Add dimension with individual values
-        layerMetadataDimensionList.push_back(handleMultipleValueDim(dataSource, cfgDim, dimValuesMap));
+        layerMetadataDimensionList.push_back(handleMultipleValueDim(dataSource, cfgDim, dimValuesMap, tableName));
       }
     } else {
       // Add dimension with pre-defined interval
-      layerMetadataDimensionList.push_back(handleRangeBasedDim(dataSource, cfgDim, dimValuesMap));
+      layerMetadataDimensionList.push_back(handleRangeBasedDim(dataSource, cfgDim, dimValuesMap, tableName));
     }
   }
   // Check dependencies between dimensions
@@ -542,9 +536,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     GeoParameters geo;
     geo.crs = (srvParam->cfg->Projection[p].attr.id);
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start initreproj %s", geo.crs.c_str());
-#endif
+    StopWatch_Measure("start initreproj %s", geo.crs.c_str());
     CImageWarper warper;
     int status = warper.initreproj(metadataLayer->dataSource, geo, &srvParam->cfg->Projection);
     if (status != 0) {
@@ -552,9 +544,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       return 1;
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("finished initreproj");
-#endif
+    StopWatch_Measure("finished initreproj");
 
     if (CXMLGEN_DEBUG) {
       if (status != 0) {
@@ -563,16 +553,12 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       }
     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("start findExtent");
-#endif
+    StopWatch_Measure("start findExtent");
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
     metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs, bboxToFind));
 
-#ifdef MEASURETIME
-    StopWatch_Stop("finished findExtent");
-#endif
+    StopWatch_Measure("finished findExtent");
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX

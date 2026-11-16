@@ -3,7 +3,6 @@
 #include "CDebugger.h"
 #include "CAutoResource.h"
 #include "CDFObjectStore.h"
-#include "CTString.h"
 
 int CHandleMetadata::process(CServerParams *srvParam) {
   std::string metadata = "{}";

@@ -1,12 +1,7 @@
 #include "CDataPostProcessor_MetadataVariable.h"
 #include "CRequest.h"
-#include "CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 #include <CImgRenderFieldVectors.h>
-#include "CDrawImage.h"
-#include "CImageWarper.h"
-#include "CTString.h"
-#include "CXMLParser.h"
 
 /************************/
 /*      CDDPMETADATA_VARIABLE  */

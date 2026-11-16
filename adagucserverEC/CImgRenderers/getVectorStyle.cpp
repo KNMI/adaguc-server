@@ -2,7 +2,6 @@
 #include "getVectorStyle.h"
 #include "CColor.h"
 #include <CServerConfig_CPPXSD.h>
-#include <cfloat>
 
 VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig::XMLE_Configuration *globalConfig) {
 

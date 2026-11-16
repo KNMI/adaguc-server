@@ -1,7 +1,6 @@
 #include "CDPPGoes16Metadata.h"
 #include "CTime.h"
 #include "CCDFObject.h"
-#include "CTString.h"
 
 /************************/
 /*      CDPPFixGOES16     */

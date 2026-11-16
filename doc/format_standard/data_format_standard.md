@@ -21,4 +21,9 @@ Vector data is defined as a data polygon described by 4 points (a tile) per time
 ## Point based data
 [Detailed point format description](data_format_standard_point.md)
 
+## GeoJSON
+Polygons, lines and points stored as a GeoJSON FeatureCollection, optionally with time, reference time and elevation dimensions.
+
+[Detailed GeoJSON format description](data_format_standard_geojson.md)
+
 

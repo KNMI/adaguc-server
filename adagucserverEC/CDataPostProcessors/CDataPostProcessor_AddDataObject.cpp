@@ -1,7 +1,19 @@
 #include "CDataPostProcessor_AddDataObject.h"
 #include "CCDFObject.h"
 #include "CDebugger.h"
-#include "CTString.h"
+#include <string>
+
+#define ADDDATAOBJECT_ATTR ADAGUCPOSTPROC_ATTR_PREFIX "_ADD_DATAOBJECT"
+
+// The data object added by this processor, marked with its index in the list of processors
+static DataObject *findAddedDataObject(CDataSource *dataSource, CServerConfig::XMLE_DataPostProc *proc) {
+  std::string mark = std::to_string(proc->attr.postProcIndexInLayer);
+  for (auto &dataObject: dataSource->dataObjects) {
+    auto attr = dataObject.cdfVariable != nullptr ? dataObject.cdfVariable->getAttributeNE(ADDDATAOBJECT_ATTR) : nullptr;
+    if (attr != nullptr && attr->toString() == mark) return &dataObject;
+  }
+  return nullptr;
+}
 
 const char *CDPPAddDataObject::getId() { return CDATAPOSTPROCESSOR_AddDataObject_ID; }
 
@@ -31,6 +43,8 @@ int CDPPAddDataObject::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
   CDBDebug("Applying %s", CDATAPOSTPROCESSOR_AddDataObject_ID);
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+    // Runs again when the data is read a second time, for example for GetFeatureInfo. A second object would never be filled.
+    if (findAddedDataObject(dataSource, proc) != nullptr) return 0;
     std::string newDataObjectName = proc->attr.name;
 
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
@@ -65,14 +79,22 @@ int CDPPAddDataObject::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
     attrData[0] = 0;
     newDataObject.cdfVariable->setAttribute("_FillValue", newDataObject.cdfVariable->getType(), attrData, 1);
     newDataObject.cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    // Marks the data object of this processor. Overwrites the mark copied from an object added by an earlier add_dataobject.
+    newDataObject.cdfVariable->setAttributeText(ADDDATAOBJECT_ATTR, std::to_string(proc->attr.postProcIndexInLayer).c_str());
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    // Store the value of a="..." into the new data object
+    // Store the value of a="..." into the data object of this processor. Not simply object 0: a later add_dataobject
+    // inserts its object before it, which would leave this one unfilled.
+    DataObject *dataObject = findAddedDataObject(dataSource, proc);
+    if (dataObject == nullptr) {
+      CDBError("Data object of %s [%s] not found", CDATAPOSTPROCESSOR_AddDataObject_ID, proc->attr.name.c_str());
+      return 1;
+    }
 
     float value = atof(proc->attr.a.c_str());
     size_t size = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, size);
-    float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
+    CDF::allocateData(CDF_FLOAT, &dataObject->cdfVariable->data, size);
+    float *result = (float *)dataObject->cdfVariable->data;
 
     for (size_t i = 0; i < size; i++) {
       result[i] = value;

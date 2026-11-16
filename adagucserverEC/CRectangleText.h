@@ -24,7 +24,6 @@
  ******************************************************************************/
 #ifndef CRectangleText_H
 #define CRectangleText_H
-#include "CTString.h"
 
 #include "CColor.h"
 
@@ -44,6 +43,6 @@ public:
   CRectangleText() {}
 
   void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color);
-  bool overlaps(CRectangleText &r1);
+  bool overlaps(const CRectangleText &r1) const;
 };
 #endif

@@ -1,0 +1,76 @@
+{
+  "adaguc.testtimeseriescached": {
+    "data": {
+      "dims": {
+        "elevation": {
+          "cdfName": "height",
+          "defaultValue": "9000",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "elevation",
+          "type": "dimtype_none",
+          "units": "meters",
+          "values": "1000,2000,3000,4000,5000,6000,7000,8000,9000"
+        },
+        "member": {
+          "cdfName": "member",
+          "defaultValue": "member1",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "member",
+          "type": "dimtype_none",
+          "units": "member number",
+          "values": "member6,member5,member4,member3,member2,member1"
+        },
+        "time": {
+          "cdfName": "time",
+          "defaultValue": "2017-01-01T00:10:00Z",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "time",
+          "type": "dimtype_none",
+          "units": "ISO8601",
+          "values": "2017-01-01T00:00:00Z,2017-01-01T00:05:00Z,2017-01-01T00:10:00Z"
+        }
+      },
+      "layer": {
+        "abstract": "",
+        "collection": "",
+        "enable_edr": true,
+        "gridspec": {
+          "bbox": [
+            -180.49444580078125,
+            -90.4888916015625,
+            179.50555419921875,
+            89.5111083984375
+          ],
+          "cellsizex": 1.0,
+          "cellsizey": -1.0,
+          "height": 180,
+          "projstring": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs",
+          "width": 360
+        },
+        "hidden": false,
+        "isqueryable": 1,
+        "latlonbox": [
+          -180.49444580078125,
+          -90.4888916015625,
+          179.50555419921875,
+          89.5111083984375
+        ],
+        "layername": "data",
+        "nativeepsg": "EPSG:4326",
+        "title": "data (data)",
+        "variables": [
+          {
+            "label": "data",
+            "standard_name": "data",
+            "units": "km",
+            "variableName": "data"
+          }
+        ],
+        "wmsgroup": ""
+      }
+    }
+  }
+}

@@ -26,14 +26,14 @@
 #ifndef CServerParams_H
 #define CServerParams_H
 #include <climits>
-#include <cstdlib>
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
 #include "./Types/GeoParameters.h"
-#include <map>
 #include <tuple>
 #include <string>
+#include <utility>
+#include <vector>
 
 // #define MAX_DIMS 10
 
@@ -65,7 +65,6 @@ public:
 class CServerParams {
 
 private:
-  int autoOpenDAPEnabled = -1;
   int autoLocalFileResourceEnabled = -1;
   int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
   std::string _onlineResource;
@@ -90,15 +89,19 @@ public:
   double dfResY = 0;
   double dX = 0;
   double dY = 0;
+  bool isTrajectory = false;
+  std::vector<f8point> trajectoryCoords;
   std::string Format;
   std::string InfoFormat;
   std::string BGColor;
   std::string responceCrs;
   std::string Styles;
   std::string Style;
-  std::string autoResourceLocation; // given location by the KVP key source=<value> parameter
+  std::string styleSheet;           // STYLESHEET KVP value, decoded
+  int styleSheetStyleIndex = -1;    // Index in cfg->Style of the Style from STYLESHEET, used for the (single) layer regardless of STYLES
+  std::string autoResourceLocation; // given location by the KVP key source=<value> parameter. Local files only.
   std::string datasetLocation;
-  std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
+  std::string internalAutoResourceLocation; // internalAutoResourceLocation is the internal (resolved, jailed) location, can differ from the given location by the KVP key source=<value> parameter
   std::string autoResourceVariable;         // autoResourceVariable is given by the KVP key variable=<value> parameter.
   std::string mapTitle;
   std::string mapSubTitle;
@@ -121,25 +124,17 @@ public:
 
   /**
    * Function which can be used to check whether automatic resources have been enabled or not
-   * The resource can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL/FILE"
+   * The resource can be provided to the ADAGUC service via the KVP parameter "SOURCE=<local file path>"
+   * Remote (OpenDAP/HTTP) resources are intentionally not supported (removed: SSRF risk).
    * The function read the config file once, for consecutive checks the value is stored in a variable
    *
-   * @return true: AutoResource is enabled
+   * @return true: AutoResource (local file) is enabled
    */
   bool isAutoResourceEnabled();
 
   /**
-   * Function which can be used to check whether automatic OPeNDAP URL reading has been enabled or not
-   * The OPeNDAP URL can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL"
-   * The function read the config file once, for consecutive checks the value is stored in a variable
-   *
-   * @return true: OPeNDAP URL's are supported
-   */
-  bool isAutoOpenDAPResourceEnabled();
-
-  /**
    * Function which can be used to check whether automatic local file reading has been enabled or not
-   * The OPeNDAP URL can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL"
+   * The local file path can be provided to the ADAGUC service via the KVP parameter "SOURCE=<path>"
    * The function read the config file once, for consecutive checks the value is stored in a variable
    *
    * @return true: File locations are supported
@@ -177,6 +172,19 @@ public:
    * returns zero on success       *
    */
   int parseConfigFile(const std::string &pszConfigFile);
+
+  /**
+   * Adds the Style and Legend elements of a STYLESHEET to the configuration, for this request only.
+   * Its Style (at most one) is used for the layer, regardless of its name and of STYLES; see styleSheetStyleIndex.
+   * A request with a STYLESHEET may only have one layer, CRequest::process_querystring enforces this.
+   * Its Legend replaces the configured one with the same name, otherwise it is added with the provided name.
+   * The xml may be bare elements or wrapped in <Configuration>, or base64 encoded XML, optionally compressed as raw
+   * deflate, zlib or gzip (anything not starting with '<'), see styleSheetToXml in utils/StyleSheetHandler.h.
+   * It must pass the allowlist in isAllowedStyleSheet
+   * (utils/StyleSheetValidation.h); png files (SymbolInterval file, LegendGraphic value) must be in a symbol directory.
+   * returns zero on success
+   */
+  int applyStyleSheet(const std::string &styleSheetXml);
 
   /**
    * Returns cache control header
@@ -236,11 +244,6 @@ bool checkIfPathHasValidTokens(const std::string &path);
  * @return true on valid, false on invalid
  */
 bool checkForValidTokens(const std::string &path, const std::string &validTokens);
-/**
- * Generic function which will be showed when a WCS is requested while it is not compiled in
- */
-void showWCSNotEnabledErrorMessage();
-
 /**
  * Returns a stringlist with all possible legends available for this Legend config object.
  * This is usually a configured legend element in a layer, or a configured legend element in a style.

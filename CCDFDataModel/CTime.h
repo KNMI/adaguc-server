@@ -27,11 +27,8 @@
 #define CTIME_H
 #include <udunits.h>
 
-#include "CTString.h"
 #include "CCDFVariable.h"
 #include <ctime>
-#include <sys/types.h>
-#include <cstdlib>
 #include <map>
 
 #define CTIME_GETINSTANCE_ERROR_MESSAGE "Unable to obtain ctime instance from variable"

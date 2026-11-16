@@ -6,7 +6,7 @@
 !Docker/adaguc-server-config-python-postgres.xml
 !Docker/start.sh
 !Docker/adaguc-server-*.sh
-!Docker/baselayers.xml
+!Docker/adaguc-internal-baselayers.xml
 !Docker/run_supervisord.sh
 !Docker/start_autosync.sh
 !Docker/pgbouncer/

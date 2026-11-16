@@ -17,8 +17,6 @@
  ******************************************************************************/
 
 #include "CTime.h"
-#include <ctime>
-#include <sstream>
 
 // Type to represent the relative interval between two timestamps
 struct TimeInterval {

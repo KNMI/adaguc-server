@@ -52,7 +52,7 @@
     <ShadeInterval min="250" max="300" fillcolor="#C65139" />
 
 
-    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderMethod>nearest</RenderMethod>
     <RenderSettings renderhint="discreteclasses" settings="fast"/>
 
   </Style>
@@ -109,7 +109,7 @@
     <ShadeInterval min="250" max="300" fillcolor="#C65139" />
 
 
-    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderMethod>nearest</RenderMethod>
     <RenderSettings renderhint="discreteclasses" settings="precise"/>
 
   </Style>

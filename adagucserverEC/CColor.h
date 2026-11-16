@@ -23,6 +23,7 @@
  *
  ******************************************************************************/
 #include <string>
+#include <string_view>
 
 #ifndef CCOLOR_H
 #define CCOLOR_H
@@ -40,6 +41,9 @@ struct CColor {
   CColor &operator=(const std::string &color);
 
   std::string c_str();
+  // Accepts #RRGGBB and #RRGGBBAA, anything else becomes opaque black
   void parse(const std::string &color);
+  // True for #RRGGBB and #RRGGBBAA
+  static bool isValid(std::string_view color);
 };
 #endif

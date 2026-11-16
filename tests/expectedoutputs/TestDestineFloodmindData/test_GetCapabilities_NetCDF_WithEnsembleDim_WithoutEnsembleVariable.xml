@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 8.1.0, of Jul 13 2026 10:22:23 </Keyword>
+            <Keyword>ADAGUCServer version 9.0.3, of Oct 19 2026 11:22:55 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -55,7 +55,6 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  AutoResource netcdf_hdsr_small_no_ensemble_variable.nc</Title>
 <CRS>CRS:84</CRS>
@@ -165,11 +164,11 @@
     </LegendURL>
   </Style>
    <Style>
-    <Name>autobilinear_deprecated/bilinear</Name>
-    <Title>autobilinear_deprecated/bilinear</Title>
+    <Name>autobilinear_deprecated</Name>
+    <Title>autobilinear_deprecated</Title>
     <LegendURL width="300" height="400">
        <Format>image/png</Format>
-       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>
+       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=autobilinear_deprecated"/>
     </LegendURL>
   </Style>
 </Layer>

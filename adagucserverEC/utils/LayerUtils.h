@@ -1,5 +1,4 @@
 #include <CServerConfig_CPPXSD.h>
-#include <CTString.h>
 
 #ifndef LAYERUTILS_H
 #define LAYERUTILS_H

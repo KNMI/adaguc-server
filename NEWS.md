@@ -1,3 +1,63 @@
+**Version X.Y.Z**
+
+- Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).
+  - `<WCSFormat driver="...">` supports `ADAGUCNetCDF`, `GTiff` and `AAIGrid`. A `WCSFormat` with any other GDAL driver now gives the error `driver "..." is not supported` on GetCoverage. The GDAL `NetCDF` driver name is written by the ADAGUC NetCDF writer (as `ADAGUCNetCDF`), so its output is CF NetCDF with the original variable names instead of GDAL's `Band1`.
+  - The `options` attribute of `WCSFormat` (GDAL creation options) is ignored, with a warning in the log. GeoTIFF output is uncompressed, as with GDAL's default options, and uses BigTIFF above 4 GB of pixel data. WCS DescribeCoverage lists only the `WCSFormat`s that GetCoverage can write.
+  - GeoTIFF: CRSs that GeoTIFF cannot describe (for example geostationary) are written as WKT in the `PCSCitationGeoKey`, as GDAL did; a rotated pole CRS is still written without CRS. CRS identifiers that PROJ does not know (like `EPSG:50001`) are now resolved with the configured `<Projection>` instead of failing.
+  - AAIGrid: for integer data without nodata value the `NODATA_value` line is left out (GDAL wrote a platform dependent value).
+  - WCS now always works, it no longer depends on compiling with `ADAGUC_USE_GDAL`.
+- Fixed an uninitialized udunits unit in `CTime`, which could make the first time conversion of a request fail (seen as `NETCDF_DIM_time` `0` in the GeoTIFF band metadata).
+- The FastAPI server now brotli compresses all content types except binary or already compressed ones, like images, NetCDF and `application/octet-stream`. Before, only a fixed list of content types was compressed, so for example CoverageJSON (`application/prs.coverage+json`), GeoJSON and `application/json; charset=utf-8` were not. Responses of these types cached in Redis by an older version are handled as not cached.
+- New `STYLESHEET` parameter, disabled by default: enable it with environment variable `ADAGUC_STYLESHEET_ENABLE=TRUE`. Send a `<Style>` (and optional `<Legend>` elements) as XML in the query string. The style is used for the requested layer regardless of `STYLES`, for that request only. Responses to requests with a `STYLESHEET` are not cached in Redis.
+- The FastAPI server (uvicorn) now accepts request lines plus headers up to 80 KB, so query strings up to 64 KB work. Before, a request whose first 16 KB arrived without the end of its headers was refused with 400.
+- `STYLESHEET` can also be sent compressed and base64 encoded, which makes the URL 4 to 7 times shorter and passes firewalls that refuse XML: a value that does not start with `<` is decoded as base64url (or standard base64) and decompressed (raw deflate as `CompressionStream("deflate-raw")` makes it, zlib or gzip, at most 64 KB), then used like the XML. See [Send a custom style with STYLESHEET](doc/tutorials/Send_a_custom_style_with_STYLESHEET.md#10-compress-the-style).
+- `adagucserver --lint` now also checks the values in configured `Style` and `Legend` elements with the `STYLESHEET` rules .
+- Combined Cairoplotter and CDrawImage in one. Removed custom Freetype renderer.
+- EDR position queries on layers that return several variables (for example `convert_uv_components`, which returns speed, direction and the wind components) now label each coverage with its own parameter id (`<layer>.<variable>`), unit and observed property. Previously all coverages used the layer name and the unit of the first variable, so wind direction was reported in `kts`. Layers that return a single variable are unchanged.
+- Fixed a `baselayers.xml` in your own dataset directory clashing with the internal baselayers dataset of the Docker image. The internal dataset is now named `adaguc-internal-baselayers`.
+- Reduced SQL queries when scanning dataset
+- Support WMS titles with tokens like '. Fixes [509](https://github.com/KNMI/adaguc-server/issues/509)
+- A scalar variable with standard_name `forecast_reference_time` is now advertised as `reference_time` dimension with units `ISO8601` and ISO8601 values, like a `reference_time` dimension. Before, GetCapabilities showed the units of the NetCDF variable, for example `seconds since 1970-01-01`. When the variable name does not end with `reference_time` (for example `frt`), its reference times are now also sorted by time, and 5 or more regularly spaced reference times are advertised as an interval (`start/end/PT6H`) instead of a list, as already happened for variables named `reference_time`. Layers scanned before are corrected automatically, there is no need to clear the `autoconfigure_dimensions` table.
+- WCS DescribeCoverage now uses the `time` dimension as time axis, also when the layer has a `reference_time` dimension. Before, it used the last dimension with `ISO8601` units, which could be `reference_time`. Without a `time` dimension, it now uses the first `ISO8601` dimension that is not a reference time, instead of the last one. A layer whose only `ISO8601` dimension is `reference_time` now has no `temporalDomain` in DescribeCoverage.
+- Hidden dimensions, like a single height level, no longer make GetMap use the short lived cache header. Fixes [803](https://github.com/KNMI/adaguc-server/issues/803)
+- Fixed wind direction in GetFeatureInfo and EDR point queries for grid-relative wind (`uvcomponents`). The bounding box of the queried cell had X and Y swapped, so the rotation to true north was computed about two cells too far east. Directions and eastward/northward components can change by several degrees on coarse grids; speed is unchanged.
+- Grid-relative wind (`uvcomponents`) is now rotated to true north with the angle at the grid point itself, where the value is defined and where barbs and vectors are drawn, measured in the tangent plane of the earth's surface. Previously the angle was taken at a cell corner over a full-cell step, which also added a spurious rotation of half a cell's arc (about 0.1 degree on a 0.25 degree lat/lon grid, where the correct rotation is 0). Barb, vector and direction output change by a few degrees on coarse grids; on fine grids the change is hardly visible.
+- GetFeatureInfo finds the value in point data split over several files with the same time. Before, only the last file was used. Fixes [827](https://github.com/KNMI/adaguc-server/issues/827)
+- Add /trajectory endpoint to EDR. Supports a 2D LINESTRING, returns a CoverageJSON section containing crossed native-grid values.
+- Fixed packed data (`scale_factor`/`add_offset`) in WCS and EDR cube output: levels after the first were not scaled, and nodata in WCS NetCDF output was not recognized.
+- Faster gzip responses (level 6 instead of 9). `Accept-Encoding` is parsed per coding: `br;q=1.0` now gets brotli, and a coding with `q=0` is not used.
+- The fork server ends each response with a marker before the exit status, so a response cut off by a fork server restart is detected instead of returned as incomplete data.
+- The fork server is only restarted after three failed health checks in a row, so a single slow check does not end the requests in progress.
+- Image comparison in the tests: `compareImage` has a `tolerance` (`exact`, the default, `geometry` or `antialiasing`) instead of `maxAllowedColorDifference`/`maxAllowedColorPercentage`, chosen by what the image contains (raster only, antialiased shapes, or text). It compares the alpha channel too, which the old comparison ignored for palette images, and the PNG/WebP encoding structure; `compareFileSizes` checks the compression. Image tests no longer compare PNG files byte for byte. A failing comparison writes a diff image. See [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
+- Reduce all EDR response times and reduce python memory usage for cube call.
+- EDR Cube query with multiple members and multiple times could select wrong values, this is now fixed. Fixes [#851](https://github.com/KNMI/adaguc-server/issues/851).
+- Check metadata layer existence once per autosync run, instead of per layer
+- Fixed missing rows at the south edge of a GetMap image when data with ascending latitudes (south to north) is drawn with bilinear interpolation or a shaded style in the CRS of the data. Depending on how the requested area lines up with the grid, up to a cell of data at the bottom of the image was left transparent. Data with descending latitudes was not affected.
+
+**Version 9.2.0 - 2026-10-28**
+
+- `CImgWarpBilinear` is removed. The keywords `bilinear`, `shaded`, `contour`, `vector`, `barb` and `thin` still work: the generic warper emulates them. New configs use `RenderMethod` `generic`, see [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md). Test datasets and docs are migrated, with one style per name in GetCapabilities. Legacy output is pinned by `TestsForLegacyBilinearRender`.
+- Fixed legacy `barb`/`vector`/`thin`-only styles painting the whole field under the symbols. They now draw only the symbols.
+- Fixed a crash when drawing contour lines without a `WMS`/`ContourFont` configuration. Contour labels now use the same font lookup as legends, so a `ContourFont` in a dataset is honoured.
+- Fixed triangle drawing issue: translucent colors were blended twice at the shared edges of grid cells. Pixels now belong to exactly one triangle.
+- Drawing now goes through Cairo instead of a first-party rasterizer, so rendered pixels at shape edges can differ by a few color units depending on the installed cairo/pixman version - see [antialiasing-differences.md](/doc/developing/antialiasing-differences.md)
+- Faster warping of large grids: quads are culled and rounded once, and tiny quads are skipped early.
+- Fix default dimension selection for omitted dimensions. Previously, `default="min"` always selected the _maximum_ value. Defaults now honour `min` and `max` and select the value available for the selected dimensions. Fixes [#762](https://github.com/KNMI/adaguc-server/issues/762)
+- Fallback to NetCDF version 4.9.0 because of https://github.com/KNMI/adaguc-server/issues/812
+- New python library versions, bumped Pillow and brotli
+
+**Version 9.1.0**
+
+- Security fix: removed the WMS `SLD` parameter and the INSPIRE CSW metadata lookup, which let the server be made to issue outbound HTTP requests to arbitrary URLs (SSRF). `CHTTPTools`, `CSLD` and `CInspire` have been removed; the server no longer makes any outbound network calls on its own.
+- Security fix: `AutoResource`'s `enableautoopendap` option (fetching an arbitrary external OPeNDAP/HTTP(S) URL via the `source=` parameter) is removed for the same SSRF reason. `source=` still works for local files via `enablelocalfile`.
+- Security fix: dimension values (e.g. `TIME=`) are now escaped before being used in SQL queries, closing a SQL injection; the `JSONP=` callback parameter is now restricted to a safe identifier charset.
+- Added a migration tutorial for deprecated `RenderMethod` keywords and keyword lists: [Migrating deprecated RenderMethods to generic](/doc/tutorials/Migrating_deprecated_RenderMethods_to_generic.md)
+- `bash compile.sh --measuretime` (can be combined with `--debug`) now creates an executable that outputs detailed timing statistics in the logs
+- Faster rendering with the generic renderer: the per-pixel draw callback is now a template parameter instead of a `std::function`, letting the compiler inline it into the pixel and triangle-fill loops. Speedup grows with image size and contour density - e.g. a 144 megapixel image with shaded contours renders about 8.5% faster. The output is unchanged.
+- Faster WebP encoding: lossy output now imports as YUVA instead of ARGB, which is faster to encode
+- Faster contour line calculation and triangle drawing in the generic data warper
+- Fixed autowms path check failing when the configured data directory contains double slashes
+
 **Version 9.0.2**
 
 - Patch for incorrectly making an interval for the reference time dimension

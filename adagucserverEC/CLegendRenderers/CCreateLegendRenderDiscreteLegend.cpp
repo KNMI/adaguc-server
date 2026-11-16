@@ -1,7 +1,9 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
+#include "Definitions.h"
 #include "numericutils.h"
+#include <algorithm>
 #include <cstring>
 #include <cmath>
 
@@ -38,7 +40,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
     textXMin -= minusWidth - numberWidth;
   }
 
-  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), 248);
+  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), standardCColorBlack);
 
   // If no maxColumn, stop
   if (maxColumn.empty()) {
@@ -47,7 +49,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
 
   // Draw central dash
   int dashX = colRightMin + (decimalWidthForMinColumn + 4) * numberWidth; // Leave gap between min column and this dash
-  legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
+  legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", standardCColorBlack);
 
   // Draw max column (to the right of the dash)
   int colRightMax = colRightMin + maxTextWidth;
@@ -69,7 +71,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::strin
   // Apply overall left offset plus some spacing
   textXMax += ((int)cbW + pLeft) * scaling + (decimalWidthForMaxColumn + 1) * numberWidth; // Think of the 15 number
 
-  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), 248);
+  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), standardCColorBlack);
 }
 
 // Aux function to calculate block height based on total height and number
@@ -280,7 +282,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
         if (yBottom <= yTop) continue;
 
-        CColor color = s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min)) : CColor(s.attr.fillcolor.c_str());
+        CColor color = s.attr.fillcolor.empty() ? styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min)) : CColor(s.attr.fillcolor.c_str());
 
         // This rectangle is borderless, and the resulting classes have no vertical blank space between them
         legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
@@ -313,7 +315,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         if (s.attr.fillcolor.empty() == false) {
           color = CColor(s.attr.fillcolor.c_str());
         } else {
-          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min));
+          color = styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, s.attr.min));
         }
         legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 
@@ -322,7 +324,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
         } else {
           // Do not align to the right: this is a non-numeric label
-          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, s.attr.label.c_str(), 248);
+          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, s.attr.label.c_str(), standardCColorBlack);
         }
       }
     }
@@ -339,7 +341,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       color = CColor(s->attr.fillcolor.c_str());
 
       legendImage->rectangle(4 + pLeft, cY2 + pTop, int(cbW) + 7 + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
-      legendImage->setText(s->attr.label.c_str(), int(cbW) + 12 + pLeft, cY2 + pTop, 248);
+      legendImage->setText(s->attr.label.c_str(), int(cbW) + 12 + pLeft, cY2 + pTop, standardCColorBlack);
     }
   }
 
@@ -355,7 +357,13 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
      * Discrete blocks based on continous interval
      */
 
-    numClasses = int((iMax - iMin) / legendInterval);
+    // An interval that does not change iMin (float j += legendInterval) would only repeat the first class
+    if (!(legendInterval > 0) || !std::isfinite(iMin) || !std::isfinite(iMax) || iMin + legendInterval == iMin) {
+      CDBError("Invalid legendInterval %f for range %f - %f", legendInterval, iMin, iMax);
+      return 1;
+    }
+    // More classes than the legend is high all get a height of 0, the clamp keeps the conversion to int defined
+    numClasses = int(std::clamp(double(iMax - iMin) / legendInterval, 1.0, double(MAX_IMAGE_HEIGHT)));
 
     int classSizeY = ((legendHeight - 24) / (numClasses));
     if (classSizeY > 12) classSizeY = 12;
@@ -394,19 +402,21 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
 
     std::string minText, maxText;
-    for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
+    for (float j = iMin; j < iMax + legendInterval && currentIteration < maxIterations; j = j + legendInterval) {
+      currentIteration++;
       // Look for the max width for the min value in this interval
-      minText = CT::printf(floatFormat.c_str(), j);
+      minText = CT::formatFloat(floatFormat, j);
       int widthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
       if (widthMin > maxWidthMin) maxWidthMin = widthMin;
 
       // Look for the max width for the max value in this interval
-      maxText = CT::printf(floatFormat.c_str(), j + legendInterval);
+      maxText = CT::formatFloat(floatFormat, j + legendInterval);
       int widthMax = legendImage->getTextWidth(maxText, fontLocation, fontSize, 0);
       if (widthMax > maxWidthMax) maxWidthMax = widthMax;
     }
 
     int classNr = 0;
+    currentIteration = 0;
     for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
       currentIteration++;
       if (currentIteration > maxIterations) break;
@@ -423,16 +433,16 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       classNr += classSizeY;
 
       if (j < iMax) {
-        int colorIndex = CImageDataWriter::getColorIndexForValue(dataSource, v);
+        CColor classColor = styleConfiguration->getCColorFromLegendPaletteIndex(CImageDataWriter::getColorIndexForValue(dataSource, v));
         if (classSizeY > 4) {
-          legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, (colorIndex), 248);
+          legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, classColor, standardCColorBlack);
         } else {
-          legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, (colorIndex), (colorIndex));
+          legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, classColor, classColor);
         }
         // Prepare alignment
         std::string minText, maxText;
-        minText = CT::printf(floatFormat.c_str(), v);
-        maxText = CT::printf(floatFormat.c_str(), v + legendInterval);
+        minText = CT::formatFloat(floatFormat, v);
+        maxText = CT::formatFloat(floatFormat, v + legendInterval);
         int currentWidthMin = legendImage->getTextWidth(minText, fontLocation, fontSize, 0);
         int currentWidthMax = legendImage->getTextWidth(maxText, fontLocation, fontSize, 0);
 
@@ -446,9 +456,9 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         int textXMax = columnXMax + (maxWidthMax - currentWidthMax);
 
         // Draw as 3 columns (min dash max)
-        legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, 0, minText.c_str(), 248);
-        legendImage->drawText(columnXMax - 2 * numberWidth, textY, fontLocation.c_str(), fontSize * scaling, 0, "–", 248);
-        legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, 0, maxText.c_str(), 248);
+        legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, 0, minText.c_str(), standardCColorBlack);
+        legendImage->drawText(columnXMax - 2 * numberWidth, textY, fontLocation.c_str(), fontSize * scaling, 0, "–", standardCColorBlack);
+        legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, 0, maxText.c_str(), standardCColorBlack);
       }
     }
   }
@@ -459,6 +469,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   }
   // Get units
   std::string units = dObjgetUnits(*dataSource->getDataObject(0));
-  if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);
+  if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), standardCColorBlack);
   return 0;
 }

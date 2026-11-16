@@ -26,7 +26,6 @@
 #ifndef CIMGWARPNEARESTRGBA_H
 #define CIMGWARPNEARESTRGBA_H
 #include <float.h>
-#include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"

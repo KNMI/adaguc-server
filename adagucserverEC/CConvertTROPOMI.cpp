@@ -91,9 +91,7 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   pointLon->readData(CDF_FLOAT, true);
   pointLat->readData(CDF_FLOAT, true);
 
-  if (CCONVERTTROPOMI_DEBUG) {
-    StopWatch_Stop("DATA READ");
-  }
+  StopWatch_Measure("DATA READ");
   MinMax lonMinMax;
   MinMax latMinMax;
   lonMinMax.min = -180; // Initialize to whole world
@@ -104,9 +102,7 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
     lonMinMax = getMinMax(pointLon);
     latMinMax = getMinMax(pointLat);
   }
-  if (CCONVERTTROPOMI_DEBUG) {
-    StopWatch_Stop("MIN/MAX Calculated");
-  }
+  StopWatch_Measure("MIN/MAX Calculated");
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
 
   // Default size of adaguc 2dField is 2x2
@@ -365,9 +361,7 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
       ((double *)varY->data)[j] = y;
     }
 
-    if (CCONVERTTROPOMI_DEBUG) {
-      StopWatch_Stop("Dimensions set");
-    }
+    StopWatch_Measure("Dimensions set");
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {

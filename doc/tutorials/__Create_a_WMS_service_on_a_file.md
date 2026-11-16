@@ -111,9 +111,8 @@ size="5"/>
 <WCS>
 <Title>BTD_DATA</Title>
 
-<WCSFormat name="netcdf" driver="NetCDF"
-mimetype="Content-Type:application/netcdf"
-options="WRITE_GDAL_TAGS=FALSE,WRITE_LONLAT=FALSE,WRITE_BOTTOMUP=FALSE,ZLEVEL=2,FORMAT=NC4C"/>
+<WCSFormat name="netcdf" driver="ADAGUCNetCDF"
+mimetype="Content-Type:application/netcdf"/>
 <WCSFormat name="aaigrid" driver="AAIGrid"
 mimetype="Content-Type:text/plain" />
 <WCSFormat name="geotiff" driver="GTiff"
@@ -228,7 +227,8 @@ images with NO2 colors">
 tickround="1">no2</Legend>
 <Min>0.0</Min>
 <Max>3500</Max>
-<RenderMethod>nearest,bilinear</RenderMethod>
+<RenderMethod>generic</RenderMethod>
+<RenderSettings interpolationmethod="bilinear"/>
 </Style>
 
 <!-- Layer configuration -->

@@ -26,19 +26,15 @@
 #include "CImgWarpHillShaded.h"
 #include "CGenericDataWarper.h"
 #include "utils.h"
-#include "CImageDataWriter.h"
 #include "f8vector.h"
 #include <CCDFTypes.h>
-#include "CImgWarpGeneric/CImgWarpGeneric.h"
 #include <string>
-#include <vector>
-#include "CCDFObject.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CImageWarper.h"
 #include "CServerParams.h"
-#include "CXMLParser.h"
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "utils/NodataUtils.h"
 #include "Types/CPointTypes.h"
 #include "Types/GeoParameters.h"
 /**
@@ -59,14 +55,7 @@ static inline int mfast_mod(const int input, const int ceil) {
 
 template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &drawFunctionState) {
   if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
-  bool isNodata = false;
-  if (drawFunctionState.hasNodataValue) {
-    if ((val) == (T)drawFunctionState.dfNodataValue) isNodata = true;
-  }
-  if (!(val == val)) isNodata = true;
-  if (!isNodata)
-    if (drawFunctionState.legendValueRange)
-      if (val < drawFunctionState.legendLowerRange || val > drawFunctionState.legendUpperRange) isNodata = true;
+  const bool isNodata = isNodataValue(val, drawFunctionState);
   if (!isNodata) {
     T *sourceData = (T *)warperState.sourceGrid;
     size_t sourceDataPX = warperState.sourceIndexX;
@@ -168,7 +157,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
           val = 239;
         else if (val < 0)
           val = 0;
-        drawImage->setPixelIndexed(x, y, (unsigned char)val);
+        styleConfiguration->drawPixelFromPaletteIndex(drawImage, x, y, (int)val);
       }
     }
   }
