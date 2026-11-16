@@ -9,6 +9,7 @@ import unittest
 import json
 import re
 import datetime
+import netCDF4
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
 from conftest import (
@@ -509,6 +510,63 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data)
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
+    def test_WMSGetFeatureInfo_two_layers(self):
+        # GetFeatureInfo on two layers in one request gives one result per layer, in the order of QUERY_LAYERS.
+        AdagucTestTools().cleanTempDir()
+        layers = ["air-temperature", "wind-from-direction"]
+        # Pixel I=25, J=15 of this 50x50 image is in the source cell x=5.5, y=53.5 (column 2, row 3)
+        source = netCDF4.Dataset(ADAGUC_PATH + "/data/datasets/convert_units/convert_units_data.nc")
+        expected_values = [float(source.variables[layer][2, 3, 2]) for layer in layers]
+        self.assertNotEqual(expected_values[0], expected_values[1])
+        query = (
+            "source=convert_units%2Fconvert_units_data.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0"
+            f"&LAYERS={','.join(layers)}&QUERY_LAYERS={','.join(layers)}&CRS=EPSG%3A4326&BBOX=50,3,55,8&WIDTH=50&HEIGHT=50&I=25&J=15"
+            "&STYLES=&time=2026-02-13T02%3A00%3A00Z&INFO_FORMAT="
+        )
+
+        status, data, _ = AdagucTestTools().runADAGUCServer(query + "application/json", env=self.env)
+        self.assertEqual(status, 0)
+        results = json.loads(data)
+        self.assertEqual([result["layername"] for result in results], layers)
+        for result, expected_value in zip(results, expected_values):
+            (value,) = result["data"]["2026-02-13T00:00:00Z"].values()
+            self.assertAlmostEqual(float(value), expected_value, places=5)
+
+        for info_format, extension in (("text/plain", "txt"), ("text/html", "html")):
+            with self.subTest(info_format=info_format):
+                filename = f"test_WMSGetFeatureInfo_two_layers.{extension}"
+                status, data, _ = AdagucTestTools().runADAGUCServer(query + info_format, env=self.env)
+                AdagucTestTools().writetofile(self.testresultspath + filename, data)
+                self.assertEqual(status, 0)
+                text = data.decode()
+                self.assertLess(text.index(layers[0]), text.index(layers[1]))
+                self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMS_exception_formats(self):
+        # The format of an error follows VERSION and EXCEPTIONS. The exit status is the HTTP status (404 for an unknown layer).
+        AdagucTestTools().cleanTempDir()
+        query = "source=testdata.nc&SERVICE=WMS&REQUEST=GetMap&LAYERS=doesnotexist&STYLES=&WIDTH=100&HEIGHT=100&FORMAT=image/png&"
+        cases = [
+            ("test_WMS_exception_1_1_1.xml", "VERSION=1.1.1&SRS=EPSG:4326&BBOX=0,50,10,55", "text/xml"),
+            ("test_WMS_exception_1_3_0.xml", "VERSION=1.3.0&CRS=EPSG:4326&BBOX=50,0,55,10", "text/xml"),
+            ("test_WMS_exception_blank_1_3_0.png", "VERSION=1.3.0&CRS=EPSG:4326&BBOX=50,0,55,10&EXCEPTIONS=BLANK", "image/png"),
+            (
+                "test_WMS_exception_blank_1_1_1.png",
+                "VERSION=1.1.1&SRS=EPSG:4326&BBOX=0,50,10,55&EXCEPTIONS=application/vnd.ogc.se_blank",
+                "image/png",
+            ),
+        ]
+        for filename, parameters, content_type in cases:
+            with self.subTest(filename=filename):
+                status, data, headers = AdagucTestTools().runADAGUCServer(query + parameters, env=self.env, showLogOnError=False)
+                AdagucTestTools().writetofile(self.testresultspath + filename, data)
+                self.assertEqual(status, 404)
+                self.assertIn(f"Content-Type:{content_type}", headers)
+                if content_type == "text/xml":
+                    self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+                else:
+                    self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMap_Report_nounits(self):
         AdagucTestTools().cleanTempDir()

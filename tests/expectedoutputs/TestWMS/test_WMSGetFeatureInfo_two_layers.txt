@@ -1,0 +1,6 @@
+Coordinates - (lon=5.50; lat=53.50)
+air-temperature (air-temperature)
+    air-temperature 19.000000 degree
+wind-from-direction (wind-from-direction)
+    wind-from-direction 153.000000 degrees
+

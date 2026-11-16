@@ -302,6 +302,27 @@ class TestWCS:
             assert values[level].count() == source[level].count()
             assert np.allclose(sorted(values[level].compressed()), sorted(source[level].compressed()))
 
+    def test_WCSGetCoverageNetCDF4_timerange_two_coverages(self):
+        """
+        Two coverages over three time steps in their native grid: the output must have both variables, with the values of the source.
+        """
+        AdagucTestTools().cleanTempDir()
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=convert_units%2Fconvert_units_data.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=air-temperature,wind-speed&FORMAT=NetCDF4"
+            "&time=2026-02-13T01:00:00Z/2026-02-13T03:00:00Z",
+            env=self.env,
+        )
+        assert status == 0
+        output = netCDF4.Dataset("filename.nc", memory=data)
+        source = netCDF4.Dataset(ADAGUC_PATH + "/data/datasets/convert_units/convert_units_data.nc")
+        assert output.variables["time"].units == source.variables["time"].units
+        assert np.allclose(output.variables["time"][:], source.variables["time"][1:4])
+        for name in ("air-temperature", "wind-speed"):
+            values = output.variables[name][:]
+            assert values.shape == (3, 5, 5)
+            assert np.ma.count_masked(values) == 0
+            assert np.array_equal(values, source.variables[name][1:4])
+
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         """
         Check if WCS GetCoverage for testdata.nc as TIFF file is OK
