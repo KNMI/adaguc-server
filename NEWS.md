@@ -1,4 +1,4 @@
-**Version X.Y.Z**
+**Version 10.0.0 - 2026-11-16**
 
 - Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).
   - `<WCSFormat driver="...">` supports `ADAGUCNetCDF`, `GTiff` and `AAIGrid`. A `WCSFormat` with any other GDAL driver now gives the error `driver "..." is not supported` on GetCoverage. The GDAL `NetCDF` driver name is written by the ADAGUC NetCDF writer (as `ADAGUCNetCDF`), so its output is CF NetCDF with the original variable names instead of GDAL's `Band1`.
