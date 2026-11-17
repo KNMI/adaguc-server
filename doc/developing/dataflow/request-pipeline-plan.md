@@ -9,10 +9,11 @@ Paths are relative to `adagucserverEC/`. Line numbers refer to `master` at `3698
 ## Summary
 
 - **A middle ground, not one pipeline and not one per request.** We build a shared *library of stages* (resolve layers, resolve dimensions, load header, read data, statistics, ...). On top of that, each request family gets a short pipeline function of 20 to 40 lines that lists its stages in order. The requests share the front half and differ at the end: render, resample into a coverage, sample values, draw a legend, or write XML.
-- **There are four families:** *render* (GetMap, GetLegendGraphic), *resample* (GetCoverage), *sample* (GetFeatureInfo, GetPointValue, GetTrajectory, and later an EDR data call), and *catalogue* (GetCapabilities, DescribeCoverage, the GetMetadata variants). Some requests use no data at all: GetScalebar, OpenDAP, and `SERVICE=METADATA`. They only share the front end and the error handling.
-- **The central new idea is a `ReadWindow`.** GetMap (the visible extent), WCS (`optimizeextent`), GetFeatureInfo (a single cell) and the EDR time series (hyperslabs) all read "part of a grid", each in its own way. One explicit read window makes them a single read stage. It also makes reading only the visible extent possible.
+- **There are four families,** by what the end stage produces: *resample* gives values on a destination grid (GetCoverage, GetHistogram); *render* is resample plus a style and drawing (GetMap, GetLegendGraphic); *sample* gives values at points of the native grid (GetFeatureInfo, GetPointValue, GetTrajectory, and later an EDR data call); *catalogue* describes layers (GetCapabilities, DescribeCoverage, the GetMetadata variants). All of them can work in another CRS: resample and render transform the data, sample only transforms the point. Some requests use no data at all: GetScalebar, OpenDAP, and `SERVICE=METADATA`. They only share the front end and the error handling.
+- **The central new idea is a `ReadWindow`.** GetMap (the visible extent), WCS (`optimizeextent`), GetFeatureInfo (a single cell) and the EDR time series (hyperslabs) all read "part of a grid", each in its own way. With an explicit read window there is one read stage with one implementation; the requests only choose a different window. It also makes reading only the visible extent possible.
 - **Recommended route: change the code in place, step by step, keeping the output identical.** We don't build a second pipeline next to the old one. There is one exception: the GetFeatureInfo end stage, which already has two implementations today. It can be rebuilt next to the old one and compared.
 - **Two tracks that hardly conflict.** The front end (`process_querystring`, errors) and the data path (`CDataReader`, `CDataSource`, writers) can be done in parallel, by different people.
+- **Post-processors** keep their current interface in this plan. Splitting them by kind, each with a narrow interface, is a follow-up (phase 6).
 - **Size:** about 30 PRs. Each one can be merged on its own, and each one leaves the code better than before, even if we stop halfway.
 
 ## 1. What the requests do today
@@ -59,8 +60,8 @@ A pipeline that covers all of this needs flags and modes again, which is the sam
 **The middle ground:** a set of stages with explicit input and output types, plus a short pipeline function per family that calls those stages in order. The pipeline function is what you read to understand a request. The stages are what you test and reuse.
 
 ```
-                ┌─ render    : GetMap, GetLegendGraphic
-front end ──────┼─ resample  : GetCoverage (later also tile generation)
+                ┌─ resample  : GetCoverage, GetHistogram (later also tile generation)
+front end ──────┼─ render    : GetMap, GetLegendGraphic (= resample + style + drawing)
 (parse,         ├─ sample    : GetFeatureInfo / PointValue / Trajectory (later EDR data call)
  normalise,     ├─ catalogue : GetCapabilities, DescribeCoverage, GetMetadata, GetReferenceTimes
  dispatch)      └─ no data   : GetScalebar, OpenDAP, SERVICE=METADATA
@@ -79,6 +80,7 @@ front end ──────┼─ resample  : GetCoverage (later also tile gene
 | `resolveSteps` | `LayerPlan` + dimensions + `DimensionIndex` (DB) → `StepList` (file or tile or virtual, plus indices) | `setDimValuesForDataSource`, `handleTileRequest`, the liveupdate and grid fake steps |
 | `loadHeader` | `LayerPlan` + `Step` → `SourceHeader`: native `GridGeometry` (immutable), `AxisInfo`, variables, `ConverterKind` | the first half of `open`, `parseDimensions` |
 | `chooseReadWindow` | `SourceHeader` + target → `ReadWindow`: full, pixel extent, cell, or hyperslab runs, plus stride | the locals `start/count/stride`, `gridExtent`, `(x, y)`, `sortAndAggregate` |
+| `locate` | `SourceHeader` + `Location` (pixel, point or trajectory) → `std::vector<Cell>` in the native grid | `GetProjInfo`, `sampleTrajectoryGrid` |
 | `readData` | `SourceHeader` + `Step` + `ReadWindow` → `DataGrid` (buffers, nodata, units, **geometry of what is in memory**), including scale/offset and post-processors | the second half of `open`, or a converter |
 | `computeStatistics` | `DataGrid` → `Statistics` | `CDataReader.cpp:1296-1303` |
 | `finaliseStyle` | style + `Statistics` → `FinalStyle` (stretched legend, feature intervals, default vectors) | `stretchLegend` in the reader, and the style changes in `warpImage` (`CImageDataWriter.cpp:916-967`, `:1010-1035`) |
@@ -90,56 +92,62 @@ The types are deliberately value types with a clear owner. `GridGeometry` alread
 ### 3.2 The pipelines (target, in pseudocode)
 
 ```cpp
+// The DimensionIndex is the access to the dimension tables in the database (step 5.6). It is created once, in main, and
+// passed in, instead of the global CDBFactory::getDBAdapter() of today, so a unit test can pass a fake.
+
 // render family
-int runGetMap(RequestContext &req) {
-  auto layers = resolveLayers(req);
-  auto steps  = resolveSteps(req, layers, dimensionIndex);
+int runGetMap(const RequestContext &req, DimensionIndex &dimensionIndex) {
+  std::vector<LayerPlan> layers = resolveLayers(req);
+  StepList steps = resolveSteps(req, layers, dimensionIndex);
   Canvas canvas = createCanvas(req.map);
-  for (auto &unit : stepsToDraw(steps)) {                 // time steps or tiles; may run in threads
-    for (auto &layer : layers) {
-      auto header = loadHeader(layer, unit);
-      auto window = chooseReadWindow(header, req.map, layer.style);   // full grid or visible extent
-      auto grid   = readData(layer, header, unit, window);
-      auto stats  = layer.statsFor(grid);                 // once per layer, as now
-      auto style  = finaliseStyle(layer.style, stats, grid);
-      renderLayer(canvas, grid, style, req.map);          // renderer table instead of a chain of ifs
+  for (const Step &unit : stepsToDraw(steps)) {                  // time steps or tiles; may run in threads
+    for (const LayerPlan &layer : layers) {
+      SourceHeader header = loadHeader(layer, unit);
+      ReadWindow window = chooseReadWindow(header, req.map, layer.style);   // full grid or visible extent
+      DataGrid grid = readData(layer, header, unit, window);
+      const Statistics &stats = layer.statsFor(grid);            // once per layer, as now
+      FinalStyle style = finaliseStyle(layer.style, stats, grid);
+      renderLayer(canvas, grid, style, req.map);                 // renderer table instead of a chain of ifs
     }
   }
-  drawOverlays(canvas, req, layers);                      // title, dimensions, legend, scale bar
+  drawOverlays(canvas, req, layers);                             // title, dimensions, legend, scale bar
   return encodeImage(canvas, req.format);
 }
 
 // resample family
-int runGetCoverage(RequestContext &req) {
-  auto layers = resolveLayers(req);
-  auto steps  = resolveSteps(req, layers, dimensionIndex);
-  auto dest   = computeDestinationGrid(req.coverage, loadHeader(layers[0], steps.first()));  // pure, one copy
+int runGetCoverage(const RequestContext &req, DimensionIndex &dimensionIndex) {
+  std::vector<LayerPlan> layers = resolveLayers(req);
+  StepList steps = resolveSteps(req, layers, dimensionIndex);
+  GridGeometry dest = computeDestinationGrid(req.coverage, loadHeader(layers[0], steps.first()));  // pure, one copy
   CoverageBuffer out(dest, layers, steps);
-  for (auto &unit : steps) for (auto &layer : layers) {
-    auto header = loadHeader(layer, unit);
-    auto grid   = readData(layer, header, unit, chooseReadWindow(header, dest));
-    resampleInto(out.slot(layer, unit), grid, dest);
+  for (const Step &unit : steps) {
+    for (const LayerPlan &layer : layers) {
+      SourceHeader header = loadHeader(layer, unit);
+      DataGrid grid = readData(layer, header, unit, chooseReadWindow(header, dest));
+      resampleInto(out.slot(layer, unit), grid, dest);
+    }
   }
-  return encodeCoverage(out, req.format);                 // NetCDF, GeoTIFF or AAIGrid, now an encoder only
+  return encodeCoverage(out, req.format);                        // NetCDF, GeoTIFF or AAIGrid, now an encoder only
 }
+// GetHistogram is the same up to resampleInto, into a float grid of the request size, and then counts instead of encoding.
 
 // sample family
-int runGetFeatureInfo(RequestContext &req) {
-  auto layers = resolveLayers(req);
-  auto steps  = resolveSteps(req, layers, dimensionIndex);
-  SampleResult result;                                    // numbers + dimensions + metadata, not text
-  for (auto &layer : layers) {
-    auto header = loadHeader(layer, steps.first(layer));
-    auto cells  = locate(header, req.location);           // pixel, point or trajectory
-    result.add(sampleLayer(layer, header, steps[layer], cells));   // series or per-step strategy
+int runGetFeatureInfo(const RequestContext &req, DimensionIndex &dimensionIndex) {
+  std::vector<LayerPlan> layers = resolveLayers(req);
+  StepList steps = resolveSteps(req, layers, dimensionIndex);
+  SampleResult result;                                           // numbers + dimensions + metadata, not text
+  for (const LayerPlan &layer : layers) {
+    SourceHeader header = loadHeader(layer, steps.first(layer));
+    std::vector<Cell> cells = locate(header, req.location);      // pixel, point or trajectory
+    result.add(sampleLayer(layer, header, steps.of(layer), cells));   // series or per-step strategy
   }
-  return writeFeatureInfo(result, req.infoFormat);        // html / text / json / gml
+  return writeFeatureInfo(result, req.infoFormat);               // html / text / json / gml
 }
 
 // catalogue family
-int runGetCapabilities(RequestContext &req) {
+int runGetCapabilities(const RequestContext &req) {
   std::vector<LayerMetadata> metas;
-  for (auto &layer : listLayers(req.cfg)) metas.push_back(layerMetadata(layer));   // DB cache or header
+  for (const CServerConfig::XMLE_Layer &layer : listLayers(req.cfg)) metas.push_back(layerMetadata(layer));   // DB cache or header
   return writeCapabilities(metas, req.service, req.version);
 }
 ```
@@ -160,7 +168,7 @@ Requirements that this design keeps:
 | GetFeatureInfo per step | one cell `(x, y)`, set by three separate code paths in the reader | `CDataReader.cpp:472-477`, `:660`, `:980-992` |
 | GetFeatureInfo JSON / EDR | hyperslabs of consecutive indices, read *without* `CDataReader` | `CURUniqueRequests.cpp` |
 
-With an explicit `ReadWindow`, `readData` gets a single input that describes what is read, and the `DataGrid` it produces carries the geometry of the part in memory. Today `open` overwrites the full-grid geometry in `CDataSource` with that of the part read (`dWidth`, `dfBBOX`), so afterwards nobody knows the full grid any more. That is exactly what blocks extent reading, and it is the likely cause of a bug in GetFeatureInfo time series (see section 7).
+With an explicit `ReadWindow` there is **one** read stage with one implementation. The window is data, a description of what to read; the requests only choose a different one (`chooseReadWindow`): GetMap the visible extent, WCS the extent of the destination grid, GetFeatureInfo one cell, the JSON path hyperslab runs. `readData` gets a single input that describes what is read, and the `DataGrid` it produces carries the geometry of the part in memory. Today `open` overwrites the full-grid geometry in `CDataSource` with that of the part read (`dWidth`, `dfBBOX`), so afterwards nobody knows the full grid any more. That is exactly what blocks extent reading, and it is the likely cause of a bug in GetFeatureInfo time series (see section 7).
 
 Format converters fall outside this: they always read everything and rasterise into the viewport. `ConverterKind` in the `SourceHeader` makes this explicit, and `chooseReadWindow` then simply returns "full".
 
@@ -187,6 +195,7 @@ Target:
 - Stages return a `StageError { ServiceExceptionType type; std::string stage; std::vector<std::string> messages; bool skippable; }`. At the pipeline boundary this becomes `setExceptionType` plus the existing message list, so the output stays the same.
 - There is one top-level `catch` around the pipeline, for `StageError`, `std::exception` and the remaining `int`. Today there is none, so a `std::bad_alloc` kills the process.
 - `throw(__LINE__)` (about 130) and `CDBError` + `return 1` are converted stage by stage, when that stage is extracted. Not in one large PR.
+- Because only the boundary translates errors, changing what goes out (for example HTTP 500 instead of 200, or JSON errors) becomes a change in one place after the refactor. Two caveats: it is only consistent once all stages have been converted (until then old `CDBError` + `return 1` paths remain), and the message texts are part of the output too (some tests check them literally), so `StageError` must carry them unchanged.
 - **Behaviour change, to be decided separately:** a `CDBError` without an exception type now exits with 0, so the client gets HTTP **200** with an error text. The refactor should keep that at first. Changing it, for example to 500, is a separate PR that can be reverted.
 
 ### 3.6 The front end
@@ -218,7 +227,7 @@ That call is not part of this plan. The plan only makes sure that the "sample" s
 
 **Recommendation: A, with C for the GetFeatureInfo end stage only.** GetFeatureInfo already has two read paths that behave differently (JSON skips converters and before-reading post-processors) and one suspected bug. A new `sampleLayer` next to the old code, compared via the tests plus extra tests, is safer there than rebuilding the old code piece by piece.
 
-**What deliberately stays in this plan:** the 13 converters and 18 post-processors keep their `CDataSource*` interface. During the migration `CDataSource` holds the new types as members (`header`, `grid`, `step`), with the old fields as accessors. Narrowing their interface is a separate, optional follow-up project.
+**What deliberately stays in this plan:** the 13 converters and 18 post-processors keep their `CDataSource*` interface. During the migration `CDataSource` holds the new types as members (`header`, `grid`, `step`), with the old fields as accessors. Narrowing their interface is a separate follow-up, phase 6.
 
 ## 5. Steps
 
@@ -229,7 +238,7 @@ Each step is one PR, unless stated otherwise, and keeps the output identical unl
 | # | Step | Why |
 |---|---|---|
 | 0.1 | Tests for the paths that lack them: GetFeatureInfo text/html over **several** time steps on gridded data; GetCoverage with `TIME=a/b` and with `COVERAGE=a,b` (several levels with `elevation=1/3` are already tested); GetFeatureInfo with two layers; GetReferenceTimes (after a decision on its output format, see section 7); error bodies for WMS 1.1.1/1.3.0 XML and `EXCEPTIONS=BLANK`. | These are the paths that the later steps change. The multi-step GetFeatureInfo test checks the suspected bug from section 7. |
-| 0.2 | Decide on GetHistogram: keep it (+ a test) or remove it. | No test, no doc, no Python user. Removing it saves a whole path. |
+| 0.2 | A test for GetHistogram. | It is kept (decision D5), but has no test, no doc and no Python user. |
 | 0.3 | Remove dead code: the `cascaded` remnants, `showWCSNotEnabledErrorMessage`, the unused `CDataReader_open_lock`, the unreachable `StopWatch_Measure` (`CRequest.cpp:1941`). Leave `usePixelExtent` in place for phase 5. | Less code to move. |
 | 0.4 | Add stage names to `TraceTimingType` (PARSE, RESOLVE_LAYERS, RESOLVE_STEPS, LOAD_HEADER, READ, STATS, RENDER, ENCODE). | Profiling per stage from the start, through the existing `X-Trace-Timings`. |
 
@@ -261,7 +270,7 @@ Each step is one PR, unless stated otherwise, and keeps the output identical unl
 | # | Step |
 |---|---|
 | 3.1 | Resolve the style once, at layer creation (`LayerPlan`), instead of lazily in `getStyle()`. **Check:** the style currently also runs for WCS and GetFeatureInfo. The plan keeps that at first, see decision D3. |
-| 3.2 | `finaliseStyle`: the style changes from `warpImage` (feature intervals, default vectors, the `PointsFromGrid` call at `:1033`) and `stretchLegend` move to one stage that returns a copy. |
+| 3.2 | `finaliseStyle`: the style changes from `warpImage` (feature intervals, default vectors, the `PointsFromGrid` call at `:1033`) and `stretchLegend` move to one stage that returns a copy. Statistics are then only computed when `finaliseStyle` needs them for a legend stretch, so the resample and sample families (WCS, GetFeatureInfo) no longer compute them, without a separate fix. |
 | 3.3 | GetLegendGraphic uses the same statistics/stretch stages instead of its own logic in `CCreateLegend`. |
 
 **Phase 4: types out of `CDataSource`**, in this order, based on how easy they are to take out:
@@ -284,6 +293,14 @@ Each step is one PR, unless stated otherwise, and keeps the output identical unl
 | 5.5 | Catalogue: GetCapabilities / DescribeCoverage / GetMetadata / GetReferenceTimes as their own short pipelines. DescribeCoverage no longer builds data sources it doesn't use. GetReferenceTimes skips the full dimension resolution. | |
 | 5.6 | `DimensionIndex` interface in front of `CDBAdapterPostgreSQL` for `resolveSteps`, so that it can be tested without Postgres. | can also come earlier |
 
+**Phase 6 (follow-up): post-processors by kind.** The 18 post-processors now get the whole `CDataSource` and can change anything. After phase 5 they can be split by kind, each with a narrow interface:
+
+| Kind | Examples | Interface |
+|---|---|---|
+| value transformation | unit conversion, `ax+b`, Beaufort | `DataGrid` → `DataGrid`, also for the flat arrays of the sample family |
+| data model change | `convert_uv_components`, adding data objects, `filter_dataobjects` | before reading: header → header |
+| layer combination | `IncludeLayer`, `AddFeatures` (they do a nested read) | an explicit stage that reads the other layer through the same pipeline |
+
 ### Order and parallelism
 
 ```
@@ -302,7 +319,7 @@ Track 1 mainly touches `process_querystring` and `CServerError`. Track 2 touches
 | D2 | **GetFeatureInfo: one read path or two?** The JSON path (and so EDR) reads all time steps of a cell in one hyperslab, straight through the CDF data model. It therefore skips what `CDataReader::open` does: format converters, before-reading post-processors, lon wrap and stride. Unit conversion is a separate implementation that ignores `from_units` and style-level conversions. Which layers go to the text path is decided by a hand-kept list of file attributes, which misses some converters (curvilinear, TROPOMI, ASCAT). Sharing the read needs the stage split (2.1) and a `ReadWindow` with hyperslab runs (3.3) first, so a merge can only be part of 5.4. | merge them (behaviour change for some layers); or keep both as named strategies, chosen explicitly from `ConverterKind` and the post-processors | First keep both, named and explicit (no change). Merge later, in a separate PR with output differences reviewed. Bugs in one path (section 7) are fixed on their own before that. |
 | D3 | **Style in requests that don't draw** (WCS, GetFeatureInfo). Post-processors from the style now also run there. | keep (it works and tests rely on it); or only layer post-processors for non-drawing requests | Keep, but make it visible in `LayerPlan`. Ask whether this is intended. |
 | D4 | **HTTP 200 with an error body** for a `CDBError` without a type | keep, or 500 | Separate PR (1.7) after the refactor. |
-| D5 | **GetHistogram** | keep + test, or remove | Remove, unless someone uses it. |
+| D5 | **GetHistogram** | keep + test, or remove | **Decided: keep**, with a test (step 0.2). It is in the resample family. |
 | D6 | **Who and when.** Two tracks allow two people. How long do we keep the PRs open, so that other branches don't conflict too much? | | Merge quickly and announce in advance. |
 
 ## 7. Found along the way
