@@ -510,6 +510,38 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    def test_WMSGetFeatureInfo_timerange_text_matches_json(self):
+        # Text formats read one cell per time step. Before the fix, only the first step had a value and the others were "nodata".
+        AdagucTestTools().cleanTempDir()
+        query = (
+            "source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc"
+            "&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=air_temperature__at_2m&QUERY_LAYERS=air_temperature__at_2m&CRS=EPSG%3A4326"
+            "&BBOX=49.55171074378079,1.4162628389784275,54.80328142582087,9.526486675156528&WIDTH=1515&HEIGHT=981&I=832&J=484&STYLES="
+            "&time=2017-12-15T10%3A00%3A00Z/2017-12-15T13%3A00%3A00Z&DIM_reference_time=2017-12-15T09%3A00%3A00Z&INFO_FORMAT="
+        )
+        status, data, _ = AdagucTestTools().runADAGUCServer(query + "application/json", env=self.env)
+        self.assertEqual(status, 0)
+        json_values = list(json.loads(data)[0]["data"]["2017-12-15T09:00:00Z"].values())
+        self.assertEqual(len(json_values), 4)
+
+        for info_format, extension in (("text/plain", "txt"), ("text/html", "html")):
+            with self.subTest(info_format=info_format):
+                filename = f"test_WMSGetFeatureInfo_timerange.{extension}"
+                status, data, _ = AdagucTestTools().runADAGUCServer(query + info_format, env=self.env)
+                AdagucTestTools().writetofile(self.testresultspath + filename, data)
+                self.assertEqual(status, 0)
+                text = data.decode()
+                self.assertNotIn("nodata", text)
+                # One row per time step, in time order, with the values of the JSON output (text/html rounds to 2 decimals)
+                if info_format == "text/plain":
+                    row_values = re.findall(r"air_temperature__at_2m ([-\d.]+) K", text)
+                    expected_values = json_values
+                else:
+                    row_values = re.findall(r"<b>([-\d.]+)</b>", text)
+                    expected_values = [f"{float(value):.2f}" for value in json_values]
+                self.assertEqual(row_values, expected_values)
+                self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
     def test_WMSGetMap_Report_nounits(self):
         AdagucTestTools().cleanTempDir()
         if os.path.exists(os.environ["ADAGUC_LOGFILE"]):

@@ -1,3 +1,7 @@
+**Version X.Y.Z**
+
+- Fixed GetFeatureInfo with `INFO_FORMAT=text/html` or `text/plain` over more than one time step (for example `time=start/end`) on gridded data: only the first time step had a value, the other steps showed `nodata`. JSON output was not affected.
+
 **Version 10.0.0 - 2026-11-16**
 
 - Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).
