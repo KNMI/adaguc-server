@@ -1,5 +1,6 @@
 **Version X.Y.Z**
 
+- Fixed packed data (`scale_factor`/`add_offset`) without a `_FillValue`: when one request read the same file more than once, for example WCS GetCoverage over several time steps or levels, or a GetMap animation, the value equal to `add_offset` was nodata from the second read on.
 - Fixed GetFeatureInfo with `INFO_FORMAT=text/html` or `text/plain` over more than one time step (for example `time=start/end`) on gridded data: only the first time step had a value, the other steps showed `nodata`. JSON output was not affected.
 
 **Version 10.0.0 - 2026-11-16**
