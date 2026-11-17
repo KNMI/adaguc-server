@@ -1185,8 +1185,8 @@ TEST(CDFVariable, readDataUnpacksFillValueOnce) {
     double fillValue = 0;
     variable.getAttributeNE("_FillValue")->getData(&fillValue, 1);
     DOUBLES_EQUAL(-9999 * 0.1 + 1.0, fillValue, 1e-9);
-    // The memory reader gives zeros, which unpack to the add_offset.
-    DOUBLES_EQUAL(1.0, ((double *)variable.data)[0], 1e-9);
+    // Not the data: the memory reader does not initialise it.
+    CHECK(variable.fillValueIsUnpacked);
   }
 }
 
