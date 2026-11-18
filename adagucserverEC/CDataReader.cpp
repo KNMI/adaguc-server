@@ -1275,7 +1275,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_DOUBLE) {
           // packed data to be unpacked to DOUBLE:
           double *_data = (double *)dataSource->getDataObject(varNr)->cdfVariable->data;
-          for (size_t j = 0; j < dataSource->getDataObject(varNr)->cdfVariable->getSize(); j++) {
+          // The size is looked up once: calling getDataObject and getSize for every value took as long as the scaling itself
+          size_t l = dataSource->getDataObject(varNr)->cdfVariable->getSize();
+          for (size_t j = 0; j < l; j++) {
             _data[j] = _data[j] * dfscale_factor + dfadd_offset;
           }
 

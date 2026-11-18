@@ -27,6 +27,9 @@
 #include "CStopWatch.h"
 #include "CDFCopyData.h"
 #include <cstring>
+#include <cstdlib>
+#include <cerrno>
+#include <cstdint>
 #include "traceTimings/traceTimings.h"
 
 
@@ -35,6 +38,48 @@
 static const bool CCDFNETCDFIO_DEBUG = false;
 static const bool CCDFNETCDFIO_DEBUG_OPEN = false;
 static const bool CCDFNETCDFWRITER_DEBUG = false;
+
+size_t CDFNetCDFReader::getChunkCacheSizeFromEnvironment() {
+  const char *value = getenv("ADAGUC_NETCDF_CHUNK_CACHE_MB");
+  if (value == nullptr || value[0] == '\0') return 0;
+  const size_t megabyte = 1024 * 1024;
+  char *end = nullptr;
+  errno = 0;
+  unsigned long long megabytes = strtoull(value, &end, 10);
+  // strtoull accepts a sign and wraps a negative number around, so only digits are allowed
+  bool isNumber = value[0] >= '0' && value[0] <= '9' && *end == '\0' && errno == 0;
+  if (!isNumber || megabytes == 0 || megabytes > SIZE_MAX / megabyte) {
+    static bool warned = false;
+    if (!warned) {
+      CDBWarning("ADAGUC_NETCDF_CHUNK_CACHE_MB=%s is not a whole number of megabytes above 0, using the default chunk cache of NetCDF", value);
+      warned = true;
+    }
+    return 0;
+  }
+  return (size_t)megabytes * megabyte;
+}
+
+/**
+ * Sets the size of the HDF5 chunk cache for the files opened from here on, when asked with ADAGUC_NETCDF_CHUNK_CACHE_MB.
+ *
+ * Reading part of a compressed variable decompresses every chunk it touches, and the decompressed chunks are kept in
+ * this cache, per variable. When one read touches more chunks than fit, every following read decompresses them again.
+ * For example, a model level of a file chunked per vertical column (1 x 90 x 60 x 60) touches every chunk of the
+ * variable: a request for 22 levels then decompresses the whole variable 22 times, instead of once.
+ *
+ * Without the environment variable nothing is changed. The number of slots and the preemption of the library are kept.
+ */
+static void setChunkCacheFromEnvironment() {
+  size_t requestedSize = CDFNetCDFReader::getChunkCacheSizeFromEnvironment();
+  if (requestedSize == 0) return;
+  size_t size = 0, numElements = 0;
+  float preemption = 0;
+  int status = nc_get_chunk_cache(&size, &numElements, &preemption);
+  if (status == NC_NOERR && size != requestedSize) status = nc_set_chunk_cache(requestedSize, numElements, preemption);
+  if (status != NC_NOERR) {
+    CDBWarning("Unable to set the NetCDF chunk cache to %zu bytes: %s", requestedSize, nc_strerror(status));
+  }
+}
 
 CDFNetCDFReader::CDFNetCDFReader() : CDFReader() {
   if (CCDFNETCDFIO_DEBUG) {
@@ -58,6 +103,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     if (CCDFNETCDFIO_DEBUG_OPEN) {
       CDBDebug("NC_OPEN re-opening %s for %s", fileName.c_str(), var->name.c_str());
     }
+    setChunkCacheFromEnvironment();
     traceTimingsSpanStart(TraceTimingType::FSNCOPEN);
     status = nc_open(fileName.c_str(), NC_NOWRITE, &root_id);
     traceTimingsSpanEnd(TraceTimingType::FSNCOPEN);
@@ -694,6 +740,7 @@ int CDFNetCDFReader::open(const char *fileName) {
     CDBDebug("NC_OPEN opening %s", fileName);
   }
 
+  setChunkCacheFromEnvironment();
   traceTimingsSpanStart(TraceTimingType::FSNCOPEN);
   status = nc_open(fileName, NC_NOWRITE, &root_id);
   traceTimingsSpanEnd(TraceTimingType::FSNCOPEN);

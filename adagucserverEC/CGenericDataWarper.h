@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cfloat>
 #include <algorithm>
+#include <vector>
 #include "CImageWarper.h"
 #include "Types/GeoParameters.h"
 #include "CDebugger.h"
@@ -46,6 +47,11 @@ public:
   GenericDataWarper() = default;
   ~GenericDataWarper();
   bool useHalfCellOffset = false;
+  // Set to true when the drawFunction only stores the value in the destination pixel, like nearest neighbour: it does not read the
+  // pixel or the warper state, and the last value drawn in a pixel is the result. Without reprojection, source cells whose pixels
+  // are all drawn again by the next column or row are then left out. With many more source cells than destination pixels (like a
+  // WCS request for every 4th cell) that is most of them. The result is the same.
+  bool drawFunctionOverwrites = false;
   // The drawFunction is a template parameter (instead of std::function), so that it can be inlined in the pixel loops.
   // It is called with the signature void(int x, int y, T value, GDWState &warperState).
   template <typename T, typename DrawFn> int render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams, const DrawFn &drawFunction);
@@ -57,7 +63,8 @@ public:
 
 // Transform the grid linearly. This is used in case projection are the same and is much efficienter then warping the grid.
 template <typename T, typename DrawFn>
-void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWarper *, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams, const DrawFn &drawFunction) {
+void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, bool drawFunctionOverwrites, CImageWarper *, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
+                         const DrawFn &drawFunction) {
   StopWatch_Measure("[linearTransformGrid] source %dx%d dest %dx%d", warperState.sourceGridWidth, warperState.sourceGridHeight, warperState.destGridWidth, warperState.destGridHeight);
   double halfCell = useHalfCellOffset ? 0.5 : 0;
   double dfSourceExtW = sourceGeoParams.bbox.span().x;
@@ -115,47 +122,80 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
   bool yDirPositive = span.y > 0;
   bool xDirPositive = span.x > 0;
   StopWatch_Measure("linearTransformGrid: start drawing pixelspan %dx%d", pixelspan.span().x, pixelspan.span().y);
+
+  // The destination pixels of a source cell are a range in x that only depends on its column, and a range in y that only depends
+  // on its row. These ranges are calculated once per column and row, instead of for every cell: with many more source cells than
+  // destination pixels (like a WCS request for every 4th cell) most of the time went into calculating them.
+  struct DestRange {
+    int start, end;         // The destination pixels start..end-1 of the cell
+    int drawStart, drawEnd; // The part of them inside the destination grid, which is drawn
+    bool skip;              // Nothing to draw
+  };
+  auto destRange = [](double round, double scale, int margin, int destSize, int destGridSize) {
+    int s1 = std::floor(round + 0.5);
+    int s2 = std::floor(round + scale + 0.5);
+    bool skip = (s1 < -margin && s2 < -margin) || (s1 >= destSize + margin && s2 >= destSize + margin);
+    if (s1 > s2) {
+      std::swap(s1, s2);
+    }
+    if (s2 == s1) s2++;
+    DestRange range = {.start = s1, .end = s2, .drawStart = std::max(s1, 0), .drawEnd = std::min(s2, destGridSize), .skip = skip};
+    if (range.drawStart >= range.drawEnd) range.skip = true;
+    return range;
+  };
+  // The next column or row is drawn later. When it draws all pixels of this one too, and only the last value drawn counts, this
+  // one does not need to be drawn. A skipped one is compared with the next as it was before, so a run of them ends at one that is drawn.
+  auto skipOverwritten = [](std::vector<DestRange> &ranges) {
+    for (size_t j = 0; j + 1 < ranges.size(); j++) {
+      const DestRange &next = ranges[j + 1];
+      if (!ranges[j].skip && !next.skip && ranges[j].drawStart >= next.drawStart && ranges[j].drawEnd <= next.drawEnd) ranges[j].skip = true;
+    }
+  };
+
+  std::vector<DestRange> columns(std::max(0, pixelspan.right - pixelspan.left));
+  for (int x = pixelspan.left; x < pixelspan.right; x++) {
+    DestRange &column = columns[x - pixelspan.left];
+    column = destRange((x + halfCell) * xScale + xOffset, xScale, sxw, destGeoParams.width, warperState.destGridWidth);
+    if (x < 0 || x >= warperState.sourceGridWidth) column.skip = true;
+  }
+  std::vector<DestRange> rows(std::max(0, pixelspan.top - pixelspan.bottom));
   for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
-    for (int x = pixelspan.left; x < pixelspan.right; x++) {
-      double dfx = x + halfCell;
-      double dfy = y - halfCell; // Y is inverted
-      double xRound = dfx * xScale + xOffset;
-      double yRound = dfy * yScale + yOffset;
-      int sx1 = std::floor(xRound + 0.5);
-      int sx2 = std::floor(xRound + xScale + 0.5);
-      int sy1 = std::floor(yRound + 0.5);
-      int sy2 = std::floor(yRound + yScale + 0.5);
+    DestRange &row = rows[y - pixelspan.bottom];
+    row = destRange((y - halfCell) * yScale + yOffset, yScale, syh, destGeoParams.height, warperState.destGridHeight); // Y is inverted
+    int sourceIndexY = sourceGeoParams.height - 1 - y;
+    if (sourceIndexY < 0 || sourceIndexY >= warperState.sourceGridHeight) row.skip = true;
+  }
+  if (drawFunctionOverwrites) {
+    skipOverwritten(columns);
+    skipOverwritten(rows);
+  }
+  // The source columns to draw, in the order they are drawn
+  std::vector<int> drawnColumns;
+  drawnColumns.reserve(columns.size());
+  for (int x = pixelspan.left; x < pixelspan.right; x++) {
+    if (!columns[x - pixelspan.left].skip) drawnColumns.push_back(x);
+  }
 
-      if ((sx1 < -sxw && sx2 < -sxw) || (sy1 < -syh && sy2 < -syh) || (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) ||
-          (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh)) {
-        continue;
-      }
+  for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
+    const DestRange &row = rows[y - pixelspan.bottom];
+    if (row.skip) {
+      continue;
+    }
+    double h = double(row.end - row.start);
+    warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
+    const T *sourceRow = ((T *)warperState.sourceGrid) + (size_t)warperState.sourceIndexY * sourceGeoParams.width;
 
+    for (int x: drawnColumns) {
+      const DestRange &column = columns[x - pixelspan.left];
+      double w = double(column.end - column.start);
       warperState.sourceIndexX = x;
-      warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
-      if (warperState.sourceIndexX < 0 || warperState.sourceIndexY < 0 || warperState.sourceIndexX >= warperState.sourceGridWidth || warperState.sourceIndexY >= warperState.sourceGridHeight) {
-        continue;
-      }
-      if (sx1 > sx2) {
-        std::swap(sx1, sx2);
-      }
-      if (sy1 > sy2) {
-        std::swap(sy1, sy2);
-      }
-      if (sy2 == sy1) sy2++;
-      if (sx2 == sx1) sx2++;
+      T value = sourceRow[x];
 
-      double h = double(sy2 - sy1);
-      double w = double(sx2 - sx1);
-      T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + (warperState.sourceIndexY) * sourceGeoParams.width];
-
-      for (int sjy = sy1; sjy < sy2; sjy++) {
-        for (int sjx = sx1; sjx < sx2; sjx++) {
-          if (sjx >= 0 && sjy >= 0 && sjx < warperState.destGridWidth && sjy < warperState.destGridHeight) {
-            warperState.sourceTileDy = yDirPositive ? (sjy - sy1) / h : ((sy2 - sjy) / h);
-            warperState.sourceTileDx = xDirPositive ? (sjx - sx1) / w : (sx2 - sjx) / w;
-            drawFunction(sjx, sjy, value, warperState);
-          }
+      for (int sjy = row.drawStart; sjy < row.drawEnd; sjy++) {
+        for (int sjx = column.drawStart; sjx < column.drawEnd; sjx++) {
+          warperState.sourceTileDy = yDirPositive ? (sjy - row.start) / h : ((row.end - sjy) / h);
+          warperState.sourceTileDx = xDirPositive ? (sjx - column.start) / w : (column.end - sjx) / w;
+          drawFunction(sjx, sjy, value, warperState);
         }
       }
     }
@@ -381,7 +421,7 @@ template <typename T, typename DrawFn> int GenericDataWarper::render(CImageWarpe
     if (verbose) {
       CDBDebug("No reprojection required, doing linear transformation");
     }
-    linearTransformGrid<T>(warperState, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
+    linearTransformGrid<T>(warperState, useHalfCellOffset, drawFunctionOverwrites, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
     if (verbose) {
       CDBDebug("Done");
     }
