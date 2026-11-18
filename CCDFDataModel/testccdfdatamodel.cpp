@@ -25,6 +25,8 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <unistd.h>
+#include <netcdf.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
@@ -308,8 +310,24 @@ int testNetCDFChunkCacheFromEnvironment() {
   float defaultPreemption = 0, preemption = 0;
   nc_get_chunk_cache(&defaultSize, &defaultNumElements, &defaultPreemption);
 
-  auto openTestFile = []() {
-    std::string testFile = "../data/datasets/ahn_utrechtse_heuvelrug_500m.nc";
+  // The test writes its own NetCDF file, so it needs no files from outside this directory: the Docker build runs these
+  // tests without the data directory.
+  std::string testFile = "/tmp/adaguc_testccdfdatamodel_chunkcache_XXXXXX";
+  int fileDescriptor = mkstemp(testFile.data());
+  if (fileDescriptor == -1) {
+    CDBError("[FAILED] unable to make a temporary file %s", testFile.c_str());
+    return 1;
+  }
+  close(fileDescriptor);
+  int ncId = 0, dimId = 0, varId = 0;
+  if (nc_create(testFile.c_str(), NC_NETCDF4 | NC_CLOBBER, &ncId) != NC_NOERR || nc_def_dim(ncId, "x", 2, &dimId) != NC_NOERR || nc_def_var(ncId, "data", NC_FLOAT, 1, &dimId, &varId) != NC_NOERR ||
+      nc_close(ncId) != NC_NOERR) {
+    CDBError("[FAILED] unable to write NetCDF file %s", testFile.c_str());
+    remove(testFile.c_str());
+    return 1;
+  }
+
+  auto openTestFile = [&testFile]() {
     CDFNetCDFReader cdfReader;
     CDFObject cdfObject;
     cdfObject.attachCDFReader(&cdfReader);
@@ -338,6 +356,7 @@ int testNetCDFChunkCacheFromEnvironment() {
     failed = true;
   }
 
+  remove(testFile.c_str());
   unsetenv("ADAGUC_NETCDF_CHUNK_CACHE_MB");
   nc_set_chunk_cache(defaultSize, defaultNumElements, defaultPreemption);
   CTime::cleanInstances();
