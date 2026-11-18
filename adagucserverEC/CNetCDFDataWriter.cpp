@@ -200,7 +200,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       }
 
       /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
-      if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->geoParams.width == 1 && srvParam->geoParams.height == 1) {
+      if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && !srvParam->dFound_WidthOrHeight) {
         CDBDebug("CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate it");
         CImageWarper warper;
         dataSource->srvParams = this->srvParam;

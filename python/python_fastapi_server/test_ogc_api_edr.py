@@ -13,7 +13,13 @@ from fastapi.testclient import TestClient
 
 from main import app
 from routers.netcdf_to_covjson import get_epsg_axis_order
-from routers.utils.native_grid import get_collection_native_crs_details, get_collection_native_crs_wkt, subsample_axis
+from routers.utils.native_grid import (
+    cellsize_to_step,
+    get_collection_native_crs_details,
+    get_collection_native_crs_wkt,
+    subsample_axis,
+    subsample_axis_by_step,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1446,11 +1452,15 @@ def test_native_crs_is_only_for_cube_queries(client: TestClient):
     assert client.get(rotated + "/position", params=position | {"crs": "CRS84"}).json() == client.get(rotated + "/position", params=position).json()
 
 
-def test_cube_native_grid_refuses_resolution(client: TestClient):
-    """crs=native returns the cells of the native grid, so a resolution cannot be applied"""
-    resp = client.get(ROTATED_POLE_NATIVE_CUBE_URL + "&resolution_x=0.5&resolution_y=0.5")
-    assert resp.status_code == 400
-    assert "resolution" in resp.json()["description"]
+def test_cube_native_grid_cellsize():
+    """resolution_x/resolution_y with crs=native: a cell size in native units, rounded to a whole number of native cells"""
+    assert cellsize_to_step(None, 0.11) is None
+    assert cellsize_to_step(0.33, 0.11) == 3
+    assert cellsize_to_step(0.3, 0.11) == 3  # 2.7 cells
+    assert cellsize_to_step(0.05, 0.11) == 1  # never less than one cell
+    # A step larger than the cells gives the middle cell
+    assert subsample_axis_by_step(0, 5, 20) == (0.0, 1, 5)
+    assert subsample_axis_by_step(0, 26, 3) == subsample_axis(0, 26, 9)
 
 
 def test_collection_native_crs_needs_one_grid():
@@ -1568,13 +1578,120 @@ def test_cube_resolution_positions_epsg4326(client: TestClient):
     assert len(axes["x"]["values"]) == 12 and len(axes["y"]["values"]) == 8
 
 
+def test_cube_native_grid_resolution_one_position(client: TestClient):
+    """resolution-x=1&resolution-y=1 with crs=native returns one native cell: the middle cell of the grid, not a resampled grid"""
+    collection = client.get(ROTATED_POLE_COLLECTION_URL).json()
+    native = next(d for d in collection["data_queries"]["cube"]["link"]["variables"]["crs_details"] if d["crs"] == "native")
+    resp = client.get(
+        ROTATED_POLE_COLLECTION_URL + "/cube?parameter-name=pr_adjust&crs=native&bbox=" + ",".join(repr(float(v)) for v in native["bbox"])
+        + "&resolution-x=1&resolution-y=1"
+    )
+    assert resp.status_code == 200, resp.text
+    coverage = resp.json()
+    source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "test_rotated_pole_RACMO.nc"))
+    source_x, source_y = source.variables["x"][:], source.variables["y"][:]
+    column, row = (len(source_x) - 1) // 2, (len(source_y) - 1) // 2
+    assert coverage["domain"]["axes"]["x"]["values"] == pytest.approx([source_x[column]])
+    assert coverage["domain"]["axes"]["y"]["values"] == pytest.approx([source_y[row]])
+    expected = source.variables["pr_adjust"][0][row][column]
+    value = coverage["ranges"]["pr_adjust"]["values"][0]
+    assert (value is None) if np.ma.is_masked(expected) else value == pytest.approx(float(expected))
+
+
+def test_cube_resolution_positions_epsg4326_one_position(client: TestClient):
+    """resolution-x=1&resolution-y=1 without crs=native is a grid of one cell, not the default grid"""
+    resp = client.get(ROTATED_POLE_CUBE_URL + "&resolution-x=1&resolution-y=1")
+    assert resp.status_code == 200, resp.text
+    axes = resp.json()["domain"]["axes"]
+    assert len(axes["x"]["values"]) == 1 and len(axes["y"]["values"]) == 1
+
+
+def test_cube_native_grid_resolution_cellsize(client: TestClient):
+    """resolution_x/resolution_y with crs=native give the same native cells as the number of positions with the same step"""
+    collection = client.get(ROTATED_POLE_COLLECTION_URL).json()
+    native = next(d for d in collection["data_queries"]["cube"]["link"]["variables"]["crs_details"] if d["crs"] == "native")
+    whole_grid_url = (
+        ROTATED_POLE_COLLECTION_URL + "/cube?parameter-name=pr_adjust&crs=native&bbox=" + ",".join(repr(float(v)) for v in native["bbox"])
+    )
+    # The whole grid has 26 x 28 cells of 0.11 rotated degrees: 9 and 10 positions are steps of 3 cells, as 0.33 degrees
+    by_positions = client.get(whole_grid_url + "&resolution-x=9&resolution-y=10").json()
+    by_cellsize = client.get(whole_grid_url + "&resolution_x=0.33&resolution_y=0.33")
+    assert by_cellsize.status_code == 200, by_cellsize.text
+    assert by_cellsize.json()["domain"]["axes"] == by_positions["domain"]["axes"]
+    assert by_cellsize.json()["ranges"] == by_positions["ranges"]
+    # One axis only: the other axis keeps every cell
+    plain = client.get(whole_grid_url).json()["domain"]["axes"]
+    one_axis = client.get(whole_grid_url + "&resolution_x=0.33").json()["domain"]["axes"]
+    assert one_axis["x"] == by_positions["domain"]["axes"]["x"] and one_axis["y"] == plain["y"]
+    # A cell size larger than the bbox gives one cell
+    one_cell = client.get(whole_grid_url + "&resolution_x=100&resolution_y=100").json()["domain"]["axes"]
+    assert len(one_cell["x"]["values"]) == 1 and len(one_cell["y"]["values"]) == 1
+
+
+@pytest.mark.parametrize("cellsize", ["2.5", "100", "1e300"])
+def test_cube_resolution_cellsize_epsg4326_larger_than_bbox(client: TestClient, cellsize):
+    """Without crs=native, a cell size larger than the bbox (3 x 2 degrees) gives one cell, as with crs=native, not an empty grid"""
+    resp = client.get(ROTATED_POLE_CUBE_URL + f"&resolution_x={cellsize}&resolution_y={cellsize}")
+    assert resp.status_code == 200, resp.text
+    axes = resp.json()["domain"]["axes"]
+    # One cell, with its centre in the middle of the bbox
+    assert axes["x"]["values"] == pytest.approx([5.5]) and axes["y"]["values"] == pytest.approx([52.0])
+
+
+@pytest.mark.parametrize("resolution", ["resolution-x=5", "resolution-y=5", "resolution_x=0.5", "resolution_y=0.5"])
+def test_trajectory_refuses_resolution(client: TestClient, resolution):
+    """A trajectory samples the native grid cells it crosses, so both kinds of resolution parameters are refused"""
+    resp = client.get(f"/edr/collections/testcollection.testcollection/trajectory?coords=LINESTRING(4 51,7 53)&{resolution}")
+    assert resp.status_code == 400, resp.text
+    assert "resolution" in resp.json()["description"]
+
+
+def test_openapi_describes_invalid_parameters_as_400(client: TestClient):
+    """The OpenAPI document describes the 400 that EDR returns for an invalid query parameter, not FastAPI's 422"""
+    for url in ("/edr/api", "/edr/openapi.json"):
+        api = client.get(url).json()
+        cube = api["paths"]["/collections/{collection_name}/cube"]["get"]
+        assert "422" not in cube["responses"]
+        assert cube["responses"]["400"]["content"]["application/json"]["schema"] == {"$ref": "#/components/schemas/EdrError"}
+        assert "EdrError" in api["components"]["schemas"] and "HTTPValidationError" not in api["components"]["schemas"]
+        assert all("422" not in operation["responses"] for path in api["paths"].values() for operation in path.values())
+
+
 @pytest.mark.parametrize(
-    "query",
+    ("query", "same_as"),
     [
-        ROTATED_POLE_CUBE_URL + "&resolution-x=12&resolution-y=8&resolution_x=0.5&resolution_y=0.5",  # both kinds
-        ROTATED_POLE_CUBE_URL + "&resolution-x=12",  # only one, without crs=native
-        ROTATED_POLE_NATIVE_CUBE_URL + "&resolution-x=-1",  # negative
+        # 0 is the same as leaving it out, also for one axis only
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=0", ROTATED_POLE_CUBE_URL),
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=0&resolution-y=0", ROTATED_POLE_CUBE_URL),
+        # and can be combined with resolution_x/resolution_y
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=0&resolution_x=0.5&resolution_y=0.5", ROTATED_POLE_CUBE_URL + "&resolution_x=0.5&resolution_y=0.5"),
     ],
 )
-def test_cube_resolution_positions_errors(client: TestClient, query):
-    assert client.get(query).status_code in (400, 422)
+def test_cube_resolution_positions_zero_is_default(client: TestClient, query, same_as):
+    resp = client.get(query)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["domain"]["axes"] == client.get(same_as).json()["domain"]["axes"]
+
+
+@pytest.mark.parametrize(
+    ("query", "status_code"),
+    [
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=12&resolution-y=8&resolution_x=0.5&resolution_y=0.5", 400),  # both kinds
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=12", 400),  # only one, without crs=native
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=12&resolution-y=0", 400),  # 0 is the same as leaving it out
+        (ROTATED_POLE_NATIVE_CUBE_URL + "&resolution-x=-1", 400),  # negative: invalid values return 400, as EDR expects
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=30000&resolution-y=2", 400),  # above the 20000 adaguc-server can write
+        (ROTATED_POLE_NATIVE_CUBE_URL + "&resolution-y=20001", 400),
+        (ROTATED_POLE_CUBE_URL + "&resolution-x=abc&resolution-y=2", 400),  # not a number
+        (ROTATED_POLE_NATIVE_CUBE_URL + "&resolution_x=0", 400),  # a cell size must be larger than 0
+        (ROTATED_POLE_NATIVE_CUBE_URL + "&resolution_x=inf", 400),  # and finite
+        (ROTATED_POLE_CUBE_URL + "&resolution_x=inf&resolution_y=inf", 400),
+        (ROTATED_POLE_CUBE_URL + "&resolution_x=nan&resolution_y=nan", 400),
+        (ROTATED_POLE_CUBE_URL + "&resolution_x=0.5", 400),  # only one, without crs=native
+        (ROTATED_POLE_NATIVE_CUBE_URL + "&resolution-x=9&resolution_y=0.33", 400),  # both kinds, on different axes
+    ],
+)
+def test_cube_resolution_positions_errors(client: TestClient, query, status_code):
+    resp = client.get(query)
+    assert resp.status_code == status_code, resp.text
+    assert resp.json()["code"] == str(status_code) and resp.json()["description"]

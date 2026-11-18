@@ -89,7 +89,7 @@ int CGridFileDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource,
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
     srvParam->geoParams.bbox.toArray(dfDstBBOX);
     /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
-    if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->geoParams.width == 1 && srvParam->geoParams.height == 1) {
+    if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && !srvParam->dFound_WidthOrHeight) {
       CImageWarper warper;
       dataSource->srvParams = this->srvParam;
       status = warper.initreproj(dataSource, this->srvParam->geoParams, &srvParam->cfg->Projection);

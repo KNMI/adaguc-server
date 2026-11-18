@@ -20,6 +20,7 @@ from edr_pydantic.capabilities import (
 from edr_pydantic.collections import Collection, Collections
 from edr_pydantic.link import Link
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
@@ -53,6 +54,23 @@ async def edr_exception_handler(_, exc: EdrException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"code": str(exc.status_code), "description": exc.detail},
+    )
+
+
+@edrApiApp.exception_handler(RequestValidationError)
+async def edr_validation_exception_handler(_, exc: RequestValidationError):
+    """
+    A query parameter with an invalid value, like resolution-x=-1, returns 400 as EDR expects (instead of FastAPI's 422),
+    in the same format as the other EDR errors
+    """
+    problems = []
+    for error in exc.errors():
+        location = error.get("loc", ())
+        name = location[-1] if len(location) > 1 else ".".join(str(part) for part in location)
+        problems.append(f"{name}: {error.get('msg', 'invalid value')}")
+    return JSONResponse(
+        status_code=400,
+        content={"code": "400", "description": "Invalid query parameter " + "; ".join(problems)},
     )
 
 
@@ -188,12 +206,42 @@ def get_fixed_api():
     """
     Fix the API! This is needed for the OGC conformance tests.
     """
-    api = get_openapi(
-        title=edrApiApp.title,
-        version=edrApiApp.version,
-        routes=edrApiApp.routes,
-    )
-    return api
+    return get_edr_openapi()
+
+
+def get_edr_openapi() -> dict:
+    """
+    The OpenAPI document of the EDR service. FastAPI describes a query parameter with an invalid value as a 422 with its
+    own error format, but EDR returns a 400 in the EDR error format (see edr_validation_exception_handler).
+    """
+    if edrApiApp.openapi_schema is None:
+        api = get_openapi(
+            title=edrApiApp.title,
+            version=edrApiApp.version,
+            routes=edrApiApp.routes,
+        )
+        for path_item in api.get("paths", {}).values():
+            for operation in path_item.values():
+                responses = operation.get("responses", {}) if isinstance(operation, dict) else {}
+                if responses.pop("422", None) is not None:
+                    responses["400"] = {
+                        "description": "A query parameter is missing or has an invalid value",
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EdrError"}}},
+                    }
+        schemas = api.setdefault("components", {}).setdefault("schemas", {})
+        schemas.pop("HTTPValidationError", None)
+        schemas.pop("ValidationError", None)
+        schemas["EdrError"] = {
+            "title": "EdrError",
+            "type": "object",
+            "required": ["code", "description"],
+            "properties": {"code": {"type": "string"}, "description": {"type": "string"}},
+        }
+        edrApiApp.openapi_schema = api
+    return edrApiApp.openapi_schema
+
+
+edrApiApp.openapi = get_edr_openapi
 
 
 @edrApiApp.get("/conformance", response_model=ConformanceModel)

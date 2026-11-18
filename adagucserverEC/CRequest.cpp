@@ -984,6 +984,7 @@ int CRequest::process_querystring() {
           dErrorOccured = 1;
         }
         dFound_Width = 1;
+        srvParam->dFound_WidthOrHeight = true;
       }
       // Height Parameters
       if (uriKeyUpperCase == "HEIGHT") {
@@ -994,6 +995,7 @@ int CRequest::process_querystring() {
         }
 
         dFound_Height = 1;
+        srvParam->dFound_WidthOrHeight = true;
       }
       // RESX Parameters
       if (uriKeyUpperCase == "RESX") {

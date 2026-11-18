@@ -76,6 +76,8 @@ public:
   bool showScaleBarInImage = false;
   bool showNorthArrow = false;
   int dFound_BBOX = 0;
+  // WIDTH or HEIGHT was given in the request, so a WCS GetCoverage of 1x1 is taken literally instead of as "no size given"
+  bool dFound_WidthOrHeight = false;
   int imageFormat = IMAGEFORMAT_IMAGEPNG8;
   int imageQuality = 85; // 0-100
   int imageMode = SERVERIMAGEMODE_8BIT;

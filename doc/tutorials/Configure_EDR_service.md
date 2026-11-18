@@ -95,13 +95,20 @@ See:
 
 ## Resolution of cube queries
 
-A cube query accepts two kinds of resolution parameters. They cannot be combined:
+A cube query accepts two kinds of resolution parameters, both for EPSG:4326 and for `crs=native`. They cannot be
+combined:
 
 - **`resolution-x` and `resolution-y` (EDR):** the number of positions in x and y, as defined by OGC API EDR. In
-  EPSG:4326 they set the width and height of the grid, and they must be given together. `0`, or leaving them out,
-  gives the default resolution. With `crs=native` they give every n-th cell of the native grid, see below.
-- **`resolution_x` and `resolution_y` (ADAGUC extension, not part of EDR):** the cell size in degrees, only for
-  EPSG:4326. Note the underscore: these are not the same as the EDR parameters with a hyphen.
+  EPSG:4326 they set the width and height of the grid, and they must be given together. The positions are the cell
+  centres of that grid, so they lie half a cell inside the bbox, not on its edges. `0`, or leaving them out, gives
+  about the resolution of the data. With `crs=native` they give every n-th cell of the native grid, see below. The
+  largest value is 20000.
+- **`resolution_x` and `resolution_y` (ADAGUC extension, not part of EDR):** the cell size in the units of the `crs`:
+  degrees for EPSG:4326, and native units (like metres or rotated degrees) for `crs=native`, see below. They must be
+  larger than 0, and in EPSG:4326 they must be given together. A cell size larger than the bbox gives one cell. Note
+  the underscore: these are not the same as the EDR parameters with a hyphen.
+
+An invalid value, like a negative number or a number above 20000, returns HTTP 400.
 
 ```text
 /edr/collections/edr.mycollection/cube?bbox=5,52,7,54&parameter-name=my_temperature&resolution-x=20&resolution-y=20
@@ -118,14 +125,16 @@ also be left out. With `crs=native` the cube returns the cells of the source gri
 /edr/collections/edr.mycollection/instances/201712150900/cube?bbox=100000,400000,250000,550000&datetime=2017-12-15T09:00Z&parameter-name=my_temperature&crs=native
 ```
 
-- **Availability:** a collection offers `native` only when all its EDR parameters share one grid, and that grid is
-  not EPSG:4326. It is then listed in the `crs` list of the collection, and in the `crs_details` of the cube query
-  with the WKT of the grid.
+- **Availability:** a collection offers `native` only when all its EDR parameters share one projection, and that
+  projection is not EPSG:4326. Their grids can differ in extent or cell size. It is then listed in the `crs` list of
+  the collection, and in the `crs_details` of the cube query with the WKT of the projection.
 - **bbox:** the values are in the coordinates of the native grid, not in longitude/latitude. In this example these
   are metres in the Dutch RD grid (EPSG:28992). For a rotated pole grid they are rotated degrees. Every cell that
   intersects the bbox is returned. To choose a bbox without converting coordinates, use the extent of the native grid
   in its `crs_details` entry (see below). To convert longitude/latitude yourself, use the WKT, for example with pyproj.
-- **Native extent:** the `native` entry in `crs_details` also gives the extent of the grid in native coordinates:
+- **Native extent (ADAGUC extension):** the `native` entry in `crs_details` also gives the extent of the grid in
+  native coordinates. EDR only defines `crs` and `wkt` in `crs_details`; these members are added by ADAGUC, so generic
+  EDR clients do not use them:
   - `bbox`: `minx, miny, maxx, maxy` of the outer cell edges. Requesting this bbox returns the whole grid. When the
     parameters have different grids in the same projection, the bbox covers all of them.
   - `cellsize`: the cell size in x and y, and `size`: the number of cells in x and y. These are only given when all
@@ -151,11 +160,13 @@ also be left out. With `crs=native` the cube returns the cells of the source gri
 - **Fewer cells:** with `resolution-x`/`resolution-y` (the number of positions) the cube returns every n-th cell of
   the native grid, for at most that many positions. The values stay cells of the native grid, without interpolation:
   the middle cell of each block of n cells. So the positions are not exactly at the bbox edges, as EDR describes for
-  interpolated data. `0`, or at least as many positions as there are cells, gives every cell. They can also be given
-  for one axis only; the other axis then keeps every cell.
-- **Errors (HTTP 400):** `crs=native` cannot be combined with `resolution_x`/`resolution_y` (degrees), because it
-  returns the cells of the native grid; use `resolution-x`/`resolution-y` for fewer cells. A bbox outside the grid and a collection without `native` also return 400.
-  `/position` and `/trajectory` refuse `crs=native`, because their coordinates are longitude/latitude.
+  interpolated data. `0`, or at least as many positions as there are cells, gives every cell.
+  With `resolution_x`/`resolution_y` (the cell size in native units) the cell size is rounded to a whole number of
+  native cells, and the cube returns every n-th cell in the same way. For example, `resolution_x=0.33` on a grid of
+  0.11 rotated degrees gives every 3rd cell. A cell size larger than the bbox gives one cell.
+  Both kinds can also be given for one axis only; the other axis then keeps every cell.
+- **Errors (HTTP 400):** a bbox outside the grid and a collection without `native` return 400. `/position` and
+  `/trajectory` refuse `crs=native`, because their coordinates are longitude/latitude.
 
 Without `crs`, or with any spelling of EPSG:4326 (`EPSG:4326`, `CRS84`, `OGC:CRS84` or their URIs), the cube returns
 EPSG:4326 as before. Other values return HTTP 400.
@@ -231,8 +242,8 @@ including rotated-pole grids. Each axis needs at least two cells; spatial
 dimensions must be the final two variable dimensions. Layers requiring multiple
 source variables or `orgname` renaming are unsupported.
 
-Only `EPSG:4326` and CoverageJSON are supported. `resolution_x` and `resolution_y`
-are rejected; rendering stride is ignored. Vertical coordinates must be finite
+Only `EPSG:4326` and CoverageJSON are supported. `resolution_x`, `resolution_y`,
+`resolution-x` and `resolution-y` are rejected; rendering stride is ignored. Vertical coordinates must be finite
 numbers. Failed trajectory data calls return HTTP 400.
 
 The current fixed limits are:
