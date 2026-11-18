@@ -302,6 +302,28 @@ class TestWCS:
             assert values[level].count() == source[level].count()
             assert np.allclose(sorted(values[level].compressed()), sorted(source[level].compressed()))
 
+    def test_WCSGetCoverageNetCDF4_packed_data_without_fillvalue_timerange(self):
+        """
+        Packed data (scale_factor 0.5, add_offset 10) without a _FillValue, over several time steps from one file.
+        The first read wrote a _FillValue of add_offset (the scaled default nodata value 0) on the cached variable,
+        so in the later time steps the value 10 was nodata.
+        """
+        AdagucTestTools().cleanTempDir()
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=testdata_scale_offset.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=scaled_param&FORMAT=NetCDF4"
+            "&time=2026-02-13T01:00:00Z/2026-02-13T03:00:00Z",
+            env=self.env,
+        )
+        assert status == 0
+        variable = netCDF4.Dataset("filename.nc", memory=data).variables["scaled_param"]
+        assert "_FillValue" not in variable.ncattrs()
+        values = variable[:]
+        assert values.shape == (3, 5, 5)
+        source = netCDF4.Dataset(ADAGUC_PATH + "/data/datasets/testdata_scale_offset.nc").variables["scaled_param"][1:4]
+        # Every time step has a cell with the value 10
+        assert np.ma.count_masked(values) == 0
+        assert np.array_equal(values, source)
+
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         """
         Check if WCS GetCoverage for testdata.nc as TIFF file is OK

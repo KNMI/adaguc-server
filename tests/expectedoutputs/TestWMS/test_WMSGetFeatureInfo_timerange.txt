@@ -1,0 +1,7 @@
+Coordinates - (lon=5.87; lat=52.21)
+air_temperature__at_2m (air_temperature__at_2m)
+  -   air_temperature__at_2m 2.470361 K
+  -   air_temperature__at_2m 3.004053 K
+  -   air_temperature__at_2m 3.232813 K
+  -   air_temperature__at_2m 3.306543 K
+

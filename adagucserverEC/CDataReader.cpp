@@ -1229,7 +1229,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDF::Attribute *add_offset = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
       // The flag stays on the (cached) variable after an earlier read, for example of another level. Data read again from the
       // file must be scaled again, but the _FillValue and nodata value were scaled already.
-      bool scaleNodata = !appliedScaleOffset;
+      // Without a _FillValue there is no nodata value to scale. Writing one would make the next read of this cached variable
+      // treat the value add_offset (packed value 0) as nodata.
+      bool scaleNodata = !appliedScaleOffset && dataSource->getDataObject(varNr)->hasNodataValue;
       if ((!appliedScaleOffset || dataIsRead) && scale_factor != nullptr) {
         appliedScaleOffset = true;
         dataSource->getDataObject(varNr)->cdfVariable->setAttribute("ADAGUC_SCALE_OFFSET_APPLIED", CDF_BYTE, appliedScaleOffset);
