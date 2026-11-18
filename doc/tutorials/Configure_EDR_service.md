@@ -93,6 +93,21 @@ See:
 
 ![](2023-11-23-AdagucServer_EDR_In_MetOffice_EDR_Viewer.png)
 
+## Resolution of cube queries
+
+A cube query accepts two kinds of resolution parameters. They cannot be combined:
+
+- **`resolution-x` and `resolution-y` (EDR):** the number of positions in x and y, as defined by OGC API EDR. In
+  EPSG:4326 they set the width and height of the grid, and they must be given together. `0`, or leaving them out,
+  gives the default resolution. With `crs=native` they give every n-th cell of the native grid, see below.
+- **`resolution_x` and `resolution_y` (ADAGUC extension, not part of EDR):** the cell size in degrees, only for
+  EPSG:4326. Note the underscore: these are not the same as the EDR parameters with a hyphen.
+
+```text
+/edr/collections/edr.mycollection/cube?bbox=5,52,7,54&parameter-name=my_temperature&resolution-x=20&resolution-y=20
+/edr/collections/edr.mycollection/cube?bbox=5,52,7,54&parameter-name=my_temperature&resolution_x=0.1&resolution_y=0.1
+```
+
 ## Cube queries on the native grid (`crs=native`)
 
 By default `/cube` resamples the data to a regular EPSG:4326 grid with nearest neighbour. The values are real values,
@@ -133,8 +148,13 @@ also be left out. With `crs=native` the cube returns the cells of the source gri
   EPSG id of the grid when there is one. CoverageJSON has no way to give a CRS as WKT, so a grid without an EPSG id,
   like a rotated pole grid, has only a `type` and no `id`. Its WKT is in the `native` entry of `crs_details`, given as
   a CF rotated pole.
-- **Errors (HTTP 400):** `crs=native` cannot be combined with `resolution_x`/`resolution_y`, because it returns the
-  cells of the native grid. A bbox outside the grid and a collection without `native` also return 400.
+- **Fewer cells:** with `resolution-x`/`resolution-y` (the number of positions) the cube returns every n-th cell of
+  the native grid, for at most that many positions. The values stay cells of the native grid, without interpolation:
+  the middle cell of each block of n cells. So the positions are not exactly at the bbox edges, as EDR describes for
+  interpolated data. `0`, or at least as many positions as there are cells, gives every cell. They can also be given
+  for one axis only; the other axis then keeps every cell.
+- **Errors (HTTP 400):** `crs=native` cannot be combined with `resolution_x`/`resolution_y` (degrees), because it
+  returns the cells of the native grid; use `resolution-x`/`resolution-y` for fewer cells. A bbox outside the grid and a collection without `native` also return 400.
   `/position` and `/trajectory` refuse `crs=native`, because their coordinates are longitude/latitude.
 
 Without `crs`, or with any spelling of EPSG:4326 (`EPSG:4326`, `CRS84`, `OGC:CRS84` or their URIs), the cube returns

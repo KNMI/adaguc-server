@@ -1,3 +1,7 @@
+**Unreleased**
+
+- EDR cube requests accept the EDR parameters `resolution-x` and `resolution-y`: the number of positions in x and y. With `crs=native` they give every n-th cell of the native grid, for at most that many positions, so the values stay cells of the native grid, without interpolation (the middle cell of each block of n cells). This makes large native requests smaller, for example the full domain of a 676×564 model grid as 169×141 cells. `0`, or at least as many positions as there are cells, gives every cell. Without `crs=native` they set the width and height of the EPSG:4326 grid. The existing `resolution_x` and `resolution_y` (cell size in degrees) are unchanged and cannot be combined with them.
+
 **Version 10.0.0 - 2026-11-16**
 
 - Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).

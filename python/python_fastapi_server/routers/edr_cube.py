@@ -59,6 +59,8 @@ async def get_collection_cube(
     z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
+    positions_x: Annotated[int | None, Query(alias="resolution-x", ge=0)] = None,
+    positions_y: Annotated[int | None, Query(alias="resolution-y", ge=0)] = None,
     crs: str | None = None,
 ) -> CovJSONResponse:
     """Returns information in EDR format for a given collection and position"""
@@ -73,6 +75,8 @@ async def get_collection_cube(
         z_par=z_par,
         resolution_x=resolution_x,
         resolution_y=resolution_y,
+        positions_x=positions_x,
+        positions_y=positions_y,
         crs=crs,
     )
 
@@ -94,10 +98,17 @@ async def get_coll_inst_cube(
     z_par: Annotated[str | None, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
+    positions_x: Annotated[int | None, Query(alias="resolution-x", ge=0)] = None,
+    positions_y: Annotated[int | None, Query(alias="resolution-y", ge=0)] = None,
     crs: str | None = None,
 ) -> CovJSONResponse:
     """Returns information in EDR format for a given collection, instance and position.
-    With crs=native the data is returned on the grid of the source data, for example a rotated pole grid, instead of in EPSG:4326."""
+    With crs=native the data is returned on the grid of the source data, for example a rotated pole grid, instead of in EPSG:4326.
+
+    resolution-x / resolution-y (EDR): the number of positions in x and y. With crs=native every n-th cell of the native
+    grid, for at most that many positions, so the values stay cells of the native grid; 0 gives every cell. Otherwise the
+    width and height of the EPSG:4326 grid. resolution_x / resolution_y (ADAGUC extension, not EDR): the cell size in
+    degrees, only for EPSG:4326."""
     allowed_params = [
         "bbox",
         "datetime",
@@ -107,11 +118,22 @@ async def get_coll_inst_cube(
         "crs",
         "resolution_x",
         "resolution_y",
+        "resolution-x",
+        "resolution-y",
     ]
 
     check_crs(crs, allow_native=True, query_type="cube")
     if crs == NATIVE_CRS and (resolution_x is not None or resolution_y is not None):
-        raise exc_failed_call("resolution_x and resolution_y cannot be combined with crs=native, which returns the cells of the native grid")
+        raise exc_failed_call(
+            "resolution_x and resolution_y cannot be combined with crs=native, which returns the cells of the native grid;"
+            " use resolution-x and resolution-y for fewer cells"
+        )
+    if (resolution_x is not None or resolution_y is not None) and (positions_x is not None or positions_y is not None):
+        raise exc_failed_call("Use either resolution-x and resolution-y (number of positions) or resolution_x and resolution_y (degrees)")
+    # EPSG:4326 output needs both a width and a height; 0 means the default resolution, as when they are left out
+    positions = (positions_x, positions_y) if positions_x is not None or positions_y is not None else None
+    if crs != NATIVE_CRS and positions is not None and (not positions_x) != (not positions_y):
+        raise exc_failed_call("resolution-x and resolution-y must be given together, or both 0, without crs=native")
 
     metadata = await get_metadata(collection_name, response=response)
 
@@ -151,7 +173,9 @@ async def get_coll_inst_cube(
         if instance:
             query["dim_reference_time"] = instance_to_iso(instance)
         if crs == NATIVE_CRS:
-            query.update(get_native_grid_query(metadata[collection_name][parameter_name]["layer"].get("gridspec"), bbox))
+            query.update(get_native_grid_query(metadata[collection_name][parameter_name]["layer"].get("gridspec"), bbox, positions))
+        elif positions is not None and positions_x and positions_y:
+            query.update(width=positions_x, height=positions_y)
         elif resolution_x is not None and resolution_y is not None:
             query.update(resx=resolution_x, resy=resolution_y)
         urlrequest = encode_native_query(query, [*custom_dims, vertical_dim])
