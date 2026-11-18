@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from routers.netcdf_to_covjson import get_epsg_axis_order
-from routers.utils.native_grid import get_collection_native_crs_details, get_collection_native_crs_wkt
+from routers.utils.native_grid import get_collection_native_crs_details, get_collection_native_crs_wkt, subsample_axis
 
 logger = logging.getLogger(__name__)
 
@@ -1499,3 +1499,82 @@ def test_covjson_axis_order_follows_epsg():
     assert get_epsg_axis_order(4258) == ["y", "x"]
     assert get_epsg_axis_order(28992) == ["x", "y"]
     assert get_epsg_axis_order(None) == ["x", "y"]
+
+
+def test_subsample_axis():
+    """Every n-th cell, for at most the requested number of positions, with each output centre on a native cell centre"""
+    # No subsampling: no resolution, 0, or at least as many positions as cells
+    for positions in (None, 0, 26, 30):
+        assert subsample_axis(0, 26, positions) == (0.0, 26, 1)
+    for start, end, positions in ((0, 26, 9), (0, 26, 7), (3, 20, 4), (5, 9, 1), (0, 28, 10), (2, 101, 5)):
+        first_edge, count, step = subsample_axis(start, end, positions)
+        assert step > 1 and count <= positions
+        middle = (step - 1) // 2
+        for k in range(count):
+            centre = first_edge + (k + 0.5) * step
+            assert centre == pytest.approx(start + k * step + middle + 0.5)  # the centre of a native cell
+            assert start <= start + k * step + middle < end  # inside the requested cells
+        # No room for one more block: the next taken cell would be outside
+        assert start + count * step + middle >= end
+    # Odd steps start on the first cell edge, even steps half a cell before it
+    assert subsample_axis(0, 26, 9) == (0.0, 9, 3)
+    assert subsample_axis(0, 26, 7) == (-0.5, 7, 4)
+
+
+ROTATED_POLE_COLLECTION_URL = "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole"
+
+
+@pytest.mark.parametrize(("positions", "step"), [((9, 10), (3, 3)), ((7, 7), (4, 4))])
+def test_cube_native_grid_resolution(client: TestClient, positions, step):
+    """resolution-x/-y with crs=native: every n-th cell of the native grid, exactly the source cells, without interpolation"""
+    collection = client.get(ROTATED_POLE_COLLECTION_URL).json()
+    native = next(d for d in collection["data_queries"]["cube"]["link"]["variables"]["crs_details"] if d["crs"] == "native")
+    resp = client.get(
+        ROTATED_POLE_COLLECTION_URL + "/cube?parameter-name=pr_adjust&crs=native&bbox=" + ",".join(repr(float(v)) for v in native["bbox"])
+        + f"&resolution-x={positions[0]}&resolution-y={positions[1]}"
+    )
+    assert resp.status_code == 200, resp.text
+    coverage = resp.json()
+    source = netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "test_rotated_pole_RACMO.nc"))
+    source_x, source_y = source.variables["x"][:], source.variables["y"][:]  # both ascending in this file
+    # The middle cell of every block of `step` cells (the lower middle one for an even step)
+    columns = list(range((step[0] - 1) // 2, len(source_x), step[0]))
+    rows = list(range((step[1] - 1) // 2, len(source_y), step[1]))
+    x, y = coverage["domain"]["axes"]["x"]["values"], coverage["domain"]["axes"]["y"]["values"]
+    assert len(x) <= positions[0] and len(y) <= positions[1]
+    assert np.allclose(sorted(x), source_x[columns]) and np.allclose(sorted(y), source_y[rows])
+    # Every value is the value of its source cell
+    returned_rows = [int(np.argmin(np.abs(source_y - value))) for value in y]
+    returned_columns = [int(np.argmin(np.abs(source_x - value))) for value in x]
+    expected = source.variables["pr_adjust"][0][returned_rows][:, returned_columns].astype(float).filled(np.nan).flatten()
+    values = np.array([np.nan if value is None else value for value in coverage["ranges"]["pr_adjust"]["values"]], dtype=float)
+    assert np.allclose(values, expected, equal_nan=True)
+
+
+@pytest.mark.parametrize("positions", ["0", "500"])
+def test_cube_native_grid_resolution_all_cells(client: TestClient, positions):
+    """resolution-x/-y of 0, or more positions than cells, give every cell of the native grid"""
+    plain = client.get(ROTATED_POLE_NATIVE_CUBE_URL).json()
+    resp = client.get(ROTATED_POLE_NATIVE_CUBE_URL + f"&resolution-x={positions}&resolution-y={positions}")
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["domain"]["axes"] == plain["domain"]["axes"]
+
+
+def test_cube_resolution_positions_epsg4326(client: TestClient):
+    """Without crs=native, resolution-x/-y are the width and height of the EPSG:4326 grid"""
+    resp = client.get(ROTATED_POLE_CUBE_URL + "&resolution-x=12&resolution-y=8")
+    assert resp.status_code == 200, resp.text
+    axes = resp.json()["domain"]["axes"]
+    assert len(axes["x"]["values"]) == 12 and len(axes["y"]["values"]) == 8
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        ROTATED_POLE_CUBE_URL + "&resolution-x=12&resolution-y=8&resolution_x=0.5&resolution_y=0.5",  # both kinds
+        ROTATED_POLE_CUBE_URL + "&resolution-x=12",  # only one, without crs=native
+        ROTATED_POLE_NATIVE_CUBE_URL + "&resolution-x=-1",  # negative
+    ],
+)
+def test_cube_resolution_positions_errors(client: TestClient, query):
+    assert client.get(query).status_code in (400, 422)

@@ -150,12 +150,37 @@ def get_collection_native_crs_details(gridspecs: list[dict | None]) -> dict | No
     return details
 
 
-def get_native_grid_query(gridspec: dict | None, bbox: str) -> dict:
+def subsample_axis(start: int, end: int, positions: int | None) -> tuple[float, int, int]:
+    """
+    Every n-th cell of the cells start..end-1 of a grid axis, for at most `positions` values (EDR resolution-x/-y: the
+    number of positions; None, 0 or at least the number of cells: every cell).
+
+    Returns (first_edge, count, step): the output grid starts at cell edge `first_edge` (in cells, can be half a cell
+    before `start`), has `count` cells of `step` native cells each, and the centre of every output cell is the centre of
+    a native cell: the middle one of each block of `step` cells (the lower middle one for an even step). So nearest
+    neighbour resampling takes exactly those native cells, without interpolation.
+    """
+    cells = end - start
+    if not positions or positions >= cells:
+        return float(start), cells, 1
+    step = math.ceil(cells / positions)
+    middle = (step - 1) // 2  # offset of the cell taken from each block
+    count = (cells - 1 - middle) // step + 1  # the last taken cell must be inside the range
+    # Output cell k has its centre at first_edge + (k + 0.5) * step, which is the centre start + k * step + middle + 0.5
+    first_edge = start + middle + 0.5 - 0.5 * step
+    return first_edge, count, step
+
+
+def get_native_grid_query(gridspec: dict | None, bbox: str, resolution: tuple[int, int] | None = None) -> dict:
     """
     WCS parameters for the cells of the native grid that intersect a bbox. As the EDR standard says, the bbox values are
     in the coordinate system of the crs parameter, so here in native grid coordinates (like rotated degrees). The bbox is
     snapped to whole cells and width and height are the number of cells, so every value is a cell of the native grid,
     without resampling.
+
+    resolution: (resolution-x, resolution-y), the number of positions in x and y (EDR). When smaller than the number of
+    cells, every n-th cell is returned (see subsample_axis): still cells of the native grid, without interpolation, but
+    fewer of them. 0 or None: every cell.
     """
     if get_native_crs_wkt(gridspec) is None:
         raise exc_failed_call("crs=native is not available for this collection")
@@ -181,15 +206,18 @@ def get_native_grid_query(gridspec: dict | None, bbox: str) -> dict:
     if col_end <= col_start or row_end <= row_start:
         raise exc_failed_call(f"bbox {bbox} is outside the native grid")
 
+    resolution_x, resolution_y = resolution if resolution is not None else (None, None)
+    first_col, width, step_x = subsample_axis(col_start, col_end, resolution_x)
+    first_row, height, step_y = subsample_axis(row_start, row_end, resolution_y)
     native_bbox = (
-        grid_left + col_start * cellsize_x,
-        grid_bottom + row_start * cellsize_y,
-        grid_left + col_end * cellsize_x,
-        grid_bottom + row_end * cellsize_y,
+        grid_left + first_col * cellsize_x,
+        grid_bottom + first_row * cellsize_y,
+        grid_left + (first_col + width * step_x) * cellsize_x,
+        grid_bottom + (first_row + height * step_y) * cellsize_y,
     )
     return {
         "crs": gridspec["projstring"],
         "bbox": ",".join(repr(value) for value in native_bbox),
-        "width": col_end - col_start,
-        "height": row_end - row_start,
+        "width": width,
+        "height": height,
     }
