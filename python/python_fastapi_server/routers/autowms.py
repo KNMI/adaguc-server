@@ -65,6 +65,11 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
         ".csv",
     )
 
+    # Collapse repeated slashes first: besides being harmless elsewhere, a leading "//" left over
+    # in sub_path would make os.path.join() below discard data_dir entirely (it resets to an
+    # absolute path whenever its next argument starts with "/"), breaking otherwise valid requests.
+    url_param_path = "/" + "/".join(part for part in url_param_path.split("/") if part)
+
     sub_path = url_param_path.replace(f"{autowms_prefix}/", "")
     sub_path = sub_path.replace(autowms_prefix, "")
     if len(sub_path) != 0:
@@ -81,7 +86,12 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
         raise HTTPException(status_code=400, detail="Invalid path detected")
 
     data = []
-    with os.scandir(browse_path) as entries:
+    try:
+        scandir_entries = os.scandir(browse_path)
+    except (FileNotFoundError, NotADirectoryError) as e:
+        raise HTTPException(status_code=404, detail="Path not found") from e
+
+    with scandir_entries as entries:
         for entry in entries:
             if entry.is_file() and entry.name.lower().endswith(ALLOWED_EXTENSIONS):
                 source = urllib.parse.quote_plus(f"{sub_path}{entry.name}")
