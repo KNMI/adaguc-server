@@ -33,6 +33,7 @@
 
 namespace Zarr {
   class Store;
+  class ChunkCache;
   struct Array;
   /** Chunks as stored, by key: whether the chunk exists, and its data */
   typedef std::map<std::string, std::pair<bool, std::string>> PrefetchedChunks;
@@ -57,8 +58,12 @@ namespace Zarr {
  * Supported: numeric and boolean data types in both byte orders, fixed length (S, U) and variable length (vlen-utf8) strings,
  * C and F order, the zlib, gzip, zstd and blosc compressors and the shuffle filter.
  *
+ * - Decoded chunks are kept for the next reads of the store, so a chunk that spans more than one read, like a chunk with all
+ *   levels when the levels are read one by one, is fetched and decoded once.
+ *
  * Settings: ADAGUC_ZARR_MAX_CONNECTIONS (default 16) limits the requests at the same time, ADAGUC_ZARR_THREADS (default the
- * number of processors, at most 8) the threads that decode chunks.
+ * number of processors, at most 8) the threads that decode chunks, ADAGUC_CHUNK_CACHE_MB (default 16, 0 to disable)
+ * the size of the decoded chunks kept per opened store, see CDFReader::getChunkCacheSizeFromEnvironment.
  */
 class CDFZarrReader : public CDFReader {
 public:
@@ -76,6 +81,7 @@ private:
   std::unique_ptr<Zarr::Store> store;
   std::map<std::string, std::shared_ptr<Zarr::Array>> arrays; // By variable name
   Zarr::PrefetchedChunks prefetchedChunks;                     // Fetched when the store was opened, see prefetchSmallArrays
+  std::unique_ptr<Zarr::ChunkCache> chunkCache;                // Decoded chunks, see ADAGUC_CHUNK_CACHE_MB
 
   /** Fetches the coordinate variables and single values that are stored in one small chunk, all at the same time */
   void prefetchSmallArrays();

@@ -28,6 +28,7 @@
 #include "CDebugger.h"
 #include "CTString.h"
 #include "traceTimings/traceTimings.h"
+#include "zarr/ZarrChunkCache.h"
 #include "zarr/ZarrCodecs.h"
 #include "zarr/ZarrStore.h"
 #include "zarr/ZarrWorkerPool.h"
@@ -675,7 +676,7 @@ namespace {
    * @return 0 on success, otherwise nonzero with the error logged
    */
   int readSelection(Zarr::Store &store, const Zarr::Array &array, const std::vector<size_t> &start, const std::vector<size_t> &count, const std::vector<ptrdiff_t> &stride, char *numbers,
-                    std::vector<std::string> *strings, const Zarr::PrefetchedChunks &prefetched) {
+                    std::vector<std::string> *strings, const Zarr::PrefetchedChunks &prefetched, Zarr::ChunkCache *cache) {
     const size_t numDims = array.shape.size();
 
     // Per dimension, the chunks that hold selected indices
@@ -753,6 +754,12 @@ namespace {
     };
 
     // Decodes one chunk and copies its selected elements to the output. Runs on the pool: chunks write to different elements.
+    auto copyFromChunk = [&](const ChunkPart &part, const char *chunk) {
+      forEachRun(part, outStrides, chunkStrides, stride, [&](size_t chunkElement, size_t outElement, size_t numElements) {
+        memcpy(output + outElement * elementSize, chunk + chunkElement * elementSize, numElements * elementSize);
+      });
+    };
+
     auto process = [&](size_t partIndex, bool found, std::string data) {
       if (failed) return;
       const ChunkPart &part = parts[partIndex];
@@ -780,27 +787,29 @@ namespace {
         return;
       }
       // fillChunk is only read for missing chunks: it is complete before the first missing chunk is submitted
-      const char *chunk = nullptr;
       if (!found) {
-        chunk = fillChunk.data();
-      } else {
-        if (data.size() != chunkBytes) {
-          setError(store.describe(part.key) + ": the chunk has " + std::to_string(data.size()) + " bytes instead of " + std::to_string(chunkBytes));
-          return;
-        }
-        if (array.swapBytes && array.kind == Zarr::Kind::Numeric) swapBytes(data, elementSize);
-        chunk = data.data();
+        copyFromChunk(part, fillChunk.data());
+        return;
       }
-      forEachRun(part, outStrides, chunkStrides, stride, [&](size_t chunkElement, size_t outElement, size_t numElements) {
-        memcpy(output + outElement * elementSize, chunk + chunkElement * elementSize, numElements * elementSize);
-      });
+      if (data.size() != chunkBytes) {
+        setError(store.describe(part.key) + ": the chunk has " + std::to_string(data.size()) + " bytes instead of " + std::to_string(chunkBytes));
+        return;
+      }
+      if (array.swapBytes && array.kind == Zarr::Kind::Numeric) swapBytes(data, elementSize);
+      // Kept for the next reads of this store, which often need the same chunk, for example for the next level
+      auto decoded = std::make_shared<const std::string>(std::move(data));
+      if (cache != nullptr) cache->put(part.key, decoded);
+      copyFromChunk(part, decoded->data());
     };
 
-    // Chunks that were fetched when the store was opened are not fetched again
+    // Decoded chunks in the cache, and chunks that were fetched when the store was opened, are not fetched again
+    const bool useCache = cache != nullptr && array.kind != Zarr::Kind::VlenUtf8;
+    std::vector<std::shared_ptr<const std::string>> cachedChunks(parts.size());
     std::vector<std::string> keysToFetch;
     std::vector<size_t> partsToFetch;
     for (size_t index = 0; index < parts.size(); index++) {
-      if (prefetched.find(parts[index].key) == prefetched.end()) {
+      if (useCache) cachedChunks[index] = cache->get(parts[index].key);
+      if (cachedChunks[index] == nullptr && prefetched.find(parts[index].key) == prefetched.end()) {
         keysToFetch.push_back(parts[index].key);
         partsToFetch.push_back(index);
       }
@@ -830,6 +839,10 @@ namespace {
         });
       };
       for (size_t index = 0; index < parts.size(); index++) {
+        if (cachedChunks[index] != nullptr) {
+          copyFromChunk(parts[index], cachedChunks[index]->data());
+          continue;
+        }
         const auto cached = prefetched.find(parts[index].key);
         if (cached == prefetched.end()) continue;
         std::string data = cached->second.second; // A copy: the chunk may be read again
@@ -873,6 +886,8 @@ int CDFZarrReader::open(const char *fileName) {
   this->fileName = fileName;
   arrays.clear();
   prefetchedChunks.clear();
+  const size_t chunkCacheSize = CDFReader::getChunkCacheSizeFromEnvironment();
+  chunkCache = chunkCacheSize > 0 ? std::make_unique<Zarr::ChunkCache>(chunkCacheSize) : nullptr;
   store = Zarr::openStore(fileName);
   if (store == nullptr) return 1;
 
@@ -1036,7 +1051,7 @@ int CDFZarrReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
   int status = 0;
   if (array.type == CDF_STRING) {
     std::vector<std::string> strings(total);
-    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, nullptr, &strings, prefetchedChunks);
+    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, nullptr, &strings, prefetchedChunks, chunkCache.get());
     if (status == 0) {
       CDF::allocateData(CDF_STRING, &var->data, total);
       for (size_t index = 0; index < total; index++) {
@@ -1048,7 +1063,7 @@ int CDFZarrReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
   } else {
     void *data = nullptr;
     CDF::allocateData(array.type, &data, total);
-    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, (char *)data, nullptr, prefetchedChunks);
+    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, (char *)data, nullptr, prefetchedChunks, chunkCache.get());
     if (status == 0 && type != array.type) {
       CDF::allocateData(type, &var->data, total);
       CDFCopyData(var->data, type, data, array.type, 0, 0, total);

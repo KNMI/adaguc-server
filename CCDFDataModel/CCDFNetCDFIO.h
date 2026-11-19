@@ -53,11 +53,6 @@ private:
 public:
   CDFNetCDFReader();
   ~CDFNetCDFReader();
-  /**
-   * The size in bytes of the chunk cache asked with the environment variable ADAGUC_NETCDF_CHUNK_CACHE_MB (megabytes),
-   * or 0 when it is not set or not a whole number above 0: then the default of the NetCDF library is kept.
-   */
-  static size_t getChunkCacheSizeFromEnvironment();
   void enableLonWarp(bool enableLonWarp);
   int open(const char *fileName);
   int close();

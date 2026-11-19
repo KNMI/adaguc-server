@@ -43,6 +43,13 @@ public:
   virtual int _readVariableData(CDF::Variable *var, CDFType type) = 0;
   // Allocates and reads the variable data
   virtual int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) = 0;
+
+  /**
+   * The size in bytes of the cache of decompressed chunks, from the environment variable ADAGUC_CHUNK_CACHE_MB (megabytes):
+   * per variable of an opened file for the NetCDF reader, per opened store for the Zarr reader. Not set, empty or not a whole
+   * number: 16 megabytes, the default of the NetCDF library. 0: no cache.
+   */
+  static size_t getChunkCacheSizeFromEnvironment();
 };
 
 #endif

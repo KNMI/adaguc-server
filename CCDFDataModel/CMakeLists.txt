@@ -65,6 +65,7 @@ add_library(CCDFDataModel
     zarr/ZarrCodecs.h
     zarr/ZarrCodecs.cpp
     zarr/ZarrWorkerPool.h
+    zarr/ZarrChunkCache.h
 )
 
 target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})

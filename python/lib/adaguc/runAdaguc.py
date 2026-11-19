@@ -75,14 +75,14 @@ class runAdaguc:
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv("ADAGUC_ENABLELOGBUFFER", "TRUE")
         adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv("ADAGUC_TRACE_TIMINGS", "FALSE")
         adagucenv["ADAGUC_STYLESHEET_ENABLE"] = os.getenv("ADAGUC_STYLESHEET_ENABLE", "FALSE")
-        # Optional: without it the NetCDF library keeps its default chunk cache
-        if os.getenv("ADAGUC_NETCDF_CHUNK_CACHE_MB"):
-            adagucenv["ADAGUC_NETCDF_CHUNK_CACHE_MB"] = os.getenv("ADAGUC_NETCDF_CHUNK_CACHE_MB")
+        # Optional settings of the NetCDF and Zarr readers; without them adagucserver uses its defaults
+        for name in ("ADAGUC_CHUNK_CACHE_MB", "ADAGUC_ZARR_MAX_CONNECTIONS", "ADAGUC_ZARR_THREADS"):
+            if os.getenv(name):
+                adagucenv[name] = os.getenv(name)
         ld_library_path = os.getenv("LD_LIBRARY_PATH")
         if ld_library_path:
             adagucenv["LD_LIBRARY_PATH"] = ld_library_path
-        # The NetCDF library takes its S3 credentials and region from the standard AWS variables,
-        # for layers with a FilePath like https://<host>/<bucket>/<store>.zarr#mode=zarr,s3
+        # S3 credentials and region for Zarr stores on S3, like https://<host>/<bucket>/<store>.zarr#mode=zarr,s3
         adagucenv.update({k: v for k, v in os.environ.items() if k.startswith("AWS_")})
 
         return adagucenv
