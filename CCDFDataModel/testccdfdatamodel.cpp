@@ -440,6 +440,13 @@ int testZarrReader() {
       continue;
     }
     const int failuresBefore = failed;
+    // The reader tells that it made the data model; the other global attributes are those of the NetCDF file
+    CDF::Attribute *readerAttribute = zarr.getAttributeNE(ZARR_READER_ATTRIBUTE_NAME);
+    if (readerAttribute == nullptr || readerAttribute->toString() != ZARR_READER_ATTRIBUTE_VALUE) {
+      CDBError("[FAILED] Zarr: %s has no global attribute %s = %s", storeName, ZARR_READER_ATTRIBUTE_NAME, ZARR_READER_ATTRIBUTE_VALUE);
+      failed++;
+    }
+    zarr.removeAttribute(ZARR_READER_ATTRIBUTE_NAME);
     if (attributesAsText(netcdf.attributes) != attributesAsText(zarr.attributes)) {
       CDBError("[FAILED] Zarr: global attributes of %s: [%s], expected [%s]", storeName, attributesAsText(zarr.attributes).c_str(), attributesAsText(netcdf.attributes).c_str());
       failed++;

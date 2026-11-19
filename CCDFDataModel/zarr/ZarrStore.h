@@ -80,6 +80,12 @@ namespace Zarr {
    */
   std::unique_ptr<Store> openStore(const std::string &location);
 
+  /**
+   * Loads the CA certificates for HTTPS once per process. This happens with the first request anyway; the fork server calls it
+   * before it forks, so that its children do not parse the certificates for every request.
+   */
+  void loadCACertificates();
+
   /** The number of HTTP requests that may run at the same time, ADAGUC_ZARR_MAX_CONNECTIONS (default 16). */
   size_t getMaxConnections();
 

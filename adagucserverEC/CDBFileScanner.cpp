@@ -455,6 +455,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
           // The file metadata does not already reside in the db.
           // Therefor we need to read information from it
+          // A Zarr store on S3 that is still being written is left for a later scan; once indexed it is not looked at again.
+          if (fileExistsInDB == 0 && isS3Directory(dataSource->cfgLayer->FilePath[0].elementValue) && !isS3StoreComplete((fileList)[j])) {
+            if (d == 0) {
+              CDBDebug("Store is not complete yet, skipping it for now: %s", (fileList)[j].c_str());
+            }
+            continue;
+          }
           if (fileExistsInDB == 0) {
             if (CDBFILESCANNER_DEBUG) {
               CDBDebug("fileExistsInDB == 0");

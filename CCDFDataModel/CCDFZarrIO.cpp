@@ -675,7 +675,7 @@ namespace {
    * @return 0 on success, otherwise nonzero with the error logged
    */
   int readSelection(Zarr::Store &store, const Zarr::Array &array, const std::vector<size_t> &start, const std::vector<size_t> &count, const std::vector<ptrdiff_t> &stride, char *numbers,
-                    std::vector<std::string> *strings) {
+                    std::vector<std::string> *strings, const Zarr::PrefetchedChunks &prefetched) {
     const size_t numDims = array.shape.size();
 
     // Per dimension, the chunks that hold selected indices
@@ -796,16 +796,23 @@ namespace {
       });
     };
 
-    std::vector<std::string> keys;
-    for (const auto &part: parts) keys.push_back(part.key);
+    // Chunks that were fetched when the store was opened are not fetched again
+    std::vector<std::string> keysToFetch;
+    std::vector<size_t> partsToFetch;
+    for (size_t index = 0; index < parts.size(); index++) {
+      if (prefetched.find(parts[index].key) == prefetched.end()) {
+        keysToFetch.push_back(parts[index].key);
+        partsToFetch.push_back(index);
+      }
+    }
     const size_t numThreads = std::min(getNumThreads(), parts.size());
 
-    int status;
+    int status = 0;
     {
       // One chunk is decoded on this thread; more chunks on a pool, while the next chunks are being fetched
       std::unique_ptr<Zarr::WorkerPool> pool;
       if (numThreads > 1) pool = std::make_unique<Zarr::WorkerPool>(numThreads, numThreads * 2);
-      status = store.fetch(keys, [&](size_t index, bool found, std::string &data) {
+      auto handleChunk = [&](size_t index, bool found, std::string &data) {
         if (!found && fillChunk.empty() && array.kind != Zarr::Kind::VlenUtf8) {
           fillChunk.reserve(chunkBytes);
           for (size_t element = 0; element < chunkElements; element++) fillChunk += array.fillBytes;
@@ -821,7 +828,16 @@ namespace {
             setError(exception.what());
           }
         });
-      });
+      };
+      for (size_t index = 0; index < parts.size(); index++) {
+        const auto cached = prefetched.find(parts[index].key);
+        if (cached == prefetched.end()) continue;
+        std::string data = cached->second.second; // A copy: the chunk may be read again
+        handleChunk(index, cached->second.first, data);
+      }
+      if (!keysToFetch.empty()) {
+        status = store.fetch(keysToFetch, [&](size_t index, bool found, std::string &data) { handleChunk(partsToFetch[index], found, data); });
+      }
       if (pool != nullptr) pool->wait();
     }
     if (status != 0) return 1;
@@ -856,6 +872,7 @@ int CDFZarrReader::open(const char *fileName) {
   }
   this->fileName = fileName;
   arrays.clear();
+  prefetchedChunks.clear();
   store = Zarr::openStore(fileName);
   if (store == nullptr) return 1;
 
@@ -869,6 +886,9 @@ int CDFZarrReader::open(const char *fileName) {
   }
 
   addAttributes(cdfObject->attributes, getOrNull(metadata, ".zattrs"), nullptr);
+  // Tells which reader made this data model, replacing an attribute with this name from the store
+  cdfObject->removeAttribute(ZARR_READER_ATTRIBUTE_NAME);
+  cdfObject->attributes.push_back(new CDF::Attribute(ZARR_READER_ATTRIBUTE_NAME, ZARR_READER_ATTRIBUTE_VALUE));
 
   // First the arrays and their dimensions, so that it is known which variables are dimensions
   struct Pending {
@@ -930,10 +950,44 @@ int CDFZarrReader::open(const char *fileName) {
     arrays[name] = entry.array;
   }
 
+  prefetchSmallArrays();
+
   if (CCDFZARRIO_DEBUG) {
-    CDBDebug("Opened Zarr store [%s]: %lu variables, %lu dimensions", fileName, cdfObject->variables.size(), cdfObject->dimensions.size());
+    CDBDebug("Opened Zarr store [%s]: %lu variables, %lu dimensions, %lu chunks prefetched", fileName, cdfObject->variables.size(), cdfObject->dimensions.size(), prefetchedChunks.size());
   }
   return 0;
+}
+
+void CDFZarrReader::prefetchSmallArrays() {
+  // Coordinate variables and single values in one chunk, like x, y, time and projection. Nearly every request reads these, and
+  // fetching them together here takes one round trip instead of one per variable.
+  static const size_t MAX_PREFETCH_BYTES = 1024 * 1024;
+  std::vector<std::string> keys;
+  for (auto variable: cdfObject->variables) {
+    const auto found = arrays.find(variable->name);
+    if (found == arrays.end()) continue;
+    const Zarr::Array &array = *found->second;
+    size_t numElements = 1;
+    bool oneChunk = true;
+    for (size_t dim = 0; dim < array.shape.size(); dim++) {
+      numElements *= array.shape[dim];
+      if (array.chunks[dim] < array.shape[dim]) oneChunk = false;
+    }
+    const bool isSmall = array.kind != Zarr::Kind::VlenUtf8 && numElements * array.elementSize <= MAX_PREFETCH_BYTES;
+    if (!array.unsupported.empty() || !oneChunk || !isSmall || (!variable->isDimension && numElements > 1)) continue;
+    std::string key = array.key + "/";
+    for (size_t dim = 0; dim < array.shape.size(); dim++) key += dim == 0 ? "0" : array.separator + "0";
+    if (array.shape.empty()) key += "0";
+    keys.push_back(key);
+  }
+  if (keys.empty()) return;
+  std::vector<std::pair<bool, std::string>> results;
+  if (fetchAll(*store, keys, results) != 0) {
+    // Not fatal: the variables are fetched again when they are read
+    prefetchedChunks.clear();
+    return;
+  }
+  for (size_t index = 0; index < keys.size(); index++) prefetchedChunks[keys[index]] = std::move(results[index]);
 }
 
 int CDFZarrReader::_readVariableData(CDF::Variable *var, CDFType type) { return _readVariableData(var, type, nullptr, nullptr, nullptr); }
@@ -982,7 +1036,7 @@ int CDFZarrReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
   int status = 0;
   if (array.type == CDF_STRING) {
     std::vector<std::string> strings(total);
-    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, nullptr, &strings);
+    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, nullptr, &strings, prefetchedChunks);
     if (status == 0) {
       CDF::allocateData(CDF_STRING, &var->data, total);
       for (size_t index = 0; index < total; index++) {
@@ -994,7 +1048,7 @@ int CDFZarrReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
   } else {
     void *data = nullptr;
     CDF::allocateData(array.type, &data, total);
-    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, (char *)data, nullptr);
+    status = readSelection(*store, array, selectionStart, selectionCount, selectionStride, (char *)data, nullptr, prefetchedChunks);
     if (status == 0 && type != array.type) {
       CDF::allocateData(type, &var->data, total);
       CDFCopyData(var->data, type, data, array.type, 0, 0, total);

@@ -1,5 +1,11 @@
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "CTString.h"
+#include "CDirReader.h"
 #include "CppUnitLite/TestHarness.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
@@ -319,3 +325,33 @@ TEST(string, decodeBase64) {
   CHECK(base64("TWE==") == "invalid");
 }
 
+
+TEST(CDirReader, zarrStoresAreListedAsFiles) {
+  char tmpl[] = "/tmp/testhclasses_zarr_XXXXXX";
+  const std::string root = mkdtemp(tmpl);
+  auto touch = [](const std::string &path) {
+    FILE *file = fopen(path.c_str(), "w");
+    if (file != nullptr) fclose(file);
+  };
+  for (const char *directory: {"/2024", "/2024/05", "/2024/05/A_1.zarr", "/2024/05/A_1.zarr/reflectivity", "/2024/05/B_2.ZARR", "/2024/05/.hidden.zarr", "/other"}) {
+    mkdir((root + directory).c_str(), 0700);
+  }
+  for (const char *file: {"/2024/05/A_1.zarr/.zmetadata", "/2024/05/A_1.zarr/reflectivity/0.0", "/2024/05/file.nc", "/other/C_3.zarr"}) {
+    touch(root + file);
+  }
+
+  CDirReader dirReader;
+  dirReader.listDirRecursive(root.c_str(), "^.*\\.(zarr|ZARR|nc)$");
+  std::vector<std::string> files = dirReader.fileList;
+  std::sort(files.begin(), files.end());
+  // Stores are listed and not descended into; a regular file named .zarr is listed as before; hidden stores are not listed
+  std::vector<std::string> expected = {root + "/2024/05/A_1.zarr", root + "/2024/05/B_2.ZARR", root + "/2024/05/file.nc", root + "/other/C_3.zarr"};
+  CHECK_EQUAL(CT::join(expected, ";"), CT::join(files, ";"));
+
+  CHECK(isZarrStoreName("RAD_1.zarr"));
+  CHECK(isZarrStoreName("RAD_1.Zarr"));
+  CHECK(!isZarrStoreName("RAD_1.nc"));
+  CHECK(!isZarrStoreName("zarr"));
+
+  CHECK(system(("rm -rf " + root).c_str()) == 0);
+}

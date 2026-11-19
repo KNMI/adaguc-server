@@ -36,6 +36,7 @@ RUN apt-get -q -y update \
     libgeotiff-dev \
     libzstd-dev \
     libblosc-dev \
+    libssl-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

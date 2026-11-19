@@ -70,6 +70,13 @@ std::string getS3StoreName(const std::string &storeLocation);
 bool isS3StoreInDirectory(const std::string &storeLocation, const std::string &directoryLocation, const std::string &filter);
 
 /**
+ * True when the store at the given location (a single store, as listed by listS3Stores) is complete: its
+ * .zmetadata exists. Writers create that object last, so a store that is still being written is not complete.
+ * Costs one request per store, so it is meant for stores that are new to the index only.
+ */
+bool isS3StoreComplete(const std::string &storeLocation);
+
+/**
  * Lists the Zarr stores in a S3 directory, including those in subdirectories.
  *
  * A store is a key prefix ending in ".zarr/". Stores are not descended into.

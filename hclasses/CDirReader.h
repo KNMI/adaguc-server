@@ -90,6 +90,9 @@ public:
 /* True for locations of the form scheme://..., like https://host/bucket/store.zarr#mode=zarr,s3 or file:///path/store.zarr#mode=zarr,file */
 bool isUrl(const std::string &location);
 
+/* True for names of Zarr stores, which are directories that are read as one file: names ending in .zarr, in any case */
+bool isZarrStoreName(const std::string &name);
+
 /* Removes the double //'s from the string and makes sure that the string does not end with a /. URLs (scheme://...) are returned as they are. */
 std::string makeCleanPath(const std::string &_path);
 

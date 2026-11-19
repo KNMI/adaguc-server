@@ -83,7 +83,12 @@ def list_data_files(data_dir: str, url_param_path: str, adaguc_online_resource: 
     data = []
     with os.scandir(browse_path) as entries:
         for entry in entries:
-            if entry.is_file() and entry.name.lower().endswith(ALLOWED_EXTENSIONS):
+            # Hidden directories are not shown
+            if entry.is_dir() and entry.name.startswith("."):
+                continue
+            # A Zarr store is a directory, but it is opened as one file
+            is_zarr_store = entry.is_dir() and entry.name.lower().endswith(".zarr")
+            if (entry.is_file() and entry.name.lower().endswith(ALLOWED_EXTENSIONS)) or is_zarr_store:
                 source = urllib.parse.quote_plus(f"{sub_path}{entry.name}")
                 data.append(
                     {

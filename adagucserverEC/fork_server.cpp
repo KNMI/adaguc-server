@@ -17,6 +17,7 @@
 #include "CDebugger.h"
 #include "CTString.h"
 #include "fork_server.h"
+#include "zarr/ZarrStore.h"
 
 /*
 See also: doc/fork_server.md
@@ -389,6 +390,9 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
     CDBError("Error on listen call");
     return 1;
   }
+
+  // Parsed once here, the children get the CA certificates for HTTPS (Zarr on S3) as they are
+  Zarr::loadCACertificates();
 
   CDBDebug("Entering fork server loop");
   while (1) {

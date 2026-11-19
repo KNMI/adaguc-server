@@ -121,7 +121,9 @@ as the URL the NetCDF library would use to open it:
     supported yet.
 -   Arrays become variables named by their path in the store (`group/name`), with the dimensions of the `_ARRAY_DIMENSIONS`
     attribute that xarray writes, or of the dimension references of NCZarr. As in xarray, the `fill_value` of an array
-    without `_FillValue` attribute is its `_FillValue`.
+    without `_FillValue` attribute is its `_FillValue`. The global attribute `adaguc_data_reader = "ADAGUC-ZARR"` tells
+    that the data was read by this reader.
+-   AutoWMS lists a directory ending in `.zarr` as a file that can be opened, instead of as a directory to browse into.
 -   To read a store with the NetCDF library instead, set `<DataReader>NetCDF</DataReader>` in the layer. That needs a NetCDF
     library with S3 support and the filter plugins for the compression of the store.
 
@@ -137,6 +139,8 @@ store below it whose name matches the filter, like files in a directory.
     bucket. If the bucket cannot be listed the scan stops and the database is left as it is.
 -   A single store can be added without listing the bucket: `scan.sh -f '<URL of the store>'`. This is the way to add
     stores as they arrive when the bucket holds very many of them.
+-   A store that is new to the database is only indexed once its `.zmetadata` exists, which writers create last. A store
+    that is still being written is skipped and picked up by a later scan. This costs one request per new store.
 -   Stores are assumed not to change: a URL has no modification date, so a store that was scanned is not scanned again.
     Use `scan.sh -t` to index everything again.
 -   The URL of a directory has to be https.

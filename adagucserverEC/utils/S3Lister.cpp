@@ -40,6 +40,12 @@ static const long S3_REQUEST_TIMEOUT_SECONDS = 120;
 /* A scan asks for the same directory once per layer; within one process the bucket is listed once. */
 static std::map<std::string, std::vector<std::string>> listedDirectories;
 
+/* A scan asks per dimension whether a new store is complete; it is checked once per process. */
+static std::map<std::string, bool> checkedStores;
+
+/* The marker a writer creates last, so that a store counts as complete once it exists. */
+static const char *S3_STORE_COMPLETION_MARKER = ".zmetadata";
+
 static std::string getEnvironment(const char *name) {
   const char *value = getenv(name);
   return value == nullptr ? "" : value;
@@ -197,6 +203,61 @@ static std::string requestS3ListPage(CURL *curl, const S3Directory &directory, c
   return body;
 }
 
+/* Creates a curl handle that signs its requests with the same credentials the NetCDF library uses to open the stores. */
+static CURL *createS3Curl() {
+  CURL *curl = curl_easy_init();
+  if (curl == nullptr) {
+    CDBError("Unable to initialize curl");
+    throw(__LINE__);
+  }
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, S3_CONNECT_TIMEOUT_SECONDS);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, S3_REQUEST_TIMEOUT_SECONDS);
+
+  const std::string accessKey = getEnvironment("AWS_ACCESS_KEY_ID"), secretKey = getEnvironment("AWS_SECRET_ACCESS_KEY");
+  std::string region = getEnvironment("AWS_REGION");
+  if (region.empty()) region = getEnvironment("AWS_DEFAULT_REGION");
+  if (region.empty()) region = "us-east-1";
+  if (!accessKey.empty() && !secretKey.empty()) {
+    // libcurl copies these strings
+    curl_easy_setopt(curl, CURLOPT_AWS_SIGV4, ("aws:amz:" + region + ":s3").c_str());
+    curl_easy_setopt(curl, CURLOPT_USERPWD, (accessKey + ":" + secretKey).c_str());
+  }
+  return curl;
+}
+
+bool isS3StoreComplete(const std::string &storeLocation) {
+  const auto cached = checkedStores.find(storeLocation);
+  if (cached != checkedStores.end()) {
+    return cached->second;
+  }
+  std::string url, fragment;
+  splitFragment(storeLocation, url, fragment);
+  url += std::string("/") + S3_STORE_COMPLETION_MARKER;
+
+  CURL *curl = createS3Curl();
+  char errorBuffer[CURL_ERROR_SIZE] = "";
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
+  const CURLcode result = curl_easy_perform(curl);
+  long httpStatus = 0;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
+  curl_easy_cleanup(curl);
+
+  if (result != CURLE_OK) {
+    CDBWarning("Unable to check whether store [%s] is complete: %s", storeLocation.c_str(), errorBuffer[0] != 0 ? errorBuffer : curl_easy_strerror(result));
+    return false; // Not cached: try again next time
+  }
+  if (httpStatus != 200 && httpStatus != 404) {
+    CDBWarning("Unable to check whether store [%s] is complete: HTTP status %ld", storeLocation.c_str(), httpStatus);
+    return false;
+  }
+  const bool complete = httpStatus == 200;
+  checkedStores[storeLocation] = complete;
+  return complete;
+}
+
 std::vector<std::string> listS3Stores(const std::string &location, const std::string &filter, const std::string &subDirectory) {
   S3Directory directory;
   if (!parseS3Directory(location, directory)) {
@@ -215,25 +276,7 @@ std::vector<std::string> listS3Stores(const std::string &location, const std::st
     return cached->second;
   }
 
-  CURL *curl = curl_easy_init();
-  if (curl == nullptr) {
-    CDBError("Unable to initialize curl");
-    throw(__LINE__);
-  }
-  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, S3_CONNECT_TIMEOUT_SECONDS);
-  curl_easy_setopt(curl, CURLOPT_TIMEOUT, S3_REQUEST_TIMEOUT_SECONDS);
-
-  // Sign the requests with the same credentials the NetCDF library uses to open the stores.
-  const std::string accessKey = getEnvironment("AWS_ACCESS_KEY_ID"), secretKey = getEnvironment("AWS_SECRET_ACCESS_KEY");
-  std::string region = getEnvironment("AWS_REGION");
-  if (region.empty()) region = getEnvironment("AWS_DEFAULT_REGION");
-  if (region.empty()) region = "us-east-1";
-  const std::string signature = "aws:amz:" + region + ":s3", credentials = accessKey + ":" + secretKey;
-  if (!accessKey.empty() && !secretKey.empty()) {
-    curl_easy_setopt(curl, CURLOPT_AWS_SIGV4, signature.c_str());
-    curl_easy_setopt(curl, CURLOPT_USERPWD, credentials.c_str());
-  }
+  CURL *curl = createS3Curl();
 
   std::vector<std::string> stores;
   size_t numberOfRequests = 0;

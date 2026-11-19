@@ -147,7 +147,12 @@ int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recu
   while (ep) {
     std::string fullName = std::string(directory) + "/" + ep->d_name;
     bool isdir = isDir(fullName.c_str());
-    if (isdir == false) {
+    // A Zarr store is a directory, but it is read as one file: it is listed, not descended into
+    if (isdir && isZarrStoreName(ep->d_name)) {
+      if (ep->d_name[0] != '.' && CT::testRegEx(ep->d_name, ext_filter)) {
+        fileList.push_back(makeCleanPath(fullName));
+      }
+    } else if (isdir == false) {
       if (CT::testRegEx(ep->d_name, ext_filter)) {
         /* This is a file */
         fileList.push_back(makeCleanPath(fullName));
@@ -263,6 +268,8 @@ void CCachedDirReader::free() {
   }
   dirReaderMap.clear();
 }
+
+bool isZarrStoreName(const std::string &name) { return CT::endsWith(CT::toLowerCase(name), ".zarr"); }
 
 bool isUrl(const std::string &location) {
   const auto schemeEnd = location.find("://");

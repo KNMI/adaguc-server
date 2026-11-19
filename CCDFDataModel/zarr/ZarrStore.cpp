@@ -37,6 +37,11 @@
 #include <map>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef ADAGUC_HAVE_OPENSSL
+#include <openssl/opensslv.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#endif
 
 namespace Zarr {
 
@@ -204,28 +209,80 @@ namespace Zarr {
     return multi;
   }
 
+  /* The CA file of libcurl, or empty when it has none or it cannot be read */
+  static std::string getDefaultCAFile(bool &hasCAPath) {
+    std::string caFile;
+    hasCAPath = false;
+#if LIBCURL_VERSION_NUM >= 0x075400 /* CURLINFO_CAINFO and CURLINFO_CAPATH are available since 7.84.0 */
+    CURL *curl = curl_easy_init();
+    if (curl != nullptr) {
+      char *caInfo = nullptr, *caPath = nullptr;
+      if (curl_easy_getinfo(curl, CURLINFO_CAINFO, &caInfo) == CURLE_OK && caInfo != nullptr && access(caInfo, R_OK) == 0) caFile = caInfo;
+      if (curl_easy_getinfo(curl, CURLINFO_CAPATH, &caPath) == CURLE_OK && caPath != nullptr && *caPath != 0) hasCAPath = true;
+      curl_easy_cleanup(curl);
+    }
+#endif
+    return caFile;
+  }
+
   /**
    * libcurl only keeps the parsed CA certificates in memory between connections when they come from a single CA file. When a CA
    * directory is configured as well, which is the default on Debian and Ubuntu, the CA file is parsed again for every new
    * connection, which takes about 10 ms. With an S3 server that closes the connection after each response, that is most of
    * the time of a request. Clearing the CA directory when there is a CA file avoids this; the CA file holds the same certificates.
+   * Only used when the shared CA certificates below are not available.
    */
   static bool shouldClearDefaultCAPath() {
     static const bool clear = [] {
-      bool result = false;
-#if LIBCURL_VERSION_NUM >= 0x075400 /* CURLINFO_CAINFO and CURLINFO_CAPATH are available since 7.84.0 */
-      CURL *curl = curl_easy_init();
-      if (curl != nullptr) {
-        char *caInfo = nullptr, *caPath = nullptr;
-        if (curl_easy_getinfo(curl, CURLINFO_CAINFO, &caInfo) == CURLE_OK && curl_easy_getinfo(curl, CURLINFO_CAPATH, &caPath) == CURLE_OK) {
-          result = caInfo != nullptr && caPath != nullptr && *caPath != 0 && access(caInfo, R_OK) == 0;
-        }
-        curl_easy_cleanup(curl);
-      }
-#endif
-      return result;
+      bool hasCAPath = false;
+      return !getDefaultCAFile(hasCAPath).empty() && hasCAPath;
     }();
     return clear;
+  }
+
+#ifdef ADAGUC_HAVE_OPENSSL
+  /*
+   * The CA certificates of libcurl, parsed once and given to every TLS connection. Parsing them takes about 10 ms. Loaded in the
+   * mother of the fork server, they are parsed once for all requests: forked children get them as they are.
+   */
+  static X509_STORE *sharedCAStore = nullptr;
+  static bool sharedCAStoreLoaded = false;
+
+  /* True when libcurl uses the same major version of OpenSSL as this program, so that its SSL_CTX can be given our X509_STORE */
+  static bool curlUsesOurOpenSSL() {
+    const curl_version_info_data *info = curl_version_info(CURLVERSION_NOW);
+    if (info == nullptr || info->ssl_version == nullptr) return false;
+    const std::string sslVersion = info->ssl_version; // Like OpenSSL/3.0.13
+    return CT::startsWith(sslVersion, "OpenSSL/" + std::to_string(OPENSSL_VERSION_MAJOR) + ".");
+  }
+
+  static CURLcode useSharedCAStore(CURL *, void *sslContext, void *) {
+    // SSL_CTX_set_cert_store takes over a reference
+    X509_STORE_up_ref(sharedCAStore);
+    SSL_CTX_set_cert_store((SSL_CTX *)sslContext, sharedCAStore);
+    return CURLE_OK;
+  }
+#endif
+
+  void loadCACertificates() {
+#ifdef ADAGUC_HAVE_OPENSSL
+    if (sharedCAStoreLoaded) return;
+    sharedCAStoreLoaded = true;
+    if (!curlUsesOurOpenSSL()) return;
+    bool hasCAPath = false;
+    const std::string caFile = getDefaultCAFile(hasCAPath);
+    if (caFile.empty()) return;
+    X509_STORE *store = X509_STORE_new();
+    if (store == nullptr) return;
+    if (X509_STORE_load_file(store, caFile.c_str()) != 1) {
+      CDBWarning("Unable to load the CA certificates from [%s]", caFile.c_str());
+      X509_STORE_free(store);
+      return;
+    }
+    // The same flags as libcurl sets on its own store
+    X509_STORE_set_flags(store, X509_V_FLAG_TRUSTED_FIRST | X509_V_FLAG_PARTIAL_CHAIN);
+    sharedCAStore = store;
+#endif
   }
 
   static size_t appendToString(char *data, size_t size, size_t count, void *destination) {
@@ -279,7 +336,19 @@ namespace Zarr {
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, appendToString);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, body);
       curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
+      loadCACertificates();
+#ifdef ADAGUC_HAVE_OPENSSL
+      if (sharedCAStore != nullptr) {
+        // libcurl does not load CA certificates itself, it gets the shared ones
+        curl_easy_setopt(curl, CURLOPT_CAINFO, nullptr);
+        curl_easy_setopt(curl, CURLOPT_CAPATH, nullptr);
+        curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, useSharedCAStore);
+      } else if (shouldClearDefaultCAPath()) {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, nullptr);
+      }
+#else
       if (shouldClearDefaultCAPath()) curl_easy_setopt(curl, CURLOPT_CAPATH, nullptr);
+#endif
       if (!signature.empty()) {
         curl_easy_setopt(curl, CURLOPT_AWS_SIGV4, signature.c_str());
         curl_easy_setopt(curl, CURLOPT_USERPWD, credentials.c_str());
