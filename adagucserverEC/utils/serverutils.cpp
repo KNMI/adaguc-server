@@ -3,6 +3,7 @@
 #include "CRequest.h"
 #include "ConfigurationUtils.h"
 #include "CServerParams.h"
+#include "S3Lister.h"
 #include <vector>
 
 bool checkIfFileMatchesLayer(std::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
@@ -14,6 +15,10 @@ bool checkIfFileMatchesLayer(std::string layerPathToScan, CServerConfig::XMLE_La
   if (layer->attr.type.empty() || layer->attr.type == ("database")) {
     if (layer->FilePath.size() > 0) {
       std::string filePath = makeCleanPath(layer->FilePath[0].elementValue.c_str());
+      // A store in a directory of Zarr stores on S3
+      if (isS3Directory(filePath)) {
+        return isS3StoreInDirectory(layerPathToScan, filePath, layer->FilePath[0].attr.filter);
+      }
       // Directories need to end with a /
       std::string filePathWithTrailingSlash = filePath + "/";
       std::string filter = layer->FilePath[0].attr.filter;

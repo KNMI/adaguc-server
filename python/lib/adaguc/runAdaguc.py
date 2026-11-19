@@ -81,6 +81,9 @@ class runAdaguc:
         ld_library_path = os.getenv("LD_LIBRARY_PATH")
         if ld_library_path:
             adagucenv["LD_LIBRARY_PATH"] = ld_library_path
+        # The NetCDF library takes its S3 credentials and region from the standard AWS variables,
+        # for layers with a FilePath like https://<host>/<bucket>/<store>.zarr#mode=zarr,s3
+        adagucenv.update({k: v for k, v in os.environ.items() if k.startswith("AWS_")})
 
         return adagucenv
 

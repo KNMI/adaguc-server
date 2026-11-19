@@ -87,7 +87,10 @@ public:
   static void removeFileFromCachedList(std::string fileToRemove);
 };
 
-/* Removes the double //'s from the string and makes sure that the string does not end with a / */
+/* True for locations of the form scheme://..., like https://host/bucket/store.zarr#mode=zarr,s3 or file:///path/store.zarr#mode=zarr,file */
+bool isUrl(const std::string &location);
+
+/* Removes the double //'s from the string and makes sure that the string does not end with a /. URLs (scheme://...) are returned as they are. */
 std::string makeCleanPath(const std::string &_path);
 
 std::string getFileDateUnCached(const std::string &file);

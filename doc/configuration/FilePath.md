@@ -89,3 +89,36 @@ But this is normally not necessary, because the step above is done during ingest
 
 </Configuration>
 ```
+
+
+Zarr stores on S3
+-----------------
+
+A Zarr store on S3 is given as the URL the NetCDF library uses to open it. A URL of which the path ends in a slash is a
+directory of stores: adaguc-server lists the bucket and scans every store below it whose name matches the filter, like
+files in a directory.
+
+```xml
+<!-- A single store -->
+<FilePath filter="">https://s3.example.com/radar/timesteps/RAD_202405280000.zarr#mode=zarr,s3</FilePath>
+
+<!-- All stores below the prefix timesteps/ of the bucket radar -->
+<FilePath filter="^RAD_[0-9]+\.zarr$">https://s3.example.com/radar/timesteps/#mode=zarr,s3</FilePath>
+```
+
+-   A store is a key prefix ending in `.zarr/`. Prefixes that do not end in `.zarr/` are subdirectories and are
+    listed as well.
+-   The filter applies to the name of the store, for example `RAD_202405280000.zarr`. An empty filter matches all stores.
+-   Each store is kept in the database under its own URL, for example
+    `https://s3.example.com/radar/timesteps/RAD_202405280000.zarr#mode=zarr,s3`.
+-   A scan of the dataset (`scan.sh -d <dataset>`) adds the stores that are new and removes the ones that are gone from the
+    bucket. If the bucket cannot be listed the scan stops and the database is left as it is.
+-   A single store can be added without listing the bucket: `scan.sh -f '<URL of the store>'`. This is the way to add
+    stores as they arrive when the bucket holds very many of them.
+-   Stores are assumed not to change: a URL has no modification date, so a store that was scanned is not scanned again.
+    Use `scan.sh -t` to index everything again.
+-   The URL has to be https; the NetCDF library does not use plain http for S3.
+-   Credentials and region are taken from the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
+    `AWS_REGION`, both for listing the bucket and by the NetCDF library for opening the stores.
+-   adaguc-server must be built with a NetCDF library that has S3 support and the filter plugins for the compression used
+    in the stores; see the Dockerfile.

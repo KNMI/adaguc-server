@@ -28,6 +28,8 @@
 #include "CXMLSerializerInterface.h"
 #include "GridFileWriters/AAIGridWriter.h"
 #include "GridFileWriters/GeoTiffWriter.h"
+#include "utils/S3Lister.h"
+#include "CDirReader.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -1165,4 +1167,80 @@ TEST(CServerParams, applyStyleSheetBase64) {
                         "eNrtwTEVQBEAAMAqngIKfEpI8AcbFhbtlTDe3Vf36S3Mf7QcV0wlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADPXWRCNW4=",
                     }),
                     false);
+}
+
+TEST(urlsAreNotCleanedLikePaths, S3Lister) {
+  // A path on the file system loses its double and trailing slashes, a URL keeps them
+  CHECK_EQUAL(std::string("/data/adaguc-data/radar"), makeCleanPath("/data//adaguc-data/radar/"));
+  CHECK_EQUAL(std::string("https://host:7443/bucket/prefix/#mode=zarr,s3"), makeCleanPath(" https://host:7443/bucket/prefix/#mode=zarr,s3\n"));
+  CHECK_EQUAL(std::string("file:///data/store.zarr#mode=zarr,file"), makeCleanPath("file:///data/store.zarr#mode=zarr,file"));
+  CHECK(isUrl("https://host/bucket/store.zarr#mode=zarr,s3"));
+  CHECK(!isUrl("/data/with://inside"));
+  CHECK(!isUrl("://nothing"));
+}
+
+TEST(directoryLocations, S3Lister) {
+  S3Directory directory;
+  CHECK(parseS3Directory("https://host:7443/radar/timesteps/2024/#mode=zarr,s3", directory));
+  CHECK_EQUAL(std::string("https://host:7443"), directory.endpoint);
+  CHECK_EQUAL(std::string("radar"), directory.bucket);
+  CHECK_EQUAL(std::string("timesteps/2024/"), directory.prefix);
+  CHECK_EQUAL(std::string("#mode=zarr,s3"), directory.fragment);
+
+  // The bucket itself is a directory too
+  CHECK(parseS3Directory("https://host/radar/#mode=nczarr,s3&aws.region=eu-west-1", directory));
+  CHECK_EQUAL(std::string("radar"), directory.bucket);
+  CHECK_EQUAL(std::string(""), directory.prefix);
+
+  // A single store, which the NetCDF library opens
+  CHECK(!isS3Directory("https://host/radar/timesteps/a.zarr#mode=zarr,s3"));
+  // Not S3: OPeNDAP, a local Zarr store, a directory on disk
+  CHECK(!isS3Directory("https://host/thredds/dodsC/a/"));
+  CHECK(!isS3Directory("https://host/radar/timesteps/#mode=zarr"));
+  CHECK(!isS3Directory("file:///data/stores/#mode=zarr,file"));
+  CHECK(!isS3Directory("/data/adaguc-data/radar/"));
+  // No bucket
+  CHECK(!isS3Directory("https://host/#mode=zarr,s3"));
+  // The NetCDF library only does https for S3
+  CHECK(!isS3Directory("http://host/radar/timesteps/#mode=zarr,s3"));
+}
+
+TEST(storesInADirectory, S3Lister) {
+  const std::string directory = "https://host/radar/timesteps/#mode=zarr,s3";
+  const std::string filter = "^RAD_[0-9]+\\.zarr$";
+  CHECK_EQUAL(std::string("RAD_202405280010.zarr"), getS3StoreName("https://host/radar/timesteps/RAD_202405280010.zarr#mode=zarr,s3"));
+
+  CHECK(isS3StoreInDirectory("https://host/radar/timesteps/RAD_202405280010.zarr#mode=zarr,s3", directory, filter));
+  // Subdirectories are listed as well, so a store deeper down belongs to the directory
+  CHECK(isS3StoreInDirectory("https://host/radar/timesteps/2024/05/RAD_202405280010.zarr#mode=zarr,s3", directory, filter));
+  CHECK(isS3StoreInDirectory("https://host/radar/timesteps/other.zarr#mode=zarr,s3", directory, ""));
+
+  CHECK(!isS3StoreInDirectory("https://host/radar/timesteps/other.zarr#mode=zarr,s3", directory, filter));
+  CHECK(!isS3StoreInDirectory("https://host/radar/RAD_202405280010.zarr#mode=zarr,s3", directory, filter));
+  CHECK(!isS3StoreInDirectory("https://elsewhere/radar/timesteps/RAD_202405280010.zarr#mode=zarr,s3", directory, filter));
+  CHECK(!isS3StoreInDirectory("https://host/radar/timesteps/RAD_202405280010.zarr#mode=zarr,file", directory, filter));
+  CHECK(!isS3StoreInDirectory("https://host/radar/timesteps/RAD_202405280010.nc#mode=zarr,s3", directory, ""));
+}
+
+TEST(listResponse, S3Lister) {
+  // What S3 answers to a ListObjectsV2 request with a delimiter, here with a second page to fetch
+  const std::string firstPage = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                                "<Name>radar</Name><Prefix>timesteps/</Prefix><Delimiter>/</Delimiter><MaxKeys>2</MaxKeys><KeyCount>2</KeyCount>"
+                                "<IsTruncated>true</IsTruncated><NextContinuationToken>a&amp;b==</NextContinuationToken>"
+                                "<Contents><Key>timesteps/readme.txt</Key><Size>3</Size></Contents>"
+                                "<CommonPrefixes><Prefix>timesteps/RAD_1.zarr/</Prefix></CommonPrefixes>"
+                                "<CommonPrefixes><Prefix>timesteps/a &amp; b/</Prefix></CommonPrefixes></ListBucketResult>";
+  const S3ListPage first = parseS3ListPage(firstPage);
+  CHECK(first.prefixes.size() == 2);
+  CHECK_EQUAL(std::string("timesteps/RAD_1.zarr/"), first.prefixes[0]);
+  CHECK_EQUAL(std::string("timesteps/a & b/"), first.prefixes[1]);
+  CHECK_EQUAL(std::string("a&b=="), first.nextContinuationToken);
+
+  // The last page: a token may still be present, but is only followed when the list is truncated
+  const S3ListPage last = parseS3ListPage("<ListBucketResult><IsTruncated>false</IsTruncated><NextContinuationToken>x</NextContinuationToken>"
+                                          "<CommonPrefixes><Prefix>timesteps/RAD_2.zarr/</Prefix></CommonPrefixes></ListBucketResult>");
+  CHECK(last.prefixes.size() == 1);
+  CHECK_EQUAL(std::string(""), last.nextContinuationToken);
+
+  CHECK(parseS3ListPage("<ListBucketResult><KeyCount>0</KeyCount><IsTruncated>false</IsTruncated></ListBucketResult>").prefixes.size() == 0);
 }

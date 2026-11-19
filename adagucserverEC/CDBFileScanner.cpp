@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CDBFileScanner.h"
+#include "utils/S3Lister.h"
 #include "CStopWatch.h"
 #include "CDataReader.h"
 #include "CDFObjectStore.h"
@@ -838,7 +839,12 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, const std::string &_tailPa
     auto layerPathToScan = makeCleanPath(_layerPathToScan);
 
     /* If this is another directory we will simply ignore it. */
-    if (!CT::startsWith(layerPathToScan, layerPath)) {
+    if (isS3Directory(layerPath)) {
+      // The location of a store in a S3 directory does not start with the location of that directory: the fragment comes last.
+      if (!isS3StoreInDirectory(layerPathToScan, layerPath, "")) {
+        return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
+      }
+    } else if (!CT::startsWith(layerPathToScan, layerPath)) {
       return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
     }
     fileToUpdate = layerPathToScan;
@@ -906,6 +912,11 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, const std::string &_tailPa
 
     } catch (int linenr) {
       CDBDebug("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0].elementValue.c_str(), filter.c_str(), tailPath.c_str());
+      // A directory that does not exist is skipped silently, but a bucket that cannot be listed is an error:
+      // it is not known which stores there are, so the database is left as it is.
+      if (isS3Directory(dataSource->cfgLayer->FilePath[0].elementValue)) {
+        return 1;
+      }
       return 0;
     }
   } else {
@@ -913,7 +924,8 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, const std::string &_tailPa
     if (verbose) {
       CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
     }
-    std::string fileToCheckAgainstRegexp = CT::basename(fileToUpdate);
+    // For a store on S3 the filter applies to its name, without the fragment of the URL
+    std::string fileToCheckAgainstRegexp = isS3Directory(dataSource->cfgLayer->FilePath[0].elementValue) ? getS3StoreName(fileToUpdate) : CT::basename(fileToUpdate);
     if (fileToUpdate == (dataSource->cfgLayer->FilePath[0].elementValue) || CT::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str())) {
       if (verbose) {
         CDBDebug("Add specified file %s with filter %s for scanning", fileToCheckAgainstRegexp.c_str(), filter.c_str());
@@ -1022,6 +1034,12 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, const
     throw(__LINE__);
   }
   std::string filePath = path;
+
+  if (isS3Directory(filePath)) {
+    // Zarr stores in a S3 bucket are listed like files in a directory. An error while listing throws,
+    // so that an unreachable bucket is not mistaken for an empty one.
+    return listS3Stores(filePath, expr, tailPath == NULL ? "" : tailPath);
+  }
 
   if (tailPath != NULL) {
     if (tailPath[0] == '/') {

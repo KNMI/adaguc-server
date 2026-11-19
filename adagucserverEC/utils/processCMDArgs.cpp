@@ -153,7 +153,8 @@ int processCMDArgs(int argc, char **argv, char **) {
     return 1;
   } else if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 1)) { /* Update database */
 
-    if (!layerPathToScan.empty() && !CDirReader::isFile(layerPathToScan.c_str())) {
+    // A URL, like a Zarr store on S3, cannot be checked on the file system: opening it tells whether it exists.
+    if (!layerPathToScan.empty() && !isUrl(layerPathToScan) && !CDirReader::isFile(layerPathToScan.c_str())) {
       CDBError("Provided file does not exist [%s].", layerPathToScan.c_str());
       return SCAN_EXITCODE_FILENOEXIST;
     }

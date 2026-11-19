@@ -27,6 +27,7 @@
 #include "CDebugger.h"
 
 #include <algorithm> /* For std::sort */
+#include <cctype>
 #include <dirent.h>
 #include <map>
 #include <regex>
@@ -263,8 +264,21 @@ void CCachedDirReader::free() {
   dirReaderMap.clear();
 }
 
+bool isUrl(const std::string &location) {
+  const auto schemeEnd = location.find("://");
+  if (schemeEnd == std::string::npos || schemeEnd == 0) {
+    return false;
+  }
+  return std::all_of(location.begin(), location.begin() + schemeEnd, [](unsigned char c) { return std::isalnum(c) || c == '+' || c == '-' || c == '.'; });
+}
+
 std::string makeCleanPath(const std::string &input) {
-  const auto newString = CT::replace(CT::trim(CT::replace(CT::trim(input), "\n", "")), "//", "/");
+  const auto trimmed = CT::trim(CT::replace(CT::trim(input), "\n", ""));
+  // A URL is not a path on the file system: its double slashes and trailing slash are significant.
+  if (isUrl(trimmed)) {
+    return trimmed;
+  }
+  const auto newString = CT::replace(trimmed, "//", "/");
   if (CT::endsWith(newString, "/")) {
     return CT::substring(newString, 0, newString.length() - 1);
   }

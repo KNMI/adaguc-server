@@ -1,4 +1,5 @@
 #include "./ConfigurationUtils.h"
+#include "S3Lister.h"
 #include <CAutoResource.h>
 #include "Definitions.h"
 #include "parseQueryString.h"
@@ -29,6 +30,10 @@ std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvPara
 
 // TODO: configure a list of possible extensions for adaguc at a central place
 bool checkIfPathIsFile(std::string filePath) {
+  // A directory of Zarr stores on S3 is a https URL too, but it is listed like a directory
+  if (isS3Directory(filePath)) {
+    return false;
+  }
   return (CT::endsWith(filePath, ".nc") || CT::endsWith(filePath, ".h5") || CT::endsWith(filePath, ".hdf5") || CT::endsWith(filePath, ".he5") || CT::endsWith(filePath, ".png") ||
           CT::endsWith(filePath, ".csv") || CT::endsWith(filePath, ".geojson") || CT::endsWith(filePath, ".json") || CT::startsWith(filePath, "http://") || CT::startsWith(filePath, "https://") ||
           CT::startsWith(filePath, "dodsc://"));

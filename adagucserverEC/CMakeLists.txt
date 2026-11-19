@@ -100,6 +100,8 @@ add_library(
     utils/CRequestUtils.cpp
     utils/serverutils.h
     utils/serverutils.cpp
+    utils/S3Lister.h
+    utils/S3Lister.cpp
     utils/projectionUtils.h
     utils/projectionUtils.cpp
     utils/writelogfile.h
