@@ -143,7 +143,8 @@ def netcdf_coordinate_axis(ncvar: netCDF4.Variable, dimname: str) -> ValuesAxis[
     if "str" in str(ncvar.dtype):
         return ValuesAxis[str](values=[str(value) for value in ncvar[:]])
 
-    return ValuesAxis[float](values=ncvar[:].data.tolist())
+    # Coordinates are written like the values, with the digits they have: -13.35, not -13.350000000000001
+    return ValuesAxis[float](values=round_to_data_precision(ncvar[:].data).tolist())
 
 
 def netcdf_coverage_referencing(dataset: netCDF4.Dataset) -> list[ReferenceSystemConnectionObject]:
@@ -163,23 +164,77 @@ def netcdf_coverage_referencing(dataset: netCDF4.Dataset) -> list[ReferenceSyste
     ]
 
 
+# Significant digits that values are written with. A 32 bit float is told apart from every other by 9 digits, and
+# often by 7 or 8. 12 digits are far more than data has.
+FLOAT32_SIGNIFICANT_DIGITS = (7, 8, 9)
+FLOAT64_SIGNIFICANT_DIGITS = 12
+
+
+def round_significant(values: np.ndarray, digits: int) -> np.ndarray:
+    """
+    64 bit floats rounded to `digits` significant digits: scaled by a power of ten to a whole number and back. Dividing
+    two numbers that are exact gives the 64 bit float nearest to the decimal, which is written as that decimal.
+    Zero, infinite and NaN are returned as they are, like values too small or large for the power of ten.
+    """
+    rounded = values.copy()
+    with np.errstate(divide="ignore", invalid="ignore"):
+        power = digits - 1 - np.floor(np.log10(np.abs(values)))
+    usable = np.isfinite(power) & (np.abs(power) < 290)
+    scale = np.power(10.0, power[usable])
+    rounded[usable] = np.round(values[usable] * scale) / scale
+    return rounded
+
+
+def round_to_data_precision(values: np.ndarray) -> np.ndarray:
+    """
+    Values as 64 bit floats that are written in JSON with as many digits as the data has, instead of with the noise of
+    how they are stored:
+    - A 32 bit float written as it is gives 17 digits, like -21.036102294921875 or 3.799999952316284. It is rounded to
+      the fewest of 7, 8 or 9 significant digits that still give the same 32 bit float: -21.036102 and 3.8.
+    - Packed data unpacked to 64 bit, like 38 * 0.1 = 3.8000000000000003: rounded to 12 significant digits (3.8).
+    This makes the JSON about half as long, and about a fifth smaller after compression, without losing anything.
+
+    Integers are returned as they are. Values that are not finite are left for the caller.
+    """
+    if not np.issubdtype(values.dtype, np.floating):
+        return values
+    doubles = values.astype(np.float64)
+    if values.dtype.itemsize > 4:
+        return round_significant(doubles, FLOAT64_SIGNIFICANT_DIGITS)
+    # 32 bit floats: more digits for the values that fewer digits do not give back
+    rounded = doubles.copy()
+    todo = np.arange(values.size)
+    for digits in FLOAT32_SIGNIFICANT_DIGITS:
+        candidates = round_significant(doubles[todo], digits)
+        rounded[todo] = candidates
+        todo = todo[candidates.astype(np.float32) != values[todo]]
+        if todo.size == 0:
+            break
+    return rounded
+
+
 def coverage_values(values: ArrayLike) -> list[float | None]:
-    """Flatten in C order, replacing masked or non-finite values with None."""
+    """
+    Flatten in C order, replacing masked or non-finite values with None. The values are rounded to the precision of
+    the data, see round_to_data_precision.
+    """
     flat = ma.asarray(values).ravel(order="C")
 
     # Find invalid/masked values
     missing = ~np.isfinite(flat.data) | ma.getmask(flat)
     missing_count = np.count_nonzero(missing)
 
-    # All values are valid, shortcut to immediately return data
-    if missing_count == 0:
-        return flat.data.tolist()
-
     # All invalid/missing values, shortcut to return all None.
     if missing_count == flat.size:
         return [None] * flat.size
 
-    return ma.array(flat.data, mask=missing, copy=False).tolist()
+    data = round_to_data_precision(flat.data)
+
+    # All values are valid, shortcut to immediately return data
+    if missing_count == 0:
+        return data.tolist()
+
+    return ma.array(data, mask=missing, copy=False).tolist()
 
 
 def netcdf_to_covjson(

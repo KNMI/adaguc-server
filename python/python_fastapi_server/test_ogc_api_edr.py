@@ -1578,6 +1578,18 @@ def test_cube_resolution_positions_epsg4326(client: TestClient):
     assert len(axes["x"]["values"]) == 12 and len(axes["y"]["values"]) == 8
 
 
+def test_cube_coordinates_have_no_storage_noise(client: TestClient):
+    """The coordinates of the axes are written with the digits they have, like -13.35 instead of -13.350000000000001"""
+    for url in (ROTATED_POLE_CUBE_URL, ROTATED_POLE_NATIVE_CUBE_URL):
+        resp = client.get(url)
+        assert resp.status_code == 200, resp.text
+        axes = resp.json()["domain"]["axes"]
+        for axis in ("x", "y"):
+            assert len(axes[axis]["values"]) > 1
+            for value in axes[axis]["values"]:
+                assert float(f"{value:.12g}") == value
+
+
 def test_cube_native_grid_resolution_one_position(client: TestClient):
     """resolution-x=1&resolution-y=1 with crs=native returns one native cell: the middle cell of the grid, not a resampled grid"""
     collection = client.get(ROTATED_POLE_COLLECTION_URL).json()
