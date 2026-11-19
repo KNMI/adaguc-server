@@ -22,6 +22,7 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *layer);
 
 int loadLayerStyleListFromMetadataDb(MetadataLayer *layer);
 
+int storemetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer);
 int updateMetaDataTable(CDataSource *dataSource);
 int updateMetaDataTableLiveUpdate(CDataSource *dataSource);
 #endif

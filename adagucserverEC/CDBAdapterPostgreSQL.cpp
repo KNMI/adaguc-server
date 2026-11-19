@@ -293,6 +293,27 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char 
   return store;
 }
 
+CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesForFixedDimensions(const std::string &name, bool orderByIndex, const std::string &table,
+                                                                         const std::vector<FixedDimensionFilter> &fixedDimensions) {
+  CPGSQLDB *DB = getDataBaseConnection();
+  if (DB == NULL) {
+    return NULL;
+  }
+  std::string where;
+  for (const auto &fixedDimension: fixedDimensions) {
+    where += where.empty() ? " where " : " and ";
+    CT::printfconcat(where, "path in (select path from %s where %s = E'%s')", fixedDimension.tableName.c_str(), fixedDimension.columnName.c_str(),
+                     DB->escapeString(fixedDimension.value).c_str());
+  }
+  std::string query = orderByIndex ? CT::printf("select distinct %s,dim%s from %s%s order by dim%s,%s", name.c_str(), name.c_str(), table.c_str(), where.c_str(), name.c_str(), name.c_str())
+                                   : CT::printf("select %s from %s%s group by %s order by %s asc", name.c_str(), table.c_str(), where.c_str(), name.c_str(), name.c_str());
+  CDBStore::Store *store = DB->queryToStore(query.c_str());
+  if (store == NULL) {
+    CDBDebug("Query %s failed", query.c_str());
+  }
+  return store;
+}
+
 CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfReferenceTimeDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName,
                                                         const char *referenceTimeTableName) {
   StopWatch_Measure(">CDBAdapterPostgreSQL::getReferenceTime");

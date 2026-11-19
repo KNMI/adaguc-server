@@ -12,6 +12,7 @@ Back to [Configuration](./Configuration.md)
 -   quantizemethod - Optional, see below
 -   hidden - Optional, hide this dimension from the GetCapabilities document
 -   fixvalue - Optional, fix the value of the dimension. When elevation has a range from 0,10,20,30, you can fixate the value to 20 with fixvalue="20"
+-   aslayers - Optional, advertise one layer per value of this dimension instead of the dimension itself. See [Dimension as layers](#dimension-as-layers)
 -   type - Optional, see [EDR configuration](/doc/configuration/EDRConfiguration/EDR.md)
 -   \<value\> - The name of the dimension in the WMS service
 
@@ -75,3 +76,34 @@ This will convert the following inputs to internal dates:
 -   2015-01-21T15:21:01Z --> 2015-01-21T15:20:00Z
 
 
+
+
+## Dimension as layers
+
+With `aslayers="true"` the Layer is split into one layer per distinct value of that dimension found in the database. Each generated layer
+has the dimension fixed to its value (as with `fixvalue`) and hidden, so it does not appear as a `<Dimension>` in the GetCapabilities document.
+
+This is useful when the dimension is used to distinguish separate products, for example runs of a trajectory model:
+
+```xml
+<Layer type="database">
+  <Name>trajks</Name>
+  <Title>trajks</Title>
+  <FilePath filter="^.*json$">/data/adaguc-data/TRAJKS</FilePath>
+  <Variable>features</Variable>
+  <Dimension name="time" aslayers="true">time</Dimension>
+  <Dimension name="elevation" default="max">elevation</Dimension>
+</Layer>
+```
+
+With three runs in the database, GetCapabilities advertises three layers, each with only the elevation dimension:
+
+- Name: the configured name with the value appended, e.g. `trajks_2026-11-12T080922Z` (colons are removed)
+- Title: the configured title with the value appended, e.g. `trajks 2026-11-12T08:09:22Z`
+
+The other dimensions of a generated layer only advertise the values of the files that match the fixed value. This applies to every
+dimension configured with `fixvalue`.
+
+AdditionalLayers that have the same dimension are copied per value as hidden layers, so they show the same run as the layer they are added to.
+
+New values appear as new layers after the files are scanned. The configured layer itself is not advertised.

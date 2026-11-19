@@ -1,0 +1,116 @@
+{
+ "type": "FeatureCollection",
+ "dimensions": {
+  "time": {
+   "value": "2026-11-12T10:30:00Z",
+   "units": "ISO8601"
+  },
+  "elevation": {
+   "value": 20.0,
+   "units": "m"
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      7.0,
+      55.0
+     ],
+     [
+      8.0,
+      54.7
+     ],
+     [
+      9.0,
+      54.4
+     ],
+     [
+      10.0,
+      54.1
+     ],
+     [
+      11.0,
+      53.8
+     ]
+    ]
+   },
+   "properties": {
+    "height": 20.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     7.0,
+     55.0
+    ]
+   },
+   "properties": {
+    "pt_time": "12/10:30",
+    "pt_type": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     8.0,
+     54.7
+    ]
+   },
+   "properties": {
+    "pt_time": "12/16:30",
+    "pt_type": 0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     9.0,
+     54.4
+    ]
+   },
+   "properties": {
+    "pt_time": "12/22:30",
+    "pt_type": 0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10.0,
+     54.1
+    ]
+   },
+   "properties": {
+    "pt_time": "13/04:30",
+    "pt_type": 0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.0,
+     53.8
+    ]
+   },
+   "properties": {
+    "pt_time": "13/10:30",
+    "pt_type": -1
+   }
+  }
+ ]
+}

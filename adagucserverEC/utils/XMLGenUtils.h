@@ -25,5 +25,6 @@ int getFileNameForLayer(MetadataLayer *metadataLayer);
 bool multiTypeSort(const std::string &a, const std::string &b);
 int checkDependenciesBetweenDims(const CDataSource *dataSource, std::vector<LayerMetadataDim> &layerMetadataDimList);
 
+bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim);
 std::string makeIntervalFromTimeList(const std::vector<std::string> &timeStampList, size_t limit = 5);
 #endif
