@@ -91,20 +91,42 @@ But this is normally not necessary, because the step above is done during ingest
 ```
 
 
-Zarr stores on S3
------------------
+Zarr stores
+-----------
 
-A Zarr store on S3 is given as the URL the NetCDF library uses to open it. A URL of which the path ends in a slash is a
-directory of stores: adaguc-server lists the bucket and scans every store below it whose name matches the filter, like
-files in a directory.
+adaguc-server reads Zarr v2 stores with its own reader, on disk and over HTTP(S) or S3. A store is given as a path or
+as the URL the NetCDF library would use to open it:
 
 ```xml
-<!-- A single store -->
+<!-- A store on disk -->
+<FilePath filter="">/data/adaguc-data/radar/RAD_202405280000.zarr</FilePath>
+
+<!-- A store on S3 -->
 <FilePath filter="">https://s3.example.com/radar/timesteps/RAD_202405280000.zarr#mode=zarr,s3</FilePath>
 
-<!-- All stores below the prefix timesteps/ of the bucket radar -->
+<!-- All stores below the prefix timesteps/ of the bucket radar on S3 -->
 <FilePath filter="^RAD_[0-9]+\.zarr$">https://s3.example.com/radar/timesteps/#mode=zarr,s3</FilePath>
 ```
+
+-   A location is read as Zarr when its fragment has `zarr` or `nczarr` in the mode (`#mode=zarr,s3`, `#mode=zarr,file`),
+    or, without a fragment, when its path ends in `.zarr`. `s3://bucket/key.zarr` reads from
+    `https://s3.<region>.amazonaws.com/bucket/key.zarr`. With `s3` in the mode the requests are signed.
+-   The metadata is read with one request from the consolidated metadata (`.zmetadata`). Without it, the reader reads the
+    `.zgroup`, `.zarray` and `.zattrs` of every group and array, which needs listing: this works on disk and on S3, not on
+    plain HTTP.
+-   Reading data fetches only the chunks of the requested part, in parallel (see `ADAGUC_ZARR_MAX_CONNECTIONS`), and
+    decodes them on several threads (see `ADAGUC_ZARR_THREADS`). A chunk that does not exist holds the fill value.
+-   Supported: numeric and boolean data types in either byte order, fixed length (`S`, `U`) and variable length
+    (`vlen-utf8`) strings, C and F order, the compressors zlib, gzip, zstd and blosc, and the shuffle filter. Zarr v3 is not
+    supported yet.
+-   Arrays become variables named by their path in the store (`group/name`), with the dimensions of the `_ARRAY_DIMENSIONS`
+    attribute that xarray writes, or of the dimension references of NCZarr. As in xarray, the `fill_value` of an array
+    without `_FillValue` attribute is its `_FillValue`.
+-   To read a store with the NetCDF library instead, set `<DataReader>NetCDF</DataReader>` in the layer. That needs a NetCDF
+    library with S3 support and the filter plugins for the compression of the store.
+
+A URL of which the path ends in a slash is a directory of stores on S3: adaguc-server lists the bucket and scans every
+store below it whose name matches the filter, like files in a directory.
 
 -   A store is a key prefix ending in `.zarr/`. Prefixes that do not end in `.zarr/` are subdirectories and are
     listed as well.
@@ -117,8 +139,9 @@ files in a directory.
     stores as they arrive when the bucket holds very many of them.
 -   Stores are assumed not to change: a URL has no modification date, so a store that was scanned is not scanned again.
     Use `scan.sh -t` to index everything again.
--   The URL has to be https; the NetCDF library does not use plain http for S3.
--   Credentials and region are taken from the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
-    `AWS_REGION`, both for listing the bucket and by the NetCDF library for opening the stores.
--   adaguc-server must be built with a NetCDF library that has S3 support and the filter plugins for the compression used
-    in the stores; see the Dockerfile.
+-   The URL of a directory has to be https.
+
+Credentials and region are taken from the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
+`AWS_SESSION_TOKEN` (optional), and `AWS_REGION` (or `AWS_DEFAULT_REGION`, default `us-east-1`); `aws.region=` in the
+fragment overrides the region, like `#mode=zarr,s3&aws.region=eu-west-1`. Without credentials the requests are not signed,
+which works for public buckets.

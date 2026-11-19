@@ -1,0 +1,8 @@
+{
+  "units": "1",
+  "_FillValue": -1.0,
+  "_ARRAY_DIMENSIONS": [
+    "lat",
+    "lon"
+  ]
+}

@@ -63,6 +63,8 @@ OpenDAP requests return 500 for every non-zero exit code. The OGC API and EDR en
 | `ADAGUC_STYLESHEET_ENABLE` | Allows clients to send their own style with the `STYLESHEET` parameter when set to `TRUE`. The XML is checked against an allowlist; still put a rate or concurrency limit in front of a public server, because a valid style can be expensive to render. | `FALSE` |
 | `ADAGUC_TMP`              | Directory used for temporary files. Available as `{ADAGUC_TMP}` substitution in configuration files. | -|
 | `ADAGUC_TRACE_TIMINGS`    | Enables timing measurements for internal operations such as database queries, file access, and image generation.<br>Results are returned in the `x-trace-timings` HTTP header. | `FALSE` |
+| `ADAGUC_ZARR_MAX_CONNECTIONS` | Maximum number of HTTP requests that the [Zarr reader](configuration/FilePath.md#zarr-stores) does at the same time, per process, to fetch the chunks of a store over HTTP(S) or S3. | `16` |
+| `ADAGUC_ZARR_THREADS` | Number of threads that the [Zarr reader](configuration/FilePath.md#zarr-stores) uses to decode chunks, per process. | The number of processors, at most `8` |
 | `ADAGUCENV_ENABLECLEANUP` | Enables or disables automatic cleanup of files based on the retention period.<br>See also [environment.md](/doc/configuration/Environment.md). | -|
 | `ADAGUCENV_RETENTIONPERIOD` | ISO 8601 duration specifying how long generated or cached files should be retained.<br>See also [environment.md](/doc/configuration/Environment.md). | -|
 | `EXTERNALADDRESS`         | Hostname where Adaguc Viewer and Adaguc Explorer are reachable. | -|

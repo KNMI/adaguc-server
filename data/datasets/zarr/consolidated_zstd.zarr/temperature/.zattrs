@@ -1,0 +1,15 @@
+{
+  "units": "K",
+  "standard_name": "air_temperature",
+  "_FillValue": "NaN",
+  "valid_range": [
+    200.0,
+    350.0
+  ],
+  "_ARRAY_DIMENSIONS": [
+    "time",
+    "z",
+    "lat",
+    "lon"
+  ]
+}

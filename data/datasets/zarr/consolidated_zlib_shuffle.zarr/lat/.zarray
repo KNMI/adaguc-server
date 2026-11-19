@@ -1,0 +1,23 @@
+{
+  "zarr_format": 2,
+  "shape": [
+    30
+  ],
+  "chunks": [
+    30
+  ],
+  "dtype": "<f4",
+  "fill_value": "NaN",
+  "order": "C",
+  "compressor": {
+    "id": "zlib",
+    "level": 4
+  },
+  "filters": [
+    {
+      "id": "shuffle",
+      "elementsize": 4
+    }
+  ],
+  "dimension_separator": "."
+}

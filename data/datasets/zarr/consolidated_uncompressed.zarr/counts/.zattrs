@@ -1,0 +1,8 @@
+{
+  "long_name": "counts",
+  "big_number": 5000000000,
+  "_ARRAY_DIMENSIONS": [
+    "lat",
+    "lon"
+  ]
+}

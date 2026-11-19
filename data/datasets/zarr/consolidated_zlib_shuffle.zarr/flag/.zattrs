@@ -1,0 +1,7 @@
+{
+  "long_name": "a flag",
+  "_ARRAY_DIMENSIONS": [
+    "lat",
+    "lon"
+  ]
+}

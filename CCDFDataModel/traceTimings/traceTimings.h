@@ -20,7 +20,9 @@ enum TraceTimingType {
   FSNCOPEN,
   FSNCREADVARS,
   FSNCREADATTRS,
-  FSNCREADDIMS
+  FSNCREADDIMS,
+  FSZARROPEN,
+  FSZARRREAD
 };
 
 struct TraceTimingsInfo {

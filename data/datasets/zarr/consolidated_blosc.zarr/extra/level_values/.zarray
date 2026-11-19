@@ -1,0 +1,21 @@
+{
+  "zarr_format": 2,
+  "shape": [
+    4
+  ],
+  "chunks": [
+    4
+  ],
+  "dtype": "<i2",
+  "fill_value": null,
+  "order": "C",
+  "compressor": {
+    "id": "blosc",
+    "cname": "lz4",
+    "clevel": 5,
+    "shuffle": 1,
+    "blocksize": 0
+  },
+  "filters": null,
+  "dimension_separator": "."
+}

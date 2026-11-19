@@ -4,6 +4,15 @@ find_package(HDF5 REQUIRED)
 find_package(UDUNITS2 REQUIRED)
 find_package(PNG REQUIRED)
 find_package(PROJ REQUIRED)
+find_package(CURL REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(Threads REQUIRED)
+
+# Optional compressors for Zarr chunks
+find_path(ZSTD_INCLUDE_DIR zstd.h)
+find_library(ZSTD_LIBRARY zstd)
+find_path(BLOSC_INCLUDE_DIR blosc.h)
+find_library(BLOSC_LIBRARY blosc)
 
 add_library(CCDFDataModel
     traceTimings/traceTimings.h
@@ -49,10 +58,34 @@ add_library(CCDFDataModel
     utils.cpp
     cdfVariableCache.h
     cdfVariableCache.cpp
+    CCDFZarrIO.h
+    CCDFZarrIO.cpp
+    zarr/ZarrStore.h
+    zarr/ZarrStore.cpp
+    zarr/ZarrCodecs.h
+    zarr/ZarrCodecs.cpp
+    zarr/ZarrWorkerPool.h
 )
 
-target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR})
-target_link_libraries(CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${UDUNITS2_LIBRARIES} ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${LIBXML2_LIBRARY} ${PNG_LIBRARY} ${PROJ_LIBRARY})
+target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
+target_link_libraries(CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${UDUNITS2_LIBRARIES} ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${LIBXML2_LIBRARY} ${PNG_LIBRARY} ${PROJ_LIBRARY} ${CURL_LIBRARIES} ZLIB::ZLIB Threads::Threads)
+
+if(ZSTD_INCLUDE_DIR AND ZSTD_LIBRARY)
+  MESSAGE(STATUS "Zarr: zstd compressor enabled (${ZSTD_LIBRARY})")
+  target_compile_definitions(CCDFDataModel PRIVATE ADAGUC_HAVE_ZSTD)
+  target_include_directories(CCDFDataModel PRIVATE ${ZSTD_INCLUDE_DIR})
+  target_link_libraries(CCDFDataModel ${ZSTD_LIBRARY})
+else()
+  MESSAGE(STATUS "Zarr: zstd not found, Zarr chunks compressed with zstd cannot be read")
+endif()
+if(BLOSC_INCLUDE_DIR AND BLOSC_LIBRARY)
+  MESSAGE(STATUS "Zarr: blosc compressor enabled (${BLOSC_LIBRARY})")
+  target_compile_definitions(CCDFDataModel PRIVATE ADAGUC_HAVE_BLOSC)
+  target_include_directories(CCDFDataModel PRIVATE ${BLOSC_INCLUDE_DIR})
+  target_link_libraries(CCDFDataModel ${BLOSC_LIBRARY})
+else()
+  MESSAGE(STATUS "Zarr: blosc not found, Zarr chunks compressed with blosc cannot be read")
+endif()
 
 # Build unit test executable
 add_executable(testccdfdatamodel testccdfdatamodel.cpp)

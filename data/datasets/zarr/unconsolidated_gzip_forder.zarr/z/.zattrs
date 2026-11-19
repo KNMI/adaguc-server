@@ -1,0 +1,7 @@
+{
+  "units": "km",
+  "long_name": "height",
+  "_ARRAY_DIMENSIONS": [
+    "z"
+  ]
+}

@@ -45,6 +45,7 @@
 #include "CConvertLatLonGrid.h"
 #include "CConvertLatLonBnds.h"
 #include "CCDFCSVReader.h"
+#include "CCDFZarrIO.h"
 #include "CCDFReader.h"
 #include "CDataSource.h"
 #include "CTString.h"
@@ -112,6 +113,13 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
  * @return The CDFReader
  */
 CDFReader *CDFObjectStore::getCDFReader(std::string fileName) {
+  // Zarr stores, on disk or over HTTP(S) / S3. <DataReader>NetCDF</DataReader> in the layer reads them with the NetCDF library instead.
+  if (CDFZarrReader::isZarrLocation(fileName)) {
+    if (EXTRACT_HDF_NC_VERBOSE) {
+      CDBDebug("Creating Zarr reader");
+    }
+    return new CDFZarrReader();
+  }
 
   fileName = CT::toLowerCase(fileName);
   if (!CT::startsWith(fileName, "http")) {

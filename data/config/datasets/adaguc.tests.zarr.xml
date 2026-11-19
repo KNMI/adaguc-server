@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+    The same data from a NetCDF file (nc_*) and from Zarr stores with different encodings, see
+    data/datasets/zarr/create_zarr_test_stores.py. TestZarr.py expects the same output for all of them.
+  -->
+  <Style name="zarrtest_temperature">
+    <Legend fixedclasses="true">bluewhitered</Legend>
+    <Min>265</Min>
+    <Max>295</Max>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  <Style name="zarrtest_reflectivity">
+    <Legend fixedclasses="true">rainbow</Legend>
+    <Min>-30</Min>
+    <Max>30</Max>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  <Layer type="database">
+    <Name>nc_temperature</Name>
+    <Variable>temperature</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/zarrtest.nc</FilePath>
+    <Styles>zarrtest_temperature</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>nc_reflectivity</Name>
+    <Variable>reflectivity</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/zarrtest.nc</FilePath>
+    <Styles>zarrtest_reflectivity</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>zlib_temperature</Name>
+    <Variable>temperature</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_zlib_shuffle.zarr</FilePath>
+    <Styles>zarrtest_temperature</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>zlib_reflectivity</Name>
+    <Variable>reflectivity</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_zlib_shuffle.zarr</FilePath>
+    <Styles>zarrtest_reflectivity</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>gzip_temperature</Name>
+    <Variable>temperature</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/unconsolidated_gzip_forder.zarr</FilePath>
+    <Styles>zarrtest_temperature</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>gzip_reflectivity</Name>
+    <Variable>reflectivity</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/unconsolidated_gzip_forder.zarr</FilePath>
+    <Styles>zarrtest_reflectivity</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>zstd_temperature</Name>
+    <Variable>temperature</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_zstd.zarr</FilePath>
+    <Styles>zarrtest_temperature</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>zstd_reflectivity</Name>
+    <Variable>reflectivity</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_zstd.zarr</FilePath>
+    <Styles>zarrtest_reflectivity</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>blosc_temperature</Name>
+    <Variable>temperature</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_blosc.zarr</FilePath>
+    <Styles>zarrtest_temperature</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>blosc_reflectivity</Name>
+    <Variable>reflectivity</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_blosc.zarr</FilePath>
+    <Styles>zarrtest_reflectivity</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>uncompressed_temperature</Name>
+    <Variable>temperature</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_uncompressed.zarr</FilePath>
+    <Styles>zarrtest_temperature</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Name>uncompressed_reflectivity</Name>
+    <Variable>reflectivity</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/zarr/consolidated_uncompressed.zarr</FilePath>
+    <Styles>zarrtest_reflectivity</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="min">time</Dimension>
+    <Dimension name="z" units="km" default="min">elevation</Dimension>
+  </Layer>
+</Configuration>

@@ -1,0 +1,17 @@
+{
+  "units": "dBZ",
+  "scale_factor": 0.01,
+  "add_offset": -30.0,
+  "_FillValue": 65535,
+  "flag_values": [
+    1,
+    2,
+    3
+  ],
+  "_ARRAY_DIMENSIONS": [
+    "time",
+    "z",
+    "lat",
+    "lon"
+  ]
+}

@@ -90,6 +90,10 @@ std::string typeToString(TraceTimingType typein) {
     return "FSNCREADATTRS";
   case TraceTimingType::FSNCREADDIMS:
     return "FSNCREADDIMS";
+  case TraceTimingType::FSZARROPEN:
+    return "FSZARROPEN";
+  case TraceTimingType::FSZARRREAD:
+    return "FSZARRREAD";
   default:
     return "?";
   }

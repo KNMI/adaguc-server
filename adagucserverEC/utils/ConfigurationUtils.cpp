@@ -1,5 +1,6 @@
 #include "./ConfigurationUtils.h"
 #include "S3Lister.h"
+#include "CCDFZarrIO.h"
 #include <CAutoResource.h>
 #include "Definitions.h"
 #include "parseQueryString.h"
@@ -33,6 +34,10 @@ bool checkIfPathIsFile(std::string filePath) {
   // A directory of Zarr stores on S3 is a https URL too, but it is listed like a directory
   if (isS3Directory(filePath)) {
     return false;
+  }
+  // A Zarr store is a directory, but it is read as one file
+  if (CDFZarrReader::isZarrLocation(filePath)) {
+    return true;
   }
   return (CT::endsWith(filePath, ".nc") || CT::endsWith(filePath, ".h5") || CT::endsWith(filePath, ".hdf5") || CT::endsWith(filePath, ".he5") || CT::endsWith(filePath, ".png") ||
           CT::endsWith(filePath, ".csv") || CT::endsWith(filePath, ".geojson") || CT::endsWith(filePath, ".json") || CT::startsWith(filePath, "http://") || CT::startsWith(filePath, "https://") ||

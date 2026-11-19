@@ -1,6 +1,9 @@
 #include "utils.h"
 
 CDFReader *findReaderByFileName(std::string fileName) {
+  if (CDFZarrReader::isZarrLocation(fileName)) {
+    return new CDFZarrReader();
+  }
   if (CT::endsWith(fileName, ".nc")) {
     return new CDFNetCDFReader();
   }

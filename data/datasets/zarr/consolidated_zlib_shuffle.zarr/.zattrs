@@ -1,0 +1,9 @@
+{
+  "Conventions": "CF-1.8",
+  "title": "Zarr reader test data",
+  "version": 3,
+  "keywords": [
+    "zarr",
+    "test"
+  ]
+}

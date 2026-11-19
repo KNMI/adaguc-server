@@ -34,35 +34,22 @@ RUN apt-get -q -y update \
     libproj-dev \
     libtiff-dev \
     libgeotiff-dev \
-    libssl-dev \
+    libzstd-dev \
+    libblosc-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# netcdf-c is built from source, for two reasons.
-#
-# 1. Debian trixie 13 ships netcdf >=4.9.1, which has two issues:
-#    - nc_open reads 4MB regardless of file size:  https://github.com/Unidata/netcdf-c/issues/3469
-#    - Memory leak in SIZE_MAX allocation when getxattr() is used - https://github.com/Unidata/netcdf-c/issues/3474
-#    Both are fixed on the netcdf-c main branch, but not yet in a release (latest is v4.10.1).
-#    See https://github.com/KNMI/adaguc-server/issues/812
-# 2. Reading Zarr stores from S3 needs a build with S3 support and with the filter plugins installed,
-#    which the Debian package does not have:
-#    - NETCDF_ENABLE_S3_INTERNAL: S3 access with the built-in client (no AWS SDK needed).
-#    - NETCDF_PLUGIN_INSTALL / NETCDF_WITH_PLUGIN_DIR: installs the filters that decode compressed
-#      Zarr chunks (zlib, shuffle, zstd, ...) and makes this directory the default plugin search path,
-#      so HDF5_PLUGIN_PATH does not have to be set.
-#
-# NETCDF_C_COMMIT is the merge of the fix for the second issue; it contains both fixes.
-ARG NETCDF_C_COMMIT=75babd9daa66364ae9ef68b682746c1ed14469d0
+# Debian trixie 13 ships netcdf  >=4.9.1 with two issues:
+# - nc_open reads 4MB regardless of file size:  https://github.com/Unidata/netcdf-c/issues/3469
+# - Memory leak in SIZE_MAX allocation when getxattr() is used - https://github.com/Unidata/netcdf-c/issues/3474
+# Therefore we fallback to v4.9.0 which does not have these issues - https://github.com/KNMI/adaguc-server/issues/812
 RUN mkdir -p /tmp/netcdf-c \
-    && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/Unidata/netcdf-c/archive/${NETCDF_C_COMMIT}.tar.gz', '/tmp/netcdf-c.tar.gz')" \
+    && python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.9.0.tar.gz', '/tmp/netcdf-c.tar.gz')" \
     && tar xzf /tmp/netcdf-c.tar.gz -C /tmp/netcdf-c --strip-components=1 \
     && rm /tmp/netcdf-c.tar.gz \
     && cmake -S /tmp/netcdf-c -B /tmp/netcdf-c-build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-    -DCMAKE_INSTALL_PREFIX=/opt/netcdf-c \
-    -DNETCDF_ENABLE_S3_INTERNAL=ON \
-    -DNETCDF_PLUGIN_INSTALL=ON -DNETCDF_WITH_PLUGIN_DIR=/opt/netcdf-c/plugins \
+    -DCMAKE_INSTALL_PREFIX=/opt/netcdf-c -DCMAKE_C_FLAGS="-Wno-error=incompatible-pointer-types" \
     && cmake --build /tmp/netcdf-c-build --parallel "$(nproc)" \
     && cmake --install /tmp/netcdf-c-build \
     && rm -rf /tmp/netcdf-c /tmp/netcdf-c-build \
@@ -107,6 +94,8 @@ RUN apt-get -q -y update \
     libcurl4-openssl-dev \
     libproj-dev \
     libudunits2-0 \
+    libzstd1 \
+    libblosc1 \
     time \
     supervisor \
     pgbouncer \

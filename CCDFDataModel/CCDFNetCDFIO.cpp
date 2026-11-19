@@ -322,6 +322,8 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   }
 
   if (type == var->nativeType) {
+    // An earlier read may have converted the data to another type
+    var->setType(type);
     if (useStartCount) {
       if (useStriding) {
         if (CCDFNETCDFIO_DEBUG_OPEN) {

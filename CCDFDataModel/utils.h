@@ -5,6 +5,7 @@
 #include "CCDFGeoJSONIO.h"
 #include "CCDFCSVReader.h"
 #include "CCDFPNGIO.h"
+#include "CCDFZarrIO.h"
 
 #ifndef ADAGUCUTILS_H
 #define ADAGUCUTILS_H

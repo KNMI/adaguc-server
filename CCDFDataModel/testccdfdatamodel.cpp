@@ -23,13 +23,16 @@
  *
  ******************************************************************************/
 
+#include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <cstdlib>
 #include <unistd.h>
 #include <netcdf.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
+#include "CCDFZarrIO.h"
 #include "CTime.h"
 #include "CCDFDataModel.h"
 #include "utils.h"
@@ -366,6 +369,192 @@ int testNetCDFChunkCacheFromEnvironment() {
   return failed;
 }
 
+/* True when the variables hold the same values: bitwise for numbers (also NaN), by text for strings */
+static bool haveSameData(CDF::Variable *a, CDF::Variable *b) {
+  if (a->getSize() != b->getSize() || a->currentType != b->currentType) return false;
+  if (a->currentType == CDF_STRING) {
+    for (size_t index = 0; index < a->getSize(); index++) {
+      if (strcmp(((char **)a->data)[index], ((char **)b->data)[index]) != 0) return false;
+    }
+    return true;
+  }
+  return memcmp(a->data, b->data, a->getSize() * CDF::getTypeSize(a->currentType)) == 0;
+}
+
+/* Reads a selection from both variables and compares the data */
+static bool readAndCompare(CDF::Variable *expected, CDF::Variable *actual, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride, const std::string &what) {
+  expected->freeData();
+  actual->freeData();
+  if (expected->readData(type, start, count, stride) != 0) {
+    CDBError("[FAILED] Zarr: unable to read %s from the NetCDF file", what.c_str());
+    return false;
+  }
+  if (actual->readData(type, start, count, stride) != 0) {
+    CDBError("[FAILED] Zarr: unable to read %s", what.c_str());
+    return false;
+  }
+  if (!haveSameData(expected, actual)) {
+    CDBError("[FAILED] Zarr: %s differs from the NetCDF file: %lu %s values, expected %lu %s values", what.c_str(), actual->getSize(), CDF::getCDFDataTypeName(actual->currentType).c_str(),
+             expected->getSize(), CDF::getCDFDataTypeName(expected->currentType).c_str());
+    if (actual->currentType != CDF_STRING && actual->getSize() > 0 && expected->getSize() > 0) {
+      CDBError("first values: %f, expected %f", actual->getDataAt<double>(0), expected->getDataAt<double>(0));
+    }
+    return false;
+  }
+  return true;
+}
+
+static std::string attributesAsText(std::vector<CDF::Attribute *> &attributes) {
+  std::vector<std::string> lines;
+  for (auto attribute: attributes) lines.push_back(attribute->name + "=" + attribute->toString());
+  std::sort(lines.begin(), lines.end());
+  return CT::join(lines, ";");
+}
+
+/**
+ * Reads the Zarr test stores (written by data/datasets/zarr/create_zarr_test_stores.py) and the NetCDF file with the same
+ * data, and expects the same dimensions, variables, attributes and data, for the whole variables and for selections.
+ */
+int testZarrReader() {
+  const std::string directory = "../data/datasets/zarr/";
+  int failed = 0;
+  CDFObject netcdf;
+  CDFNetCDFReader netcdfReader;
+  netcdf.attachCDFReader(&netcdfReader);
+  if (netcdf.open((directory + "zarrtest.nc").c_str()) != 0) {
+    CDBError("[FAILED] Zarr: unable to open the NetCDF file");
+    return 1;
+  }
+  for (const char *storeName: {"consolidated_zlib_shuffle.zarr", "unconsolidated_gzip_forder.zarr", "consolidated_zstd.zarr", "consolidated_blosc.zarr", "consolidated_uncompressed.zarr"}) {
+    const std::string store = directory + storeName;
+    if (!CDFZarrReader::isZarrLocation(store)) {
+      CDBError("[FAILED] Zarr: %s is not recognized as a Zarr store", storeName);
+      failed++;
+    }
+    CDFObject zarr;
+    CDFZarrReader zarrReader;
+    zarr.attachCDFReader(&zarrReader);
+    if (zarr.open(store.c_str()) != 0) {
+      CDBError("[FAILED] Zarr: unable to open %s", storeName);
+      failed++;
+      continue;
+    }
+    const int failuresBefore = failed;
+    if (attributesAsText(netcdf.attributes) != attributesAsText(zarr.attributes)) {
+      CDBError("[FAILED] Zarr: global attributes of %s: [%s], expected [%s]", storeName, attributesAsText(zarr.attributes).c_str(), attributesAsText(netcdf.attributes).c_str());
+      failed++;
+    }
+    if (netcdf.dimensions.size() != zarr.dimensions.size() || netcdf.variables.size() != zarr.variables.size()) {
+      CDBError("[FAILED] Zarr: %s has %lu dimensions and %lu variables, expected %lu and %lu", storeName, zarr.dimensions.size(), zarr.variables.size(), netcdf.dimensions.size(),
+               netcdf.variables.size());
+      failed++;
+    }
+    for (auto dimension: netcdf.dimensions) {
+      auto zarrDimension = zarr.getDimensionNE(dimension->name);
+      if (zarrDimension == nullptr || zarrDimension->getSize() != dimension->getSize()) {
+        CDBError("[FAILED] Zarr: dimension %s of %s is missing or has another length", dimension->name.c_str(), storeName);
+        failed++;
+      }
+    }
+    for (auto variable: netcdf.variables) {
+      const std::string what = std::string(storeName) + ":" + variable->name;
+      CDF::Variable *zarrVariable = zarr.getVariableNE(variable->name);
+      if (zarrVariable == nullptr) {
+        CDBError("[FAILED] Zarr: variable %s is missing", what.c_str());
+        failed++;
+        continue;
+      }
+      std::string dimensions, zarrDimensions;
+      for (auto dimension: variable->dimensionlinks) dimensions += dimension->name + ",";
+      for (auto dimension: zarrVariable->dimensionlinks) zarrDimensions += dimension->name + ",";
+      if (variable->getNativeType() != zarrVariable->getNativeType() || dimensions != zarrDimensions || variable->isDimension != zarrVariable->isDimension) {
+        CDBError("[FAILED] Zarr: %s is %s(%s), expected %s(%s)", what.c_str(), CDF::getCDFDataTypeName(zarrVariable->getNativeType()).c_str(), zarrDimensions.c_str(),
+                 CDF::getCDFDataTypeName(variable->getNativeType()).c_str(), dimensions.c_str());
+        failed++;
+        continue;
+      }
+      if (attributesAsText(variable->attributes) != attributesAsText(zarrVariable->attributes)) {
+        CDBError("[FAILED] Zarr: attributes of %s: [%s], expected [%s]", what.c_str(), attributesAsText(zarrVariable->attributes).c_str(), attributesAsText(variable->attributes).c_str());
+        failed++;
+      }
+
+      // The whole variable, converted and in its own type. Converted first: reading in the own type must give the own type again.
+      const CDFType type = variable->getNativeType();
+      if (type != CDF_STRING && !readAndCompare(variable, zarrVariable, CDF_DOUBLE, nullptr, nullptr, nullptr, what + " as double")) failed++;
+      if (!readAndCompare(variable, zarrVariable, type, nullptr, nullptr, nullptr, what)) failed++;
+
+      // Selections: the same pattern on every dimension, and a different pattern per dimension
+      const size_t numDims = variable->dimensionlinks.size();
+      for (int pattern = 0; pattern < 10 && numDims > 0; pattern++) {
+        std::vector<size_t> start(numDims), count(numDims);
+        std::vector<ptrdiff_t> stride(numDims);
+        std::string selection;
+        for (size_t dim = 0; dim < numDims; dim++) {
+          const size_t length = variable->dimensionlinks[dim]->getSize();
+          switch (pattern < 5 ? pattern : (pattern + dim) % 5) {
+          case 0: // Everything
+            start[dim] = 0, count[dim] = length, stride[dim] = 1;
+            break;
+          case 1: // Every second element
+            start[dim] = std::min<size_t>(1, length - 1), count[dim] = std::max<size_t>(1, (length - start[dim] + 1) / 2), stride[dim] = 2;
+            break;
+          case 2: // A range in the middle
+            start[dim] = length / 3, count[dim] = std::max<size_t>(1, length / 2), stride[dim] = 1;
+            break;
+          case 3: // The last element
+            start[dim] = length - 1, count[dim] = 1, stride[dim] = 1;
+            break;
+          default: // Every third element
+            start[dim] = 0, count[dim] = (length + 2) / 3, stride[dim] = 3;
+            break;
+          }
+          selection += CT::printf("[%lu:%lu:%td]", start[dim], count[dim], stride[dim]);
+        }
+        if (!readAndCompare(variable, zarrVariable, type, start.data(), count.data(), stride.data(), what + selection)) failed++;
+      }
+      variable->freeData();
+      zarrVariable->freeData();
+    }
+    if (failed == failuresBefore) {
+      CDBDebug("[OK] Zarr: %s is the same as the NetCDF file", storeName);
+    }
+  }
+
+  // Locations
+  const std::vector<std::pair<std::string, bool>> locations = {
+      {"https://host:7443/bucket/store.zarr#mode=zarr,s3", true},
+      {"https://host/bucket/store#mode=nczarr,s3&aws.region=eu-west-1", true},
+      {"file:///data/store.zarr#mode=zarr,file", true},
+      {"/data/store.zarr", true},
+      {"/data/store.zarr/", true},
+      {"s3://bucket/store.zarr", true},
+      {"/data/store.zip#mode=zarr,zip", false},
+      {"/data/file.nc", false},
+      {"https://host/thredds/dodsC/file.nc", false},
+  };
+  for (const auto &location: locations) {
+    if (CDFZarrReader::isZarrLocation(location.first) != location.second) {
+      CDBError("[FAILED] Zarr: isZarrLocation(%s) should be %d", location.first.c_str(), location.second);
+      failed++;
+    }
+  }
+
+  // Opening a store that does not exist fails
+  {
+    CDFObject zarr;
+    CDFZarrReader zarrReader;
+    zarr.attachCDFReader(&zarrReader);
+    if (zarr.open((directory + "does_not_exist.zarr").c_str()) == 0) {
+      CDBError("[FAILED] Zarr: opening a store that does not exist succeeded");
+      failed++;
+    }
+  }
+  if (!failed) {
+    CDBDebug("[OK] testZarrReader");
+  }
+  return failed > 0;
+}
+
 int main(int, char **) {
   bool failed = false;
   CDBDebug("Testing CTime");
@@ -386,6 +575,8 @@ int main(int, char **) {
   if (testHDF5Reader() != 0) failed = true;
 
   if (testNetCDFChunkCacheFromEnvironment() != 0) failed = true;
+
+  if (testZarrReader() != 0) failed = true;
 
   CTime::cleanInstances();
   delete testVarA;

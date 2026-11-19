@@ -1,0 +1,347 @@
+{
+  "metadata": {
+    ".zgroup": {
+      "zarr_format": 2
+    },
+    ".zattrs": {
+      "Conventions": "CF-1.8",
+      "title": "Zarr reader test data",
+      "version": 3,
+      "keywords": [
+        "zarr",
+        "test"
+      ]
+    },
+    "extra/.zgroup": {
+      "zarr_format": 2
+    },
+    "extra/.zattrs": {
+      "description": "a group"
+    },
+    "lat/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        30
+      ],
+      "chunks": [
+        30
+      ],
+      "dtype": "<f4",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "lat/.zattrs": {
+      "units": "degrees_north",
+      "standard_name": "latitude",
+      "_ARRAY_DIMENSIONS": [
+        "lat"
+      ]
+    },
+    "lon/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        40
+      ],
+      "chunks": [
+        40
+      ],
+      "dtype": "<f4",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "lon/.zattrs": {
+      "units": "degrees_east",
+      "standard_name": "longitude",
+      "_ARRAY_DIMENSIONS": [
+        "lon"
+      ]
+    },
+    "time/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        2
+      ],
+      "chunks": [
+        2
+      ],
+      "dtype": "<f8",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "time/.zattrs": {
+      "units": "seconds since 1970-01-01 00:00:00",
+      "standard_name": "time",
+      "_ARRAY_DIMENSIONS": [
+        "time"
+      ]
+    },
+    "z/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        3
+      ],
+      "chunks": [
+        3
+      ],
+      "dtype": "<f4",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "z/.zattrs": {
+      "units": "km",
+      "long_name": "height",
+      "_ARRAY_DIMENSIONS": [
+        "z"
+      ]
+    },
+    "temperature/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        2,
+        3,
+        30,
+        40
+      ],
+      "chunks": [
+        2,
+        3,
+        30,
+        40
+      ],
+      "dtype": "<f4",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "temperature/.zattrs": {
+      "units": "K",
+      "standard_name": "air_temperature",
+      "_FillValue": "NaN",
+      "valid_range": [
+        200.0,
+        350.0
+      ],
+      "_ARRAY_DIMENSIONS": [
+        "time",
+        "z",
+        "lat",
+        "lon"
+      ]
+    },
+    "reflectivity/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        2,
+        3,
+        30,
+        40
+      ],
+      "chunks": [
+        2,
+        3,
+        30,
+        40
+      ],
+      "dtype": "<u2",
+      "fill_value": 65535,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "reflectivity/.zattrs": {
+      "units": "dBZ",
+      "scale_factor": 0.01,
+      "add_offset": -30.0,
+      "_FillValue": 65535,
+      "flag_values": [
+        1,
+        2,
+        3
+      ],
+      "_ARRAY_DIMENSIONS": [
+        "time",
+        "z",
+        "lat",
+        "lon"
+      ]
+    },
+    "counts/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        30,
+        40
+      ],
+      "chunks": [
+        30,
+        40
+      ],
+      "dtype": "<i4",
+      "fill_value": null,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "counts/.zattrs": {
+      "long_name": "counts",
+      "big_number": 5000000000,
+      "_ARRAY_DIMENSIONS": [
+        "lat",
+        "lon"
+      ]
+    },
+    "flag/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        30,
+        40
+      ],
+      "chunks": [
+        30,
+        40
+      ],
+      "dtype": "|b1",
+      "fill_value": null,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "flag/.zattrs": {
+      "long_name": "a flag",
+      "_ARRAY_DIMENSIONS": [
+        "lat",
+        "lon"
+      ]
+    },
+    "station_name/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        5
+      ],
+      "chunks": [
+        5
+      ],
+      "dtype": "|O",
+      "fill_value": null,
+      "order": "C",
+      "compressor": null,
+      "filters": [
+        {
+          "id": "vlen-utf8"
+        }
+      ],
+      "dimension_separator": "."
+    },
+    "station_name/.zattrs": {
+      "long_name": "station name",
+      "_ARRAY_DIMENSIONS": [
+        "station"
+      ]
+    },
+    "station_code/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        5
+      ],
+      "chunks": [
+        5
+      ],
+      "dtype": "|S4",
+      "fill_value": null,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "station_code/.zattrs": {
+      "long_name": "station code",
+      "_ARRAY_DIMENSIONS": [
+        "station"
+      ]
+    },
+    "station_label/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        5
+      ],
+      "chunks": [
+        5
+      ],
+      "dtype": "<U6",
+      "fill_value": null,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "station_label/.zattrs": {
+      "long_name": "station label",
+      "_ARRAY_DIMENSIONS": [
+        "station"
+      ]
+    },
+    "extra/humidity/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        30,
+        40
+      ],
+      "chunks": [
+        30,
+        40
+      ],
+      "dtype": "<f8",
+      "fill_value": -1.0,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "extra/humidity/.zattrs": {
+      "units": "1",
+      "_FillValue": -1.0,
+      "_ARRAY_DIMENSIONS": [
+        "lat",
+        "lon"
+      ]
+    },
+    "extra/level_values/.zarray": {
+      "zarr_format": 2,
+      "shape": [
+        4
+      ],
+      "chunks": [
+        4
+      ],
+      "dtype": "<i2",
+      "fill_value": null,
+      "order": "C",
+      "compressor": null,
+      "filters": null,
+      "dimension_separator": "."
+    },
+    "extra/level_values/.zattrs": {
+      "units": "hPa",
+      "_ARRAY_DIMENSIONS": [
+        "level"
+      ]
+    }
+  },
+  "zarr_consolidated_format": 1
+}
