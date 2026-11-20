@@ -221,6 +221,7 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
   }
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
     const auto dataObject = dataSource->getDataObject(dataObjectNr);
+    results.clear();
     std::map<std::pair<int, int>, std::vector<CURResult>> spatialResults;
     std::string variableName = dataObject->cdfVariable->name;
     for (const auto &[dimName, fileInfo]: fileInfoMap) {
@@ -322,6 +323,13 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
               throw(__LINE__);
             }
 
+            // readData unpacked the data and the _FillValue attribute (once). Use that as the nodata value of the data object, as
+            // CDataReader does, so the unit conversion, the post-processors and the nodata check below all use the unpacked value.
+            if (dataObject->hasNodataValue) {
+              CDF::Attribute *fillValueAttribute = variable->getAttributeNE("_FillValue");
+              if (fillValueAttribute != nullptr) fillValueAttribute->getData(&dataObject->dfNodataValue, 1);
+            }
+
             if (enableLogsForCURUniqueRequests) {
               for (size_t j = 0; j < variable->getSize(); j++) {
                 CDBDebug("Orig Data value %lu is \t %f", j, ((double *)variable->data)[j]);
@@ -393,7 +401,8 @@ void CURUniqueRequests::makeRequests(std::map<std::string, CURFileInfo> &fileInf
 
                 double pixelValueAtIndex = CImageDataWriter::convertValue(variable->getType(), variable->data, indexInVariable);
                 std::string pixelValueAsString = "nodata";
-                if ((pixelValueAtIndex != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixelValueAtIndex == pixelValueAtIndex) || dataObject->hasNodataValue == false) {
+                const bool isNodata = dataObject->hasNodataValue && (pixelValueAtIndex == dataObject->dfNodataValue || std::isnan(pixelValueAtIndex));
+                if (!isNodata) {
                   if (dataObject->hasStatusFlag) {
                     std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, pixelValueAtIndex);
                     pixelValueAsString = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixelValueAtIndex);

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <!-- Layers for the GetPointValue / GetFeatureInfo JSON tests in TestWMS.py -->
+
+  <!-- Two variables and no post-processing: one JSON result per variable -->
+  <Layer type="database">
+    <Name>xy-wind</Name>
+    <Title>x and y wind components</Title>
+    <Variable>x-wind-hagl</Variable>
+    <Variable>y-wind-hagl</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
+  </Layer>
+
+  <!-- Packed data with a _FillValue and a unit conversion: fill cells must stay nodata -->
+  <Layer type="database">
+    <Name>packed-plus-ten</Name>
+    <Title>Packed data plus 10</Title>
+    <Variable>packed</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata_packed_fillvalue.nc</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="10" units="m s-1"/>
+  </Layer>
+
+  <!-- The same packed data (wind speed in m s-1) converted to Beaufort: fill cells must stay nodata -->
+  <Layer type="database">
+    <Name>packed-beaufort</Name>
+    <Title>Packed wind speed in Beaufort</Title>
+    <Variable>packed</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata_packed_fillvalue.nc</FilePath>
+    <DataPostProc algorithm="beaufort"/>
+  </Layer>
+</Configuration>

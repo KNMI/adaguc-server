@@ -79,8 +79,7 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
     return readData(currentType, _start, _count, _stride);
   }
 
-  double scaleFactor = 1, addOffset = 0, fillValue = 0;
-  bool hasFillValue = false;
+  double scaleFactor = 1, addOffset = 0;
   int scaleType = currentType;
 
   CDF::Attribute *a = getAttr("scale_factor");
@@ -91,11 +90,6 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
 
   try {
     getAttributeThrows("add_offset")->getData(&addOffset, 1);
-  } catch (int e) {
-  }
-  try {
-    getAttributeThrows("_FillValue")->getData(&fillValue, 1);
-    hasFillValue = true;
   } catch (int e) {
   }
 
@@ -122,23 +116,45 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
   // Apply scale and offset
   if (reallyApplyScaleOffset) {
     size_t lsize = getSize();
+    // The variable is cached and can be read again after freeData (for example for another hyperslab, or in another type):
+    // the data is unpacked on every read, the _FillValue attribute only once, see unpackFillValueOnce.
     if (scaleType == CDF_FLOAT) {
       float *scaleData = (float *)data;
       float fscale = float(scaleFactor);
       float foffset = float(addOffset);
       for (size_t j = 0; j < lsize; j++) scaleData[j] = scaleData[j] * fscale + foffset;
-      float newFillValue = fillValue * fscale + foffset;
-      if (hasFillValue) getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &newFillValue, 1);
+      unpackFillValueOnce(CDF_FLOAT, scaleFactor, addOffset);
     }
 
     if (scaleType == CDF_DOUBLE) {
       double *scaleData = (double *)data;
       for (size_t j = 0; j < lsize; j++) scaleData[j] = scaleData[j] * scaleFactor + addOffset;
-      double newFillValue = fillValue * scaleFactor + addOffset;
-      if (hasFillValue) getAttributeThrows("_FillValue")->setData(CDF_DOUBLE, &newFillValue, 1);
+      unpackFillValueOnce(CDF_DOUBLE, scaleFactor, addOffset);
     }
   }
   return 0;
+}
+
+std::optional<double> CDF::Variable::unpackFillValueOnce(CDFType unpackedType, double scaleFactor, double addOffset) {
+  CDF::Attribute *fillValueAttribute = getAttributeNE("_FillValue");
+  if (fillValueAttribute == nullptr) return std::nullopt;
+  if (fillValueIsUnpacked) {
+    double unpackedFillValue;
+    fillValueAttribute->getData(&unpackedFillValue, 1);
+    return unpackedFillValue;
+  }
+  double packedFillValue;
+  fillValueAttribute->getData(&packedFillValue, 1);
+  fillValueIsUnpacked = true;
+  if (unpackedType == CDF_FLOAT) {
+    // In float, as the data: the unpacked fill value must be exactly equal to an unpacked fill cell.
+    float unpackedFillValue = (float)packedFillValue * (float)scaleFactor + (float)addOffset;
+    fillValueAttribute->setData(CDF_FLOAT, &unpackedFillValue, 1);
+    return unpackedFillValue;
+  }
+  double unpackedFillValue = packedFillValue * scaleFactor + addOffset;
+  fillValueAttribute->setData(CDF_DOUBLE, &unpackedFillValue, 1);
+  return unpackedFillValue;
 }
 
 int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
@@ -587,6 +603,7 @@ CDF::Variable *CDF::Variable::clone(CDFType newType, std::string newName) {
   for (auto attribute: attributes) {
     newVariable->addAttribute(new CDF::Attribute(attribute));
   }
+  newVariable->fillValueIsUnpacked = fillValueIsUnpacked; // the attributes were copied, including an unpacked _FillValue
   newVariable->parentCDFObject = parentCDFObject;
   newVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
   newVariable->data = nullptr;
