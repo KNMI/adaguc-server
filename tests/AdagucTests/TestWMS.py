@@ -546,10 +546,15 @@ class TestWMS(unittest.TestCase):
     # Helpers and constants for the GetPointValue JSON tests below.
     #
     # testdata_packed_fillvalue.nc has one packed variable "packed" (int16, scale_factor 0.1, _FillValue -9999) on 3 levels.
-    # On latitude 52.5 two cells are used: one with the fill value on all levels, and one with data.
-    PACKED_Y = "52.5"
-    PACKED_FILL_CELL_X = "3.5"
-    PACKED_DATA_CELL_X = "4.5"  # column 4, row 2: the values 2.4, 12.4 and 22.4 on the 3 levels
+    # Two of its cells, as (lon, lat):
+    FILLVALUE_CELL = ("3.5", "52.5")  # the fill value on all 3 levels
+    DATA_CELL = ("4.5", "52.5")  # column 4, row 2: the values 2.4, 12.4 and 22.4 on the 3 levels
+
+    @staticmethod
+    def xy(cell):
+        """The X and Y parameters of GetPointValue for a (lon, lat) cell; with CRS=EPSG:4326, X is the longitude."""
+        lon, lat = cell
+        return f"&X={lon}&Y={lat}"
 
     @staticmethod
     def get_point_value_json(query, env):
@@ -613,10 +618,10 @@ class TestWMS(unittest.TestCase):
             "packed-beaufort": ["2.000000", "6.000000", "9.000000"],  # 2.4, 12.4 and 22.4 m s-1 in Beaufort
         }
         for layer, expected_values in expected_data_cell_values.items():
-            for x, expected in ((self.PACKED_FILL_CELL_X, ["nodata"] * 3), (self.PACKED_DATA_CELL_X, expected_values)):
-                with self.subTest(layer=layer, x=x):
+            for cell, expected in ((self.FILLVALUE_CELL, ["nodata"] * 3), (self.DATA_CELL, expected_values)):
+                with self.subTest(layer=layer, cell=cell):
                     (result,) = self.get_point_value_json(
-                        f"DATASET=adaguc.tests.getpointvalue_json&QUERY_LAYERS={layer}&X={x}&Y={self.PACKED_Y}&elevation=1/3", env
+                        f"DATASET=adaguc.tests.getpointvalue_json&QUERY_LAYERS={layer}{self.xy(cell)}&elevation=1/3", env
                     )
                     self.assertEqual(self.values_of(result), expected)
 
@@ -631,8 +636,8 @@ class TestWMS(unittest.TestCase):
         """
         AdagucTestTools().cleanTempDir()
         layer = "source=testdata_packed_fillvalue.nc&QUERY_LAYERS=packed"
-        for x, expect_nodata in ((self.PACKED_FILL_CELL_X, True), (self.PACKED_DATA_CELL_X, False)):
-            point = f"&X={x}&Y={self.PACKED_Y}"
+        for cell, expect_nodata in ((self.FILLVALUE_CELL, True), (self.DATA_CELL, False)):
+            point = self.xy(cell)
 
             # Reference: text/plain, one request per level. A text row looks like "    packed 2.400000 m s-1" or "    packed nodata".
             text_values = {}
@@ -649,7 +654,7 @@ class TestWMS(unittest.TestCase):
 
             # JSON gives a value per level: {"1": "2.400000", "2": ...}
             for elevation, levels in (("1/3", ["1", "2", "3"]), ("1,3", ["1", "3"])):
-                with self.subTest(x=x, elevation=elevation):
+                with self.subTest(cell=cell, elevation=elevation):
                     (result,) = self.get_point_value_json(layer + point + f"&elevation={elevation}", self.env)
                     self.assertEqual(result["data"], {level: text_values[level] for level in levels})
 
