@@ -51,6 +51,7 @@ OpenDAP requests return 500 for every non-zero exit code. The OGC API and EDR en
 | `ADAGUC_DATARESTRICTION`  | Controls access restrictions for certain services. Possible values: `ALLOW_WCS`, `ALLOW_GFI`, `ALLOW_METADATA`, `SHOW_QUERYINFO`.<br>Values can be combined with `\|`. `FALSE` means no restrictions. | `FALSE` (`ALLOW_WCS\|ALLOW_GFI\|ALLOW_METADATA`) |
 | `ADAGUC_DATASET_DIR`      | Directory containing dataset configuration XML files. | `/data/adaguc-datasets` |
 | `ADAGUC_DB`               | PostgreSQL connection string used by adaguc. | `host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc` |
+| `ADAGUC_EDR_CONVERSION_PROCESSES` | Number of processes that convert EDR cube results to CoverageJSON, per server. Converting a large cube takes seconds; in separate processes the server goes on answering other requests in the meantime. Each process starts at the first cube request and uses memory for the Python libraries and the cube it converts. | `2` |
 | `ADAGUC_ENABLELOGBUFFER`  | Controls logging behaviour:<br>`FALSE`: unbuffered logging with live output (may slow service).<br>`TRUE`: buffered logging.<br>`DISABLELOGGING`: disables logging completely. | `FALSE` |
 | `ADAGUC_FONT`             | Path to a default TrueType font (TTF) used for rendering text in generated imagery (e.g. `FreeSans.ttf`). | -|
 | `ADAGUC_FORK_ENABLE`      | Enables running adaguc-server in [fork mode](/doc/fork_server.md) when set to `TRUE`. | `FALSE` |

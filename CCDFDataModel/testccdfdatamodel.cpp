@@ -416,8 +416,7 @@ static std::string attributesAsText(std::vector<CDF::Attribute *> &attributes) {
  * Reads the Zarr test stores (written by data/datasets/zarr/create_zarr_test_stores.py) and the NetCDF file with the same
  * data, and expects the same dimensions, variables, attributes and data, for the whole variables and for selections.
  */
-int testZarrReader() {
-  const std::string directory = "../data/datasets/zarr/";
+static int compareZarrStoresWithNetCDF(const std::string &directory) {
   int failed = 0;
   CDFObject netcdf;
   CDFNetCDFReader netcdfReader;
@@ -526,6 +525,19 @@ int testZarrReader() {
     if (failed == failuresBefore) {
       CDBDebug("[OK] Zarr: %s is the same as the NetCDF file", storeName);
     }
+  }
+
+  return failed;
+}
+
+int testZarrReader() {
+  int failed = 0;
+  // The test data is in the data directory of the repository, which the Docker build does not have
+  const std::string directory = "../data/datasets/zarr/";
+  if (access((directory + "zarrtest.nc").c_str(), R_OK) == 0) {
+    failed += compareZarrStoresWithNetCDF(directory);
+  } else {
+    CDBDebug("[SKIPPED] Zarr: comparing the Zarr stores with the NetCDF file, %s is not there", directory.c_str());
   }
 
   // Locations
