@@ -13,6 +13,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 from numpy import ma
 from covjson_pydantic.coverage import Coverage
+from covjson_pydantic.coverage import CoverageCollection
 from covjson_pydantic.domain import Domain
 from covjson_pydantic.domain import DomainType
 from covjson_pydantic.domain import ValuesAxis
@@ -361,3 +362,40 @@ def netcdf_to_covjson(
             coverages.append(Coverage(domain=domain, ranges=ranges, parameters=parameters))
 
     return coverages
+
+
+class CubeParameterError(Exception):
+    """The NetCDF of a parameter could not be read, for example because adaguc-server answered with an error message"""
+
+
+def cube_responses_to_covjson(
+    responses: list[tuple[str, bytes]],
+    metadata: dict[str, Any],
+    translate_names: dict[str, str],
+    translate_dims: dict[str, str],
+) -> bytes | None:
+    """
+    The CoverageJSON, serialized, of the NetCDF that adaguc-server returned for each parameter of a cube request:
+    one Coverage, or a CoverageCollection. None when there is no coverage.
+
+    Runs in a separate process (see routers/edr_cube.py): for a large cube, like millions of values, converting and
+    serializing takes seconds of Python work that holds the GIL, which would hold up all other requests of the server.
+
+    Raises:
+        CubeParameterError: with the parameter name, when its NetCDF cannot be read
+    """
+    coverages: list[Coverage] = []
+    parameters: dict[str, Parameter] = {}
+    for parameter_name, netcdf in responses:
+        try:
+            with netCDF4.Dataset(f"{parameter_name}.nc", memory=netcdf) as dataset:
+                parameter_coverages = netcdf_to_covjson(metadata, dataset, translate_names, translate_dims)
+        except OSError as exc:
+            raise CubeParameterError(parameter_name) from exc
+        for coverage in parameter_coverages or []:
+            coverages.append(coverage)
+            parameters = parameters | coverage.parameters
+    if not coverages:
+        return None
+    result: BaseModel = coverages[0] if len(coverages) == 1 else CoverageCollection(coverages=coverages, parameters=parameters)
+    return result.model_dump_json(exclude_none=True, by_alias=True).encode("utf-8")

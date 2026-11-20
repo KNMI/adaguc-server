@@ -9,17 +9,20 @@ KNMI
 """
 
 from __future__ import annotations
+import asyncio
 import logging
+import os
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 import time
 from typing_extensions import Annotated
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import Query, Request, APIRouter, Response
-from netCDF4 import Dataset
 
 from .utils.edr_exception import exc_failed_call
 
-from .covjsonresponse import CovJSONResponse, create_coveragejson_response
+from .covjsonresponse import CovJSONResponse
 from .utils.edr_utils import (
     get_custom,
     get_dataset_from_collection,
@@ -33,7 +36,7 @@ from .utils.edr_utils import (
 )
 
 
-from .netcdf_to_covjson import netcdf_to_covjson
+from .netcdf_to_covjson import CubeParameterError, cube_responses_to_covjson
 from .utils.native_grid import MAX_POSITIONS, NATIVE_CRS, check_crs, get_native_grid_query
 from .utils.ogcapi_tools import call_adaguc
 
@@ -152,8 +155,7 @@ async def get_coll_inst_cube(
     translate_names = get_translate_names(metadata[collection_name])
     translate_dims = get_translate_dims(metadata[collection_name])
 
-    coveragejsons = []
-    parameters = {}
+    responses: list[tuple[str, bytes]] = []
     datetime_arg = datetime_par
     if datetime_par is None:
         datetime_arg = "*"
@@ -189,23 +191,38 @@ async def get_coll_inst_cube(
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             continue
-        try:
-            with Dataset(f"{parameter_name}.nc", memory=wcs_response) as result_dataset:
-                coveragejson = netcdf_to_covjson(metadata[collection_name], result_dataset, translate_names, translate_dims)
-        except OSError as exc:
-            # adaguc-server can refuse a request (like a grid above its size limit) with an error message instead of NetCDF
-            raise exc_failed_call(f"cube call failed for parameter {parameter_name}") from exc
-        if coveragejson is not None:
-            coveragejsons.extend(coveragejson)
-            for covjson in coveragejson:
-                parameters = parameters | covjson.parameters
+        responses.append((parameter_name, wcs_response))
 
-    if len(coveragejsons) == 0:
+    if len(responses) == 0:
         raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")
-    if len(coveragejsons) == 1:
-        return create_coveragejson_response(coveragejsons[0], response=response)
+    try:
+        body = await convert_in_process(responses, metadata[collection_name], translate_names, translate_dims)
+    except CubeParameterError as exc:
+        # adaguc-server can refuse a request (like a grid above its size limit) with an error message instead of NetCDF
+        raise exc_failed_call(f"cube call failed for parameter {exc}") from exc
+    if body is None:
+        raise exc_failed_call(f"cube call failed for parameters {','.join(parameter_names)} [{status}]")
+    return CovJSONResponse(body, headers=response.headers)
 
-    return create_coveragejson_response(CoverageCollection(coverages=coveragejsons, parameters=parameters), response=response)
+
+# Converting a large cube to CoverageJSON is Python work of seconds that holds the GIL: on the event loop, or on a thread of
+# this process, it would hold up all other requests. It runs in a small pool of processes instead, made at the first cube.
+CONVERSION_PROCESSES = int(os.environ.get("ADAGUC_EDR_CONVERSION_PROCESSES", "2"))
+_conversion_pool: ProcessPoolExecutor | None = None
+
+
+async def convert_in_process(responses: list[tuple[str, bytes]], collection_metadata: dict, translate_names: dict, translate_dims: dict) -> bytes | None:
+    """cube_responses_to_covjson in the conversion pool. A pool of which a process died is made again."""
+    global _conversion_pool  # pylint: disable=global-statement
+    if _conversion_pool is None:
+        _conversion_pool = ProcessPoolExecutor(max_workers=max(1, CONVERSION_PROCESSES))
+    pool = _conversion_pool
+    try:
+        return await asyncio.get_running_loop().run_in_executor(pool, cube_responses_to_covjson, responses, collection_metadata, translate_names, translate_dims)
+    except BrokenProcessPool as exc:
+        if _conversion_pool is pool:
+            _conversion_pool = None
+        raise exc_failed_call("cube conversion failed") from exc
 
 
 def get_cellsize_query(bbox: str, resolution_x: float, resolution_y: float) -> dict:
