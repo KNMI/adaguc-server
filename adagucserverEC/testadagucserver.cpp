@@ -1166,3 +1166,43 @@ TEST(CServerParams, applyStyleSheetBase64) {
                     }),
                     false);
 }
+
+// Reading a packed variable more than once (other hyperslab, after freeData) must not unpack the _FillValue attribute more than once.
+TEST(CDFVariable, readDataUnpacksFillValueOnce) {
+  CDF::Dimension dim("x", 2);
+  CDF::Variable variable("packed", CDF_SHORT, {&dim}, false);
+  variable.setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+  variable.setAttribute("scale_factor", CDF_DOUBLE, 0.1);
+  variable.setAttribute("add_offset", CDF_DOUBLE, 1.0);
+  variable.setAttribute("_FillValue", CDF_SHORT, (short)-9999);
+
+  size_t start[] = {0};
+  size_t count[] = {2};
+  ptrdiff_t stride[] = {1};
+  for (int read = 0; read < 3; read++) {
+    variable.freeData();
+    CHECK(variable.readData(CDF_DOUBLE, start, count, stride, true) == 0);
+    double fillValue = 0;
+    variable.getAttributeNE("_FillValue")->getData(&fillValue, 1);
+    DOUBLES_EQUAL(-9999 * 0.1 + 1.0, fillValue, 1e-9);
+    // Not the data: the memory reader does not initialise it.
+    CHECK(variable.fillValueIsUnpacked);
+  }
+}
+
+// unpackFillValueOnce unpacks the _FillValue once, and does not create one when there is none.
+TEST(CDFVariable, unpackFillValueOnce) {
+  CDF::Dimension dim("x", 2);
+  CDF::Variable withoutFillValue("nofill", CDF_SHORT, {&dim}, false);
+  CHECK(!withoutFillValue.unpackFillValueOnce(CDF_FLOAT, 0.5, 10).has_value());
+  CHECK(withoutFillValue.getAttributeNE("_FillValue") == nullptr);
+
+  CDF::Variable withFillValue("fill", CDF_SHORT, {&dim}, false);
+  withFillValue.setAttribute("_FillValue", CDF_SHORT, (short)-9999);
+  for (int call = 0; call < 2; call++) {
+    std::optional<double> unpackedFillValue = withFillValue.unpackFillValueOnce(CDF_FLOAT, 0.1, 0);
+    CHECK(unpackedFillValue.has_value());
+    DOUBLES_EQUAL((float)-9999 * 0.1f, *unpackedFillValue, 0);
+    CHECK(withFillValue.getAttributeNE("_FillValue")->getType() == CDF_FLOAT);
+  }
+}

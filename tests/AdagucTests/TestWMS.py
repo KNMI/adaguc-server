@@ -9,6 +9,7 @@ import unittest
 import json
 import re
 import datetime
+import netCDF4
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
 from conftest import (
@@ -541,6 +542,121 @@ class TestWMS(unittest.TestCase):
                     expected_values = [f"{float(value):.2f}" for value in json_values]
                 self.assertEqual(row_values, expected_values)
                 self.assertEqual(data, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    # Helpers and constants for the GetPointValue JSON tests below.
+    #
+    # testdata_packed_fillvalue.nc has one packed variable "packed" (int16, scale_factor 0.1, _FillValue -9999) on 3 levels.
+    # Two of its cells, as (lon, lat):
+    FILLVALUE_CELL = ("3.5", "52.5")  # the fill value on all 3 levels
+    DATA_CELL = ("4.5", "52.5")  # column 4, row 2: the values 2.4, 12.4 and 22.4 on the 3 levels
+
+    @staticmethod
+    def xy(cell):
+        """The X and Y parameters of GetPointValue for a (lon, lat) cell; with CRS=EPSG:4326, X is the longitude."""
+        lon, lat = cell
+        return f"&X={lon}&Y={lat}"
+
+    @staticmethod
+    def get_point_value_json(query, env):
+        """Run a GetPointValue request with INFO_FORMAT=application/json and return the parsed result list."""
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            query + "&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.3.0&CRS=EPSG:4326&INFO_FORMAT=application/json", env=env
+        )
+        assert status == 0
+        return json.loads(data)
+
+    @staticmethod
+    def values_of(result):
+        """All values in the "data" of one JSON result. "data" is nested per dimension, e.g. {reference_time: {time: value}}."""
+        values = [result["data"]]
+        while isinstance(values[0], dict):
+            values = [value for nested in values for value in nested.values()]
+        return values
+
+    def test_WMSGetPointValue_two_variables_json(self):
+        """
+        Bug: for a layer with two variables, the results of the first variable were not cleared before the second one. With
+        enough time steps (std::sort is not stable) the second variable then showed values of the first.
+
+        Test: ask the two-variable layer for all 60 time steps, and compare the result of each variable with the same request on
+        a layer that has only that variable (source=, one layer per variable, so nothing to mix up).
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("adaguc.tests.getpointvalue_json.xml")
+        update_db(env)
+        point = "&X=5.15&Y=52.67&time=*"
+
+        results = self.get_point_value_json("DATASET=adaguc.tests.getpointvalue_json&QUERY_LAYERS=xy-wind" + point, env)
+        self.assertEqual([result["variablename"] for result in results], ["x-wind-hagl", "y-wind-hagl"])
+
+        for result in results:
+            variable = result["variablename"]
+            with self.subTest(variable=variable):
+                self.assertEqual(len(self.values_of(result)), 60)
+                (alone,) = self.get_point_value_json(
+                    f"source=wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc&QUERY_LAYERS={variable}" + point, self.env
+                )
+                self.assertEqual(result["data"], alone["data"])
+
+    def test_WMSGetPointValue_packed_fillvalue_post_processing_json(self):
+        """
+        Bug: post-processing that changes the values (a unit conversion, Beaufort) compared the unpacked data with the packed
+        nodata value. A fill cell was therefore converted as if it were data (for example -999.9 + 10 = -989.9), and not
+        reported as nodata.
+
+        Test: two layers on the packed variable, one with ax+b (+10) and one with Beaufort. The fill cell must be nodata on all
+        levels, the data cell must have the converted values.
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("adaguc.tests.getpointvalue_json.xml")
+        update_db(env)
+        source = netCDF4.Dataset(ADAGUC_PATH + "/data/datasets/testdata_packed_fillvalue.nc").variables["packed"][:]
+        self.assertEqual([round(float(value), 6) for value in source[:, 2, 4]], [2.4, 12.4, 22.4])
+
+        expected_data_cell_values = {
+            "packed-plus-ten": ["12.400000", "22.400000", "32.400000"],  # 2.4, 12.4 and 22.4, plus 10
+            "packed-beaufort": ["2.000000", "6.000000", "9.000000"],  # 2.4, 12.4 and 22.4 m s-1 in Beaufort
+        }
+        for layer, expected_values in expected_data_cell_values.items():
+            for cell, expected in ((self.FILLVALUE_CELL, ["nodata"] * 3), (self.DATA_CELL, expected_values)):
+                with self.subTest(layer=layer, cell=cell):
+                    (result,) = self.get_point_value_json(
+                        f"DATASET=adaguc.tests.getpointvalue_json&QUERY_LAYERS={layer}{self.xy(cell)}&elevation=1/3", env
+                    )
+                    self.assertEqual(self.values_of(result), expected)
+
+    def test_WMSGetPointValue_packed_fillvalue_json_matches_text(self):
+        """
+        Bug: the JSON path unpacks the data (scale_factor), but compared it with the packed nodata value, so a fill cell gave
+        the unpacked fill value (-999.9) instead of nodata. Reading the same variable again (non-consecutive levels "1,3"
+        make two reads) also unpacked the _FillValue attribute again.
+
+        Test: text/plain reads the values through another code path, which was correct. Ask text/plain one level at a time as
+        the reference, then check that JSON gives the same, for consecutive (1/3) and non-consecutive (1,3) levels.
+        """
+        AdagucTestTools().cleanTempDir()
+        layer = "source=testdata_packed_fillvalue.nc&QUERY_LAYERS=packed"
+        for cell, expect_nodata in ((self.FILLVALUE_CELL, True), (self.DATA_CELL, False)):
+            point = self.xy(cell)
+
+            # Reference: text/plain, one request per level. A text row looks like "    packed 2.400000 m s-1" or "    packed nodata".
+            text_values = {}
+            for level in ("1", "2", "3"):
+                status, data, _ = AdagucTestTools().runADAGUCServer(
+                    layer
+                    + point
+                    + f"&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.3.0&CRS=EPSG:4326&INFO_FORMAT=text/plain&elevation={level}",
+                    env=self.env,
+                )
+                self.assertEqual(status, 0)
+                (text_values[level],) = re.findall(r"^\s+-?\s*packed (nodata|[-\d.]+)", data.decode(), re.MULTILINE)
+            self.assertEqual(all(value == "nodata" for value in text_values.values()), expect_nodata)
+
+            # JSON gives a value per level: {"1": "2.400000", "2": ...}
+            for elevation, levels in (("1/3", ["1", "2", "3"]), ("1,3", ["1", "3"])):
+                with self.subTest(cell=cell, elevation=elevation):
+                    (result,) = self.get_point_value_json(layer + point + f"&elevation={elevation}", self.env)
+                    self.assertEqual(result["data"], {level: text_values[level] for level in levels})
 
     def test_WMSGetMap_Report_nounits(self):
         AdagucTestTools().cleanTempDir()

@@ -525,10 +525,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     double dfNoData = NAN;
     if (dataSource->getDataObject(j)->hasNodataValue == 1) {
       dfNoData = dataSource->getDataObject(j)->dfNodataValue;
-      // Only the header is read here. CDataReader applies scale_factor and add_offset to the nodata value when it reads the data,
+      // Only the header is read here. CDataReader unpacks the nodata value (scale_factor and add_offset) when it reads the data,
       // and that value becomes the _FillValue, so fill with it too: otherwise cells without data do not match the _FillValue.
       CDF::Attribute *scaleFactor = sourceVar->getAttributeNE("scale_factor");
-      if (scaleFactor != nullptr && sourceVar->getAttributeNE("ADAGUC_SCALE_OFFSET_APPLIED") == nullptr) {
+      if (scaleFactor != nullptr && !sourceVar->fillValueIsUnpacked) {
         double dfScaleFactor = 1, dfAddOffset = 0;
         scaleFactor->getData(&dfScaleFactor, 1);
         CDF::Attribute *addOffset = sourceVar->getAttributeNE("add_offset");
