@@ -56,8 +56,8 @@ async def get_trajectory(
         raise EdrException(400, "Trajectory currently supports crs=EPSG:4326")
     if f not in ("CoverageJSON", "application/prs.coverage+json"):
         raise EdrException(400, "Trajectory currently supports CoverageJSON")
-    if "resolution_x" in request.query_params or "resolution_y" in request.query_params:
-        raise EdrException(400, "Trajectory samples native grid cells; resolution_x and resolution_y are not supported")
+    if any(name in request.query_params for name in ("resolution_x", "resolution_y", "resolution-x", "resolution-y")):
+        raise EdrException(400, "Trajectory samples native grid cells; resolution_x, resolution_y, resolution-x and resolution-y are not supported")
 
     metadata = await get_metadata(collection_name, response=response)
     dataset = get_dataset_from_collection(metadata, collection_name)

@@ -24,8 +24,12 @@
  ******************************************************************************/
 
 #include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <netcdf.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
+#include "CCDFNetCDFIO.h"
 #include "CTime.h"
 #include "CCDFDataModel.h"
 #include "utils.h"
@@ -278,6 +282,90 @@ int testHDF5Reader() {
   return 0;
 }
 
+int testNetCDFChunkCacheFromEnvironment() {
+  CDBDebug("testNetCDFChunkCacheFromEnvironment");
+  const size_t megabyte = 1024 * 1024;
+  bool failed = false;
+
+  // Not set, empty or not a whole number above 0: the default of the NetCDF library is kept
+  unsetenv("ADAGUC_CHUNK_CACHE_MB");
+  if (CDFNetCDFReader::getChunkCacheSizeFromEnvironment() != 0) {
+    CDBError("[FAILED] chunk cache size without ADAGUC_CHUNK_CACHE_MB should be 0");
+    failed = true;
+  }
+  for (const char *invalid: {"", "0", "-128", "+128", "12.5", "128MB", " 128", "abc", "99999999999999999999999999"}) {
+    setenv("ADAGUC_CHUNK_CACHE_MB", invalid, 1);
+    if (CDFNetCDFReader::getChunkCacheSizeFromEnvironment() != 0) {
+      CDBError("[FAILED] chunk cache size for ADAGUC_CHUNK_CACHE_MB=[%s] should be 0", invalid);
+      failed = true;
+    }
+  }
+  setenv("ADAGUC_CHUNK_CACHE_MB", "128", 1);
+  if (CDFNetCDFReader::getChunkCacheSizeFromEnvironment() != 128 * megabyte) {
+    CDBError("[FAILED] chunk cache size for ADAGUC_CHUNK_CACHE_MB=128 should be 128 megabytes");
+    failed = true;
+  }
+
+  size_t defaultSize = 0, defaultNumElements = 0, size = 0, numElements = 0;
+  float defaultPreemption = 0, preemption = 0;
+  nc_get_chunk_cache(&defaultSize, &defaultNumElements, &defaultPreemption);
+
+  // The test writes its own NetCDF file, so it needs no files from outside this directory: the Docker build runs these
+  // tests without the data directory.
+  std::string testFile = "/tmp/adaguc_testccdfdatamodel_chunkcache_XXXXXX";
+  int fileDescriptor = mkstemp(testFile.data());
+  if (fileDescriptor == -1) {
+    CDBError("[FAILED] unable to make a temporary file %s", testFile.c_str());
+    return 1;
+  }
+  close(fileDescriptor);
+  int ncId = 0, dimId = 0, varId = 0;
+  if (nc_create(testFile.c_str(), NC_NETCDF4 | NC_CLOBBER, &ncId) != NC_NOERR || nc_def_dim(ncId, "x", 2, &dimId) != NC_NOERR || nc_def_var(ncId, "data", NC_FLOAT, 1, &dimId, &varId) != NC_NOERR ||
+      nc_close(ncId) != NC_NOERR) {
+    CDBError("[FAILED] unable to write NetCDF file %s", testFile.c_str());
+    remove(testFile.c_str());
+    return 1;
+  }
+
+  auto openTestFile = [&testFile]() {
+    CDFNetCDFReader cdfReader;
+    CDFObject cdfObject;
+    cdfObject.attachCDFReader(&cdfReader);
+    int status = cdfReader.open(testFile.c_str());
+    if (status != 0) {
+      CDBError("[FAILED] unable to open file %s", testFile.c_str());
+    }
+    return status;
+  };
+
+  // An invalid value changes nothing when a file is opened
+  setenv("ADAGUC_CHUNK_CACHE_MB", "abc", 1);
+  if (openTestFile() != 0) failed = true;
+  nc_get_chunk_cache(&size, &numElements, &preemption);
+  if (size != defaultSize || numElements != defaultNumElements || preemption != defaultPreemption) {
+    CDBError("[FAILED] an invalid ADAGUC_CHUNK_CACHE_MB changed the chunk cache");
+    failed = true;
+  }
+
+  // A valid value sets the size when a file is opened, and keeps the number of slots and the preemption
+  setenv("ADAGUC_CHUNK_CACHE_MB", "96", 1);
+  if (openTestFile() != 0) failed = true;
+  nc_get_chunk_cache(&size, &numElements, &preemption);
+  if (size != 96 * megabyte || numElements != defaultNumElements || preemption != defaultPreemption) {
+    CDBError("[FAILED] chunk cache is %zu bytes with %zu slots, expected %zu bytes with %zu slots", size, numElements, 96 * megabyte, defaultNumElements);
+    failed = true;
+  }
+
+  remove(testFile.c_str());
+  unsetenv("ADAGUC_CHUNK_CACHE_MB");
+  nc_set_chunk_cache(defaultSize, defaultNumElements, defaultPreemption);
+  CTime::cleanInstances();
+  if (!failed) {
+    CDBDebug("[OK] testNetCDFChunkCacheFromEnvironment");
+  }
+  return failed;
+}
+
 int main(int, char **) {
   bool failed = false;
   CDBDebug("Testing CTime");
@@ -296,6 +384,8 @@ int main(int, char **) {
   if (testCTimeEpochTimeConversion() != 0) failed = true;
 
   if (testHDF5Reader() != 0) failed = true;
+
+  if (testNetCDFChunkCacheFromEnvironment() != 0) failed = true;
 
   CTime::cleanInstances();
   delete testVarA;

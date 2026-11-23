@@ -13,6 +13,8 @@ from .edr_exception import EdrException, exc_failed_call
 
 # Value of the crs parameter that requests the native grid
 NATIVE_CRS = "native"
+# The largest EDR resolution-x/-y: adaguc-server refuses a WCS width or height above 20000
+MAX_POSITIONS = 20000
 
 # Values of the crs parameter that request the default EPSG:4326 output
 DEFAULT_CRS_VALUES = (
@@ -112,8 +114,9 @@ def get_native_crs_wkt(gridspec: dict | None) -> str | None:
 
 def get_collection_native_crs_wkt(gridspecs: list[dict | None]) -> str | None:
     """
-    WKT of the native grid that all parameters of a collection share, or None. crs=native is only advertised when every
-    parameter has the same native grid: a cube request for several parameters must work, and one WKT must describe them all.
+    WKT of the native projection that all parameters of a collection share, or None. crs=native is only advertised when
+    every parameter has the same projection (their grids can differ in extent or cell size): a cube request for several
+    parameters must work, and one WKT must describe them all.
     """
     projstrings = {(gridspec or {}).get("projstring") for gridspec in gridspecs}
     if len(gridspecs) == 0 or len(projstrings) != 1:
@@ -150,12 +153,66 @@ def get_collection_native_crs_details(gridspecs: list[dict | None]) -> dict | No
     return details
 
 
-def get_native_grid_query(gridspec: dict | None, bbox: str) -> dict:
+def subsample_axis(start: int, end: int, positions: int | None) -> tuple[float, int, int]:
+    """
+    Every n-th cell of the cells start..end-1 of a grid axis, for at most `positions` values (EDR resolution-x/-y: the
+    number of positions; None, 0 or at least the number of cells: every cell).
+
+    Returns (first_edge, count, step): the output grid starts at cell edge `first_edge` (in cells, can be half a cell
+    before `start`), has `count` cells of `step` native cells each, and the centre of every output cell is the centre of
+    a native cell: the middle one of each block of `step` cells (the lower middle one for an even step). So nearest
+    neighbour resampling takes exactly those native cells, without interpolation.
+    """
+    cells = end - start
+    if not positions or positions >= cells:
+        return float(start), cells, 1
+    return subsample_axis_by_step(start, end, math.ceil(cells / positions))
+
+
+def subsample_axis_by_step(start: int, end: int, step: int) -> tuple[float, int, int]:
+    """
+    Every `step`-th cell of the cells start..end-1 of a grid axis, as described in subsample_axis. A step larger than
+    the number of cells gives one cell: the middle one.
+    """
+    step = max(1, min(step, end - start))
+    middle = (step - 1) // 2  # offset of the cell taken from each block
+    count = (end - start - 1 - middle) // step + 1  # the last taken cell must be inside the range
+    # Output cell k has its centre at first_edge + (k + 0.5) * step, which is the centre start + k * step + middle + 0.5
+    first_edge = start + middle + 0.5 - 0.5 * step
+    return first_edge, count, step
+
+
+def cellsize_to_step(cellsize: float | None, native_cellsize: float) -> int | None:
+    """
+    The number of native cells per output cell for a requested cell size in native units (resolution_x/resolution_y
+    with crs=native): rounded to a whole number of native cells, at least 1. None when no cell size is requested.
+    """
+    if cellsize is None:
+        return None
+    return max(1, math.floor(cellsize / native_cellsize + 0.5))
+
+
+def get_native_grid_query(
+    gridspec: dict | None,
+    bbox: str,
+    positions_x: int | None = None,
+    positions_y: int | None = None,
+    cellsize_x: float | None = None,
+    cellsize_y: float | None = None,
+) -> dict:
     """
     WCS parameters for the cells of the native grid that intersect a bbox. As the EDR standard says, the bbox values are
     in the coordinate system of the crs parameter, so here in native grid coordinates (like rotated degrees). The bbox is
     snapped to whole cells and width and height are the number of cells, so every value is a cell of the native grid,
     without resampling.
+
+    positions_x, positions_y: EDR resolution-x and resolution-y, the number of positions in x and y. When smaller than
+    the number of cells, every n-th cell is returned (see subsample_axis): still cells of the native grid, without
+    interpolation, but fewer of them. 0 or None: every cell.
+
+    cellsize_x, cellsize_y: resolution_x and resolution_y, the cell size in native units (like metres or rotated
+    degrees), rounded to a whole number of native cells (see cellsize_to_step). Every n-th cell is returned, as above.
+    An axis takes either a number of positions or a cell size.
     """
     if get_native_crs_wkt(gridspec) is None:
         raise exc_failed_call("crs=native is not available for this collection")
@@ -169,27 +226,35 @@ def get_native_grid_query(gridspec: dict | None, bbox: str) -> dict:
     # The gridspec bbox can be ordered top to bottom
     grid_left = min(gridspec["bbox"][0], gridspec["bbox"][2])
     grid_bottom = min(gridspec["bbox"][1], gridspec["bbox"][3])
-    cellsize_x = abs(gridspec["cellsizex"])
-    cellsize_y = abs(gridspec["cellsizey"])
+    native_cellsize_x = abs(gridspec["cellsizex"])
+    native_cellsize_y = abs(gridspec["cellsizey"])
     # A bbox edge on a cell edge must not take in the neighbouring cell because of rounding, like 293.0000001 cells.
     # 1e-4 cell also covers coordinates stored as float32, which are off by about 1e-6 cell.
     eps = 1e-4
-    col_start = max(0, math.floor((x_min - grid_left) / cellsize_x + eps))
-    col_end = min(gridspec["width"], math.ceil((x_max - grid_left) / cellsize_x - eps))
-    row_start = max(0, math.floor((y_min - grid_bottom) / cellsize_y + eps))
-    row_end = min(gridspec["height"], math.ceil((y_max - grid_bottom) / cellsize_y - eps))
+    col_start = max(0, math.floor((x_min - grid_left) / native_cellsize_x + eps))
+    col_end = min(gridspec["width"], math.ceil((x_max - grid_left) / native_cellsize_x - eps))
+    row_start = max(0, math.floor((y_min - grid_bottom) / native_cellsize_y + eps))
+    row_end = min(gridspec["height"], math.ceil((y_max - grid_bottom) / native_cellsize_y - eps))
     if col_end <= col_start or row_end <= row_start:
         raise exc_failed_call(f"bbox {bbox} is outside the native grid")
 
+    if cellsize_x is not None:
+        first_col, width, step_x = subsample_axis_by_step(col_start, col_end, cellsize_to_step(cellsize_x, native_cellsize_x))
+    else:
+        first_col, width, step_x = subsample_axis(col_start, col_end, positions_x)
+    if cellsize_y is not None:
+        first_row, height, step_y = subsample_axis_by_step(row_start, row_end, cellsize_to_step(cellsize_y, native_cellsize_y))
+    else:
+        first_row, height, step_y = subsample_axis(row_start, row_end, positions_y)
     native_bbox = (
-        grid_left + col_start * cellsize_x,
-        grid_bottom + row_start * cellsize_y,
-        grid_left + col_end * cellsize_x,
-        grid_bottom + row_end * cellsize_y,
+        grid_left + first_col * native_cellsize_x,
+        grid_bottom + first_row * native_cellsize_y,
+        grid_left + (first_col + width * step_x) * native_cellsize_x,
+        grid_bottom + (first_row + height * step_y) * native_cellsize_y,
     )
     return {
         "crs": gridspec["projstring"],
         "bbox": ",".join(repr(value) for value in native_bbox),
-        "width": col_end - col_start,
-        "height": row_end - row_start,
+        "width": width,
+        "height": height,
     }

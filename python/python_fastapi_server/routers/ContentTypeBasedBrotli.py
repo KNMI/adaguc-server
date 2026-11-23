@@ -1,5 +1,7 @@
 """This middleware extends the BrotliMiddleware but makes it content type aware"""
 
+import asyncio
+
 from brotli_asgi import BrotliMiddleware, BrotliResponder
 from starlette.datastructures import Headers
 from starlette.middleware.gzip import GZipResponder
@@ -8,6 +10,10 @@ from .is_br_encoding_needed import requires_encoding
 
 # The default level 9 is about ten times slower than 6 for a few percent smaller responses, e.g. 2.6s instead of 0.23s for 13MB of CoverageJSON
 GZIP_COMPRESSLEVEL = 6
+
+# Responses from this size are compressed on a thread: compressing tens of megabytes, like a large EDR cube, takes long enough to
+# hold up all other requests when it is done on the event loop
+COMPRESS_ON_THREAD_BYTES = 1024 * 1024
 
 
 def get_accepted_encodings(headers: Headers) -> set[str]:
@@ -33,6 +39,15 @@ class MyBrotliResponder(BrotliResponder):
     """This middleware extends the BrotliResponder but makes it content type aware"""
 
     requires_br_encoding = False
+    _precompressed: tuple[bytes, bytes] | None = None  # A body and its compressed bytes, see my_send_with_brotli
+
+    def _process(self, body):
+        """The compressed body: from my_send_with_brotli when it compressed this body on a thread, otherwise compressed here"""
+        if self._precompressed is not None and self._precompressed[0] is body:
+            compressed = self._precompressed[1]
+            self._precompressed = None
+            return compressed
+        return super()._process(body)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:  # noqa
         self.send = send
@@ -44,6 +59,20 @@ class MyBrotliResponder(BrotliResponder):
         if self.requires_br_encoding is False and "headers" in message:
             self.requires_br_encoding = requires_encoding(Headers(raw=message["headers"]))
         if self.requires_br_encoding:
+            body = message.get("body", b"")
+            # BrotliResponder compresses a body when the response is streamed (it has started, or more body follows), or when
+            # the body is at least minimum_size. Only then is it compressed here: the compressor keeps what it is given, so a
+            # body that is sent as it is must not go through it.
+            will_be_compressed = (
+                message["type"] == "http.response.body"
+                and not self.content_encoding_set
+                and (self.started or message.get("more_body", False) or len(body) >= self.minimum_size)
+            )
+            if will_be_compressed and len(body) >= COMPRESS_ON_THREAD_BYTES:
+                # BrotliResponder compresses on the event loop, which holds up all other requests for a large body, like an EDR
+                # cube of tens of megabytes. Brotli releases the GIL, so on a thread the event loop goes on; _process then
+                # gives BrotliResponder this result.
+                self._precompressed = (body, await asyncio.to_thread(BrotliResponder._process, self, body))
             # Use BrotliResponder to encode with brotli
             await super().send_with_brotli(message)
         else:

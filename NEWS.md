@@ -1,7 +1,15 @@
 **Version X.Y.Z**
 
+- Fixed requests without reprojection for fewer pixels than the data has cells (EDR cube with `crs=native`, WCS, zoomed out WMS): every pixel gets the source cell at its centre, also for data stored with x or y descending.
+- Fixed a large EDR cube holding up other requests: CoverageJSON conversion runs in separate processes (`ADAGUC_EDR_CONVERSION_PROCESSES`, default 2), Brotli compression on a thread.
 - Fixed packed data (`scale_factor`/`add_offset`) without a `_FillValue`: when one request read the same file more than once, for example WCS GetCoverage over several time steps or levels, or a GetMap animation, the value equal to `add_offset` was nodata from the second read on.
 - Fixed GetFeatureInfo with `INFO_FORMAT=text/html` or `text/plain` over more than one time step (for example `time=start/end`) on gridded data: only the first time step had a value, the other steps showed `nodata`. JSON output was not affected.
+- EDR cube accepts `resolution-x`/`resolution-y` (number of positions); with `crs=native` they give every n-th native cell. `resolution_x`/`resolution_y` now also work with `crs=native`. See [Configure_EDR_service.md](doc/tutorials/Configure_EDR_service.md).
+- EDR returns HTTP 400 instead of 422 for an invalid query parameter.
+- New optional `ADAGUC_CHUNK_CACHE_MB`: the NetCDF chunk cache size, for compressed files whose chunks span many levels or time steps. See [EnvironmentVariablesAndExitCodes.md](doc/EnvironmentVariablesAndExitCodes.md).
+- Faster WCS, EDR cube and WMS requests that need no reprojection.
+- Smaller EDR cube responses: values are written with the digits the data has (`3.8`, not `3.8000000000000003`); 64 bit values are rounded to 12 significant digits.
+- WCS GetCoverage with `WIDTH=1&HEIGHT=1` returns one cell.
 
 **Version 10.0.0 - 2026-11-16**
 

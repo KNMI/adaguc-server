@@ -172,6 +172,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, std::stri
   srvParam->WCS_GoNative = false;
   srvParam->geoParams.width = atoi(tileSettings.attr.tilewidthpx.c_str());
   srvParam->geoParams.height = atoi(tileSettings.attr.tileheightpx.c_str());
+  // The tile size is given, so the writer must not calculate its own
+  srvParam->dFound_WidthOrHeight = true;
 
   int index = 0;
   std::string suffix = CT::printf("_tmp%d", getpid());
