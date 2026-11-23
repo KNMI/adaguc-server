@@ -140,16 +140,17 @@ async def rest_get_edr_landing_page(request: Request):
     keywords = cfg.get("keywords")
 
     base_url = get_base_url(request)
-    landingpage_url = base_url + "edr"
-    conformance_url = base_url + "edr/conformance"
-    collections_url = base_url + "edr/collections"
+    landingpage_url = f"{base_url}edr/"
+    conformance_url = f"{base_url}edr/conformance"
+    collections_url = f"{base_url}edr/collections"
+    openapi_url = f"{base_url}api"
 
     links: list[Link] = []
     link = Link(href=landingpage_url, rel="self", type="application/json")
     links.append(link)
     links.append(Link(href=conformance_url, rel="conformance", type="application/json"))
     links.append(Link(href=collections_url, rel="data", type="application/json"))
-    openapi_url = f"{landingpage_url}/api"
+
     links.append(
         Link(
             href=openapi_url,
