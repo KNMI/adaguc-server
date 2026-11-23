@@ -11,6 +11,7 @@ KNMI
 from __future__ import annotations
 import asyncio
 import logging
+import multiprocessing
 import os
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
@@ -207,15 +208,44 @@ async def get_coll_inst_cube(
 
 # Converting a large cube to CoverageJSON is Python work of seconds that holds the GIL: on the event loop, or on a thread of
 # this process, it would hold up all other requests. It runs in a small pool of processes instead, made at the first cube.
-CONVERSION_PROCESSES = int(os.environ.get("ADAGUC_EDR_CONVERSION_PROCESSES", "2"))
+DEFAULT_CONVERSION_PROCESSES = 2
 _conversion_pool: ProcessPoolExecutor | None = None
+
+
+def get_conversion_processes() -> int:
+    """
+    The number of processes of the conversion pool: ADAGUC_EDR_CONVERSION_PROCESSES, a whole number of at least 1.
+    Not set, or another value: 2. A wrong value must not stop the server from starting, so it is read here and not when
+    this module is imported.
+    """
+    value = os.environ.get("ADAGUC_EDR_CONVERSION_PROCESSES", "").strip()
+    if value == "":
+        return DEFAULT_CONVERSION_PROCESSES
+    try:
+        processes = int(value)
+    except ValueError:
+        processes = 0
+    if processes < 1:
+        logger.warning("Ignoring ADAGUC_EDR_CONVERSION_PROCESSES=%s, expected a whole number of at least 1. Using %d.", value, DEFAULT_CONVERSION_PROCESSES)
+        return DEFAULT_CONVERSION_PROCESSES
+    return processes
+
+
+def make_conversion_pool() -> ProcessPoolExecutor:
+    """
+    The pool of processes for convert_in_process. Its processes are started by a fork server, also on Python versions
+    where forking this process is the default: this process has threads by then (like the one that compresses large
+    responses), and a fork of a process with threads can start with a lock that another thread held, and wait for it
+    forever.
+    """
+    return ProcessPoolExecutor(max_workers=get_conversion_processes(), mp_context=multiprocessing.get_context("forkserver"))
 
 
 async def convert_in_process(responses: list[tuple[str, bytes]], collection_metadata: dict, translate_names: dict, translate_dims: dict) -> bytes | None:
     """cube_responses_to_covjson in the conversion pool. A pool of which a process died is made again."""
     global _conversion_pool  # pylint: disable=global-statement
     if _conversion_pool is None:
-        _conversion_pool = ProcessPoolExecutor(max_workers=max(1, CONVERSION_PROCESSES))
+        _conversion_pool = make_conversion_pool()
     pool = _conversion_pool
     try:
         return await asyncio.get_running_loop().run_in_executor(pool, cube_responses_to_covjson, responses, collection_metadata, translate_names, translate_dims)

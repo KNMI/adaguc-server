@@ -44,6 +44,13 @@ def test_values_have_the_precision_of_the_data() -> None:
     # Too small or large for a power of ten: as they are
     assert rounded[4] == 5e-324 and rounded[5] == 1.7e308
 
+    # Whole numbers are exact, also with more than 12 digits, like a count, an identifier or a time in milliseconds
+    whole = np.array([1234567890123.0, 1716854400123.0, -98765432109876.0, 999999999999999.0, 38.0, -0.0, np.nan, np.inf])
+    assert np.array_equal(round_to_data_precision(whole), whole, equal_nan=True)
+    assert json.dumps(coverage_values(whole[:3])) == "[1234567890123.0, 1716854400123.0, -98765432109876.0]"
+    # Other 64 bit values with more than 12 significant digits lose the digits after the 12th
+    assert round_to_data_precision(np.array([0.1234567890123456, 1234567890123.5])).tolist() == [0.123456789012, 1234567890120.0]
+
     # Integers stay integers
     assert coverage_values(np.array([1, 2, 3], dtype=np.int32)) == [1, 2, 3]
 

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+    The rotated pole grid of test_rotated_pole_RACMO.nc, stored with x and y ascending or descending, for EDR cube
+    requests with crs=native. Every cell holds row * 100 + column of its cell in the grid, see
+    data/datasets/native_grid_orientation/create_native_grid_orientation.py
+  -->
+  <Layer type="database">
+    <Group collection="xasc_yasc"/>
+    <Name>cell_xasc_yasc</Name>
+    <Title>Cell number, x and y stored x ascending, y ascending</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/native_grid_orientation/xasc_yasc.nc</FilePath>
+    <Variable>cell</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="xasc_ydesc"/>
+    <Name>cell_xasc_ydesc</Name>
+    <Title>Cell number, x and y stored x ascending, y descending</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/native_grid_orientation/xasc_ydesc.nc</FilePath>
+    <Variable>cell</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="xdesc_yasc"/>
+    <Name>cell_xdesc_yasc</Name>
+    <Title>Cell number, x and y stored x descending, y ascending</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/native_grid_orientation/xdesc_yasc.nc</FilePath>
+    <Variable>cell</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="xdesc_ydesc"/>
+    <Name>cell_xdesc_ydesc</Name>
+    <Title>Cell number, x and y stored x descending, y descending</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/native_grid_orientation/xdesc_ydesc.nc</FilePath>
+    <Variable>cell</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601">time</Dimension>
+  </Layer>
+</Configuration>

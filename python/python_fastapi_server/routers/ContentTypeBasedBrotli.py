@@ -60,7 +60,15 @@ class MyBrotliResponder(BrotliResponder):
             self.requires_br_encoding = requires_encoding(Headers(raw=message["headers"]))
         if self.requires_br_encoding:
             body = message.get("body", b"")
-            if message["type"] == "http.response.body" and not self.content_encoding_set and len(body) >= COMPRESS_ON_THREAD_BYTES:
+            # BrotliResponder compresses a body when the response is streamed (it has started, or more body follows), or when
+            # the body is at least minimum_size. Only then is it compressed here: the compressor keeps what it is given, so a
+            # body that is sent as it is must not go through it.
+            will_be_compressed = (
+                message["type"] == "http.response.body"
+                and not self.content_encoding_set
+                and (self.started or message.get("more_body", False) or len(body) >= self.minimum_size)
+            )
+            if will_be_compressed and len(body) >= COMPRESS_ON_THREAD_BYTES:
                 # BrotliResponder compresses on the event loop, which holds up all other requests for a large body, like an EDR
                 # cube of tens of megabytes. Brotli releases the GIL, so on a thread the event loop goes on; _process then
                 # gives BrotliResponder this result.

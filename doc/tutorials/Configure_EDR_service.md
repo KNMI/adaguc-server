@@ -121,8 +121,11 @@ An invalid value, like a negative number or a number above 20000, returns HTTP 4
 The values in a cube response are written with the digits the data has, not with the noise of how they are stored:
 `3.8` for packed data that unpacks to `3.8000000000000003` (rounded to 12 significant digits), and `-21.036102` for
 the 32 bit float `-21.036102294921875` (the fewest of 7, 8 or 9 significant digits that give the same 32 bit float).
-The coordinates of the axes are written the same way. This loses nothing, and makes the response about a fifth
-smaller after compression.
+The coordinates of the axes are written the same way. This makes the response about a fifth smaller after
+compression. A 32 bit float loses nothing: the value written gives the same 32 bit float. A 64 bit value changes by at
+most 5 parts in 10^13, far less than the precision of packed data or of a measurement, so a 64 bit value that really has
+more than 12 significant digits loses the digits after the 12th. Whole numbers below 10^15, like counts, identifiers or
+times in milliseconds, are written as they are.
 
 ## Cube queries on the native grid (`crs=native`)
 

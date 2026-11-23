@@ -132,6 +132,17 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, bool dra
     bool skip;              // Nothing to draw
   };
   auto destRange = [](double round, double scale, int margin, int destSize, int destGridSize) {
+    if (std::fabs(scale) < 1) {
+      // A source cell smaller than a destination pixel is drawn only in the pixel whose centre it contains: every pixel then
+      // gets the source cell at its centre (nearest neighbour), whatever the order in which the cells are stored and drawn.
+      // Rounding the edges of the cell instead puts all cells near an edge of a pixel in it, and the last one drawn wins:
+      // for an axis stored in descending order that is another cell than the one at the centre of the pixel.
+      double low = std::min(round, round + scale), high = std::max(round, round + scale);
+      int pixel = (int)std::ceil(low - 0.5);
+      DestRange range = {.start = pixel, .end = pixel + 1, .drawStart = std::max(pixel, 0), .drawEnd = std::min(pixel + 1, destGridSize), .skip = !(pixel + 0.5 < high)};
+      if (range.drawStart >= range.drawEnd) range.skip = true;
+      return range;
+    }
     int s1 = std::floor(round + 0.5);
     int s2 = std::floor(round + scale + 0.5);
     bool skip = (s1 < -margin && s2 < -margin) || (s1 >= destSize + margin && s2 >= destSize + margin);

@@ -37,7 +37,7 @@ LARGE_BODY = json.dumps({"values": [n / 7 for n in range(200_000)]}).encode()
 SMALL_BODY = json.dumps({"values": [1, 2, 3] * 300}).encode()
 
 
-def make_client() -> TestClient:
+def make_client(minimum_size: int = 400) -> TestClient:
     async def single(request):
         return Response(LARGE_BODY if request.query_params.get("size") == "large" else SMALL_BODY, media_type="application/json")
 
@@ -51,7 +51,7 @@ def make_client() -> TestClient:
         return StreamingResponse(parts(), media_type="application/json")
 
     app = Starlette(routes=[Route("/single", single), Route("/streaming", streaming)])
-    app.add_middleware(ContentTypeBasedBrotli, gzip_fallback=True)
+    app.add_middleware(ContentTypeBasedBrotli, gzip_fallback=True, minimum_size=minimum_size)
     return TestClient(app)
 
 
@@ -67,3 +67,17 @@ def test_brotli_responses(path: str, expected: bytes):
         assert response.headers["content-encoding"] == "br"
         body = b"".join(response.iter_raw())
     assert brotli.decompress(body) == expected
+
+
+def test_brotli_minimum_size_above_thread_size():
+    """A response in one body that is smaller than minimum_size is sent as it is, also when it is large enough to compress on a thread"""
+    assert COMPRESS_ON_THREAD_BYTES < len(LARGE_BODY) < 10_000_000
+    client = make_client(minimum_size=10_000_000)
+    with client.stream("GET", "/single?size=large", headers={"Accept-Encoding": "br"}) as response:
+        assert response.status_code == 200
+        assert "content-encoding" not in response.headers
+        assert b"".join(response.iter_raw()) == LARGE_BODY
+    # A streamed response is compressed whatever its size, and stays a valid stream
+    with client.stream("GET", "/streaming", headers={"Accept-Encoding": "br"}) as response:
+        assert response.headers["content-encoding"] == "br"
+        assert brotli.decompress(b"".join(response.iter_raw())) == LARGE_BODY

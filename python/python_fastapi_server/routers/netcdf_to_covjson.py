@@ -166,9 +166,12 @@ def netcdf_coverage_referencing(dataset: netCDF4.Dataset) -> list[ReferenceSyste
 
 
 # Significant digits that values are written with. A 32 bit float is told apart from every other by 9 digits, and
-# often by 7 or 8. 12 digits are far more than data has.
+# often by 7 or 8. 12 digits are far more than packed data and measurements have; a 64 bit float can hold 15 to 17.
 FLOAT32_SIGNIFICANT_DIGITS = (7, 8, 9)
 FLOAT64_SIGNIFICANT_DIGITS = 12
+# Whole numbers below this are written as they are: they are exact, and a count, an identifier or a time in milliseconds
+# can have more than 12 digits. Noise of a calculation cannot turn one whole number of this size into another.
+FLOAT64_EXACT_WHOLE_NUMBERS_BELOW = 1e15
 
 
 def round_significant(values: np.ndarray, digits: int) -> np.ndarray:
@@ -193,7 +196,12 @@ def round_to_data_precision(values: np.ndarray) -> np.ndarray:
     - A 32 bit float written as it is gives 17 digits, like -21.036102294921875 or 3.799999952316284. It is rounded to
       the fewest of 7, 8 or 9 significant digits that still give the same 32 bit float: -21.036102 and 3.8.
     - Packed data unpacked to 64 bit, like 38 * 0.1 = 3.8000000000000003: rounded to 12 significant digits (3.8).
-    This makes the JSON about half as long, and about a fifth smaller after compression, without losing anything.
+    This makes the JSON about half as long, and about a fifth smaller after compression.
+
+    For 32 bit floats nothing is lost: the value written gives the same 32 bit float. A 64 bit float changes by at most
+    5 parts in 10^13, far less than the precision of packed data or of a measurement; a 64 bit value that really has more
+    than 12 significant digits loses the digits after the 12th. Whole numbers below 10^15 are not rounded, see
+    FLOAT64_EXACT_WHOLE_NUMBERS_BELOW.
 
     Integers are returned as they are. Values that are not finite are left for the caller.
     """
@@ -201,7 +209,11 @@ def round_to_data_precision(values: np.ndarray) -> np.ndarray:
         return values
     doubles = values.astype(np.float64)
     if values.dtype.itemsize > 4:
-        return round_significant(doubles, FLOAT64_SIGNIFICANT_DIGITS)
+        rounded = round_significant(doubles, FLOAT64_SIGNIFICANT_DIGITS)
+        with np.errstate(invalid="ignore"):
+            whole = (np.abs(doubles) < FLOAT64_EXACT_WHOLE_NUMBERS_BELOW) & (doubles == np.floor(doubles))
+        rounded[whole] = doubles[whole]
+        return rounded
     # 32 bit floats: more digits for the values that fewer digits do not give back
     rounded = doubles.copy()
     todo = np.arange(values.size)
