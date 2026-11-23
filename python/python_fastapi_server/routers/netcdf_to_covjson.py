@@ -174,18 +174,39 @@ FLOAT64_SIGNIFICANT_DIGITS = 12
 FLOAT64_EXACT_WHOLE_NUMBERS_BELOW = 1e15
 
 
+# The powers of ten that a 64 bit float holds exactly: 10^0 to 10^22. They are written out and not calculated: 10^23 is
+# not exact, and numpy calculates it as 1e23 or as 1.0000000000000001e23, depending on the processor it runs on.
+EXACT_POWERS_OF_TEN = np.array([float(f"1e{power}") for power in range(23)])
+
+
 def round_significant(values: np.ndarray, digits: int) -> np.ndarray:
     """
-    64 bit floats rounded to `digits` significant digits: scaled by a power of ten to a whole number and back. Dividing
-    two numbers that are exact gives the 64 bit float nearest to the decimal, which is written as that decimal.
-    Zero, infinite and NaN are returned as they are, like values too small or large for the power of ten.
+    64 bit floats rounded to `digits` significant digits: scaled by a power of ten to a whole number and back. The whole
+    number and the power of ten are exact, and dividing or multiplying two exact numbers gives the 64 bit float nearest
+    to the decimal, which is written as that decimal. This needs a power of ten that is exact, so of at most 10^22
+    (see EXACT_POWERS_OF_TEN); the few values that need a larger one, like 1e-12 for 12 digits, are rounded as text.
+    Zero, infinite and NaN are returned as they are.
     """
     rounded = values.copy()
     with np.errstate(divide="ignore", invalid="ignore"):
         power = digits - 1 - np.floor(np.log10(np.abs(values)))
-    usable = np.isfinite(power) & (np.abs(power) < 290)
-    scale = np.power(10.0, power[usable])
-    rounded[usable] = np.round(values[usable] * scale) / scale
+    finite = np.isfinite(power)
+    largest = len(EXACT_POWERS_OF_TEN) - 1
+
+    # Up to a whole number and back: 3.8000000000000003 * 10^11 = 380000000000, / 10^11 = 3.8
+    multiply = finite & (power >= 0) & (power <= largest)
+    scale = EXACT_POWERS_OF_TEN[power[multiply].astype(np.intp)]
+    rounded[multiply] = np.round(values[multiply] * scale) / scale
+
+    # Values with more than `digits` digits before the decimal point, down to a whole number and back
+    divide = finite & (power < 0) & (power >= -largest)
+    scale = EXACT_POWERS_OF_TEN[(-power[divide]).astype(np.intp)]
+    rounded[divide] = np.round(values[divide] / scale) * scale
+
+    # Too small or too large for an exact power of ten
+    other = finite & (np.abs(power) > largest)
+    if np.any(other):
+        rounded[other] = [float(f"{value:.{digits - 1}e}") for value in values[other].tolist()]
     return rounded
 
 
@@ -199,7 +220,7 @@ def round_to_data_precision(values: np.ndarray) -> np.ndarray:
     This makes the JSON about half as long, and about a fifth smaller after compression.
 
     For 32 bit floats nothing is lost: the value written gives the same 32 bit float. A 64 bit float changes by at most
-    5 parts in 10^13, far less than the precision of packed data or of a measurement; a 64 bit value that really has more
+    5 parts in 10^12, far less than the precision of packed data or of a measurement; a 64 bit value that really has more
     than 12 significant digits loses the digits after the 12th. Whole numbers below 10^15 are not rounded, see
     FLOAT64_EXACT_WHOLE_NUMBERS_BELOW.
 

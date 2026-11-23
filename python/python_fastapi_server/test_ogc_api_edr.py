@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -12,8 +13,10 @@ from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
 from main import app
-from routers.edr_cube import get_conversion_processes, make_conversion_pool
+from routers import edr_cube
+from routers.edr_cube import convert_in_process, get_conversion_processes, make_conversion_pool
 from routers.netcdf_to_covjson import get_epsg_axis_order
+from routers.utils.edr_exception import EdrException
 from routers.utils.native_grid import (
     cellsize_to_step,
     get_collection_native_crs_details,
@@ -1477,6 +1480,25 @@ def test_cube_conversion_pool_uses_a_fork_server():
     try:
         assert pool._mp_context.get_start_method() == "forkserver"  # pylint: disable=protected-access
         assert pool.submit(int, "7").result(timeout=60) == 7
+    finally:
+        pool.shutdown()
+
+
+def test_cube_conversion_process_that_died_gives_500(monkeypatch):
+    """
+    A conversion process that died, for example killed for using too much memory, gives a 500 and not a 400: the request
+    was valid. The pool is made again for the next request.
+    """
+    pool = make_conversion_pool()
+    try:
+        assert pool.submit(int, "7").result(timeout=60) == 7
+        for process in list(pool._processes.values()):  # pylint: disable=protected-access
+            process.kill()
+        monkeypatch.setattr(edr_cube, "_conversion_pool", pool)
+        with pytest.raises(EdrException) as error:
+            asyncio.run(convert_in_process([], {}, {}, {}))
+        assert error.value.status_code == 500
+        assert edr_cube._conversion_pool is None  # pylint: disable=protected-access
     finally:
         pool.shutdown()
 

@@ -119,6 +119,38 @@ def write_cell_number_grid(path: str, x_ascending: bool, y_ascending: bool):
         cell[0] = cells
 
 
+def assert_pixels_have_the_cell_at_their_centre(netcdf: bytes, width: int, height: int):
+    """
+    Checks a WCS GetCoverage result of a grid written by write_cell_number_grid: every pixel has a value, and it is the
+    value of the source cell that contains the centre of the pixel. A centre exactly on the edge of two cells can have
+    the value of either.
+    """
+    with Dataset("filename.nc", memory=netcdf) as dataset:
+        variable = dataset.variables["cell"]
+        values = np.ma.masked_invalid(np.squeeze(variable[:]))
+        x = np.array(dataset.variables[variable.dimensions[-1]][:])
+        y = np.array(dataset.variables[variable.dimensions[-2]][:])
+    assert values.shape == (height, width)
+    empty = np.ma.getmaskarray(values)
+    empty_columns, empty_rows = np.nonzero(empty.all(axis=0))[0].tolist(), np.nonzero(empty.all(axis=1))[0].tolist()
+    assert not empty.any(), f"{empty.sum()} of {empty.size} pixels have no value: all of columns {empty_columns} and rows {empty_rows}"
+
+    def cells_at(coordinate: float) -> set[int]:
+        """The cell that contains a coordinate, or both cells when it is on the edge between them"""
+        position = coordinate / CELL_NUMBER_GRID_CELLSIZE
+        return {int(np.floor(position - 1e-6)), int(np.floor(position + 1e-6))}
+
+    other_cell = []
+    for j, y_value in enumerate(y):
+        for i, x_value in enumerate(x):
+            row, column = divmod(int(values[j, i]), 1000)
+            if row not in cells_at(y_value) or column not in cells_at(x_value):
+                other_cell.append(f"({x_value:g}, {y_value:g}) has the value of row {row}, column {column}")
+    assert (
+        not other_cell
+    ), f"{len(other_cell)} of {values.size} pixels have the value of another cell than the one at their centre: {other_cell[:5]}"
+
+
 class TestWCS:
     """
     Run test for WCS Server system of adaguc-server
@@ -922,27 +954,32 @@ class TestWCS:
             env=self.env,
         )
         assert status == 0
-        with Dataset("filename.nc", memory=data) as dataset:
-            variable = dataset.variables["cell"]
-            values = np.ma.masked_invalid(np.squeeze(variable[:]))
-            x = np.array(dataset.variables[variable.dimensions[-1]][:])
-            y = np.array(dataset.variables[variable.dimensions[-2]][:])
-        assert values.shape == (size, size)
-        empty = np.ma.getmaskarray(values)
-        empty_columns, empty_rows = np.nonzero(empty.all(axis=0))[0].tolist(), np.nonzero(empty.all(axis=1))[0].tolist()
-        assert not empty.any(), f"{empty.sum()} of {empty.size} pixels have no value: all of columns {empty_columns} and rows {empty_rows}"
+        assert_pixels_have_the_cell_at_their_centre(data, size, size)
 
-        def cells_at(coordinate: float) -> set[int]:
-            """The cell that contains a coordinate, or both cells when it is on the edge between them"""
-            position = coordinate / CELL_NUMBER_GRID_CELLSIZE
-            return {int(np.floor(position - 1e-6)), int(np.floor(position + 1e-6))}
-
-        other_cell = []
-        for j, y_value in enumerate(y):
-            for i, x_value in enumerate(x):
-                row, column = divmod(int(values[j, i]), 1000)
-                if row not in cells_at(y_value) or column not in cells_at(x_value):
-                    other_cell.append(f"({x_value:g}, {y_value:g}) has the value of row {row}, column {column}")
-        assert (
-            not other_cell
-        ), f"{len(other_cell)} of {values.size} pixels have the value of another cell than the one at their centre: {other_cell[:5]}"
+    @pytest.mark.parametrize("orientation", ["xasc_yasc", "xasc_ydesc", "xdesc_yasc", "xdesc_ydesc"])
+    @pytest.mark.parametrize("pixels_per_cell", [1, 2, 3])
+    @pytest.mark.parametrize(
+        "first_cell, shift, cells", [(10, 0, 30), (13, 0.5, 30), (1, 0.25, 17), (3, 0.25, 17), (7, 0.75, 17), (20, 0.75, 31)]
+    )
+    def test_WCSGetCoverageNetCDF4_as_many_pixels_as_cells_or_more(self, orientation, pixels_per_cell, first_cell, shift, cells):
+        """
+        A request without reprojection for as many pixels as the data has cells, or a whole number of pixels per cell,
+        gives every pixel a value: the value of the source cell at its centre. The bbox starts `shift` cells after the
+        lower edge of cell `first_cell` and covers `cells` cells. With these shifts the edges of cells are exactly on
+        centres of pixels (a shift of half a cell with 1 or 3 pixels per cell, of a quarter with 2). Before, a row or
+        column of such pixels could get no cell at all, because the upper edge of a cell and the lower edge of the next
+        were calculated in different ways and could differ by a rounding error.
+        """
+        AdagucTestTools().cleanTempDir()
+        filename = f"test_WCSGetCoverageNetCDF4_as_many_pixels_as_cells_or_more_{orientation}.nc"
+        write_cell_number_grid(self.testresultspath + filename, "xasc" in orientation, "yasc" in orientation)
+        start = (first_cell + shift) * CELL_NUMBER_GRID_CELLSIZE
+        end = start + cells * CELL_NUMBER_GRID_CELLSIZE
+        size = cells * pixels_per_cell
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            f"source=TestWCS/{filename}&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=cell&CRS=EPSG%3A4326&FORMAT=NetCDF4"
+            f"&BBOX={start!r},{start!r},{end!r},{end!r}&WIDTH={size}&HEIGHT={size}",
+            env=self.env,
+        )
+        assert status == 0
+        assert_pixels_have_the_cell_at_their_centre(data, size, size)

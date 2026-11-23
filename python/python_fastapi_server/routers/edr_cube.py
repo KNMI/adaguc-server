@@ -21,7 +21,7 @@ from typing_extensions import Annotated
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import Query, Request, APIRouter, Response
 
-from .utils.edr_exception import exc_failed_call
+from .utils.edr_exception import EdrException, exc_failed_call
 
 from .covjsonresponse import CovJSONResponse
 from .utils.edr_utils import (
@@ -242,7 +242,10 @@ def make_conversion_pool() -> ProcessPoolExecutor:
 
 
 async def convert_in_process(responses: list[tuple[str, bytes]], collection_metadata: dict, translate_names: dict, translate_dims: dict) -> bytes | None:
-    """cube_responses_to_covjson in the conversion pool. A pool of which a process died is made again."""
+    """
+    cube_responses_to_covjson in the conversion pool. A pool of which a process died (for example killed for using too
+    much memory) is made again; the requests that were waiting for it get a 500, not a 400: they were valid.
+    """
     global _conversion_pool  # pylint: disable=global-statement
     if _conversion_pool is None:
         _conversion_pool = make_conversion_pool()
@@ -252,7 +255,7 @@ async def convert_in_process(responses: list[tuple[str, bytes]], collection_meta
     except BrokenProcessPool as exc:
         if _conversion_pool is pool:
             _conversion_pool = None
-        raise exc_failed_call("cube conversion failed") from exc
+        raise EdrException(code=500, description="cube conversion failed") from exc
 
 
 def get_cellsize_query(bbox: str, resolution_x: float, resolution_y: float) -> dict:

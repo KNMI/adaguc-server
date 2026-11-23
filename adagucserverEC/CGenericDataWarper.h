@@ -137,8 +137,11 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       if (range.drawStart >= range.drawEnd) range.skip = true;
       return range;
     }
+    // The upper edge is nextRound, the same number as the lower edge of the next cell, so the pixels of the two cells join.
+    // Calculated here as round + scale it can differ by a rounding error and round to another pixel, which leaves a row
+    // or column of pixels between the two cells that neither draws.
     int s1 = std::floor(round + 0.5);
-    int s2 = std::floor(round + scale + 0.5);
+    int s2 = std::floor(nextRound + 0.5);
     bool skip = (s1 < -margin && s2 < -margin) || (s1 >= destSize + margin && s2 >= destSize + margin);
     if (s1 > s2) {
       std::swap(s1, s2);
