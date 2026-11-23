@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -12,7 +13,10 @@ from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
 from main import app
+from routers import edr_cube
+from routers.edr_cube import convert_in_process, get_conversion_processes, make_conversion_pool
 from routers.netcdf_to_covjson import get_epsg_axis_order
+from routers.utils.edr_exception import EdrException
 from routers.utils.native_grid import (
     cellsize_to_step,
     get_collection_native_crs_details,
@@ -47,6 +51,7 @@ def setup_test_data():
         "adaguc.tests.multi_reftime_temporal_extent.xml",
         "adaguc.tests.arcus_uwcw_manymodelruns.xml",
         "adaguc.tests.rotatedpole_edr.xml",
+        "adaguc.tests.native_grid_orientation.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -93,6 +98,10 @@ def test_collections(client: TestClient):
         "adaguc.tests.arcus_uwcw_manymodelruns.hagl",
         "adaguc.tests.members.mycollection",
         "adaguc.tests.multi_reftime_temporal_extent.gl",
+        "adaguc.tests.native_grid_orientation.xasc_yasc",
+        "adaguc.tests.native_grid_orientation.xasc_ydesc",
+        "adaguc.tests.native_grid_orientation.xdesc_yasc",
+        "adaguc.tests.native_grid_orientation.xdesc_ydesc",
         "adaguc.tests.rotatedpole_edr.rotatedpole",
         "adaguc_ewclocalclimateinfo_test",
         "adaguc_tests_solarterminator",
@@ -1452,6 +1461,48 @@ def test_native_crs_is_only_for_cube_queries(client: TestClient):
     assert client.get(rotated + "/position", params=position | {"crs": "CRS84"}).json() == client.get(rotated + "/position", params=position).json()
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(None, 2), ("", 2), ("4", 4), ("1", 1), (" 3 ", 3), ("0", 2), ("-1", 2), ("two", 2), ("1.5", 2)],
+)
+def test_cube_conversion_processes(monkeypatch, value, expected):
+    """ADAGUC_EDR_CONVERSION_PROCESSES is a whole number of at least 1; anything else gives the default instead of an error"""
+    if value is None:
+        monkeypatch.delenv("ADAGUC_EDR_CONVERSION_PROCESSES", raising=False)
+    else:
+        monkeypatch.setenv("ADAGUC_EDR_CONVERSION_PROCESSES", value)
+    assert get_conversion_processes() == expected
+
+
+def test_cube_conversion_pool_uses_a_fork_server():
+    """The conversion processes are not forked from the server process, which has threads, on any Python version"""
+    pool = make_conversion_pool()
+    try:
+        assert pool._mp_context.get_start_method() == "forkserver"  # pylint: disable=protected-access
+        assert pool.submit(int, "7").result(timeout=60) == 7
+    finally:
+        pool.shutdown()
+
+
+def test_cube_conversion_process_that_died_gives_500(monkeypatch):
+    """
+    A conversion process that died, for example killed for using too much memory, gives a 500 and not a 400: the request
+    was valid. The pool is made again for the next request.
+    """
+    pool = make_conversion_pool()
+    try:
+        assert pool.submit(int, "7").result(timeout=60) == 7
+        for process in list(pool._processes.values()):  # pylint: disable=protected-access
+            process.kill()
+        monkeypatch.setattr(edr_cube, "_conversion_pool", pool)
+        with pytest.raises(EdrException) as error:
+            asyncio.run(convert_in_process([], {}, {}, {}))
+        assert error.value.status_code == 500
+        assert edr_cube._conversion_pool is None  # pylint: disable=protected-access
+    finally:
+        pool.shutdown()
+
+
 def test_cube_native_grid_cellsize():
     """resolution_x/resolution_y with crs=native: a cell size in native units, rounded to a whole number of native cells"""
     assert cellsize_to_step(None, 0.11) is None
@@ -1559,6 +1610,46 @@ def test_cube_native_grid_resolution(client: TestClient, positions, step):
     expected = source.variables["pr_adjust"][0][returned_rows][:, returned_columns].astype(float).filled(np.nan).flatten()
     values = np.array([np.nan if value is None else value for value in coverage["ranges"]["pr_adjust"]["values"]], dtype=float)
     assert np.allclose(values, expected, equal_nan=True)
+
+
+@pytest.mark.parametrize("orientation", ["xasc_yasc", "xasc_ydesc", "xdesc_yasc", "xdesc_ydesc"])
+@pytest.mark.parametrize(
+    "query",
+    [
+        "resolution-x=13&resolution-y=14",  # every 2nd cell
+        "resolution-x=9&resolution-y=10",  # every 3rd cell
+        "resolution-x=7&resolution-y=7",  # every 4th cell
+        "resolution_x=0.33&resolution_y=0.33",  # every 3rd cell, as a cell size
+        "resolution-x=1&resolution-y=1",  # one cell
+    ],
+)
+def test_cube_native_grid_resolution_orientation(client: TestClient, orientation, query):
+    """
+    With crs=native and every n-th cell, every value is the value of the native cell at its coordinates, whatever the
+    order in which x and y are stored. Every cell of these files holds row * 100 + column of its cell in the grid (row 0
+    is the most southern, column 0 the most western), see data/datasets/native_grid_orientation.
+    """
+    url = f"/edr/collections/adaguc.tests.native_grid_orientation.{orientation}"
+    collection = client.get(url).json()
+    native = next(d for d in collection["data_queries"]["cube"]["link"]["variables"]["crs_details"] if d["crs"] == "native")
+    resp = client.get(url + f"/cube?parameter-name=cell_{orientation}&crs=native&bbox=" + ",".join(repr(float(v)) for v in native["bbox"]) + "&" + query)
+    assert resp.status_code == 200, resp.text
+    coverage = resp.json()
+    with netCDF4.Dataset(os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "native_grid_orientation", f"{orientation}.nc")) as source:
+        grid_x, grid_y = np.sort(source.variables["x"][:]), np.sort(source.variables["y"][:])
+    x, y = coverage["domain"]["axes"]["x"]["values"], coverage["domain"]["axes"]["y"]["values"]
+    ranges = coverage["ranges"][f"cell_{orientation}"]
+    assert ranges["axisNames"][-2:] == ["y", "x"]
+    values = np.array(ranges["values"], dtype=float).reshape(len(y), len(x))
+    wrong = []
+    for j, y_value in enumerate(y):
+        for i, x_value in enumerate(x):
+            row, column = int(np.argmin(np.abs(grid_y - y_value))), int(np.argmin(np.abs(grid_x - x_value)))
+            # The coordinates are those of a native cell, and the value is the value of that cell
+            assert abs(grid_y[row] - y_value) < 1e-6 and abs(grid_x[column] - x_value) < 1e-6
+            if values[j, i] != row * 100 + column:
+                wrong.append(f"({x_value}, {y_value}) is cell {row * 100 + column}, value {values[j, i]:.0f}")
+    assert not wrong, f"{len(wrong)} of {values.size} values are of another cell: {wrong[:5]}"
 
 
 @pytest.mark.parametrize("positions", ["0", "500"])
