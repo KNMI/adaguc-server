@@ -18,6 +18,7 @@
 #include "CTString.h"
 #include "fork_server.h"
 #include "zarr/ZarrStore.h"
+#include "zarr/ZarrMetadataCache.h"
 
 /*
 See also: doc/fork_server.md
@@ -393,6 +394,8 @@ int mother_run_as_fork_service(int (*run_adaguc_once)(int, char **, char **), in
 
   // Parsed once here, the children get the CA certificates for HTTPS (Zarr on S3) as they are
   Zarr::loadCACertificates();
+  // Old entries of the Zarr metadata cache, or all of them when the cache is off
+  Zarr::cleanMetadataCache();
 
   CDBDebug("Entering fork server loop");
   while (1) {

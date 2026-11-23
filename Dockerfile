@@ -36,6 +36,7 @@ RUN apt-get -q -y update \
     libgeotiff-dev \
     libzstd-dev \
     libblosc-dev \
+    libdeflate-dev \
     libssl-dev \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -97,6 +98,7 @@ RUN apt-get -q -y update \
     libudunits2-0 \
     libzstd1 \
     libblosc1 \
+    libdeflate0 \
     time \
     supervisor \
     pgbouncer \

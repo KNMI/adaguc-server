@@ -76,7 +76,7 @@ class runAdaguc:
         adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv("ADAGUC_TRACE_TIMINGS", "FALSE")
         adagucenv["ADAGUC_STYLESHEET_ENABLE"] = os.getenv("ADAGUC_STYLESHEET_ENABLE", "FALSE")
         # Optional settings of the NetCDF and Zarr readers; without them adagucserver uses its defaults
-        for name in ("ADAGUC_CHUNK_CACHE_MB", "ADAGUC_ZARR_MAX_CONNECTIONS", "ADAGUC_ZARR_THREADS"):
+        for name in ("ADAGUC_CHUNK_CACHE_MB", "ADAGUC_ZARR_MAX_CONNECTIONS", "ADAGUC_ZARR_THREADS", "ADAGUC_ZARR_METADATA_CACHE_SECONDS"):
             if os.getenv(name):
                 adagucenv[name] = os.getenv(name)
         ld_library_path = os.getenv("LD_LIBRARY_PATH")

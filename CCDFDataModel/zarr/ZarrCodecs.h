@@ -44,7 +44,8 @@ namespace Zarr {
 
   /**
    * Decodes a chunk as it is stored to the bytes of the array: decompresses it, then undoes the filters, the last one first.
-   * The vlen-utf8 filter is left to the caller.
+   * The vlen-utf8 filter is left to the caller. zlib and gzip are inflated with libdeflate when adaguc-server was built with
+   * it and the size of the chunk is known, which is about 2.5 times faster than zlib; otherwise with zlib.
    * Thread safe.
    * @param data The stored chunk, replaced by the decoded chunk
    * @param expectedSize The size of the decoded chunk in bytes, or 0 when not known in advance

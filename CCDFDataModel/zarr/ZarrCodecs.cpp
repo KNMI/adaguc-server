@@ -29,6 +29,10 @@
 #include <cstdint>
 #include <cstring>
 #include <zlib.h>
+#ifdef ADAGUC_HAVE_LIBDEFLATE
+#include <libdeflate.h>
+#include <memory>
+#endif
 #ifdef ADAGUC_HAVE_ZSTD
 #include <zstd.h>
 #endif
@@ -71,8 +75,31 @@ namespace Zarr {
     return "";
   }
 
+#ifdef ADAGUC_HAVE_LIBDEFLATE
+  /*
+   * Inflates zlib or gzip data with libdeflate, which is about 2.5 times faster than zlib but has to know the size of the
+   * output beforehand: for a chunk that is the size the array gives. Returns false when it cannot do it, for example when
+   * the data is larger than expected; zlib then inflates it and tells what is wrong.
+   */
+  static bool inflateWithLibdeflate(const std::string &input, bool gzip, size_t expectedSize, std::string &output) {
+    if (expectedSize == 0) return false;
+    thread_local std::unique_ptr<libdeflate_decompressor, void (*)(libdeflate_decompressor *)> decompressor(libdeflate_alloc_decompressor(), libdeflate_free_decompressor);
+    if (decompressor == nullptr) return false;
+    output.resize(expectedSize);
+    size_t actualSize = 0;
+    const libdeflate_result result = gzip ? libdeflate_gzip_decompress(decompressor.get(), input.data(), input.size(), output.data(), output.size(), &actualSize)
+                                          : libdeflate_zlib_decompress(decompressor.get(), input.data(), input.size(), output.data(), output.size(), &actualSize);
+    if (result != LIBDEFLATE_SUCCESS) return false;
+    output.resize(actualSize);
+    return true;
+  }
+#endif
+
   /* Inflates zlib (windowBits 15) or gzip (windowBits 15 + 16) data */
   static std::string inflateData(const std::string &input, int windowBits, size_t expectedSize, std::string &output) {
+#ifdef ADAGUC_HAVE_LIBDEFLATE
+    if (inflateWithLibdeflate(input, windowBits > 15, expectedSize, output)) return "";
+#endif
     z_stream stream;
     memset(&stream, 0, sizeof(stream));
     if (inflateInit2(&stream, windowBits) != Z_OK) return "unable to initialize zlib";

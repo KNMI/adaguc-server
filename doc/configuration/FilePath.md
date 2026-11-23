@@ -117,6 +117,11 @@ as the URL the NetCDF library would use to open it:
 -   Reading data fetches only the chunks of the requested part, in parallel (see `ADAGUC_ZARR_MAX_CONNECTIONS`), and
     decodes them on several threads (see `ADAGUC_ZARR_THREADS`). A chunk that does not exist holds the fill value.
     Decoded chunks are kept for the next reads of the request (see `ADAGUC_CHUNK_CACHE_MB`).
+-   Opening a store over HTTP(S) or S3 takes two rounds of requests, for the consolidated metadata and for the coordinate
+    variables, and that for every request to adaguc-server. With `ADAGUC_ZARR_METADATA_CACHE_SECONDS` both are kept on
+    disk for that many seconds, and the next requests for the same store open it without any request to the store. This is
+    off by default: a store that is replaced under the same URL is read with its old metadata for at most that long. Only
+    stores with consolidated metadata are kept.
 -   Supported: numeric and boolean data types in either byte order, fixed length (`S`, `U`) and variable length
     (`vlen-utf8`) strings, C and F order, the compressors zlib, gzip, zstd and blosc, and the shuffle filter. Zarr v3 is not
     supported yet.

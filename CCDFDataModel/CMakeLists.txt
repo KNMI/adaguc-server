@@ -13,6 +13,8 @@ find_path(ZSTD_INCLUDE_DIR zstd.h)
 find_library(ZSTD_LIBRARY zstd)
 find_path(BLOSC_INCLUDE_DIR blosc.h)
 find_library(BLOSC_LIBRARY blosc)
+find_path(LIBDEFLATE_INCLUDE_DIR libdeflate.h)
+find_library(LIBDEFLATE_LIBRARY deflate)
 
 add_library(CCDFDataModel
     traceTimings/traceTimings.h
@@ -66,6 +68,8 @@ add_library(CCDFDataModel
     zarr/ZarrCodecs.cpp
     zarr/ZarrWorkerPool.h
     zarr/ZarrChunkCache.h
+    zarr/ZarrMetadataCache.h
+    zarr/ZarrMetadataCache.cpp
 )
 
 target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
@@ -87,6 +91,14 @@ if(OPENSSL_FOUND)
   target_link_libraries(CCDFDataModel OpenSSL::SSL OpenSSL::Crypto)
 else()
   MESSAGE(STATUS "Zarr: OpenSSL not found, libcurl loads the CA certificates for every connection")
+endif()
+if(LIBDEFLATE_INCLUDE_DIR AND LIBDEFLATE_LIBRARY)
+  MESSAGE(STATUS "Zarr: zlib and gzip chunks are inflated with libdeflate (${LIBDEFLATE_LIBRARY})")
+  target_compile_definitions(CCDFDataModel PRIVATE ADAGUC_HAVE_LIBDEFLATE)
+  target_include_directories(CCDFDataModel PRIVATE ${LIBDEFLATE_INCLUDE_DIR})
+  target_link_libraries(CCDFDataModel ${LIBDEFLATE_LIBRARY})
+else()
+  MESSAGE(STATUS "Zarr: libdeflate not found, zlib and gzip chunks are inflated with zlib, which is slower")
 endif()
 if(BLOSC_INCLUDE_DIR AND BLOSC_LIBRARY)
   MESSAGE(STATUS "Zarr: blosc compressor enabled (${BLOSC_LIBRARY})")

@@ -60,10 +60,13 @@ namespace Zarr {
  *
  * - Decoded chunks are kept for the next reads of the store, so a chunk that spans more than one read, like a chunk with all
  *   levels when the levels are read one by one, is fetched and decoded once.
+ * - What is fetched when a store over HTTP(S) or S3 is opened, its consolidated metadata and coordinate variables, can be kept
+ *   on disk for the next processes that open the same store, see zarr/ZarrMetadataCache.h. Off by default.
  *
  * Settings: ADAGUC_ZARR_MAX_CONNECTIONS (default 16) limits the requests at the same time, ADAGUC_ZARR_THREADS (default the
  * number of processors, at most 8) the threads that decode chunks, ADAGUC_CHUNK_CACHE_MB (default 16, 0 to disable)
- * the size of the decoded chunks kept per opened store, see CDFReader::getChunkCacheSizeFromEnvironment.
+ * the size of the decoded chunks kept per opened store, see CDFReader::getChunkCacheSizeFromEnvironment,
+ * ADAGUC_ZARR_METADATA_CACHE_SECONDS (default 0, off) how long an opened store is kept on disk in ADAGUC_TMP.
  */
 class CDFZarrReader : public CDFReader {
 public:
@@ -83,8 +86,11 @@ private:
   Zarr::PrefetchedChunks prefetchedChunks;                     // Fetched when the store was opened, see prefetchSmallArrays
   std::unique_ptr<Zarr::ChunkCache> chunkCache;                // Decoded chunks, see ADAGUC_CHUNK_CACHE_MB
 
-  /** Fetches the coordinate variables and single values that are stored in one small chunk, all at the same time */
-  void prefetchSmallArrays();
+  /**
+   * Fetches the coordinate variables and single values that are stored in one small chunk, all at the same time.
+   * @return False when they could not be fetched; they are then fetched when they are read.
+   */
+  bool prefetchSmallArrays();
 };
 
 #endif

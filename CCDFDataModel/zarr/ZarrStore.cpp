@@ -385,6 +385,8 @@ namespace Zarr {
 
     std::string describe(const std::string &key) const override { return key.empty() ? baseUrl : baseUrl + "/" + percentEncode(key, true); }
 
+    bool isRemote() const override { return true; }
+
     int fetch(const std::vector<std::string> &keys, const FetchCallback &callback) override {
       if (keys.empty()) return 0;
       CURLM *multi = getMultiHandle();

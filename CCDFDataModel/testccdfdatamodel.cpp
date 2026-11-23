@@ -30,11 +30,17 @@
 #include <vector>
 #include <cstdlib>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <netcdf.h>
+#include <zlib.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFZarrIO.h"
+#include "zarr/ZarrCodecs.h"
+#include "zarr/ZarrMetadataCache.h"
 #include "CTime.h"
 #include "CCDFDataModel.h"
 #include "utils.h"
@@ -575,6 +581,216 @@ int testZarrReader() {
   return failed > 0;
 }
 
+/* Compresses data as zlib (windowBits 15) or gzip (windowBits 15 + 16) */
+static std::string deflateData(const std::string &data, int windowBits) {
+  z_stream stream;
+  memset(&stream, 0, sizeof(stream));
+  if (deflateInit2(&stream, 1, Z_DEFLATED, windowBits, 8, Z_DEFAULT_STRATEGY) != Z_OK) return "";
+  std::string compressed(deflateBound(&stream, data.size()) + 32, 0);
+  stream.next_in = (Bytef *)data.data();
+  stream.avail_in = (uInt)data.size();
+  stream.next_out = (Bytef *)compressed.data();
+  stream.avail_out = (uInt)compressed.size();
+  const int result = deflate(&stream, Z_FINISH);
+  compressed.resize(stream.total_out);
+  deflateEnd(&stream);
+  return result == Z_STREAM_END ? compressed : "";
+}
+
+/*
+ * zlib and gzip chunks are inflated by libdeflate when the size of the chunk is known, and otherwise, or when libdeflate
+ * cannot do it, by zlib. Both have to give the same data and refuse the same damaged chunks.
+ */
+int testZarrInflate() {
+  int failed = 0;
+  std::string data;
+  for (size_t index = 0; index < 200000; index++) data += (char)((index * index / 7) % 251);
+  const nlohmann::ordered_json noFilters;
+
+  for (const char *id: {"zlib", "gzip"}) {
+    const nlohmann::ordered_json compressor = {{"id", id}};
+    const std::string compressed = deflateData(data, std::string(id) == "gzip" ? 15 + 16 : 15);
+    if (compressed.empty()) {
+      CDBError("[FAILED] Zarr inflate: unable to compress the test data as %s", id);
+      return 1;
+    }
+    // The size of the chunk: not known, right, too small and too large. The chunk is decoded completely in all cases.
+    for (const size_t expectedSize: {(size_t)0, data.size(), data.size() / 3, data.size() * 2}) {
+      std::string chunk = compressed;
+      const std::string error = Zarr::decodeChunk(compressor, noFilters, chunk, expectedSize);
+      if (!error.empty() || chunk != data) {
+        CDBError("[FAILED] Zarr inflate: %s with expected size %lu gave %lu bytes, error [%s]", id, expectedSize, chunk.size(), error.c_str());
+        failed++;
+      }
+    }
+    // A chunk that is cut off, and a chunk with damaged data, are refused
+    for (const bool cutOff: {true, false}) {
+      std::string chunk = compressed;
+      if (cutOff) {
+        chunk.resize(chunk.size() / 2);
+      } else {
+        for (size_t index = chunk.size() / 2; index < chunk.size() / 2 + 16; index++) chunk[index] = (char)~chunk[index];
+      }
+      if (Zarr::decodeChunk(compressor, noFilters, chunk, data.size()).empty() && chunk == data) {
+        CDBError("[FAILED] Zarr inflate: a %s chunk that is %s was decoded as if it was complete", id, cutOff ? "cut off" : "damaged");
+        failed++;
+      }
+    }
+  }
+  if (!failed) {
+    CDBDebug("[OK] testZarrInflate");
+  }
+  return failed > 0;
+}
+
+int testZarrMetadataCache() {
+  int failed = 0;
+  auto check = [&failed](bool condition, const char *what) {
+    if (!condition) {
+      CDBError("[FAILED] Zarr metadata cache: %s", what);
+      failed++;
+    }
+  };
+
+  // ADAGUC_ZARR_METADATA_CACHE_SECONDS: off without it, and with a value that is not a whole number of seconds
+  unsetenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS");
+  check(Zarr::getMetadataCacheSeconds() == 0, "without ADAGUC_ZARR_METADATA_CACHE_SECONDS the cache should be off");
+  for (const char *invalid: {"", "-60", "+60", "1.5", "60s", " 60", "abc", "99999999999999999999999999"}) {
+    setenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS", invalid, 1);
+    check(Zarr::getMetadataCacheSeconds() == 0, "an invalid ADAGUC_ZARR_METADATA_CACHE_SECONDS should turn the cache off");
+  }
+  setenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS", "3600", 1);
+  check(Zarr::getMetadataCacheSeconds() == 3600, "ADAGUC_ZARR_METADATA_CACHE_SECONDS=3600 should be 3600 seconds");
+  unsetenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS");
+
+  std::string directory = "/tmp/adaguc_testccdfdatamodel_zarrcache_XXXXXX";
+  if (mkdtemp(directory.data()) == nullptr) {
+    CDBError("[FAILED] unable to make a temporary directory %s", directory.c_str());
+    return 1;
+  }
+  const std::string location = "https://host:7443/bucket/2026/store.zarr#mode=zarr,s3";
+  Zarr::OpenedStore opened, read;
+  opened.consolidatedMetadata = "{\"metadata\": {\".zgroup\": {\"zarr_format\": 2}}}";
+  opened.prefetched["x/0"] = {true, std::string("\0\1\2binary\n\0", 11)};
+  opened.prefetched["time/0"] = {false, ""};
+
+  // Nothing is read before something is written, and nothing is kept when the cache is off or has no directory
+  check(!Zarr::readMetadataCache(directory, location, 60, read), "an empty cache should not have the store");
+  check(!Zarr::writeMetadataCache(directory, location, 0, opened) && !Zarr::writeMetadataCache("", location, 60, opened), "nothing should be written when the cache is off");
+  check(!Zarr::readMetadataCache(directory, location, 60, read), "the cache should still not have the store");
+
+  check(Zarr::writeMetadataCache(directory, location, 60, opened), "writing an entry should succeed");
+  check(Zarr::readMetadataCache(directory, location, 60, read), "the entry should be read back");
+  check(read.consolidatedMetadata == opened.consolidatedMetadata && read.prefetched == opened.prefetched, "the entry read back should be what was written");
+  check(!Zarr::readMetadataCache(directory, location + "&aws.region=eu-west-1", 60, read), "another location should not be in the cache");
+  check(read.consolidatedMetadata.empty() && read.prefetched.empty(), "a store that is not in the cache should give nothing");
+
+  // The file of the entry, to make it older and to damage it
+  std::string entry;
+  if (DIR *entries = opendir(directory.c_str())) {
+    while (struct dirent *item = readdir(entries)) {
+      const std::string name = item->d_name;
+      if (name.size() > 9 && name.compare(name.size() - 9, 9, ".zarrmeta") == 0) entry = directory + "/" + name;
+    }
+    closedir(entries);
+  }
+  check(!entry.empty(), "the entry should be a file ending in .zarrmeta");
+  if (!entry.empty()) {
+    // An entry of two minutes ago is used for an hour, not for a minute
+    struct timeval times[2];
+    gettimeofday(&times[0], nullptr);
+    times[0].tv_sec -= 120;
+    times[1] = times[0];
+    utimes(entry.c_str(), times);
+    check(Zarr::readMetadataCache(directory, location, 3600, read), "an entry of two minutes old should be used for an hour");
+    check(!Zarr::readMetadataCache(directory, location, 60, read), "an entry of two minutes old should not be used for a minute");
+
+    // Writing again replaces it
+    opened.prefetched["y/0"] = {true, "new"};
+    check(Zarr::writeMetadataCache(directory, location, 60, opened) && Zarr::readMetadataCache(directory, location, 60, read) && read.prefetched.size() == 3,
+          "writing an entry again should replace it");
+
+    // An entry that is cut off is not used
+    struct stat status;
+    if (stat(entry.c_str(), &status) == 0 && truncate(entry.c_str(), status.st_size - 5) == 0) {
+      check(!Zarr::readMetadataCache(directory, location, 60, read), "an entry that is cut off should not be used");
+    }
+    unlink(entry.c_str());
+  }
+  // Writing leaves no temporary files
+  auto listCacheFiles = [](const std::string &cacheDirectory) {
+    std::vector<std::string> names;
+    if (DIR *entries = opendir(cacheDirectory.c_str())) {
+      while (struct dirent *item = readdir(entries)) {
+        const std::string name = item->d_name;
+        if (name != "." && name != "..") names.push_back(name);
+      }
+      closedir(entries);
+    }
+    std::sort(names.begin(), names.end());
+    return names;
+  };
+  check(Zarr::writeMetadataCache(directory, location, 60, opened), "writing an entry should succeed");
+  for (const auto &name: listCacheFiles(directory)) {
+    check(name == "cleaned" || (name.size() > 9 && name.compare(name.size() - 9, 9, ".zarrmeta") == 0), "writing should leave no temporary files");
+  }
+  for (const auto &name: listCacheFiles(directory)) unlink((directory + "/" + name).c_str());
+  rmdir(directory.c_str());
+
+  // A process can stop using the cache, like a scan does
+  check(Zarr::isMetadataCacheUsed(), "the cache should be used by default");
+  Zarr::setMetadataCacheUsed(false);
+  check(!Zarr::isMetadataCacheUsed(), "the cache should not be used after switching it off");
+  Zarr::setMetadataCacheUsed(true);
+
+  // Cleaning, as the fork server does when it starts: old entries and temporary files are removed, others kept; with the
+  // cache off, everything and the directory
+  std::string temporaryDirectory = "/tmp/adaguc_testccdfdatamodel_zarrtmp_XXXXXX";
+  if (mkdtemp(temporaryDirectory.data()) != nullptr) {
+    const char *previousTmp = getenv("ADAGUC_TMP");
+    const std::string savedTmp = previousTmp == nullptr ? "" : previousTmp;
+    setenv("ADAGUC_TMP", temporaryDirectory.c_str(), 1);
+    const std::string cacheDirectory = Zarr::getMetadataCacheDirectory();
+    check(cacheDirectory == temporaryDirectory + "/zarr-metadata-cache", "the cache directory should be zarr-metadata-cache in ADAGUC_TMP");
+    const std::string otherLocation = "https://host:7443/bucket/2026/other.zarr#mode=zarr,s3";
+    // The entry of the other location and a temporary file left by a stopped process are ten minutes old
+    check(Zarr::writeMetadataCache(cacheDirectory, otherLocation, 60, opened), "writing an entry should succeed");
+    const std::string leftover = cacheDirectory + "/0123456789abcdef.zarrmeta.Ab12Cd";
+    if (FILE *file = fopen(leftover.c_str(), "w")) fclose(file);
+    struct timeval old[2];
+    gettimeofday(&old[0], nullptr);
+    old[0].tv_sec -= 600;
+    old[1] = old[0];
+    for (const auto &name: listCacheFiles(cacheDirectory)) {
+      if (name != "cleaned") utimes((cacheDirectory + "/" + name).c_str(), old);
+    }
+    // The entry of the location is new
+    check(Zarr::writeMetadataCache(cacheDirectory, location, 60, opened), "writing an entry should succeed");
+    setenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS", "60", 1);
+    Zarr::cleanMetadataCache();
+    check(Zarr::readMetadataCache(cacheDirectory, location, 60, read), "cleaning should keep an entry that is not too old");
+    check(!Zarr::readMetadataCache(cacheDirectory, otherLocation, 3600, read), "cleaning should remove an entry that is too old");
+    check(access(leftover.c_str(), F_OK) != 0, "cleaning should remove an old temporary file");
+    setenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS", "0", 1);
+    Zarr::cleanMetadataCache();
+    check(access(cacheDirectory.c_str(), F_OK) != 0, "cleaning with the cache off should remove the directory");
+    unsetenv("ADAGUC_ZARR_METADATA_CACHE_SECONDS");
+    if (savedTmp.empty()) {
+      unsetenv("ADAGUC_TMP");
+    } else {
+      setenv("ADAGUC_TMP", savedTmp.c_str(), 1);
+    }
+    for (const auto &name: listCacheFiles(cacheDirectory)) unlink((cacheDirectory + "/" + name).c_str());
+    rmdir(cacheDirectory.c_str());
+    rmdir(temporaryDirectory.c_str());
+  }
+
+  if (!failed) {
+    CDBDebug("[OK] testZarrMetadataCache");
+  }
+  return failed > 0;
+}
+
 int main(int, char **) {
   bool failed = false;
   CDBDebug("Testing CTime");
@@ -597,6 +813,10 @@ int main(int, char **) {
   if (testNetCDFChunkCacheFromEnvironment() != 0) failed = true;
 
   if (testZarrReader() != 0) failed = true;
+
+  if (testZarrInflate() != 0) failed = true;
+
+  if (testZarrMetadataCache() != 0) failed = true;
 
   CTime::cleanInstances();
   delete testVarA;

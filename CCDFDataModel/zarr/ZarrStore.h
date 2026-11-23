@@ -60,6 +60,9 @@ namespace Zarr {
 
     /** The location of a key, for messages */
     virtual std::string describe(const std::string &key) const = 0;
+
+    /** True when every fetch is a request over the network, as for HTTP(S) and S3; false for a directory on disk */
+    virtual bool isRemote() const { return false; }
   };
 
   /**

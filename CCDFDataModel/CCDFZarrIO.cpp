@@ -30,6 +30,7 @@
 #include "traceTimings/traceTimings.h"
 #include "zarr/ZarrChunkCache.h"
 #include "zarr/ZarrCodecs.h"
+#include "zarr/ZarrMetadataCache.h"
 #include "zarr/ZarrStore.h"
 #include "zarr/ZarrWorkerPool.h"
 
@@ -548,18 +549,29 @@ namespace {
     return 0;
   }
 
-  /* Reads the metadata of all groups and arrays, as in consolidated metadata: a map from key (like group/name/.zarray) to JSON */
-  int loadMetadata(Zarr::Store &store, ordered_json &metadata) {
+  /* The metadata in the text of a .zmetadata: a map from key (like group/name/.zarray) to JSON */
+  bool parseConsolidatedMetadata(const std::string &text, ordered_json &metadata, const std::string &location) {
+    ordered_json consolidated;
+    if (!parseJson(text, consolidated, location)) return false;
+    metadata = getOrNull(consolidated, "metadata");
+    if (!metadata.is_object()) {
+      CDBError("[%s] has no metadata object", location.c_str());
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Reads the metadata of all groups and arrays, as in consolidated metadata: a map from key (like group/name/.zarray) to JSON.
+   * @param consolidatedText Gets the text of .zmetadata when the store has consolidated metadata, otherwise it is left empty
+   */
+  int loadMetadata(Zarr::Store &store, ordered_json &metadata, std::string &consolidatedText) {
+    consolidatedText.clear();
     std::vector<std::pair<bool, std::string>> results;
     if (fetchAll(store, {".zmetadata"}, results) != 0) return 1;
     if (results[0].first) {
-      ordered_json consolidated;
-      if (!parseJson(results[0].second, consolidated, store.describe(".zmetadata"))) return 1;
-      metadata = getOrNull(consolidated, "metadata");
-      if (!metadata.is_object()) {
-        CDBError("[%s] has no metadata object", store.describe(".zmetadata").c_str());
-        return 1;
-      }
+      if (!parseConsolidatedMetadata(results[0].second, metadata, store.describe(".zmetadata"))) return 1;
+      consolidatedText.swap(results[0].second);
       return 0;
     }
 
@@ -891,9 +903,20 @@ int CDFZarrReader::open(const char *fileName) {
   store = Zarr::openStore(fileName);
   if (store == nullptr) return 1;
 
+  // A store over HTTP(S) or S3 that was opened shortly before is opened from the cache on disk, without any request
+  const size_t cacheSeconds = store->isRemote() && Zarr::isMetadataCacheUsed() ? Zarr::getMetadataCacheSeconds() : 0;
+  const std::string cacheDirectory = cacheSeconds > 0 ? Zarr::getMetadataCacheDirectory() : "";
+  Zarr::OpenedStore opened;
   ordered_json metadata;
   traceTimingsSpanStart(TraceTimingType::FSZARROPEN);
-  const int status = loadMetadata(*store, metadata);
+  const bool fromCache =
+      Zarr::readMetadataCache(cacheDirectory, fileName, cacheSeconds, opened) && parseConsolidatedMetadata(opened.consolidatedMetadata, metadata, std::string(fileName) + " in the metadata cache");
+  int status = 0;
+  if (!fromCache) {
+    opened = Zarr::OpenedStore();
+    metadata = ordered_json();
+    status = loadMetadata(*store, metadata, opened.consolidatedMetadata);
+  }
   traceTimingsSpanEnd(TraceTimingType::FSZARROPEN);
   if (status != 0) {
     CDBError("Unable to open Zarr store [%s]", fileName);
@@ -965,7 +988,13 @@ int CDFZarrReader::open(const char *fileName) {
     arrays[name] = entry.array;
   }
 
-  prefetchSmallArrays();
+  if (fromCache) {
+    prefetchedChunks = std::move(opened.prefetched);
+  } else if (prefetchSmallArrays() && !opened.consolidatedMetadata.empty()) {
+    // Only stores with consolidated metadata are kept: that is written last, so the store is complete
+    opened.prefetched = prefetchedChunks;
+    Zarr::writeMetadataCache(cacheDirectory, fileName, cacheSeconds, opened);
+  }
 
   if (CCDFZARRIO_DEBUG) {
     CDBDebug("Opened Zarr store [%s]: %lu variables, %lu dimensions, %lu chunks prefetched", fileName, cdfObject->variables.size(), cdfObject->dimensions.size(), prefetchedChunks.size());
@@ -973,7 +1002,7 @@ int CDFZarrReader::open(const char *fileName) {
   return 0;
 }
 
-void CDFZarrReader::prefetchSmallArrays() {
+bool CDFZarrReader::prefetchSmallArrays() {
   // Coordinate variables and single values in one chunk, like x, y, time and projection. Nearly every request reads these, and
   // fetching them together here takes one round trip instead of one per variable.
   static const size_t MAX_PREFETCH_BYTES = 1024 * 1024;
@@ -995,14 +1024,15 @@ void CDFZarrReader::prefetchSmallArrays() {
     if (array.shape.empty()) key += "0";
     keys.push_back(key);
   }
-  if (keys.empty()) return;
+  if (keys.empty()) return true;
   std::vector<std::pair<bool, std::string>> results;
   if (fetchAll(*store, keys, results) != 0) {
     // Not fatal: the variables are fetched again when they are read
     prefetchedChunks.clear();
-    return;
+    return false;
   }
   for (size_t index = 0; index < keys.size(); index++) prefetchedChunks[keys[index]] = std::move(results[index]);
+  return true;
 }
 
 int CDFZarrReader::_readVariableData(CDF::Variable *var, CDFType type) { return _readVariableData(var, type, nullptr, nullptr, nullptr); }

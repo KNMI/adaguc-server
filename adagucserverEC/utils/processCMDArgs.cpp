@@ -15,6 +15,7 @@
 #include "lintDataset.h"
 #include "CProj4ToCF.h"
 #include "CServerParams.h"
+#include "zarr/ZarrMetadataCache.h"
 
 static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
                                        {"config", required_argument, 0, 0},
@@ -86,6 +87,8 @@ int processCMDArgs(int argc, char **argv, char **) {
       }
       if (strncmp(long_options[opt_idx].name, "updatedb", 8) == 0) {
         scanFlags += CDBFILESCANNER_UPDATEDB;
+        // A scan opens every store: that says nothing about which stores will be requested, and it should see them as they are now
+        Zarr::setMetadataCacheUsed(false);
       }
       if (strncmp(long_options[opt_idx].name, "lint", 8) == 0) {
         scanFlags += CDBFILESCANNER_LINTDATASET;
