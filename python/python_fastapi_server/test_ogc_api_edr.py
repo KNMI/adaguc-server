@@ -75,6 +75,8 @@ def test_root(client: TestClient):
     root_info = resp.json()
     assert root_info["description"] == "EDR service for ADAGUC datasets"
     assert len(root_info["links"]) >= 4
+    linkrefs = [link["href"] for link in root_info["links"]]
+    assert linkrefs[0].endswith("/edr/")
 
 
 def test_collections(client: TestClient):
@@ -1278,7 +1280,9 @@ ROTATED_POLE_CUBE_URL = "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpo
 # With crs=native the bbox is in the coordinates of the native grid, here rotated degrees
 NATIVE_BBOX = (-1.0, -1.5, 0.5, 0.2)
 ROTATED_POLE_NATIVE_CUBE_URL = (
-    "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?bbox=" + ",".join(str(v) for v in NATIVE_BBOX) + "&parameter-name=pr_adjust&crs=native"
+    "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?bbox="
+    + ",".join(str(v) for v in NATIVE_BBOX)
+    + "&parameter-name=pr_adjust&crs=native"
 )
 
 
@@ -1330,7 +1334,12 @@ def test_cube_native_grid_extent(client: TestClient):
     source_x, source_y = source.variables["x"][:], source.variables["y"][:]
     cellsize_x, cellsize_y = abs(source_x[1] - source_x[0]), abs(source_y[1] - source_y[0])
     # The outer cell edges of the grid, in rotated degrees
-    expected_bbox = [source_x.min() - cellsize_x / 2, source_y.min() - cellsize_y / 2, source_x.max() + cellsize_x / 2, source_y.max() + cellsize_y / 2]
+    expected_bbox = [
+        source_x.min() - cellsize_x / 2,
+        source_y.min() - cellsize_y / 2,
+        source_x.max() + cellsize_x / 2,
+        source_y.max() + cellsize_y / 2,
+    ]
     assert native["bbox"] == pytest.approx(expected_bbox, abs=1e-4)
     assert native["cellsize"] == pytest.approx([cellsize_x, cellsize_y], abs=1e-6)
     assert native["size"] == [len(source_x), len(source_y)]
@@ -1380,7 +1389,13 @@ def test_cube_native_grid_instance(client: TestClient):
     assert coverage["domain"]["referencing"][0]["system"] == {"type": "ProjectedCRS", "id": "http://www.opengis.net/def/crs/EPSG/0/3857"}
 
     source = netCDF4.Dataset(
-        os.path.join(os.environ["ADAGUC_PATH"], "data", "datasets", "arcustest_uwcw", "uwcw_ha43ens_nl_2km_wind-speed-hagl_geoweb_nc_20240605T03_5x5.nc")
+        os.path.join(
+            os.environ["ADAGUC_PATH"],
+            "data",
+            "datasets",
+            "arcustest_uwcw",
+            "uwcw_ha43ens_nl_2km_wind-speed-hagl_geoweb_nc_20240605T03_5x5.nc",
+        )
     )
     axes = coverage["domain"]["axes"]
     assert np.allclose(sorted(axes["x"]["values"]), native_cells_in_bbox(source.variables["x"][:], bbox[0], bbox[2]))
@@ -1404,7 +1419,8 @@ def test_cube_native_grid_bbox_on_cell_edges(client: TestClient):
         source_y[0] + (9 + 0.5) * cellsize_y,
     )
     resp = client.get(
-        "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?parameter-name=pr_adjust&crs=native&bbox=" + ",".join(repr(float(v)) for v in bbox)
+        "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole/cube?parameter-name=pr_adjust&crs=native&bbox="
+        + ",".join(repr(float(v)) for v in bbox)
     )
     assert resp.status_code == 200, resp.text
     axes = resp.json()["domain"]["axes"]
@@ -1443,7 +1459,10 @@ def test_native_crs_is_only_for_cube_queries(client: TestClient):
     assert client.get(trajectory, params=params | {"crs": "native"}).status_code == 400
     # Like the cube, position accepts every spelling of EPSG:4326
     position = {"coords": "POINT(5 52)", "parameter-name": "pr_adjust"}
-    assert client.get(rotated + "/position", params=position | {"crs": "CRS84"}).json() == client.get(rotated + "/position", params=position).json()
+    assert (
+        client.get(rotated + "/position", params=position | {"crs": "CRS84"}).json()
+        == client.get(rotated + "/position", params=position).json()
+    )
 
 
 def test_cube_native_grid_refuses_resolution(client: TestClient):
