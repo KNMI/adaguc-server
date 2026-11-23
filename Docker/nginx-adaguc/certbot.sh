@@ -1,5 +1,5 @@
 #!/bin/sh
-source /etc/envvars
+. /etc/envvars
 while ! nc -z -w1 localhost 80 ; do
     sleep 1
 done

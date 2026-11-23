@@ -1,2 +1,2 @@
 #!/bin/sh
-exec crond -f -L /dev/stdout
+exec /usr/sbin/cron -f
