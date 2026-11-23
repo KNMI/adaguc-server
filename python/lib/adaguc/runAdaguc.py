@@ -76,8 +76,8 @@ class runAdaguc:
         adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv("ADAGUC_TRACE_TIMINGS", "FALSE")
         adagucenv["ADAGUC_STYLESHEET_ENABLE"] = os.getenv("ADAGUC_STYLESHEET_ENABLE", "FALSE")
         # Optional: without it the NetCDF library keeps its default chunk cache
-        if os.getenv("ADAGUC_NETCDF_CHUNK_CACHE_MB"):
-            adagucenv["ADAGUC_NETCDF_CHUNK_CACHE_MB"] = os.getenv("ADAGUC_NETCDF_CHUNK_CACHE_MB")
+        if os.getenv("ADAGUC_CHUNK_CACHE_MB"):
+            adagucenv["ADAGUC_CHUNK_CACHE_MB"] = os.getenv("ADAGUC_CHUNK_CACHE_MB")
         ld_library_path = os.getenv("LD_LIBRARY_PATH")
         if ld_library_path:
             adagucenv["LD_LIBRARY_PATH"] = ld_library_path

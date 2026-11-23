@@ -288,21 +288,21 @@ int testNetCDFChunkCacheFromEnvironment() {
   bool failed = false;
 
   // Not set, empty or not a whole number above 0: the default of the NetCDF library is kept
-  unsetenv("ADAGUC_NETCDF_CHUNK_CACHE_MB");
+  unsetenv("ADAGUC_CHUNK_CACHE_MB");
   if (CDFNetCDFReader::getChunkCacheSizeFromEnvironment() != 0) {
-    CDBError("[FAILED] chunk cache size without ADAGUC_NETCDF_CHUNK_CACHE_MB should be 0");
+    CDBError("[FAILED] chunk cache size without ADAGUC_CHUNK_CACHE_MB should be 0");
     failed = true;
   }
   for (const char *invalid: {"", "0", "-128", "+128", "12.5", "128MB", " 128", "abc", "99999999999999999999999999"}) {
-    setenv("ADAGUC_NETCDF_CHUNK_CACHE_MB", invalid, 1);
+    setenv("ADAGUC_CHUNK_CACHE_MB", invalid, 1);
     if (CDFNetCDFReader::getChunkCacheSizeFromEnvironment() != 0) {
-      CDBError("[FAILED] chunk cache size for ADAGUC_NETCDF_CHUNK_CACHE_MB=[%s] should be 0", invalid);
+      CDBError("[FAILED] chunk cache size for ADAGUC_CHUNK_CACHE_MB=[%s] should be 0", invalid);
       failed = true;
     }
   }
-  setenv("ADAGUC_NETCDF_CHUNK_CACHE_MB", "128", 1);
+  setenv("ADAGUC_CHUNK_CACHE_MB", "128", 1);
   if (CDFNetCDFReader::getChunkCacheSizeFromEnvironment() != 128 * megabyte) {
-    CDBError("[FAILED] chunk cache size for ADAGUC_NETCDF_CHUNK_CACHE_MB=128 should be 128 megabytes");
+    CDBError("[FAILED] chunk cache size for ADAGUC_CHUNK_CACHE_MB=128 should be 128 megabytes");
     failed = true;
   }
 
@@ -339,16 +339,16 @@ int testNetCDFChunkCacheFromEnvironment() {
   };
 
   // An invalid value changes nothing when a file is opened
-  setenv("ADAGUC_NETCDF_CHUNK_CACHE_MB", "abc", 1);
+  setenv("ADAGUC_CHUNK_CACHE_MB", "abc", 1);
   if (openTestFile() != 0) failed = true;
   nc_get_chunk_cache(&size, &numElements, &preemption);
   if (size != defaultSize || numElements != defaultNumElements || preemption != defaultPreemption) {
-    CDBError("[FAILED] an invalid ADAGUC_NETCDF_CHUNK_CACHE_MB changed the chunk cache");
+    CDBError("[FAILED] an invalid ADAGUC_CHUNK_CACHE_MB changed the chunk cache");
     failed = true;
   }
 
   // A valid value sets the size when a file is opened, and keeps the number of slots and the preemption
-  setenv("ADAGUC_NETCDF_CHUNK_CACHE_MB", "96", 1);
+  setenv("ADAGUC_CHUNK_CACHE_MB", "96", 1);
   if (openTestFile() != 0) failed = true;
   nc_get_chunk_cache(&size, &numElements, &preemption);
   if (size != 96 * megabyte || numElements != defaultNumElements || preemption != defaultPreemption) {
@@ -357,7 +357,7 @@ int testNetCDFChunkCacheFromEnvironment() {
   }
 
   remove(testFile.c_str());
-  unsetenv("ADAGUC_NETCDF_CHUNK_CACHE_MB");
+  unsetenv("ADAGUC_CHUNK_CACHE_MB");
   nc_set_chunk_cache(defaultSize, defaultNumElements, defaultPreemption);
   CTime::cleanInstances();
   if (!failed) {

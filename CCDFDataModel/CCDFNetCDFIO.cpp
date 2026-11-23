@@ -40,7 +40,7 @@ static const bool CCDFNETCDFIO_DEBUG_OPEN = false;
 static const bool CCDFNETCDFWRITER_DEBUG = false;
 
 size_t CDFNetCDFReader::getChunkCacheSizeFromEnvironment() {
-  const char *value = getenv("ADAGUC_NETCDF_CHUNK_CACHE_MB");
+  const char *value = getenv("ADAGUC_CHUNK_CACHE_MB");
   if (value == nullptr || value[0] == '\0') return 0;
   const size_t megabyte = 1024 * 1024;
   char *end = nullptr;
@@ -51,7 +51,7 @@ size_t CDFNetCDFReader::getChunkCacheSizeFromEnvironment() {
   if (!isNumber || megabytes == 0 || megabytes > SIZE_MAX / megabyte) {
     static bool warned = false;
     if (!warned) {
-      CDBWarning("ADAGUC_NETCDF_CHUNK_CACHE_MB=%s is not a whole number of megabytes above 0, using the default chunk cache of NetCDF", value);
+      CDBWarning("ADAGUC_CHUNK_CACHE_MB=%s is not a whole number of megabytes above 0, using the default chunk cache of NetCDF", value);
       warned = true;
     }
     return 0;
@@ -60,7 +60,7 @@ size_t CDFNetCDFReader::getChunkCacheSizeFromEnvironment() {
 }
 
 /**
- * Sets the size of the HDF5 chunk cache for the files opened from here on, when asked with ADAGUC_NETCDF_CHUNK_CACHE_MB.
+ * Sets the size of the HDF5 chunk cache for the files opened from here on, when asked with ADAGUC_CHUNK_CACHE_MB.
  *
  * Reading part of a compressed variable decompresses every chunk it touches, and the decompressed chunks are kept in
  * this cache, per variable. When one read touches more chunks than fit, every following read decompresses them again.

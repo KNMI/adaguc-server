@@ -929,8 +929,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_NEAREST) {
-        // drawFunction_nearest only stores the value, so the warper can leave out the source cells that are drawn over
-        genericDataWarper->drawFunctionOverwrites = true;
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = srvParam->geoParams};
         auto dataType = variable->getType();
 
@@ -942,7 +940,6 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_AVG_RGB) {
-        genericDataWarper->drawFunctionOverwrites = false; // drawFunction_avg_rgb adds up every value drawn in a pixel
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = srvParam->geoParams};
         auto dataType = variable->getType();
 

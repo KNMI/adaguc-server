@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import netCDF4
 import numpy as np
+import pytest
 from netCDF4 import Dataset
 from PIL import Image, TiffImagePlugin
 from adaguc.AdagucTestTools import AdagucTestTools
@@ -76,6 +77,46 @@ def read_geotiff(data: bytes):
 def read_source_values(filename: str, variable: str):
     with Dataset(f"{ADAGUC_PATH}/data/datasets/{filename}") as dataset:
         return np.array(dataset.variables[variable][:])
+
+
+CELL_NUMBER_GRID_CELLS = 60
+CELL_NUMBER_GRID_CELLSIZE = 0.1
+
+
+def write_cell_number_grid(path: str, x_ascending: bool, y_ascending: bool):
+    """
+    Writes a lat/lon grid of 60 x 60 cells of 0.1 degree, from 0 to 6 degrees, without nodata. Every cell holds
+    row * 1000 + column of its cell in the grid (row 0 is the most southern, column 0 the most western), whatever the
+    order in which x and y are stored, so a returned value tells which cell it came from.
+    """
+    centres = (np.arange(CELL_NUMBER_GRID_CELLS) + 0.5) * CELL_NUMBER_GRID_CELLSIZE
+    x, y = centres, centres
+    rows, columns = np.meshgrid(np.arange(CELL_NUMBER_GRID_CELLS), np.arange(CELL_NUMBER_GRID_CELLS), indexing="ij")
+    cells = (rows * 1000 + columns).astype("f4")
+    if not x_ascending:
+        x, cells = x[::-1], cells[:, ::-1]
+    if not y_ascending:
+        y, cells = y[::-1], cells[::-1, :]
+    with Dataset(path, "w") as dataset:
+        dataset.createDimension("lon", len(x))
+        dataset.createDimension("lat", len(y))
+        dataset.createDimension("time", 1)
+        lon = dataset.createVariable("lon", "f8", ("lon",))
+        lon.standard_name = "longitude"
+        lon.units = "degrees_east"
+        lon[:] = x
+        lat = dataset.createVariable("lat", "f8", ("lat",))
+        lat.standard_name = "latitude"
+        lat.units = "degrees_north"
+        lat[:] = y
+        time = dataset.createVariable("time", "f8", ("time",))
+        time.standard_name = "time"
+        time.units = "seconds since 2020-01-01 00:00:00"
+        time[:] = [0]
+        cell = dataset.createVariable("cell", "f4", ("time", "lat", "lon"))
+        cell.long_name = "row * 1000 + column of the cell in the grid"
+        cell.units = "1"
+        cell[0] = cells
 
 
 class TestWCS:
@@ -858,3 +899,50 @@ class TestWCS:
         assert foundgridspec == expectedgridspec
         projectionid = ds.variables["crs"].getncattr("id")
         assert "EPSG:4326" == projectionid
+
+    @pytest.mark.parametrize("orientation", ["xasc_yasc", "xasc_ydesc", "xdesc_yasc", "xdesc_ydesc"])
+    @pytest.mark.parametrize("cells_per_pixel", [2, 3, 4, 5, 6, 10])
+    def test_WCSGetCoverageNetCDF4_fewer_pixels_than_cells(self, orientation, cells_per_pixel):
+        """
+        A request without reprojection for fewer pixels than the data has cells gives every pixel a value: the value of
+        the source cell at its centre, whatever the order in which x and y are stored. With an even number of cells per
+        pixel the centre of a pixel is exactly on the edge of two cells, and it gets one of those two. Before, such a
+        pixel could get no cell at all, because the edges of two neighbouring cells were calculated in different ways and
+        could differ by a rounding error: with 6 cells per pixel 3 of the 10 columns and rows stayed empty.
+        """
+        AdagucTestTools().cleanTempDir()
+        filename = f"test_WCSGetCoverageNetCDF4_fewer_pixels_than_cells_{orientation}.nc"
+        write_cell_number_grid(self.testresultspath + filename, "xasc" in orientation, "yasc" in orientation)
+        extent = CELL_NUMBER_GRID_CELLS * CELL_NUMBER_GRID_CELLSIZE
+        size = CELL_NUMBER_GRID_CELLS // cells_per_pixel
+        # The autoresource configuration also reads files from tests/testresults
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            f"source=TestWCS/{filename}&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=cell&CRS=EPSG%3A4326&FORMAT=NetCDF4"
+            f"&BBOX=0,0,{extent},{extent}&WIDTH={size}&HEIGHT={size}",
+            env=self.env,
+        )
+        assert status == 0
+        with Dataset("filename.nc", memory=data) as dataset:
+            variable = dataset.variables["cell"]
+            values = np.ma.masked_invalid(np.squeeze(variable[:]))
+            x = np.array(dataset.variables[variable.dimensions[-1]][:])
+            y = np.array(dataset.variables[variable.dimensions[-2]][:])
+        assert values.shape == (size, size)
+        empty = np.ma.getmaskarray(values)
+        empty_columns, empty_rows = np.nonzero(empty.all(axis=0))[0].tolist(), np.nonzero(empty.all(axis=1))[0].tolist()
+        assert not empty.any(), f"{empty.sum()} of {empty.size} pixels have no value: all of columns {empty_columns} and rows {empty_rows}"
+
+        def cells_at(coordinate: float) -> set[int]:
+            """The cell that contains a coordinate, or both cells when it is on the edge between them"""
+            position = coordinate / CELL_NUMBER_GRID_CELLSIZE
+            return {int(np.floor(position - 1e-6)), int(np.floor(position + 1e-6))}
+
+        other_cell = []
+        for j, y_value in enumerate(y):
+            for i, x_value in enumerate(x):
+                row, column = divmod(int(values[j, i]), 1000)
+                if row not in cells_at(y_value) or column not in cells_at(x_value):
+                    other_cell.append(f"({x_value:g}, {y_value:g}) has the value of row {row}, column {column}")
+        assert (
+            not other_cell
+        ), f"{len(other_cell)} of {values.size} pixels have the value of another cell than the one at their centre: {other_cell[:5]}"
