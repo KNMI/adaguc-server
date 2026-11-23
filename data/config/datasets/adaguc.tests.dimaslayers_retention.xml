@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Settings enablecleanupsystem="true"/>
+
+  <Style name="trajectory_line">
+    <RenderMethod>polyline</RenderMethod>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#000000" borderwidth="1"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>trajectory</Name>
+    <Title>Trajectory</Title>
+    <FilePath filter="^.*\.geojson$" retentionperiod="P1D" retentiontype="filedate">{ADAGUC_TMP}/dimaslayers/</FilePath>
+    <Variable>features</Variable>
+    <Styles>trajectory_line</Styles>
+    <Dimension name="time" aslayers="true">time</Dimension>
+    <Dimension name="elevation" default="max">elevation</Dimension>
+  </Layer>
+</Configuration>

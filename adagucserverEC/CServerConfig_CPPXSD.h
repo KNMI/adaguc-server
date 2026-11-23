@@ -1216,6 +1216,7 @@ struct CServerConfig : CXMLObjectInterface {
     struct Cattr {
       std::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
+      bool aslayers = false;
       std::string type = "dimtype_none";
     } attr;
     bool addAttribute(const attribute &attrCfg) {
@@ -1239,6 +1240,9 @@ struct CServerConfig : CXMLObjectInterface {
         return true;
       } else if ("hidden" == attrCfg.name) {
         attr.hidden = parseBool(attrCfg);
+        return true;
+      } else if ("aslayers" == attrCfg.name) {
+        attr.aslayers = parseBool(attrCfg);
         return true;
       } else if ("quantizemethod" == attrCfg.name) {
         attr.quantizemethod = attrCfg.value;

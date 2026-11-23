@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Style name="trajectory_points">
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#FF0000FF" textcolor="#0000FFFF" linecolor="#000000A0" discradius="3" dot="false" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textradius="10" textformat="%0.0f"/>
+  </Style>
+
+  <Style name="trajectory_end_points">
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" min="-1000" max="-0.1" fillcolor="#FFFF00FF" textcolor="#0000FFFF" linecolor="#000000A0" discradius="6" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textradius="10" textformat=" "/>
+    <Point pointstyle="point" min="0.1" max="1000" fillcolor="#FF5C00FF" textcolor="#0000FFFF" linecolor="#000000A0" discradius="6" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textradius="10" textformat=" "/>
+  </Style>
+
+  <Style name="trajectory_line">
+    <RenderMethod>polyline</RenderMethod>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#000000" borderwidth="1"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>trajectory</Name>
+    <Title>Trajectory</Title>
+    <AdditionalLayer style="trajectory_points" replace="false">trajectory_pt</AdditionalLayer>
+    <AdditionalLayer style="trajectory_line" replace="false">trajectory_line</AdditionalLayer>
+    <FilePath filter="^.*\.geojson$">{ADAGUC_PATH}/data/datasets/dimaslayers/</FilePath>
+    <Variable>pt_type</Variable>
+    <Styles>trajectory_end_points</Styles>
+    <!-- One layer per model run: the time dimension is not advertised, every run becomes a layer with only the elevation dimension -->
+    <Dimension name="time" aslayers="true">time</Dimension>
+    <Dimension name="elevation" default="max">elevation</Dimension>
+  </Layer>
+
+  <Layer type="database">
+    <Name>trajectory_pt</Name>
+    <Title>Trajectory points</Title>
+    <FilePath filter="^.*\.geojson$">{ADAGUC_PATH}/data/datasets/dimaslayers/</FilePath>
+    <Variable>pt_time</Variable>
+    <Styles>trajectory_points</Styles>
+    <Dimension name="time" aslayers="true" default="max">time</Dimension>
+    <Dimension name="elevation" default="max">elevation</Dimension>
+  </Layer>
+
+  <Layer type="database" hidden="true">
+    <Name>trajectory_line</Name>
+    <Title>Trajectory line</Title>
+    <FilePath filter="^.*\.geojson$">{ADAGUC_PATH}/data/datasets/dimaslayers/</FilePath>
+    <Variable>features</Variable>
+    <Styles>trajectory_line</Styles>
+    <Dimension name="time" aslayers="true" default="max">time</Dimension>
+    <Dimension name="elevation" default="max">elevation</Dimension>
+  </Layer>
+</Configuration>

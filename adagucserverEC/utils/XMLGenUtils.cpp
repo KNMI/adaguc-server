@@ -250,7 +250,7 @@ bool isATimeDimension(CServerConfig::XMLE_Dimension *cfgDim) {
 }
 
 LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::XMLE_Dimension *cfgLayerDim, const std::map<std::string, std::vector<std::string>> &dimValuesMap,
-                                        const std::string &tableName) {
+                                        const std::string &tableName, const std::vector<FixedDimensionFilter> &fixedDimensionFilters) {
   // Get all dimension values from the db
   auto srvParam = dataSource->srvParams;
   bool isTimeDim = isATimeDimension(cfgLayerDim);
@@ -259,8 +259,12 @@ LayerMetadataDim handleMultipleValueDim(CDataSource *dataSource, CServerConfig::
   std::vector<std::string> queryValues;
   if (dimValueInMapIt == dimValuesMap.end() || dimValueInMapIt->second.size() == 0) {
 
-    auto values = isTimeDim ? CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
-                            : CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str());
+    auto dbAdapter = CDBFactory::getDBAdapter(srvParam->cfg);
+    // Only advertise values of files which match the fixed values of the other dimensions
+    bool useFixedDimensionFilters = !fixedDimensionFilters.empty() && cfgLayerDim->attr.fixvalue.empty();
+    auto values = useFixedDimensionFilters ? dbAdapter->getUniqueValuesForFixedDimensions(cfgLayerDim->attr.name, !isTimeDim, tableName, fixedDimensionFilters)
+                  : isTimeDim              ? dbAdapter->getUniqueValuesOrderedByValue(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str())
+                                           : dbAdapter->getUniqueValuesOrderedByIndex(cfgLayerDim->attr.name.c_str(), 0, true, tableName.c_str());
 
     if (values == NULL) {
       CDBError("Query failed");
@@ -473,6 +477,14 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
                           ->getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0].elementValue, dataSource->cfgLayer->FilePath[0].attr.filter, dimensions, dataSource);
   }
 
+  std::vector<FixedDimensionFilter> fixedDimensionFilters;
+  for (const auto &dim: dataSource->cfgLayer->Dimension) {
+    if (dim.attr.fixvalue.empty()) continue;
+    auto table = dimensionTables.find(CT::toLowerCase(dim.attr.name));
+    if (table == dimensionTables.end()) continue;
+    fixedDimensionFilters.push_back({.columnName = CT::toLowerCase(dim.attr.name), .tableName = table->second.tableName, .value = dim.attr.fixvalue});
+  }
+
   for (auto it = dataSource->cfgLayer->Dimension.begin(); it != dataSource->cfgLayer->Dimension.end(); ++it) {
     auto *cfgDim = &(*it);
     // This dimension is a filetimedate type, its values come from the modification date of the file
@@ -496,7 +508,7 @@ int getDimsForLayer(CDataSource *dataSource, std::vector<LayerMetadataDim> &laye
         layerMetadataDimensionList.push_back(handleRangeBasedDim(dataSource, cfgDim, dimValuesMap, tableName));
       } else {
         // Add dimension with individual values
-        layerMetadataDimensionList.push_back(handleMultipleValueDim(dataSource, cfgDim, dimValuesMap, tableName));
+        layerMetadataDimensionList.push_back(handleMultipleValueDim(dataSource, cfgDim, dimValuesMap, tableName, fixedDimensionFilters));
       }
     } else {
       // Add dimension with pre-defined interval
