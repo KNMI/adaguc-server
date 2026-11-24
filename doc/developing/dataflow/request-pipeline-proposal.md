@@ -93,7 +93,7 @@ parse request
 
 ## Plan: small steps, same behaviour
 
-A big rewrite would be risky and would block other work for a long time. Instead, each step below keeps behaviour identical, can be reviewed as a separate PR, and leaves the code better than before even if we stop there. The functional tests (443 tests, including image comparisons) are the safety net for every step.
+A big rewrite would be risky and would block other work for a long time. Instead, each step below keeps behaviour identical, can be reviewed as a separate PR, and leaves the code better than before even if we stop there. The functional tests (more than 700, including image comparisons) are the safety net for every step.
 
 1. **Split `CDataReader::open` internally into named stages**: for example `openHeader`, `applyFormatConverters`, `runPostProcessorsBeforeReading`, `readData`, `applyScaleAndOffset`, `runPostProcessorsAfterReading` and `computeStatistics`. `open(mode)` keeps its signature and calls these stages in the same order. This is a pure code move.
 2. **Lift the stages to the caller, for GetMap only**: `warpImage` and `addData` call the stages directly instead of `open(OPEN_ALL)`, and are renamed for what they do (for example `loadAndRenderLayer` and `renderLayers`).
