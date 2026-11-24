@@ -1228,8 +1228,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
       CDF::Attribute *add_offset = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
       // The flag stays on the (cached) variable after an earlier read, for example of another level. Data read again from the
-      // file must be scaled again, but the _FillValue and nodata value were scaled already.
-      bool scaleNodata = !appliedScaleOffset;
+      // file must be scaled again. The _FillValue is unpacked only once, and none is created when there is none (that would
+      // make the value add_offset nodata), see unpackFillValueOnce.
       if ((!appliedScaleOffset || dataIsRead) && scale_factor != nullptr) {
         appliedScaleOffset = true;
         dataSource->getDataObject(varNr)->cdfVariable->setAttribute("ADAGUC_SCALE_OFFSET_APPLIED", CDF_BYTE, appliedScaleOffset);
@@ -1250,8 +1250,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
 
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_FLOAT) {
-          // Preserve the original nodata value, so it remains a nice short rounded number.
-          auto fNoData = (float)dataSource->getDataObject(varNr)->dfNodataValue;
           auto fscale_factor = (float)dfscale_factor;
           auto fadd_offset = (float)dfadd_offset;
           // packed data to be unpacked to FLOAT:
@@ -1262,11 +1260,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
               _data[j] = _data[j] * fscale_factor + fadd_offset;
             }
           }
-          // Convert the nodata type and put it back
-          if (scaleNodata) {
-            dataSource->getDataObject(varNr)->dfNodataValue = fNoData * fscale_factor + fadd_offset;
-            float d = dataSource->getDataObject(varNr)->dfNodataValue;
-            dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_FLOAT, d);
+          if (auto unpackedNodataValue = dataSource->getDataObject(varNr)->cdfVariable->unpackFillValueOnce(CDF_FLOAT, dfscale_factor, dfadd_offset)) {
+            dataSource->getDataObject(varNr)->dfNodataValue = *unpackedNodataValue;
           }
         }
 
@@ -1277,10 +1272,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
             _data[j] = _data[j] * dfscale_factor + dfadd_offset;
           }
 
-          // Convert the nodata type
-          if (scaleNodata) {
-            dataSource->getDataObject(varNr)->dfNodataValue = dataSource->getDataObject(varNr)->dfNodataValue * dfscale_factor + dfadd_offset;
-            dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_DOUBLE, dataSource->getDataObject(varNr)->dfNodataValue);
+          if (auto unpackedNodataValue = dataSource->getDataObject(varNr)->cdfVariable->unpackFillValueOnce(CDF_DOUBLE, dfscale_factor, dfadd_offset)) {
+            dataSource->getDataObject(varNr)->dfNodataValue = *unpackedNodataValue;
           }
         }
       }

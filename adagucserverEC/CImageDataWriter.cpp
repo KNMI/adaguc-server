@@ -479,7 +479,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
       continue;
     }
     auto &getFeatureInfoResult = getFeatureInfoResultList.emplace_back();
-    bool headerIsAvailable = false;
     bool sameHeaderForAll = false;
     bool openAll = false;
 
@@ -487,11 +486,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
     if (dataSource->getNumDataObjects() > 0) {
       if (dataSource->getFirstAvailableDataObject()->cdfVariable != NULL) {
-        if (dataSource->isConfigured) {
-          if (dataSource->nativeProj4.length() > 0) {
-            headerIsAvailable = true;
-          }
-        }
         if (dataSource->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
           openAll = true;
         }
@@ -585,12 +579,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
           } else {
             if (CIMAGEDATAWRITER_DEBUG) {
-              CDBDebug("OPEN Header %d", headerIsAvailable);
+              CDBDebug("OPEN Header");
             }
-            if (!headerIsAvailable || sameHeaderForAll == true) {
-              headerIsAvailable = true;
-              status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
-            }
+            // Open the header for every step: the single cell read below replaces the grid geometry
+            // of the data source (dWidth, dHeight, dfBBOX) by that of the cell.
+            status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
           }
 
           if (status != 0) {

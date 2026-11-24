@@ -1,3 +1,10 @@
+**Version X.Y.Z**
+
+- Fixed packed data (`scale_factor`/`add_offset`) without a `_FillValue`: when one request read the same file more than once, for example WCS GetCoverage over several time steps or levels, or a GetMap animation, the value equal to `add_offset` was nodata from the second read on.
+- Fixed GetFeatureInfo with `INFO_FORMAT=text/html` or `text/plain` over more than one time step (for example `time=start/end`) on gridded data: only the first time step had a value, the other steps showed `nodata`. JSON output was not affected.
+- Fixed GetFeatureInfo and GetPointValue with `INFO_FORMAT=application/json`, and so EDR position queries, on packed data (`scale_factor`/`add_offset`) with a `_FillValue`: a cell with the fill value gave the unpacked fill value (for example `-999.9`) instead of `nodata`, or, with a unit conversion or Beaufort, a converted value. Text formats were not affected.
+- Fixed GetFeatureInfo and GetPointValue with `INFO_FORMAT=application/json`, and so EDR position queries, on layers with more than one variable (without `convert_uv_components`): with enough time steps, the second variable could show values of the first one.
+
 **Version 10.0.0 - 2026-11-16**
 
 - Breaking: GDAL is no longer a dependency. WCS GeoTIFF (`GTiff`) output is written with libtiff and libgeotiff, AAIGrid (`AAIGrid`) output directly, in the same layout as GDAL wrote them (data types, nodata, GDAL band/dataset metadata tags, georeferencing, CRS as EPSG code or as user defined projection). Building needs `libtiff-dev` and `libgeotiff-dev` (Homebrew: `libtiff libgeotiff`) instead of `libgdal-dev`. See [WCSFormat](/doc/configuration/WCSFormat.md).

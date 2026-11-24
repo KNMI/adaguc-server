@@ -27,6 +27,7 @@
 #define CCDFVARIABLE_H
 
 #include <algorithm>
+#include <optional>
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
@@ -79,6 +80,18 @@ namespace CDF {
     void *data = nullptr;
     bool isDimension = false;
     bool enableCache = false;
+    // Set when the _FillValue attribute has been replaced by its unpacked value (fill * scale_factor + add_offset), see unpackFillValueOnce.
+    // It describes the attributes of this variable object; clone() copies it together with the attributes.
+    bool fillValueIsUnpacked = false;
+    /**
+     * Replaces the _FillValue attribute by its unpacked value (fill * scale_factor + add_offset), with the type of the unpacked data
+     * (CDF_FLOAT or CDF_DOUBLE). This happens only once: the variable is cached and its data can be read and unpacked many times,
+     * but the attribute must stay equal to the nodata value of the unpacked data.
+     * The attribute keeps the type of the first call. Data that is later unpacked in the other type (float versus double) can
+     * differ from it in the last bit.
+     * @return The unpacked fill value, or nothing if the variable has no _FillValue
+     */
+    std::optional<double> unpackFillValueOnce(CDFType unpackedType, double scaleFactor, double addOffset);
     CDF::Variable *clone(CDFType newType, std::string newName);
     void copy(CDF::Variable *sourceVariable);
     void setCustomReader(CustomReader *customReader);
