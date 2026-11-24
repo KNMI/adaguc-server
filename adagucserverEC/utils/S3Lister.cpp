@@ -203,28 +203,47 @@ static std::string requestS3ListPage(CURL *curl, const S3Directory &directory, c
   return body;
 }
 
-/* Creates a curl handle that signs its requests with the same credentials the NetCDF library uses to open the stores. */
-static CURL *createS3Curl() {
-  CURL *curl = curl_easy_init();
-  if (curl == nullptr) {
-    CDBError("Unable to initialize curl");
-    throw(__LINE__);
-  }
-  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, S3_CONNECT_TIMEOUT_SECONDS);
-  curl_easy_setopt(curl, CURLOPT_TIMEOUT, S3_REQUEST_TIMEOUT_SECONDS);
+/*
+ * A curl handle that signs its requests with the same credentials the Zarr reader uses to open the stores:
+ * AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN for the temporary credentials of a role.
+ */
+struct S3Curl {
+  CURL *curl = nullptr;
+  curl_slist *headers = nullptr;
 
-  const std::string accessKey = getEnvironment("AWS_ACCESS_KEY_ID"), secretKey = getEnvironment("AWS_SECRET_ACCESS_KEY");
-  std::string region = getEnvironment("AWS_REGION");
-  if (region.empty()) region = getEnvironment("AWS_DEFAULT_REGION");
-  if (region.empty()) region = "us-east-1";
-  if (!accessKey.empty() && !secretKey.empty()) {
-    // libcurl copies these strings
-    curl_easy_setopt(curl, CURLOPT_AWS_SIGV4, ("aws:amz:" + region + ":s3").c_str());
-    curl_easy_setopt(curl, CURLOPT_USERPWD, (accessKey + ":" + secretKey).c_str());
+  S3Curl() {
+    curl = curl_easy_init();
+    if (curl == nullptr) {
+      CDBError("Unable to initialize curl");
+      throw(__LINE__);
+    }
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, S3_CONNECT_TIMEOUT_SECONDS);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, S3_REQUEST_TIMEOUT_SECONDS);
+
+    const std::string accessKey = getEnvironment("AWS_ACCESS_KEY_ID"), secretKey = getEnvironment("AWS_SECRET_ACCESS_KEY");
+    std::string region = getEnvironment("AWS_REGION");
+    if (region.empty()) region = getEnvironment("AWS_DEFAULT_REGION");
+    if (region.empty()) region = "us-east-1";
+    if (!accessKey.empty() && !secretKey.empty()) {
+      // libcurl copies these strings
+      curl_easy_setopt(curl, CURLOPT_AWS_SIGV4, ("aws:amz:" + region + ":s3").c_str());
+      curl_easy_setopt(curl, CURLOPT_USERPWD, (accessKey + ":" + secretKey).c_str());
+      // Temporary credentials are only accepted with their session token. libcurl does not copy the list of headers.
+      const std::string sessionToken = getEnvironment("AWS_SESSION_TOKEN");
+      if (!sessionToken.empty()) {
+        headers = curl_slist_append(headers, ("x-amz-security-token: " + sessionToken).c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+      }
+    }
   }
-  return curl;
-}
+  ~S3Curl() {
+    curl_easy_cleanup(curl);
+    curl_slist_free_all(headers);
+  }
+  S3Curl(const S3Curl &) = delete;
+  S3Curl &operator=(const S3Curl &) = delete;
+};
 
 bool isS3StoreComplete(const std::string &storeLocation) {
   const auto cached = checkedStores.find(storeLocation);
@@ -235,15 +254,16 @@ bool isS3StoreComplete(const std::string &storeLocation) {
   splitFragment(storeLocation, url, fragment);
   url += std::string("/") + S3_STORE_COMPLETION_MARKER;
 
-  CURL *curl = createS3Curl();
   char errorBuffer[CURL_ERROR_SIZE] = "";
+  S3Curl s3;
+  CURL *curl = s3.curl;
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
   const CURLcode result = curl_easy_perform(curl);
   long httpStatus = 0;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
-  curl_easy_cleanup(curl);
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, nullptr);
 
   if (result != CURLE_OK) {
     CDBWarning("Unable to check whether store [%s] is complete: %s", storeLocation.c_str(), errorBuffer[0] != 0 ? errorBuffer : curl_easy_strerror(result));
@@ -276,38 +296,34 @@ std::vector<std::string> listS3Stores(const std::string &location, const std::st
     return cached->second;
   }
 
-  CURL *curl = createS3Curl();
+  // Released when this function returns, also when a request fails
+  S3Curl s3;
+  CURL *curl = s3.curl;
 
   std::vector<std::string> stores;
   size_t numberOfRequests = 0;
-  try {
-    std::deque<std::string> prefixesToList = {startPrefix};
-    while (!prefixesToList.empty()) {
-      const std::string prefix = prefixesToList.front();
-      prefixesToList.pop_front();
-      std::string continuationToken;
-      do {
-        const S3ListPage page = parseS3ListPage(requestS3ListPage(curl, directory, prefix, continuationToken));
-        numberOfRequests++;
-        for (const auto &key: page.prefixes) {
-          // A key like prefix/name.zarr/ is a store, any other key ending in a slash is a subdirectory.
-          const std::string keyWithoutSlash = key.substr(0, key.size() - 1);
-          const std::string name = keyWithoutSlash.substr(keyWithoutSlash.find_last_of('/') + 1);
-          if (name.empty() || name[0] == '.') continue;
-          if (!CT::endsWith(name, S3_STORE_EXTENSION)) {
-            prefixesToList.push_back(key);
-          } else if (filter.empty() || CT::testRegEx(name, filter.c_str())) {
-            stores.push_back(directory.endpoint + "/" + directory.bucket + "/" + keyWithoutSlash + directory.fragment);
-          }
+  std::deque<std::string> prefixesToList = {startPrefix};
+  while (!prefixesToList.empty()) {
+    const std::string prefix = prefixesToList.front();
+    prefixesToList.pop_front();
+    std::string continuationToken;
+    do {
+      const S3ListPage page = parseS3ListPage(requestS3ListPage(curl, directory, prefix, continuationToken));
+      numberOfRequests++;
+      for (const auto &key: page.prefixes) {
+        // A key like prefix/name.zarr/ is a store, any other key ending in a slash is a subdirectory.
+        const std::string keyWithoutSlash = key.substr(0, key.size() - 1);
+        const std::string name = keyWithoutSlash.substr(keyWithoutSlash.find_last_of('/') + 1);
+        if (name.empty() || name[0] == '.') continue;
+        if (!CT::endsWith(name, S3_STORE_EXTENSION)) {
+          prefixesToList.push_back(key);
+        } else if (filter.empty() || CT::testRegEx(name, filter.c_str())) {
+          stores.push_back(directory.endpoint + "/" + directory.bucket + "/" + keyWithoutSlash + directory.fragment);
         }
-        continuationToken = page.nextContinuationToken;
-      } while (!continuationToken.empty());
-    }
-  } catch (int lineNumber) {
-    curl_easy_cleanup(curl);
-    throw(lineNumber);
+      }
+      continuationToken = page.nextContinuationToken;
+    } while (!continuationToken.empty());
   }
-  curl_easy_cleanup(curl);
 
   std::sort(stores.begin(), stores.end());
   CDBDebug("Listed S3 directory [%s]: %lu stores match filter [%s], in %lu requests", location.c_str(), stores.size(), filter.c_str(), numberOfRequests);
