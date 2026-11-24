@@ -203,7 +203,7 @@ def get_extent_from_md(metadata: dict, parameter: str):
     bbox = [metadata[parameter]["layer"]["latlonbox"]]
     if bbox is None:
         return None, None
-    crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
+    crs = "EPSG:4326"
     spatial = Spatial(bbox=bbox, crs=crs)
 
     interval, time_values = get_times_for_collection(metadata)
