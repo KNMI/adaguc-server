@@ -70,12 +70,25 @@ static bool fragmentHasS3Mode(const std::string &fragment) {
   return false;
 }
 
+std::string getS3Region(const std::string &fragment) {
+  std::string region;
+  if (fragment.size() > 1) {
+    for (const auto &parameter: CT::split(fragment.substr(1), "&")) {
+      if (CT::startsWith(parameter, "aws.region=")) region = parameter.substr(11);
+    }
+  }
+  if (region.empty()) region = getEnvironment("AWS_REGION");
+  if (region.empty()) region = getEnvironment("AWS_DEFAULT_REGION");
+  if (region.empty()) region = "us-east-1";
+  return region;
+}
+
 bool parseS3Directory(const std::string &location, S3Directory &directory) {
   std::string url;
   splitFragment(location, url, directory.fragment);
-  // The NetCDF library only speaks https to S3
-  static const std::string scheme = "https://";
-  if (!CT::startsWith(url, scheme) || !CT::endsWith(url, "/") || !fragmentHasS3Mode(directory.fragment)) {
+  // https, or http for an endpoint without TLS, like the Zarr reader accepts for a single store
+  const std::string scheme = CT::startsWith(url, "https://") ? "https://" : CT::startsWith(url, "http://") ? "http://" : "";
+  if (scheme.empty() || !CT::endsWith(url, "/") || !fragmentHasS3Mode(directory.fragment)) {
     return false;
   }
   const auto bucketStart = url.find('/', scheme.size());
@@ -206,12 +219,14 @@ static std::string requestS3ListPage(CURL *curl, const S3Directory &directory, c
 /*
  * A curl handle that signs its requests with the same credentials the Zarr reader uses to open the stores:
  * AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN for the temporary credentials of a role.
+ * They are signed for the region of the location, see getS3Region.
  */
 struct S3Curl {
   CURL *curl = nullptr;
   curl_slist *headers = nullptr;
 
-  S3Curl() {
+  /* fragment: the fragment of the directory or store that is requested, like #mode=zarr,s3&aws.region=eu-west-1 */
+  explicit S3Curl(const std::string &fragment) {
     curl = curl_easy_init();
     if (curl == nullptr) {
       CDBError("Unable to initialize curl");
@@ -222,9 +237,7 @@ struct S3Curl {
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, S3_REQUEST_TIMEOUT_SECONDS);
 
     const std::string accessKey = getEnvironment("AWS_ACCESS_KEY_ID"), secretKey = getEnvironment("AWS_SECRET_ACCESS_KEY");
-    std::string region = getEnvironment("AWS_REGION");
-    if (region.empty()) region = getEnvironment("AWS_DEFAULT_REGION");
-    if (region.empty()) region = "us-east-1";
+    const std::string region = getS3Region(fragment);
     if (!accessKey.empty() && !secretKey.empty()) {
       // libcurl copies these strings
       curl_easy_setopt(curl, CURLOPT_AWS_SIGV4, ("aws:amz:" + region + ":s3").c_str());
@@ -255,7 +268,7 @@ bool isS3StoreComplete(const std::string &storeLocation) {
   url += std::string("/") + S3_STORE_COMPLETION_MARKER;
 
   char errorBuffer[CURL_ERROR_SIZE] = "";
-  S3Curl s3;
+  S3Curl s3(fragment);
   CURL *curl = s3.curl;
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
@@ -281,7 +294,7 @@ bool isS3StoreComplete(const std::string &storeLocation) {
 std::vector<std::string> listS3Stores(const std::string &location, const std::string &filter, const std::string &subDirectory) {
   S3Directory directory;
   if (!parseS3Directory(location, directory)) {
-    CDBError("[%s] is not a S3 directory, expected https://<host>/<bucket>/[<prefix>/]#mode=zarr,s3", location.c_str());
+    CDBError("[%s] is not a S3 directory, expected http(s)://<host>/<bucket>/[<prefix>/]#mode=zarr,s3", location.c_str());
     throw(__LINE__);
   }
   std::string startPrefix = directory.prefix;
@@ -297,7 +310,7 @@ std::vector<std::string> listS3Stores(const std::string &location, const std::st
   }
 
   // Released when this function returns, also when a request fails
-  S3Curl s3;
+  S3Curl s3(directory.fragment);
   CURL *curl = s3.curl;
 
   std::vector<std::string> stores;

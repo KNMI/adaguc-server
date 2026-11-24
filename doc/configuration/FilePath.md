@@ -149,7 +149,7 @@ store below it whose name matches the filter, like files in a directory.
     that is still being written is skipped and picked up by a later scan. This costs one request per new store.
 -   Stores are assumed not to change: a URL has no modification date, so a store that was scanned is not scanned again.
     Use `scan.sh -t` to index everything again.
--   The URL of a directory has to be https.
+-   The URL of a directory is https, or http for an endpoint without TLS.
 
 Credentials and region are taken from the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and
 `AWS_SESSION_TOKEN` (optional), and `AWS_REGION` (or `AWS_DEFAULT_REGION`, default `us-east-1`); `aws.region=` in the

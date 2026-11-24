@@ -30,16 +30,19 @@
 #include <vector>
 
 /**
- * A directory of Zarr stores on S3 is written like the NetCDF library writes the URL of a single store, but ending in a slash:
+ * A directory of Zarr stores on S3 is written like the URL of a single store, but ending in a slash. The fragment is the
+ * notation of the NetCDF library, which the Zarr reader of adaguc-server takes as well:
  *
  *   single store: https://<host>[:<port>]/<bucket>/[<prefix>/]<name>.zarr#mode=zarr,s3
  *   directory:    https://<host>[:<port>]/<bucket>/[<prefix>/]#mode=zarr,s3
  *
- * Listing a directory gives the URLs of the stores below it. These are what the NetCDF library opens,
- * and what is kept as "file" in the database.
+ * Both can also be http, for an endpoint without TLS.
+ *
+ * Listing a directory gives the URLs of the stores below it. These are what the Zarr reader opens (or the NetCDF library,
+ * for a layer with <DataReader>NetCDF</DataReader>), and what is kept as "file" in the database.
  */
 struct S3Directory {
-  std::string endpoint; // https://<host>[:<port>]
+  std::string endpoint; // https://<host>[:<port>], or http://
   std::string bucket;
   std::string prefix;   // Empty, or ending in a slash
   std::string fragment; // Including the #, for example #mode=zarr,s3
@@ -51,8 +54,17 @@ struct S3ListPage {
   std::string nextContinuationToken; // Set when there are more pages
 };
 
-/** True when the location is an https URL with "s3" in its mode, of which the path ends in a slash. */
+/** True when the location is an https or http URL with "s3" in its mode, of which the path ends in a slash. */
 bool isS3Directory(const std::string &location);
+
+/**
+ * The region that requests for a directory or store are signed for: aws.region= in its fragment, like
+ * #mode=zarr,s3&aws.region=eu-west-1, otherwise AWS_REGION, AWS_DEFAULT_REGION or us-east-1. The same as the Zarr reader
+ * uses to open the stores.
+ *
+ * @param fragment The fragment of the location, including the #
+ */
+std::string getS3Region(const std::string &fragment);
 
 /** Splits the location of a directory into its parts. Returns false if it is not a S3 directory. */
 bool parseS3Directory(const std::string &location, S3Directory &directory);
@@ -80,8 +92,9 @@ bool isS3StoreComplete(const std::string &storeLocation);
  * Lists the Zarr stores in a S3 directory, including those in subdirectories.
  *
  * A store is a key prefix ending in ".zarr/". Stores are not descended into.
- * Credentials and region come from AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_REGION, the same variables
- * the NetCDF library uses to open the stores. Without credentials the request is not signed.
+ * Credentials come from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN for temporary credentials;
+ * the region from the fragment of the location or from AWS_REGION, see getS3Region. These are the same as the Zarr reader
+ * uses to open the stores. Without credentials the request is not signed.
  *
  * @param location The directory, see S3Directory
  * @param filter POSIX regexp that the name of a store must match, for example ^radar_.*\.zarr$. Empty matches all stores.

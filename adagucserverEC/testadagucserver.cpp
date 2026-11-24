@@ -1192,7 +1192,7 @@ TEST(directoryLocations, S3Lister) {
   CHECK_EQUAL(std::string("radar"), directory.bucket);
   CHECK_EQUAL(std::string(""), directory.prefix);
 
-  // A single store, which the NetCDF library opens
+  // A single store, which the Zarr reader opens
   CHECK(!isS3Directory("https://host/radar/timesteps/a.zarr#mode=zarr,s3"));
   // Not S3: OPeNDAP, a local Zarr store, a directory on disk
   CHECK(!isS3Directory("https://host/thredds/dodsC/a/"));
@@ -1201,8 +1201,32 @@ TEST(directoryLocations, S3Lister) {
   CHECK(!isS3Directory("/data/adaguc-data/radar/"));
   // No bucket
   CHECK(!isS3Directory("https://host/#mode=zarr,s3"));
-  // The NetCDF library only does https for S3
-  CHECK(!isS3Directory("http://host/radar/timesteps/#mode=zarr,s3"));
+  // http, for an endpoint without TLS
+  CHECK(parseS3Directory("http://host:7070/radar/timesteps/#mode=zarr,s3", directory));
+  CHECK_EQUAL(std::string("http://host:7070"), directory.endpoint);
+  CHECK_EQUAL(std::string("radar"), directory.bucket);
+  CHECK_EQUAL(std::string("timesteps/"), directory.prefix);
+  CHECK(!isS3Directory("http://host/#mode=zarr,s3"));
+  // Another scheme
+  CHECK(!isS3Directory("ftp://host/radar/timesteps/#mode=zarr,s3"));
+  CHECK(!isS3Directory("s3://radar/timesteps/#mode=zarr,s3"));
+}
+
+TEST(regionOfALocation, S3Lister) {
+  // aws.region in the fragment of a directory or store goes before the environment, as for the Zarr reader
+  setenv("AWS_REGION", "eu-central-1", 1);
+  setenv("AWS_DEFAULT_REGION", "us-west-2", 1);
+  CHECK_EQUAL(std::string("eu-west-1"), getS3Region("#mode=zarr,s3&aws.region=eu-west-1"));
+  CHECK_EQUAL(std::string("eu-west-1"), getS3Region("#aws.region=eu-west-1&mode=zarr,s3"));
+  // Without it, or when it is empty: AWS_REGION, then AWS_DEFAULT_REGION, then us-east-1
+  CHECK_EQUAL(std::string("eu-central-1"), getS3Region("#mode=zarr,s3"));
+  CHECK_EQUAL(std::string("eu-central-1"), getS3Region("#mode=zarr,s3&aws.region="));
+  CHECK_EQUAL(std::string("eu-central-1"), getS3Region(""));
+  unsetenv("AWS_REGION");
+  CHECK_EQUAL(std::string("us-west-2"), getS3Region("#mode=zarr,s3"));
+  unsetenv("AWS_DEFAULT_REGION");
+  CHECK_EQUAL(std::string("us-east-1"), getS3Region("#mode=zarr,s3"));
+  CHECK_EQUAL(std::string("eu-west-1"), getS3Region("#mode=zarr,s3&aws.region=eu-west-1"));
 }
 
 TEST(storesInADirectory, S3Lister) {
