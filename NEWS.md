@@ -1,3 +1,7 @@
+**Version X.Y.Z**
+
+-
+
 **Version 10.1.0 - 2026-11-25**
 
 - Fixed packed data (`scale_factor`/`add_offset`) without a `_FillValue`: when one request read the same file more than once, for example WCS GetCoverage over several time steps or levels, or a GetMap animation, the value equal to `add_offset` was nodata from the second read on.
