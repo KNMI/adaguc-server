@@ -1,9 +1,12 @@
-**Version X.Y.Z**
+**Version 10.1.0 - 2026-11-25**
 
 - Fixed packed data (`scale_factor`/`add_offset`) without a `_FillValue`: when one request read the same file more than once, for example WCS GetCoverage over several time steps or levels, or a GetMap animation, the value equal to `add_offset` was nodata from the second read on.
 - Fixed GetFeatureInfo with `INFO_FORMAT=text/html` or `text/plain` over more than one time step (for example `time=start/end`) on gridded data: only the first time step had a value, the other steps showed `nodata`. JSON output was not affected.
 - Fixed GetFeatureInfo and GetPointValue with `INFO_FORMAT=application/json`, and so EDR position queries, on packed data (`scale_factor`/`add_offset`) with a `_FillValue`: a cell with the fill value gave the unpacked fill value (for example `-999.9`) instead of `nodata`, or, with a unit conversion or Beaufort, a converted value. Text formats were not affected.
 - Fixed GetFeatureInfo and GetPointValue with `INFO_FORMAT=application/json`, and so EDR position queries, on layers with more than one variable (without `convert_uv_components`): with enough time steps, the second variable could show values of the first one.
+
+- Fixed EDR position, cube and trajectory queries refusing a `crs` given as a WKT of EPSG:4326 with a 400 `Unsupported crs`. GeoWeb sends the WKT that the collection advertises in `extent.spatial.crs` back as `crs`. Every WKT (1 or 2) that describes EPSG:4326 is now accepted, also when reformatted, like the WKT in `crs_details`. A WKT of another CRS still gives a 400. Trajectory now also accepts the other spellings of EPSG:4326 (`CRS84`, `OGC:CRS84` and the `opengis.net` URIs), like position and cube.
+- Fixed the `self` link of the EDR landing page: it pointed to `/edr`, which gives a 404, and now points to `/edr/`.
 
 **Version 10.0.0 - 2026-11-16**
 

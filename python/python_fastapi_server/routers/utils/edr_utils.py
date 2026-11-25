@@ -45,7 +45,7 @@ from .edr_exception import (
 
 from .ogcapi_tools import call_adaguc
 from .json_utils import pydantic_json_loads
-from .native_grid import EPSG_4326_CRS_DETAILS, NATIVE_CRS, get_collection_native_crs_details
+from .native_grid import EPSG_4326_CRS_DETAILS, EXTENT_CRS_WKT, NATIVE_CRS, get_collection_native_crs_details
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def get_extent_from_md(metadata: dict, parameter: str):
     bbox = [metadata[parameter]["layer"]["latlonbox"]]
     if bbox is None:
         return None, None
-    crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
+    crs = EXTENT_CRS_WKT
     spatial = Spatial(bbox=bbox, crs=crs)
 
     interval, time_values = get_times_for_collection(metadata)
@@ -293,12 +293,7 @@ def get_collectioninfo_from_md(
         query_type="position",
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON"],
-        crs_details=[
-            {
-                "crs": "EPSG:4326",
-                "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
-            }
-        ],
+        crs_details=[EPSG_4326_CRS_DETAILS],
     )
     position_link = EDRQueryLink(
         href=f"{base_url}/position",

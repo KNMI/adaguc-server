@@ -7,6 +7,7 @@ from .covjsonresponse import CovJSONResponse, create_coveragejson_response
 from .trajectory_covjson import SectionCoverage, SectionCoverageCollection, sections_from_response
 from .utils.edr_exception import EdrException, exc_failed_call
 from .utils.json_utils import pydantic_json_loads
+from .utils.native_grid import check_crs
 from .utils.edr_utils import (
     call_adaguc,
     get_custom,
@@ -52,8 +53,7 @@ async def get_trajectory(
     points = parse_coordinates(coords, "LineString")
     if len(points) > 1000:
         raise EdrException(400, "Trajectory supports at most 1000 vertices")
-    if crs != "EPSG:4326":
-        raise EdrException(400, "Trajectory currently supports crs=EPSG:4326")
+    check_crs(crs, allow_native=False, query_type="trajectory")
     if f not in ("CoverageJSON", "application/prs.coverage+json"):
         raise EdrException(400, "Trajectory currently supports CoverageJSON")
     if "resolution_x" in request.query_params or "resolution_y" in request.query_params:
