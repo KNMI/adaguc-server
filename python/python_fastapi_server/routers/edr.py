@@ -56,12 +56,6 @@ async def edr_exception_handler(_, exc: EdrException):
     )
 
 
-DEFAULT_CRS_OBJECT = {
-    "crs": "EPSG:4326",
-    "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
-}
-
-
 @edrApiApp.get("/collections", response_model=Collections, response_model_exclude_none=True)
 @edrApiApp.get("/collections/", response_model=Collections, response_model_exclude_none=True)
 async def rest_get_edr_collections(request: Request, response: Response):
@@ -140,16 +134,17 @@ async def rest_get_edr_landing_page(request: Request):
     keywords = cfg.get("keywords")
 
     base_url = get_base_url(request)
-    landingpage_url = base_url + "edr"
-    conformance_url = base_url + "edr/conformance"
-    collections_url = base_url + "edr/collections"
+    # The landing page is /edr/, with a trailing slash: /edr is not routed
+    landingpage_url = f"{base_url}edr/"
+    conformance_url = f"{base_url}edr/conformance"
+    collections_url = f"{base_url}edr/collections"
+    openapi_url = f"{base_url}edr/api"
 
     links: list[Link] = []
     link = Link(href=landingpage_url, rel="self", type="application/json")
     links.append(link)
     links.append(Link(href=conformance_url, rel="conformance", type="application/json"))
     links.append(Link(href=collections_url, rel="data", type="application/json"))
-    openapi_url = f"{landingpage_url}/api"
     links.append(
         Link(
             href=openapi_url,

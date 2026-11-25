@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 
 import netCDF4
 import numpy as np
@@ -75,6 +75,14 @@ def test_root(client: TestClient):
     root_info = resp.json()
     assert root_info["description"] == "EDR service for ADAGUC datasets"
     assert len(root_info["links"]) >= 4
+    hrefs = {link["rel"]: link["href"] for link in root_info["links"]}
+    assert hrefs["self"].endswith("/edr/")
+    assert hrefs["conformance"].endswith("/edr/conformance")
+    assert hrefs["data"].endswith("/edr/collections")
+    assert hrefs["service-desc"].endswith("/edr/api")
+    # Every link the landing page reports must resolve. Only the path is requested, EXTERNALADDRESS may add a host and prefix.
+    for href in hrefs.values():
+        assert client.get(urlsplit(href).path).status_code == 200, href
 
 
 def test_collections(client: TestClient):
@@ -1499,3 +1507,47 @@ def test_covjson_axis_order_follows_epsg():
     assert get_epsg_axis_order(4258) == ["y", "x"]
     assert get_epsg_axis_order(28992) == ["x", "y"]
     assert get_epsg_axis_order(None) == ["x", "y"]
+
+
+ROTATED_POLE_COLLECTION = "/edr/collections/adaguc.tests.rotatedpole_edr.rotatedpole"
+TRAJECTORY_URL = "/edr/collections/testcollection.testcollection/instances/202406010000/trajectory"
+TRAJECTORY_PARAMS = {"coords": "LINESTRING(5.1 52.1,8.1 52.1)", "parameter-name": "testdata", "datetime": "2024-06-01T01:00:00Z"}
+
+
+def advertised_wgs84_wkts(client: TestClient) -> list[str]:
+    """The two WGS84 WKTs the collection advertises, as extent crs and in crs_details, plus one reformatted"""
+    collection = client.get(ROTATED_POLE_COLLECTION).json()
+    extent_wkt = collection["extent"]["spatial"]["crs"]
+    details_wkt = collection["data_queries"]["position"]["link"]["variables"]["crs_details"][0]["wkt"]
+    assert extent_wkt != details_wkt
+    return [extent_wkt, details_wkt, extent_wkt.replace(",", ", ").lower()]
+
+
+def test_queries_accept_advertised_wgs84_wkt(client: TestClient):
+    """Clients like GeoWeb send an advertised WKT back as crs. Any WKT of EPSG:4326 gives the same as no crs."""
+    position_url = ROTATED_POLE_COLLECTION + "/position"
+    position = {"coords": "POINT(5 52)", "parameter-name": "pr_adjust"}
+    expected_position = client.get(position_url, params=position).json()
+    expected_cube = client.get(ROTATED_POLE_CUBE_URL).json()
+    expected_trajectory = client.get(TRAJECTORY_URL, params=TRAJECTORY_PARAMS).json()
+    for wkt in advertised_wgs84_wkts(client):
+        resp = client.get(position_url, params=position | {"crs": wkt})
+        assert resp.status_code == 200, resp.text
+        assert resp.json() == expected_position
+        resp = client.get(ROTATED_POLE_CUBE_URL + "&" + urlencode({"crs": wkt}))
+        assert resp.status_code == 200, resp.text
+        assert resp.json() == expected_cube
+        resp = client.get(TRAJECTORY_URL, params=TRAJECTORY_PARAMS | {"crs": wkt})
+        assert resp.status_code == 200, resp.text
+        assert resp.json() == expected_trajectory
+    # Trajectory accepts the other spellings of EPSG:4326 too
+    assert client.get(TRAJECTORY_URL, params=TRAJECTORY_PARAMS | {"crs": "CRS84"}).json() == expected_trajectory
+
+
+@pytest.mark.parametrize("crs", [CRS.from_epsg(4258).to_wkt(), CRS.from_epsg(3857).to_wkt(), "GEOGCS[", "EPSG:3857"])
+def test_queries_refuse_other_crs(client: TestClient, crs: str):
+    """A WKT of another CRS, even a geographic one like ETRS89, or an unparsable one, gives a 400"""
+    resp = client.get(ROTATED_POLE_COLLECTION + "/position", params={"coords": "POINT(5 52)", "parameter-name": "pr_adjust", "crs": crs})
+    assert resp.status_code == 400
+    assert client.get(ROTATED_POLE_CUBE_URL + "&" + urlencode({"crs": crs})).status_code == 400
+    assert client.get(TRAJECTORY_URL, params=TRAJECTORY_PARAMS | {"crs": crs}).status_code == 400

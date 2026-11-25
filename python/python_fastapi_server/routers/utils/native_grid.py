@@ -14,7 +14,10 @@ from .edr_exception import EdrException, exc_failed_call
 # Value of the crs parameter that requests the native grid
 NATIVE_CRS = "native"
 
-# Values of the crs parameter that request the default EPSG:4326 output
+# The WGS84 WKT that the collection advertises as extent.spatial.crs. Clients like GeoWeb send it back as crs.
+EXTENT_CRS_WKT = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
+
+# Values of the crs parameter that request the default EPSG:4326 output. A WKT of EPSG:4326 is accepted as well, see is_epsg_4326_wkt.
 DEFAULT_CRS_VALUES = (
     "EPSG:4326",
     "CRS84",
@@ -30,9 +33,24 @@ EPSG_4326_CRS_DETAILS = {
 }
 
 
+EPSG_4326_CRS = CRS.from_epsg(4326)
+
+
+@lru_cache(maxsize=64)
+def is_epsg_4326_wkt(crs: str) -> bool:
+    """
+    True when crs is a WKT (1 or 2) of EPSG:4326. The collection advertises two different WKTs (EXTENT_CRS_WKT and the
+    wkt in EPSG_4326_CRS_DETAILS), and clients may send them back reformatted, so they are compared as CRS, not as text.
+    """
+    try:
+        return CRS.from_wkt(crs).equals(EPSG_4326_CRS, ignore_axis_order=True)
+    except CRSError:
+        return False
+
+
 def check_crs(crs: str | None, allow_native: bool, query_type: str) -> None:
     """Raises a 400 for a crs parameter the query does not support. Only cube queries support crs=native."""
-    if crs is None or crs in DEFAULT_CRS_VALUES or (allow_native and crs == NATIVE_CRS):
+    if crs is None or crs in DEFAULT_CRS_VALUES or (allow_native and crs == NATIVE_CRS) or is_epsg_4326_wkt(crs):
         return
     supported = f"{NATIVE_CRS} or EPSG:4326" if allow_native else "EPSG:4326"
     raise EdrException(code=400, description=f"Unsupported crs {crs} for {query_type} queries, use {supported}")
