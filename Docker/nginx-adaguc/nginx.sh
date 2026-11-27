@@ -1,5 +1,5 @@
 #!/bin/sh
-source /etc/envvars
+. /etc/envvars
 HOSTNAMEWITHSLASH=${EXTERNAL_HOSTNAME#https://};
 HOSTNAME=${HOSTNAMEWITHSLASH%/}
 envsubst '\$SSL_DOMAINS \$SSL_FORWARD \$HOSTNAME' < /nginx.conf > /etc/nginx/nginx.conf

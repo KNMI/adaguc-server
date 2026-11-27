@@ -1,6 +1,6 @@
 #!/bin/sh
 export > /etc/envvars
-trap "sv stop crond; sv stop nginx; exit" SIGTERM
+trap "sv stop crond; sv stop nginx; exit" TERM
 
 if [ ! -f /cert/dhparam.pem ]; then
     echo "No dhparam file found."
@@ -13,6 +13,6 @@ if [ ! -f /cert/privkey.pem ]; then
     ( set -x; openssl req -x509 -nodes -days 365 -newkey rsa:2048 -subj '/CN=*/O=C3S-MAGIC/C=EU' -keyout /cert/privkey.pem -out /cert/fullchain.pem )
 fi
 
-/sbin/runsvdir /etc/service &
-sh ./certbot.sh
+runsvdir /etc/service &
+sh /certbot.sh
 wait
